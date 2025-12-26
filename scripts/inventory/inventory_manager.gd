@@ -198,7 +198,7 @@ func _equip_to_slot(item: ItemData, slot: ItemData.EquipSlot, from_backpack_inde
 
 	# Put old item in backpack if there was one
 	if not old_item.is_empty():
-		var old_charges := old_item.get("charges", 0)
+		var old_charges: int = old_item.get("charges", 0)
 		if old_item.item is ConsumableData:
 			add_item(old_item.item, 1, old_charges)
 		else:
@@ -217,7 +217,7 @@ func unequip_item(slot: ItemData.EquipSlot) -> bool:
 	Debug.info("Inventory", "Unequipping item", "%s from %s" % [item_data.item.item_name, ItemData.get_slot_name(slot)])
 
 	# Try to add to backpack (preserve charges for consumables)
-	var item_charges := item_data.get("charges", 0)
+	var item_charges: int = item_data.get("charges", 0)
 	if item_data.item is ConsumableData:
 		if not add_item(item_data.item, 1, item_charges):
 			Debug.warn("Inventory", "Cannot unequip", "Backpack is full")
