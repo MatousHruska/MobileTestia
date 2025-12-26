@@ -10,19 +10,34 @@ class_name EquipmentData
 @export var bonus_strength: int = 0
 @export var bonus_dexterity: int = 0
 @export var bonus_intelligence: int = 0
-@export var bonus_endurance: int = 0
+@export var bonus_vitality: int = 0
+@export var bonus_energy: int = 0
 @export var bonus_luck: int = 0
 
-## Derived stat bonuses
-@export_group("Derived Bonuses")
-@export var bonus_health: int = 0
-@export var bonus_mana: int = 0
-@export var bonus_physical_damage: int = 0
+## Offensive stat bonuses
+@export_group("Offensive Bonuses")
+@export var bonus_melee_damage: int = 0
+@export var bonus_ranged_damage: int = 0
 @export var bonus_magic_damage: int = 0
-@export var bonus_defense: int = 0
+@export var bonus_attack_speed: float = 0.0  # Percentage
 @export var bonus_crit_chance: float = 0.0  # Percentage
 @export var bonus_crit_damage: float = 0.0  # Percentage
-@export var bonus_attack_speed: float = 0.0  # Percentage
+
+## Defensive stat bonuses
+@export_group("Defensive Bonuses")
+@export var bonus_armor: int = 0
+@export var bonus_magic_resistance: int = 0
+@export var bonus_dodge_chance: float = 0.0  # Percentage
+@export var bonus_health: int = 0
+@export var bonus_mana: int = 0
+@export var bonus_stamina: int = 0
+
+## Utility stat bonuses
+@export_group("Utility Bonuses")
+@export var bonus_movement_speed: float = 0.0  # Percentage
+@export var bonus_life_regen: float = 0.0  # Per second
+@export var bonus_mana_regen: float = 0.0  # Per second
+@export var bonus_stamina_regen: float = 0.0  # Per second
 
 ## Requirements
 @export_group("Requirements")
@@ -53,36 +68,95 @@ func get_stat_text() -> String:
 
 	# Primary stats
 	if bonus_strength != 0:
-		lines.append("+%d Strength" % bonus_strength)
+		lines.append("+%d STR" % bonus_strength)
 	if bonus_dexterity != 0:
-		lines.append("+%d Dexterity" % bonus_dexterity)
+		lines.append("+%d DEX" % bonus_dexterity)
 	if bonus_intelligence != 0:
-		lines.append("+%d Intelligence" % bonus_intelligence)
-	if bonus_endurance != 0:
-		lines.append("+%d Endurance" % bonus_endurance)
+		lines.append("+%d INT" % bonus_intelligence)
+	if bonus_vitality != 0:
+		lines.append("+%d VIT" % bonus_vitality)
+	if bonus_energy != 0:
+		lines.append("+%d ENE" % bonus_energy)
 	if bonus_luck != 0:
-		lines.append("+%d Luck" % bonus_luck)
+		lines.append("+%d LUK" % bonus_luck)
 
-	# Derived stats
+	# Offensive stats
+	if bonus_melee_damage != 0:
+		lines.append("+%d Melee Dmg" % bonus_melee_damage)
+	if bonus_ranged_damage != 0:
+		lines.append("+%d Ranged Dmg" % bonus_ranged_damage)
+	if bonus_magic_damage != 0:
+		lines.append("+%d Magic Dmg" % bonus_magic_damage)
+	if bonus_attack_speed != 0.0:
+		lines.append("+%.0f%% Atk Spd" % bonus_attack_speed)
+	if bonus_crit_chance != 0.0:
+		lines.append("+%.1f%% Crit" % bonus_crit_chance)
+	if bonus_crit_damage != 0.0:
+		lines.append("+%.0f%% Crit Dmg" % bonus_crit_damage)
+
+	# Defensive stats
+	if bonus_armor != 0:
+		lines.append("+%d Armor" % bonus_armor)
+	if bonus_magic_resistance != 0:
+		lines.append("+%d Magic Resist" % bonus_magic_resistance)
+	if bonus_dodge_chance != 0.0:
+		lines.append("+%.1f%% Dodge" % bonus_dodge_chance)
 	if bonus_health != 0:
 		lines.append("+%d Health" % bonus_health)
 	if bonus_mana != 0:
 		lines.append("+%d Mana" % bonus_mana)
-	if bonus_physical_damage != 0:
-		lines.append("+%d Physical Damage" % bonus_physical_damage)
-	if bonus_magic_damage != 0:
-		lines.append("+%d Magic Damage" % bonus_magic_damage)
-	if bonus_defense != 0:
-		lines.append("+%d Defense" % bonus_defense)
-	if bonus_crit_chance != 0.0:
-		lines.append("+%.1f%% Crit Chance" % bonus_crit_chance)
-	if bonus_crit_damage != 0.0:
-		lines.append("+%.1f%% Crit Damage" % bonus_crit_damage)
-	if bonus_attack_speed != 0.0:
-		lines.append("+%.1f%% Attack Speed" % bonus_attack_speed)
+	if bonus_stamina != 0:
+		lines.append("+%d Stamina" % bonus_stamina)
+
+	# Utility stats
+	if bonus_movement_speed != 0.0:
+		lines.append("+%.0f%% Move Spd" % bonus_movement_speed)
+	if bonus_life_regen != 0.0:
+		lines.append("+%.1f Life/s" % bonus_life_regen)
+	if bonus_mana_regen != 0.0:
+		lines.append("+%.1f Mana/s" % bonus_mana_regen)
+	if bonus_stamina_regen != 0.0:
+		lines.append("+%.1f Stam/s" % bonus_stamina_regen)
 
 	if lines.is_empty():
 		return "No bonuses"
+
+	return "\n".join(lines)
+
+
+## Check if player meets stat requirements to equip this item
+func can_equip() -> bool:
+	if PlayerStats.level < required_level:
+		return false
+	if PlayerStats.strength < required_strength:
+		return false
+	if PlayerStats.dexterity < required_dexterity:
+		return false
+	if PlayerStats.intelligence < required_intelligence:
+		return false
+	return true
+
+
+## Get requirement text for UI (shows unmet requirements in red)
+func get_requirement_text() -> String:
+	var lines: PackedStringArray = []
+
+	if required_level > 1:
+		var met := PlayerStats.level >= required_level
+		var color := "green" if met else "red"
+		lines.append("[color=%s]Requires Level %d[/color]" % [color, required_level])
+	if required_strength > 0:
+		var met := PlayerStats.strength >= required_strength
+		var color := "green" if met else "red"
+		lines.append("[color=%s]Requires %d STR[/color]" % [color, required_strength])
+	if required_dexterity > 0:
+		var met := PlayerStats.dexterity >= required_dexterity
+		var color := "green" if met else "red"
+		lines.append("[color=%s]Requires %d DEX[/color]" % [color, required_dexterity])
+	if required_intelligence > 0:
+		var met := PlayerStats.intelligence >= required_intelligence
+		var color := "green" if met else "red"
+		lines.append("[color=%s]Requires %d INT[/color]" % [color, required_intelligence])
 
 	return "\n".join(lines)
 
