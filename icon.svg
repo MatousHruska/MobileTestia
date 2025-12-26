@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" fill="#3d5a80"/>
+  <text x="64" y="72" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" font-weight="bold" fill="white">MT</text>
+  <rect x="24" y="88" width="80" height="8" rx="4" fill="#98c1d9"/>
+  <rect x="34" y="100" width="60" height="6" rx="3" fill="#e0fbfc"/>
+</svg>
