@@ -19,43 +19,43 @@ script = ExtResource("4_ref")
 
 [node name="ReferenceObjects" type="Node2D" parent="."]
 
-[node name="Rock1" type="Sprite2D" parent="ReferenceObjects"]
+[node name="Rock1" type="Node2D" parent="ReferenceObjects"]
 position = Vector2(100, 50)
 script = ExtResource("4_ref")
 object_color = Color(0.4, 0.35, 0.3, 1)
 object_size = Vector2(40, 30)
 
-[node name="Rock2" type="Sprite2D" parent="ReferenceObjects"]
+[node name="Rock2" type="Node2D" parent="ReferenceObjects"]
 position = Vector2(-150, 100)
 script = ExtResource("4_ref")
 object_color = Color(0.35, 0.3, 0.28, 1)
 object_size = Vector2(50, 35)
 
-[node name="Tree1" type="Sprite2D" parent="ReferenceObjects"]
+[node name="Tree1" type="Node2D" parent="ReferenceObjects"]
 position = Vector2(-100, -80)
 script = ExtResource("4_ref")
 object_color = Color(0.2, 0.5, 0.2, 1)
 object_size = Vector2(30, 60)
 
-[node name="Tree2" type="Sprite2D" parent="ReferenceObjects"]
+[node name="Tree2" type="Node2D" parent="ReferenceObjects"]
 position = Vector2(200, -50)
 script = ExtResource("4_ref")
 object_color = Color(0.25, 0.55, 0.25, 1)
 object_size = Vector2(35, 70)
 
-[node name="Crate" type="Sprite2D" parent="ReferenceObjects"]
+[node name="Crate" type="Node2D" parent="ReferenceObjects"]
 position = Vector2(50, 150)
 script = ExtResource("4_ref")
 object_color = Color(0.6, 0.45, 0.25, 1)
 object_size = Vector2(32, 32)
 
-[node name="Barrel" type="Sprite2D" parent="ReferenceObjects"]
+[node name="Barrel" type="Node2D" parent="ReferenceObjects"]
 position = Vector2(-200, -150)
 script = ExtResource("4_ref")
 object_color = Color(0.5, 0.35, 0.2, 1)
 object_size = Vector2(24, 28)
 
-[node name="Marker" type="Sprite2D" parent="ReferenceObjects"]
+[node name="Marker" type="Node2D" parent="ReferenceObjects"]
 position = Vector2(0, -100)
 script = ExtResource("4_ref")
 object_color = Color(0.8, 0.2, 0.2, 1)
