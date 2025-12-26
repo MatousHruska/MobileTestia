@@ -11,7 +11,7 @@ signal joystick_released
 enum Mode { FIXED, FLOATING }
 
 @export_group("Configuration")
-@export var mode: Mode = Mode.FLOATING
+@export var mode: Mode = Mode.FIXED  ## Changed to FIXED for visible placeholder
 @export var joystick_radius: float = 64.0  ## Outer ring radius
 @export var knob_radius: float = 32.0  ## Inner knob radius
 @export var dead_zone: float = 0.1  ## Ignore input below this threshold
@@ -28,51 +28,41 @@ var joystick_center: Vector2 = Vector2.ZERO
 var knob_position: Vector2 = Vector2.ZERO
 var output_direction: Vector2 = Vector2.ZERO
 
-## Components
-@onready var base_ring: Control = $BaseRing
-@onready var knob: Control = $Knob
-
 
 func _ready() -> void:
 	Debug.info("Input", "VirtualJoystick ready", ["mode:", Mode.keys()[mode]])
 
-	if mode == Mode.FIXED:
-		joystick_center = size / 2.0
-		_update_visual_position()
+	# Set center based on control size
+	joystick_center = size / 2.0
+	knob_position = joystick_center
 
-	_setup_visuals()
-
-
-func _setup_visuals() -> void:
-	## Create visual elements if not present
-	if not base_ring:
-		base_ring = Control.new()
-		base_ring.name = "BaseRing"
-		add_child(base_ring)
-		base_ring.draw.connect(_draw_base_ring)
-
-	if not knob:
-		knob = Control.new()
-		knob.name = "Knob"
-		add_child(knob)
-		knob.draw.connect(_draw_knob)
-
-	_set_visibility(mode == Mode.FIXED)
+	# Always show the joystick placeholder
+	queue_redraw()
 
 
-func _draw_base_ring() -> void:
-	if not base_ring:
-		return
-	var color := active_color if is_active else base_color
-	base_ring.draw_circle(Vector2.ZERO, joystick_radius, color)
-	base_ring.draw_arc(Vector2.ZERO, joystick_radius, 0, TAU, 32, Color(1, 1, 1, 0.5), 2.0)
+func _draw() -> void:
+	## Draw joystick directly on this control
+	var center := joystick_center
 
+	# Draw base ring
+	var ring_color: Color
+	if is_active:
+		ring_color = active_color
+	else:
+		ring_color = base_color
 
-func _draw_knob() -> void:
-	if not knob:
-		return
-	var color := active_color if is_active else knob_color
-	knob.draw_circle(Vector2.ZERO, knob_radius, color)
+	draw_circle(center, joystick_radius, ring_color)
+	draw_arc(center, joystick_radius, 0, TAU, 32, Color(1, 1, 1, 0.5), 2.0)
+
+	# Draw knob
+	var knob_col: Color
+	if is_active:
+		knob_col = active_color
+	else:
+		knob_col = knob_color
+
+	draw_circle(knob_position, knob_radius, knob_col)
+	draw_arc(knob_position, knob_radius, 0, TAU, 24, Color(1, 1, 1, 0.6), 2.0)
 
 
 func _input(event: InputEvent) -> void:
@@ -116,8 +106,7 @@ func _start_joystick(index: int, touch_pos: Vector2) -> void:
 	# else: use fixed center
 
 	knob_position = joystick_center
-	_update_visual_position()
-	_set_visibility(true)
+	queue_redraw()
 
 	Debug.log("Input", "Joystick started", ["center:", joystick_center])
 
@@ -142,7 +131,7 @@ func _update_joystick(touch_pos: Vector2) -> void:
 	else:
 		output_direction = raw_direction
 
-	_update_visual_position()
+	queue_redraw()
 	joystick_input.emit(output_direction)
 
 	Debug.trace("Input", "Joystick update", output_direction)
@@ -154,10 +143,7 @@ func _release_joystick() -> void:
 	output_direction = Vector2.ZERO
 	knob_position = joystick_center
 
-	_update_visual_position()
-
-	if mode == Mode.FLOATING:
-		_set_visibility(false)
+	queue_redraw()
 
 	joystick_released.emit()
 	joystick_input.emit(Vector2.ZERO)
@@ -165,28 +151,14 @@ func _release_joystick() -> void:
 	Debug.log("Input", "Joystick released")
 
 
-func _update_visual_position() -> void:
-	if base_ring:
-		base_ring.position = joystick_center
-		base_ring.queue_redraw()
-	if knob:
-		knob.position = knob_position
-		knob.queue_redraw()
-
-
-func _set_visibility(visible_state: bool) -> void:
-	if base_ring:
-		base_ring.visible = visible_state
-	if knob:
-		knob.visible = visible_state
-
-
 ## Public getters
 func get_direction() -> Vector2:
 	return output_direction
 
 func get_direction_normalized() -> Vector2:
-	return output_direction.normalized() if output_direction.length() > 0 else Vector2.ZERO
+	if output_direction.length() > 0:
+		return output_direction.normalized()
+	return Vector2.ZERO
 
 func is_pressed() -> bool:
 	return is_active
