@@ -4,14 +4,24 @@ class_name InventoryPanel
 
 signal destroy_requested  # Emitted when destroy button pressed, parent shows confirmation
 
-## Equipment slot order (left column)
-const EQUIPMENT_SLOT_ORDER: Array[ItemData.EquipSlot] = [
+## Equipment slot layout (2-column grid)
+## Format: Array of rows, each row is an array of slots
+const EQUIPMENT_LAYOUT: Array = [
+	[ItemData.EquipSlot.HEAD, ItemData.EquipSlot.ACCESSORY_2],      # H  A2
+	[ItemData.EquipSlot.HANDS, ItemData.EquipSlot.BODY],            # G  B
+	[ItemData.EquipSlot.BOOTS],                                      # F
+	[ItemData.EquipSlot.MAIN_HAND],                                  # W
+	[ItemData.EquipSlot.ACCESSORY_1],                                # A1
+	[ItemData.EquipSlot.QUICK_SLOT]                                  # Q
+]
+
+## All equipment slots for iteration
+const EQUIPMENT_SLOTS: Array[ItemData.EquipSlot] = [
 	ItemData.EquipSlot.HEAD,
 	ItemData.EquipSlot.BODY,
 	ItemData.EquipSlot.HANDS,
 	ItemData.EquipSlot.BOOTS,
 	ItemData.EquipSlot.MAIN_HAND,
-	ItemData.EquipSlot.OFF_HAND,
 	ItemData.EquipSlot.ACCESSORY_1,
 	ItemData.EquipSlot.ACCESSORY_2,
 	ItemData.EquipSlot.QUICK_SLOT
@@ -71,7 +81,7 @@ func _build_ui() -> void:
 func _build_equipment_column(parent: HBoxContainer) -> void:
 	var equip_panel := PanelContainer.new()
 	equip_panel.name = "EquipmentPanel"
-	equip_panel.custom_minimum_size.x = 180
+	equip_panel.custom_minimum_size.x = 160
 	parent.add_child(equip_panel)
 
 	var equip_vbox := VBoxContainer.new()
@@ -86,34 +96,41 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	header.add_theme_font_size_override("font_size", 16)
 	equip_vbox.add_child(header)
 
-	# Equipment slots grid (2 columns)
+	# Equipment slots container
 	equipment_container = VBoxContainer.new()
 	equipment_container.name = "EquipmentSlots"
-	equipment_container.add_theme_constant_override("separation", 2)
+	equipment_container.add_theme_constant_override("separation", 4)
 	equip_vbox.add_child(equipment_container)
 
-	# Create equipment slots
-	for slot in EQUIPMENT_SLOT_ORDER:
+	# Create equipment slots using the 2-column layout
+	for row_slots in EQUIPMENT_LAYOUT:
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 4)
+		row.add_theme_constant_override("separation", 8)
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		equipment_container.add_child(row)
 
-		# Slot label
-		var label := Label.new()
-		label.text = ItemData.get_slot_name(slot) + ":"
-		label.custom_minimum_size.x = 70
-		label.add_theme_font_size_override("font_size", 11)
-		row.add_child(label)
+		for slot in row_slots:
+			var slot_container := VBoxContainer.new()
+			slot_container.add_theme_constant_override("separation", 2)
+			row.add_child(slot_container)
 
-		# Slot button
-		var slot_btn := InventorySlot.new()
-		slot_btn.slot_type = InventorySlot.SlotType.EQUIPMENT
-		slot_btn.equipment_slot = slot
-		slot_btn.custom_minimum_size = Vector2(48, 48)
-		slot_btn.slot_pressed.connect(_on_slot_pressed)
-		row.add_child(slot_btn)
+			# Slot button
+			var slot_btn := InventorySlot.new()
+			slot_btn.slot_type = InventorySlot.SlotType.EQUIPMENT
+			slot_btn.equipment_slot = slot
+			slot_btn.custom_minimum_size = Vector2(56, 56)
+			slot_btn.slot_pressed.connect(_on_slot_pressed)
+			slot_container.add_child(slot_btn)
 
-		equipment_slots[slot] = slot_btn
+			# Slot label below
+			var label := Label.new()
+			label.text = ItemData.get_slot_name(slot)
+			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			label.add_theme_font_size_override("font_size", 10)
+			label.modulate = Color(0.7, 0.7, 0.7)
+			slot_container.add_child(label)
+
+			equipment_slots[slot] = slot_btn
 
 
 func _build_details_column(parent: HBoxContainer) -> void:
@@ -317,7 +334,7 @@ func _refresh_all() -> void:
 
 
 func _refresh_equipment() -> void:
-	for slot in EQUIPMENT_SLOT_ORDER:
+	for slot in EQUIPMENT_SLOTS:
 		var slot_ui: InventorySlot = equipment_slots[slot]
 		var item_data: Dictionary = Inventory.get_equipped_item(slot)
 

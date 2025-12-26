@@ -17,7 +17,6 @@ const EQUIPMENT_SLOTS: Array[ItemData.EquipSlot] = [
 	ItemData.EquipSlot.HANDS,
 	ItemData.EquipSlot.BOOTS,
 	ItemData.EquipSlot.MAIN_HAND,
-	ItemData.EquipSlot.OFF_HAND,
 	ItemData.EquipSlot.ACCESSORY_1,
 	ItemData.EquipSlot.ACCESSORY_2,
 	ItemData.EquipSlot.QUICK_SLOT
@@ -174,17 +173,6 @@ func _equip_to_slot(item: ItemData, slot: ItemData.EquipSlot, from_backpack_inde
 	if not old_item.is_empty():
 		add_item(old_item.item, old_item.quantity)
 
-	# Handle two-handed weapons
-	if item is EquipmentData:
-		var equip: EquipmentData = item as EquipmentData
-		if equip.is_two_handed() and slot == ItemData.EquipSlot.MAIN_HAND:
-			# Clear off-hand
-			var off_hand: Dictionary = equipped[ItemData.EquipSlot.OFF_HAND]
-			if not off_hand.is_empty():
-				add_item(off_hand.item, off_hand.quantity)
-				equipped[ItemData.EquipSlot.OFF_HAND] = {}
-				equipment_changed.emit(ItemData.EquipSlot.OFF_HAND)
-
 	equipment_changed.emit(slot)
 	inventory_changed.emit()
 	return true
@@ -219,12 +207,8 @@ func get_equipped_item(slot: ItemData.EquipSlot) -> Dictionary:
 	return equipped[slot]
 
 
-func is_slot_blocked(slot: ItemData.EquipSlot) -> bool:
-	# Off-hand is blocked if main hand has two-handed weapon
-	if slot == ItemData.EquipSlot.OFF_HAND:
-		var main_hand: Dictionary = equipped[ItemData.EquipSlot.MAIN_HAND]
-		if not main_hand.is_empty() and main_hand.item is EquipmentData:
-			return (main_hand.item as EquipmentData).is_two_handed()
+func is_slot_blocked(_slot: ItemData.EquipSlot) -> bool:
+	# No slots are blocked in this configuration
 	return false
 
 
