@@ -10,11 +10,16 @@ config_version=5
 
 [application]
 
-config/name="MobileTestia"
-config/description="Mobile game testing project"
-run/main_scene="res://scenes/main.tscn"
+config/name="Heroes of Tesia"
+config/description="Mobile Action RPG - Pixel Art Top-Down"
+run/main_scene="res://scenes/world/test_zone.tscn"
 config/features=PackedStringArray("4.2", "Mobile")
 config/icon="res://icon.svg"
+
+[autoload]
+
+Debug="*res://autoloads/debug_manager.gd"
+Game="*res://autoloads/game_manager.gd"
 
 [display]
 
@@ -28,7 +33,18 @@ window/handheld/orientation=0
 
 pointing/emulate_touch_from_mouse=true
 
+[layer_names]
+
+2d_physics/layer_1="World"
+2d_physics/layer_2="Player"
+2d_physics/layer_3="Enemies"
+2d_physics/layer_4="PlayerHitbox"
+2d_physics/layer_5="EnemyHitbox"
+2d_physics/layer_6="Pickups"
+
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="mobile"
 textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.1, 0.1, 0.15, 1)
