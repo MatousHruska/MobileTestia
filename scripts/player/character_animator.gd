@@ -16,7 +16,6 @@ enum AnimState { IDLE, WALK, ATTACK, DODGE, HIT, DIE }
 @onready var body_sprite: Sprite2D = $Body
 @onready var head_sprite: Sprite2D = $Head
 @onready var weapon_sprite: Sprite2D = $Weapon
-@onready var animation_player: AnimationPlayer = $AnimationPlayer
 
 ## Spritesheet configuration
 @export_group("Spritesheet Config")
@@ -54,7 +53,6 @@ var _frame_timer: float = 0.0
 var _current_fps: float = 6.0
 var _current_frame_count: int = 4
 var _animation_playing: bool = false
-var _queued_state: AnimState = AnimState.IDLE
 
 ## Row mapping for spritesheets (direction → row index)
 ## Format: [IDLE, WALK, ATTACK, DODGE, HIT, DIE] for each direction

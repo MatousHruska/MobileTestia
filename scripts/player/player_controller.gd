@@ -4,7 +4,6 @@ class_name PlayerController
 ## Handles movement, facing direction, and coordinates with animator
 
 ## Signals
-signal direction_changed(direction: Vector2)
 signal facing_changed(facing: Facing)
 signal attack_started
 signal attack_ended
@@ -191,9 +190,15 @@ func _snap_facing_to_cardinal(direction: Vector2) -> void:
 	var new_facing: Facing
 
 	if abs(direction.x) > abs(direction.y):
-		new_facing = Facing.RIGHT if direction.x > 0 else Facing.LEFT
+		if direction.x > 0:
+			new_facing = Facing.RIGHT
+		else:
+			new_facing = Facing.LEFT
 	else:
-		new_facing = Facing.DOWN if direction.y > 0 else Facing.UP
+		if direction.y > 0:
+			new_facing = Facing.DOWN
+		else:
+			new_facing = Facing.UP
 
 	if new_facing != current_facing:
 		_update_facing(new_facing)
