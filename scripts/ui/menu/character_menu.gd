@@ -6,7 +6,7 @@ class_name CharacterMenu
 signal menu_opened
 signal menu_closed
 
-enum Tab { STATS, INVENTORY, SKILLS, QUESTS, MENU }
+enum Tab { INVENTORY, STATS, SKILLS, QUESTS, MENU }
 
 ## References
 @onready var panel_container: Control = $MenuPanel
@@ -38,7 +38,7 @@ enum Tab { STATS, INVENTORY, SKILLS, QUESTS, MENU }
 @onready var confirm_popup: ConfirmationDialog = $ConfirmPopup
 
 ## State
-var current_tab: Tab = Tab.STATS
+var current_tab: Tab = Tab.INVENTORY
 var is_open: bool = false
 
 ## Tab button references for easy iteration
@@ -75,8 +75,8 @@ func _setup_confirm_popup() -> void:
 
 
 func _setup_tabs() -> void:
-	_tab_buttons = [stats_tab, inventory_tab, skills_tab, quests_tab, menu_tab]
-	_panels = [stats_panel, inventory_panel, skills_panel, quests_panel, menu_panel]
+	_tab_buttons = [inventory_tab, stats_tab, skills_tab, quests_tab, menu_tab]
+	_panels = [inventory_panel, stats_panel, skills_panel, quests_panel, menu_panel]
 
 	# Connect tab buttons
 	if stats_tab:
@@ -101,7 +101,7 @@ func _setup_tabs() -> void:
 	_setup_inventory_panel()
 
 	# Show default tab
-	_switch_to_tab(Tab.STATS)
+	_switch_to_tab(Tab.INVENTORY)
 
 
 func _setup_menu_buttons() -> void:
@@ -249,7 +249,7 @@ func _on_exit_game_pressed() -> void:
 
 
 ## Public interface
-func open_menu(start_tab: Tab = Tab.STATS) -> void:
+func open_menu(start_tab: Tab = Tab.INVENTORY) -> void:
 	if is_open:
 		return
 
