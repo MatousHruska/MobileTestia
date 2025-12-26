@@ -376,51 +376,108 @@ func get_total_stat_bonus(stat_name: String) -> int:
 	return total
 
 
-## DEBUG: Add test items
+## DEBUG: Add test items - one for each equipment slot
 func debug_add_test_items() -> void:
-	Debug.info("Inventory", "Adding debug test items")
+	Debug.info("Inventory", "Adding debug test items for all slots")
 
-	# Create a test sword
-	var sword := EquipmentData.new()
-	sword.id = "test_sword"
-	sword.item_name = "Iron Sword"
-	sword.description = "A sturdy iron blade."
-	sword.rarity = ItemData.Rarity.COMMON
-	sword.equipment_type = ItemData.EquipmentType.WEAPON_ONE_HANDED
-	sword.bonus_physical_damage = 5
-	sword.bonus_strength = 2
-	add_item(sword)
-
-	# Create a test helmet
+	# HEAD - Helmet
 	var helmet := EquipmentData.new()
 	helmet.id = "test_helmet"
-	helmet.item_name = "Leather Cap"
-	helmet.description = "Basic head protection."
-	helmet.rarity = ItemData.Rarity.COMMON
+	helmet.item_name = "Iron Helm"
+	helmet.description = "A sturdy iron helmet."
+	helmet.rarity = ItemData.Rarity.UNCOMMON
 	helmet.equipment_type = ItemData.EquipmentType.HELMET
-	helmet.bonus_defense = 3
+	helmet.bonus_defense = 5
+	helmet.bonus_endurance = 2
 	add_item(helmet)
 
-	# Create a test potion
+	# BODY - Armor
+	var armor := EquipmentData.new()
+	armor.id = "test_armor"
+	armor.item_name = "Chainmail"
+	armor.description = "Interlocking metal rings provide solid protection."
+	armor.rarity = ItemData.Rarity.UNCOMMON
+	armor.equipment_type = ItemData.EquipmentType.ARMOR
+	armor.bonus_defense = 10
+	armor.bonus_health = 20
+	add_item(armor)
+
+	# HANDS - Gloves
+	var gloves := EquipmentData.new()
+	gloves.id = "test_gloves"
+	gloves.item_name = "Leather Gloves"
+	gloves.description = "Supple leather gloves that improve grip."
+	gloves.rarity = ItemData.Rarity.COMMON
+	gloves.equipment_type = ItemData.EquipmentType.GLOVES
+	gloves.bonus_dexterity = 3
+	gloves.bonus_attack_speed = 5.0
+	add_item(gloves)
+
+	# BOOTS - Boots
+	var boots := EquipmentData.new()
+	boots.id = "test_boots"
+	boots.item_name = "Traveler's Boots"
+	boots.description = "Well-worn boots made for long journeys."
+	boots.rarity = ItemData.Rarity.COMMON
+	boots.equipment_type = ItemData.EquipmentType.BOOTS
+	boots.bonus_dexterity = 2
+	boots.bonus_defense = 2
+	add_item(boots)
+
+	# MAIN_HAND - Weapon
+	var sword := EquipmentData.new()
+	sword.id = "test_sword"
+	sword.item_name = "Steel Longsword"
+	sword.description = "A well-balanced blade forged from quality steel."
+	sword.rarity = ItemData.Rarity.RARE
+	sword.equipment_type = ItemData.EquipmentType.WEAPON_ONE_HANDED
+	sword.bonus_physical_damage = 12
+	sword.bonus_strength = 3
+	sword.bonus_crit_chance = 5.0
+	add_item(sword)
+
+	# ACCESSORY_1 - Ring
+	var ring := EquipmentData.new()
+	ring.id = "test_ring"
+	ring.item_name = "Ruby Ring"
+	ring.description = "A gold ring set with a fiery ruby."
+	ring.rarity = ItemData.Rarity.RARE
+	ring.equipment_type = ItemData.EquipmentType.RING
+	ring.bonus_strength = 4
+	ring.bonus_crit_damage = 10.0
+	add_item(ring)
+
+	# ACCESSORY_2 - Amulet
+	var amulet := EquipmentData.new()
+	amulet.id = "test_amulet"
+	amulet.item_name = "Sapphire Pendant"
+	amulet.description = "A silver pendant with a deep blue sapphire."
+	amulet.rarity = ItemData.Rarity.EPIC
+	amulet.equipment_type = ItemData.EquipmentType.AMULET
+	amulet.bonus_intelligence = 5
+	amulet.bonus_mana = 30
+	amulet.bonus_magic_damage = 8
+	add_item(amulet)
+
+	# QUICK_SLOT - Consumable (Health Potion)
 	var potion := ConsumableData.new()
-	potion.id = "health_potion_small"
-	potion.item_name = "Small Health Potion"
-	potion.description = "Restores a small amount of health."
+	potion.id = "health_potion"
+	potion.item_name = "Health Potion"
+	potion.description = "Restores 50 health instantly."
 	potion.rarity = ItemData.Rarity.COMMON
 	potion.effect_type = ConsumableData.EffectType.HEAL_HEALTH
 	potion.effect_value = 50
 	add_item(potion, 5)
 
-	# Create a rare ring
-	var ring := EquipmentData.new()
-	ring.id = "test_ring"
-	ring.item_name = "Ring of Power"
-	ring.description = "A ring imbued with ancient power."
-	ring.rarity = ItemData.Rarity.RARE
-	ring.equipment_type = ItemData.EquipmentType.RING
-	ring.bonus_strength = 3
-	ring.bonus_crit_chance = 2.5
-	add_item(ring)
+	# Extra consumable - Mana Potion
+	var mana_potion := ConsumableData.new()
+	mana_potion.id = "mana_potion"
+	mana_potion.item_name = "Mana Potion"
+	mana_potion.description = "Restores 30 mana instantly."
+	mana_potion.rarity = ItemData.Rarity.COMMON
+	mana_potion.effect_type = ConsumableData.EffectType.HEAL_MANA
+	mana_potion.effect_value = 30
+	add_item(mana_potion, 3)
 
 	# Add some gold
-	add_gold(100)
+	add_gold(250)
