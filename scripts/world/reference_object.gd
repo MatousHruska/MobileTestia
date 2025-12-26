@@ -1,9 +1,11 @@
 extends Node2D
 ## ReferenceObject - Simple placeholder object for testing movement
 ## Always draws directly using _draw()
+## Optionally creates collision
 
 @export var object_color: Color = Color(0.5, 0.5, 0.5, 1.0)
 @export var object_size: Vector2 = Vector2(32, 32)
+@export var has_collision: bool = true
 @export var draw_grid: bool = false
 @export var grid_spacing: float = 64.0
 @export var grid_color: Color = Color(0.3, 0.35, 0.3, 0.5)
@@ -13,7 +15,36 @@ func _ready() -> void:
 	# Check if this is the grid node
 	if name == "Grid":
 		draw_grid = true
+		has_collision = false
+
+	# Create collision if enabled
+	if has_collision and not draw_grid:
+		_create_collision()
+
 	queue_redraw()
+
+
+func _create_collision() -> void:
+	# Create a StaticBody2D for collision
+	var static_body := StaticBody2D.new()
+	static_body.name = "CollisionBody"
+
+	# Create collision shape
+	var collision_shape := CollisionShape2D.new()
+	collision_shape.name = "CollisionShape"
+
+	# Create rectangle shape matching object size
+	var shape := RectangleShape2D.new()
+	shape.size = object_size
+	collision_shape.shape = shape
+
+	# Set collision layer to World (layer 1)
+	static_body.collision_layer = 1
+	static_body.collision_mask = 0
+
+	# Add to tree
+	static_body.add_child(collision_shape)
+	add_child(static_body)
 
 
 func _draw() -> void:
