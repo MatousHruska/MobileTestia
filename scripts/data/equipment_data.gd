@@ -42,7 +42,7 @@ func get_target_slot() -> EquipSlot:
 	return ItemData.get_slot_for_type(equipment_type)
 
 
-## Check if this is a two-handed weapon (blocks off-hand)
+## Check if this is a two-handed weapon
 func is_two_handed() -> bool:
 	return equipment_type == EquipmentType.WEAPON_TWO_HANDED
 
@@ -108,7 +108,5 @@ func get_type_name() -> String:
 			return "Ring"
 		EquipmentType.AMULET:
 			return "Amulet"
-		EquipmentType.SHIELD:
-			return "Shield"
 		_:
 			return "Equipment"
