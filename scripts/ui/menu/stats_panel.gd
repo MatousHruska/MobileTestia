@@ -478,18 +478,23 @@ func _find_node_recursive(parent: Node, node_name: String) -> Node:
 
 
 func _update_attributes() -> void:
-	if _attribute_rows.has("strength"):
-		_attribute_rows["strength"]["value"].text = str(PlayerStats.strength)
-	if _attribute_rows.has("dexterity"):
-		_attribute_rows["dexterity"]["value"].text = str(PlayerStats.dexterity)
-	if _attribute_rows.has("intelligence"):
-		_attribute_rows["intelligence"]["value"].text = str(PlayerStats.intelligence)
-	if _attribute_rows.has("vitality"):
-		_attribute_rows["vitality"]["value"].text = str(PlayerStats.vitality)
-	if _attribute_rows.has("energy"):
-		_attribute_rows["energy"]["value"].text = str(PlayerStats.energy)
-	if _attribute_rows.has("luck"):
-		_attribute_rows["luck"]["value"].text = str(PlayerStats.luck)
+	_update_primary_stat("strength", PlayerStats.strength)
+	_update_primary_stat("dexterity", PlayerStats.dexterity)
+	_update_primary_stat("intelligence", PlayerStats.intelligence)
+	_update_primary_stat("vitality", PlayerStats.vitality)
+	_update_primary_stat("energy", PlayerStats.energy)
+	_update_primary_stat("luck", PlayerStats.luck)
+
+
+func _update_primary_stat(stat_name: String, base_value: int) -> void:
+	if not _attribute_rows.has(stat_name):
+		return
+	var bonus := int(PlayerStats.get_equipment_bonus(stat_name))
+	var total := base_value + bonus
+	if bonus > 0:
+		_attribute_rows[stat_name]["value"].text = "%d (+%d)" % [total, bonus]
+	else:
+		_attribute_rows[stat_name]["value"].text = str(total)
 
 
 func _update_resources() -> void:
