@@ -44,8 +44,10 @@ var details_description: Label
 var details_stats: Label
 var action_equip_button: Button
 var action_use_button: Button
+var action_swap_button: Button
 var action_destroy_button: Button
 var details_placeholder: Label
+var swap_mode_label: Label
 
 ## Slot tracking
 var equipment_slots: Dictionary = {}  # EquipSlot -> InventorySlot
@@ -251,17 +253,33 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	action_use_button = Button.new()
 	action_use_button.name = "UseButton"
 	action_use_button.text = "Use"
-	action_use_button.custom_minimum_size = Vector2(80, 40)
+	action_use_button.custom_minimum_size = Vector2(70, 40)
 	action_use_button.pressed.connect(_on_use_pressed)
 	action_use_button.visible = false
 	button_row.add_child(action_use_button)
 
+	action_swap_button = Button.new()
+	action_swap_button.name = "SwapButton"
+	action_swap_button.text = "Swap"
+	action_swap_button.custom_minimum_size = Vector2(70, 40)
+	action_swap_button.pressed.connect(_on_swap_pressed)
+	button_row.add_child(action_swap_button)
+
 	action_destroy_button = Button.new()
 	action_destroy_button.name = "DestroyButton"
 	action_destroy_button.text = "Destroy"
-	action_destroy_button.custom_minimum_size = Vector2(80, 40)
+	action_destroy_button.custom_minimum_size = Vector2(70, 40)
 	action_destroy_button.pressed.connect(_on_destroy_pressed)
 	button_row.add_child(action_destroy_button)
+
+	# Swap mode indicator label
+	swap_mode_label = Label.new()
+	swap_mode_label.name = "SwapModeLabel"
+	swap_mode_label.text = "Select target slot to swap..."
+	swap_mode_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	swap_mode_label.modulate = Color(1.0, 0.8, 0.2)
+	swap_mode_label.visible = false
+	info_container.add_child(swap_mode_label)
 
 
 func _build_backpack_column(parent: HBoxContainer) -> void:
@@ -323,6 +341,7 @@ func _connect_signals() -> void:
 	Inventory.item_selected.connect(_on_item_selected)
 	Inventory.item_deselected.connect(_on_item_deselected)
 	Inventory.gold_changed.connect(_on_gold_changed)
+	Inventory.swap_mode_changed.connect(_on_swap_mode_changed)
 
 
 func _refresh_all() -> void:
@@ -340,9 +359,10 @@ func _refresh_equipment() -> void:
 		if item_data.is_empty():
 			slot_ui.clear_item()
 		else:
-			slot_ui.set_item(item_data.item, item_data.quantity)
+			var charges := item_data.get("charges", 0)
+			slot_ui.set_item(item_data.item, item_data.quantity, charges)
 
-		# Check if slot is blocked (e.g., off-hand with two-handed weapon)
+		# Check if slot is blocked
 		slot_ui.set_blocked(Inventory.is_slot_blocked(slot))
 
 		# Update selection state
@@ -360,7 +380,8 @@ func _refresh_backpack() -> void:
 		if item_data.is_empty():
 			slot_ui.clear_item()
 		else:
-			slot_ui.set_item(item_data.item, item_data.quantity)
+			var charges := item_data.get("charges", 0)
+			slot_ui.set_item(item_data.item, item_data.quantity, charges)
 
 		# Update selection state
 		slot_ui.set_selected(
@@ -439,6 +460,9 @@ func _update_action_buttons() -> void:
 		if is_in_backpack:
 			action_equip_button.text = "Quick Slot"
 
+	# Swap is only available for backpack items
+	action_swap_button.visible = is_in_backpack
+
 	# Destroy is always available
 	action_destroy_button.visible = true
 
@@ -453,6 +477,15 @@ func _refresh_gold() -> void:
 
 func _on_slot_pressed(slot: InventorySlot) -> void:
 	Debug.log("UI", "Slot pressed", "%s index %d" % [slot.slot_type, slot.backpack_index if slot.slot_type == InventorySlot.SlotType.BACKPACK else slot.equipment_slot])
+
+	# Handle swap mode
+	if Inventory.swap_mode:
+		if slot.slot_type == InventorySlot.SlotType.BACKPACK:
+			Inventory.swap_with_backpack_slot(slot.backpack_index)
+		else:
+			# Can't swap with equipment slots, exit swap mode
+			Inventory.exit_swap_mode()
+		return
 
 	if slot.slot_type == InventorySlot.SlotType.BACKPACK:
 		Inventory.select_backpack_item(slot.backpack_index)
@@ -499,6 +532,22 @@ func _on_use_pressed() -> void:
 	Inventory.use_selected()
 
 
+func _on_swap_pressed() -> void:
+	Inventory.enter_swap_mode()
+
+
 func _on_destroy_pressed() -> void:
 	# Emit signal for parent to show confirmation
 	destroy_requested.emit()
+
+
+func _on_swap_mode_changed(active: bool) -> void:
+	swap_mode_label.visible = active
+	# Hide action buttons when in swap mode
+	if active:
+		action_equip_button.visible = false
+		action_use_button.visible = false
+		action_swap_button.visible = false
+		action_destroy_button.visible = false
+	else:
+		_update_action_buttons()

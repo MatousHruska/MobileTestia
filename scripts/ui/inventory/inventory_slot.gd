@@ -21,6 +21,7 @@ var ghost_label: Label
 ## State
 var current_item: ItemData = null
 var current_quantity: int = 0
+var current_charges: int = 0
 var is_selected: bool = false
 var is_blocked: bool = false
 
@@ -114,15 +115,17 @@ func _update_ghost_icon() -> void:
 		ghost_label.text = ""
 
 
-func set_item(item: ItemData, quantity: int = 1) -> void:
+func set_item(item: ItemData, quantity: int = 1, charges: int = 0) -> void:
 	current_item = item
 	current_quantity = quantity
+	current_charges = charges
 	refresh_display()
 
 
 func clear_item() -> void:
 	current_item = null
 	current_quantity = 0
+	current_charges = 0
 	refresh_display()
 
 
@@ -133,9 +136,19 @@ func refresh_display() -> void:
 		icon_rect.visible = true
 		ghost_label.visible = false
 
-		# Show quantity if stackable
-		if current_quantity > 1:
+		# Show charges for consumables, quantity for stackables
+		if current_item is ConsumableData:
+			var consumable: ConsumableData = current_item as ConsumableData
+			quantity_label.text = "%d/%d" % [current_charges, consumable.max_charges]
+			quantity_label.visible = true
+			# Dim if no charges
+			if current_charges <= 0:
+				quantity_label.modulate = Color(1.0, 0.3, 0.3)
+			else:
+				quantity_label.modulate = Color.WHITE
+		elif current_quantity > 1:
 			quantity_label.text = str(current_quantity)
+			quantity_label.modulate = Color.WHITE
 			quantity_label.visible = true
 		else:
 			quantity_label.visible = false
