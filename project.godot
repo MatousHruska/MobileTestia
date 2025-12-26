@@ -21,6 +21,7 @@ config/icon="res://icon.svg"
 Debug="*res://autoloads/debug_manager.gd"
 Game="*res://autoloads/game_manager.gd"
 Inventory="*res://scripts/inventory/inventory_manager.gd"
+PlayerStats="*res://autoloads/player_stats.gd"
 
 [display]
 
