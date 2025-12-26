@@ -185,7 +185,7 @@ func export_for_ai(last_n: int = 50) -> String:
 	output += "FPS: %.1f\n" % Engine.get_frames_per_second()
 	output += "=" .repeat(40) + "\n\n"
 
-	var start_idx := max(0, _log_history.size() - last_n)
+	var start_idx: int = maxi(0, _log_history.size() - last_n)
 	for i in range(start_idx, _log_history.size()):
 		var entry: Dictionary = _log_history[i]
 		output += "%s [%s] %s: %s" % [
