@@ -3,6 +3,9 @@ class_name HUD
 ## HUD - Main game HUD controller
 ## Manages player stats display and mobile controls
 
+## Signals
+signal menu_button_pressed
+
 ## References (set in scene or found automatically)
 @onready var joystick: VirtualJoystick = $Controls/JoystickArea/VirtualJoystick
 @onready var attack_button: ActionButton = $Controls/ActionButtons/AttackButton
@@ -10,9 +13,13 @@ class_name HUD
 @onready var health_bar: ProgressBar = $PlayerFrame/HealthBar
 @onready var mana_bar: ProgressBar = $PlayerFrame/ManaBar
 @onready var stamina_bar: ProgressBar = $PlayerFrame/StaminaBar
+@onready var menu_button: Button = $MenuButton/Button
 
 ## Player reference
 var player: PlayerController = null
+
+## Character menu reference (set externally)
+var character_menu: CharacterMenu = null
 
 
 func _ready() -> void:
@@ -22,7 +29,8 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	if player and joystick:
+	# Only process input when game is in PLAYING state
+	if player and joystick and Game.is_playing:
 		player.set_input_direction(joystick.get_direction())
 
 
@@ -46,18 +54,35 @@ func _setup_controls() -> void:
 	if dodge_button:
 		dodge_button.pressed.connect(_on_dodge_pressed)
 
+	if menu_button:
+		menu_button.pressed.connect(_on_menu_pressed)
+
 
 func _on_attack_pressed() -> void:
-	if player:
+	if player and Game.can_player_attack:
 		player.request_attack()
 
 
 func _on_dodge_pressed() -> void:
-	if player:
+	if player and Game.can_player_move:
 		player.request_dodge()
 
 
-## Public interface for updating stats display
+func _on_menu_pressed() -> void:
+	Debug.log("UI", "Menu button pressed")
+	menu_button_pressed.emit()
+
+	# Open character menu if available
+	if character_menu:
+		character_menu.toggle_menu()
+
+
+## Public interface
+func set_character_menu(menu: CharacterMenu) -> void:
+	character_menu = menu
+	Debug.info("UI", "Character menu linked to HUD")
+
+
 func update_health(current: float, maximum: float) -> void:
 	if health_bar:
 		health_bar.max_value = maximum
@@ -80,4 +105,5 @@ func print_state() -> void:
 		"player_connected": player != null,
 		"joystick_active": joystick.is_pressed() if joystick else false,
 		"joystick_direction": joystick.get_direction() if joystick else Vector2.ZERO,
+		"menu_connected": character_menu != null,
 	})
