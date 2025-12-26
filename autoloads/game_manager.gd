@@ -27,6 +27,9 @@ var player: Node2D = null:
 		if player:
 			player_spawned.emit(player)
 			Debug.info("Player", "Player reference set", player.name)
+			# Auto-transition to PLAYING when player is ready
+			if current_state == GameState.LOADING:
+				set_playing()
 
 ## Game flags
 var is_paused: bool:
