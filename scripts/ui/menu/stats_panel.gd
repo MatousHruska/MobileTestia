@@ -74,10 +74,6 @@ func _create_right_panel() -> Control:
 	var container := VBoxContainer.new()
 	container.add_theme_constant_override("separation", 8)
 
-	# === DESCRIPTION BOX (at top, aligned with left panel) ===
-	var description_box := _create_description_box()
-	container.add_child(description_box)
-
 	# === SUBTAB BAR ===
 	var subtab_bar := _create_subtab_bar()
 	container.add_child(subtab_bar)
@@ -85,6 +81,10 @@ func _create_right_panel() -> Control:
 	# === SUBTAB CONTENT ===
 	var subtab_content := _create_subtab_content()
 	container.add_child(subtab_content)
+
+	# === DESCRIPTION BOX (aligned with Resources on left) ===
+	var description_box := _create_description_box()
+	container.add_child(description_box)
 
 	return container
 
@@ -283,6 +283,7 @@ func _create_subtab_bar() -> Control:
 func _create_subtab_content() -> Control:
 	var container := Control.new()
 	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	container.custom_minimum_size = Vector2(0, 140)
 
 	# Offensive panel
 	var offensive := _create_offensive_panel()
