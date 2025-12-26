@@ -82,11 +82,25 @@ toggle_mode = true
 text = "Equipment"
 
 [node name="SkillsTab" type="Button" parent="MenuPanel/VBox/TabBar"]
-custom_minimum_size = Vector2(100, 40)
+custom_minimum_size = Vector2(80, 40)
 layout_mode = 2
 size_flags_horizontal = 3
 toggle_mode = true
 text = "Skills"
+
+[node name="QuestsTab" type="Button" parent="MenuPanel/VBox/TabBar"]
+custom_minimum_size = Vector2(80, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "Quests"
+
+[node name="MenuTab" type="Button" parent="MenuPanel/VBox/TabBar"]
+custom_minimum_size = Vector2(80, 40)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+text = "Menu"
 
 [node name="HSeparator" type="HSeparator" parent="MenuPanel/VBox"]
 layout_mode = 2
@@ -562,3 +576,73 @@ custom_minimum_size = Vector2(0, 60)
 layout_mode = 2
 text = "Select a skill to see details"
 horizontal_alignment = 1
+
+[node name="QuestsPanel" type="VBoxContainer" parent="MenuPanel/VBox/ContentArea"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 8
+
+[node name="ActiveLabel" type="Label" parent="MenuPanel/VBox/ContentArea/QuestsPanel"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Active Quests"
+
+[node name="QuestScroll" type="ScrollContainer" parent="MenuPanel/VBox/ContentArea/QuestsPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="QuestList" type="VBoxContainer" parent="MenuPanel/VBox/ContentArea/QuestsPanel/QuestScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Placeholder" type="Label" parent="MenuPanel/VBox/ContentArea/QuestsPanel/QuestScroll/QuestList"]
+layout_mode = 2
+text = "No active quests"
+modulate = Color(0.6, 0.6, 0.6, 1)
+
+[node name="QuestInfo" type="Label" parent="MenuPanel/VBox/ContentArea/QuestsPanel"]
+custom_minimum_size = Vector2(0, 80)
+layout_mode = 2
+text = "Select a quest to see details"
+horizontal_alignment = 1
+
+[node name="MenuPanel" type="VBoxContainer" parent="MenuPanel/VBox/ContentArea"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="ButtonsVBox" type="VBoxContainer" parent="MenuPanel/VBox/ContentArea/MenuPanel"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 12
+
+[node name="SaveButton" type="Button" parent="MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+text = "Save Game"
+
+[node name="LoadButton" type="Button" parent="MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+text = "Load Game"
+
+[node name="ExitToMenuButton" type="Button" parent="MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+text = "Exit to Main Menu"
+
+[node name="ExitGameButton" type="Button" parent="MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox"]
+custom_minimum_size = Vector2(200, 50)
+layout_mode = 2
+text = "Exit Game"

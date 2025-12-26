@@ -1,12 +1,12 @@
 extends CanvasLayer
 class_name CharacterMenu
 ## CharacterMenu - Main character/pause menu with tabbed interface
-## Contains: Stats, Inventory, Equipment, Skills panels
+## Contains: Stats, Inventory, Equipment, Skills, Quests, Menu panels
 
 signal menu_opened
 signal menu_closed
 
-enum Tab { STATS, INVENTORY, EQUIPMENT, SKILLS }
+enum Tab { STATS, INVENTORY, EQUIPMENT, SKILLS, QUESTS, MENU }
 
 ## References
 @onready var panel_container: Control = $MenuPanel
@@ -19,12 +19,22 @@ enum Tab { STATS, INVENTORY, EQUIPMENT, SKILLS }
 @onready var inventory_tab: Button = $MenuPanel/VBox/TabBar/InventoryTab
 @onready var equipment_tab: Button = $MenuPanel/VBox/TabBar/EquipmentTab
 @onready var skills_tab: Button = $MenuPanel/VBox/TabBar/SkillsTab
+@onready var quests_tab: Button = $MenuPanel/VBox/TabBar/QuestsTab
+@onready var menu_tab: Button = $MenuPanel/VBox/TabBar/MenuTab
 
 ## Content panels
 @onready var stats_panel: Control = $MenuPanel/VBox/ContentArea/StatsPanel
 @onready var inventory_panel: Control = $MenuPanel/VBox/ContentArea/InventoryPanel
 @onready var equipment_panel: Control = $MenuPanel/VBox/ContentArea/EquipmentPanel
 @onready var skills_panel: Control = $MenuPanel/VBox/ContentArea/SkillsPanel
+@onready var quests_panel: Control = $MenuPanel/VBox/ContentArea/QuestsPanel
+@onready var menu_panel: Control = $MenuPanel/VBox/ContentArea/MenuPanel
+
+## Menu panel buttons
+@onready var save_button: Button = $MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox/SaveButton
+@onready var load_button: Button = $MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox/LoadButton
+@onready var exit_to_menu_button: Button = $MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox/ExitToMenuButton
+@onready var exit_game_button: Button = $MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox/ExitGameButton
 
 ## State
 var current_tab: Tab = Tab.STATS
@@ -47,8 +57,8 @@ func _ready() -> void:
 
 
 func _setup_tabs() -> void:
-	_tab_buttons = [stats_tab, inventory_tab, equipment_tab, skills_tab]
-	_panels = [stats_panel, inventory_panel, equipment_panel, skills_panel]
+	_tab_buttons = [stats_tab, inventory_tab, equipment_tab, skills_tab, quests_tab, menu_tab]
+	_panels = [stats_panel, inventory_panel, equipment_panel, skills_panel, quests_panel, menu_panel]
 
 	# Connect tab buttons
 	if stats_tab:
@@ -59,13 +69,31 @@ func _setup_tabs() -> void:
 		equipment_tab.pressed.connect(_on_tab_pressed.bind(Tab.EQUIPMENT))
 	if skills_tab:
 		skills_tab.pressed.connect(_on_tab_pressed.bind(Tab.SKILLS))
+	if quests_tab:
+		quests_tab.pressed.connect(_on_tab_pressed.bind(Tab.QUESTS))
+	if menu_tab:
+		menu_tab.pressed.connect(_on_tab_pressed.bind(Tab.MENU))
 
 	# Connect close button
 	if close_button:
 		close_button.pressed.connect(close_menu)
 
+	# Connect menu panel buttons
+	_setup_menu_buttons()
+
 	# Show default tab
 	_switch_to_tab(Tab.STATS)
+
+
+func _setup_menu_buttons() -> void:
+	if save_button:
+		save_button.pressed.connect(_on_save_pressed)
+	if load_button:
+		load_button.pressed.connect(_on_load_pressed)
+	if exit_to_menu_button:
+		exit_to_menu_button.pressed.connect(_on_exit_to_menu_pressed)
+	if exit_game_button:
+		exit_game_button.pressed.connect(_on_exit_game_pressed)
 
 
 func _input(event: InputEvent) -> void:
@@ -110,6 +138,10 @@ func _refresh_current_panel() -> void:
 			_refresh_equipment_panel()
 		Tab.SKILLS:
 			_refresh_skills_panel()
+		Tab.QUESTS:
+			_refresh_quests_panel()
+		Tab.MENU:
+			_refresh_menu_panel()
 
 
 func _refresh_stats_panel() -> void:
@@ -130,6 +162,39 @@ func _refresh_equipment_panel() -> void:
 func _refresh_skills_panel() -> void:
 	# TODO: Populate with skill tree
 	Debug.log("UI", "Refreshing skills panel")
+
+
+func _refresh_quests_panel() -> void:
+	# TODO: Populate with active quests
+	Debug.log("UI", "Refreshing quests panel")
+
+
+func _refresh_menu_panel() -> void:
+	Debug.log("UI", "Refreshing menu panel")
+
+
+## Menu button handlers
+func _on_save_pressed() -> void:
+	Debug.info("UI", "Save button pressed")
+	# TODO: Implement save functionality
+	Debug.warn("UI", "Save not yet implemented")
+
+
+func _on_load_pressed() -> void:
+	Debug.info("UI", "Load button pressed")
+	# TODO: Implement load functionality
+	Debug.warn("UI", "Load not yet implemented")
+
+
+func _on_exit_to_menu_pressed() -> void:
+	Debug.info("UI", "Exit to menu button pressed")
+	# TODO: Implement return to main menu
+	Debug.warn("UI", "Exit to menu not yet implemented")
+
+
+func _on_exit_game_pressed() -> void:
+	Debug.info("UI", "Exit game button pressed")
+	get_tree().quit()
 
 
 ## Public interface
