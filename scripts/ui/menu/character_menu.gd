@@ -48,6 +48,12 @@ var _panels: Array[Control] = []
 ## Inventory panel instance (created dynamically)
 var _inventory_panel_instance: InventoryPanel = null
 
+## Stats panel instance (created dynamically)
+var _stats_panel_instance: StatsPanel = null
+
+## Stat description popup
+var _stat_popup: PopupPanel = null
+
 
 func _ready() -> void:
 	Debug.info("UI", "CharacterMenu ready")
@@ -100,6 +106,12 @@ func _setup_tabs() -> void:
 	# Setup the inventory panel (replaces old content)
 	_setup_inventory_panel()
 
+	# Setup the stats panel (replaces old content)
+	_setup_stats_panel()
+
+	# Setup stat description popup
+	_setup_stat_popup()
+
 	# Show default tab
 	_switch_to_tab(Tab.INVENTORY)
 
@@ -131,6 +143,68 @@ func _setup_inventory_panel() -> void:
 	inventory_panel.add_child(_inventory_panel_instance)
 
 	Debug.info("UI", "Unified InventoryPanel created")
+
+
+func _setup_stats_panel() -> void:
+	if not stats_panel:
+		return
+
+	# Clear old stats panel content
+	for child in stats_panel.get_children():
+		child.queue_free()
+
+	# Create new stats panel
+	_stats_panel_instance = StatsPanel.new()
+	_stats_panel_instance.name = "DynamicStatsPanel"
+	_stats_panel_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_stats_panel_instance.stat_tapped.connect(_on_stat_tapped)
+	stats_panel.add_child(_stats_panel_instance)
+
+	Debug.info("UI", "StatsPanel created")
+
+
+func _setup_stat_popup() -> void:
+	_stat_popup = PopupPanel.new()
+	_stat_popup.name = "StatPopup"
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_right", 16)
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_bottom", 12)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+
+	var title := Label.new()
+	title.name = "Title"
+	title.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(title)
+
+	var description := Label.new()
+	description.name = "Description"
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	description.custom_minimum_size = Vector2(250, 0)
+	vbox.add_child(description)
+
+	margin.add_child(vbox)
+	_stat_popup.add_child(margin)
+	add_child(_stat_popup)
+
+
+func _on_stat_tapped(stat_name: String) -> void:
+	if not _stat_popup:
+		return
+
+	var title_label := _stat_popup.get_node_or_null("MarginContainer/VBoxContainer/Title") as Label
+	var desc_label := _stat_popup.get_node_or_null("MarginContainer/VBoxContainer/Description") as Label
+
+	if title_label and desc_label:
+		# Format title from stat_name
+		title_label.text = stat_name.capitalize().replace("_", " ")
+		desc_label.text = PlayerStats.get_stat_description(stat_name)
+
+	_stat_popup.popup_centered()
 
 
 func _input(event: InputEvent) -> void:
@@ -180,7 +254,8 @@ func _refresh_current_panel() -> void:
 
 
 func _refresh_stats_panel() -> void:
-	# TODO: Populate with actual player stats
+	if _stats_panel_instance:
+		_stats_panel_instance.refresh_display()
 	Debug.log("UI", "Refreshing stats panel")
 
 
@@ -299,3 +374,13 @@ func print_state() -> void:
 ## Debug: Add test items to inventory
 func debug_add_test_items() -> void:
 	Inventory.debug_add_test_items()
+
+
+## Debug: Add stat points
+func debug_add_stat_points(amount: int = 10) -> void:
+	PlayerStats.debug_add_points(amount)
+
+
+## Debug: Add experience
+func debug_add_experience(amount: int = 500) -> void:
+	PlayerStats.debug_add_experience(amount)
