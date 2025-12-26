@@ -16,7 +16,6 @@ enum EquipSlot {
 	HANDS,
 	BOOTS,
 	MAIN_HAND,
-	OFF_HAND,
 	ACCESSORY_1,
 	ACCESSORY_2,
 	QUICK_SLOT
@@ -35,9 +34,7 @@ enum EquipmentType {
 	GLOVES,
 	BOOTS,
 	RING,
-	AMULET,
-	# Shield
-	SHIELD
+	AMULET
 }
 
 ## Core properties
@@ -100,8 +97,6 @@ static func get_slot_name(slot: EquipSlot) -> String:
 			return "Boots"
 		EquipSlot.MAIN_HAND:
 			return "Weapon"
-		EquipSlot.OFF_HAND:
-			return "Off-Hand"
 		EquipSlot.ACCESSORY_1:
 			return "Accessory"
 		EquipSlot.ACCESSORY_2:
@@ -125,8 +120,6 @@ static func get_slot_for_type(equip_type: EquipmentType) -> EquipSlot:
 			return EquipSlot.BOOTS
 		EquipmentType.WEAPON_ONE_HANDED, EquipmentType.WEAPON_TWO_HANDED, EquipmentType.WEAPON_RANGED:
 			return EquipSlot.MAIN_HAND
-		EquipmentType.SHIELD:
-			return EquipSlot.OFF_HAND
 		EquipmentType.RING:
 			return EquipSlot.ACCESSORY_1  # Default, can also go to ACCESSORY_2
 		EquipmentType.AMULET:

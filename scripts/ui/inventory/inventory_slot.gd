@@ -31,7 +31,6 @@ const GHOST_ICONS: Dictionary = {
 	ItemData.EquipSlot.HANDS: "G",
 	ItemData.EquipSlot.BOOTS: "F",
 	ItemData.EquipSlot.MAIN_HAND: "W",
-	ItemData.EquipSlot.OFF_HAND: "S",
 	ItemData.EquipSlot.ACCESSORY_1: "A1",
 	ItemData.EquipSlot.ACCESSORY_2: "A2",
 	ItemData.EquipSlot.QUICK_SLOT: "Q"
