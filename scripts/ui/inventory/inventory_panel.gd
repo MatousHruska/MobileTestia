@@ -7,11 +7,11 @@ signal destroy_requested  # Emitted when destroy button pressed, parent shows co
 ## Equipment slot layout (2-column grid)
 ## Format: Array of rows, each row is an array of slots
 const EQUIPMENT_LAYOUT: Array = [
-	[ItemData.EquipSlot.HEAD, ItemData.EquipSlot.ACCESSORY_2],      # H  A2
-	[ItemData.EquipSlot.HANDS, ItemData.EquipSlot.BODY],            # G  B
+	[ItemData.EquipSlot.HEAD, ItemData.EquipSlot.ACCESSORY_2],      # H  A (Amulet)
+	[ItemData.EquipSlot.BODY],                                       # B
+	[ItemData.EquipSlot.HANDS, ItemData.EquipSlot.ACCESSORY_1],     # G  R (Ring)
 	[ItemData.EquipSlot.BOOTS],                                      # F
 	[ItemData.EquipSlot.MAIN_HAND],                                  # W
-	[ItemData.EquipSlot.ACCESSORY_1],                                # A1
 	[ItemData.EquipSlot.QUICK_SLOT]                                  # Q
 ]
 

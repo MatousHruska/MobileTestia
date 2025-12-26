@@ -98,9 +98,9 @@ static func get_slot_name(slot: EquipSlot) -> String:
 		EquipSlot.MAIN_HAND:
 			return "Weapon"
 		EquipSlot.ACCESSORY_1:
-			return "Accessory"
+			return "Ring"
 		EquipSlot.ACCESSORY_2:
-			return "Accessory"
+			return "Amulet"
 		EquipSlot.QUICK_SLOT:
 			return "Quick Slot"
 		_:
