@@ -74,6 +74,10 @@ func _create_right_panel() -> Control:
 	var container := VBoxContainer.new()
 	container.add_theme_constant_override("separation", 8)
 
+	# === DESCRIPTION BOX (at top, aligned with left panel) ===
+	var description_box := _create_description_box()
+	container.add_child(description_box)
+
 	# === SUBTAB BAR ===
 	var subtab_bar := _create_subtab_bar()
 	container.add_child(subtab_bar)
@@ -81,10 +85,6 @@ func _create_right_panel() -> Control:
 	# === SUBTAB CONTENT ===
 	var subtab_content := _create_subtab_content()
 	container.add_child(subtab_content)
-
-	# === DESCRIPTION BOX ===
-	var description_box := _create_description_box()
-	container.add_child(description_box)
 
 	return container
 
@@ -309,8 +309,7 @@ func _create_subtab_content() -> Control:
 
 func _create_description_box() -> Control:
 	var container := PanelContainer.new()
-	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	container.custom_minimum_size = Vector2(0, 80)
+	container.custom_minimum_size = Vector2(0, 90)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 8)
