@@ -30,10 +30,13 @@ enum EffectType {
 ## Cooldown before can use again (seconds)
 @export var cooldown: float = 0.0
 
+## Maximum charges this consumable can hold
+@export var max_charges: int = 5
+
 
 func _init() -> void:
 	item_type = ItemType.CONSUMABLE
-	max_stack = 99  # Consumables can stack by default
+	max_stack = 1  # Consumables use charges, not stacking
 
 
 ## Get formatted effect text for UI

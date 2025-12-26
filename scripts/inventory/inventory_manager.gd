@@ -32,6 +32,10 @@ var selected_item: ItemData = null
 var selected_source: String = ""  # "backpack" or "equipment"
 var selected_index: int = -1  # Backpack index or equipment slot
 
+## Swap mode state
+var swap_mode: bool = false
+signal swap_mode_changed(active: bool)
+
 
 func _ready() -> void:
 	_initialize_inventory()
@@ -52,13 +56,32 @@ func _initialize_inventory() -> void:
 
 ## BACKPACK OPERATIONS
 
-func add_item(item: ItemData, quantity: int = 1) -> bool:
+func add_item(item: ItemData, quantity: int = 1, charges: int = -1) -> bool:
 	if item == null or quantity <= 0:
 		return false
 
 	Debug.info("Inventory", "Adding item", "%s x%d" % [item.item_name, quantity])
 
-	# Try to stack with existing items first
+	# Handle consumables with charges
+	if item is ConsumableData:
+		var consumable: ConsumableData = item as ConsumableData
+		# If charges not specified, use max charges
+		if charges < 0:
+			charges = consumable.max_charges
+
+		# Each consumable takes one slot (no stacking, uses charges instead)
+		for i in quantity:
+			var empty_slot := _find_empty_backpack_slot()
+			if empty_slot == -1:
+				Debug.warn("Inventory", "Backpack full, could not add all items")
+				inventory_changed.emit()
+				return false
+			backpack[empty_slot] = {item = item, quantity = 1, charges = charges}
+
+		inventory_changed.emit()
+		return true
+
+	# Try to stack with existing items first (non-consumables)
 	if item.max_stack > 1:
 		for i in backpack.size():
 			var slot: Dictionary = backpack[i]
@@ -81,7 +104,7 @@ func add_item(item: ItemData, quantity: int = 1) -> bool:
 			return false
 
 		var stack_size := mini(quantity, item.max_stack)
-		backpack[empty_slot] = {item = item, quantity = stack_size}
+		backpack[empty_slot] = {item = item, quantity = stack_size, charges = 0}
 		quantity -= stack_size
 
 	inventory_changed.emit()
@@ -162,16 +185,24 @@ func _equip_to_slot(item: ItemData, slot: ItemData.EquipSlot, from_backpack_inde
 	# Get currently equipped item (if any)
 	var old_item: Dictionary = equipped[slot]
 
-	# Remove from backpack if specified
+	# Get charges from backpack slot if consumable
+	var item_charges := 0
 	if from_backpack_index >= 0:
+		var backpack_slot: Dictionary = backpack[from_backpack_index]
+		if backpack_slot.has("charges"):
+			item_charges = backpack_slot.charges
 		backpack[from_backpack_index] = {}
 
-	# Equip new item
-	equipped[slot] = {item = item, quantity = 1}
+	# Equip new item (preserve charges for consumables)
+	equipped[slot] = {item = item, quantity = 1, charges = item_charges}
 
 	# Put old item in backpack if there was one
 	if not old_item.is_empty():
-		add_item(old_item.item, old_item.quantity)
+		var old_charges := old_item.get("charges", 0)
+		if old_item.item is ConsumableData:
+			add_item(old_item.item, 1, old_charges)
+		else:
+			add_item(old_item.item, old_item.quantity)
 
 	equipment_changed.emit(slot)
 	inventory_changed.emit()
@@ -185,17 +216,19 @@ func unequip_item(slot: ItemData.EquipSlot) -> bool:
 
 	Debug.info("Inventory", "Unequipping item", "%s from %s" % [item_data.item.item_name, ItemData.get_slot_name(slot)])
 
-	# Try to add to backpack
-	if not add_item(item_data.item, item_data.quantity):
-		Debug.warn("Inventory", "Cannot unequip", "Backpack is full")
-		return false
+	# Try to add to backpack (preserve charges for consumables)
+	var item_charges := item_data.get("charges", 0)
+	if item_data.item is ConsumableData:
+		if not add_item(item_data.item, 1, item_charges):
+			Debug.warn("Inventory", "Cannot unequip", "Backpack is full")
+			return false
+	else:
+		if not add_item(item_data.item, item_data.quantity):
+			Debug.warn("Inventory", "Cannot unequip", "Backpack is full")
+			return false
 
 	# Clear the slot
 	equipped[slot] = {}
-
-	# Clear selection if this was selected
-	if selected_source == "equipment" and selected_index == slot:
-		deselect()
 
 	equipment_changed.emit(slot)
 	return true
@@ -262,10 +295,37 @@ func equip_selected() -> bool:
 		Debug.warn("Inventory", "Cannot equip", "Item not in backpack")
 		return false
 
+	var item_to_equip := selected_item
+	var target_slot := _get_equip_target_slot(item_to_equip)
+
 	var result := equip_item(selected_item, selected_index)
-	if result:
-		deselect()
+	if result and target_slot != ItemData.EquipSlot.NONE:
+		# Select the item in its new equipment slot
+		select_equipment_item(target_slot)
 	return result
+
+
+func _get_equip_target_slot(item: ItemData) -> ItemData.EquipSlot:
+	## Helper to determine which slot an item will be equipped to
+	if item.item_type == ItemData.ItemType.CONSUMABLE:
+		return ItemData.EquipSlot.QUICK_SLOT
+
+	if item is EquipmentData:
+		var equip: EquipmentData = item as EquipmentData
+		var target_slot := equip.get_target_slot()
+
+		# Handle rings - check which slot is available
+		if equip.equipment_type == ItemData.EquipmentType.RING:
+			if equipped[ItemData.EquipSlot.ACCESSORY_1].is_empty():
+				return ItemData.EquipSlot.ACCESSORY_1
+			elif equipped[ItemData.EquipSlot.ACCESSORY_2].is_empty():
+				return ItemData.EquipSlot.ACCESSORY_2
+			else:
+				return ItemData.EquipSlot.ACCESSORY_1
+
+		return target_slot
+
+	return ItemData.EquipSlot.NONE
 
 
 func unequip_selected() -> bool:
@@ -277,7 +337,16 @@ func unequip_selected() -> bool:
 		return false
 
 	var slot: ItemData.EquipSlot = selected_index as ItemData.EquipSlot
-	return unequip_item(slot)
+	var item_to_unequip := selected_item
+
+	# Find where the item will go in backpack
+	var target_backpack_index := _find_empty_backpack_slot()
+
+	var result := unequip_item(slot)
+	if result and target_backpack_index >= 0:
+		# Select the item in its new backpack slot
+		select_backpack_item(target_backpack_index)
+	return result
 
 
 func use_selected() -> bool:
@@ -288,20 +357,29 @@ func use_selected() -> bool:
 		Debug.warn("Inventory", "Cannot use", "Item is not consumable")
 		return false
 
-	Debug.info("Inventory", "Using item", selected_item.item_name)
-	# TODO: Apply consumable effect
-
-	# Remove one from stack
+	# Check if consumable has charges
+	var current_charges := 0
 	if selected_source == "backpack":
-		remove_item_at(selected_index, 1)
+		current_charges = backpack[selected_index].get("charges", 0)
 	elif selected_source == "equipment":
 		var slot: ItemData.EquipSlot = selected_index as ItemData.EquipSlot
-		var item_data: Dictionary = equipped[slot]
-		item_data.quantity -= 1
-		if item_data.quantity <= 0:
-			equipped[slot] = {}
-			equipment_changed.emit(slot)
-		deselect()
+		current_charges = equipped[slot].get("charges", 0)
+
+	if current_charges <= 0:
+		Debug.warn("Inventory", "Cannot use", "No charges remaining")
+		return false
+
+	Debug.info("Inventory", "Using item", "%s (charges: %d -> %d)" % [selected_item.item_name, current_charges, current_charges - 1])
+	# TODO: Apply consumable effect
+
+	# Decrement charges (item stays even at 0 charges)
+	if selected_source == "backpack":
+		backpack[selected_index].charges = current_charges - 1
+		inventory_changed.emit()
+	elif selected_source == "equipment":
+		var slot: ItemData.EquipSlot = selected_index as ItemData.EquipSlot
+		equipped[slot].charges = current_charges - 1
+		equipment_changed.emit(slot)
 
 	return true
 
@@ -321,6 +399,51 @@ func destroy_selected() -> bool:
 		equipment_changed.emit(slot)
 
 	deselect()
+	return true
+
+
+## SWAP OPERATIONS
+
+func enter_swap_mode() -> void:
+	if not has_selection():
+		return
+	swap_mode = true
+	swap_mode_changed.emit(true)
+	Debug.info("Inventory", "Swap mode entered", "Select target slot")
+
+
+func exit_swap_mode() -> void:
+	swap_mode = false
+	swap_mode_changed.emit(false)
+	Debug.info("Inventory", "Swap mode exited")
+
+
+func swap_with_backpack_slot(target_index: int) -> bool:
+	if not swap_mode or not has_selection():
+		return false
+
+	if selected_source != "backpack":
+		Debug.warn("Inventory", "Cannot swap", "Source must be in backpack")
+		exit_swap_mode()
+		return false
+
+	if target_index == selected_index:
+		# Clicked same slot, just exit swap mode
+		exit_swap_mode()
+		return false
+
+	Debug.info("Inventory", "Swapping items", "Slot %d <-> Slot %d" % [selected_index, target_index])
+
+	# Swap the two slots
+	var temp: Dictionary = backpack[selected_index]
+	backpack[selected_index] = backpack[target_index]
+	backpack[target_index] = temp
+
+	# Select the item in its new position
+	exit_swap_mode()
+	inventory_changed.emit()
+	select_backpack_item(target_index)
+
 	return true
 
 
@@ -459,7 +582,7 @@ func debug_add_test_items() -> void:
 	amulet.bonus_magic_damage = 8
 	add_item(amulet)
 
-	# QUICK_SLOT - Consumable (Health Potion)
+	# QUICK_SLOT - Consumable (Health Potion) - 5/5 charges
 	var potion := ConsumableData.new()
 	potion.id = "health_potion"
 	potion.item_name = "Health Potion"
@@ -467,9 +590,10 @@ func debug_add_test_items() -> void:
 	potion.rarity = ItemData.Rarity.COMMON
 	potion.effect_type = ConsumableData.EffectType.HEAL_HEALTH
 	potion.effect_value = 50
-	add_item(potion, 5)
+	potion.max_charges = 5
+	add_item(potion)  # Adds with 5/5 charges
 
-	# Extra consumable - Mana Potion
+	# Extra consumable - Mana Potion - 5/5 charges
 	var mana_potion := ConsumableData.new()
 	mana_potion.id = "mana_potion"
 	mana_potion.item_name = "Mana Potion"
@@ -477,7 +601,8 @@ func debug_add_test_items() -> void:
 	mana_potion.rarity = ItemData.Rarity.COMMON
 	mana_potion.effect_type = ConsumableData.EffectType.HEAL_MANA
 	mana_potion.effect_value = 30
-	add_item(mana_potion, 3)
+	mana_potion.max_charges = 5
+	add_item(mana_potion)  # Adds with 5/5 charges
 
 	# Add some gold
 	add_gold(250)
