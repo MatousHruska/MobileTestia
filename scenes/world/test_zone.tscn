@@ -1,11 +1,15 @@
-[gd_scene load_steps=5 format=3 uid="uid://testzone001"]
+[gd_scene load_steps=7 format=3 uid="uid://testzone001"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
 [ext_resource type="Script" path="res://scripts/camera/game_camera.gd" id="3_camera"]
 [ext_resource type="Script" path="res://scripts/world/reference_object.gd" id="4_ref"]
+[ext_resource type="Script" path="res://scripts/world/zone_base.gd" id="5_zone"]
+[ext_resource type="PackedScene" path="res://scenes/ui/menu/character_menu.tscn" id="6_menu"]
 
 [node name="TestZone" type="Node2D"]
+script = ExtResource("5_zone")
+zone_name = "Test Zone"
 
 [node name="Background" type="ColorRect" parent="."]
 offset_left = -640.0
@@ -69,3 +73,5 @@ follow_smoothing = 8.0
 look_ahead_distance = 30.0
 
 [node name="HUD" parent="." instance=ExtResource("2_hud")]
+
+[node name="CharacterMenu" parent="." instance=ExtResource("6_menu")]
