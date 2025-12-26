@@ -39,7 +39,81 @@ signal swap_mode_changed(active: bool)
 
 func _ready() -> void:
 	_initialize_inventory()
+	# Connect equipment changes to stats recalculation
+	equipment_changed.connect(_on_equipment_changed)
 	Debug.info("Inventory", "InventoryManager initialized", "Backpack size: %d" % BACKPACK_SIZE)
+
+
+func _on_equipment_changed(_slot: ItemData.EquipSlot) -> void:
+	_recalculate_equipment_bonuses()
+
+
+func _recalculate_equipment_bonuses() -> void:
+	## Recalculate all equipment bonuses and apply to PlayerStats
+	PlayerStats.clear_equipment_bonuses()
+
+	for slot in EQUIPMENT_SLOTS:
+		var item_data: Dictionary = equipped[slot]
+		if item_data.is_empty():
+			continue
+		var item: ItemData = item_data.item
+		if not item is EquipmentData:
+			continue
+		var equip: EquipmentData = item as EquipmentData
+
+		# Primary stat bonuses (add to equipment bonuses, not base stats)
+		if equip.bonus_strength != 0:
+			PlayerStats.set_equipment_bonus("strength", PlayerStats.get_equipment_bonus("strength") + equip.bonus_strength)
+		if equip.bonus_dexterity != 0:
+			PlayerStats.set_equipment_bonus("dexterity", PlayerStats.get_equipment_bonus("dexterity") + equip.bonus_dexterity)
+		if equip.bonus_intelligence != 0:
+			PlayerStats.set_equipment_bonus("intelligence", PlayerStats.get_equipment_bonus("intelligence") + equip.bonus_intelligence)
+		if equip.bonus_vitality != 0:
+			PlayerStats.set_equipment_bonus("vitality", PlayerStats.get_equipment_bonus("vitality") + equip.bonus_vitality)
+		if equip.bonus_energy != 0:
+			PlayerStats.set_equipment_bonus("energy", PlayerStats.get_equipment_bonus("energy") + equip.bonus_energy)
+		if equip.bonus_luck != 0:
+			PlayerStats.set_equipment_bonus("luck", PlayerStats.get_equipment_bonus("luck") + equip.bonus_luck)
+
+		# Offensive stat bonuses
+		if equip.bonus_melee_damage != 0:
+			PlayerStats.set_equipment_bonus("melee_damage", PlayerStats.get_equipment_bonus("melee_damage") + equip.bonus_melee_damage)
+		if equip.bonus_ranged_damage != 0:
+			PlayerStats.set_equipment_bonus("ranged_damage", PlayerStats.get_equipment_bonus("ranged_damage") + equip.bonus_ranged_damage)
+		if equip.bonus_magic_damage != 0:
+			PlayerStats.set_equipment_bonus("magic_damage", PlayerStats.get_equipment_bonus("magic_damage") + equip.bonus_magic_damage)
+		if equip.bonus_attack_speed != 0.0:
+			PlayerStats.set_equipment_bonus("attack_speed", PlayerStats.get_equipment_bonus("attack_speed") + equip.bonus_attack_speed)
+		if equip.bonus_crit_chance != 0.0:
+			PlayerStats.set_equipment_bonus("crit_chance", PlayerStats.get_equipment_bonus("crit_chance") + equip.bonus_crit_chance)
+		if equip.bonus_crit_damage != 0.0:
+			PlayerStats.set_equipment_bonus("crit_damage", PlayerStats.get_equipment_bonus("crit_damage") + equip.bonus_crit_damage)
+
+		# Defensive stat bonuses
+		if equip.bonus_armor != 0:
+			PlayerStats.set_equipment_bonus("armor", PlayerStats.get_equipment_bonus("armor") + equip.bonus_armor)
+		if equip.bonus_magic_resistance != 0:
+			PlayerStats.set_equipment_bonus("magic_resistance", PlayerStats.get_equipment_bonus("magic_resistance") + equip.bonus_magic_resistance)
+		if equip.bonus_dodge_chance != 0.0:
+			PlayerStats.set_equipment_bonus("dodge_chance", PlayerStats.get_equipment_bonus("dodge_chance") + equip.bonus_dodge_chance)
+		if equip.bonus_health != 0:
+			PlayerStats.set_equipment_bonus("health", PlayerStats.get_equipment_bonus("health") + equip.bonus_health)
+		if equip.bonus_mana != 0:
+			PlayerStats.set_equipment_bonus("mana", PlayerStats.get_equipment_bonus("mana") + equip.bonus_mana)
+		if equip.bonus_stamina != 0:
+			PlayerStats.set_equipment_bonus("stamina", PlayerStats.get_equipment_bonus("stamina") + equip.bonus_stamina)
+
+		# Utility stat bonuses
+		if equip.bonus_movement_speed != 0.0:
+			PlayerStats.set_equipment_bonus("movement_speed", PlayerStats.get_equipment_bonus("movement_speed") + equip.bonus_movement_speed)
+		if equip.bonus_life_regen != 0.0:
+			PlayerStats.set_equipment_bonus("life_regen", PlayerStats.get_equipment_bonus("life_regen") + equip.bonus_life_regen)
+		if equip.bonus_mana_regen != 0.0:
+			PlayerStats.set_equipment_bonus("mana_regen", PlayerStats.get_equipment_bonus("mana_regen") + equip.bonus_mana_regen)
+		if equip.bonus_stamina_regen != 0.0:
+			PlayerStats.set_equipment_bonus("stamina_regen", PlayerStats.get_equipment_bonus("stamina_regen") + equip.bonus_stamina_regen)
+
+	Debug.log("Inventory", "Equipment bonuses recalculated")
 
 
 func _initialize_inventory() -> void:
@@ -158,6 +232,12 @@ func equip_item(item: ItemData, from_backpack_index: int = -1) -> bool:
 
 	if item is EquipmentData:
 		var equip: EquipmentData = item as EquipmentData
+
+		# Check stat requirements
+		if not equip.can_equip():
+			Debug.warn("Inventory", "Cannot equip item", "Requirements not met for %s" % item.item_name)
+			return false
+
 		var target_slot := equip.get_target_slot()
 
 		if target_slot == ItemData.EquipSlot.NONE:
@@ -466,37 +546,9 @@ func remove_gold(amount: int) -> bool:
 
 ## UTILITY
 
-func get_total_stat_bonus(stat_name: String) -> int:
-	var total := 0
-	for slot in EQUIPMENT_SLOTS:
-		var item_data: Dictionary = equipped[slot]
-		if item_data.is_empty():
-			continue
-		var item: ItemData = item_data.item
-		if item is EquipmentData:
-			var equip: EquipmentData = item as EquipmentData
-			match stat_name:
-				"strength":
-					total += equip.bonus_strength
-				"dexterity":
-					total += equip.bonus_dexterity
-				"intelligence":
-					total += equip.bonus_intelligence
-				"endurance":
-					total += equip.bonus_endurance
-				"luck":
-					total += equip.bonus_luck
-				"health":
-					total += equip.bonus_health
-				"mana":
-					total += equip.bonus_mana
-				"physical_damage":
-					total += equip.bonus_physical_damage
-				"magic_damage":
-					total += equip.bonus_magic_damage
-				"defense":
-					total += equip.bonus_defense
-	return total
+func get_total_stat_bonus(stat_name: String) -> float:
+	## Returns total equipment bonus for a stat. Uses PlayerStats cache.
+	return PlayerStats.get_equipment_bonus(stat_name)
 
 
 ## DEBUG: Add test items - one for each equipment slot
@@ -510,8 +562,8 @@ func debug_add_test_items() -> void:
 	helmet.description = "A sturdy iron helmet."
 	helmet.rarity = ItemData.Rarity.UNCOMMON
 	helmet.equipment_type = ItemData.EquipmentType.HELMET
-	helmet.bonus_defense = 5
-	helmet.bonus_endurance = 2
+	helmet.bonus_armor = 5
+	helmet.bonus_vitality = 2
 	add_item(helmet)
 
 	# BODY - Armor
@@ -521,8 +573,9 @@ func debug_add_test_items() -> void:
 	armor.description = "Interlocking metal rings provide solid protection."
 	armor.rarity = ItemData.Rarity.UNCOMMON
 	armor.equipment_type = ItemData.EquipmentType.ARMOR
-	armor.bonus_defense = 10
+	armor.bonus_armor = 10
 	armor.bonus_health = 20
+	armor.bonus_life_regen = 0.5
 	add_item(armor)
 
 	# HANDS - Gloves
@@ -544,7 +597,8 @@ func debug_add_test_items() -> void:
 	boots.rarity = ItemData.Rarity.COMMON
 	boots.equipment_type = ItemData.EquipmentType.BOOTS
 	boots.bonus_dexterity = 2
-	boots.bonus_defense = 2
+	boots.bonus_armor = 2
+	boots.bonus_movement_speed = 10.0
 	add_item(boots)
 
 	# MAIN_HAND - Weapon
@@ -554,7 +608,7 @@ func debug_add_test_items() -> void:
 	sword.description = "A well-balanced blade forged from quality steel."
 	sword.rarity = ItemData.Rarity.RARE
 	sword.equipment_type = ItemData.EquipmentType.WEAPON_ONE_HANDED
-	sword.bonus_physical_damage = 12
+	sword.bonus_melee_damage = 12
 	sword.bonus_strength = 3
 	sword.bonus_crit_chance = 5.0
 	add_item(sword)
@@ -580,6 +634,7 @@ func debug_add_test_items() -> void:
 	amulet.bonus_intelligence = 5
 	amulet.bonus_mana = 30
 	amulet.bonus_magic_damage = 8
+	amulet.bonus_mana_regen = 1.0
 	add_item(amulet)
 
 	# QUICK_SLOT - Consumable (Health Potion) - 5/5 charges

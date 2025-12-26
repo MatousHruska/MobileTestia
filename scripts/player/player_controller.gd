@@ -25,6 +25,7 @@ enum Facing { DOWN = 0, UP = 1, LEFT = 2, RIGHT = 3 }
 @export var attack_lunge_duration: float = 0.1
 @export var dodge_speed: float = 300.0
 @export var dodge_duration: float = 0.3
+@export var dodge_stamina_cost: float = 25.0
 
 ## State
 var input_direction: Vector2 = Vector2.ZERO
@@ -90,8 +91,10 @@ func _process_movement(delta: float) -> void:
 	var target_velocity := Vector2.ZERO
 
 	if input_direction != Vector2.ZERO:
+		# Calculate effective move speed with equipment bonus
+		var effective_speed := move_speed * (1.0 + PlayerStats.movement_speed / 100.0)
 		# Apply acceleration toward target speed
-		target_velocity = input_direction * move_speed
+		target_velocity = input_direction * effective_speed
 		velocity = velocity.move_toward(target_velocity, acceleration * delta)
 
 		# Update facing based on input
@@ -135,6 +138,11 @@ func request_attack() -> void:
 
 func request_dodge() -> void:
 	if is_dodging or is_attacking:
+		return
+
+	# Check if player has enough stamina
+	if not PlayerStats.use_stamina(dodge_stamina_cost):
+		Debug.log("Combat", "Dodge failed", "Not enough stamina")
 		return
 
 	is_dodging = true
