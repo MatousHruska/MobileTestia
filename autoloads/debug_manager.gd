@@ -11,8 +11,6 @@ extends Node
 ##   Debug.perf_end("loading")    # End and print elapsed time
 ##   Debug.dump(player_stats)     # Pretty print dictionary/object
 
-class_name DebugManager
-
 ## Log levels
 enum LogLevel { TRACE = 0, DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4, NONE = 5 }
 

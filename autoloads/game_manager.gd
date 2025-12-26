@@ -2,8 +2,6 @@ extends Node
 ## GameManager - Central game state and coordination singleton
 ## Manages game flow, player reference, and global state
 
-class_name GameManager
-
 ## Signals
 signal game_paused
 signal game_resumed
