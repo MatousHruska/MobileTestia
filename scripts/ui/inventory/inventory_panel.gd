@@ -359,7 +359,7 @@ func _refresh_equipment() -> void:
 		if item_data.is_empty():
 			slot_ui.clear_item()
 		else:
-			var charges := item_data.get("charges", 0)
+			var charges: int = item_data.get("charges", 0)
 			slot_ui.set_item(item_data.item, item_data.quantity, charges)
 
 		# Check if slot is blocked
@@ -380,7 +380,7 @@ func _refresh_backpack() -> void:
 		if item_data.is_empty():
 			slot_ui.clear_item()
 		else:
-			var charges := item_data.get("charges", 0)
+			var charges: int = item_data.get("charges", 0)
 			slot_ui.set_item(item_data.item, item_data.quantity, charges)
 
 		# Update selection state
