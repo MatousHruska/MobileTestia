@@ -77,7 +77,7 @@
 - **Strength (STR):** Phys Dmg.
 - **Dexterity (DEX):** Atk Speed, Crit Chance.
 - **Intelligence (INT):** Magic Dmg, Mana Pool/Regen.
-- **Stamina (STA):** Health Pool/Regen.
+- **Endurance (END):** Health Pool/Regen.
 - **Luck (LUK):** Drop Rates, Gold Find, Crit Dmg.
 
 **Leveling Loop:**
