@@ -11,8 +11,7 @@ const EQUIPMENT_LAYOUT: Array = [
 	[ItemData.EquipSlot.BODY],                                       # B
 	[ItemData.EquipSlot.HANDS, ItemData.EquipSlot.ACCESSORY_1],     # G  R (Ring)
 	[ItemData.EquipSlot.BOOTS],                                      # F
-	[ItemData.EquipSlot.MAIN_HAND],                                  # W
-	[ItemData.EquipSlot.QUICK_SLOT]                                  # Q
+	[ItemData.EquipSlot.MAIN_HAND, ItemData.EquipSlot.QUICK_SLOT]   # W  Q
 ]
 
 ## All equipment slots for iteration
