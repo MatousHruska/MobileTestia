@@ -157,54 +157,71 @@ func _setup_stats_panel() -> void:
 	_stats_panel_instance = StatsPanel.new()
 	_stats_panel_instance.name = "DynamicStatsPanel"
 	_stats_panel_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_stats_panel_instance.stat_tapped.connect(_on_stat_tapped)
+	_stats_panel_instance.stat_tooltip_requested.connect(_on_stat_tooltip_requested)
+	_stats_panel_instance.stat_tooltip_dismissed.connect(_on_stat_tooltip_dismissed)
 	stats_panel.add_child(_stats_panel_instance)
 
 	Debug.info("UI", "StatsPanel created")
 
 
 func _setup_stat_popup() -> void:
+	# Create a tooltip-style panel (not a popup, so we control visibility)
 	_stat_popup = PopupPanel.new()
-	_stat_popup.name = "StatPopup"
+	_stat_popup.name = "StatTooltip"
+	_stat_popup.transparent_bg = true
+
+	var panel := PanelContainer.new()
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
+	vbox.add_theme_constant_override("separation", 4)
 
 	var title := Label.new()
 	title.name = "Title"
-	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_font_size_override("font_size", 16)
 	vbox.add_child(title)
 
 	var description := Label.new()
 	description.name = "Description"
 	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	description.custom_minimum_size = Vector2(250, 0)
+	description.custom_minimum_size = Vector2(220, 0)
+	description.add_theme_font_size_override("font_size", 13)
 	vbox.add_child(description)
 
 	margin.add_child(vbox)
-	_stat_popup.add_child(margin)
+	panel.add_child(margin)
+	_stat_popup.add_child(panel)
 	add_child(_stat_popup)
 
 
-func _on_stat_tapped(stat_name: String) -> void:
+func _on_stat_tooltip_requested(stat_name: String, global_pos: Vector2) -> void:
 	if not _stat_popup:
 		return
 
-	var title_label := _stat_popup.get_node_or_null("MarginContainer/VBoxContainer/Title") as Label
-	var desc_label := _stat_popup.get_node_or_null("MarginContainer/VBoxContainer/Description") as Label
+	var panel := _stat_popup.get_child(0) as PanelContainer
+	if not panel:
+		return
+
+	var title_label := panel.get_node_or_null("MarginContainer/VBoxContainer/Title") as Label
+	var desc_label := panel.get_node_or_null("MarginContainer/VBoxContainer/Description") as Label
 
 	if title_label and desc_label:
-		# Format title from stat_name
 		title_label.text = stat_name.capitalize().replace("_", " ")
 		desc_label.text = PlayerStats.get_stat_description(stat_name)
 
-	_stat_popup.popup_centered()
+	# Position next to the stat
+	_stat_popup.position = global_pos
+	_stat_popup.popup()
+
+
+func _on_stat_tooltip_dismissed() -> void:
+	if _stat_popup:
+		_stat_popup.hide()
 
 
 func _input(event: InputEvent) -> void:
