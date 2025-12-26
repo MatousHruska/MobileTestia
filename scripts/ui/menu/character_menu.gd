@@ -1,12 +1,12 @@
 extends CanvasLayer
 class_name CharacterMenu
 ## CharacterMenu - Main character/pause menu with tabbed interface
-## Contains: Stats, Inventory, Equipment, Skills, Quests, Menu panels
+## Contains: Stats, Inventory (merged Equipment), Skills, Quests, Menu panels
 
 signal menu_opened
 signal menu_closed
 
-enum Tab { STATS, INVENTORY, EQUIPMENT, SKILLS, QUESTS, MENU }
+enum Tab { STATS, INVENTORY, SKILLS, QUESTS, MENU }
 
 ## References
 @onready var panel_container: Control = $MenuPanel
@@ -17,7 +17,6 @@ enum Tab { STATS, INVENTORY, EQUIPMENT, SKILLS, QUESTS, MENU }
 ## Tab buttons
 @onready var stats_tab: Button = $MenuPanel/VBox/TabBar/StatsTab
 @onready var inventory_tab: Button = $MenuPanel/VBox/TabBar/InventoryTab
-@onready var equipment_tab: Button = $MenuPanel/VBox/TabBar/EquipmentTab
 @onready var skills_tab: Button = $MenuPanel/VBox/TabBar/SkillsTab
 @onready var quests_tab: Button = $MenuPanel/VBox/TabBar/QuestsTab
 @onready var menu_tab: Button = $MenuPanel/VBox/TabBar/MenuTab
@@ -25,7 +24,6 @@ enum Tab { STATS, INVENTORY, EQUIPMENT, SKILLS, QUESTS, MENU }
 ## Content panels
 @onready var stats_panel: Control = $MenuPanel/VBox/ContentArea/StatsPanel
 @onready var inventory_panel: Control = $MenuPanel/VBox/ContentArea/InventoryPanel
-@onready var equipment_panel: Control = $MenuPanel/VBox/ContentArea/EquipmentPanel
 @onready var skills_panel: Control = $MenuPanel/VBox/ContentArea/SkillsPanel
 @onready var quests_panel: Control = $MenuPanel/VBox/ContentArea/QuestsPanel
 @onready var menu_panel: Control = $MenuPanel/VBox/ContentArea/MenuPanel
@@ -36,6 +34,9 @@ enum Tab { STATS, INVENTORY, EQUIPMENT, SKILLS, QUESTS, MENU }
 @onready var exit_to_menu_button: Button = $MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox/ExitToMenuButton
 @onready var exit_game_button: Button = $MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox/ExitGameButton
 
+## Confirmation popup
+@onready var confirm_popup: ConfirmationDialog = $ConfirmPopup
+
 ## State
 var current_tab: Tab = Tab.STATS
 var is_open: bool = false
@@ -43,6 +44,9 @@ var is_open: bool = false
 ## Tab button references for easy iteration
 var _tab_buttons: Array[Button] = []
 var _panels: Array[Control] = []
+
+## Inventory panel instance (created dynamically)
+var _inventory_panel_instance: InventoryPanel = null
 
 
 func _ready() -> void:
@@ -52,21 +56,33 @@ func _ready() -> void:
 	visible = false
 	is_open = false
 
+	# Create confirmation popup if not in scene
+	_setup_confirm_popup()
+
 	# Setup tab arrays after @onready
 	call_deferred("_setup_tabs")
 
 
+func _setup_confirm_popup() -> void:
+	if not confirm_popup:
+		confirm_popup = ConfirmationDialog.new()
+		confirm_popup.name = "ConfirmPopup"
+		confirm_popup.title = "Confirm"
+		confirm_popup.dialog_text = "Are you sure?"
+		confirm_popup.ok_button_text = "Yes"
+		confirm_popup.cancel_button_text = "No"
+		add_child(confirm_popup)
+
+
 func _setup_tabs() -> void:
-	_tab_buttons = [stats_tab, inventory_tab, equipment_tab, skills_tab, quests_tab, menu_tab]
-	_panels = [stats_panel, inventory_panel, equipment_panel, skills_panel, quests_panel, menu_panel]
+	_tab_buttons = [stats_tab, inventory_tab, skills_tab, quests_tab, menu_tab]
+	_panels = [stats_panel, inventory_panel, skills_panel, quests_panel, menu_panel]
 
 	# Connect tab buttons
 	if stats_tab:
 		stats_tab.pressed.connect(_on_tab_pressed.bind(Tab.STATS))
 	if inventory_tab:
 		inventory_tab.pressed.connect(_on_tab_pressed.bind(Tab.INVENTORY))
-	if equipment_tab:
-		equipment_tab.pressed.connect(_on_tab_pressed.bind(Tab.EQUIPMENT))
 	if skills_tab:
 		skills_tab.pressed.connect(_on_tab_pressed.bind(Tab.SKILLS))
 	if quests_tab:
@@ -81,6 +97,9 @@ func _setup_tabs() -> void:
 	# Connect menu panel buttons
 	_setup_menu_buttons()
 
+	# Setup the inventory panel (replaces old content)
+	_setup_inventory_panel()
+
 	# Show default tab
 	_switch_to_tab(Tab.STATS)
 
@@ -94,6 +113,24 @@ func _setup_menu_buttons() -> void:
 		exit_to_menu_button.pressed.connect(_on_exit_to_menu_pressed)
 	if exit_game_button:
 		exit_game_button.pressed.connect(_on_exit_game_pressed)
+
+
+func _setup_inventory_panel() -> void:
+	if not inventory_panel:
+		return
+
+	# Clear old inventory panel content
+	for child in inventory_panel.get_children():
+		child.queue_free()
+
+	# Create new unified inventory panel
+	_inventory_panel_instance = InventoryPanel.new()
+	_inventory_panel_instance.name = "UnifiedInventory"
+	_inventory_panel_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_inventory_panel_instance.destroy_requested.connect(_on_destroy_requested)
+	inventory_panel.add_child(_inventory_panel_instance)
+
+	Debug.info("UI", "Unified InventoryPanel created")
 
 
 func _input(event: InputEvent) -> void:
@@ -134,8 +171,6 @@ func _refresh_current_panel() -> void:
 			_refresh_stats_panel()
 		Tab.INVENTORY:
 			_refresh_inventory_panel()
-		Tab.EQUIPMENT:
-			_refresh_equipment_panel()
 		Tab.SKILLS:
 			_refresh_skills_panel()
 		Tab.QUESTS:
@@ -150,13 +185,8 @@ func _refresh_stats_panel() -> void:
 
 
 func _refresh_inventory_panel() -> void:
-	# TODO: Populate with inventory items
+	# Inventory panel auto-refreshes via signals
 	Debug.log("UI", "Refreshing inventory panel")
-
-
-func _refresh_equipment_panel() -> void:
-	# TODO: Populate with equipped items
-	Debug.log("UI", "Refreshing equipment panel")
 
 
 func _refresh_skills_panel() -> void:
@@ -171,6 +201,27 @@ func _refresh_quests_panel() -> void:
 
 func _refresh_menu_panel() -> void:
 	Debug.log("UI", "Refreshing menu panel")
+
+
+## Destroy confirmation
+func _on_destroy_requested() -> void:
+	if not Inventory.has_selection():
+		return
+
+	confirm_popup.title = "Destroy Item"
+	confirm_popup.dialog_text = "Are you sure you want to destroy\n%s?" % Inventory.selected_item.item_name
+
+	# Disconnect any previous connections
+	if confirm_popup.confirmed.is_connected(_on_destroy_confirmed):
+		confirm_popup.confirmed.disconnect(_on_destroy_confirmed)
+
+	confirm_popup.confirmed.connect(_on_destroy_confirmed)
+	confirm_popup.popup_centered()
+
+
+func _on_destroy_confirmed() -> void:
+	Inventory.destroy_selected()
+	Debug.info("UI", "Item destroyed via confirmation")
 
 
 ## Menu button handlers
@@ -220,6 +271,9 @@ func close_menu() -> void:
 	is_open = false
 	visible = false
 
+	# Deselect any item
+	Inventory.deselect()
+
 	# Resume game
 	Game.close_inventory()
 
@@ -240,3 +294,8 @@ func print_state() -> void:
 		"is_open": is_open,
 		"current_tab": Tab.keys()[current_tab],
 	})
+
+
+## Debug: Add test items to inventory
+func debug_add_test_items() -> void:
+	Inventory.debug_add_test_items()
