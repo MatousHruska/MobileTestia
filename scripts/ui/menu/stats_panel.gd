@@ -2,10 +2,7 @@ extends Control
 class_name StatsPanel
 ## Stats Panel - Displays player attributes and derived stats
 ## Left side: Primary attributes + Resources (always visible)
-## Right side: Subtabs for Offensive/Defensive/Utility stats
-
-signal stat_tooltip_requested(stat_name: String, global_pos: Vector2)
-signal stat_tooltip_dismissed
+## Right side: Subtabs for Offensive/Defensive/Utility stats + Description box
 
 enum SubTab { OFFENSIVE, DEFENSIVE, UTILITY }
 
@@ -18,8 +15,9 @@ var _resource_labels: Dictionary = {}
 var _subtab_buttons: Array[Button] = []
 var _subtab_panels: Array[Control] = []
 
-## Tooltip state
-var _tooltip_button: Button = null
+## Description box
+var _description_title: Label = null
+var _description_text: Label = null
 
 
 func _ready() -> void:
@@ -83,6 +81,10 @@ func _create_right_panel() -> Control:
 	# === SUBTAB CONTENT ===
 	var subtab_content := _create_subtab_content()
 	container.add_child(subtab_content)
+
+	# === DESCRIPTION BOX ===
+	var description_box := _create_description_box()
+	container.add_child(description_box)
 
 	return container
 
@@ -166,14 +168,13 @@ func _create_attributes_section() -> Control:
 
 
 func _create_attribute_row(abbrev: String, stat_name: String, hint: String) -> Array:
-	# Label (hold for tooltip)
+	# Label (tap for description)
 	var label := Button.new()
 	label.name = abbrev + "Label"
 	label.flat = true
 	label.text = abbrev + ":"
 	label.custom_minimum_size = Vector2(45, 0)
-	label.button_down.connect(_on_stat_pressed.bind(stat_name, label))
-	label.button_up.connect(_on_stat_released)
+	label.pressed.connect(_on_stat_tapped.bind(stat_name))
 
 	# Value
 	var value := Label.new()
@@ -241,14 +242,13 @@ func _create_resources_section() -> Control:
 
 
 func _create_resource_row(stat_name: String, display_name: String) -> Array:
-	# Label (hold for tooltip)
+	# Label (tap for description)
 	var label := Button.new()
 	label.flat = true
 	label.text = display_name + ":"
 	label.custom_minimum_size = Vector2(70, 0)
 	label.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	label.button_down.connect(_on_stat_pressed.bind(stat_name, label))
-	label.button_up.connect(_on_stat_released)
+	label.pressed.connect(_on_stat_tapped.bind(stat_name))
 
 	# Value
 	var value := Label.new()
@@ -304,6 +304,41 @@ func _create_subtab_content() -> Control:
 	container.add_child(utility)
 	_subtab_panels.append(utility)
 
+	return container
+
+
+func _create_description_box() -> Control:
+	var container := PanelContainer.new()
+	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	container.custom_minimum_size = Vector2(0, 80)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+
+	_description_title = Label.new()
+	_description_title.name = "DescTitle"
+	_description_title.add_theme_font_size_override("font_size", 14)
+	_description_title.text = "Tap a stat for details"
+	_description_title.modulate = Color(1.0, 0.9, 0.6)
+	vbox.add_child(_description_title)
+
+	_description_text = Label.new()
+	_description_text.name = "DescText"
+	_description_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_description_text.add_theme_font_size_override("font_size", 12)
+	_description_text.text = ""
+	_description_text.modulate = Color(0.8, 0.8, 0.8)
+	_description_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(_description_text)
+
+	margin.add_child(vbox)
+	container.add_child(margin)
 	return container
 
 
@@ -381,8 +416,7 @@ func _create_derived_stat_row(stat_name: String, display_name: String) -> Array:
 	label.text = display_name + ":"
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	label.button_down.connect(_on_stat_pressed.bind(stat_name, label))
-	label.button_up.connect(_on_stat_released)
+	label.pressed.connect(_on_stat_tapped.bind(stat_name))
 
 	var value := Label.new()
 	value.name = stat_name + "_value"
@@ -547,12 +581,7 @@ func _on_allocate_pressed(stat_name: String) -> void:
 			PlayerStats.allocate_luck()
 
 
-func _on_stat_pressed(stat_name: String, button: Button) -> void:
-	_tooltip_button = button
-	var global_pos := button.global_position + Vector2(button.size.x + 8, 0)
-	stat_tooltip_requested.emit(stat_name, global_pos)
-
-
-func _on_stat_released() -> void:
-	_tooltip_button = null
-	stat_tooltip_dismissed.emit()
+func _on_stat_tapped(stat_name: String) -> void:
+	if _description_title and _description_text:
+		_description_title.text = stat_name.capitalize().replace("_", " ")
+		_description_text.text = PlayerStats.get_stat_description(stat_name)
