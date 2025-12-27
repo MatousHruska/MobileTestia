@@ -1,7 +1,7 @@
 extends BaseCharacter
 class_name EnemyNPC
 ## EnemyNPC - Hostile NPCs with health, combat stats, loot, and AI
-## Uses AIStateMachine for behavior control
+## Uses EnemyBehavior for simple chase/attack behavior
 
 ## Signals
 signal health_changed(current: float, maximum: float)
@@ -40,10 +40,9 @@ signal loot_dropped(items: Array)
 
 ## AI Configuration (exposed for easy tweaking)
 @export_group("AI")
-@export var archetype: AIStateMachine.Archetype = AIStateMachine.Archetype.MELEE
 @export var detection_radius: float = 120.0
 @export var attack_radius: float = 24.0
-@export var patrol_points: Array[Vector2] = []
+@export var leash_radius: float = 300.0  ## Max chase distance from spawn
 
 ## Current state
 var current_health: float = 100.0:
@@ -55,7 +54,7 @@ var current_health: float = 100.0:
 			_on_death()
 
 ## Components
-var ai_state_machine: AIStateMachine
+var behavior: EnemyBehavior
 var hitbox: Area2D
 var hurtbox: Area2D
 
@@ -84,7 +83,8 @@ func _ready() -> void:
 	Debug.info("NPC", "EnemyNPC '%s' ready" % enemy_name, {
 		"level": enemy_level,
 		"health": max_health,
-		"archetype": AIStateMachine.Archetype.keys()[archetype]
+		"detection": detection_radius,
+		"attack_range": attack_radius
 	})
 
 
@@ -132,16 +132,15 @@ func _process_health_regen(delta: float) -> void:
 
 ## Setup
 func _setup_ai() -> void:
-	ai_state_machine = AIStateMachine.new()
-	ai_state_machine.name = "AIStateMachine"
-	ai_state_machine.archetype = archetype
-	ai_state_machine.detection_radius = detection_radius
-	ai_state_machine.attack_radius = attack_radius
-	ai_state_machine.patrol_points = patrol_points
-	ai_state_machine.attack_cooldown = 1.0 / attack_speed
+	behavior = EnemyBehavior.new()
+	behavior.name = "EnemyBehavior"
+	behavior.detection_radius = detection_radius
+	behavior.attack_radius = attack_radius
+	behavior.leash_radius = leash_radius
+	behavior.attack_cooldown = 1.0 / attack_speed
 
-	add_child(ai_state_machine)
-	Debug.log("NPC", "AI setup for %s" % enemy_name, ["archetype:", AIStateMachine.Archetype.keys()[archetype]])
+	add_child(behavior)
+	Debug.log("NPC", "AI setup for %s" % enemy_name)
 
 
 func _setup_hitbox() -> void:
@@ -202,8 +201,8 @@ func take_damage(amount: float, attacker: Node2D = null) -> void:
 	_invulnerable_timer = 0.1
 
 	# Notify AI
-	if ai_state_machine:
-		ai_state_machine.on_hit(attacker)
+	if behavior:
+		behavior.on_hit(attacker)
 
 	damaged.emit(final_damage, attacker)
 	Debug.log("Combat", "%s took damage" % enemy_name, {
@@ -271,8 +270,8 @@ func _on_death() -> void:
 		hurtbox.set_deferred("monitorable", false)
 
 	# Notify AI
-	if ai_state_machine:
-		ai_state_machine.on_death()
+	if behavior:
+		behavior.on_death()
 
 	# Grant experience
 	PlayerStats.add_experience(experience_reward)
@@ -371,7 +370,7 @@ func print_state() -> void:
 		"damage": base_damage,
 		"armor": armor,
 		"position": global_position,
-		"ai_state": ai_state_machine.get_state_name() if ai_state_machine else "none",
+		"ai_state": behavior.get_state_name() if behavior else "none",
 		"is_dead": is_dead,
 	})
 
