@@ -290,6 +290,10 @@ func _update_animation() -> void:
 	if not sprite:
 		return
 
+	# Don't interrupt attack/hit animations - let them finish
+	if current_anim_state == AnimState.ATTACK or current_anim_state == AnimState.HIT:
+		return
+
 	var new_state: AnimState
 	if is_dead:
 		new_state = AnimState.DIE
