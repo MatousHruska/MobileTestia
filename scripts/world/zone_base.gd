@@ -68,12 +68,12 @@ func _spawn_database_enemies() -> void:
 			})
 		else:
 			# Fallback to EnemyPresets if database entry missing
-			var type := enemy_data.id.replace("ene_", "").replace("_basic", "")
-			enemy = EnemyPresets.create(type, enemy_data.level)
+			var enemy_type: String = str(enemy_data.id).replace("ene_", "").replace("_basic", "")
+			enemy = EnemyPresets.create(enemy_type, enemy_data.level)
 			if enemy != null:
 				enemies_node.add_child(enemy)
 				enemy.global_position = enemy_data.position
 				enemy.home_position = enemy.global_position
-				Debug.warn("Zone", "Used fallback enemy", type)
+				Debug.warn("Zone", "Used fallback enemy", enemy_type)
 
 	Debug.info("Zone", "Spawned %d test enemies from database" % test_enemies.size())
