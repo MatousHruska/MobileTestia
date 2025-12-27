@@ -185,9 +185,9 @@ func _evaluate_attack() -> void:
 		_change_state(AIState.FLEE)
 		return
 
-	# If target moved out of range - chase them
-	if distance > attack_radius * 1.5:
-		Debug.log("AI", "Target out of attack range, chasing", ["distance:", distance, "attack_radius:", attack_radius])
+	# If target moved out of attack range - chase them immediately
+	if distance > attack_radius:
+		Debug.log("AI", "Target left attack range, chasing", ["distance:", distance, "attack_radius:", attack_radius])
 		_change_state(AIState.CHASE)
 		return
 
@@ -211,9 +211,9 @@ func _evaluate_kite() -> void:
 	# Too close - need to back off
 	if distance < preferred_distance * 0.5:
 		_change_state(AIState.FLEE)
-	# Too far - chase closer (use larger of preferred_distance or attack_radius)
-	elif distance > max(preferred_distance * 1.5, attack_radius * 1.2):
-		Debug.log("AI", "Target too far while kiting, chasing", ["distance:", distance])
+	# Too far - chase closer (if beyond attack range)
+	elif distance > attack_radius:
+		Debug.log("AI", "Target left kite range, chasing", ["distance:", distance, "attack_radius:", attack_radius])
 		_change_state(AIState.CHASE)
 
 
@@ -293,8 +293,15 @@ func _process_chase() -> void:
 	owner_character.set_move_direction(direction)
 
 
-func _process_attack(delta: float) -> void:
+func _process_attack(_delta: float) -> void:
 	owner_character.stop_movement()
+
+	# Immediately check if target moved out of range
+	if _has_valid_target():
+		var distance: float = _get_distance_to_target()
+		if distance > attack_radius:
+			_change_state(AIState.CHASE)
+			return
 
 	if _attack_timer <= 0:
 		_perform_attack()
@@ -310,11 +317,17 @@ func _process_flee() -> void:
 	owner_character.set_move_direction(direction)
 
 
-func _process_kite(delta: float) -> void:
+func _process_kite(_delta: float) -> void:
 	if not _has_valid_target():
 		return
 
 	var distance: float = _get_distance_to_target()
+
+	# Immediately chase if target moved out of attack range
+	if distance > attack_radius:
+		_change_state(AIState.CHASE)
+		return
+
 	var to_player: Vector2 = owner_character.get_direction_to_player()
 
 	# Strafe around player while maintaining distance
