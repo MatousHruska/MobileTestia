@@ -276,17 +276,22 @@ func _recalculate_derived() -> void:
 	var base_mana := 30.0
 	var base_stamina := 100.0
 
-	# Vitality: +2 Life per point
-	max_life = base_life + (vitality * 2.0) + get_equipment_bonus("health")
+	# Total primary stats (base + equipment bonuses)
+	var total_vitality := vitality + int(get_equipment_bonus("vitality"))
+	var total_energy := energy + int(get_equipment_bonus("energy"))
+	var total_luck := luck + int(get_equipment_bonus("luck"))
 
-	# Energy: +1.5 Mana per point
-	max_mana = base_mana + (energy * 1.5) + get_equipment_bonus("mana")
+	# Vitality: +2 Life per point (uses total vitality including equipment)
+	max_life = base_life + (total_vitality * 2.0) + get_equipment_bonus("health")
+
+	# Energy: +1.5 Mana per point (uses total energy including equipment)
+	max_mana = base_mana + (total_energy * 1.5) + get_equipment_bonus("mana")
 
 	# Stamina is fixed (could add modifiers later)
 	max_stamina = base_stamina + get_equipment_bonus("stamina")
 
-	# Critical Damage: Base 150% + 1% per Luck point
-	critical_damage = BASE_CRIT_DAMAGE + (luck * 1.0) + get_equipment_bonus("crit_damage")
+	# Critical Damage: Base 150% + 1% per Luck point (uses total luck including equipment)
+	critical_damage = BASE_CRIT_DAMAGE + (total_luck * 1.0) + get_equipment_bonus("crit_damage")
 
 	# Offensive stats (from equipment and buffs only, primary stats are requirements)
 	melee_damage = get_equipment_bonus("melee_damage")
