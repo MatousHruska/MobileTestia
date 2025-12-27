@@ -21,5 +21,5 @@ func _ready() -> void:
 	# Notify game manager
 	Game.current_zone = zone_name
 
-	# DEBUG: Add test items for inventory testing
-	Inventory.debug_add_test_items()
+	# Add starting items from database
+	Inventory.add_starting_items()

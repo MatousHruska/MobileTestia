@@ -385,7 +385,7 @@ func print_state() -> void:
 
 ## Debug: Add test items to inventory
 func debug_add_test_items() -> void:
-	Inventory.debug_add_test_items()
+	Inventory.add_starting_items()
 
 
 ## Debug: Add stat points

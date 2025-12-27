@@ -356,6 +356,161 @@ func weighted_random(items: Array, weight_key: String = "spawn_weight") -> Dicti
 
 
 #===============================================================================
+# ITEM FACTORY
+#===============================================================================
+
+## Create EquipmentData from database item_base
+func create_equipment(base_id: String, rarity: ItemData.Rarity = ItemData.Rarity.COMMON) -> EquipmentData:
+	var base: Dictionary = get_item_base(base_id)
+	if base.is_empty():
+		Debug.error("Database", "Item base not found: %s" % base_id)
+		return null
+
+	var item := EquipmentData.new()
+	item.id = base.get("id", base_id)
+	item.item_name = base.get("name", "Unknown Item")
+	item.description = base.get("description", "")
+	item.rarity = rarity
+
+	# Map slot to equipment type
+	var slot: String = base.get("slot", "")
+	var item_type: String = base.get("item_type", "")
+	item.equipment_type = _map_slot_to_equipment_type(slot, item_type)
+
+	# Base stats become bonuses (base item = common with just base stats)
+	var base_damage: int = int(base.get("base_damage", 0))
+	var base_armor: int = int(base.get("base_armor", 0))
+
+	# Weapons get melee damage (can expand for ranged/magic later)
+	if slot == "Weapon":
+		if item_type in ["Bow", "Crossbow"]:
+			item.bonus_ranged_damage = base_damage
+		elif item_type in ["Staff", "Wand"]:
+			item.bonus_magic_damage = base_damage
+		else:
+			item.bonus_melee_damage = base_damage
+
+	# Armor pieces get armor bonus
+	if base_armor > 0:
+		item.bonus_armor = base_armor
+
+	# Requirements
+	item.required_strength = int(base.get("req_str", 0))
+	item.required_dexterity = int(base.get("req_dex", 0))
+	item.required_intelligence = int(base.get("req_int", 0))
+
+	return item
+
+
+## Create equipment with random affixes
+func create_magic_equipment(base_id: String, item_level: int = 1, affix_count: int = 2) -> EquipmentData:
+	var item := create_equipment(base_id, ItemData.Rarity.UNCOMMON if affix_count <= 2 else ItemData.Rarity.RARE)
+	if item == null:
+		return null
+
+	var base: Dictionary = get_item_base(base_id)
+
+	# Get valid affixes for this item
+	var prefixes := get_prefixes_for_item(base)
+	var suffixes := get_suffixes_for_item(base)
+
+	# Filter by item level
+	prefixes = prefixes.filter(func(a): return int(a.get("item_level_min", 1)) <= item_level and int(a.get("item_level_max", 100)) >= item_level)
+	suffixes = suffixes.filter(func(a): return int(a.get("item_level_min", 1)) <= item_level and int(a.get("item_level_max", 100)) >= item_level)
+
+	var name_prefix := ""
+	var name_suffix := ""
+	var added := 0
+
+	# Add prefixes
+	while added < affix_count and not prefixes.is_empty():
+		var affix := weighted_random(prefixes)
+		if affix.is_empty():
+			break
+		_apply_affix_to_item(item, affix)
+		name_prefix = affix.get("name", "")
+		prefixes.erase(affix)
+		added += 1
+
+	# Add suffixes
+	while added < affix_count and not suffixes.is_empty():
+		var affix := weighted_random(suffixes)
+		if affix.is_empty():
+			break
+		_apply_affix_to_item(item, affix)
+		name_suffix = affix.get("name", "")
+		suffixes.erase(affix)
+		added += 1
+
+	# Update name with affixes
+	if name_prefix != "":
+		item.item_name = name_prefix + " " + item.item_name
+	if name_suffix != "":
+		item.item_name = item.item_name + " " + name_suffix
+
+	return item
+
+
+## Apply affix stats to item
+func _apply_affix_to_item(item: EquipmentData, affix: Dictionary) -> void:
+	var stat: String = affix.get("stat_modifier", "")
+	var min_val: float = float(affix.get("min_value", 0))
+	var max_val: float = float(affix.get("max_value", 0))
+	var value: int = randi_range(int(min_val), int(max_val))
+
+	match stat:
+		"melee_damage": item.bonus_melee_damage += value
+		"ranged_damage": item.bonus_ranged_damage += value
+		"magic_damage": item.bonus_magic_damage += value
+		"strength": item.bonus_strength += value
+		"dexterity": item.bonus_dexterity += value
+		"intelligence": item.bonus_intelligence += value
+		"vitality": item.bonus_vitality += value
+		"energy": item.bonus_energy += value
+		"luck": item.bonus_luck += value
+		"armor": item.bonus_armor += value
+		"magic_resistance": item.bonus_magic_resistance += value
+		"dodge_chance": item.bonus_dodge_chance += float(value)
+		"attack_speed": item.bonus_attack_speed += float(value)
+		"critical_chance": item.bonus_crit_chance += float(value)
+		"critical_damage": item.bonus_crit_damage += float(value)
+		"life": item.bonus_health += value
+		"mana": item.bonus_mana += value
+		"life_regen": item.bonus_life_regen += float(value)
+		"mana_regen": item.bonus_mana_regen += float(value)
+		"movement_speed": item.bonus_movement_speed += float(value)
+
+
+## Map slot string to EquipmentType enum
+func _map_slot_to_equipment_type(slot: String, item_type: String) -> ItemData.EquipmentType:
+	match slot:
+		"Weapon":
+			match item_type:
+				"Bow", "Crossbow":
+					return ItemData.EquipmentType.WEAPON_RANGED
+				"Staff", "Wand":
+					return ItemData.EquipmentType.WEAPON_ONE_HANDED
+				"Greatsword", "Greataxe", "Polearm":
+					return ItemData.EquipmentType.WEAPON_TWO_HANDED
+				_:
+					return ItemData.EquipmentType.WEAPON_ONE_HANDED
+		"Head":
+			return ItemData.EquipmentType.HELMET
+		"Chest":
+			return ItemData.EquipmentType.ARMOR
+		"Hands":
+			return ItemData.EquipmentType.GLOVES
+		"Feet":
+			return ItemData.EquipmentType.BOOTS
+		"Ring":
+			return ItemData.EquipmentType.RING
+		"Amulet":
+			return ItemData.EquipmentType.AMULET
+		_:
+			return ItemData.EquipmentType.NONE
+
+
+#===============================================================================
 # DEBUG
 #===============================================================================
 

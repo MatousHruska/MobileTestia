@@ -554,113 +554,67 @@ func get_total_stat_bonus(stat_name: String) -> float:
 	return PlayerStats.get_equipment_bonus(stat_name)
 
 
-## DEBUG: Add test items - one for each equipment slot
-func debug_add_test_items() -> void:
-	Debug.info("Inventory", "Adding debug test items for all slots")
+## Add starting items from database (replaces hardcoded test items)
+func add_starting_items() -> void:
+	Debug.info("Inventory", "Adding starting items from database")
 
-	# HEAD - Helmet
-	var helmet := EquipmentData.new()
-	helmet.id = "test_helmet"
-	helmet.item_name = "Iron Helm"
-	helmet.description = "A sturdy iron helmet."
-	helmet.rarity = ItemData.Rarity.UNCOMMON
-	helmet.equipment_type = ItemData.EquipmentType.HELMET
-	helmet.bonus_armor = 5
-	helmet.bonus_vitality = 2
-	add_item(helmet)
+	# Starting equipment from database (common quality base items)
+	var starting_items := [
+		"wep_sword_iron",      # Basic iron sword
+		"arm_helmet_leather",  # Leather cap
+		"arm_chest_leather",   # Leather tunic
+		"arm_gloves_leather",  # Leather gloves
+		"arm_boots_leather",   # Leather boots
+		"acc_ring_copper",     # Copper ring
+		"acc_amulet_bone",     # Bone amulet
+	]
 
-	# BODY - Armor
-	var armor := EquipmentData.new()
-	armor.id = "test_armor"
-	armor.item_name = "Chainmail"
-	armor.description = "Interlocking metal rings provide solid protection."
-	armor.rarity = ItemData.Rarity.UNCOMMON
-	armor.equipment_type = ItemData.EquipmentType.ARMOR
-	armor.bonus_armor = 10
-	armor.bonus_health = 20
-	armor.bonus_life_regen = 0.5
-	add_item(armor)
+	for item_id in starting_items:
+		var item := DatabaseLoader.create_equipment(item_id)
+		if item != null:
+			add_item(item)
+		else:
+			Debug.warn("Inventory", "Could not create starting item: %s" % item_id)
 
-	# HANDS - Gloves
-	var gloves := EquipmentData.new()
-	gloves.id = "test_gloves"
-	gloves.item_name = "Leather Gloves"
-	gloves.description = "Supple leather gloves that improve grip."
-	gloves.rarity = ItemData.Rarity.COMMON
-	gloves.equipment_type = ItemData.EquipmentType.GLOVES
-	gloves.bonus_dexterity = 3
-	gloves.bonus_attack_speed = 5.0
-	add_item(gloves)
+	# Consumables (hardcoded until consumables database is added)
+	var health_potion := ConsumableData.new()
+	health_potion.id = "con_potion_health"
+	health_potion.item_name = "Health Potion"
+	health_potion.description = "Restores 50 health instantly."
+	health_potion.rarity = ItemData.Rarity.COMMON
+	health_potion.effect_type = ConsumableData.EffectType.HEAL_HEALTH
+	health_potion.effect_value = 50
+	health_potion.max_charges = 5
+	add_item(health_potion)
 
-	# BOOTS - Boots
-	var boots := EquipmentData.new()
-	boots.id = "test_boots"
-	boots.item_name = "Traveler's Boots"
-	boots.description = "Well-worn boots made for long journeys."
-	boots.rarity = ItemData.Rarity.COMMON
-	boots.equipment_type = ItemData.EquipmentType.BOOTS
-	boots.bonus_dexterity = 2
-	boots.bonus_armor = 2
-	boots.bonus_movement_speed = 10.0
-	add_item(boots)
-
-	# MAIN_HAND - Weapon
-	var sword := EquipmentData.new()
-	sword.id = "test_sword"
-	sword.item_name = "Steel Longsword"
-	sword.description = "A well-balanced blade forged from quality steel."
-	sword.rarity = ItemData.Rarity.RARE
-	sword.equipment_type = ItemData.EquipmentType.WEAPON_ONE_HANDED
-	sword.bonus_melee_damage = 12
-	sword.bonus_strength = 3
-	sword.bonus_crit_chance = 5.0
-	add_item(sword)
-
-	# ACCESSORY_1 - Ring
-	var ring := EquipmentData.new()
-	ring.id = "test_ring"
-	ring.item_name = "Ruby Ring"
-	ring.description = "A gold ring set with a fiery ruby."
-	ring.rarity = ItemData.Rarity.RARE
-	ring.equipment_type = ItemData.EquipmentType.RING
-	ring.bonus_strength = 4
-	ring.bonus_crit_damage = 10.0
-	add_item(ring)
-
-	# ACCESSORY_2 - Amulet
-	var amulet := EquipmentData.new()
-	amulet.id = "test_amulet"
-	amulet.item_name = "Sapphire Pendant"
-	amulet.description = "A silver pendant with a deep blue sapphire."
-	amulet.rarity = ItemData.Rarity.EPIC
-	amulet.equipment_type = ItemData.EquipmentType.AMULET
-	amulet.bonus_intelligence = 5
-	amulet.bonus_mana = 30
-	amulet.bonus_magic_damage = 8
-	amulet.bonus_mana_regen = 1.0
-	add_item(amulet)
-
-	# QUICK_SLOT - Consumable (Health Potion) - 5/5 charges
-	var potion := ConsumableData.new()
-	potion.id = "health_potion"
-	potion.item_name = "Health Potion"
-	potion.description = "Restores 50 health instantly."
-	potion.rarity = ItemData.Rarity.COMMON
-	potion.effect_type = ConsumableData.EffectType.HEAL_HEALTH
-	potion.effect_value = 50
-	potion.max_charges = 5
-	add_item(potion)  # Adds with 5/5 charges
-
-	# Extra consumable - Mana Potion - 5/5 charges
 	var mana_potion := ConsumableData.new()
-	mana_potion.id = "mana_potion"
+	mana_potion.id = "con_potion_mana"
 	mana_potion.item_name = "Mana Potion"
 	mana_potion.description = "Restores 30 mana instantly."
 	mana_potion.rarity = ItemData.Rarity.COMMON
 	mana_potion.effect_type = ConsumableData.EffectType.HEAL_MANA
 	mana_potion.effect_value = 30
 	mana_potion.max_charges = 5
-	add_item(mana_potion)  # Adds with 5/5 charges
+	add_item(mana_potion)
 
-	# Add some gold
-	add_gold(250)
+	# Starting gold
+	add_gold(100)
+
+	Debug.info("Inventory", "Starting items added")
+
+
+## DEBUG: Add test items with affixes (for testing magic/rare item generation)
+func debug_add_magic_items() -> void:
+	Debug.info("Inventory", "Adding magic test items")
+
+	# Generate some magic items with random affixes
+	var magic_sword := DatabaseLoader.create_magic_equipment("wep_sword_steel", 5, 2)
+	if magic_sword:
+		add_item(magic_sword)
+
+	var rare_armor := DatabaseLoader.create_magic_equipment("arm_chest_chainmail", 5, 4)
+	if rare_armor:
+		rare_armor.rarity = ItemData.Rarity.RARE
+		add_item(rare_armor)
+
+	Debug.info("Inventory", "Magic test items added")
