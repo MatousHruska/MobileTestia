@@ -133,13 +133,17 @@ func _do_chase() -> void:
 func _do_attack() -> void:
 	state = State.COMBAT
 
-	# Stop moving while attacking
-	_owner.stop_movement()
-
 	# Attack if cooldown ready
 	if _attack_timer <= 0:
+		# Only stop moving during the actual attack
+		_owner.stop_movement()
 		_perform_attack()
 		_attack_timer = attack_cooldown
+	else:
+		# Still in attack range but on cooldown - keep chasing to stay on target
+		if _has_valid_target():
+			var direction := _owner.global_position.direction_to(target.global_position)
+			_owner.set_move_direction(direction)
 
 
 func _do_return_home() -> void:
