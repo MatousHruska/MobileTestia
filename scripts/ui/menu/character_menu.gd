@@ -45,6 +45,10 @@ var is_open: bool = false
 var _tab_buttons: Array[Button] = []
 var _panels: Array[Control] = []
 
+## Tab notification colors
+const BADGE_COLOR := Color(1.0, 0.85, 0.3)  ## Golden yellow for notification text
+const NORMAL_COLOR := Color(1.0, 1.0, 1.0)  ## Normal button color
+
 ## Inventory panel instance (created dynamically)
 var _inventory_panel_instance: InventoryPanel = null
 
@@ -106,6 +110,17 @@ func _setup_tabs() -> void:
 	# Setup the stats panel (replaces old content)
 	_setup_stats_panel()
 
+	# Setup notification badges on tabs
+	_setup_tab_badges()
+
+	# Connect to PlayerStats for badge updates
+	PlayerStats.attribute_points_changed.connect(_on_attribute_points_changed)
+	PlayerStats.skill_points_changed.connect(_on_skill_points_changed)
+
+	# Initial badge update
+	_update_stats_badge()
+	_update_skills_badge()
+
 	# Show default tab
 	_switch_to_tab(Tab.INVENTORY)
 
@@ -154,6 +169,49 @@ func _setup_stats_panel() -> void:
 	stats_panel.add_child(_stats_panel_instance)
 
 	Debug.info("UI", "StatsPanel created")
+
+
+func _setup_tab_badges() -> void:
+	## Set up tab badge system - badges are shown via text + color change
+	pass  ## Badges are updated dynamically via _update_*_badge functions
+
+
+func _update_stats_badge() -> void:
+	if not stats_tab:
+		return
+
+	var points := PlayerStats.attribute_points
+	if points > 0:
+		stats_tab.text = "Stats (+%d)" % points
+		stats_tab.add_theme_color_override("font_color", BADGE_COLOR)
+		stats_tab.add_theme_color_override("font_hover_color", BADGE_COLOR)
+	else:
+		stats_tab.text = "Stats"
+		stats_tab.remove_theme_color_override("font_color")
+		stats_tab.remove_theme_color_override("font_hover_color")
+
+
+func _update_skills_badge() -> void:
+	if not skills_tab:
+		return
+
+	var points := PlayerStats.skill_points
+	if points > 0:
+		skills_tab.text = "Skills (+%d)" % points
+		skills_tab.add_theme_color_override("font_color", BADGE_COLOR)
+		skills_tab.add_theme_color_override("font_hover_color", BADGE_COLOR)
+	else:
+		skills_tab.text = "Skills"
+		skills_tab.remove_theme_color_override("font_color")
+		skills_tab.remove_theme_color_override("font_hover_color")
+
+
+func _on_attribute_points_changed(_points: int) -> void:
+	_update_stats_badge()
+
+
+func _on_skill_points_changed(_points: int) -> void:
+	_update_skills_badge()
 
 
 func _input(event: InputEvent) -> void:
