@@ -86,13 +86,13 @@ func _update_behavior(_delta: float) -> void:
 
 	# Debug: Log decision every 30 frames
 	if Engine.get_process_frames() % 30 == 0:
-		Debug.log("AI", "%s decision" % _owner.name, {
-			"dist": "%.1f" % distance_to_target,
-			"atk_range": attack_radius,
-			"locked": owner_locked,
-			"move_dir": _owner.move_direction,
-			"velocity": "%.1f" % _owner.velocity.length()
-		})
+		Debug.log("AI", "%s: dist=%.1f atk_range=%.0f locked=%s vel=%.1f" % [
+			_owner.name,
+			distance_to_target,
+			attack_radius,
+			owner_locked,
+			_owner.velocity.length()
+		])
 
 	# Face target if configured
 	if face_target and _owner.has_method("_update_facing_from_direction"):
@@ -122,11 +122,12 @@ func _do_chase() -> void:
 
 	# Debug: Log when velocity is low (should be chasing but not moving)
 	if _owner.velocity.length() < 1.0 and Engine.get_process_frames() % 30 == 0:
-		Debug.warn("AI", "%s chase but vel=0!" % _owner.name, {
-			"dir": "%.2f,%.2f" % [direction.x, direction.y],
-			"locked": _owner.is_locked,
-			"move_dir": "%.2f,%.2f" % [_owner.move_direction.x, _owner.move_direction.y]
-		})
+		Debug.warn("AI", "%s chase vel=0! dir=(%.2f,%.2f) locked=%s move_dir=(%.2f,%.2f)" % [
+			_owner.name,
+			direction.x, direction.y,
+			_owner.is_locked,
+			_owner.move_direction.x, _owner.move_direction.y
+		])
 
 
 func _do_attack() -> void:
