@@ -38,17 +38,36 @@ var is_locked: bool = false  ## Prevents input during certain actions
 @onready var character_animator: CharacterAnimator = $CharacterAnimator
 @onready var hitbox_pivot: Node2D = $HitboxPivot
 
+## Level up effect
+var _level_up_effect: LevelUpEffect
+
 ## Internal
 var _lunge_velocity: Vector2 = Vector2.ZERO
 var _lunge_timer: float = 0.0
 var _dodge_timer: float = 0.0
 var _dodge_direction: Vector2 = Vector2.ZERO
 
+## Test XP timer (for development)
+var _test_xp_timer: float = 0.0
+const TEST_XP_INTERVAL: float = 10.0  ## Gain XP every 10 seconds
+const TEST_XP_AMOUNT: int = 100  ## Amount of XP to gain
+
 
 func _ready() -> void:
 	Debug.info("Player", "PlayerController ready")
 	Game.player = self
 	_update_facing(Facing.DOWN)
+	_setup_level_up_effect()
+
+
+func _setup_level_up_effect() -> void:
+	## Create and add level up effect
+	_level_up_effect = LevelUpEffect.new()
+	_level_up_effect.name = "LevelUpEffect"
+	add_child(_level_up_effect)
+
+	## Connect to level up signal
+	PlayerStats.leveled_up.connect(_on_leveled_up)
 
 
 func _physics_process(delta: float) -> void:
@@ -59,6 +78,7 @@ func _physics_process(delta: float) -> void:
 
 	_process_timers(delta)
 	_process_movement(delta)
+	_process_test_xp(delta)
 	move_and_slide()
 
 	Debug.trace("Movement", "Velocity", velocity)
@@ -239,6 +259,21 @@ func _facing_to_rotation(facing: Facing) -> float:
 		Facing.LEFT: return PI / 2.0
 		Facing.RIGHT: return -PI / 2.0
 	return 0.0
+
+
+## Test XP gain (for development testing)
+func _process_test_xp(delta: float) -> void:
+	_test_xp_timer += delta
+	if _test_xp_timer >= TEST_XP_INTERVAL:
+		_test_xp_timer = 0.0
+		PlayerStats.add_experience(TEST_XP_AMOUNT)
+		Debug.info("Player", "Test XP granted: +%d XP" % TEST_XP_AMOUNT)
+
+
+## Level up callback
+func _on_leveled_up(new_level: int) -> void:
+	if _level_up_effect:
+		_level_up_effect.play(new_level)
 
 
 ## Debug

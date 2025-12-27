@@ -106,9 +106,16 @@ func _create_header() -> Control:
 	var points_label := Label.new()
 	points_label.name = "PointsLabel"
 	points_label.add_theme_font_size_override("font_size", 14)
-	points_label.text = "Points: 0"
+	points_label.text = "Attr: 0"
 	points_label.modulate = Color(1.0, 0.9, 0.3)
 	level_row.add_child(points_label)
+
+	var skill_points_label := Label.new()
+	skill_points_label.name = "SkillPointsLabel"
+	skill_points_label.add_theme_font_size_override("font_size", 14)
+	skill_points_label.text = "Skill: 0"
+	skill_points_label.modulate = Color(0.3, 0.9, 1.0)
+	level_row.add_child(skill_points_label)
 
 	container.add_child(level_row)
 
@@ -434,6 +441,7 @@ func _connect_signals() -> void:
 	PlayerStats.level_changed.connect(_on_level_changed)
 	PlayerStats.experience_changed.connect(_on_experience_changed)
 	PlayerStats.attribute_points_changed.connect(_on_points_changed)
+	PlayerStats.skill_points_changed.connect(_on_skill_points_changed)
 	PlayerStats.resource_changed.connect(_on_resource_changed)
 
 
@@ -449,8 +457,12 @@ func _update_level_display() -> void:
 	# Find nodes by traversing (since they're dynamically created)
 	_find_and_update_node("LevelLabel", func(n: Label): n.text = "Level %d" % PlayerStats.level)
 	_find_and_update_node("PointsLabel", func(n: Label):
-		n.text = "Points: %d" % PlayerStats.attribute_points
+		n.text = "Attr: %d" % PlayerStats.attribute_points
 		n.visible = PlayerStats.attribute_points > 0
+	)
+	_find_and_update_node("SkillPointsLabel", func(n: Label):
+		n.text = "Skill: %d" % PlayerStats.skill_points
+		n.visible = PlayerStats.skill_points > 0
 	)
 	_find_and_update_node("XPBar", func(n: ProgressBar):
 		n.max_value = PlayerStats.experience_for_next_level
@@ -552,6 +564,10 @@ func _on_experience_changed(_current: int, _required: int) -> void:
 func _on_points_changed(_points: int) -> void:
 	_update_level_display()
 	_update_plus_buttons()
+
+
+func _on_skill_points_changed(_points: int) -> void:
+	_update_level_display()
 
 
 func _on_resource_changed(resource: String, _current: float, _maximum: float) -> void:
