@@ -11,53 +11,7 @@ script = ExtResource("1_hud")
 [node name="PlayerFrame" type="Control" parent="."]
 anchors_preset = 0
 offset_right = 200.0
-offset_bottom = 100.0
-
-[node name="Background" type="ColorRect" parent="PlayerFrame"]
-layout_mode = 0
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 192.0
-offset_bottom = 92.0
-color = Color(0, 0, 0, 0.5)
-
-[node name="HealthBar" type="ProgressBar" parent="PlayerFrame"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 12.0
-offset_right = 188.0
-offset_bottom = 32.0
-max_value = 100.0
-value = 100.0
-show_percentage = false
-
-[node name="ManaBar" type="ProgressBar" parent="PlayerFrame"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 36.0
-offset_right = 188.0
-offset_bottom = 52.0
-max_value = 100.0
-value = 80.0
-show_percentage = false
-
-[node name="StaminaBar" type="ProgressBar" parent="PlayerFrame"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 56.0
-offset_right = 188.0
-offset_bottom = 72.0
-max_value = 100.0
-value = 100.0
-show_percentage = false
-
-[node name="LevelLabel" type="Label" parent="PlayerFrame"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 74.0
-offset_right = 100.0
-offset_bottom = 90.0
-text = "Lv. 1"
+offset_bottom = 110.0
 
 [node name="MenuButton" type="Control" parent="."]
 anchors_preset = 1
