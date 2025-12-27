@@ -104,16 +104,16 @@ func _world_to_screen(world_pos: Vector2, camera: Camera2D) -> Vector2:
 
 
 func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
-	var screen_pos := _world_to_screen(enemy.global_position, camera)
+	var screen_pos: Vector2 = _world_to_screen(enemy.global_position, camera)
 
 	# Detection radius
 	if show_detection_radii and enemy.ai_state_machine:
-		var radius := enemy.detection_radius * camera.zoom.x
+		var radius: float = enemy.detection_radius * camera.zoom.x
 		draw_node.draw_arc(screen_pos, radius, 0, TAU, 32, color_detection, 2.0)
 
 	# Attack radius
 	if show_attack_radii and enemy.ai_state_machine:
-		var radius := enemy.attack_radius * camera.zoom.x
+		var radius: float = enemy.attack_radius * camera.zoom.x
 		draw_node.draw_arc(screen_pos, radius, 0, TAU, 24, color_attack, 2.0)
 
 	# Health bar
@@ -122,29 +122,29 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 
 	# AI State label
 	if show_ai_states and enemy.ai_state_machine:
-		var state_name := enemy.ai_state_machine.get_state_name()
-		var state_color := ai_state_colors.get(enemy.ai_state_machine.current_state, Color.WHITE)
+		var state_name: String = enemy.ai_state_machine.get_state_name()
+		var state_color: Color = ai_state_colors.get(enemy.ai_state_machine.current_state, Color.WHITE)
 		_draw_label(screen_pos + Vector2(0, -40), state_name, state_color)
 
 		# Archetype in smaller text
-		var archetype := enemy.ai_state_machine.get_archetype_name()
-		_draw_label(screen_pos + Vector2(0, -52), "[%s]" % archetype, Color(0.7, 0.7, 0.7), 10)
+		var archetype_name: String = enemy.ai_state_machine.get_archetype_name()
+		_draw_label(screen_pos + Vector2(0, -52), "[%s]" % archetype_name, Color(0.7, 0.7, 0.7), 10)
 
 	# Target line
 	if show_target_lines and enemy.ai_state_machine and enemy.ai_state_machine.target:
-		var target_pos := _world_to_screen(enemy.ai_state_machine.target.global_position, camera)
+		var target_pos: Vector2 = _world_to_screen(enemy.ai_state_machine.target.global_position, camera)
 		draw_node.draw_line(screen_pos, target_pos, color_target_line, 2.0)
 
 	# Facing arrow
 	if show_facing_arrows:
-		var facing_vec := enemy.get_facing_vector() * 20 * camera.zoom.x
-		var arrow_end := screen_pos + facing_vec
+		var facing_vec: Vector2 = enemy.get_facing_vector() * 20 * camera.zoom.x
+		var arrow_end: Vector2 = screen_pos + facing_vec
 		draw_node.draw_line(screen_pos, arrow_end, color_facing, 2.0)
 		_draw_arrow_head(arrow_end, facing_vec.normalized(), color_facing)
 
 	# Velocity vector
 	if show_velocity_vectors and enemy.velocity.length() > 1:
-		var vel_vec := enemy.velocity.normalized() * 30 * camera.zoom.x
+		var vel_vec: Vector2 = enemy.velocity.normalized() * 30 * camera.zoom.x
 		draw_node.draw_line(screen_pos, screen_pos + vel_vec, color_velocity, 1.5)
 
 	# Patrol path
@@ -153,25 +153,25 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 
 
 func _draw_friendly(npc: Node2D, camera: Camera2D) -> void:
-	var screen_pos := _world_to_screen(npc.global_position, camera)
+	var screen_pos: Vector2 = _world_to_screen(npc.global_position, camera)
 
 	# Interaction radius
 	if npc.is_interactable:
-		var radius := npc.interaction_radius * camera.zoom.x
+		var radius: float = npc.interaction_radius * camera.zoom.x
 		draw_node.draw_arc(screen_pos, radius, 0, TAU, 24, color_friendly, 1.5)
 
 	# Name label
 	_draw_label(screen_pos + Vector2(0, -30), npc.npc_name, color_friendly)
 
 	# Movement pattern indicator
-	var pattern_names := ["STATIC", "WANDER", "PATROL"]
-	var pattern_name := pattern_names[npc.movement_pattern] if npc.movement_pattern < pattern_names.size() else "UNKNOWN"
+	var pattern_names: Array = ["STATIC", "WANDER", "PATROL"]
+	var pattern_name: String = pattern_names[npc.movement_pattern] if npc.movement_pattern < pattern_names.size() else "UNKNOWN"
 	_draw_label(screen_pos + Vector2(0, -42), "[%s]" % pattern_name, Color(0.6, 0.8, 0.6), 10)
 
 	# Wander radius (movement_pattern 1 = WANDER)
 	if npc.movement_pattern == 1:
-		var home_screen := _world_to_screen(npc.home_position, camera)
-		var radius := npc.wander_radius * camera.zoom.x
+		var home_screen: Vector2 = _world_to_screen(npc.home_position, camera)
+		var radius: float = npc.wander_radius * camera.zoom.x
 		draw_node.draw_arc(home_screen, radius, 0, TAU, 32, Color(0.4, 0.7, 0.4, 0.3), 1.5)
 
 	# Patrol path (movement_pattern 2 = PATROL)
@@ -180,32 +180,32 @@ func _draw_friendly(npc: Node2D, camera: Camera2D) -> void:
 
 	# Facing arrow
 	if show_facing_arrows:
-		var facing_vec := npc.get_facing_vector() * 15 * camera.zoom.x
+		var facing_vec: Vector2 = npc.get_facing_vector() * 15 * camera.zoom.x
 		draw_node.draw_line(screen_pos, screen_pos + facing_vec, color_friendly, 1.5)
 
 
 func _draw_spawner(spawner: Node2D, camera: Camera2D) -> void:
-	var screen_pos := _world_to_screen(spawner.global_position, camera)
+	var screen_pos: Vector2 = _world_to_screen(spawner.global_position, camera)
 
 	# Spawn radius
-	var radius := spawner.spawn_radius * camera.zoom.x
+	var radius: float = spawner.spawn_radius * camera.zoom.x
 	draw_node.draw_arc(screen_pos, radius, 0, TAU, 24, Color(0.8, 0.4, 0.8, 0.4), 2.0)
 
 	# Spawner icon (simple X)
-	var size := 8.0
+	var size: float = 8.0
 	draw_node.draw_line(screen_pos + Vector2(-size, -size), screen_pos + Vector2(size, size), Color(0.8, 0.4, 0.8), 2.0)
 	draw_node.draw_line(screen_pos + Vector2(size, -size), screen_pos + Vector2(-size, size), Color(0.8, 0.4, 0.8), 2.0)
 
 	# Status label
-	var status := "Active" if spawner.is_active else "Inactive"
-	var alive_count := spawner.alive_enemies.size()
-	var remaining := spawner.spawns_remaining if spawner.spawns_remaining >= 0 else "INF"
-	var label := "%s (%d/%d) [%s]" % [status, alive_count, spawner.max_alive, remaining]
+	var status: String = "Active" if spawner.is_active else "Inactive"
+	var alive_count: int = spawner.alive_enemies.size()
+	var remaining_str: String = str(spawner.spawns_remaining) if spawner.spawns_remaining >= 0 else "INF"
+	var label: String = "%s (%d/%d) [%s]" % [status, alive_count, spawner.max_alive, remaining_str]
 	_draw_label(screen_pos + Vector2(0, -20), label, Color(0.8, 0.4, 0.8))
 
 	# Wave info if applicable
 	if spawner.wave_mode:
-		var wave_label := "Wave %d" % spawner.current_wave
+		var wave_label: String = "Wave %d" % spawner.current_wave
 		_draw_label(screen_pos + Vector2(0, -32), wave_label, Color(0.9, 0.6, 0.9), 10)
 
 
