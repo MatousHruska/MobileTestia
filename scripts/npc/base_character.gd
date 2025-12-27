@@ -33,8 +33,8 @@ var move_direction: Vector2 = Vector2.ZERO
 var is_dead: bool = false
 var is_locked: bool = false  ## Prevents movement during certain actions
 
-## Sprite reference
-@onready var sprite: AnimatedSprite2D = $Sprite2D
+## Sprite reference (created dynamically in _setup_sprite)
+var sprite: AnimatedSprite2D = null
 
 ## Name label
 var name_label: Label
@@ -67,9 +67,9 @@ func _physics_process(delta: float) -> void:
 ## Setup functions
 func _setup_sprite() -> void:
 	# Remove any existing sprite to ensure clean setup
-	if sprite:
+	if sprite and is_instance_valid(sprite):
 		sprite.queue_free()
-		sprite = null
+	sprite = null
 
 	# Always create a new AnimatedSprite2D
 	sprite = AnimatedSprite2D.new()
@@ -83,6 +83,9 @@ func _setup_sprite() -> void:
 
 	# Connect animation signals
 	sprite.animation_finished.connect(_on_animation_finished)
+
+	# Play initial idle animation so sprite is visible immediately
+	_play_animation_for_state(AnimState.IDLE)
 
 
 func _setup_collision() -> void:
