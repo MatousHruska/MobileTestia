@@ -158,7 +158,7 @@ func _evaluate_chase() -> void:
 		return
 
 	_lost_target_timer = 0.0
-	var distance := _get_distance_to_target()
+	var distance: float = _get_distance_to_target()
 
 	# Check flee conditions
 	if _should_flee():
@@ -206,13 +206,14 @@ func _evaluate_kite() -> void:
 		_change_state(AIState.IDLE)
 		return
 
-	var distance := _get_distance_to_target()
+	var distance: float = _get_distance_to_target()
 
 	# Too close - need to back off
 	if distance < preferred_distance * 0.5:
 		_change_state(AIState.FLEE)
-	# Too far - chase closer
-	elif distance > preferred_distance * 1.5:
+	# Too far - chase closer (use larger of preferred_distance or attack_radius)
+	elif distance > max(preferred_distance * 1.5, attack_radius * 1.2):
+		Debug.log("AI", "Target too far while kiting, chasing", ["distance:", distance])
 		_change_state(AIState.CHASE)
 
 
