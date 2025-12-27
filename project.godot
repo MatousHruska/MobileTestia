@@ -13,7 +13,7 @@ config_version=5
 config/name="Heroes of Tesia"
 config/description="Mobile Action RPG - Pixel Art Top-Down"
 run/main_scene="res://scenes/world/test_zone.tscn"
-config/features=PackedStringArray("4.2", "Mobile")
+config/features=PackedStringArray("4.5", "Mobile")
 config/icon="res://icon.svg"
 
 [autoload]
@@ -31,7 +31,6 @@ window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="viewport"
 window/stretch/aspect="expand"
-window/handheld/orientation=0
 
 [input_devices]
 
