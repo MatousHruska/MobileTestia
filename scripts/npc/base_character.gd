@@ -224,8 +224,8 @@ func _play_animation_for_state(state: AnimState) -> void:
 
 
 func _get_animation_name(state: AnimState, facing: Facing) -> String:
-	var state_name := AnimState.keys()[state].to_lower()
-	var facing_name := Facing.keys()[facing].to_lower()
+	var state_name: String = AnimState.keys()[state].to_lower()
+	var facing_name: String = Facing.keys()[facing].to_lower()
 
 	# For left, use right animation with flip
 	if facing == Facing.LEFT:
