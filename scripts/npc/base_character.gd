@@ -201,6 +201,12 @@ func _setup_name_label() -> void:
 ## Movement processing
 func _process_movement(delta: float) -> void:
 	if is_locked:
+		# Debug: Log when locked is blocking movement
+		if move_direction != Vector2.ZERO and Engine.get_process_frames() % 60 == 0:
+			Debug.warn("NPC", "%s movement BLOCKED by is_locked" % name, {
+				"move_dir": move_direction,
+				"anim_state": AnimState.keys()[current_anim_state]
+			})
 		velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
 		return
 
@@ -310,10 +316,16 @@ func _play_animation_for_state(state: AnimState) -> void:
 
 func _unlock_after_attack() -> void:
 	## Safety unlock when attack animation doesn't exist
+	Debug.log("NPC", "%s scheduling unlock (no anim)" % name)
 	get_tree().create_timer(0.3).timeout.connect(func():
+		Debug.log("NPC", "%s unlock timer fired" % name, {
+			"anim_state": AnimState.keys()[current_anim_state],
+			"is_locked": is_locked
+		})
 		if current_anim_state == AnimState.ATTACK:
 			is_locked = false
 			_set_anim_state(AnimState.IDLE)
+			Debug.log("NPC", "%s UNLOCKED by safety timer" % name)
 	)
 
 
@@ -329,10 +341,15 @@ func _get_animation_name(state: AnimState, facing: Facing) -> String:
 
 
 func _on_animation_finished() -> void:
+	Debug.log("NPC", "%s animation finished" % name, {
+		"state": AnimState.keys()[current_anim_state],
+		"is_locked": is_locked
+	})
 	match current_anim_state:
 		AnimState.ATTACK:
 			_set_anim_state(AnimState.IDLE)
 			is_locked = false
+			Debug.log("NPC", "%s UNLOCKED after attack anim" % name)
 		AnimState.HIT:
 			_set_anim_state(AnimState.IDLE)
 		AnimState.DIE:
@@ -341,6 +358,7 @@ func _on_animation_finished() -> void:
 
 ## Combat helpers
 func play_attack() -> void:
+	Debug.log("NPC", "%s play_attack called" % name, {"was_locked": is_locked})
 	is_locked = true
 	_set_anim_state(AnimState.ATTACK)
 

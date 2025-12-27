@@ -63,6 +63,9 @@ func _process(delta: float) -> void:
 func _update_behavior(_delta: float) -> void:
 	## Core behavior logic - runs every frame
 
+	# Check if owner is locked (can't move during attack animation)
+	var owner_locked: bool = _owner.is_locked if "is_locked" in _owner else false
+
 	# If no target, look for one
 	if not _has_valid_target():
 		_try_acquire_target()
@@ -80,6 +83,16 @@ func _update_behavior(_delta: float) -> void:
 
 	# Get distance to target
 	var distance_to_target := _get_distance_to_target()
+
+	# Debug: Log decision every 30 frames
+	if Engine.get_process_frames() % 30 == 0:
+		Debug.log("AI", "%s decision" % _owner.name, {
+			"dist": "%.1f" % distance_to_target,
+			"atk_range": attack_radius,
+			"locked": owner_locked,
+			"move_dir": _owner.move_direction,
+			"velocity": "%.1f" % _owner.velocity.length()
+		})
 
 	# Face target if configured
 	if face_target and _owner.has_method("_update_facing_from_direction"):
@@ -106,6 +119,13 @@ func _do_chase() -> void:
 
 	var direction := _owner.global_position.direction_to(target.global_position)
 	_owner.set_move_direction(direction)
+
+	# Debug: Log when we start chasing (only once per chase start)
+	if _owner.velocity.length() < 1.0:
+		Debug.log("AI", "%s starting chase" % _owner.name, {
+			"dir": direction,
+			"locked": _owner.is_locked
+		})
 
 
 func _do_attack() -> void:
