@@ -50,6 +50,11 @@ var _category_markers: Dictionary = {
 	"Inventory": "[INV]",
 	"System": "[SYS]",
 	"Debug": "[DBG]",
+	"NPC": "[NPC]",
+	"AI": "[AI_]",
+	"Spawner": "[SPN]",
+	"Loot": "[LOT]",
+	"Stats": "[STS]",
 }
 
 ## Level prefixes
