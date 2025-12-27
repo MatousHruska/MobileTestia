@@ -53,6 +53,7 @@ func _setup_visuals() -> void:
 	rarity_border.name = "RarityBorder"
 	rarity_border.set_anchors_preset(PRESET_FULL_RECT)
 	rarity_border.color = Color(0.3, 0.3, 0.3, 0.5)
+	rarity_border.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(rarity_border)
 
 	# Background
@@ -64,6 +65,7 @@ func _setup_visuals() -> void:
 	bg.offset_right = -2
 	bg.offset_bottom = -2
 	bg.color = Color(0.15, 0.15, 0.2, 1.0)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 
 	# Item icon
@@ -76,6 +78,7 @@ func _setup_visuals() -> void:
 	icon_rect.offset_bottom = -4
 	icon_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(icon_rect)
 
 	# Ghost label for empty equipment slots
@@ -88,6 +91,7 @@ func _setup_visuals() -> void:
 	ghost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	ghost_label.add_theme_font_size_override("font_size", 16)
 	ghost_label.modulate = Color(0.4, 0.4, 0.4, 0.6)
+	ghost_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(ghost_label)
 
 	# Quantity label (bottom right)
@@ -101,6 +105,7 @@ func _setup_visuals() -> void:
 	quantity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	quantity_label.add_theme_font_size_override("font_size", 12)
 	quantity_label.visible = false
+	quantity_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(quantity_label)
 
 	# Initialize display
