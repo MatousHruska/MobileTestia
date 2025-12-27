@@ -72,6 +72,16 @@ func _ready() -> void:
 	})
 
 
+## Override placeholder color - GREEN for friendly
+func _get_placeholder_color() -> Color:
+	return Color(0.2, 0.8, 0.3)  ## Green
+
+
+## Override display name
+func _get_display_name() -> String:
+	return npc_name
+
+
 func _exit_tree() -> void:
 	# Unregister from NPCManager
 	if NPCManager:

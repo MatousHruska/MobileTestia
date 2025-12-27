@@ -36,6 +36,9 @@ var is_locked: bool = false  ## Prevents movement during certain actions
 ## Sprite reference
 @onready var sprite: AnimatedSprite2D = $Sprite2D
 
+## Name label
+var name_label: Label
+
 ## Debug
 var _debug_enabled: bool = true
 
@@ -43,6 +46,7 @@ var _debug_enabled: bool = true
 func _ready() -> void:
 	_setup_sprite()
 	_setup_collision()
+	_setup_name_label()
 	if use_y_sorting:
 		y_sort_enabled = true
 	Debug.info("NPC", "%s ready at %s" % [name, global_position])
@@ -90,33 +94,82 @@ func _setup_collision() -> void:
 
 
 func _create_placeholder_sprite() -> void:
-	## Create a simple placeholder sprite for testing
+	## Create a circular placeholder sprite for testing
 	var frames := SpriteFrames.new()
+	var base_color: Color = _get_placeholder_color()
 
-	# Create a basic colored square for each animation
-	var colors := {
-		"idle_down": Color(0.4, 0.6, 0.8),
-		"idle_up": Color(0.4, 0.6, 0.8),
-		"idle_left": Color(0.4, 0.6, 0.8),
-		"idle_right": Color(0.4, 0.6, 0.8),
-		"walk_down": Color(0.3, 0.7, 0.5),
-		"walk_up": Color(0.3, 0.7, 0.5),
-		"walk_left": Color(0.3, 0.7, 0.5),
-		"walk_right": Color(0.3, 0.7, 0.5),
+	# Create slightly different shades for walk animation
+	var idle_color: Color = base_color
+	var walk_color: Color = base_color.lightened(0.15)
+
+	var anims: Dictionary = {
+		"idle_down": idle_color,
+		"idle_up": idle_color,
+		"idle_left": idle_color,
+		"idle_right": idle_color,
+		"walk_down": walk_color,
+		"walk_up": walk_color,
+		"walk_left": walk_color,
+		"walk_right": walk_color,
 	}
 
-	for anim_name in colors:
+	var size: int = 32
+	var radius: float = size / 2.0 - 2.0
+	var center: Vector2 = Vector2(size / 2.0, size / 2.0)
+
+	for anim_name in anims:
 		frames.add_animation(anim_name)
 		frames.set_animation_speed(anim_name, 6.0)
 		frames.set_animation_loop(anim_name, true)
 
-		var image := Image.create(24, 32, false, Image.FORMAT_RGBA8)
-		image.fill(colors[anim_name])
+		# Create circular image
+		var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
+		image.fill(Color.TRANSPARENT)
+
+		# Draw filled circle
+		for x in range(size):
+			for y in range(size):
+				var dist: float = Vector2(x, y).distance_to(center)
+				if dist <= radius:
+					# Add slight border effect
+					if dist > radius - 2:
+						image.set_pixel(x, y, anims[anim_name].darkened(0.3))
+					else:
+						image.set_pixel(x, y, anims[anim_name])
+
 		var texture := ImageTexture.create_from_image(image)
 		frames.add_frame(anim_name, texture)
 
 	sprite.sprite_frames = frames
-	Debug.log("NPC", "Created placeholder sprite for %s" % name)
+	Debug.log("NPC", "Created circular placeholder for %s" % name)
+
+
+## Virtual method - override in child classes to set placeholder color
+func _get_placeholder_color() -> Color:
+	return Color(0.5, 0.5, 0.5)  ## Default gray
+
+
+## Virtual method - override in child classes to get display name
+func _get_display_name() -> String:
+	return name
+
+
+func _setup_name_label() -> void:
+	## Create name label below the sprite
+	name_label = Label.new()
+	name_label.name = "NameLabel"
+	name_label.text = _get_display_name()
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.position = Vector2(-50, 16)  ## Below the sprite
+	name_label.size = Vector2(100, 20)
+
+	# Style the label
+	name_label.add_theme_font_size_override("font_size", 10)
+	name_label.add_theme_color_override("font_color", Color.WHITE)
+	name_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	name_label.add_theme_constant_override("outline_size", 2)
+
+	add_child(name_label)
 
 
 ## Movement processing

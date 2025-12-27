@@ -88,6 +88,16 @@ func _ready() -> void:
 	})
 
 
+## Override placeholder color - RED for hostile
+func _get_placeholder_color() -> Color:
+	return Color(0.9, 0.2, 0.2)  ## Red
+
+
+## Override display name
+func _get_display_name() -> String:
+	return enemy_name
+
+
 func _exit_tree() -> void:
 	# Unregister from NPCManager
 	if NPCManager:
