@@ -178,16 +178,18 @@ func _evaluate_attack() -> void:
 		_change_state(AIState.IDLE)
 		return
 
-	var distance := _get_distance_to_target()
+	var distance: float = _get_distance_to_target()
 
 	# Check flee conditions
 	if _should_flee():
 		_change_state(AIState.FLEE)
 		return
 
-	# If target moved out of range
-	if distance > attack_radius * 1.2:  ## Small buffer to prevent flickering
+	# If target moved out of range - chase them
+	if distance > attack_radius * 1.5:
+		Debug.log("AI", "Target out of attack range, chasing", ["distance:", distance, "attack_radius:", attack_radius])
 		_change_state(AIState.CHASE)
+		return
 
 
 func _evaluate_flee() -> void:
