@@ -270,7 +270,7 @@ func print_state() -> void:
 func print_all_enemies() -> void:
 	Debug.info("NPC", "=== ALL ENEMIES ===")
 	for i in range(all_enemies.size()):
-		var enemy := all_enemies[i]
+		var enemy: Node2D = all_enemies[i]
 		if is_instance_valid(enemy):
 			Debug.info("NPC", "[%d] %s" % [i, enemy.enemy_name], {
 				"pos": enemy.global_position,
@@ -281,10 +281,10 @@ func print_all_enemies() -> void:
 
 func print_all_friendlies() -> void:
 	Debug.info("NPC", "=== ALL FRIENDLIES ===")
-	var pattern_names := ["STATIC", "WANDER", "PATROL"]
+	var pattern_names: Array = ["STATIC", "WANDER", "PATROL"]
 	for npc in all_friendlies:
 		if is_instance_valid(npc):
-			var pattern := pattern_names[npc.movement_pattern] if npc.movement_pattern < pattern_names.size() else "UNKNOWN"
+			var pattern: String = pattern_names[npc.movement_pattern] if npc.movement_pattern < pattern_names.size() else "UNKNOWN"
 			Debug.info("NPC", "%s" % npc.npc_name, {
 				"id": npc.npc_id,
 				"pattern": pattern,
@@ -314,7 +314,7 @@ func export_npc_state() -> String:
 	output += "--- Enemies ---\n"
 	for enemy in all_enemies:
 		if is_instance_valid(enemy):
-			var ai_state := enemy.ai_state_machine.get_state_name() if enemy.ai_state_machine else "none"
+			var ai_state: String = enemy.ai_state_machine.get_state_name() if enemy.ai_state_machine else "none"
 			output += "  %s [Lv%d]: HP=%d/%d, State=%s, Pos=%s\n" % [
 				enemy.enemy_name,
 				enemy.enemy_level,
@@ -325,10 +325,10 @@ func export_npc_state() -> String:
 			]
 
 	output += "\n--- Friendlies ---\n"
-	var pattern_names := ["STATIC", "WANDER", "PATROL"]
+	var pattern_names_export: Array = ["STATIC", "WANDER", "PATROL"]
 	for npc in all_friendlies:
 		if is_instance_valid(npc):
-			var pattern := pattern_names[npc.movement_pattern] if npc.movement_pattern < pattern_names.size() else "UNKNOWN"
+			var pattern: String = pattern_names_export[npc.movement_pattern] if npc.movement_pattern < pattern_names_export.size() else "UNKNOWN"
 			output += "  %s [%s]: Pattern=%s, Interactable=%s\n" % [
 				npc.npc_name,
 				npc.npc_id,
