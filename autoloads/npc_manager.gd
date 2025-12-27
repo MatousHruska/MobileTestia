@@ -179,8 +179,8 @@ func debug_damage_all_enemies(amount: float) -> void:
 func debug_freeze_all_ai() -> void:
 	Debug.info("Debug", "Freezing all AI")
 	for enemy in all_enemies:
-		if is_instance_valid(enemy) and enemy.ai_state_machine:
-			enemy.ai_state_machine.force_state(0)  # AIStateMachine.AIState.IDLE
+		if is_instance_valid(enemy) and enemy.behavior:
+			enemy.behavior.reset()  # Reset to idle state
 
 
 func debug_aggro_all() -> void:
@@ -190,15 +190,14 @@ func debug_aggro_all() -> void:
 		return
 
 	for enemy in all_enemies:
-		if is_instance_valid(enemy) and enemy.ai_state_machine:
-			enemy.ai_state_machine.force_target(Game.player)
+		if is_instance_valid(enemy) and enemy.behavior:
+			enemy.behavior.force_target(Game.player)
 
 
-func debug_stun_all(duration: float = 3.0) -> void:
-	Debug.info("Debug", "Stunning all enemies", ["duration:", duration])
-	for enemy in all_enemies:
-		if is_instance_valid(enemy) and enemy.ai_state_machine:
-			enemy.ai_state_machine.apply_stun(duration)
+func debug_stun_all(_duration: float = 3.0) -> void:
+	Debug.info("Debug", "Stun not implemented in simplified AI")
+	# Simplified behavior system doesn't have stun - just freeze them
+	debug_freeze_all_ai()
 
 
 func debug_spawn_enemy_at_player(scene_path: String = "") -> void:
@@ -275,7 +274,7 @@ func print_all_enemies() -> void:
 			Debug.info("NPC", "[%d] %s" % [i, enemy.enemy_name], {
 				"pos": enemy.global_position,
 				"health": "%d/%d" % [int(enemy.current_health), int(enemy.max_health)],
-				"state": enemy.ai_state_machine.get_state_name() if enemy.ai_state_machine else "none"
+				"state": enemy.behavior.get_state_name() if enemy.behavior else "none"
 			})
 
 
@@ -314,7 +313,7 @@ func export_npc_state() -> String:
 	output += "--- Enemies ---\n"
 	for enemy in all_enemies:
 		if is_instance_valid(enemy):
-			var ai_state: String = enemy.ai_state_machine.get_state_name() if enemy.ai_state_machine else "none"
+			var ai_state: String = enemy.behavior.get_state_name() if enemy.behavior else "none"
 			output += "  %s [Lv%d]: HP=%d/%d, State=%s, Pos=%s\n" % [
 				enemy.enemy_name,
 				enemy.enemy_level,

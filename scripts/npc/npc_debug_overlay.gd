@@ -27,18 +27,11 @@ var color_velocity := Color(0.0, 1.0, 1.0, 0.7)
 var color_friendly := Color(0.3, 0.8, 1.0, 0.8)
 var color_enemy := Color(1.0, 0.4, 0.4, 0.8)
 
-## State colors for AI
+## State colors for AI (using EnemyBehavior states)
 var ai_state_colors := {
-	AIStateMachine.AIState.IDLE: Color(0.5, 0.5, 0.5),
-	AIStateMachine.AIState.PATROL: Color(0.3, 0.6, 1.0),
-	AIStateMachine.AIState.AGGRO: Color(1.0, 0.6, 0.0),
-	AIStateMachine.AIState.CHASE: Color(1.0, 0.4, 0.0),
-	AIStateMachine.AIState.ATTACK: Color(1.0, 0.0, 0.0),
-	AIStateMachine.AIState.FLEE: Color(0.8, 0.8, 0.0),
-	AIStateMachine.AIState.KITE: Color(0.6, 0.0, 0.8),
-	AIStateMachine.AIState.BLOCK: Color(0.0, 0.5, 1.0),
-	AIStateMachine.AIState.STUNNED: Color(0.6, 0.6, 0.6),
-	AIStateMachine.AIState.DEAD: Color(0.3, 0.3, 0.3),
+	EnemyBehavior.State.IDLE: Color(0.5, 0.5, 0.5),
+	EnemyBehavior.State.COMBAT: Color(1.0, 0.3, 0.0),
+	EnemyBehavior.State.DEAD: Color(0.3, 0.3, 0.3),
 }
 
 ## Drawing node
@@ -107,12 +100,12 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 	var screen_pos: Vector2 = _world_to_screen(enemy.global_position, camera)
 
 	# Detection radius
-	if show_detection_radii and enemy.ai_state_machine:
+	if show_detection_radii and enemy.behavior:
 		var radius: float = enemy.detection_radius * camera.zoom.x
 		draw_node.draw_arc(screen_pos, radius, 0, TAU, 32, color_detection, 2.0)
 
 	# Attack radius
-	if show_attack_radii and enemy.ai_state_machine:
+	if show_attack_radii and enemy.behavior:
 		var radius: float = enemy.attack_radius * camera.zoom.x
 		draw_node.draw_arc(screen_pos, radius, 0, TAU, 24, color_attack, 2.0)
 
@@ -121,18 +114,18 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 		_draw_health_bar(screen_pos + Vector2(-20, -30), 40, 6, enemy.get_health_percent())
 
 	# AI State label
-	if show_ai_states and enemy.ai_state_machine:
-		var state_name: String = enemy.ai_state_machine.get_state_name()
-		var state_color: Color = ai_state_colors.get(enemy.ai_state_machine.current_state, Color.WHITE)
+	if show_ai_states and enemy.behavior:
+		var state_name: String = enemy.behavior.get_state_name()
+		var state_color: Color = ai_state_colors.get(enemy.behavior.state, Color.WHITE)
 		_draw_label(screen_pos + Vector2(0, -40), state_name, state_color)
 
-		# Archetype in smaller text
-		var archetype_name: String = enemy.ai_state_machine.get_archetype_name()
-		_draw_label(screen_pos + Vector2(0, -52), "[%s]" % archetype_name, Color(0.7, 0.7, 0.7), 10)
+		# Show if has target
+		if enemy.behavior.has_target():
+			_draw_label(screen_pos + Vector2(0, -52), "[TARGETING]", Color(1.0, 0.5, 0.0), 10)
 
 	# Target line
-	if show_target_lines and enemy.ai_state_machine and enemy.ai_state_machine.target:
-		var target_pos: Vector2 = _world_to_screen(enemy.ai_state_machine.target.global_position, camera)
+	if show_target_lines and enemy.behavior and enemy.behavior.target:
+		var target_pos: Vector2 = _world_to_screen(enemy.behavior.target.global_position, camera)
 		draw_node.draw_line(screen_pos, target_pos, color_target_line, 2.0)
 
 	# Facing arrow
@@ -147,9 +140,11 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 		var vel_vec: Vector2 = enemy.velocity.normalized() * 30 * camera.zoom.x
 		draw_node.draw_line(screen_pos, screen_pos + vel_vec, color_velocity, 1.5)
 
-	# Patrol path
-	if show_patrol_paths and not enemy.patrol_points.is_empty():
-		_draw_patrol_path(enemy.home_position, enemy.patrol_points, camera)
+	# Leash radius (area enemy will chase within)
+	if show_patrol_paths and enemy.behavior:
+		var leash_screen: Vector2 = _world_to_screen(enemy.home_position, camera)
+		var leash_radius: float = enemy.leash_radius * camera.zoom.x
+		draw_node.draw_arc(leash_screen, leash_radius, 0, TAU, 32, Color(0.5, 0.3, 0.3, 0.2), 1.5)
 
 
 func _draw_friendly(npc: Node2D, camera: Camera2D) -> void:
