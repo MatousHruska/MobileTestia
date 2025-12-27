@@ -105,9 +105,10 @@ func _create_placeholder_sprite() -> void:
 	var frames := SpriteFrames.new()
 	var base_color: Color = _get_placeholder_color()
 
-	# Create slightly different shades for walk animation
+	# Create slightly different shades for different states
 	var idle_color: Color = base_color
 	var walk_color: Color = base_color.lightened(0.15)
+	var attack_color: Color = base_color.lightened(0.4)  # Brighter for attack
 
 	var anims: Dictionary = {
 		"idle_down": idle_color,
@@ -118,6 +119,10 @@ func _create_placeholder_sprite() -> void:
 		"walk_up": walk_color,
 		"walk_left": walk_color,
 		"walk_right": walk_color,
+		"attack_down": attack_color,
+		"attack_up": attack_color,
+		"attack_left": attack_color,
+		"attack_right": attack_color,
 	}
 
 	var size: int = 32
@@ -127,25 +132,39 @@ func _create_placeholder_sprite() -> void:
 	for anim_name in anims:
 		frames.add_animation(anim_name)
 		frames.set_animation_speed(anim_name, 6.0)
-		frames.set_animation_loop(anim_name, true)
+		# Attack animations should NOT loop (play once, then finish)
+		var is_attack: bool = anim_name.begins_with("attack")
+		frames.set_animation_loop(anim_name, not is_attack)
 
-		# Create circular image
-		var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
-		image.fill(Color.TRANSPARENT)
+		# Attack gets multiple frames for visual effect (3 frames = 0.5s at 6fps)
+		var frame_count: int = 3 if is_attack else 1
 
-		# Draw filled circle
-		for x in range(size):
-			for y in range(size):
-				var dist: float = Vector2(x, y).distance_to(center)
-				if dist <= radius:
-					# Add slight border effect
-					if dist > radius - 2:
-						image.set_pixel(x, y, anims[anim_name].darkened(0.3))
-					else:
-						image.set_pixel(x, y, anims[anim_name])
+		for frame_idx in range(frame_count):
+			# Create circular image
+			var image := Image.create(size, size, false, Image.FORMAT_RGBA8)
+			image.fill(Color.TRANSPARENT)
 
-		var texture := ImageTexture.create_from_image(image)
-		frames.add_frame(anim_name, texture)
+			# For attack, pulse the size/brightness across frames
+			var frame_radius: float = radius
+			var frame_color: Color = anims[anim_name]
+			if is_attack:
+				var pulse: float = 1.0 + 0.2 * sin(frame_idx * PI / 2)  # Pulse effect
+				frame_radius = radius * pulse
+				frame_color = frame_color.lightened(0.1 * frame_idx)
+
+			# Draw filled circle
+			for x in range(size):
+				for y in range(size):
+					var dist: float = Vector2(x, y).distance_to(center)
+					if dist <= frame_radius:
+						# Add slight border effect
+						if dist > frame_radius - 2:
+							image.set_pixel(x, y, frame_color.darkened(0.3))
+						else:
+							image.set_pixel(x, y, frame_color)
+
+			var texture := ImageTexture.create_from_image(image)
+			frames.add_frame(anim_name, texture)
 
 	sprite.sprite_frames = frames
 	Debug.log("NPC", "Created circular placeholder for %s" % name)
@@ -269,6 +288,9 @@ func _set_anim_state(state: AnimState) -> void:
 
 func _play_animation_for_state(state: AnimState) -> void:
 	if not sprite or not sprite.sprite_frames:
+		# No sprite - unlock immediately if attack
+		if state == AnimState.ATTACK:
+			_unlock_after_attack()
 		return
 
 	var anim_name := _get_animation_name(state, current_facing)
@@ -281,6 +303,18 @@ func _play_animation_for_state(state: AnimState) -> void:
 		sprite.play(anim_name)
 	else:
 		Debug.warn("NPC", "Animation not found: %s" % anim_name)
+		# If attack animation missing, unlock after a brief delay
+		if state == AnimState.ATTACK:
+			_unlock_after_attack()
+
+
+func _unlock_after_attack() -> void:
+	## Safety unlock when attack animation doesn't exist
+	get_tree().create_timer(0.3).timeout.connect(func():
+		if current_anim_state == AnimState.ATTACK:
+			is_locked = false
+			_set_anim_state(AnimState.IDLE)
+	)
 
 
 func _get_animation_name(state: AnimState, facing: Facing) -> String:
