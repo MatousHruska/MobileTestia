@@ -236,19 +236,31 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	spacer.size_flags_vertical = SIZE_EXPAND_FILL
 	info_container.add_child(spacer)
 
-	# Action buttons
-	var button_row := HBoxContainer.new()
-	button_row.name = "ActionButtons"
-	button_row.add_theme_constant_override("separation", 8)
-	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	info_container.add_child(button_row)
+	# Action buttons container (two rows)
+	var buttons_container := VBoxContainer.new()
+	buttons_container.name = "ButtonsContainer"
+	buttons_container.add_theme_constant_override("separation", 4)
+	info_container.add_child(buttons_container)
+
+	# Top row - Equip/Quick Slot button (separate to avoid dynamic stretching)
+	var top_button_row := HBoxContainer.new()
+	top_button_row.name = "TopButtonRow"
+	top_button_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons_container.add_child(top_button_row)
 
 	action_equip_button = Button.new()
 	action_equip_button.name = "EquipButton"
 	action_equip_button.text = "Equip"
-	action_equip_button.custom_minimum_size = Vector2(80, 40)
+	action_equip_button.custom_minimum_size = Vector2(120, 40)
 	action_equip_button.pressed.connect(_on_equip_pressed)
-	button_row.add_child(action_equip_button)
+	top_button_row.add_child(action_equip_button)
+
+	# Bottom row - Use, Swap, Destroy buttons
+	var button_row := HBoxContainer.new()
+	button_row.name = "ActionButtons"
+	button_row.add_theme_constant_override("separation", 8)
+	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	buttons_container.add_child(button_row)
 
 	action_use_button = Button.new()
 	action_use_button.name = "UseButton"
