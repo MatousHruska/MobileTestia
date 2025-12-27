@@ -116,14 +116,14 @@ Private Function GetOrCreateSheet(ByVal sheetName As String) As Worksheet
 End Function
 
 '-------------------------------------------------------------------------------
-' Helper: Set headers for a sheet
+' Helper: Set headers for a sheet (0-based array)
 '-------------------------------------------------------------------------------
-Private Sub SetHeaders(ByVal ws As Worksheet, ByRef headers() As String)
+Private Sub SetHeaders(ByVal ws As Worksheet, ByRef headers As Variant)
     Dim col As Integer
-    For col = LBound(headers) To UBound(headers)
-        ws.Cells(1, col).value = headers(col)
-        ws.Cells(1, col).Font.Bold = True
-        ws.Cells(1, col).Interior.Color = RGB(200, 200, 200)
+    For col = 0 To UBound(headers)
+        ws.Cells(1, col + 1).value = headers(col)
+        ws.Cells(1, col + 1).Font.Bold = True
+        ws.Cells(1, col + 1).Interior.Color = RGB(200, 200, 200)
     Next col
     ws.Rows(1).AutoFilter
 End Sub
@@ -134,113 +134,102 @@ End Sub
 Private Sub SetupItemBasesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("ItemBases")
-    Dim headers() As String
-    headers = Split("id,name,slot,item_type,base_damage,attack_speed,base_armor,req_str,req_dex,req_int,allowed_affix_tags,description", ",")
-    ReDim Preserve headers(1 To 12)
-    Dim i As Integer
-    For i = 1 To 12
-        headers(i) = Split("id,name,slot,item_type,base_damage,attack_speed,base_armor,req_str,req_dex,req_int,allowed_affix_tags,description", ",")(i - 1)
-    Next i
+    Dim headers As Variant
+    headers = Array("id", "name", "slot", "item_type", "base_damage", "attack_speed", _
+                    "base_armor", "req_str", "req_dex", "req_int", "allowed_affix_tags", "description")
     SetHeaders ws, headers
 End Sub
 
 Private Sub SetupAffixesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("Affixes")
-    Dim h(1 To 10) As String
-    h(1) = "id": h(2) = "name": h(3) = "type": h(4) = "stat_modifier"
-    h(5) = "min_value": h(6) = "max_value": h(7) = "spawn_weight"
-    h(8) = "item_level_min": h(9) = "item_level_max": h(10) = "allowed_tags"
-    SetHeaders ws, h
+    Dim headers As Variant
+    headers = Array("id", "name", "type", "stat_modifier", "min_value", "max_value", _
+                    "spawn_weight", "item_level_min", "item_level_max", "allowed_tags")
+    SetHeaders ws, headers
 End Sub
 
 Private Sub SetupUniqueItemsSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("UniqueItems")
-    Dim h(1 To 8) As String
-    h(1) = "id": h(2) = "name": h(3) = "base_id": h(4) = "fixed_stats"
-    h(5) = "special_ability": h(6) = "lore_text": h(7) = "drop_weight": h(8) = "min_level"
-    SetHeaders ws, h
+    Dim headers As Variant
+    headers = Array("id", "name", "base_id", "fixed_stats", "special_ability", _
+                    "lore_text", "drop_weight", "min_level")
+    SetHeaders ws, headers
 End Sub
 
 Private Sub SetupEnemiesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("Enemies")
-    Dim h(1 To 14) As String
-    h(1) = "id": h(2) = "name": h(3) = "type": h(4) = "base_health"
-    h(5) = "base_damage": h(6) = "armor": h(7) = "move_speed": h(8) = "attack_speed"
-    h(9) = "attack_range": h(10) = "detection_range": h(11) = "xp_reward"
-    h(12) = "loot_table_id": h(13) = "ability_ids": h(14) = "description"
-    SetHeaders ws, h
+    Dim headers As Variant
+    headers = Array("id", "name", "type", "base_health", "base_damage", "armor", _
+                    "move_speed", "attack_speed", "attack_range", "detection_range", _
+                    "xp_reward", "loot_table_id", "ability_ids", "description")
+    SetHeaders ws, headers
 End Sub
 
 Private Sub SetupEnemyAbilitiesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("EnemyAbilities")
-    Dim h(1 To 8) As String
-    h(1) = "id": h(2) = "name": h(3) = "type": h(4) = "damage"
-    h(5) = "damage_type": h(6) = "cooldown": h(7) = "range": h(8) = "description"
-    SetHeaders ws, h
+    Dim headers As Variant
+    headers = Array("id", "name", "type", "damage", "damage_type", "cooldown", "range", "description")
+    SetHeaders ws, headers
 End Sub
 
 Private Sub SetupEnemyVariantsSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("EnemyVariants")
-    Dim h(1 To 7) As String
-    h(1) = "id": h(2) = "name": h(3) = "health_multiplier": h(4) = "damage_multiplier"
-    h(5) = "xp_multiplier": h(6) = "extra_abilities": h(7) = "visual_effect"
-    SetHeaders ws, h
+    Dim headers As Variant
+    headers = Array("id", "name", "health_multiplier", "damage_multiplier", _
+                    "xp_multiplier", "extra_abilities", "visual_effect")
+    SetHeaders ws, headers
 End Sub
 
 Private Sub SetupLootTablesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("LootTables")
-    Dim h(1 To 13) As String
-    h(1) = "id": h(2) = "name": h(3) = "min_drops": h(4) = "max_drops"
-    h(5) = "nothing_weight": h(6) = "common_weight": h(7) = "magic_weight"
-    h(8) = "rare_weight": h(9) = "unique_weight": h(10) = "gold_min"
-    h(11) = "gold_max": h(12) = "item_pool": h(13) = "guaranteed_drops"
-    SetHeaders ws, h
+    Dim headers As Variant
+    headers = Array("id", "name", "min_drops", "max_drops", "nothing_weight", _
+                    "common_weight", "magic_weight", "rare_weight", "unique_weight", _
+                    "gold_min", "gold_max", "item_pool", "guaranteed_drops")
+    SetHeaders ws, headers
 End Sub
 
 Private Sub SetupSkillsSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("Skills")
-    Dim h(1 To 18) As String
-    h(1) = "id": h(2) = "name": h(3) = "type": h(4) = "tree": h(5) = "tier"
-    h(6) = "max_level": h(7) = "mana_cost": h(8) = "stamina_cost": h(9) = "cooldown"
-    h(10) = "base_damage": h(11) = "damage_per_level": h(12) = "effect_type"
-    h(13) = "effect_value": h(14) = "effect_per_level": h(15) = "duration"
-    h(16) = "prerequisite_ids": h(17) = "description": h(18) = "icon_name"
-    SetHeaders ws, h
+    Dim headers As Variant
+    headers = Array("id", "name", "type", "tree", "tier", "max_level", "mana_cost", _
+                    "stamina_cost", "cooldown", "base_damage", "damage_per_level", _
+                    "effect_type", "effect_value", "effect_per_level", "duration", _
+                    "prerequisite_ids", "description", "icon_name")
+    SetHeaders ws, headers
 End Sub
 
 Private Sub SetupQuestsSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("Quests")
-    Dim h(1 To 13) As String
-    h(1) = "id": h(2) = "name": h(3) = "type": h(4) = "giver_npc": h(5) = "min_level"
-    h(6) = "prerequisite_quests": h(7) = "objective_ids": h(8) = "xp_reward"
-    h(9) = "gold_reward": h(10) = "item_rewards": h(11) = "loot_table_reward"
-    h(12) = "description": h(13) = "completion_text"
-    SetHeaders ws, h
+    Dim headers As Variant
+    headers = Array("id", "name", "type", "giver_npc", "min_level", "prerequisite_quests", _
+                    "objective_ids", "xp_reward", "gold_reward", "item_rewards", _
+                    "loot_table_reward", "description", "completion_text")
+    SetHeaders ws, headers
 End Sub
 
 Private Sub SetupQuestObjectivesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("QuestObjectives")
-    Dim h(1 To 6) As String
-    h(1) = "id": h(2) = "type": h(3) = "target_id": h(4) = "count"
-    h(5) = "description": h(6) = "optional"
-    SetHeaders ws, h
+    Dim headers As Variant
+    headers = Array("id", "type", "target_id", "count", "description", "optional")
+    SetHeaders ws, headers
 End Sub
 
 Private Sub SetupStatModifiersSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("StatModifiers")
-    Dim h(1 To 4) As String
-    h(1) = "id": h(2) = "display_name": h(3) = "category": h(4) = "description"
-    SetHeaders ws, h
+    Dim headers As Variant
+    headers = Array("id", "display_name", "category", "description")
+    SetHeaders ws, headers
 
     ' Pre-populate with valid stat modifiers
     Dim stats As Variant
@@ -253,19 +242,19 @@ Private Sub SetupStatModifiersSheet()
 
     Dim row As Integer
     row = 2
-    Dim stat As Variant
-    For Each stat In stats
-        ws.Cells(row, 1).value = stat
+    Dim i As Integer
+    For i = 0 To UBound(stats)
+        ws.Cells(row, 1).value = stats(i)
         row = row + 1
-    Next stat
+    Next i
 End Sub
 
 Private Sub SetupRaritiesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("Rarities")
-    Dim h(1 To 5) As String
-    h(1) = "id": h(2) = "name": h(3) = "color_hex": h(4) = "affix_count": h(5) = "drop_weight"
-    SetHeaders ws, h
+    Dim headers As Variant
+    headers = Array("id", "name", "color_hex", "affix_count", "drop_weight")
+    SetHeaders ws, headers
 
     ' Pre-populate with standard rarities
     ws.Cells(2, 1).value = "common": ws.Cells(2, 2).value = "Common"
