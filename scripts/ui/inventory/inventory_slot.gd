@@ -176,7 +176,7 @@ func refresh_display() -> void:
 		else:
 			ghost_label.visible = false
 
-	# Handle blocked state (e.g., off-hand with two-handed weapon)
+	# Handle blocked state
 	if is_blocked:
 		modulate = Color(0.5, 0.5, 0.5, 0.5)
 		disabled = true

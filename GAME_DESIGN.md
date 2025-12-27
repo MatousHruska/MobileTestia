@@ -95,9 +95,11 @@
 **Slots:**
 - **Head:** (Visual change - Sprite Swap).
 - **Body:** (Stats only).
+- **Hands:** (Stats only).
+- **Boots:** (Stats only).
 - **Main Hand:** (Weapon - Visual change - Sprite Swap).
-- **Off Hand:** (Shield/Orb - Visual change if capacity allows).
-- **Accessory 1 & 2:** (Stats only).
+- **Ring & Amulet:** (Stats only).
+- **Quick Slot:** (Consumable item for quick use).
 **Backpack:** Grid-based (e.g., 20 slots). Drag-and-drop or Tap-to-Equip.
 
 ---

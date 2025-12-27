@@ -6,7 +6,7 @@ class_name CharacterMenu
 signal menu_opened
 signal menu_closed
 
-enum Tab { STATS, INVENTORY, SKILLS, QUESTS, MENU }
+enum Tab { INVENTORY, STATS, SKILLS, QUESTS, MENU }
 
 ## References
 @onready var panel_container: Control = $MenuPanel
@@ -38,7 +38,7 @@ enum Tab { STATS, INVENTORY, SKILLS, QUESTS, MENU }
 @onready var confirm_popup: ConfirmationDialog = $ConfirmPopup
 
 ## State
-var current_tab: Tab = Tab.STATS
+var current_tab: Tab = Tab.INVENTORY
 var is_open: bool = false
 
 ## Tab button references for easy iteration
@@ -47,6 +47,9 @@ var _panels: Array[Control] = []
 
 ## Inventory panel instance (created dynamically)
 var _inventory_panel_instance: InventoryPanel = null
+
+## Stats panel instance (created dynamically)
+var _stats_panel_instance: StatsPanel = null
 
 
 func _ready() -> void:
@@ -75,8 +78,8 @@ func _setup_confirm_popup() -> void:
 
 
 func _setup_tabs() -> void:
-	_tab_buttons = [stats_tab, inventory_tab, skills_tab, quests_tab, menu_tab]
-	_panels = [stats_panel, inventory_panel, skills_panel, quests_panel, menu_panel]
+	_tab_buttons = [inventory_tab, stats_tab, skills_tab, quests_tab, menu_tab]
+	_panels = [inventory_panel, stats_panel, skills_panel, quests_panel, menu_panel]
 
 	# Connect tab buttons
 	if stats_tab:
@@ -100,8 +103,11 @@ func _setup_tabs() -> void:
 	# Setup the inventory panel (replaces old content)
 	_setup_inventory_panel()
 
+	# Setup the stats panel (replaces old content)
+	_setup_stats_panel()
+
 	# Show default tab
-	_switch_to_tab(Tab.STATS)
+	_switch_to_tab(Tab.INVENTORY)
 
 
 func _setup_menu_buttons() -> void:
@@ -131,6 +137,23 @@ func _setup_inventory_panel() -> void:
 	inventory_panel.add_child(_inventory_panel_instance)
 
 	Debug.info("UI", "Unified InventoryPanel created")
+
+
+func _setup_stats_panel() -> void:
+	if not stats_panel:
+		return
+
+	# Clear old stats panel content
+	for child in stats_panel.get_children():
+		child.queue_free()
+
+	# Create new stats panel
+	_stats_panel_instance = StatsPanel.new()
+	_stats_panel_instance.name = "DynamicStatsPanel"
+	_stats_panel_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
+	stats_panel.add_child(_stats_panel_instance)
+
+	Debug.info("UI", "StatsPanel created")
 
 
 func _input(event: InputEvent) -> void:
@@ -184,7 +207,8 @@ func _refresh_current_panel() -> void:
 
 
 func _refresh_stats_panel() -> void:
-	# TODO: Populate with actual player stats
+	if _stats_panel_instance:
+		_stats_panel_instance.refresh_display()
 	Debug.log("UI", "Refreshing stats panel")
 
 
@@ -253,7 +277,7 @@ func _on_exit_game_pressed() -> void:
 
 
 ## Public interface
-func open_menu(start_tab: Tab = Tab.STATS) -> void:
+func open_menu(start_tab: Tab = Tab.INVENTORY) -> void:
 	if is_open:
 		return
 
@@ -304,3 +328,13 @@ func print_state() -> void:
 ## Debug: Add test items to inventory
 func debug_add_test_items() -> void:
 	Inventory.debug_add_test_items()
+
+
+## Debug: Add stat points
+func debug_add_stat_points(amount: int = 10) -> void:
+	PlayerStats.debug_add_points(amount)
+
+
+## Debug: Add experience
+func debug_add_experience(amount: int = 500) -> void:
+	PlayerStats.debug_add_experience(amount)
