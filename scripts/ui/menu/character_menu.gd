@@ -170,6 +170,10 @@ func _on_tab_pressed(tab: Tab) -> void:
 func _switch_to_tab(tab: Tab) -> void:
 	current_tab = tab
 
+	# Clear inventory selection state when switching tabs
+	Inventory.exit_swap_mode()
+	Inventory.deselect()
+
 	# Update button states
 	for i in range(_tab_buttons.size()):
 		var btn := _tab_buttons[i]
@@ -295,7 +299,8 @@ func close_menu() -> void:
 	is_open = false
 	visible = false
 
-	# Deselect any item
+	# Clear inventory selection state
+	Inventory.exit_swap_mode()
 	Inventory.deselect()
 
 	# Resume game
