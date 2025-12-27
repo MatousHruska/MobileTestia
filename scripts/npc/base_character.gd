@@ -25,12 +25,6 @@ enum AnimState { IDLE, WALK, ATTACK, HIT, DIE }
 @export var sprite_frames: SpriteFrames
 @export var use_y_sorting: bool = true
 
-## Visibility settings
-@export_group("Visibility")
-@export var visibility_full_distance: float = 150.0  ## Full opacity within this range
-@export var visibility_fade_distance: float = 300.0  ## Fade to min opacity at this range
-@export var visibility_min_opacity: float = 0.4  ## Minimum opacity when far away
-
 ## Current state
 var current_facing: Facing = Facing.DOWN
 var current_anim_state: AnimState = AnimState.IDLE
@@ -65,37 +59,22 @@ func _physics_process(delta: float) -> void:
 	_process_movement(delta)
 	move_and_slide()
 	_update_animation()
-	_update_visibility()
 
 	if _debug_enabled:
 		Debug.trace("NPC", "%s velocity" % name, velocity)
 
 
-## Update visibility based on distance to player
-func _update_visibility() -> void:
-	if not Game.is_player_valid():
-		modulate.a = 1.0
-		return
-
-	var distance: float = get_distance_to_player()
-
-	if distance <= visibility_full_distance:
-		modulate.a = 1.0
-	elif distance >= visibility_fade_distance:
-		modulate.a = visibility_min_opacity
-	else:
-		# Lerp between full and min opacity
-		var t: float = (distance - visibility_full_distance) / (visibility_fade_distance - visibility_full_distance)
-		modulate.a = lerpf(1.0, visibility_min_opacity, t)
-
-
 ## Setup functions
 func _setup_sprite() -> void:
-	if not sprite:
-		# Create sprite if not present
-		sprite = AnimatedSprite2D.new()
-		sprite.name = "Sprite2D"
-		add_child(sprite)
+	# Remove any existing sprite to ensure clean setup
+	if sprite:
+		sprite.queue_free()
+		sprite = null
+
+	# Always create a new AnimatedSprite2D
+	sprite = AnimatedSprite2D.new()
+	sprite.name = "Sprite2D"
+	add_child(sprite)
 
 	if sprite_frames:
 		sprite.sprite_frames = sprite_frames
