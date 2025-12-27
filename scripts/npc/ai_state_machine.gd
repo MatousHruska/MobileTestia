@@ -261,8 +261,8 @@ func _process_patrol(delta: float) -> void:
 		return
 
 	# Get current target (relative to initial position)
-	var target_pos := owner_character.home_position + patrol_points[_patrol_index] if owner_character.has_method("get") else patrol_points[_patrol_index]
-	var distance := owner_character.global_position.distance_to(target_pos)
+	var target_pos: Vector2 = owner_character.home_position + patrol_points[_patrol_index] if owner_character.has_method("get") else patrol_points[_patrol_index]
+	var distance: float = owner_character.global_position.distance_to(target_pos)
 
 	if distance < 8.0:
 		# Reached point
@@ -270,14 +270,14 @@ func _process_patrol(delta: float) -> void:
 		_patrol_index = (_patrol_index + 1) % patrol_points.size()
 		Debug.log("AI", "Patrol point reached", ["index:", _patrol_index])
 	else:
-		var direction := owner_character.global_position.direction_to(target_pos)
+		var direction: Vector2 = owner_character.global_position.direction_to(target_pos)
 		owner_character.set_move_direction(direction)
 
 
 func _process_aggro() -> void:
 	# Face target during aggro
 	if _has_valid_target():
-		var direction := owner_character.get_direction_to_player()
+		var direction: Vector2 = owner_character.get_direction_to_player()
 		owner_character._update_facing_from_direction(direction)
 	owner_character.stop_movement()
 
@@ -286,7 +286,7 @@ func _process_chase() -> void:
 	if not _has_valid_target():
 		return
 
-	var direction := owner_character.get_direction_to_player()
+	var direction: Vector2 = owner_character.get_direction_to_player()
 	owner_character.set_move_direction(direction)
 
 
@@ -303,7 +303,7 @@ func _process_flee() -> void:
 		return
 
 	# Move away from target
-	var direction := -owner_character.get_direction_to_player()
+	var direction: Vector2 = -owner_character.get_direction_to_player()
 	owner_character.set_move_direction(direction)
 
 
@@ -311,16 +311,16 @@ func _process_kite(delta: float) -> void:
 	if not _has_valid_target():
 		return
 
-	var distance := _get_distance_to_target()
-	var to_player := owner_character.get_direction_to_player()
+	var distance: float = _get_distance_to_target()
+	var to_player: Vector2 = owner_character.get_direction_to_player()
 
 	# Strafe around player while maintaining distance
-	var strafe := to_player.rotated(PI / 2)  ## Perpendicular
-	var desired_distance := preferred_distance
+	var strafe: Vector2 = to_player.rotated(PI / 2)  ## Perpendicular
+	var desired_distance: float = preferred_distance
 
 	if distance < desired_distance:
 		# Back away while strafing
-		var direction := (-to_player * 0.7 + strafe * 0.3).normalized()
+		var direction: Vector2 = (-to_player * 0.7 + strafe * 0.3).normalized()
 		owner_character.set_move_direction(direction)
 	else:
 		# Strafe in place
@@ -380,7 +380,7 @@ func _get_distance_to_target() -> float:
 func _can_detect_player() -> bool:
 	if not Game.is_player_valid():
 		return false
-	var distance := owner_character.get_distance_to_player()
+	var distance: float = owner_character.get_distance_to_player()
 	return distance <= detection_radius
 
 
@@ -392,7 +392,7 @@ func _should_flee() -> bool:
 		Archetype.COWARD:
 			return _get_health_percent() < flee_health_threshold * 2  ## Flee at 40%
 		Archetype.MAGE, Archetype.RANGED:
-			var distance := _get_distance_to_target()
+			var distance: float = _get_distance_to_target()
 			return distance < preferred_distance * 0.5 or _get_health_percent() < flee_health_threshold
 		_:
 			return _get_health_percent() < flee_health_threshold
