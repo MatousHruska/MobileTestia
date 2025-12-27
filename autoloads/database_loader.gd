@@ -511,6 +511,73 @@ func _map_slot_to_equipment_type(slot: String, item_type: String) -> ItemData.Eq
 
 
 #===============================================================================
+# ENEMY FACTORY
+#===============================================================================
+
+## Create EnemyNPC from database enemy entry
+func create_enemy(enemy_id: String, level: int = 1) -> EnemyNPC:
+	var data: Dictionary = get_enemy(enemy_id)
+	if data.is_empty():
+		Debug.error("Database", "Enemy not found: %s" % enemy_id)
+		return null
+
+	var enemy := EnemyNPC.new()
+	enemy.enemy_id = enemy_id
+	enemy.enemy_name = data.get("name", "Unknown Enemy")
+	enemy.enemy_level = level
+
+	# Type determines if boss
+	var enemy_type: String = data.get("type", "Normal")
+	enemy.is_boss = enemy_type == "Boss"
+	enemy.is_unique = enemy_type in ["Boss", "Miniboss"]
+
+	# Base stats (scaled by level)
+	var level_mult := 1.0 + ((level - 1) * 0.1)
+	enemy.max_health = float(data.get("base_health", 100)) * level_mult
+	enemy.base_damage = float(data.get("base_damage", 10)) * level_mult
+	enemy.armor = float(data.get("armor", 0)) * level_mult
+	enemy.move_speed = float(data.get("move_speed", 80))
+	enemy.attack_speed = float(data.get("attack_speed", 1.0))
+
+	# AI ranges
+	enemy.attack_radius = float(data.get("attack_range", 24))
+	enemy.detection_radius = float(data.get("detection_range", 150))
+
+	# Rewards (scaled by level)
+	enemy.experience_reward = int(float(data.get("xp_reward", 25)) * level_mult)
+	enemy.gold_min = int(level * 2)
+	enemy.gold_max = int(level * 8)
+
+	# Loot table reference (TODO: integrate with loot system)
+	var loot_table_id: String = data.get("loot_table_id", "")
+	if not loot_table_id.is_empty():
+		enemy.set_meta("loot_table_id", loot_table_id)
+
+	Debug.log("Database", "Created enemy from database", {
+		"id": enemy_id,
+		"name": enemy.enemy_name,
+		"level": level,
+		"health": enemy.max_health
+	})
+
+	return enemy
+
+
+## Get list of all enemy IDs
+func get_all_enemy_ids() -> Array:
+	return enemies.keys()
+
+
+## Get enemies by type (Normal, Miniboss, Boss)
+func get_enemy_ids_by_type(type: String) -> Array:
+	var result: Array = []
+	for enemy in enemies_list:
+		if enemy.get("type", "Normal") == type:
+			result.append(enemy.get("id", ""))
+	return result
+
+
+#===============================================================================
 # DEBUG
 #===============================================================================
 
