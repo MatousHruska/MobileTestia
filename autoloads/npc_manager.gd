@@ -119,11 +119,11 @@ func get_enemies_in_radius(position: Vector2, radius: float) -> Array:
 
 func get_nearest_enemy(position: Vector2) -> Node2D:
 	var nearest: Node2D = null
-	var nearest_dist := INF
+	var nearest_dist: float = INF
 
 	for enemy in all_enemies:
 		if is_instance_valid(enemy) and not enemy.is_dead:
-			var dist := enemy.global_position.distance_to(position)
+			var dist: float = enemy.global_position.distance_to(position)
 			if dist < nearest_dist:
 				nearest_dist = dist
 				nearest = enemy
