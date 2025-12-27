@@ -269,6 +269,7 @@ func get_equipment_bonus(stat: String) -> float:
 func _recalculate_derived() -> void:
 	var old_max_life := max_life
 	var old_max_mana := max_mana
+	var old_max_stamina := max_stamina
 
 	# Base values
 	var base_life := 80.0
@@ -288,14 +289,14 @@ func _recalculate_derived() -> void:
 	critical_damage = BASE_CRIT_DAMAGE + (luck * 1.0) + get_equipment_bonus("crit_damage")
 
 	# Offensive stats (from equipment and buffs only, primary stats are requirements)
-	melee_damage = get_equipment_bonus("physical_damage")
+	melee_damage = get_equipment_bonus("melee_damage")
 	ranged_damage = get_equipment_bonus("ranged_damage")
 	magic_damage = get_equipment_bonus("magic_damage")
 	attack_speed = get_equipment_bonus("attack_speed")
 	critical_chance = 5.0 + get_equipment_bonus("crit_chance")
 
 	# Defensive stats
-	armor = get_equipment_bonus("defense")
+	armor = get_equipment_bonus("armor")
 	magic_resistance = get_equipment_bonus("magic_resistance")
 	dodge_chance = get_equipment_bonus("dodge_chance")
 
@@ -305,11 +306,16 @@ func _recalculate_derived() -> void:
 	mana_regen = 0.5 + get_equipment_bonus("mana_regen")  # Base 0.5/s
 	stamina_regen = 10.0 + get_equipment_bonus("stamina_regen")  # Base 10/s
 
-	# Adjust current values if max changed
+	# Adjust current values if max changed and emit resource signals
 	if max_life != old_max_life:
 		current_life = clampf(current_life, 0.0, max_life)
+		resource_changed.emit("life", current_life, max_life)
 	if max_mana != old_max_mana:
 		current_mana = clampf(current_mana, 0.0, max_mana)
+		resource_changed.emit("mana", current_mana, max_mana)
+	if max_stamina != old_max_stamina:
+		current_stamina = clampf(current_stamina, 0.0, max_stamina)
+		resource_changed.emit("stamina", current_stamina, max_stamina)
 
 	stats_changed.emit()
 
