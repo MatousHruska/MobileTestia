@@ -8,9 +8,13 @@ signal level_changed(old_level: int, new_level: int)
 signal experience_changed(current: int, required: int)
 signal resource_changed(resource: String, current: float, maximum: float)
 signal attribute_points_changed(points: int)
+signal skill_points_changed(points: int)
+signal leveled_up(new_level: int)  ## Emitted for level up visual effect
 
 ## Constants
-const POINTS_PER_LEVEL: int = 5
+const POINTS_PER_LEVEL: int = 5  ## Attribute points per level
+const SKILL_POINTS_PER_LEVEL: int = 1  ## Skill points per level
+const XP_PER_LEVEL: int = 100  ## XP required for each level (flat for testing)
 const BASE_CRIT_DAMAGE: float = 150.0  # Base 150% crit damage
 
 ## Primary Attributes - Player allocates these manually
@@ -69,6 +73,11 @@ var attribute_points: int = 0:
 	set(value):
 		attribute_points = value
 		attribute_points_changed.emit(value)
+
+var skill_points: int = 0:
+	set(value):
+		skill_points = value
+		skill_points_changed.emit(value)
 
 ## Vital Stats (Resources) - Current values
 var current_life: float = 100.0:
@@ -133,12 +142,7 @@ func _process(delta: float) -> void:
 
 ## Experience and Leveling
 var experience_for_next_level: int:
-	get: return _calculate_exp_for_level(level + 1)
-
-
-func _calculate_exp_for_level(lvl: int) -> int:
-	# Simple exponential curve: 100 * level^1.5
-	return int(100.0 * pow(lvl, 1.5))
+	get: return XP_PER_LEVEL  ## Flat 100 XP per level for testing
 
 
 func _check_level_up() -> void:
@@ -146,7 +150,9 @@ func _check_level_up() -> void:
 		experience -= experience_for_next_level
 		level += 1
 		attribute_points += POINTS_PER_LEVEL
-		Debug.info("Stats", "Level up!", ["Level:", level, "Points:", attribute_points])
+		skill_points += SKILL_POINTS_PER_LEVEL
+		Debug.info("Stats", "Level up! Lv.%d (+%d attr, +%d skill)" % [level, POINTS_PER_LEVEL, SKILL_POINTS_PER_LEVEL])
+		leveled_up.emit(level)  ## Trigger level up visual effect
 
 
 func add_experience(amount: int) -> void:
@@ -387,6 +393,7 @@ func print_state() -> void:
 		"level": level,
 		"experience": "%d / %d" % [experience, experience_for_next_level],
 		"attribute_points": attribute_points,
+		"skill_points": skill_points,
 		"STR": strength,
 		"DEX": dexterity,
 		"INT": intelligence,
