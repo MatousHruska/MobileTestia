@@ -103,7 +103,7 @@ func _world_to_screen(world_pos: Vector2, camera: Camera2D) -> Vector2:
 	return viewport_size / 2.0 + offset
 
 
-func _draw_enemy(enemy: EnemyNPC, camera: Camera2D) -> void:
+func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 	var screen_pos := _world_to_screen(enemy.global_position, camera)
 
 	# Detection radius
@@ -152,7 +152,7 @@ func _draw_enemy(enemy: EnemyNPC, camera: Camera2D) -> void:
 		_draw_patrol_path(enemy.home_position, enemy.patrol_points, camera)
 
 
-func _draw_friendly(npc: FriendlyNPC, camera: Camera2D) -> void:
+func _draw_friendly(npc: Node2D, camera: Camera2D) -> void:
 	var screen_pos := _world_to_screen(npc.global_position, camera)
 
 	# Interaction radius
@@ -164,17 +164,18 @@ func _draw_friendly(npc: FriendlyNPC, camera: Camera2D) -> void:
 	_draw_label(screen_pos + Vector2(0, -30), npc.npc_name, color_friendly)
 
 	# Movement pattern indicator
-	var pattern_name := FriendlyNPC.MovementPattern.keys()[npc.movement_pattern]
+	var pattern_names := ["STATIC", "WANDER", "PATROL"]
+	var pattern_name := pattern_names[npc.movement_pattern] if npc.movement_pattern < pattern_names.size() else "UNKNOWN"
 	_draw_label(screen_pos + Vector2(0, -42), "[%s]" % pattern_name, Color(0.6, 0.8, 0.6), 10)
 
-	# Wander radius
-	if npc.movement_pattern == FriendlyNPC.MovementPattern.WANDER:
+	# Wander radius (movement_pattern 1 = WANDER)
+	if npc.movement_pattern == 1:
 		var home_screen := _world_to_screen(npc.home_position, camera)
 		var radius := npc.wander_radius * camera.zoom.x
 		draw_node.draw_arc(home_screen, radius, 0, TAU, 32, Color(0.4, 0.7, 0.4, 0.3), 1.5)
 
-	# Patrol path
-	if npc.movement_pattern == FriendlyNPC.MovementPattern.PATROL and not npc.patrol_points.is_empty():
+	# Patrol path (movement_pattern 2 = PATROL)
+	if npc.movement_pattern == 2 and not npc.patrol_points.is_empty():
 		_draw_patrol_path(npc.home_position, npc.patrol_points, camera)
 
 	# Facing arrow
@@ -183,7 +184,7 @@ func _draw_friendly(npc: FriendlyNPC, camera: Camera2D) -> void:
 		draw_node.draw_line(screen_pos, screen_pos + facing_vec, color_friendly, 1.5)
 
 
-func _draw_spawner(spawner: EnemySpawner, camera: Camera2D) -> void:
+func _draw_spawner(spawner: Node2D, camera: Camera2D) -> void:
 	var screen_pos := _world_to_screen(spawner.global_position, camera)
 
 	# Spawn radius
