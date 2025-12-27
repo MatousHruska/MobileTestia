@@ -476,12 +476,15 @@ func _refresh_gold() -> void:
 ## Signal handlers
 
 func _on_slot_pressed(slot: InventorySlot) -> void:
-	Debug.log("UI", "Slot pressed", "%s index %d" % [slot.slot_type, slot.backpack_index if slot.slot_type == InventorySlot.SlotType.BACKPACK else slot.equipment_slot])
+	var slot_idx = slot.backpack_index if slot.slot_type == InventorySlot.SlotType.BACKPACK else slot.equipment_slot
+	Debug.info("UI", "Slot pressed", "type=%s index=%d swap_mode=%s has_selection=%s" % [slot.slot_type, slot_idx, Inventory.swap_mode, Inventory.has_selection()])
 
 	# Handle swap mode
 	if Inventory.swap_mode:
+		Debug.info("UI", "In swap mode", "slot_type=%s target_index=%d" % [slot.slot_type, slot.backpack_index])
 		if slot.slot_type == InventorySlot.SlotType.BACKPACK:
-			Inventory.swap_with_backpack_slot(slot.backpack_index)
+			var result = Inventory.swap_with_backpack_slot(slot.backpack_index)
+			Debug.info("UI", "Swap result", str(result))
 		else:
 			# Can't swap with equipment slots, exit swap mode
 			Inventory.exit_swap_mode()
