@@ -499,16 +499,19 @@ func exit_swap_mode() -> void:
 
 
 func swap_with_backpack_slot(target_index: int) -> bool:
+	Debug.info("Inventory", "swap_with_backpack_slot called", "target=%d swap_mode=%s has_selection=%s selected_source=%s selected_index=%d" % [target_index, swap_mode, has_selection(), selected_source, selected_index])
+
 	if not swap_mode or not has_selection():
+		Debug.warn("Inventory", "Swap rejected", "swap_mode=%s has_selection=%s" % [swap_mode, has_selection()])
 		return false
 
 	if selected_source != "backpack":
-		Debug.warn("Inventory", "Cannot swap", "Source must be in backpack")
+		Debug.warn("Inventory", "Cannot swap", "Source must be in backpack (was %s)" % selected_source)
 		exit_swap_mode()
 		return false
 
 	if target_index == selected_index:
-		# Clicked same slot, just exit swap mode
+		Debug.info("Inventory", "Same slot clicked", "Exiting swap mode")
 		exit_swap_mode()
 		return false
 
