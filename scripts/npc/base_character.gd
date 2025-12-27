@@ -200,11 +200,20 @@ func _setup_name_label() -> void:
 
 ## Movement processing
 func _process_movement(delta: float) -> void:
+	# Debug: Log movement state every 60 frames
+	if Engine.get_process_frames() % 60 == 0 and move_direction != Vector2.ZERO:
+		Debug.log("NPC", "%s _process_movement" % name, {
+			"move_dir": "%.2f,%.2f" % [move_direction.x, move_direction.y],
+			"velocity": "%.1f" % velocity.length(),
+			"is_locked": is_locked,
+			"move_speed": move_speed
+		})
+
 	if is_locked:
 		# Debug: Log when locked is blocking movement
 		if move_direction != Vector2.ZERO and Engine.get_process_frames() % 60 == 0:
 			Debug.warn("NPC", "%s movement BLOCKED by is_locked" % name, {
-				"move_dir": move_direction,
+				"move_dir": "%.2f,%.2f" % [move_direction.x, move_direction.y],
 				"anim_state": AnimState.keys()[current_anim_state]
 			})
 		velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
@@ -220,10 +229,16 @@ func _process_movement(delta: float) -> void:
 
 ## Set movement direction (called by AI or patrol logic)
 func set_move_direction(direction: Vector2) -> void:
+	var old_dir := move_direction
 	move_direction = direction.limit_length(1.0)
+	# Debug: Log when direction changes significantly
+	if old_dir.length() < 0.1 and move_direction.length() > 0.1:
+		Debug.log("NPC", "%s set_move_direction" % name, "%.2f,%.2f" % [move_direction.x, move_direction.y])
 
 
 func stop_movement() -> void:
+	if move_direction != Vector2.ZERO:
+		Debug.log("NPC", "%s stop_movement called" % name)
 	move_direction = Vector2.ZERO
 
 

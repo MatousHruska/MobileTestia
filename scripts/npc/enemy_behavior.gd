@@ -120,11 +120,12 @@ func _do_chase() -> void:
 	var direction := _owner.global_position.direction_to(target.global_position)
 	_owner.set_move_direction(direction)
 
-	# Debug: Log when we start chasing (only once per chase start)
-	if _owner.velocity.length() < 1.0:
-		Debug.log("AI", "%s starting chase" % _owner.name, {
-			"dir": direction,
-			"locked": _owner.is_locked
+	# Debug: Log when velocity is low (should be chasing but not moving)
+	if _owner.velocity.length() < 1.0 and Engine.get_process_frames() % 30 == 0:
+		Debug.warn("AI", "%s chase but vel=0!" % _owner.name, {
+			"dir": "%.2f,%.2f" % [direction.x, direction.y],
+			"locked": _owner.is_locked,
+			"move_dir": "%.2f,%.2f" % [_owner.move_direction.x, _owner.move_direction.y]
 		})
 
 
