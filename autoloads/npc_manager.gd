@@ -2,23 +2,23 @@ extends Node
 ## NPCManager - Global NPC management and debugging singleton
 ## Tracks all NPCs, provides debug commands, and manages persistence
 
-## Signals
-signal enemy_registered(enemy: EnemyNPC)
-signal enemy_unregistered(enemy: EnemyNPC)
-signal friendly_registered(npc: FriendlyNPC)
-signal friendly_unregistered(npc: FriendlyNPC)
-signal spawner_registered(spawner: EnemySpawner)
+## Signals (use Node2D to avoid circular class references)
+signal enemy_registered(enemy: Node2D)
+signal enemy_unregistered(enemy: Node2D)
+signal friendly_registered(npc: Node2D)
+signal friendly_unregistered(npc: Node2D)
+signal spawner_registered(spawner: Node2D)
 
-## Tracking
-var all_enemies: Array[EnemyNPC] = []
-var all_friendlies: Array[FriendlyNPC] = []
-var all_spawners: Array[EnemySpawner] = []
+## Tracking (untyped arrays to avoid class loading issues)
+var all_enemies: Array = []
+var all_friendlies: Array = []
+var all_spawners: Array = []
 
 ## Persistence (for unique/boss NPCs)
 var killed_unique_ids: Array[String] = []
 
 ## Debug overlay
-var debug_overlay: NPCDebugOverlay = null
+var debug_overlay: Node = null
 
 ## Stats tracking
 var total_enemies_killed: int = 0
@@ -31,14 +31,21 @@ func _ready() -> void:
 
 
 func _setup_debug_overlay() -> void:
-	debug_overlay = NPCDebugOverlay.new()
-	debug_overlay.name = "NPCDebugOverlay"
-	debug_overlay.enabled = false  ## Start disabled
-	add_child(debug_overlay)
+	# Defer overlay creation to avoid class loading issues
+	call_deferred("_create_debug_overlay")
+
+
+func _create_debug_overlay() -> void:
+	var overlay_script := load("res://scripts/npc/npc_debug_overlay.gd")
+	if overlay_script:
+		debug_overlay = overlay_script.new()
+		debug_overlay.name = "NPCDebugOverlay"
+		debug_overlay.enabled = false  ## Start disabled
+		add_child(debug_overlay)
 
 
 ## Registration (called by NPCs on ready)
-func register_enemy(enemy: EnemyNPC) -> void:
+func register_enemy(enemy: Node2D) -> void:
 	if enemy in all_enemies:
 		return
 
@@ -50,13 +57,13 @@ func register_enemy(enemy: EnemyNPC) -> void:
 	Debug.log("NPC", "Registered enemy: %s" % enemy.enemy_name, ["total:", all_enemies.size()])
 
 
-func unregister_enemy(enemy: EnemyNPC) -> void:
+func unregister_enemy(enemy: Node2D) -> void:
 	all_enemies.erase(enemy)
 	enemy_unregistered.emit(enemy)
 	Debug.log("NPC", "Unregistered enemy: %s" % enemy.enemy_name)
 
 
-func register_friendly(npc: FriendlyNPC) -> void:
+func register_friendly(npc: Node2D) -> void:
 	if npc in all_friendlies:
 		return
 
@@ -67,13 +74,13 @@ func register_friendly(npc: FriendlyNPC) -> void:
 	Debug.log("NPC", "Registered friendly: %s" % npc.npc_name)
 
 
-func unregister_friendly(npc: FriendlyNPC) -> void:
+func unregister_friendly(npc: Node2D) -> void:
 	all_friendlies.erase(npc)
 	friendly_unregistered.emit(npc)
 	Debug.log("NPC", "Unregistered friendly: %s" % npc.npc_name)
 
 
-func register_spawner(spawner: EnemySpawner) -> void:
+func register_spawner(spawner: Node2D) -> void:
 	if spawner in all_spawners:
 		return
 
@@ -84,13 +91,13 @@ func register_spawner(spawner: EnemySpawner) -> void:
 	Debug.log("NPC", "Registered spawner at %s" % spawner.global_position)
 
 
-func unregister_spawner(spawner: EnemySpawner) -> void:
+func unregister_spawner(spawner: Node2D) -> void:
 	all_spawners.erase(spawner)
 	Debug.log("NPC", "Unregistered spawner")
 
 
 ## Event handlers
-func _on_enemy_died(enemy: EnemyNPC) -> void:
+func _on_enemy_died(enemy: Node2D) -> void:
 	total_enemies_killed += 1
 	total_experience_gained += enemy.experience_reward
 
@@ -101,8 +108,8 @@ func _on_enemy_died(enemy: EnemyNPC) -> void:
 
 
 ## Queries
-func get_enemies_in_radius(position: Vector2, radius: float) -> Array[EnemyNPC]:
-	var result: Array[EnemyNPC] = []
+func get_enemies_in_radius(position: Vector2, radius: float) -> Array:
+	var result: Array = []
 	for enemy in all_enemies:
 		if is_instance_valid(enemy) and not enemy.is_dead:
 			if enemy.global_position.distance_to(position) <= radius:
@@ -110,8 +117,8 @@ func get_enemies_in_radius(position: Vector2, radius: float) -> Array[EnemyNPC]:
 	return result
 
 
-func get_nearest_enemy(position: Vector2) -> EnemyNPC:
-	var nearest: EnemyNPC = null
+func get_nearest_enemy(position: Vector2) -> Node2D:
+	var nearest: Node2D = null
 	var nearest_dist := INF
 
 	for enemy in all_enemies:
@@ -124,14 +131,14 @@ func get_nearest_enemy(position: Vector2) -> EnemyNPC:
 	return nearest
 
 
-func get_friendly_by_id(npc_id: String) -> FriendlyNPC:
+func get_friendly_by_id(npc_id: String) -> Node2D:
 	for npc in all_friendlies:
 		if is_instance_valid(npc) and npc.npc_id == npc_id:
 			return npc
 	return null
 
 
-func get_enemy_by_id(enemy_id: String) -> EnemyNPC:
+func get_enemy_by_id(enemy_id: String) -> Node2D:
 	for enemy in all_enemies:
 		if is_instance_valid(enemy) and enemy.enemy_id == enemy_id:
 			return enemy
@@ -173,7 +180,7 @@ func debug_freeze_all_ai() -> void:
 	Debug.info("Debug", "Freezing all AI")
 	for enemy in all_enemies:
 		if is_instance_valid(enemy) and enemy.ai_state_machine:
-			enemy.ai_state_machine.force_state(AIStateMachine.AIState.IDLE)
+			enemy.ai_state_machine.force_state(0)  # AIStateMachine.AIState.IDLE
 
 
 func debug_aggro_all() -> void:
@@ -205,18 +212,21 @@ func debug_spawn_enemy_at_player(scene_path: String = "") -> void:
 
 func debug_spawn_enemy_at(position: Vector2, scene_path: String = "") -> void:
 	if scene_path.is_empty():
-		# Create a default test enemy
-		var enemy := EnemyNPC.new()
-		enemy.enemy_name = "Debug Enemy"
-		enemy.global_position = position
-		enemy.max_health = 50.0
-		enemy.base_damage = 5.0
-		get_tree().current_scene.add_child(enemy)
-		Debug.info("Debug", "Spawned debug enemy at %s" % position)
+		# Create a default test enemy using script load
+		var enemy_script := load("res://scripts/npc/enemy_npc.gd")
+		if enemy_script:
+			var enemy := CharacterBody2D.new()
+			enemy.set_script(enemy_script)
+			enemy.enemy_name = "Debug Enemy"
+			enemy.global_position = position
+			enemy.max_health = 50.0
+			enemy.base_damage = 5.0
+			get_tree().current_scene.add_child(enemy)
+			Debug.info("Debug", "Spawned debug enemy at %s" % position)
 	else:
 		var scene := load(scene_path) as PackedScene
 		if scene:
-			var enemy: EnemyNPC = scene.instantiate()
+			var enemy := scene.instantiate()
 			enemy.global_position = position
 			get_tree().current_scene.add_child(enemy)
 			Debug.info("Debug", "Spawned enemy from scene at %s" % position)
@@ -271,11 +281,13 @@ func print_all_enemies() -> void:
 
 func print_all_friendlies() -> void:
 	Debug.info("NPC", "=== ALL FRIENDLIES ===")
+	var pattern_names := ["STATIC", "WANDER", "PATROL"]
 	for npc in all_friendlies:
 		if is_instance_valid(npc):
+			var pattern := pattern_names[npc.movement_pattern] if npc.movement_pattern < pattern_names.size() else "UNKNOWN"
 			Debug.info("NPC", "%s" % npc.npc_name, {
 				"id": npc.npc_id,
-				"pattern": FriendlyNPC.MovementPattern.keys()[npc.movement_pattern],
+				"pattern": pattern,
 				"interacting": npc.is_interacting
 			})
 
@@ -313,12 +325,14 @@ func export_npc_state() -> String:
 			]
 
 	output += "\n--- Friendlies ---\n"
+	var pattern_names := ["STATIC", "WANDER", "PATROL"]
 	for npc in all_friendlies:
 		if is_instance_valid(npc):
+			var pattern := pattern_names[npc.movement_pattern] if npc.movement_pattern < pattern_names.size() else "UNKNOWN"
 			output += "  %s [%s]: Pattern=%s, Interactable=%s\n" % [
 				npc.npc_name,
 				npc.npc_id,
-				FriendlyNPC.MovementPattern.keys()[npc.movement_pattern],
+				pattern,
 				npc.is_interactable
 			]
 

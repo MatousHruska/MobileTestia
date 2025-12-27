@@ -55,7 +55,7 @@ enum Archetype {
 ## Current state
 var current_state: AIState = AIState.IDLE
 var target: Node2D = null
-var owner_character: BaseCharacter = null
+var owner_character: CharacterBody2D = null  ## Actually BaseCharacter, but typed loosely to avoid circular ref
 
 ## Internal timers
 var _state_timer: float = 0.0
@@ -70,9 +70,9 @@ var _debug_enabled: bool = true
 
 
 func _ready() -> void:
-	owner_character = get_parent() as BaseCharacter
+	owner_character = get_parent() as CharacterBody2D
 	if not owner_character:
-		Debug.err("AI", "AIStateMachine must be child of BaseCharacter!")
+		Debug.err("AI", "AIStateMachine must be child of CharacterBody2D!")
 		return
 
 	Debug.info("AI", "State machine ready", {

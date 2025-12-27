@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://testzone001"]
+[gd_scene load_steps=9 format=3 uid="uid://testzone001"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -8,9 +8,6 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/menu/character_menu.tscn" id="6_menu"]
 [ext_resource type="Script" path="res://scripts/npc/enemy_npc.gd" id="7_enemy"]
 [ext_resource type="Script" path="res://scripts/npc/friendly_npc.gd" id="8_friendly"]
-[ext_resource type="Script" path="res://scripts/npc/ai_state_machine.gd" id="9_ai"]
-[ext_resource type="Script" path="res://scripts/npc/base_character.gd" id="10_base"]
-[ext_resource type="Script" path="res://scripts/npc/npc_debug_overlay.gd" id="11_debug"]
 
 [node name="TestZone" type="Node2D"]
 script = ExtResource("5_zone")
@@ -165,8 +162,3 @@ look_ahead_distance = 30.0
 [node name="HUD" parent="." instance=ExtResource("2_hud")]
 
 [node name="CharacterMenu" parent="." instance=ExtResource("6_menu")]
-
-[node name="NPCDebugOverlay" type="CanvasLayer" parent="."]
-layer = 100
-script = ExtResource("11_debug")
-enabled = true
