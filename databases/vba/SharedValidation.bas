@@ -117,19 +117,36 @@ Public Function EscapeJsonString(ByVal str As String) As String
 End Function
 
 '-------------------------------------------------------------------------------
-' WriteJsonFile - Writes string content to a JSON file
+' WriteJsonFile - Writes string content to a JSON file (UTF-8 without BOM)
 '-------------------------------------------------------------------------------
 Public Sub WriteJsonFile(ByVal filePath As String, ByVal content As String)
-    Dim fso As Object
-    Set fso = CreateObject("Scripting.FileSystemObject")
+    ' Use ADODB.Stream for proper UTF-8 encoding without BOM
+    Dim stream As Object
+    Set stream = CreateObject("ADODB.Stream")
 
-    Dim file As Object
-    Set file = fso.CreateTextFile(filePath, True, True) ' Overwrite, Unicode
-    file.Write content
-    file.Close
+    stream.Type = 2  ' adTypeText
+    stream.Charset = "UTF-8"
+    stream.Open
+    stream.WriteText content
 
-    Set file = Nothing
-    Set fso = Nothing
+    ' Remove BOM by copying to binary stream
+    Dim binaryStream As Object
+    Set binaryStream = CreateObject("ADODB.Stream")
+    binaryStream.Type = 1  ' adTypeBinary
+    binaryStream.Open
+
+    ' Skip the 3-byte UTF-8 BOM
+    stream.Position = 3
+    stream.CopyTo binaryStream
+
+    ' Save to file
+    binaryStream.SaveToFile filePath, 2  ' adSaveCreateOverWrite
+
+    binaryStream.Close
+    stream.Close
+
+    Set binaryStream = Nothing
+    Set stream = Nothing
 End Sub
 
 '-------------------------------------------------------------------------------
