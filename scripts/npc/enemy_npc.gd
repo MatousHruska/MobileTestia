@@ -295,19 +295,41 @@ func _drop_loot() -> void:
 		InventoryManager.add_gold(gold_amount)
 		Debug.log("Loot", "%s dropped gold" % enemy_name, gold_amount)
 
-	# Roll for ONE item max (first successful roll wins)
 	var dropped_item_id: String = ""
-	for entry in loot_table:
-		var item_id: String = entry.get("item_id", "")
-		var drop_chance: float = entry.get("drop_chance", 0.0)
 
-		if item_id.is_empty():
-			continue
+	# Check for database loot table reference first
+	if has_meta("loot_table_id"):
+		var loot_table_id: String = get_meta("loot_table_id")
+		var db_loot_table: Dictionary = DatabaseLoader.get_loot_table(loot_table_id)
 
-		if randf() <= drop_chance:
-			dropped_item_id = item_id
-			Debug.log("Loot", "%s dropped item" % enemy_name, item_id)
-			break  # Only one item can drop
+		if not db_loot_table.is_empty():
+			# Use guaranteed_drops if available
+			var guaranteed: String = db_loot_table.get("guaranteed_drops", "")
+			if not guaranteed.is_empty():
+				dropped_item_id = guaranteed
+				Debug.log("Loot", "%s dropped guaranteed item" % enemy_name, dropped_item_id)
+			else:
+				# Fall back to item_pool
+				var item_pool: String = db_loot_table.get("item_pool", "")
+				if not item_pool.is_empty():
+					# item_pool can be comma-separated, pick one randomly
+					var items := item_pool.split(",")
+					dropped_item_id = items[randi() % items.size()].strip_edges()
+					Debug.log("Loot", "%s dropped item from pool" % enemy_name, dropped_item_id)
+
+	# Fall back to local loot_table array if no database drop
+	if dropped_item_id.is_empty():
+		for entry in loot_table:
+			var item_id: String = entry.get("item_id", "")
+			var drop_chance: float = entry.get("drop_chance", 0.0)
+
+			if item_id.is_empty():
+				continue
+
+			if randf() <= drop_chance:
+				dropped_item_id = item_id
+				Debug.log("Loot", "%s dropped item" % enemy_name, item_id)
+				break  # Only one item can drop
 
 	# Spawn the loot pickup if we got an item
 	if not dropped_item_id.is_empty():
