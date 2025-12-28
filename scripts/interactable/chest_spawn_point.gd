@@ -127,8 +127,8 @@ func _get_zone_level() -> int:
 	var parent := get_parent()
 	while parent != null:
 		if parent is ZoneBase:
-			var zone_data := parent.get_zone_data()
-			return zone_data.get("min_level", 1)
+			var zone_data: Dictionary = parent.get_zone_data()
+			return int(zone_data.get("min_level", 1))
 		parent = parent.get_parent()
 
 	return 1  # Default level
