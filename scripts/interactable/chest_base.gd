@@ -86,8 +86,8 @@ func _open_chest() -> void:
 	current_state = ChestState.OPENING
 
 	# Visual feedback - slightly lighter color while opening
-	var open_color := TIER_COLORS[chest_tier].lightened(0.2)
-	set_visual_color(open_color)
+	var base_color: Color = TIER_COLORS[chest_tier]
+	set_visual_color(base_color.lightened(0.2))
 
 	# Brief delay for opening animation
 	await get_tree().create_timer(0.3).timeout
@@ -116,7 +116,8 @@ func _loot_chest() -> void:
 	_update_interaction_prompt()
 
 	# Visual - darker, empty look
-	set_visual_color(TIER_COLORS[chest_tier].darkened(0.4))
+	var looted_color: Color = TIER_COLORS[chest_tier]
+	set_visual_color(looted_color.darkened(0.4))
 
 	chest_looted.emit()
 	Debug.info("Chest", "Looted %s chest" % TIER_NAMES[chest_tier])
@@ -242,10 +243,11 @@ func is_opened() -> bool:
 
 ## Force chest to opened state (for loading saved games)
 func set_opened(looted: bool = true) -> void:
+	var color: Color = TIER_COLORS[chest_tier]
 	if looted:
 		current_state = ChestState.LOOTED
-		set_visual_color(TIER_COLORS[chest_tier].darkened(0.4))
+		set_visual_color(color.darkened(0.4))
 	else:
 		current_state = ChestState.OPEN
-		set_visual_color(TIER_COLORS[chest_tier].lightened(0.2))
+		set_visual_color(color.lightened(0.2))
 	_update_interaction_prompt()
