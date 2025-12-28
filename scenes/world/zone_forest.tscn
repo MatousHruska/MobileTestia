@@ -166,6 +166,7 @@ offset_bottom = 60.0
 color = Color(0.3, 0.25, 0.15, 1)
 
 [node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallRight"]
+position = Vector2(0, 16)
 shape = SubResource("RectangleShape2D_wall_v2")
 
 [node name="OldWoodenDoor" type="Node2D" parent="SecretRoom"]
