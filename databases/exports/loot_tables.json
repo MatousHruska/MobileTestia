@@ -16,6 +16,23 @@
       "gold_max": 0,
       "item_pool": "wep_sword_iron",
       "guaranteed_drops": "wep_sword_iron"
+    },
+    {
+      "id": "loot_vampire_lord",
+      "name": "Vampire Lord Loot",
+      "min_drops": 1,
+      "max_drops": 1,
+      "rarity_weights": {
+        "nothing": 0,
+        "common": 0,
+        "magic": 0,
+        "rare": 0,
+        "unique": 0
+      },
+      "gold_min": 50,
+      "gold_max": 100,
+      "item_pool": "",
+      "guaranteed_drops": "key_old_wooden"
     }
   ]
 }

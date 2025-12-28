@@ -39,7 +39,7 @@
       "zone_type": "dungeon",
       "min_level": 5,
       "max_level": 10,
-      "enemy_spawn_list": "ene_Vampire_basic",
+      "enemy_spawn_list": "ene_Vampire_basic,ene_vampire_lord",
       "loot_table_id": "Vampires",
       "respawn_time": 60,
       "music_track": ""
