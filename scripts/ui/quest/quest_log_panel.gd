@@ -184,7 +184,7 @@ func _populate_quest_list() -> void:
 
 func _populate_active_quests(qm) -> void:
 	# Story quests first
-	var story_quests := qm.get_active_story_quests()
+	var story_quests: Array = qm.get_active_story_quests()
 	if not story_quests.is_empty():
 		var header := _create_section_header("Story Quests")
 		_quest_list.add_child(header)
@@ -194,7 +194,7 @@ func _populate_active_quests(qm) -> void:
 			_quest_list.add_child(item)
 
 	# Side quests
-	var side_quests := qm.get_active_side_quests()
+	var side_quests: Array = qm.get_active_side_quests()
 	if not side_quests.is_empty():
 		var header := _create_section_header("Side Quests")
 		_quest_list.add_child(header)
@@ -213,7 +213,7 @@ func _populate_active_quests(qm) -> void:
 
 
 func _populate_completed_quests(qm) -> void:
-	var completed := qm.get_completed_quests()
+	var completed: Array = qm.get_completed_quests()
 
 	if completed.is_empty():
 		var label := Label.new()
