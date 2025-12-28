@@ -70,7 +70,7 @@ func _build_ui() -> void:
 	# Dimmer background
 	var dimmer := ColorRect.new()
 	dimmer.name = "Dimmer"
-	dimmer.set_anchors_preset(PRESET_FULL_RECT)
+	dimmer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	dimmer.color = Color(0, 0, 0, 0.6)
 	dimmer.gui_input.connect(_on_dimmer_input)
 	add_child(dimmer)
@@ -78,7 +78,7 @@ func _build_ui() -> void:
 	# Main panel
 	var panel := Panel.new()
 	panel.name = "MenuPanel"
-	panel.set_anchors_preset(PRESET_CENTER)
+	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.offset_left = -400
 	panel.offset_top = -280
 	panel.offset_right = 400
@@ -88,7 +88,7 @@ func _build_ui() -> void:
 	# Main VBox
 	var vbox := VBoxContainer.new()
 	vbox.name = "VBox"
-	vbox.set_anchors_preset(PRESET_FULL_RECT)
+	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 	vbox.offset_left = 8
 	vbox.offset_top = 8
 	vbox.offset_right = -8
@@ -106,7 +106,7 @@ func _build_ui() -> void:
 	# Content area (3 columns: Chest | Details | Backpack)
 	var content := HBoxContainer.new()
 	content.name = "ContentArea"
-	content.size_flags_vertical = SIZE_EXPAND_FILL
+	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	content.add_theme_constant_override("separation", 8)
 	vbox.add_child(content)
 
@@ -123,7 +123,7 @@ func _build_header(parent: VBoxContainer) -> void:
 
 	var title := Label.new()
 	title.name = "Title"
-	title.size_flags_horizontal = SIZE_EXPAND_FILL
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	title.add_theme_font_size_override("font_size", 22)
 	title.text = "Chest"
 	header.add_child(title)
@@ -174,7 +174,7 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 
 	# Spacer
 	var spacer := Control.new()
-	spacer.size_flags_vertical = SIZE_EXPAND_FILL
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	chest_vbox.add_child(spacer)
 
 	# Gold display
@@ -198,7 +198,7 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 func _build_details_column(parent: HBoxContainer) -> void:
 	var details_panel := PanelContainer.new()
 	details_panel.name = "DetailsPanel"
-	details_panel.size_flags_horizontal = SIZE_EXPAND_FILL
+	details_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	parent.add_child(details_panel)
 
 	details_container = VBoxContainer.new()
@@ -218,14 +218,14 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	details_placeholder.text = "Select an item to view details"
 	details_placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	details_placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	details_placeholder.size_flags_vertical = SIZE_EXPAND_FILL
+	details_placeholder.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	details_placeholder.modulate = Color(0.6, 0.6, 0.6)
 	details_container.add_child(details_placeholder)
 
 	# Info container (hidden until item selected)
 	var info_container := VBoxContainer.new()
 	info_container.name = "InfoContainer"
-	info_container.size_flags_vertical = SIZE_EXPAND_FILL
+	info_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	info_container.add_theme_constant_override("separation", 4)
 	info_container.visible = false
 	details_container.add_child(info_container)
@@ -241,7 +241,7 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	top_row.add_child(icon_bg)
 
 	details_icon = TextureRect.new()
-	details_icon.set_anchors_preset(PRESET_FULL_RECT)
+	details_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
 	details_icon.offset_left = 4
 	details_icon.offset_top = 4
 	details_icon.offset_right = -4
@@ -251,7 +251,7 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	icon_bg.add_child(details_icon)
 
 	var name_vbox := VBoxContainer.new()
-	name_vbox.size_flags_horizontal = SIZE_EXPAND_FILL
+	name_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top_row.add_child(name_vbox)
 
 	details_name = Label.new()
@@ -286,12 +286,12 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	info_container.add_child(stats_label)
 
 	details_stats = Label.new()
-	details_stats.size_flags_vertical = SIZE_EXPAND_FILL
+	details_stats.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	info_container.add_child(details_stats)
 
 	# Spacer
 	var spacer := Control.new()
-	spacer.size_flags_vertical = SIZE_EXPAND_FILL
+	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	info_container.add_child(spacer)
 
 	# Action buttons
@@ -339,7 +339,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 
 	var header := Label.new()
 	header.text = "Inventory"
-	header.size_flags_horizontal = SIZE_EXPAND_FILL
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_theme_font_size_override("font_size", 16)
 	header_row.add_child(header)
 
@@ -351,7 +351,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 
 	# Scrollable backpack grid
 	backpack_scroll = ScrollContainer.new()
-	backpack_scroll.size_flags_vertical = SIZE_EXPAND_FILL
+	backpack_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	backpack_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	backpack_vbox.add_child(backpack_scroll)
 

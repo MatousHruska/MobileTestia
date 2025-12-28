@@ -203,12 +203,23 @@ func interact_with_ui_manager() -> void:
 	if current_state == ChestState.OPEN:
 		# Generate contents and open menu via UIManager
 		var contents := _generate_contents()
-		UIManager.open_chest_menu(self, contents)
 
-		# Connect to menu closed signal to check if items remain
-		var menu: ChestMenu = UIManager.chest_menu
-		if menu and not menu.chest_closed.is_connected(_on_menu_closed):
-			menu.chest_closed.connect(_on_menu_closed)
+		# Use call_deferred to avoid load order issues with UIManager
+		_open_chest_menu_deferred.call_deferred(contents)
+
+
+func _open_chest_menu_deferred(contents: Dictionary) -> void:
+	# Called deferred to ensure UIManager is loaded
+	if not UIManager:
+		Debug.warn("Chest", "UIManager not available")
+		return
+
+	UIManager.open_chest_menu(self, contents)
+
+	# Connect to menu closed signal to check if items remain
+	var menu = UIManager.chest_menu
+	if menu and menu.has_signal("chest_closed") and not menu.chest_closed.is_connected(_on_menu_closed):
+		menu.chest_closed.connect(_on_menu_closed)
 
 
 func _on_menu_closed() -> void:
