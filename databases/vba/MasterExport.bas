@@ -33,6 +33,15 @@ Public Sub ExportAll()
     ExportQuests
     ExportQuestObjectives
 
+    ' NPCs & Trading
+    ExportNPCs
+    ExportShopInventory
+
+    ' Gameplay
+    ExportConsumables
+    ExportStatusEffects
+    ExportZones
+
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -57,6 +66,11 @@ Public Sub ValidateAll()
     ValidateLootTables
     ValidateSkills
     ValidateQuests
+    ValidateNPCs
+    ValidateShopInventory
+    ValidateConsumables
+    ValidateStatusEffects
+    ValidateZones
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -88,6 +102,11 @@ Public Sub SetupWorkbook()
     SetupSkillsSheet
     SetupQuestsSheet
     SetupQuestObjectivesSheet
+    SetupNPCsSheet
+    SetupShopInventorySheet
+    SetupConsumablesSheet
+    SetupStatusEffectsSheet
+    SetupZonesSheet
     SetupStatModifiersSheet
     SetupRaritiesSheet
 
@@ -268,6 +287,51 @@ Private Sub SetupRaritiesSheet()
 
     ws.Cells(5, 1).value = "unique": ws.Cells(5, 2).value = "Unique"
     ws.Cells(5, 3).value = "#8B4513": ws.Cells(5, 4).value = -1: ws.Cells(5, 5).value = 1
+End Sub
+
+Private Sub SetupNPCsSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet("NPCs")
+    Dim headers As Variant
+    headers = Array("id", "name", "type", "location", "shop_inventory_id", _
+                    "dialogue_greeting", "faction", "sprite_id", "min_level")
+    SetHeaders ws, headers
+End Sub
+
+Private Sub SetupShopInventorySheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet("ShopInventory")
+    Dim headers As Variant
+    headers = Array("id", "name", "item_id", "item_type", "stock", "restock_hours", _
+                    "price_multiplier", "currency_type", "min_player_level", "max_player_level")
+    SetHeaders ws, headers
+End Sub
+
+Private Sub SetupConsumablesSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet("Consumables")
+    Dim headers As Variant
+    headers = Array("id", "name", "consumable_type", "effect_type", "effect_value", _
+                    "duration", "cooldown", "stack_size", "price_base", "description")
+    SetHeaders ws, headers
+End Sub
+
+Private Sub SetupStatusEffectsSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet("StatusEffects")
+    Dim headers As Variant
+    headers = Array("id", "name", "type", "stat_affected", "value", "duration", _
+                    "tick_interval", "visual_effect", "stackable", "max_stacks", "description")
+    SetHeaders ws, headers
+End Sub
+
+Private Sub SetupZonesSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet("Zones")
+    Dim headers As Variant
+    headers = Array("id", "name", "zone_type", "min_level", "max_level", "enemy_spawn_list", _
+                    "loot_table_id", "respawn_time", "music_track", "description")
+    SetHeaders ws, headers
 End Sub
 
 '-------------------------------------------------------------------------------
