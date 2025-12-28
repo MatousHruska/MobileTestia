@@ -62,6 +62,22 @@ mode = 0
 joystick_radius = 80.0
 knob_radius = 40.0
 
+[node name="InteractButton" type="Button" parent="Controls"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -60.0
+offset_top = -220.0
+offset_right = 60.0
+offset_bottom = -170.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Interact"
+
 [node name="ActionButtons" type="Control" parent="Controls"]
 layout_mode = 1
 anchors_preset = 3

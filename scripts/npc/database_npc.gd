@@ -55,8 +55,8 @@ func _load_from_database() -> void:
 		"generic":
 			dialogue_id = _npc_data.get("dialogue_greeting", "")
 
-	# Interaction settings
-	is_interactable = true
+	# Interaction settings from database
+	is_interactable = _npc_data.get("is_interactable", true)
 	interaction_radius = 50.0  ## Could be in database too
 
 	# Min level requirement
@@ -78,6 +78,10 @@ func _load_from_database() -> void:
 func interact() -> void:
 	if not can_interact():
 		return
+
+	# Log interaction started
+	print("Interaction started with %s" % npc_name)
+	Debug.info("NPC", "Interaction started", {"npc": npc_name, "id": database_id})
 
 	# Show greeting from database
 	var greeting: String = _npc_data.get("dialogue_greeting", "")

@@ -343,6 +343,7 @@ This guide explains how to set up and use the Excel database system for MobileTe
 | faction | string | No | `town_guard` |
 | sprite_id | string | No | `npc_guard_01` |
 | min_level | number | No | `1` |
+| is_interactable | boolean | No | `TRUE` |
 
 **ID Prefix:** `npc_`
 
