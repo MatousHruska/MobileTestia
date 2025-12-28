@@ -10,7 +10,7 @@ signal menu_button_pressed
 @onready var joystick: VirtualJoystick = $Controls/JoystickArea/VirtualJoystick
 @onready var attack_button: ActionButton = $Controls/ActionButtons/AttackButton
 @onready var dodge_button: ActionButton = $Controls/ActionButtons/DodgeButton
-@onready var interact_button: Button = $Controls/InteractButton
+@onready var interact_button: Button = $Controls/ActionButtons/InteractButton
 @onready var player_frame: Control = $PlayerFrame
 @onready var menu_button: Button = $MenuButton/Button
 
@@ -32,7 +32,6 @@ var character_menu: CharacterMenu = null
 ## Nearby interactable NPC
 var nearby_npc: Node = null
 var _last_nearby_npc: Node = null
-var _debug_frame_counter: int = 0
 
 
 func _ready() -> void:
@@ -41,12 +40,6 @@ func _ready() -> void:
 	_connect_to_game_manager()
 	_connect_to_player_stats()
 	_setup_controls()
-
-	# Debug: Check if interact button exists
-	if interact_button:
-		Debug.info("UI", "Interact button found and ready")
-	else:
-		Debug.warn("UI", "Interact button is NULL in _ready()!")
 
 
 func _process(_delta: float) -> void:
@@ -233,7 +226,6 @@ func _on_dodge_pressed() -> void:
 
 func _on_interact_pressed() -> void:
 	if nearby_npc and nearby_npc.has_method("interact"):
-		Debug.log("UI", "Interact button pressed")
 		nearby_npc.interact()
 
 
@@ -278,22 +270,7 @@ func update_stamina(current: float, maximum: float) -> void:
 
 ## Interaction handling
 func _update_interact_button() -> void:
-	# Debug: Print every 120 frames (2 seconds) to verify function is running
-	_debug_frame_counter += 1
-	if _debug_frame_counter == 120:
-		Debug.log("UI", "_update_interact_button is running | interact_button: %s | Game.is_playing: %s | NPCManager: %s | friendlies: %d" % [
-			interact_button != null,
-			Game.is_playing,
-			NPCManager != null,
-			NPCManager.all_friendlies.size() if NPCManager else 0
-		])
-		_debug_frame_counter = 0
-
-	if not interact_button:
-		Debug.warn("UI", "Interact button not found!")
-		return
-
-	if not Game.is_playing:
+	if not interact_button or not Game.is_playing:
 		return
 
 	# Find nearby interactable NPCs
@@ -301,44 +278,21 @@ func _update_interact_button() -> void:
 
 	if NPCManager:
 		for npc in NPCManager.all_friendlies:
-			if is_instance_valid(npc):
-				# Debug: Log NPC state every check cycle
-				if _debug_frame_counter == 1:  # Log once per cycle
-					Debug.log("UI", "Checking NPC: %s | is_interactable: %s | is_player_in_range: %s | is_interacting: %s | can_interact: %s" % [
-						npc.npc_name,
-						npc.is_interactable,
-						npc.is_player_in_range,
-						npc.is_interacting,
-						npc.can_interact() if npc.has_method("can_interact") else "N/A"
-					])
+			if is_instance_valid(npc) and npc.has_method("can_interact") and npc.can_interact():
+				nearby_npc = npc
+				break
 
-				if npc.has_method("can_interact") and npc.can_interact():
-					nearby_npc = npc
-					# Log details when NPC changes
-					if nearby_npc != _last_nearby_npc:
-						Debug.info("UI", "Found nearby NPC", {
-							"name": npc.npc_name,
-							"is_interactable": npc.is_interactable,
-							"is_player_in_range": npc.is_player_in_range,
-							"can_interact": true
-						})
-					break
-
-	# Log when NPC changes
+	# Track NPC changes
 	if nearby_npc != _last_nearby_npc:
-		if nearby_npc == null and _last_nearby_npc != null:
-			Debug.log("UI", "No nearby NPCs (was near: %s)" % _last_nearby_npc.npc_name)
 		_last_nearby_npc = nearby_npc
 
 	# Show/hide button based on nearby NPC
 	if nearby_npc:
 		if not interact_button.visible:
 			interact_button.visible = true
-			Debug.info("UI", "Interact button shown for: %s" % nearby_npc.npc_name)
 	else:
 		if interact_button.visible:
 			interact_button.visible = false
-			Debug.log("UI", "Interact button hidden")
 
 
 ## Debug
