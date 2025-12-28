@@ -16,7 +16,7 @@ size = Vector2(80, 40)
 
 [node name="TestZone" type="Node2D"]
 script = ExtResource("5_zone")
-zone_id = ""
+zone_id = "zone_test_hub"
 zone_name = "Test Hub"
 spawn_enemies = false
 
