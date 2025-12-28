@@ -22,6 +22,7 @@ var dialogues: Dictionary = {}
 var consumables: Dictionary = {}
 var status_effects: Dictionary = {}
 var zones: Dictionary = {}
+var chests: Dictionary = {}
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -33,6 +34,7 @@ var quests_list: Array = []
 var npcs_list: Array = []
 var dialogues_list: Array = []
 var zones_list: Array = []
+var chests_list: Array = []
 
 ## Signals
 signal databases_loaded
@@ -78,6 +80,9 @@ func load_all_databases() -> void:
 	success = _load_database("consumables.json", "consumables", consumables) and success
 	success = _load_database("status_effects.json", "status_effects", status_effects) and success
 	success = _load_database("zones.json", "zones", zones, zones_list) and success
+
+	# Interactables
+	success = _load_database("chests.json", "chests", chests, chests_list) and success
 
 	if success:
 		Debug.info("Database", "All databases loaded successfully")
@@ -350,6 +355,33 @@ func get_dialogue(id: String) -> Dictionary:
 func get_dialogue_frames(id: String) -> Array:
 	var dialogue := get_dialogue(id)
 	return dialogue.get("frames", [])
+
+
+#===============================================================================
+# CHEST ACCESS
+#===============================================================================
+
+## Get chest by id
+func get_chest(id: String) -> Dictionary:
+	return chests.get(id, {})
+
+
+## Get all chests for a zone
+func get_chests_for_zone(zone_id: String) -> Array:
+	var result: Array = []
+	for chest in chests_list:
+		if chest.get("zone_id", "") == zone_id:
+			result.append(chest)
+	return result
+
+
+## Get chests by type (loot, quest)
+func get_chests_by_type(chest_type: String) -> Array:
+	var result: Array = []
+	for chest in chests_list:
+		if chest.get("chest_type", "loot") == chest_type:
+			result.append(chest)
+	return result
 
 
 #===============================================================================
@@ -656,4 +688,6 @@ func print_stats() -> void:
 		"quest_objectives": quest_objectives.size(),
 		"npcs": npcs.size(),
 		"dialogues": dialogues.size(),
+		"zones": zones.size(),
+		"chests": chests.size(),
 	})
