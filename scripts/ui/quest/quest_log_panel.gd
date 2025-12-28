@@ -61,10 +61,9 @@ func _debug_sizes() -> void:
 
 
 func _build_ui() -> void:
-	# Main horizontal split
+	# Main horizontal split - use anchors to fill parent Control
 	var hbox := HBoxContainer.new()
-	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 	hbox.add_theme_constant_override("separation", 8)
 	add_child(hbox)
 
