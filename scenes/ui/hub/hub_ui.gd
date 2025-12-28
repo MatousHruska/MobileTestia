@@ -190,7 +190,7 @@ func _npc_has_quest() -> bool:
 	if has_node("/root/QuestManager"):
 		var qm = get_node("/root/QuestManager")
 		# Check for new quests
-		var available := qm.get_quests_for_npc(current_npc_id)
+		var available: Array = qm.get_quests_for_npc(current_npc_id)
 		if not available.is_empty():
 			return true
 		# Check for turn-in quests
@@ -413,7 +413,7 @@ func _on_quest_pressed() -> void:
 	var qm = get_node("/root/QuestManager")
 
 	# Check for quests to turn in first
-	var turn_in_quests := qm.get_turn_in_quests_for_npc(current_npc_id)
+	var turn_in_quests: Array = qm.get_turn_in_quests_for_npc(current_npc_id)
 	if not turn_in_quests.is_empty():
 		var quest_id: String = turn_in_quests[0]
 		var quest_data := DatabaseLoader.get_quest(quest_id)
@@ -441,7 +441,7 @@ func _on_quest_pressed() -> void:
 		return
 
 	# Check for available quests
-	var available := qm.get_quests_for_npc(current_npc_id)
+	var available: Array = qm.get_quests_for_npc(current_npc_id)
 	if not available.is_empty():
 		var quest_data: Dictionary = available[0]
 		var quest_id: String = quest_data.get("id", "")
