@@ -280,7 +280,7 @@ func complete_quest(quest_id: String, force: bool = false) -> bool:
 
 	# Grant rewards
 	var quest_data := DatabaseLoader.get_quest(quest_id)
-	var rewards := quest_data.get("rewards", {})
+	var rewards: Dictionary = quest_data.get("rewards", {})
 	_grant_rewards(quest_id, rewards)
 
 	# Move to completed list
