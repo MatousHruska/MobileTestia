@@ -39,7 +39,8 @@ func _ready() -> void:
 func _build_ui() -> void:
 	# Main horizontal split
 	var hbox := HBoxContainer.new()
-	hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hbox.add_theme_constant_override("separation", 8)
 	add_child(hbox)
 
@@ -248,10 +249,13 @@ func _create_quest_item(quest_id: String, is_tracked: bool, is_completed: bool =
 	var quest_data := DatabaseLoader.get_quest(quest_id)
 	var quest_name: String = quest_data.get("name", quest_id)
 
+	Debug.info("Quest", "Creating quest item: %s (tracked: %s)" % [quest_name, is_tracked])
+
 	var button := Button.new()
 	button.text = quest_name
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	button.custom_minimum_size.y = 32
 
 	# Styling
 	if is_tracked:
