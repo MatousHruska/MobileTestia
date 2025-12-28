@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://b0sxxcsnfjnkf"]
+[gd_scene load_steps=12 format=3 uid="uid://b0sxxcsnfjnkf"]
 
 [ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -11,6 +11,15 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
+size = Vector2(128, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
+size = Vector2(16, 160)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v_small"]
+size = Vector2(16, 56)
+
 [node name="ZoneMeadow" type="Node2D"]
 script = ExtResource("4_zone")
 zone_id = "zone_meadow"
@@ -22,7 +31,7 @@ offset_left = -640.0
 offset_top = -360.0
 offset_right = 640.0
 offset_bottom = 360.0
-color = Color(0.25, 0.4, 0.2, 1)
+color = Color(0.15, 0.15, 0.18, 1)
 
 [node name="Decorations" type="Node2D" parent="."]
 
@@ -46,14 +55,98 @@ offset_right = 165.0
 offset_bottom = -35.0
 color = Color(0.9, 0.7, 0.2, 1)
 
-[node name="Interactables" type="Node2D" parent="."]
+[node name="SecretRoom" type="Node2D" parent="."]
+position = Vector2(400, 0)
 
-[node name="SecretGateDoor" type="Node2D" parent="Interactables"]
-position = Vector2(350, 0)
+[node name="Floor" type="ColorRect" parent="SecretRoom"]
+offset_left = -8.0
+offset_top = -80.0
+offset_right = 120.0
+offset_bottom = 80.0
+color = Color(0.12, 0.12, 0.14, 1)
+
+[node name="WallTop" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(56, -80)
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallTop"]
+offset_left = -64.0
+offset_top = -8.0
+offset_right = 64.0
+offset_bottom = 8.0
+color = Color(0.4, 0.35, 0.3, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallTop"]
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="WallBottom" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(56, 80)
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallBottom"]
+offset_left = -64.0
+offset_top = -8.0
+offset_right = 64.0
+offset_bottom = 8.0
+color = Color(0.4, 0.35, 0.3, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallBottom"]
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="WallRight" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(120, 0)
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallRight"]
+offset_left = -8.0
+offset_top = -80.0
+offset_right = 8.0
+offset_bottom = 80.0
+color = Color(0.4, 0.35, 0.3, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallRight"]
+shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="WallLeftTop" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(0, -52)
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallLeftTop"]
+offset_left = -8.0
+offset_top = -28.0
+offset_right = 8.0
+offset_bottom = 28.0
+color = Color(0.4, 0.35, 0.3, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallLeftTop"]
+shape = SubResource("RectangleShape2D_wall_v_small")
+
+[node name="WallLeftBottom" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(0, 52)
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallLeftBottom"]
+offset_left = -8.0
+offset_top = -28.0
+offset_right = 8.0
+offset_bottom = 28.0
+color = Color(0.4, 0.35, 0.3, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallLeftBottom"]
+shape = SubResource("RectangleShape2D_wall_v_small")
+
+[node name="SecretGateDoor" type="Node2D" parent="SecretRoom"]
+position = Vector2(0, 0)
 script = ExtResource("8_door")
 door_name = "Secret Gate"
 persistence_id = "meadows_lever_door"
 lever_controlled = true
+
+[node name="SecretChest" type="Marker2D" parent="SecretRoom"]
+position = Vector2(80, 0)
+script = ExtResource("7_chest_spawn")
+spawn_id = "meadow_secret_chest"
+spawn_chance = 1.0
+wooden_weight = 0
+iron_weight = 0
+golden_weight = 100
+
+[node name="Interactables" type="Node2D" parent="."]
 
 [node name="Enemies" type="Node2D" parent="."]
 
