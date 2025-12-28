@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://b0sxxcsnfjnkf"]
+[gd_scene load_steps=9 format=3 uid="uid://b0sxxcsnfjnkf"]
 
 [ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://vik7jjuuh4ix" path="res://scripts/world/zone_base.gd" id="4_zone"]
 [ext_resource type="Script" uid="uid://cayikglml6hs4" path="res://scripts/world/zone_transition.gd" id="6_transition"]
 [ext_resource type="Script" uid="uid://bxs48qilberw1" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
+[ext_resource type="Script" path="res://scripts/interactable/unlockable_door.gd" id="8_door"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
@@ -44,6 +45,15 @@ offset_top = -50.0
 offset_right = 165.0
 offset_bottom = -35.0
 color = Color(0.9, 0.7, 0.2, 1)
+
+[node name="Interactables" type="Node2D" parent="."]
+
+[node name="SecretGateDoor" type="Node2D" parent="Interactables"]
+position = Vector2(350, 0)
+script = ExtResource("8_door")
+door_name = "Secret Gate"
+persistence_id = "meadows_lever_door"
+lever_controlled = true
 
 [node name="Enemies" type="Node2D" parent="."]
 
