@@ -14,6 +14,7 @@ class_name ZoneBase
 ## Auto-find references
 @onready var hud: HUD = $HUD
 @onready var character_menu: CharacterMenu = $CharacterMenu
+@onready var chest_menu: ChestMenu = $ChestMenu
 
 
 func _ready() -> void:
@@ -23,6 +24,11 @@ func _ready() -> void:
 	if hud and character_menu:
 		hud.set_character_menu(character_menu)
 		Debug.log("System", "HUD linked to CharacterMenu")
+
+	# Link chest menu to HUD
+	if hud and chest_menu:
+		hud.set_chest_menu(chest_menu)
+		Debug.log("System", "HUD linked to ChestMenu")
 
 	# Notify game manager
 	Game.current_zone = zone_name
