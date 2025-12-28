@@ -29,6 +29,7 @@ var player: PlayerController = null
 ## Nearby interactable NPC or object
 var nearby_npc: Node = null  ## Can be NPC or InteractableBase
 var _last_nearby_npc: Node = null
+var _connected_pickup: Node = null  ## Track connected LootPickup for signal cleanup
 
 
 func _ready() -> void:
@@ -296,9 +297,29 @@ func _update_interact_button() -> void:
 				nearby_npc = chest
 				break
 
+	# Check for loot pickups on ground
+	if nearby_npc == null:
+		var pickups := get_tree().get_nodes_in_group("loot_pickups")
+		for pickup in pickups:
+			if is_instance_valid(pickup) and pickup.has_method("can_interact") and pickup.can_interact():
+				nearby_npc = pickup
+				break
+
 	# Track changes
 	if nearby_npc != _last_nearby_npc:
+		# Disconnect from old pickup if any
+		if _connected_pickup and is_instance_valid(_connected_pickup):
+			if _connected_pickup.has_signal("pickup_failed"):
+				_connected_pickup.pickup_failed.disconnect(_on_pickup_failed)
+			_connected_pickup = null
+
 		_last_nearby_npc = nearby_npc
+
+		# Connect to new pickup if it's a LootPickup
+		if nearby_npc and nearby_npc is LootPickup:
+			_connected_pickup = nearby_npc
+			nearby_npc.pickup_failed.connect(_on_pickup_failed)
+
 		# Update button text based on what's nearby
 		if nearby_npc and nearby_npc.has_method("get_interaction_prompt"):
 			interact_button.text = nearby_npc.get_interaction_prompt()
@@ -312,6 +333,26 @@ func _update_interact_button() -> void:
 	else:
 		if interact_button.visible:
 			interact_button.visible = false
+
+
+## Loot pickup feedback
+func _on_pickup_failed() -> void:
+	Debug.log("UI", "Inventory full - flashing interact button")
+	_flash_interact_button_red()
+
+
+func _flash_interact_button_red() -> void:
+	if not interact_button:
+		return
+
+	# Store original modulate
+	var original_color := interact_button.modulate
+
+	# Flash red a few times
+	var tween := create_tween()
+	for i in 3:
+		tween.tween_property(interact_button, "modulate", Color(1.0, 0.3, 0.3), 0.1)
+		tween.tween_property(interact_button, "modulate", original_color, 0.1)
 
 
 ## Debug
