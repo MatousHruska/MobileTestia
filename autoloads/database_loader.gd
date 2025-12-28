@@ -16,6 +16,11 @@ var loot_tables: Dictionary = {}
 var skills: Dictionary = {}
 var quests: Dictionary = {}
 var quest_objectives: Dictionary = {}
+var npcs: Dictionary = {}
+var shop_inventory: Dictionary = {}
+var consumables: Dictionary = {}
+var status_effects: Dictionary = {}
+var zones: Dictionary = {}
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -24,6 +29,8 @@ var unique_items_list: Array = []
 var enemies_list: Array = []
 var skills_list: Array = []
 var quests_list: Array = []
+var npcs_list: Array = []
+var zones_list: Array = []
 
 ## Signals
 signal databases_loaded
@@ -59,6 +66,15 @@ func load_all_databases() -> void:
 	# Quests
 	success = _load_database("quests.json", "quests", quests, quests_list) and success
 	success = _load_database("quest_objectives.json", "quest_objectives", quest_objectives) and success
+
+	# NPCs & Trading
+	success = _load_database("npcs.json", "npcs", npcs, npcs_list) and success
+	success = _load_database("shop_inventory.json", "shop_inventory", shop_inventory) and success
+
+	# Gameplay
+	success = _load_database("consumables.json", "consumables", consumables) and success
+	success = _load_database("status_effects.json", "status_effects", status_effects) and success
+	success = _load_database("zones.json", "zones", zones, zones_list) and success
 
 	if success:
 		Debug.info("Database", "All databases loaded successfully")
@@ -288,6 +304,33 @@ func get_available_quests(player_level: int, completed_quests: Array = []) -> Ar
 		if prereqs_met:
 			result.append(quest)
 
+	return result
+
+
+#===============================================================================
+# NPC ACCESS
+#===============================================================================
+
+## Get NPC by id
+func get_npc(id: String) -> Dictionary:
+	return npcs.get(id, {})
+
+
+## Get all NPCs of a type
+func get_npcs_by_type(npc_type: String) -> Array:
+	var result: Array = []
+	for npc in npcs_list:
+		if npc.get("type", "generic") == npc_type:
+			result.append(npc)
+	return result
+
+
+## Get shop inventory by id
+func get_shop_inventory(id: String) -> Array:
+	var result: Array = []
+	for entry in shop_inventory.values():
+		if entry.get("id", "") == id:
+			result.append(entry)
 	return result
 
 

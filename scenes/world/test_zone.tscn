@@ -7,7 +7,7 @@
 [ext_resource type="Script" path="res://scripts/world/zone_base.gd" id="5_zone"]
 [ext_resource type="PackedScene" path="res://scenes/ui/menu/character_menu.tscn" id="6_menu"]
 [ext_resource type="Script" path="res://scripts/npc/enemy_npc.gd" id="7_enemy"]
-[ext_resource type="Script" path="res://scripts/npc/friendly_npc.gd" id="8_friendly"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/database_npc.tscn" id="8_npc_prefab"]
 
 [node name="TestZone" type="Node2D"]
 script = ExtResource("5_zone")
@@ -69,88 +69,56 @@ object_size = Vector2(16, 16)
 
 [node name="Enemies" type="Node2D" parent="."]
 
-[node name="Zombie" type="CharacterBody2D" parent="Enemies"]
+[node name="Zombie1" type="CharacterBody2D" parent="Enemies"]
 position = Vector2(-250, 0)
 script = ExtResource("7_enemy")
+enemy_id = "ene_zombie_basic"
 enemy_name = "Zombie"
-max_health = 60.0
+max_health = 50.0
 base_damage = 8.0
-attack_speed = 0.8
+attack_speed = 1.0
 armor = 2.0
 enemy_level = 1
-experience_reward = 20
-archetype = 0
+experience_reward = 15
 detection_radius = 100.0
 attack_radius = 20.0
 move_speed = 40.0
 
-[node name="SkeletonArcher" type="CharacterBody2D" parent="Enemies"]
+[node name="Zombie2" type="CharacterBody2D" parent="Enemies"]
 position = Vector2(-300, -80)
 script = ExtResource("7_enemy")
-enemy_name = "Skeleton Archer"
-max_health = 40.0
-base_damage = 12.0
-attack_speed = 1.2
-enemy_level = 1
-experience_reward = 25
-archetype = 1
-detection_radius = 150.0
-attack_radius = 100.0
-move_speed = 70.0
-
-[node name="Goblin" type="CharacterBody2D" parent="Enemies"]
-position = Vector2(-200, 80)
-script = ExtResource("7_enemy")
-enemy_name = "Goblin"
-max_health = 30.0
-base_damage = 6.0
-attack_speed = 1.5
-armor = 1.0
+enemy_id = "ene_zombie_basic"
+enemy_name = "Zombie"
+max_health = 50.0
+base_damage = 8.0
+attack_speed = 1.0
+armor = 2.0
 enemy_level = 1
 experience_reward = 15
-archetype = 5
-detection_radius = 80.0
-attack_radius = 18.0
-move_speed = 100.0
+detection_radius = 100.0
+attack_radius = 20.0
+move_speed = 40.0
+
+[node name="Zombie3" type="CharacterBody2D" parent="Enemies"]
+position = Vector2(-200, 80)
+script = ExtResource("7_enemy")
+enemy_id = "ene_zombie_basic"
+enemy_name = "Zombie"
+max_health = 50.0
+base_damage = 8.0
+attack_speed = 1.0
+armor = 2.0
+enemy_level = 1
+experience_reward = 15
+detection_radius = 100.0
+attack_radius = 20.0
+move_speed = 40.0
 
 [node name="FriendlyNPCs" type="Node2D" parent="."]
 
-[node name="Blacksmith" type="CharacterBody2D" parent="FriendlyNPCs"]
-position = Vector2(250, -50)
-script = ExtResource("8_friendly")
-npc_name = "Blacksmith"
-npc_id = "blacksmith_test"
-is_interactable = true
-interaction_radius = 50.0
-shop_id = "blacksmith"
-movement_pattern = 0
-
-[node name="Villager" type="CharacterBody2D" parent="FriendlyNPCs"]
-position = Vector2(300, 50)
-script = ExtResource("8_friendly")
-npc_name = "Villager Tom"
-npc_id = "villager_tom"
-is_interactable = true
-interaction_radius = 40.0
-dialogue_id = "villager_generic"
-movement_pattern = 1
-wander_radius = 60.0
-wander_interval_min = 3.0
-wander_interval_max = 6.0
-move_speed = 35.0
-
-[node name="Guard" type="CharacterBody2D" parent="FriendlyNPCs"]
-position = Vector2(350, 0)
-script = ExtResource("8_friendly")
-npc_name = "Town Guard"
-npc_id = "guard_test"
-is_interactable = true
-interaction_radius = 40.0
-dialogue_id = "guard_generic"
-movement_pattern = 2
-patrol_points = PackedVector2Array(0, 0, 0, -80, 0, 80)
-patrol_wait_time = 2.0
-move_speed = 50.0
+[node name="QuestGiver" parent="FriendlyNPCs" instance=ExtResource("8_npc_prefab")]
+position = Vector2(280, 0)
+database_id = "npc_quest_giver_main"
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 

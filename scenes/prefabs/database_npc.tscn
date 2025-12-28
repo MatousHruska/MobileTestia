@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://database_npc_prefab"]
+
+[ext_resource type="Script" path="res://scripts/npc/database_npc.gd" id="1_database_npc"]
+
+[node name="DatabaseNPC" type="CharacterBody2D"]
+script = ExtResource("1_database_npc")
+database_id = ""
+move_speed = 0.0
+movement_pattern = 0
