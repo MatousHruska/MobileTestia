@@ -10,6 +10,7 @@ signal menu_button_pressed
 @onready var joystick: VirtualJoystick = $Controls/JoystickArea/VirtualJoystick
 @onready var attack_button: ActionButton = $Controls/ActionButtons/AttackButton
 @onready var dodge_button: ActionButton = $Controls/ActionButtons/DodgeButton
+@onready var interact_button: Button = $Controls/InteractButton
 @onready var player_frame: Control = $PlayerFrame
 @onready var menu_button: Button = $MenuButton/Button
 
@@ -28,6 +29,9 @@ var player: PlayerController = null
 ## Character menu reference (set externally)
 var character_menu: CharacterMenu = null
 
+## Nearby interactable NPC
+var nearby_npc: Node = null
+
 
 func _ready() -> void:
 	Debug.info("UI", "HUD ready")
@@ -41,6 +45,9 @@ func _process(_delta: float) -> void:
 	# Only process input when game is in PLAYING state
 	if player and joystick and Game.is_playing:
 		player.set_input_direction(joystick.get_direction())
+
+	# Check for nearby interactable NPCs
+	_update_interact_button()
 
 
 func _setup_resource_bars() -> void:
@@ -199,6 +206,9 @@ func _setup_controls() -> void:
 	if dodge_button:
 		dodge_button.pressed.connect(_on_dodge_pressed)
 
+	if interact_button:
+		interact_button.pressed.connect(_on_interact_pressed)
+
 	if menu_button:
 		menu_button.pressed.connect(_on_menu_pressed)
 
@@ -211,6 +221,12 @@ func _on_attack_pressed() -> void:
 func _on_dodge_pressed() -> void:
 	if player and Game.can_player_move:
 		player.request_dodge()
+
+
+func _on_interact_pressed() -> void:
+	if nearby_npc and nearby_npc.has_method("interact"):
+		Debug.log("UI", "Interact button pressed")
+		nearby_npc.interact()
 
 
 func _on_menu_pressed() -> void:
@@ -250,6 +266,31 @@ func update_stamina(current: float, maximum: float) -> void:
 		stamina_bar.value = current
 	if stamina_label:
 		stamina_label.text = "%d / %d" % [int(current), int(maximum)]
+
+
+## Interaction handling
+func _update_interact_button() -> void:
+	if not interact_button or not Game.is_playing:
+		return
+
+	# Find nearby interactable NPCs
+	nearby_npc = null
+
+	if NPCManager:
+		for npc in NPCManager.all_friendlies:
+			if is_instance_valid(npc) and npc.has_method("can_interact") and npc.can_interact():
+				nearby_npc = npc
+				break
+
+	# Show/hide button based on nearby NPC
+	if nearby_npc:
+		if not interact_button.visible:
+			interact_button.visible = true
+			Debug.log("UI", "Interact button shown")
+	else:
+		if interact_button.visible:
+			interact_button.visible = false
+			Debug.log("UI", "Interact button hidden")
 
 
 ## Debug
