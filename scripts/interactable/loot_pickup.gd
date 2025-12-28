@@ -53,12 +53,14 @@ func _update_visual_for_item() -> void:
 	match item.rarity:
 		ItemData.Rarity.COMMON:
 			placeholder_color = Color(0.7, 0.7, 0.7)  # Gray
-		ItemData.Rarity.MAGIC:
-			placeholder_color = Color(0.3, 0.5, 1.0)  # Blue
+		ItemData.Rarity.UNCOMMON:
+			placeholder_color = Color(0.3, 0.8, 0.3)  # Green
 		ItemData.Rarity.RARE:
-			placeholder_color = Color(1.0, 0.8, 0.2)  # Yellow/Gold
-		ItemData.Rarity.UNIQUE:
-			placeholder_color = Color(0.8, 0.4, 0.1)  # Orange
+			placeholder_color = Color(0.3, 0.5, 1.0)  # Blue
+		ItemData.Rarity.EPIC:
+			placeholder_color = Color(0.6, 0.3, 0.9)  # Purple
+		ItemData.Rarity.LEGENDARY:
+			placeholder_color = Color(1.0, 0.6, 0.1)  # Orange
 		_:
 			placeholder_color = Color(0.7, 0.7, 0.7)
 
