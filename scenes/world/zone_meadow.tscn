@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://zone_meadow_001"]
+[gd_scene load_steps=9 format=3 uid="uid://zone_meadow_001"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/world/zone_base.gd" id="4_zone"]
 [ext_resource type="PackedScene" path="res://scenes/ui/menu/character_menu.tscn" id="5_menu"]
 [ext_resource type="Script" path="res://scripts/world/zone_transition.gd" id="6_transition"]
+[ext_resource type="Script" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
@@ -47,6 +48,28 @@ offset_bottom = -35.0
 color = Color(0.9, 0.7, 0.2, 1)
 
 [node name="Enemies" type="Node2D" parent="."]
+
+[node name="ChestSpawns" type="Node2D" parent="."]
+
+[node name="MeadowChest1" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(250, 80)
+script = ExtResource("7_chest_spawn")
+spawn_id = "meadow_chest_1"
+spawn_chance = 0.8
+wooden_weight = 70
+iron_weight = 25
+golden_weight = 5
+marker_color = Color(0.55, 0.35, 0.15, 0.8)
+
+[node name="MeadowChest2" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(-280, 150)
+script = ExtResource("7_chest_spawn")
+spawn_id = "meadow_chest_2"
+spawn_chance = 0.6
+wooden_weight = 50
+iron_weight = 40
+golden_weight = 10
+marker_color = Color(0.5, 0.5, 0.55, 0.8)
 
 [node name="TransitionToTest" type="Area2D" parent="."]
 position = Vector2(0, -280)

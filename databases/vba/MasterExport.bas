@@ -43,6 +43,9 @@ Public Sub ExportAll()
     ExportStatusEffects
     ExportZones
 
+    ' Interactables
+    ExportChests
+
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -72,6 +75,7 @@ Public Sub ValidateAll()
     ValidateConsumables
     ValidateStatusEffects
     ValidateZones
+    ValidateChests
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -109,6 +113,7 @@ Public Sub SetupWorkbook()
     SetupConsumablesSheet
     SetupStatusEffectsSheet
     SetupZonesSheet
+    SetupChestsSheet
     SetupStatModifiersSheet
     SetupRaritiesSheet
 
@@ -342,6 +347,16 @@ Private Sub SetupDialoguesSheet()
     Set ws = GetOrCreateSheet("Dialogues")
     Dim headers As Variant
     headers = Array("id", "frames")
+    SetHeaders ws, headers
+End Sub
+
+Private Sub SetupChestsSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet("Chests")
+    Dim headers As Variant
+    headers = Array("id", "name", "chest_type", "tier", "zone_id", "spawn_chance", _
+                    "fixed_gold", "fixed_items", "loot_table_id", "min_items", "max_items", _
+                    "respawn_time", "quest_id", "description")
     SetHeaders ws, headers
 End Sub
 
