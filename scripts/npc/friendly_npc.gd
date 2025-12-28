@@ -72,9 +72,9 @@ func _ready() -> void:
 	})
 
 
-## Override placeholder color - GREEN for friendly
+## Override placeholder color - YELLOW for friendly
 func _get_placeholder_color() -> Color:
-	return Color(0.2, 0.8, 0.3)  ## Green
+	return Color(0.9, 0.8, 0.2)  ## Yellowish
 
 
 ## Override display name
