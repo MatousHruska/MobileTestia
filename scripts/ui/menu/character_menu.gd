@@ -190,7 +190,9 @@ func _setup_quest_panel() -> void:
 	if QuestLogPanelScript:
 		_quest_log_instance = QuestLogPanelScript.new()
 		_quest_log_instance.name = "QuestLogPanel"
-		_quest_log_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
+		# VBoxContainer uses size_flags, not anchors
+		_quest_log_instance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_quest_log_instance.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		quests_panel.add_child(_quest_log_instance)
 		Debug.info("UI", "QuestLogPanel created")
 	else:
