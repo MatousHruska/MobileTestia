@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://zone_forest_001"]
+[gd_scene load_steps=9 format=3 uid="uid://zone_forest_001"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -6,9 +6,19 @@
 [ext_resource type="Script" path="res://scripts/world/zone_base.gd" id="4_zone"]
 [ext_resource type="Script" path="res://scripts/world/zone_transition.gd" id="6_transition"]
 [ext_resource type="Script" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
+[ext_resource type="Script" path="res://scripts/interactable/unlockable_door.gd" id="8_door"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
+size = Vector2(100, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
+size = Vector2(16, 120)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v2"]
+size = Vector2(16, 88)
 
 [node name="ZoneForest" type="Node2D"]
 script = ExtResource("4_zone")
@@ -102,6 +112,80 @@ shape = SubResource("RectangleShape2D_trans")
 script = ExtResource("3_camera")
 follow_smoothing = 8.0
 look_ahead_distance = 30.0
+
+[node name="SecretRoom" type="Node2D" parent="."]
+position = Vector2(400, 100)
+
+[node name="WallTop" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(0, -60)
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallTop"]
+offset_left = -50.0
+offset_top = -8.0
+offset_right = 50.0
+offset_bottom = 8.0
+color = Color(0.3, 0.25, 0.15, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallTop"]
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="WallBottom" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(0, 60)
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallBottom"]
+offset_left = -50.0
+offset_top = -8.0
+offset_right = 50.0
+offset_bottom = 8.0
+color = Color(0.3, 0.25, 0.15, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallBottom"]
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="WallLeft" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(-50, 0)
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallLeft"]
+offset_left = -8.0
+offset_top = -60.0
+offset_right = 8.0
+offset_bottom = 60.0
+color = Color(0.3, 0.25, 0.15, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallLeft"]
+shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="WallRight" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(50, 0)
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallRight"]
+offset_left = -8.0
+offset_top = -28.0
+offset_right = 8.0
+offset_bottom = 60.0
+color = Color(0.3, 0.25, 0.15, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallRight"]
+shape = SubResource("RectangleShape2D_wall_v2")
+
+[node name="OldWoodenDoor" type="Node2D" parent="SecretRoom"]
+position = Vector2(50, -44)
+script = ExtResource("8_door")
+door_name = "Old Wooden Door"
+persistence_id = "forest_secret_door"
+required_key_id = "key_old_wooden"
+required_key_name = "Old Wooden Key"
+placeholder_size = Vector2(16, 32)
+
+[node name="SecretChest" type="Marker2D" parent="SecretRoom"]
+position = Vector2(0, 0)
+script = ExtResource("7_chest_spawn")
+spawn_id = "forest_secret_chest"
+spawn_chance = 1.0
+wooden_weight = 0
+iron_weight = 20
+golden_weight = 80
+allow_wooden = false
 
 [node name="HUD" parent="." instance=ExtResource("2_hud")]
 
