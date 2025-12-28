@@ -44,6 +44,21 @@
       "xp_reward": 15,
       "loot_table_id": "loot_test_guaranteed",
       "ability_ids": "abl_melee_basic"
+    },
+    {
+      "id": "ene_vampire_lord",
+      "name": "Vampire Lord",
+      "type": "Miniboss",
+      "base_health": 500,
+      "base_damage": 15,
+      "armor": 10,
+      "move_speed": 50,
+      "attack_speed": 1,
+      "attack_range": 25,
+      "detection_range": 150,
+      "xp_reward": 100,
+      "loot_table_id": "loot_vampire_lord",
+      "ability_ids": ""
     }
   ]
 }
