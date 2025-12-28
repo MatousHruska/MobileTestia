@@ -36,6 +36,7 @@ Public Sub ExportAll()
     ' NPCs & Trading
     ExportNPCs
     ExportShopInventory
+    ExportDialogues
 
     ' Gameplay
     ExportConsumables
@@ -104,6 +105,7 @@ Public Sub SetupWorkbook()
     SetupQuestObjectivesSheet
     SetupNPCsSheet
     SetupShopInventorySheet
+    SetupDialoguesSheet
     SetupConsumablesSheet
     SetupStatusEffectsSheet
     SetupZonesSheet
@@ -294,7 +296,8 @@ Private Sub SetupNPCsSheet()
     Set ws = GetOrCreateSheet("NPCs")
     Dim headers As Variant
     headers = Array("id", "name", "type", "location", "shop_inventory_id", _
-                    "dialogue_greeting", "faction", "sprite_id", "min_level", "is_interactable")
+                    "dialogue_greeting", "faction", "sprite_id", "min_level", "is_interactable", _
+                    "portrait_id", "dialogue_talk_id")
     SetHeaders ws, headers
 End Sub
 
@@ -331,6 +334,14 @@ Private Sub SetupZonesSheet()
     Dim headers As Variant
     headers = Array("id", "name", "zone_type", "min_level", "max_level", "enemy_spawn_list", _
                     "loot_table_id", "respawn_time", "music_track", "description")
+    SetHeaders ws, headers
+End Sub
+
+Private Sub SetupDialoguesSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet("Dialogues")
+    Dim headers As Variant
+    headers = Array("id", "frames")
     SetHeaders ws, headers
 End Sub
 

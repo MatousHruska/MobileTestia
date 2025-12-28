@@ -20,6 +20,8 @@ Private Const COL_NPC_FACTION As Integer = 7
 Private Const COL_NPC_SPRITE_ID As Integer = 8
 Private Const COL_NPC_MIN_LEVEL As Integer = 9
 Private Const COL_NPC_IS_INTERACTABLE As Integer = 10
+Private Const COL_NPC_PORTRAIT_ID As Integer = 11
+Private Const COL_NPC_DIALOGUE_TALK_ID As Integer = 12
 
 ' Column indices for ShopInventory
 Private Const COL_SI_ID As Integer = 1
@@ -164,7 +166,9 @@ Public Sub ExportNPCs()
         json = json & "      ""faction"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_FACTION))) & """," & vbCrLf
         json = json & "      ""sprite_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_SPRITE_ID))) & """," & vbCrLf
         json = json & "      ""min_level"": " & GetDefaultNumeric(ws.Cells(i, COL_NPC_MIN_LEVEL), 1) & "," & vbCrLf
-        json = json & "      ""is_interactable"": " & LCase(CStr(GetDefaultBoolean(ws.Cells(i, COL_NPC_IS_INTERACTABLE), True))) & vbCrLf
+        json = json & "      ""is_interactable"": " & LCase(CStr(GetDefaultBoolean(ws.Cells(i, COL_NPC_IS_INTERACTABLE), True))) & "," & vbCrLf
+        json = json & "      ""portrait_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_PORTRAIT_ID))) & """," & vbCrLf
+        json = json & "      ""dialogue_talk_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_DIALOGUE_TALK_ID))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
