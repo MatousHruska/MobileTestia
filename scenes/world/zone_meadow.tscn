@@ -1,13 +1,11 @@
-[gd_scene load_steps=10 format=3 uid="uid://zone_meadow_001"]
+[gd_scene load_steps=8 format=3 uid="uid://zone_meadow_001"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
 [ext_resource type="Script" path="res://scripts/camera/game_camera.gd" id="3_camera"]
 [ext_resource type="Script" path="res://scripts/world/zone_base.gd" id="4_zone"]
-[ext_resource type="PackedScene" path="res://scenes/ui/menu/character_menu.tscn" id="5_menu"]
 [ext_resource type="Script" path="res://scripts/world/zone_transition.gd" id="6_transition"]
 [ext_resource type="Script" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
-[ext_resource type="PackedScene" path="res://scenes/ui/chest/chest_menu.tscn" id="8_chest_menu"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
@@ -92,6 +90,3 @@ look_ahead_distance = 30.0
 
 [node name="HUD" parent="." instance=ExtResource("2_hud")]
 
-[node name="CharacterMenu" parent="." instance=ExtResource("5_menu")]
-
-[node name="ChestMenu" parent="." instance=ExtResource("8_chest_menu")]

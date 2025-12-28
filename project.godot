@@ -24,6 +24,7 @@ Inventory="*res://scripts/inventory/inventory_manager.gd"
 PlayerStats="*res://autoloads/player_stats.gd"
 NPCManager="*res://autoloads/npc_manager.gd"
 DatabaseLoader="*res://autoloads/database_loader.gd"
+UIManager="*res://autoloads/ui_manager.gd"
 
 [display]
 

@@ -1,17 +1,15 @@
-[gd_scene load_steps=13 format=3 uid="uid://testzone001"]
+[gd_scene load_steps=11 format=3 uid="uid://testzone001"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
 [ext_resource type="Script" path="res://scripts/camera/game_camera.gd" id="3_camera"]
 [ext_resource type="Script" path="res://scripts/world/reference_object.gd" id="4_ref"]
 [ext_resource type="Script" path="res://scripts/world/zone_base.gd" id="5_zone"]
-[ext_resource type="PackedScene" path="res://scenes/ui/menu/character_menu.tscn" id="6_menu"]
 [ext_resource type="Script" path="res://scripts/npc/enemy_npc.gd" id="7_enemy"]
 [ext_resource type="PackedScene" path="res://scenes/prefabs/database_npc.tscn" id="8_npc_prefab"]
 [ext_resource type="Script" path="res://scripts/world/zone_transition.gd" id="9_transition"]
 [ext_resource type="Script" path="res://scripts/world/spawn_point.gd" id="10_spawn"]
 [ext_resource type="Script" path="res://scripts/interactable/chest_spawn_point.gd" id="11_chest_spawn"]
-[ext_resource type="PackedScene" path="res://scenes/ui/chest/chest_menu.tscn" id="12_chest_menu"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
@@ -227,7 +225,3 @@ follow_smoothing = 8.0
 look_ahead_distance = 30.0
 
 [node name="HUD" parent="." instance=ExtResource("2_hud")]
-
-[node name="CharacterMenu" parent="." instance=ExtResource("6_menu")]
-
-[node name="ChestMenu" parent="." instance=ExtResource("12_chest_menu")]

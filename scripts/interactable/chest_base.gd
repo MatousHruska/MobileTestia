@@ -184,8 +184,8 @@ func _should_auto_loot() -> bool:
 	return false  # Use chest menu instead of auto-loot
 
 
-## Interact with chest menu UI
-func interact_with_menu(menu: ChestMenu) -> void:
+## Interact with chest via UIManager
+func interact_with_ui_manager() -> void:
 	if current_state == ChestState.CLOSED:
 		# Open chest first
 		current_state = ChestState.OPENING
@@ -201,12 +201,13 @@ func interact_with_menu(menu: ChestMenu) -> void:
 		_update_interaction_prompt()
 
 	if current_state == ChestState.OPEN:
-		# Generate contents and open menu
+		# Generate contents and open menu via UIManager
 		var contents := _generate_contents()
-		menu.open_chest(self, contents)
+		UIManager.open_chest_menu(self, contents)
 
 		# Connect to menu closed signal to check if items remain
-		if not menu.chest_closed.is_connected(_on_menu_closed):
+		var menu: ChestMenu = UIManager.chest_menu
+		if menu and not menu.chest_closed.is_connected(_on_menu_closed):
 			menu.chest_closed.connect(_on_menu_closed)
 
 

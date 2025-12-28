@@ -26,12 +26,6 @@ var level_label: Label
 ## Player reference
 var player: PlayerController = null
 
-## Character menu reference (set externally)
-var character_menu: CharacterMenu = null
-
-## Chest menu reference (set externally)
-var chest_menu: ChestMenu = null
-
 ## Nearby interactable NPC or object
 var nearby_npc: Node = null  ## Can be NPC or InteractableBase
 var _last_nearby_npc: Node = null
@@ -231,11 +225,10 @@ func _on_interact_pressed() -> void:
 	if nearby_npc == null:
 		return
 
-	# Handle chest interaction specially - open chest menu
-	if nearby_npc is ChestBase and chest_menu:
+	# Handle chest interaction via UIManager
+	if nearby_npc is ChestBase:
 		var chest: ChestBase = nearby_npc as ChestBase
-		# Generate contents and open menu
-		chest.interact_with_menu(chest_menu)
+		chest.interact_with_ui_manager()
 	elif nearby_npc.has_method("interact"):
 		nearby_npc.interact()
 
@@ -244,20 +237,8 @@ func _on_menu_pressed() -> void:
 	Debug.log("UI", "Menu button pressed")
 	menu_button_pressed.emit()
 
-	# Open character menu if available
-	if character_menu:
-		character_menu.toggle_menu()
-
-
-## Public interface
-func set_character_menu(menu: CharacterMenu) -> void:
-	character_menu = menu
-	Debug.info("UI", "Character menu linked to HUD")
-
-
-func set_chest_menu(menu: ChestMenu) -> void:
-	chest_menu = menu
-	Debug.info("UI", "Chest menu linked to HUD")
+	# Open character menu via UIManager
+	UIManager.toggle_character_menu()
 
 
 func update_health(current: float, maximum: float) -> void:
@@ -339,5 +320,4 @@ func print_state() -> void:
 		"player_connected": player != null,
 		"joystick_active": joystick.is_pressed() if joystick else false,
 		"joystick_direction": joystick.get_direction() if joystick else Vector2.ZERO,
-		"menu_connected": character_menu != null,
 	})
