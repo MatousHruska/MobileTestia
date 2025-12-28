@@ -39,12 +39,16 @@ func _build_ui() -> void:
 	_dimmer.gui_input.connect(_on_dimmer_input)
 	add_child(_dimmer)
 
-	# Main panel
+	# Main panel - use a Control wrapper to center properly
+	var center_container := CenterContainer.new()
+	center_container.name = "CenterWrapper"
+	center_container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(center_container)
+
 	_panel = PanelContainer.new()
 	_panel.name = "RewardPanel"
-	_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_panel.custom_minimum_size = Vector2(300, 200)
-	add_child(_panel)
+	center_container.add_child(_panel)
 
 	# Content margin
 	var margin := MarginContainer.new()

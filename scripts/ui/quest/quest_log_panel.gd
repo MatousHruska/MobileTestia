@@ -133,6 +133,9 @@ func _connect_signals() -> void:
 		qm.quest_failed.connect(_on_quest_changed)
 		qm.quest_abandoned.connect(_on_quest_changed)
 		qm.objective_updated.connect(_on_objective_updated)
+		Debug.info("Quest", "QuestLogPanel connected to QuestManager signals")
+	else:
+		Debug.warn("Quest", "QuestLogPanel: QuestManager not found for signal connection")
 
 
 func _on_quest_changed(_quest_id: String) -> void:
@@ -171,7 +174,10 @@ func _populate_quest_list() -> void:
 	for child in _quest_list.get_children():
 		child.queue_free()
 
+	Debug.log("Quest", "Populating quest list, filter: %s" % ("ACTIVE" if _current_filter == Filter.ACTIVE else "COMPLETED"))
+
 	if not has_node("/root/QuestManager"):
+		Debug.warn("Quest", "QuestManager not found in quest log panel")
 		return
 
 	var qm = get_node("/root/QuestManager")
@@ -185,6 +191,8 @@ func _populate_quest_list() -> void:
 func _populate_active_quests(qm) -> void:
 	# Story quests first
 	var story_quests: Array = qm.get_active_story_quests()
+	var side_quests_preview: Array = qm.get_active_side_quests()
+	Debug.info("Quest", "Active quests - Story: %d, Side: %d" % [story_quests.size(), side_quests_preview.size()])
 	if not story_quests.is_empty():
 		var header := _create_section_header("Story Quests")
 		_quest_list.add_child(header)

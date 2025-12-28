@@ -521,7 +521,8 @@ func _on_quest_accept_pressed() -> void:
 
 	if has_node("/root/QuestManager"):
 		var qm = get_node("/root/QuestManager")
-		qm.start_quest(_pending_quest_id)
+		var success: bool = qm.start_quest(_pending_quest_id)
+		Debug.info("HubUI", "Quest start result: %s for %s" % [success, _pending_quest_id])
 		qm.on_npc_talked(current_npc_id)
 
 	show_dialogue("Good luck, adventurer!")
