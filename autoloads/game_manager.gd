@@ -52,6 +52,10 @@ var spawn_point_id: String = ""
 var game_time: float = 0.0
 var game_time_scale: float = 1.0
 
+## UI References
+var hub_ui: Node = null
+const HUB_UI_SCENE := preload("res://scenes/ui/hub/hub_ui.tscn")
+
 
 func _ready() -> void:
 	Debug.info("System", "GameManager initialized")
@@ -113,6 +117,34 @@ func end_dialogue() -> void:
 		return
 	current_state = GameState.PLAYING
 	Debug.info("UI", "Dialogue ended")
+
+
+## Hub UI (NPC Interaction Menu)
+func open_hub_ui(npc_id: String) -> void:
+	if current_state != GameState.PLAYING:
+		return
+
+	# Create Hub UI if not exists
+	if hub_ui == null:
+		hub_ui = HUB_UI_SCENE.instantiate()
+		hub_ui.closed.connect(_on_hub_ui_closed)
+		get_tree().root.add_child(hub_ui)
+
+	current_state = GameState.DIALOGUE
+	hub_ui.open(npc_id)
+	Debug.info("UI", "Hub UI opened for NPC: %s" % npc_id)
+
+
+func close_hub_ui() -> void:
+	if hub_ui and hub_ui.is_open:
+		hub_ui.close()
+
+
+func _on_hub_ui_closed() -> void:
+	if current_state == GameState.DIALOGUE:
+		current_state = GameState.PLAYING
+	Debug.info("UI", "Hub UI closed")
+
 
 func game_over() -> void:
 	current_state = GameState.GAME_OVER

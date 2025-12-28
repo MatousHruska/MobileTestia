@@ -249,14 +249,8 @@ func interact() -> void:
 	Debug.info("NPC", "Started interaction with %s" % npc_name)
 	interaction_started.emit()
 
-	# Handle different interaction types
-	if not shop_id.is_empty():
-		Debug.log("NPC", "Opening shop: %s" % shop_id)
-		# TODO: Open shop UI
-	elif not dialogue_id.is_empty():
-		Debug.log("NPC", "Starting dialogue: %s" % dialogue_id)
-		Game.start_dialogue()
-		# TODO: Start dialogue system
+	# Open Hub UI for this NPC
+	Game.open_hub_ui(npc_id)
 
 
 func end_interaction() -> void:
@@ -268,9 +262,6 @@ func end_interaction() -> void:
 
 	Debug.info("NPC", "Ended interaction with %s" % npc_name)
 	interaction_ended.emit()
-
-	if Game.current_state == Game.GameState.DIALOGUE:
-		Game.end_dialogue()
 
 
 ## Utility

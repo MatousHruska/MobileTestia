@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://dhub8ui9menu"]
+
+[ext_resource type="Script" path="res://scenes/ui/hub/hub_ui.gd" id="1_hub"]
+
+[node name="HubUI" type="CanvasLayer"]
+process_mode = 3
+layer = 100
+script = ExtResource("1_hub")

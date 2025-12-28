@@ -18,6 +18,7 @@ var quests: Dictionary = {}
 var quest_objectives: Dictionary = {}
 var npcs: Dictionary = {}
 var shop_inventory: Dictionary = {}
+var dialogues: Dictionary = {}
 var consumables: Dictionary = {}
 var status_effects: Dictionary = {}
 var zones: Dictionary = {}
@@ -30,6 +31,7 @@ var enemies_list: Array = []
 var skills_list: Array = []
 var quests_list: Array = []
 var npcs_list: Array = []
+var dialogues_list: Array = []
 var zones_list: Array = []
 
 ## Signals
@@ -70,6 +72,7 @@ func load_all_databases() -> void:
 	# NPCs & Trading
 	success = _load_database("npcs.json", "npcs", npcs, npcs_list) and success
 	success = _load_database("shop_inventory.json", "shop_inventory", shop_inventory) and success
+	success = _load_database("dialogues.json", "dialogues", dialogues, dialogues_list) and success
 
 	# Gameplay
 	success = _load_database("consumables.json", "consumables", consumables) and success
@@ -332,6 +335,21 @@ func get_shop_inventory(id: String) -> Array:
 		if entry.get("id", "") == id:
 			result.append(entry)
 	return result
+
+
+#===============================================================================
+# DIALOGUE ACCESS
+#===============================================================================
+
+## Get dialogue by id
+func get_dialogue(id: String) -> Dictionary:
+	return dialogues.get(id, {})
+
+
+## Get dialogue frames by id (convenience function)
+func get_dialogue_frames(id: String) -> Array:
+	var dialogue := get_dialogue(id)
+	return dialogue.get("frames", [])
 
 
 #===============================================================================
@@ -636,4 +654,6 @@ func print_stats() -> void:
 		"skills": skills.size(),
 		"quests": quests.size(),
 		"quest_objectives": quest_objectives.size(),
+		"npcs": npcs.size(),
+		"dialogues": dialogues.size(),
 	})
