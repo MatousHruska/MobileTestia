@@ -32,11 +32,32 @@ var _completed_filter: Button
 
 func _ready() -> void:
 	Debug.info("Quest", "QuestLogPanel _ready() called")
+
+	# Set anchors to fill parent (since we're a Control in a VBoxContainer)
+	set_anchors_preset(Control.PRESET_FULL_RECT)
+
 	_build_ui()
 	Debug.info("Quest", "QuestLogPanel _build_ui() completed, _quest_list valid: %s" % is_instance_valid(_quest_list))
 	_connect_signals()
 	refresh()
 	Debug.info("Quest", "QuestLogPanel _ready() completed, _quest_list children: %d" % _quest_list.get_child_count())
+
+	# Debug sizes after a frame
+	call_deferred("_debug_sizes")
+
+
+func _debug_sizes() -> void:
+	Debug.info("Quest", "=== SIZE DEBUG ===")
+	Debug.info("Quest", "QuestLogPanel size: %s, position: %s" % [size, position])
+	if get_child_count() > 0:
+		var hbox = get_child(0)
+		Debug.info("Quest", "HBox size: %s, child_count: %d" % [hbox.size, hbox.get_child_count()])
+		if hbox.get_child_count() > 0:
+			var left = hbox.get_child(0)
+			Debug.info("Quest", "Left panel size: %s" % left.size)
+	Debug.info("Quest", "_quest_scroll size: %s" % _quest_scroll.size)
+	Debug.info("Quest", "_quest_list size: %s, children: %d" % [_quest_list.size, _quest_list.get_child_count()])
+	Debug.info("Quest", "=== END SIZE DEBUG ===")
 
 
 func _build_ui() -> void:
