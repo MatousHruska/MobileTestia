@@ -339,6 +339,44 @@
       },
       "start_dialogue": "dlg_spare_beast_start",
       "complete_dialogue": "dlg_spare_beast_complete"
+    },
+    {
+      "id": "side_test_undead_purge",
+      "name": "Undead Purge",
+      "description": "The undead are growing restless. Clear out the zombies roaming the meadows and slay the Vampire Lord who commands them from the crypt.",
+      "type": "side",
+      "min_level": 1,
+      "giver_npc": "npc_quest_giver_main",
+      "turn_in_npc": "npc_quest_giver_main",
+      "prerequisite_quests": "",
+      "next_quest": "",
+      "can_abandon": true,
+      "auto_complete": false,
+      "objectives": [
+        {
+          "id": "obj_kill_zombies",
+          "type": "kill_count",
+          "target": "ene_zombie_basic",
+          "count": 5,
+          "description": "Kill 5 zombies",
+          "optional": false
+        },
+        {
+          "id": "obj_kill_vampire_lord",
+          "type": "kill_named",
+          "target": "ene_vampire_lord",
+          "count": 1,
+          "description": "Slay the Vampire Lord",
+          "optional": false
+        }
+      ],
+      "rewards": {
+        "experience": 250,
+        "gold": 100,
+        "items": []
+      },
+      "start_dialogue": "",
+      "complete_dialogue": ""
     }
   ]
 }
