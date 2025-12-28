@@ -35,6 +35,11 @@ var _typewriter_timer: float = 0.0
 var is_open: bool = false
 var _is_typing: bool = false
 
+## Quest offer state
+var _pending_quest_id: String = ""
+var _quest_accept_button: Button
+var _quest_decline_button: Button
+
 
 func _ready() -> void:
 	_build_ui()
@@ -354,6 +359,23 @@ func _build_buttons_section() -> Control:
 	exit_button.custom_minimum_size.y = 36
 	buttons_container.add_child(exit_button)
 
+	# Quest Accept/Decline buttons (hidden by default)
+	_quest_accept_button = Button.new()
+	_quest_accept_button.name = "AcceptQuestButton"
+	_quest_accept_button.text = "Accept"
+	_quest_accept_button.custom_minimum_size.y = 36
+	_quest_accept_button.add_theme_color_override("font_color", Color.LIGHT_GREEN)
+	_quest_accept_button.hide()
+	buttons_container.add_child(_quest_accept_button)
+
+	_quest_decline_button = Button.new()
+	_quest_decline_button.name = "DeclineQuestButton"
+	_quest_decline_button.text = "Decline"
+	_quest_decline_button.custom_minimum_size.y = 36
+	_quest_decline_button.add_theme_color_override("font_color", Color.INDIAN_RED)
+	_quest_decline_button.hide()
+	buttons_container.add_child(_quest_decline_button)
+
 	return container
 
 
@@ -366,6 +388,8 @@ func _connect_signals() -> void:
 	quest_button.pressed.connect(_on_quest_pressed)
 	trade_button.pressed.connect(_on_trade_pressed)
 	exit_button.pressed.connect(_on_exit_pressed)
+	_quest_accept_button.pressed.connect(_on_quest_accept_pressed)
+	_quest_decline_button.pressed.connect(_on_quest_decline_pressed)
 
 
 func _on_background_input(event: InputEvent) -> void:
@@ -446,7 +470,10 @@ func _on_quest_pressed() -> void:
 		var quest_data: Dictionary = available[0]
 		var quest_id: String = quest_data.get("id", "")
 
-		# Show start dialogue
+		# Store pending quest for accept/decline
+		_pending_quest_id = quest_id
+
+		# Show quest description
 		var start_dialogue: String = quest_data.get("start_dialogue", "")
 		if not start_dialogue.is_empty():
 			var frames := DatabaseLoader.get_dialogue_frames(start_dialogue)
@@ -457,17 +484,55 @@ func _on_quest_pressed() -> void:
 		else:
 			show_dialogue(quest_data.get("description", "I have a task for you."))
 
-		# Start the quest
-		qm.start_quest(quest_id)
-
-		# Update button visibility
-		_setup_buttons()
+		# Show Accept/Decline buttons, hide other buttons
+		_show_quest_offer_buttons()
 		quest_pressed.emit()
 		return
 
 	# No quests available
 	show_dialogue("I don't have any quests for you right now.")
 	quest_pressed.emit()
+
+
+func _show_quest_offer_buttons() -> void:
+	## Show Accept/Decline buttons, hide normal buttons
+	talk_button.hide()
+	quest_button.hide()
+	trade_button.hide()
+	exit_button.hide()
+	_quest_accept_button.show()
+	_quest_decline_button.show()
+
+
+func _hide_quest_offer_buttons() -> void:
+	## Hide Accept/Decline buttons, restore normal buttons
+	_quest_accept_button.hide()
+	_quest_decline_button.hide()
+	_pending_quest_id = ""
+	_setup_buttons()
+
+
+func _on_quest_accept_pressed() -> void:
+	Debug.log("HubUI", "Quest accepted: %s" % _pending_quest_id)
+
+	if _pending_quest_id.is_empty():
+		_hide_quest_offer_buttons()
+		return
+
+	if has_node("/root/QuestManager"):
+		var qm = get_node("/root/QuestManager")
+		qm.start_quest(_pending_quest_id)
+		qm.on_npc_talked(current_npc_id)
+
+	show_dialogue("Good luck, adventurer!")
+	_hide_quest_offer_buttons()
+
+
+func _on_quest_decline_pressed() -> void:
+	Debug.log("HubUI", "Quest declined: %s" % _pending_quest_id)
+
+	show_dialogue("Come back if you change your mind.")
+	_hide_quest_offer_buttons()
 
 
 func _on_trade_pressed() -> void:

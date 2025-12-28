@@ -655,11 +655,19 @@ func _on_enemy_died(enemy: Node2D) -> void:
 	if not is_instance_valid(enemy):
 		return
 
-	var enemy_id: String = enemy.enemy_id if enemy.has_method("get") else ""
-	var enemy_name: String = enemy.enemy_name if enemy.has_method("get") else ""
-	var enemy_type: String = enemy.get_meta("enemy_type", "") if enemy.has_meta("enemy_type") else ""
+	# Get enemy properties safely
+	var enemy_id: String = ""
+	var enemy_name: String = ""
+	var enemy_type: String = ""
 
-	Debug.log("Quest", "Enemy died, checking objectives", {
+	if "enemy_id" in enemy:
+		enemy_id = enemy.enemy_id
+	if "enemy_name" in enemy:
+		enemy_name = enemy.enemy_name
+	if enemy.has_meta("enemy_type"):
+		enemy_type = enemy.get_meta("enemy_type")
+
+	Debug.info("Quest", "Enemy killed, checking objectives", {
 		"id": enemy_id,
 		"name": enemy_name
 	})
