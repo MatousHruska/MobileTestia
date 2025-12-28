@@ -294,7 +294,7 @@ Private Sub SetupNPCsSheet()
     Set ws = GetOrCreateSheet("NPCs")
     Dim headers As Variant
     headers = Array("id", "name", "type", "location", "shop_inventory_id", _
-                    "dialogue_greeting", "faction", "sprite_id", "min_level")
+                    "dialogue_greeting", "faction", "sprite_id", "min_level", "is_interactable")
     SetHeaders ws, headers
 End Sub
 
