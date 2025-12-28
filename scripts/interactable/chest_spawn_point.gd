@@ -28,6 +28,11 @@ class_name ChestSpawnPoint
 @export var min_items: int = 0
 @export var max_items: int = 2
 
+## Respawn settings
+@export_group("Respawn")
+@export var respawn_time_seconds: float = 300.0  ## 5 minutes default
+@export var can_respawn: bool = true
+
 ## Editor visual
 @export_group("Editor")
 @export var marker_color: Color = Color(0.6, 0.4, 0.2, 0.8)
@@ -75,6 +80,10 @@ func _try_spawn_chest() -> void:
 		spawned_chest.loot_table_id = loot_table_id
 	spawned_chest.min_items = min_items
 	spawned_chest.max_items = max_items
+
+	# Apply respawn settings
+	spawned_chest.can_respawn = can_respawn
+	spawned_chest.respawn_time_seconds = respawn_time_seconds
 
 	# Add to scene
 	get_parent().add_child(spawned_chest)

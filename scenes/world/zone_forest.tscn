@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://zone_forest_001"]
+[gd_scene load_steps=9 format=3 uid="uid://zone_forest_001"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/world/zone_base.gd" id="4_zone"]
 [ext_resource type="PackedScene" path="res://scenes/ui/menu/character_menu.tscn" id="5_menu"]
 [ext_resource type="Script" path="res://scripts/world/zone_transition.gd" id="6_transition"]
+[ext_resource type="Script" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
@@ -54,6 +55,36 @@ offset_bottom = 130.0
 color = Color(0.1, 0.2, 0.05, 1)
 
 [node name="Enemies" type="Node2D" parent="."]
+
+[node name="ChestSpawns" type="Node2D" parent="."]
+
+[node name="ForestChest1" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(250, 50)
+script = ExtResource("7_chest_spawn")
+spawn_id = "forest_chest_1"
+spawn_chance = 0.8
+wooden_weight = 50
+iron_weight = 40
+golden_weight = 10
+
+[node name="ForestChest2" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(-400, 120)
+script = ExtResource("7_chest_spawn")
+spawn_id = "forest_chest_2"
+spawn_chance = 0.6
+wooden_weight = 40
+iron_weight = 45
+golden_weight = 15
+
+[node name="ForestChest3" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(150, -150)
+script = ExtResource("7_chest_spawn")
+spawn_id = "forest_chest_3"
+spawn_chance = 0.4
+wooden_weight = 30
+iron_weight = 45
+golden_weight = 25
+allow_wooden = false
 
 [node name="TransitionToTest" type="Area2D" parent="."]
 position = Vector2(0, -280)

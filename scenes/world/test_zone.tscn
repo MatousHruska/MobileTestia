@@ -168,6 +168,19 @@ object_size = Vector2(16, 16)
 
 [node name="ChestSpawns" type="Node2D" parent="."]
 
+[node name="StarterChest" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(-80, 50)
+script = ExtResource("11_chest_spawn")
+spawn_id = "starter_chest"
+spawn_chance = 1.0
+wooden_weight = 100
+iron_weight = 0
+golden_weight = 0
+allow_iron = false
+allow_golden = false
+respawn_time_seconds = 60.0
+marker_color = Color(0.55, 0.35, 0.15, 0.9)
+
 [node name="ChestSpawn1" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(-300, 80)
 script = ExtResource("11_chest_spawn")
