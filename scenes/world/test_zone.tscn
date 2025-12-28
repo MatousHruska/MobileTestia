@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://testzone001"]
+[gd_scene load_steps=11 format=3 uid="uid://testzone001"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -8,17 +8,113 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/menu/character_menu.tscn" id="6_menu"]
 [ext_resource type="Script" path="res://scripts/npc/enemy_npc.gd" id="7_enemy"]
 [ext_resource type="PackedScene" path="res://scenes/prefabs/database_npc.tscn" id="8_npc_prefab"]
+[ext_resource type="Script" path="res://scripts/world/zone_transition.gd" id="9_transition"]
+[ext_resource type="Script" path="res://scripts/world/spawn_point.gd" id="10_spawn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
+size = Vector2(80, 40)
 
 [node name="TestZone" type="Node2D"]
 script = ExtResource("5_zone")
-zone_name = "Test Zone"
+zone_id = ""
+zone_name = "Test Hub"
+spawn_enemies = false
 
 [node name="Background" type="ColorRect" parent="."]
 offset_left = -640.0
-offset_top = -360.0
+offset_top = -500.0
 offset_right = 640.0
 offset_bottom = 360.0
 color = Color(0.15, 0.2, 0.15, 1)
+
+[node name="ZoneTransitions" type="Node2D" parent="."]
+
+[node name="ToMeadow" type="Area2D" parent="ZoneTransitions"]
+position = Vector2(-200, -350)
+script = ExtResource("9_transition")
+target_zone = "res://scenes/world/zone_meadow.tscn"
+spawn_point_id = "default"
+display_name = "Meadow"
+transition_color = Color(0.3, 0.6, 0.3, 0.7)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZoneTransitions/ToMeadow"]
+shape = SubResource("RectangleShape2D_trans")
+
+[node name="ToForest" type="Area2D" parent="ZoneTransitions"]
+position = Vector2(0, -350)
+script = ExtResource("9_transition")
+target_zone = "res://scenes/world/zone_forest.tscn"
+spawn_point_id = "default"
+display_name = "Forest"
+transition_color = Color(0.15, 0.35, 0.15, 0.7)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZoneTransitions/ToForest"]
+shape = SubResource("RectangleShape2D_trans")
+
+[node name="ToCrypt" type="Area2D" parent="ZoneTransitions"]
+position = Vector2(200, -350)
+script = ExtResource("9_transition")
+target_zone = "res://scenes/world/zone_crypt.tscn"
+spawn_point_id = "default"
+display_name = "Crypt"
+transition_color = Color(0.3, 0.2, 0.4, 0.7)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZoneTransitions/ToCrypt"]
+shape = SubResource("RectangleShape2D_trans")
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="SpawnFromMeadow" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(-200, -280)
+script = ExtResource("10_spawn")
+spawn_id = "from_meadow"
+marker_color = Color(0.3, 0.6, 0.3, 0.8)
+
+[node name="SpawnFromForest" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(0, -280)
+script = ExtResource("10_spawn")
+spawn_id = "from_forest"
+marker_color = Color(0.15, 0.35, 0.15, 0.8)
+
+[node name="SpawnFromCrypt" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(200, -280)
+script = ExtResource("10_spawn")
+spawn_id = "from_crypt"
+marker_color = Color(0.3, 0.2, 0.4, 0.8)
+
+[node name="SpawnDefault" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(0, 0)
+script = ExtResource("10_spawn")
+spawn_id = "default"
+
+[node name="TransitionLabels" type="Node2D" parent="."]
+
+[node name="LabelMeadow" type="Label" parent="TransitionLabels"]
+offset_left = -240.0
+offset_top = -400.0
+offset_right = -160.0
+offset_bottom = -377.0
+text = "MEADOW
+(Zombies)"
+horizontal_alignment = 1
+
+[node name="LabelForest" type="Label" parent="TransitionLabels"]
+offset_left = -40.0
+offset_top = -400.0
+offset_right = 40.0
+offset_bottom = -377.0
+text = "FOREST
+(Ghouls)"
+horizontal_alignment = 1
+
+[node name="LabelCrypt" type="Label" parent="TransitionLabels"]
+offset_left = 160.0
+offset_top = -400.0
+offset_right = 240.0
+offset_bottom = -377.0
+text = "CRYPT
+(Vampires)"
+horizontal_alignment = 1
 
 [node name="Grid" type="Node2D" parent="."]
 script = ExtResource("4_ref")
@@ -62,57 +158,12 @@ object_color = Color(0.5, 0.35, 0.2, 1)
 object_size = Vector2(24, 28)
 
 [node name="Marker" type="Node2D" parent="ReferenceObjects"]
-position = Vector2(0, -100)
+position = Vector2(0, -200)
 script = ExtResource("4_ref")
 object_color = Color(0.8, 0.2, 0.2, 1)
 object_size = Vector2(16, 16)
 
 [node name="Enemies" type="Node2D" parent="."]
-
-[node name="Zombie1" type="CharacterBody2D" parent="Enemies"]
-position = Vector2(-250, 0)
-script = ExtResource("7_enemy")
-enemy_id = "ene_zombie_basic"
-enemy_name = "Zombie"
-max_health = 50.0
-base_damage = 8.0
-attack_speed = 1.0
-armor = 2.0
-enemy_level = 1
-experience_reward = 15
-detection_radius = 100.0
-attack_radius = 20.0
-move_speed = 40.0
-
-[node name="Zombie2" type="CharacterBody2D" parent="Enemies"]
-position = Vector2(-300, -80)
-script = ExtResource("7_enemy")
-enemy_id = "ene_zombie_basic"
-enemy_name = "Zombie"
-max_health = 50.0
-base_damage = 8.0
-attack_speed = 1.0
-armor = 2.0
-enemy_level = 1
-experience_reward = 15
-detection_radius = 100.0
-attack_radius = 20.0
-move_speed = 40.0
-
-[node name="Zombie3" type="CharacterBody2D" parent="Enemies"]
-position = Vector2(-200, 80)
-script = ExtResource("7_enemy")
-enemy_id = "ene_zombie_basic"
-enemy_name = "Zombie"
-max_health = 50.0
-base_damage = 8.0
-attack_speed = 1.0
-armor = 2.0
-enemy_level = 1
-experience_reward = 15
-detection_radius = 100.0
-attack_radius = 20.0
-move_speed = 40.0
 
 [node name="FriendlyNPCs" type="Node2D" parent="."]
 
