@@ -29,8 +29,8 @@ var player: PlayerController = null
 ## Character menu reference (set externally)
 var character_menu: CharacterMenu = null
 
-## Nearby interactable NPC
-var nearby_npc: Node = null
+## Nearby interactable NPC or object
+var nearby_npc: Node = null  ## Can be NPC or InteractableBase
 var _last_nearby_npc: Node = null
 
 
@@ -273,20 +273,42 @@ func _update_interact_button() -> void:
 	if not interact_button or not Game.is_playing:
 		return
 
-	# Find nearby interactable NPCs
+	# Find nearby interactable object (NPC or chest)
 	nearby_npc = null
 
+	# Check friendly NPCs first
 	if NPCManager:
 		for npc in NPCManager.all_friendlies:
 			if is_instance_valid(npc) and npc.has_method("can_interact") and npc.can_interact():
 				nearby_npc = npc
 				break
 
-	# Track NPC changes
+	# If no NPC found, check for chests and other interactables
+	if nearby_npc == null:
+		var chests := get_tree().get_nodes_in_group("loot_chests")
+		for chest in chests:
+			if is_instance_valid(chest) and chest.has_method("can_interact") and chest.can_interact():
+				nearby_npc = chest
+				break
+
+	# Also check quest chests
+	if nearby_npc == null:
+		var quest_chests := get_tree().get_nodes_in_group("quest_chests")
+		for chest in quest_chests:
+			if is_instance_valid(chest) and chest.has_method("can_interact") and chest.can_interact():
+				nearby_npc = chest
+				break
+
+	# Track changes
 	if nearby_npc != _last_nearby_npc:
 		_last_nearby_npc = nearby_npc
+		# Update button text based on what's nearby
+		if nearby_npc and nearby_npc.has_method("get_interaction_prompt"):
+			interact_button.text = nearby_npc.get_interaction_prompt()
+		else:
+			interact_button.text = "Interact"
 
-	# Show/hide button based on nearby NPC
+	# Show/hide button based on nearby interactable
 	if nearby_npc:
 		if not interact_button.visible:
 			interact_button.visible = true
