@@ -6,6 +6,7 @@ class_name QuestRewardPopup
 signal popup_closed
 
 var _panel: PanelContainer
+var _dimmer: ColorRect
 var _content: VBoxContainer
 var _continue_button: Button
 
@@ -31,12 +32,12 @@ func _connect_quest_manager() -> void:
 
 func _build_ui() -> void:
 	# Background dimmer
-	var dimmer := ColorRect.new()
-	dimmer.name = "Dimmer"
-	dimmer.color = Color(0, 0, 0, 0.6)
-	dimmer.set_anchors_preset(Control.PRESET_FULL_RECT)
-	dimmer.gui_input.connect(_on_dimmer_input)
-	add_child(dimmer)
+	_dimmer = ColorRect.new()
+	_dimmer.name = "Dimmer"
+	_dimmer.color = Color(0, 0, 0, 0.6)
+	_dimmer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_dimmer.gui_input.connect(_on_dimmer_input)
+	add_child(_dimmer)
 
 	# Main panel
 	_panel = PanelContainer.new()
@@ -189,12 +190,16 @@ func close_popup() -> void:
 
 	_is_open = false
 
-	# Fade out animation
+	# Fade out animation on child controls (CanvasLayer doesn't have modulate)
 	var tween := create_tween()
-	tween.tween_property(self, "modulate:a", 0.0, 0.15)
+	tween.set_parallel(true)
+	tween.tween_property(_dimmer, "modulate:a", 0.0, 0.15)
+	tween.tween_property(_panel, "modulate:a", 0.0, 0.15)
+	tween.set_parallel(false)
 	tween.tween_callback(func():
 		hide()
-		self.modulate.a = 1.0
+		_dimmer.modulate.a = 1.0
+		_panel.modulate.a = 1.0
 		popup_closed.emit()
 	)
 
