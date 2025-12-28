@@ -212,8 +212,8 @@ func _setup_controls() -> void:
 
 
 func _on_attack_pressed() -> void:
-	if player and Game.can_player_attack:
-		player.request_attack()
+	# DEBUG: Kill all enemies for loot testing (no combat system yet)
+	NPCManager.debug_kill_all_enemies()
 
 
 func _on_dodge_pressed() -> void:
