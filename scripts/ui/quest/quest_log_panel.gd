@@ -57,8 +57,10 @@ func _build_ui() -> void:
 
 func _build_quest_list_panel() -> Control:
 	var panel := PanelContainer.new()
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	var vbox := VBoxContainer.new()
+	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	vbox.add_theme_constant_override("separation", 4)
 	panel.add_child(vbox)
 
@@ -98,8 +100,10 @@ func _build_quest_list_panel() -> Control:
 
 func _build_details_panel() -> Control:
 	var panel := PanelContainer.new()
+	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	var margin := MarginContainer.new()
+	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_theme_constant_override("margin_left", 8)
 	margin.add_theme_constant_override("margin_right", 8)
 	margin.add_theme_constant_override("margin_top", 8)
@@ -107,6 +111,7 @@ func _build_details_panel() -> Control:
 	panel.add_child(margin)
 
 	_details_scroll = ScrollContainer.new()
+	_details_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_details_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	margin.add_child(_details_scroll)
 
