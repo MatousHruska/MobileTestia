@@ -305,6 +305,22 @@ func _update_interact_button() -> void:
 				nearby_npc = pickup
 				break
 
+	# Check for doors
+	if nearby_npc == null:
+		var doors := get_tree().get_nodes_in_group("doors")
+		for door in doors:
+			if is_instance_valid(door) and door.has_method("can_interact") and door.can_interact():
+				nearby_npc = door
+				break
+
+	# Check for levers
+	if nearby_npc == null:
+		var levers := get_tree().get_nodes_in_group("levers")
+		for lever in levers:
+			if is_instance_valid(lever) and lever.has_method("can_interact") and lever.can_interact():
+				nearby_npc = lever
+				break
+
 	# Track changes
 	if nearby_npc != _last_nearby_npc:
 		# Disconnect from old pickup if any
