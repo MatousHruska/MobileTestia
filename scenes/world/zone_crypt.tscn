@@ -14,7 +14,7 @@ size = Vector2(80, 40)
 script = ExtResource("4_zone")
 zone_id = "zone_crypt"
 zone_name = "Ancient Crypt"
-enemy_spawn_positions = Array[Vector2]([Vector2(-200, 0), Vector2(-320, -80), Vector2(-250, 100)])
+enemy_spawn_positions = Array[Vector2]([Vector2(-200, 0), Vector2(-320, -80), Vector2(-250, 100), Vector2(300, 0)])
 
 [node name="Background" type="ColorRect" parent="."]
 offset_left = -640.0
