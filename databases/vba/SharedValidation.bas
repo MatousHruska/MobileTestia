@@ -105,6 +105,25 @@ Public Function GetDefaultString(ByVal cell As Range, Optional ByVal defaultVal 
 End Function
 
 '-------------------------------------------------------------------------------
+' GetDefaultBoolean - Returns default value for empty boolean cells
+'-------------------------------------------------------------------------------
+Public Function GetDefaultBoolean(ByVal cell As Range, Optional ByVal defaultVal As Boolean = False) As Boolean
+    If IsEmpty(cell.value) Or Trim(cell.value) = "" Then
+        GetDefaultBoolean = defaultVal
+    Else
+        Dim val As String
+        val = LCase(Trim(cell.value))
+        If val = "true" Or val = "yes" Or val = "1" Then
+            GetDefaultBoolean = True
+        ElseIf val = "false" Or val = "no" Or val = "0" Then
+            GetDefaultBoolean = False
+        Else
+            GetDefaultBoolean = defaultVal
+        End If
+    End If
+End Function
+
+'-------------------------------------------------------------------------------
 ' EscapeJsonString - Escapes special characters for JSON
 '-------------------------------------------------------------------------------
 Public Function EscapeJsonString(ByVal str As String) As String
