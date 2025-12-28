@@ -1,10 +1,15 @@
 extends Node2D
 class_name ZoneBase
 ## ZoneBase - Base script for game zones
-## Handles common zone setup like linking HUD to menu
+## Handles zone setup, player spawning, and enemy spawning from database
 
+## Zone identification - links to zones database
+@export var zone_id: String = ""
 @export var zone_name: String = "Unknown Zone"
-@export var spawn_test_enemies: bool = true
+
+## Enemy spawning
+@export var spawn_enemies: bool = true
+@export var enemy_spawn_positions: Array[Vector2] = []
 
 ## Auto-find references
 @onready var hud: HUD = $HUD
@@ -12,7 +17,7 @@ class_name ZoneBase
 
 
 func _ready() -> void:
-	Debug.info("System", "Zone loaded", zone_name)
+	Debug.info("System", "Zone loaded: %s (id: %s)" % [zone_name, zone_id])
 
 	# Link HUD to character menu
 	if hud and character_menu:
@@ -22,17 +27,69 @@ func _ready() -> void:
 	# Notify game manager
 	Game.current_zone = zone_name
 
-	# Add starting items from database
-	Inventory.add_starting_items()
+	# Position player at spawn point
+	_position_player_at_spawn()
 
-	# Spawn test enemies from database
-	if spawn_test_enemies:
-		_spawn_database_enemies()
+	# Add starting items from database (only on first zone)
+	if Game.game_time < 1.0:
+		Inventory.add_starting_items()
+
+	# Spawn enemies from database
+	if spawn_enemies:
+		_spawn_zone_enemies()
 
 
-func _spawn_database_enemies() -> void:
-	## Spawns test enemies from the database
-	## Replaces any existing hardcoded enemies
+func _position_player_at_spawn() -> void:
+	## Position player at the correct spawn point based on Game.spawn_point_id
+	var spawn_id: String = Game.spawn_point_id
+	if spawn_id.is_empty():
+		spawn_id = "default"
+
+	# Find spawn point with matching ID
+	var spawn_points := get_tree().get_nodes_in_group("spawn_points")
+	for sp in spawn_points:
+		if sp is SpawnPoint and sp.spawn_id == spawn_id:
+			if Game.player:
+				Game.player.global_position = sp.global_position
+				Debug.log("Zone", "Player spawned at: %s (%s)" % [spawn_id, sp.global_position])
+			return
+
+	# Also check for SpawnPoint nodes directly in scene
+	for child in get_children():
+		if child is SpawnPoint and child.spawn_id == spawn_id:
+			if Game.player:
+				Game.player.global_position = child.global_position
+				Debug.log("Zone", "Player spawned at: %s (%s)" % [spawn_id, child.global_position])
+			return
+
+	Debug.log("Zone", "No spawn point '%s' found, using default position" % spawn_id)
+
+
+func _spawn_zone_enemies() -> void:
+	## Spawns enemies based on zone database entry
+
+	# Get zone data from database
+	var zone_data: Dictionary = {}
+	if not zone_id.is_empty():
+		zone_data = DatabaseLoader.zones.get(zone_id, {})
+
+	# Get enemy list from database or use fallback
+	var enemy_ids: Array = []
+	if zone_data.has("enemy_spawn_list"):
+		var spawn_list: String = zone_data.get("enemy_spawn_list", "")
+		if not spawn_list.is_empty():
+			enemy_ids = spawn_list.split(",")
+			for i in range(enemy_ids.size()):
+				enemy_ids[i] = enemy_ids[i].strip_edges()
+
+	# Fallback to zombie if no enemies defined
+	if enemy_ids.is_empty():
+		enemy_ids = ["ene_zombie_basic"]
+		Debug.warn("Zone", "No enemies in database for zone '%s', using fallback" % zone_id)
+
+	# Get level range from database
+	var min_level: int = zone_data.get("min_level", 1)
+	var max_level: int = zone_data.get("max_level", min_level + 2)
 
 	# Find or create Enemies container
 	var enemies_node := get_node_or_null("Enemies")
@@ -40,40 +97,36 @@ func _spawn_database_enemies() -> void:
 		enemies_node = Node2D.new()
 		enemies_node.name = "Enemies"
 		add_child(enemies_node)
-	else:
-		# Remove existing hardcoded enemies
-		for child in enemies_node.get_children():
-			child.queue_free()
 
-	# Wait a frame for cleanup
-	await get_tree().process_frame
+	# Use defined spawn positions or defaults
+	var positions: Array[Vector2] = enemy_spawn_positions
+	if positions.is_empty():
+		positions = [
+			Vector2(-250, 0),
+			Vector2(-300, -80),
+			Vector2(-200, 80),
+		]
 
-	# Spawn enemies from database
-	var test_enemies := [
-		{"id": "ene_zombie_basic", "level": 1, "position": Vector2(-250, 0)},
-		{"id": "ene_skeleton_basic", "level": 1, "position": Vector2(-300, -80)},
-		{"id": "ene_goblin_basic", "level": 1, "position": Vector2(-200, 80)},
-	]
+	# Spawn enemies at positions
+	for i in range(positions.size()):
+		var enemy_id: String = enemy_ids[i % enemy_ids.size()]
+		var level: int = randi_range(min_level, max_level)
+		var pos: Vector2 = positions[i]
 
-	for enemy_data in test_enemies:
-		var enemy := DatabaseLoader.create_enemy(enemy_data.id, enemy_data.level)
+		var enemy := DatabaseLoader.create_enemy(enemy_id, level)
 		if enemy != null:
 			enemies_node.add_child(enemy)
-			enemy.global_position = enemy_data.position
+			enemy.global_position = pos
 			enemy.home_position = enemy.global_position
-			Debug.log("Zone", "Spawned database enemy", {
-				"id": enemy_data.id,
-				"name": enemy.enemy_name,
-				"position": enemy.global_position
-			})
+			Debug.log("Zone", "Spawned: %s Lv%d at %s" % [enemy.enemy_name, level, pos])
 		else:
-			# Fallback to EnemyPresets if database entry missing
-			var enemy_type: String = str(enemy_data.id).replace("ene_", "").replace("_basic", "")
-			enemy = EnemyPresets.create(enemy_type, enemy_data.level)
-			if enemy != null:
-				enemies_node.add_child(enemy)
-				enemy.global_position = enemy_data.position
-				enemy.home_position = enemy.global_position
-				Debug.warn("Zone", "Used fallback enemy", enemy_type)
+			Debug.warn("Zone", "Failed to spawn enemy: %s" % enemy_id)
 
-	Debug.info("Zone", "Spawned %d test enemies from database" % test_enemies.size())
+	Debug.info("Zone", "Spawned %d enemies from zone database" % positions.size())
+
+
+## Get zone data from database
+func get_zone_data() -> Dictionary:
+	if zone_id.is_empty():
+		return {}
+	return DatabaseLoader.zones.get(zone_id, {})
