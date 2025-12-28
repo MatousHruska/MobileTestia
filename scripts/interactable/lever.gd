@@ -11,6 +11,7 @@ signal lever_deactivated  ## Emitted when turned OFF
 ## Lever settings
 @export_group("Lever")
 @export var lever_name: String = "Lever"
+@export var persistence_id: String = ""  ## Unique ID for saving state (leave empty to not persist)
 @export var starts_on: bool = false
 @export var one_shot: bool = false  ## If true, can only be activated once
 
@@ -37,7 +38,14 @@ func _init() -> void:
 
 
 func _on_ready() -> void:
-	is_on = starts_on
+	# Load persisted state or use default
+	if not persistence_id.is_empty() and Persistence.has_state("levers", persistence_id):
+		var state := Persistence.load_state("levers", persistence_id)
+		is_on = state.get("is_on", starts_on)
+		has_been_used = state.get("has_been_used", false)
+	else:
+		is_on = starts_on
+
 	_update_lever_state()
 	add_to_group("levers")
 
@@ -81,6 +89,7 @@ func toggle() -> void:
 	is_on = not is_on
 	has_been_used = true
 	_update_lever_state()
+	_save_state()
 
 	# Emit signals
 	lever_toggled.emit(is_on)
@@ -107,6 +116,15 @@ func toggle() -> void:
 				node.toggle()
 
 	Debug.info("Lever", "%s toggled to %s" % [lever_name, "ON" if is_on else "OFF"])
+
+
+## Save state to persistence
+func _save_state() -> void:
+	if not persistence_id.is_empty():
+		Persistence.save_state("levers", persistence_id, {
+			"is_on": is_on,
+			"has_been_used": has_been_used
+		})
 
 
 ## Set lever state directly

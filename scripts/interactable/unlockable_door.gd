@@ -10,6 +10,7 @@ signal door_locked
 ## Door settings
 @export_group("Door")
 @export var door_name: String = "Door"
+@export var persistence_id: String = ""  ## Unique ID for saving state (leave empty to not persist)
 @export var required_key_id: String = ""  ## ID of key needed to unlock
 @export var required_key_name: String = "Key"  ## Display name for "X needed" message
 @export var starts_locked: bool = true
@@ -37,7 +38,12 @@ func _init() -> void:
 
 
 func _on_ready() -> void:
-	is_locked = starts_locked
+	# Load persisted state or use default
+	if not persistence_id.is_empty() and Persistence.has_state("doors", persistence_id):
+		is_locked = not Persistence.is_door_unlocked(persistence_id)
+	else:
+		is_locked = starts_locked
+
 	_setup_collision()
 	_setup_floating_text()
 	_update_door_state()
@@ -166,6 +172,7 @@ func unlock() -> void:
 
 	is_locked = false
 	_update_door_state()
+	_save_state()
 	door_unlocked.emit()
 
 
@@ -176,7 +183,14 @@ func lock() -> void:
 
 	is_locked = true
 	_update_door_state()
+	_save_state()
 	door_locked.emit()
+
+
+## Save state to persistence
+func _save_state() -> void:
+	if not persistence_id.is_empty():
+		Persistence.save_door_state(persistence_id, is_locked)
 
 
 ## Toggle lock state
