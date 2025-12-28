@@ -289,45 +289,43 @@ func _on_death() -> void:
 
 
 func _drop_loot() -> void:
-	var dropped_items: Array = []
-
-	# Roll for gold
+	# Roll for gold - add directly to player
 	var gold_amount := randi_range(gold_min, gold_max)
 	if gold_amount > 0:
-		dropped_items.append({"type": "gold", "amount": gold_amount})
+		InventoryManager.add_gold(gold_amount)
 		Debug.log("Loot", "%s dropped gold" % enemy_name, gold_amount)
 
-	# Roll for items
+	# Roll for ONE item max (first successful roll wins)
+	var dropped_item_id: String = ""
 	for entry in loot_table:
 		var item_id: String = entry.get("item_id", "")
 		var drop_chance: float = entry.get("drop_chance", 0.0)
-		var quantity_min: int = entry.get("quantity_min", 1)
-		var quantity_max: int = entry.get("quantity_max", 1)
 
 		if item_id.is_empty():
 			continue
 
 		if randf() <= drop_chance:
-			var quantity := randi_range(quantity_min, quantity_max)
-			dropped_items.append({
-				"type": "item",
-				"item_id": item_id,
-				"quantity": quantity
-			})
-			Debug.log("Loot", "%s dropped item" % enemy_name, {
-				"item": item_id,
-				"quantity": quantity
-			})
+			dropped_item_id = item_id
+			Debug.log("Loot", "%s dropped item" % enemy_name, item_id)
+			break  # Only one item can drop
 
-	if not dropped_items.is_empty():
-		loot_dropped.emit(dropped_items)
-		_spawn_loot_visuals(dropped_items)
+	# Spawn the loot pickup if we got an item
+	if not dropped_item_id.is_empty():
+		_spawn_loot_pickup(dropped_item_id)
+		loot_dropped.emit([{"type": "item", "item_id": dropped_item_id}])
 
 
-func _spawn_loot_visuals(items: Array) -> void:
-	## TODO: Spawn actual loot pickup nodes
-	## For now just log
-	Debug.info("Loot", "Spawning loot at %s" % global_position, items)
+func _spawn_loot_pickup(item_id: String) -> void:
+	# Create the item from database
+	var item := DatabaseLoader.create_equipment(item_id)
+	if item == null:
+		Debug.warn("Loot", "Failed to create item: %s" % item_id)
+		return
+
+	# Create and spawn the pickup
+	var pickup := LootPickup.create_at(global_position, item)
+	get_tree().current_scene.add_child(pickup)
+	Debug.info("Loot", "Spawned loot pickup: %s at %s" % [item.item_name, global_position])
 
 
 func _cleanup() -> void:
