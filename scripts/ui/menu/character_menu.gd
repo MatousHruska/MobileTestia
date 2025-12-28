@@ -55,6 +55,9 @@ var _inventory_panel_instance: InventoryPanel = null
 ## Stats panel instance (created dynamically)
 var _stats_panel_instance: StatsPanel = null
 
+## Quest log panel instance (created dynamically)
+var _quest_log_instance = null  # QuestLogPanel
+
 
 func _ready() -> void:
 	Debug.info("UI", "CharacterMenu ready")
@@ -109,6 +112,9 @@ func _setup_tabs() -> void:
 
 	# Setup the stats panel (replaces old content)
 	_setup_stats_panel()
+
+	# Setup the quest log panel (replaces old content)
+	_setup_quest_panel()
 
 	# Setup notification badges on tabs
 	_setup_tab_badges()
@@ -169,6 +175,26 @@ func _setup_stats_panel() -> void:
 	stats_panel.add_child(_stats_panel_instance)
 
 	Debug.info("UI", "StatsPanel created")
+
+
+func _setup_quest_panel() -> void:
+	if not quests_panel:
+		return
+
+	# Clear old quest panel content
+	for child in quests_panel.get_children():
+		child.queue_free()
+
+	# Create new quest log panel
+	var QuestLogPanelScript = load("res://scripts/ui/quest/quest_log_panel.gd")
+	if QuestLogPanelScript:
+		_quest_log_instance = QuestLogPanelScript.new()
+		_quest_log_instance.name = "QuestLogPanel"
+		_quest_log_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
+		quests_panel.add_child(_quest_log_instance)
+		Debug.info("UI", "QuestLogPanel created")
+	else:
+		Debug.warn("UI", "Failed to load QuestLogPanel script")
 
 
 func _setup_tab_badges() -> void:
@@ -283,7 +309,8 @@ func _refresh_skills_panel() -> void:
 
 
 func _refresh_quests_panel() -> void:
-	# TODO: Populate with active quests
+	if _quest_log_instance and _quest_log_instance.has_method("refresh"):
+		_quest_log_instance.refresh()
 	Debug.log("UI", "Refreshing quests panel")
 
 

@@ -10,10 +10,17 @@ const CHEST_MENU_SCENE := "res://scenes/ui/chest/chest_menu.tscn"
 var character_menu: CharacterMenu = null
 var chest_menu: ChestMenu = null
 
+## Quest UI instances
+var quest_reward_popup = null  # QuestRewardPopup
+var quest_debug_overlay = null  # QuestDebugOverlay
+
 
 func _ready() -> void:
 	layer = 100  # Always on top of game UI
 	Debug.info("UI", "UIManager initialized")
+
+	# Create quest UI elements
+	call_deferred("_setup_quest_ui")
 
 
 ## Character Menu
@@ -72,6 +79,31 @@ func _ensure_chest_menu() -> void:
 			chest_menu = scene.instantiate()
 			add_child(chest_menu)
 			Debug.info("UI", "ChestMenu instantiated")
+
+
+## Quest UI
+
+func _setup_quest_ui() -> void:
+	# Create reward popup
+	var reward_popup_script = load("res://scripts/ui/quest/reward_popup.gd")
+	if reward_popup_script:
+		quest_reward_popup = reward_popup_script.new()
+		quest_reward_popup.name = "QuestRewardPopup"
+		add_child(quest_reward_popup)
+		Debug.info("UI", "QuestRewardPopup created")
+
+	# Create debug overlay
+	var debug_overlay_script = load("res://scripts/quests/quest_debug_overlay.gd")
+	if debug_overlay_script:
+		quest_debug_overlay = debug_overlay_script.new()
+		quest_debug_overlay.name = "QuestDebugOverlay"
+		add_child(quest_debug_overlay)
+		Debug.info("UI", "QuestDebugOverlay created")
+
+
+func toggle_quest_debug() -> void:
+	if quest_debug_overlay and quest_debug_overlay.has_method("toggle"):
+		quest_debug_overlay.toggle()
 
 
 ## Utility

@@ -167,6 +167,16 @@ func _setup_buttons() -> void:
 	var has_quest := _npc_has_quest()
 	quest_button.visible = has_quest
 
+	# Update quest button text based on state
+	if has_quest and has_node("/root/QuestManager"):
+		var qm = get_node("/root/QuestManager")
+		if qm.has_quest_to_turn_in(current_npc_id):
+			quest_button.text = "Complete Quest"
+			quest_button.add_theme_color_override("font_color", Color.GOLD)
+		else:
+			quest_button.text = "Quest"
+			quest_button.remove_theme_color_override("font_color")
+
 	# Trade button - show if NPC has shop
 	var shop_id: String = current_npc_data.get("shop_inventory_id", "")
 	trade_button.visible = not shop_id.is_empty()
@@ -176,10 +186,15 @@ func _setup_buttons() -> void:
 
 
 func _npc_has_quest() -> bool:
-	# Check if any quest has this NPC as giver
-	for quest in DatabaseLoader.quests_list:
-		if quest.get("giver_npc", "") == current_npc_id:
-			# TODO: Check quest state (available, in progress, etc.)
+	## Check if NPC has available quests or quests to turn in
+	if has_node("/root/QuestManager"):
+		var qm = get_node("/root/QuestManager")
+		# Check for new quests
+		var available := qm.get_quests_for_npc(current_npc_id)
+		if not available.is_empty():
+			return true
+		# Check for turn-in quests
+		if qm.has_quest_to_turn_in(current_npc_id):
 			return true
 	return false
 
@@ -364,6 +379,11 @@ func _on_background_input(event: InputEvent) -> void:
 func _on_talk_pressed() -> void:
 	Debug.log("HubUI", "Talk pressed")
 
+	# Notify quest system that player talked to this NPC
+	if has_node("/root/QuestManager"):
+		var qm = get_node("/root/QuestManager")
+		qm.on_npc_talked(current_npc_id)
+
 	# Get dialogue_talk_id and play it
 	var dialogue_id: String = current_npc_data.get("dialogue_talk_id", "")
 	if dialogue_id.is_empty():
@@ -385,8 +405,68 @@ func _on_talk_pressed() -> void:
 
 func _on_quest_pressed() -> void:
 	Debug.log("HubUI", "Quest pressed")
-	# TODO: Implement quest UI
-	show_dialogue("Quest functionality coming soon...")
+
+	if not has_node("/root/QuestManager"):
+		show_dialogue("Quest system not available.")
+		return
+
+	var qm = get_node("/root/QuestManager")
+
+	# Check for quests to turn in first
+	var turn_in_quests := qm.get_turn_in_quests_for_npc(current_npc_id)
+	if not turn_in_quests.is_empty():
+		var quest_id: String = turn_in_quests[0]
+		var quest_data := DatabaseLoader.get_quest(quest_id)
+
+		# Show completion dialogue
+		var complete_dialogue: String = quest_data.get("complete_dialogue", "")
+		if not complete_dialogue.is_empty():
+			var frames := DatabaseLoader.get_dialogue_frames(complete_dialogue)
+			if not frames.is_empty():
+				show_dialogue(frames[0].get("text", "Thank you for completing the quest!"))
+			else:
+				show_dialogue("Thank you for completing the quest!")
+		else:
+			show_dialogue("Thank you for completing the quest!")
+
+		# Complete the quest
+		qm.complete_quest(quest_id)
+
+		# Notify NPC talked (for any talk objectives)
+		qm.on_npc_talked(current_npc_id)
+
+		# Update button visibility
+		_setup_buttons()
+		quest_pressed.emit()
+		return
+
+	# Check for available quests
+	var available := qm.get_quests_for_npc(current_npc_id)
+	if not available.is_empty():
+		var quest_data: Dictionary = available[0]
+		var quest_id: String = quest_data.get("id", "")
+
+		# Show start dialogue
+		var start_dialogue: String = quest_data.get("start_dialogue", "")
+		if not start_dialogue.is_empty():
+			var frames := DatabaseLoader.get_dialogue_frames(start_dialogue)
+			if not frames.is_empty():
+				show_dialogue(frames[0].get("text", quest_data.get("description", "I have a task for you.")))
+			else:
+				show_dialogue(quest_data.get("description", "I have a task for you."))
+		else:
+			show_dialogue(quest_data.get("description", "I have a task for you."))
+
+		# Start the quest
+		qm.start_quest(quest_id)
+
+		# Update button visibility
+		_setup_buttons()
+		quest_pressed.emit()
+		return
+
+	# No quests available
+	show_dialogue("I don't have any quests for you right now.")
 	quest_pressed.emit()
 
 
