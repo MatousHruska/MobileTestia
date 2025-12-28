@@ -277,6 +277,11 @@ func _on_death() -> void:
 	PlayerStats.add_experience(experience_reward)
 	Debug.info("Combat", "%s killed, +%d XP" % [enemy_name, experience_reward])
 
+	# Save death to persistence for unique/boss enemies
+	if is_unique or is_boss:
+		Persistence.save_enemy_killed(enemy_id)
+		Debug.info("Combat", "Unique enemy %s permanently killed" % enemy_name)
+
 	# Drop loot
 	_drop_loot()
 

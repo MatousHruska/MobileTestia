@@ -84,15 +84,19 @@ func _update_door_state() -> void:
 		placeholder_color = locked_color
 		if _visual:
 			_visual.color = locked_color
+		if _collision_body:
+			_collision_body.set_deferred("collision_layer", 1)
 		if _collision_shape:
-			_collision_shape.disabled = false
-		interaction_prompt = "Unlock"
+			_collision_shape.set_deferred("disabled", false)
+		interaction_prompt = "Unlock (%s)" % door_name
 	else:
 		placeholder_color = unlocked_color
 		if _visual:
 			_visual.color = unlocked_color
+		if _collision_body:
+			_collision_body.set_deferred("collision_layer", 0)
 		if _collision_shape:
-			_collision_shape.disabled = true
+			_collision_shape.set_deferred("disabled", true)
 		interaction_prompt = ""  # No interaction when unlocked
 
 
@@ -104,7 +108,7 @@ func can_interact() -> bool:
 ## Override interaction prompt
 func get_interaction_prompt() -> String:
 	if is_locked:
-		return "Unlock"
+		return "Unlock (%s)" % door_name
 	return ""
 
 
