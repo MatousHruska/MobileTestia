@@ -14,6 +14,36 @@
       "xp_reward": 15,
       "loot_table_id": "",
       "ability_ids": "abl_melee_basic"
+    },
+    {
+      "id": "ene_ghoul_basic",
+      "name": "Ghoul",
+      "type": "Normal",
+      "base_health": 100,
+      "base_damage": 8,
+      "armor": 2,
+      "move_speed": 40,
+      "attack_speed": 1,
+      "attack_range": 20,
+      "detection_range": 100,
+      "xp_reward": 15,
+      "loot_table_id": "",
+      "ability_ids": "abl_melee_basic"
+    },
+    {
+      "id": "ene_Vampire_basic",
+      "name": "Vampire",
+      "type": "Normal",
+      "base_health": 200,
+      "base_damage": 8,
+      "armor": 2,
+      "move_speed": 40,
+      "attack_speed": 1,
+      "attack_range": 20,
+      "detection_range": 100,
+      "xp_reward": 15,
+      "loot_table_id": "",
+      "ability_ids": "abl_melee_basic"
     }
   ]
 }
