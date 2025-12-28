@@ -108,7 +108,7 @@ func _setup_interaction_area() -> void:
 	_interaction_area = Area2D.new()
 	_interaction_area.name = "InteractionArea"
 	_interaction_area.collision_layer = 0
-	_interaction_area.collision_mask = 1  ## Player layer
+	_interaction_area.collision_mask = 2  ## Player layer (player is on layer 2)
 
 	var collision := CollisionShape2D.new()
 	var shape := CircleShape2D.new()
