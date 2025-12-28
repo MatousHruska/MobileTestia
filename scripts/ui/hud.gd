@@ -302,6 +302,16 @@ func _update_interact_button() -> void:
 	if NPCManager:
 		for npc in NPCManager.all_friendlies:
 			if is_instance_valid(npc):
+				# Debug: Log NPC state every check cycle
+				if _debug_frame_counter == 1:  # Log once per cycle
+					Debug.log("UI", "Checking NPC: %s | is_interactable: %s | is_player_in_range: %s | is_interacting: %s | can_interact: %s" % [
+						npc.npc_name,
+						npc.is_interactable,
+						npc.is_player_in_range,
+						npc.is_interacting,
+						npc.can_interact() if npc.has_method("can_interact") else "N/A"
+					])
+
 				if npc.has_method("can_interact") and npc.can_interact():
 					nearby_npc = npc
 					# Log details when NPC changes
