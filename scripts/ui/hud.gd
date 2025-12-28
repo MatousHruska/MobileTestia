@@ -31,6 +31,7 @@ var character_menu: CharacterMenu = null
 
 ## Nearby interactable NPC
 var nearby_npc: Node = null
+var _last_nearby_npc: Node = null
 
 
 func _ready() -> void:
@@ -270,7 +271,11 @@ func update_stamina(current: float, maximum: float) -> void:
 
 ## Interaction handling
 func _update_interact_button() -> void:
-	if not interact_button or not Game.is_playing:
+	if not interact_button:
+		Debug.warn("UI", "Interact button not found!")
+		return
+
+	if not Game.is_playing:
 		return
 
 	# Find nearby interactable NPCs
@@ -278,15 +283,30 @@ func _update_interact_button() -> void:
 
 	if NPCManager:
 		for npc in NPCManager.all_friendlies:
-			if is_instance_valid(npc) and npc.has_method("can_interact") and npc.can_interact():
-				nearby_npc = npc
-				break
+			if is_instance_valid(npc):
+				if npc.has_method("can_interact") and npc.can_interact():
+					nearby_npc = npc
+					# Log details when NPC changes
+					if nearby_npc != _last_nearby_npc:
+						Debug.info("UI", "Found nearby NPC", {
+							"name": npc.npc_name,
+							"is_interactable": npc.is_interactable,
+							"is_player_in_range": npc.is_player_in_range,
+							"can_interact": true
+						})
+					break
+
+	# Log when NPC changes
+	if nearby_npc != _last_nearby_npc:
+		if nearby_npc == null and _last_nearby_npc != null:
+			Debug.log("UI", "No nearby NPCs (was near: %s)" % _last_nearby_npc.npc_name)
+		_last_nearby_npc = nearby_npc
 
 	# Show/hide button based on nearby NPC
 	if nearby_npc:
 		if not interact_button.visible:
 			interact_button.visible = true
-			Debug.log("UI", "Interact button shown")
+			Debug.info("UI", "Interact button shown for: %s" % nearby_npc.npc_name)
 	else:
 		if interact_button.visible:
 			interact_button.visible = false
