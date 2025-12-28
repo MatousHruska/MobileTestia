@@ -236,18 +236,33 @@ Private Sub SetupQuestsSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("Quests")
     Dim headers As Variant
-    headers = Array("id", "name", "type", "giver_npc", "min_level", "prerequisite_quests", _
-                    "objective_ids", "xp_reward", "gold_reward", "item_rewards", _
-                    "loot_table_reward", "description", "completion_text")
+    ' Updated structure with embedded objectives support
+    headers = Array("id", "name", "description", "type", "min_level", "giver_npc", _
+                    "turn_in_npc", "prerequisite_quests", "next_quest", "can_abandon", _
+                    "auto_complete", "xp_reward", "gold_reward", "item_rewards", _
+                    "start_dialogue", "complete_dialogue")
     SetHeaders ws, headers
+
+    ' Add column notes
+    ws.Cells(1, 4).AddComment "story or side"
+    ws.Cells(1, 10).AddComment "TRUE/FALSE - story quests should be FALSE"
+    ws.Cells(1, 11).AddComment "TRUE/FALSE - auto complete when objectives done"
+    ws.Cells(1, 14).AddComment "Comma-separated item IDs"
 End Sub
 
 Private Sub SetupQuestObjectivesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("QuestObjectives")
     Dim headers As Variant
-    headers = Array("id", "type", "target_id", "count", "description", "optional")
+    ' Objectives linked to quests by quest_id
+    headers = Array("quest_id", "objective_id", "type", "target", "count", "description", "optional")
     SetHeaders ws, headers
+
+    ' Add column notes
+    ws.Cells(1, 1).AddComment "Links to quest id in Quests sheet"
+    ws.Cells(1, 3).AddComment "kill_named, kill_count, gather, delivery, interact, talk, escort, defend, use_ability, defeat_no_kill, reach_location, race"
+    ws.Cells(1, 4).AddComment "enemy_id, item_id, npc_id, zone_id, etc."
+    ws.Cells(1, 7).AddComment "TRUE/FALSE"
 End Sub
 
 Private Sub SetupStatModifiersSheet()
