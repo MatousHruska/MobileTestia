@@ -17,10 +17,10 @@ const COIN_SIZE: Vector2 = Vector2(8, 8)
 
 ## Scatter animation
 var _scatter_velocity: Vector2 = Vector2.ZERO
-var _scatter_friction: float = 8.0
+var _scatter_friction: float = 3.0  # Lower = slower deceleration
 var _is_scattering: bool = true
 var _scatter_time: float = 0.0
-const SCATTER_DURATION: float = 0.3
+const SCATTER_DURATION: float = 0.6  # Longer scatter time
 
 ## Bobbing
 var _bob_time: float = 0.0
@@ -126,7 +126,7 @@ static func spawn_coins(parent: Node, pos: Vector2, total_gold: int, coin_count:
 		# Random scatter direction
 		var angle: float = randf() * TAU
 		var scatter_dir := Vector2(cos(angle), sin(angle))
-		var scatter_speed: float = randf_range(80.0, 150.0)
+		var scatter_speed: float = randf_range(120.0, 220.0)  # Faster = fly further
 
 		# First coin gets remainder
 		var coin_value: int = gold_per_coin + (remainder if i == 0 else 0)
