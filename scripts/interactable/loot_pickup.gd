@@ -84,7 +84,7 @@ func _on_interact() -> void:
 		return
 
 	# Try to add item to inventory
-	var success := InventoryManager.add_item(item)
+	var success := Inventory.add_item(item)
 
 	if success:
 		Debug.info("Loot", "Picked up: %s" % item.item_name)
