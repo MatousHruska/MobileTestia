@@ -47,11 +47,6 @@ var _lunge_timer: float = 0.0
 var _dodge_timer: float = 0.0
 var _dodge_direction: Vector2 = Vector2.ZERO
 
-## Test XP timer (for development)
-var _test_xp_timer: float = 0.0
-const TEST_XP_INTERVAL: float = 10.0  ## Gain XP every 10 seconds
-const TEST_XP_AMOUNT: int = 100  ## Amount of XP to gain
-
 
 func _ready() -> void:
 	Debug.info("Player", "PlayerController ready")
@@ -78,7 +73,6 @@ func _physics_process(delta: float) -> void:
 
 	_process_timers(delta)
 	_process_movement(delta)
-	_process_test_xp(delta)
 	move_and_slide()
 
 	Debug.trace("Movement", "Velocity", velocity)
@@ -259,15 +253,6 @@ func _facing_to_rotation(facing: Facing) -> float:
 		Facing.LEFT: return PI / 2.0
 		Facing.RIGHT: return -PI / 2.0
 	return 0.0
-
-
-## Test XP gain (for development testing)
-func _process_test_xp(delta: float) -> void:
-	_test_xp_timer += delta
-	if _test_xp_timer >= TEST_XP_INTERVAL:
-		_test_xp_timer = 0.0
-		PlayerStats.add_experience(TEST_XP_AMOUNT)
-		Debug.info("Player", "Test XP granted: +%d XP" % TEST_XP_AMOUNT)
 
 
 ## Level up callback
