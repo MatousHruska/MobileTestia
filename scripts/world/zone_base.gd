@@ -107,6 +107,11 @@ func _spawn_zone_enemies() -> void:
 		var level: int = randi_range(min_level, max_level)
 		var pos: Vector2 = positions[i]
 
+		# Check if this unique/miniboss enemy was already killed
+		if Persistence.is_enemy_killed(enemy_id):
+			Debug.log("Zone", "Skipping killed enemy: %s" % enemy_id)
+			continue
+
 		var enemy := DatabaseLoader.create_enemy(enemy_id, level)
 		if enemy != null:
 			enemies_node.add_child(enemy)
