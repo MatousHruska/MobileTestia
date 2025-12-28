@@ -289,11 +289,11 @@ func _on_death() -> void:
 
 
 func _drop_loot() -> void:
-	# Roll for gold - add directly to player
+	# Spawn gold coins with scatter effect
 	var gold_amount := randi_range(gold_min, gold_max)
 	if gold_amount > 0:
-		Inventory.add_gold(gold_amount)
-		Debug.log("Loot", "%s dropped gold" % enemy_name, gold_amount)
+		GoldPickup.spawn_coins(get_tree().current_scene, global_position, gold_amount)
+		Debug.log("Loot", "%s dropped gold coins" % enemy_name, gold_amount)
 
 	var dropped_item_id: String = ""
 
