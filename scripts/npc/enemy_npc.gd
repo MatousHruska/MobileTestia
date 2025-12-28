@@ -292,7 +292,7 @@ func _drop_loot() -> void:
 	# Roll for gold - add directly to player
 	var gold_amount := randi_range(gold_min, gold_max)
 	if gold_amount > 0:
-		InventoryManager.add_gold(gold_amount)
+		Inventory.add_gold(gold_amount)
 		Debug.log("Loot", "%s dropped gold" % enemy_name, gold_amount)
 
 	var dropped_item_id: String = ""
