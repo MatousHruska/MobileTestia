@@ -32,6 +32,7 @@ var character_menu: CharacterMenu = null
 ## Nearby interactable NPC
 var nearby_npc: Node = null
 var _last_nearby_npc: Node = null
+var _debug_frame_counter: int = 0
 
 
 func _ready() -> void:
@@ -40,6 +41,12 @@ func _ready() -> void:
 	_connect_to_game_manager()
 	_connect_to_player_stats()
 	_setup_controls()
+
+	# Debug: Check if interact button exists
+	if interact_button:
+		Debug.info("UI", "Interact button found and ready")
+	else:
+		Debug.warn("UI", "Interact button is NULL in _ready()!")
 
 
 func _process(_delta: float) -> void:
@@ -271,6 +278,17 @@ func update_stamina(current: float, maximum: float) -> void:
 
 ## Interaction handling
 func _update_interact_button() -> void:
+	# Debug: Print every 120 frames (2 seconds) to verify function is running
+	_debug_frame_counter += 1
+	if _debug_frame_counter == 120:
+		Debug.log("UI", "_update_interact_button is running | interact_button: %s | Game.is_playing: %s | NPCManager: %s | friendlies: %d" % [
+			interact_button != null,
+			Game.is_playing,
+			NPCManager != null,
+			NPCManager.all_friendlies.size() if NPCManager else 0
+		])
+		_debug_frame_counter = 0
+
 	if not interact_button:
 		Debug.warn("UI", "Interact button not found!")
 		return
