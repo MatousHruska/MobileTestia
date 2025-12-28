@@ -151,7 +151,7 @@ func _update_display() -> void:
 
 
 func _update_quest_list(qm, container: VBoxContainer) -> void:
-	var active_quests := qm.get_active_quests()
+	var active_quests: Array = qm.get_active_quests()
 
 	# Remove stale quest labels
 	for quest_id in _quest_labels.keys():
