@@ -1,5 +1,48 @@
 {
   "zones": [
-
+    {
+      "id": "zone_test_hub",
+      "name": "Test Hub",
+      "zone_type": "town",
+      "min_level": 1,
+      "max_level": 99,
+      "enemy_spawn_list": "",
+      "loot_table_id": "Central hub - no enemies",
+      "respawn_time": 60,
+      "music_track": ""
+    },
+    {
+      "id": "zone_meadow",
+      "name": "Peaceful Meadow",
+      "zone_type": "outdoor",
+      "min_level": 1,
+      "max_level": 3,
+      "enemy_spawn_list": "ene_zombie_basic",
+      "loot_table_id": "Zombies",
+      "respawn_time": 60,
+      "music_track": ""
+    },
+    {
+      "id": "zone_forest",
+      "name": "Dark Forest",
+      "zone_type": "outdoor",
+      "min_level": 3,
+      "max_level": 6,
+      "enemy_spawn_list": "ene_ghoul_basic",
+      "loot_table_id": "Ghouls",
+      "respawn_time": 60,
+      "music_track": ""
+    },
+    {
+      "id": "zone_crypt",
+      "name": "Ancient Crypt",
+      "zone_type": "dungeon",
+      "min_level": 5,
+      "max_level": 10,
+      "enemy_spawn_list": "ene_Vampire_basic",
+      "loot_table_id": "Vampires",
+      "respawn_time": 60,
+      "music_track": ""
+    }
   ]
 }
