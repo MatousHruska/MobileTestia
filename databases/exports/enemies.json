@@ -12,7 +12,7 @@
       "attack_range": 20,
       "detection_range": 100,
       "xp_reward": 15,
-      "loot_table_id": "",
+      "loot_table_id": "loot_test_guaranteed",
       "ability_ids": "abl_melee_basic"
     },
     {
@@ -27,7 +27,7 @@
       "attack_range": 20,
       "detection_range": 100,
       "xp_reward": 15,
-      "loot_table_id": "",
+      "loot_table_id": "loot_test_guaranteed",
       "ability_ids": "abl_melee_basic"
     },
     {
@@ -42,7 +42,7 @@
       "attack_range": 20,
       "detection_range": 100,
       "xp_reward": 15,
-      "loot_table_id": "",
+      "loot_table_id": "loot_test_guaranteed",
       "ability_ids": "abl_melee_basic"
     }
   ]

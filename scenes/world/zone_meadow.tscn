@@ -1,11 +1,11 @@
-[gd_scene load_steps=8 format=3 uid="uid://zone_meadow_001"]
+[gd_scene load_steps=8 format=3 uid="uid://b0sxxcsnfjnkf"]
 
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
-[ext_resource type="Script" path="res://scripts/camera/game_camera.gd" id="3_camera"]
-[ext_resource type="Script" path="res://scripts/world/zone_base.gd" id="4_zone"]
-[ext_resource type="Script" path="res://scripts/world/zone_transition.gd" id="6_transition"]
-[ext_resource type="Script" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
+[ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
+[ext_resource type="Script" uid="uid://br7g6n3ugvdis" path="res://scripts/camera/game_camera.gd" id="3_camera"]
+[ext_resource type="Script" uid="uid://vik7jjuuh4ix" path="res://scripts/world/zone_base.gd" id="4_zone"]
+[ext_resource type="Script" uid="uid://cayikglml6hs4" path="res://scripts/world/zone_transition.gd" id="6_transition"]
+[ext_resource type="Script" uid="uid://bxs48qilberw1" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
@@ -29,7 +29,6 @@ color = Color(0.25, 0.4, 0.2, 1)
 offset_left = -100.0
 offset_top = -20.0
 offset_right = -60.0
-offset_bottom = 0.0
 color = Color(0.2, 0.5, 0.15, 1)
 
 [node name="Grass2" type="ColorRect" parent="Decorations"]
@@ -55,9 +54,6 @@ position = Vector2(250, 80)
 script = ExtResource("7_chest_spawn")
 spawn_id = "meadow_chest_1"
 spawn_chance = 0.8
-wooden_weight = 70
-iron_weight = 25
-golden_weight = 5
 marker_color = Color(0.55, 0.35, 0.15, 0.8)
 
 [node name="MeadowChest2" type="Marker2D" parent="ChestSpawns"]
@@ -76,7 +72,6 @@ script = ExtResource("6_transition")
 target_zone = "res://scenes/world/test_zone.tscn"
 spawn_point_id = "from_meadow"
 display_name = "To Hub"
-transition_color = Color(0.3, 0.5, 0.8, 0.6)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="TransitionToTest"]
 shape = SubResource("RectangleShape2D_trans")
@@ -89,4 +84,3 @@ follow_smoothing = 8.0
 look_ahead_distance = 30.0
 
 [node name="HUD" parent="." instance=ExtResource("2_hud")]
-
