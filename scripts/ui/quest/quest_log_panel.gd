@@ -31,9 +31,12 @@ var _completed_filter: Button
 
 
 func _ready() -> void:
+	Debug.info("Quest", "QuestLogPanel _ready() called")
 	_build_ui()
+	Debug.info("Quest", "QuestLogPanel _build_ui() completed, _quest_list valid: %s" % is_instance_valid(_quest_list))
 	_connect_signals()
 	refresh()
+	Debug.info("Quest", "QuestLogPanel _ready() completed, _quest_list children: %d" % _quest_list.get_child_count())
 
 
 func _build_ui() -> void:
@@ -94,6 +97,12 @@ func _build_quest_list_panel() -> Control:
 	_quest_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_quest_list.add_theme_constant_override("separation", 2)
 	_quest_scroll.add_child(_quest_list)
+
+	# DEBUG: Add visible test label
+	var debug_label := Label.new()
+	debug_label.text = "DEBUG: Quest list container"
+	debug_label.add_theme_color_override("font_color", Color.RED)
+	_quest_list.add_child(debug_label)
 
 	return panel
 
@@ -176,6 +185,8 @@ func refresh() -> void:
 
 
 func _populate_quest_list() -> void:
+	Debug.info("Quest", ">>> _populate_quest_list called, _quest_list valid: %s" % is_instance_valid(_quest_list))
+
 	# Clear existing items
 	for child in _quest_list.get_children():
 		child.queue_free()
@@ -192,6 +203,9 @@ func _populate_quest_list() -> void:
 		_populate_active_quests(qm)
 	else:
 		_populate_completed_quests(qm)
+
+	# Debug: Log final state
+	Debug.info("Quest", ">>> After populate: _quest_list children = %d, size = %s" % [_quest_list.get_child_count(), _quest_list.size])
 
 
 func _populate_active_quests(qm) -> void:
