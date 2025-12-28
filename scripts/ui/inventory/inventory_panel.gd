@@ -483,6 +483,12 @@ func _refresh_gold() -> void:
 	var gold_label := get_node_or_null("MainHBox/BackpackPanel/BackpackVBox/HBoxContainer/GoldLabel")
 	if gold_label:
 		gold_label.text = "Gold: %d" % Inventory.gold
+		Debug.log("UI", "Gold label updated to: %d" % Inventory.gold)
+
+
+## Public method to force refresh all UI (called when panel becomes visible)
+func refresh() -> void:
+	_refresh_all()
 
 
 ## Signal handlers

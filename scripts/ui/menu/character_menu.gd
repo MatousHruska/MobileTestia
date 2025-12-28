@@ -271,7 +271,9 @@ func _refresh_stats_panel() -> void:
 
 
 func _refresh_inventory_panel() -> void:
-	# Inventory panel auto-refreshes via signals
+	# Force refresh when tab becomes visible
+	if _inventory_panel_instance:
+		_inventory_panel_instance.refresh()
 	Debug.log("UI", "Refreshing inventory panel")
 
 

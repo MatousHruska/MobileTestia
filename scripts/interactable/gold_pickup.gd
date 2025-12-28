@@ -86,7 +86,9 @@ func _physics_process(delta: float) -> void:
 
 
 func _collect() -> void:
+	Debug.info("GoldPickup", "Collecting coin", "Value: %d, Inventory gold before: %d" % [gold_value, Inventory.gold])
 	Inventory.add_gold(gold_value)
+	Debug.info("GoldPickup", "Coin collected", "Inventory gold after: %d" % Inventory.gold)
 	# Small scale pop effect before destroying
 	var tween := create_tween()
 	tween.tween_property(_visual, "scale", Vector2(1.5, 1.5), 0.05)
@@ -115,12 +117,14 @@ static func create_at(pos: Vector2, value: int, scatter_dir: Vector2 = Vector2.Z
 
 ## Spawn multiple coins with scatter effect
 static func spawn_coins(parent: Node, pos: Vector2, total_gold: int, coin_count: int = 0) -> void:
+	Debug.info("GoldPickup", "Spawning coins", "Total gold: %d" % total_gold)
 	# Determine coin count based on gold amount if not specified
 	if coin_count <= 0:
 		coin_count = clampi(total_gold / 2, 3, 15)  # 3-15 coins
 
 	var gold_per_coin: int = maxi(1, total_gold / coin_count)
 	var remainder: int = total_gold - (gold_per_coin * coin_count)
+	Debug.info("GoldPickup", "Coin distribution", "%d coins, %d gold each" % [coin_count, gold_per_coin])
 
 	for i in coin_count:
 		# Random scatter direction
