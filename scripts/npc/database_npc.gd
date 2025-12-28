@@ -12,7 +12,7 @@ var _npc_data: Dictionary = {}
 
 func _ready() -> void:
 	if database_id.is_empty():
-		Debug.error("NPC", "DatabaseNPC has no database_id set!")
+		Debug.warn("NPC", "DatabaseNPC has no database_id set!")
 		push_error("DatabaseNPC requires database_id")
 		return
 
@@ -28,7 +28,7 @@ func _load_from_database() -> void:
 	_npc_data = DatabaseLoader.get_npc(database_id)
 
 	if _npc_data.is_empty():
-		Debug.error("NPC", "NPC not found in database: %s" % database_id)
+		Debug.warn("NPC", "NPC not found in database: %s" % database_id)
 		push_error("NPC '%s' not found in database" % database_id)
 		return
 

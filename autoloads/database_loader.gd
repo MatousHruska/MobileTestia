@@ -94,7 +94,7 @@ func _load_database(filename: String, root_key: String, target_dict: Dictionary,
 	var file := FileAccess.open(path, FileAccess.READ)
 	if not file:
 		var error := "Failed to open: %s" % path
-		Debug.error("Database", error)
+		Debug.warn("Database", error)
 		database_load_failed.emit(filename, error)
 		return false
 
@@ -106,7 +106,7 @@ func _load_database(filename: String, root_key: String, target_dict: Dictionary,
 
 	if parse_result != OK:
 		var error := "JSON parse error in %s at line %d: %s" % [filename, json.get_error_line(), json.get_error_message()]
-		Debug.error("Database", error)
+		Debug.warn("Database", error)
 		database_load_failed.emit(filename, error)
 		return false
 
@@ -114,7 +114,7 @@ func _load_database(filename: String, root_key: String, target_dict: Dictionary,
 
 	if not data.has(root_key):
 		var error := "Missing root key '%s' in %s" % [root_key, filename]
-		Debug.error("Database", error)
+		Debug.warn("Database", error)
 		database_load_failed.emit(filename, error)
 		return false
 
@@ -406,7 +406,7 @@ func weighted_random(items: Array, weight_key: String = "spawn_weight") -> Dicti
 func create_equipment(base_id: String, rarity: ItemData.Rarity = ItemData.Rarity.COMMON) -> EquipmentData:
 	var base: Dictionary = get_item_base(base_id)
 	if base.is_empty():
-		Debug.error("Database", "Item base not found: %s" % base_id)
+		Debug.warn("Database", "Item base not found: %s" % base_id)
 		return null
 
 	var item := EquipmentData.new()
@@ -561,7 +561,7 @@ func _map_slot_to_equipment_type(slot: String, item_type: String) -> ItemData.Eq
 func create_enemy(enemy_id: String, level: int = 1) -> EnemyNPC:
 	var data: Dictionary = get_enemy(enemy_id)
 	if data.is_empty():
-		Debug.error("Database", "Enemy not found: %s" % enemy_id)
+		Debug.warn("Database", "Enemy not found: %s" % enemy_id)
 		return null
 
 	var enemy := EnemyNPC.new()
