@@ -307,6 +307,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 
 	# Header with gold
 	var header_row := HBoxContainer.new()
+	header_row.name = "HBoxContainer"
 	backpack_vbox.add_child(header_row)
 
 	var header := Label.new()
