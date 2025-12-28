@@ -11,9 +11,10 @@ signal door_locked
 @export_group("Door")
 @export var door_name: String = "Door"
 @export var persistence_id: String = ""  ## Unique ID for saving state (leave empty to not persist)
-@export var required_key_id: String = ""  ## ID of key needed to unlock
+@export var required_key_id: String = ""  ## ID of key needed to unlock (leave empty for lever-only doors)
 @export var required_key_name: String = "Key"  ## Display name for "X needed" message
 @export var starts_locked: bool = true
+@export var lever_controlled: bool = false  ## If true, can only be opened by a lever (no key interaction)
 
 ## Visual settings
 @export_group("Visuals")
@@ -40,7 +41,9 @@ func _init() -> void:
 func _on_ready() -> void:
 	# Load persisted state or use default
 	if not persistence_id.is_empty() and Persistence.has_state("doors", persistence_id):
-		is_locked = not Persistence.is_door_unlocked(persistence_id)
+		var state := Persistence.load_state("doors", persistence_id)
+		is_locked = state.get("is_locked", starts_locked)
+		Debug.log("Door", "%s loaded state: %s" % [door_name, "locked" if is_locked else "unlocked"])
 	else:
 		is_locked = starts_locked
 
@@ -100,13 +103,17 @@ func _update_door_state() -> void:
 		interaction_prompt = ""  # No interaction when unlocked
 
 
-## Override can_interact - only when locked
+## Override can_interact - only when locked and not lever-controlled
 func can_interact() -> bool:
+	if lever_controlled:
+		return false  # Lever-controlled doors can't be interacted with directly
 	return is_interactable and is_player_in_range and is_locked and not is_interacting
 
 
 ## Override interaction prompt
 func get_interaction_prompt() -> String:
+	if lever_controlled:
+		return ""  # No prompt for lever-controlled doors
 	if is_locked:
 		return "Unlock (%s)" % door_name
 	return ""
@@ -194,7 +201,9 @@ func lock() -> void:
 ## Save state to persistence
 func _save_state() -> void:
 	if not persistence_id.is_empty():
-		Persistence.save_door_state(persistence_id, is_locked)
+		Persistence.save_state("doors", persistence_id, {
+			"is_locked": is_locked
+		})
 
 
 ## Toggle lock state

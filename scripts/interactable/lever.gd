@@ -17,7 +17,8 @@ signal lever_deactivated  ## Emitted when turned OFF
 
 ## Linked objects (optional - can also use signals)
 @export_group("Linked Objects")
-@export var linked_door: NodePath = ""  ## Path to a door to toggle
+@export var linked_door: NodePath = ""  ## Path to a door in same scene
+@export var linked_door_id: String = ""  ## Persistence ID of door in ANY zone (cross-zone support)
 @export var linked_nodes: Array[NodePath] = []  ## Additional nodes to notify
 
 ## Visual settings
@@ -34,7 +35,7 @@ func _init() -> void:
 	placeholder_size = Vector2(16, 24)  # Vertical lever shape
 	placeholder_color = off_color
 	interaction_radius = 35.0
-	interaction_prompt = "Pull"
+	interaction_prompt = "Activate Lever"
 
 
 func _on_ready() -> void:
@@ -55,12 +56,12 @@ func _update_lever_state() -> void:
 		placeholder_color = on_color
 		if _visual:
 			_visual.color = on_color
-		interaction_prompt = "Pull (ON)"
+		interaction_prompt = "Deactivate Lever"
 	else:
 		placeholder_color = off_color
 		if _visual:
 			_visual.color = off_color
-		interaction_prompt = "Pull (OFF)"
+		interaction_prompt = "Activate Lever"
 
 
 ## Override can_interact
@@ -72,7 +73,7 @@ func can_interact() -> bool:
 
 ## Override interaction prompt
 func get_interaction_prompt() -> String:
-	return "Pull"
+	return interaction_prompt
 
 
 ## Override interaction behavior
@@ -98,11 +99,20 @@ func toggle() -> void:
 	else:
 		lever_deactivated.emit()
 
-	# Notify linked door
+	# Notify linked door (same scene)
 	if not linked_door.is_empty():
 		var door := get_node_or_null(linked_door)
 		if door and door.has_method("toggle"):
 			door.toggle()
+
+	# Unlock door via persistence ID (cross-zone support)
+	if not linked_door_id.is_empty():
+		# Save door unlocked state to persistence
+		Persistence.save_state("doors", linked_door_id, {
+			"is_locked": not is_on,
+			"unlocked_by_lever": true
+		})
+		Debug.info("Lever", "Door '%s' %s via persistence" % [linked_door_id, "unlocked" if is_on else "locked"])
 
 	# Notify other linked nodes
 	for node_path in linked_nodes:
