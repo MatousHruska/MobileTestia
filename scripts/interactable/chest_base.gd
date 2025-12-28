@@ -181,7 +181,50 @@ func _give_contents_to_player(contents: Dictionary) -> void:
 
 ## Override to skip loot UI
 func _should_auto_loot() -> bool:
-	return true  # Default: auto-loot
+	return false  # Use chest menu instead of auto-loot
+
+
+## Interact with chest menu UI
+func interact_with_menu(menu: ChestMenu) -> void:
+	if current_state == ChestState.CLOSED:
+		# Open chest first
+		current_state = ChestState.OPENING
+
+		# Visual feedback
+		var base_color: Color = TIER_COLORS[chest_tier]
+		set_visual_color(base_color.lightened(0.2))
+
+		# Brief delay for opening animation
+		await get_tree().create_timer(0.2).timeout
+
+		current_state = ChestState.OPEN
+		_update_interaction_prompt()
+
+	if current_state == ChestState.OPEN:
+		# Generate contents and open menu
+		var contents := _generate_contents()
+		menu.open_chest(self, contents)
+
+		# Connect to menu closed signal to check if items remain
+		if not menu.chest_closed.is_connected(_on_menu_closed):
+			menu.chest_closed.connect(_on_menu_closed)
+
+
+func _on_menu_closed() -> void:
+	# Check if any items remain in the chest
+	var remaining: Array = get_meta("remaining_items", [])
+	if remaining.is_empty():
+		# Mark as looted
+		current_state = ChestState.LOOTED
+		_update_interaction_prompt()
+
+		var looted_color: Color = TIER_COLORS[chest_tier]
+		set_visual_color(looted_color.darkened(0.4))
+
+		_on_chest_looted()
+		Debug.info("Chest", "Chest looted completely: %s" % display_name)
+	else:
+		Debug.info("Chest", "Chest still has %d items: %s" % [remaining.size(), display_name])
 
 
 ## Override for custom behavior after looting
