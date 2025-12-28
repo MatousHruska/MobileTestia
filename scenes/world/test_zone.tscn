@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://testzone001"]
+[gd_scene load_steps=12 format=3 uid="uid://testzone001"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -10,6 +10,7 @@
 [ext_resource type="PackedScene" path="res://scenes/prefabs/database_npc.tscn" id="8_npc_prefab"]
 [ext_resource type="Script" path="res://scripts/world/zone_transition.gd" id="9_transition"]
 [ext_resource type="Script" path="res://scripts/world/spawn_point.gd" id="10_spawn"]
+[ext_resource type="Script" path="res://scripts/interactable/chest_spawn_point.gd" id="11_chest_spawn"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
@@ -164,6 +165,39 @@ object_color = Color(0.8, 0.2, 0.2, 1)
 object_size = Vector2(16, 16)
 
 [node name="Enemies" type="Node2D" parent="."]
+
+[node name="ChestSpawns" type="Node2D" parent="."]
+
+[node name="ChestSpawn1" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(-300, 80)
+script = ExtResource("11_chest_spawn")
+spawn_id = "hub_chest_1"
+spawn_chance = 1.0
+wooden_weight = 80
+iron_weight = 18
+golden_weight = 2
+marker_color = Color(0.6, 0.4, 0.2, 0.8)
+
+[node name="ChestSpawn2" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(350, 120)
+script = ExtResource("11_chest_spawn")
+spawn_id = "hub_chest_2"
+spawn_chance = 0.75
+wooden_weight = 60
+iron_weight = 35
+golden_weight = 5
+marker_color = Color(0.5, 0.5, 0.55, 0.8)
+
+[node name="ChestSpawn3" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(-50, 200)
+script = ExtResource("11_chest_spawn")
+spawn_id = "hub_chest_3"
+spawn_chance = 0.5
+wooden_weight = 40
+iron_weight = 40
+golden_weight = 20
+allow_wooden = false
+marker_color = Color(0.85, 0.65, 0.15, 0.8)
 
 [node name="FriendlyNPCs" type="Node2D" parent="."]
 
