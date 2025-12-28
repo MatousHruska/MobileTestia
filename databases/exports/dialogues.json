@@ -1,0 +1,13 @@
+{
+  "dialogues": [
+    {
+      "id": "dlg_quest_master_talk",
+      "frames": [
+      {
+        "text": "`Greetings, brave adventurer!",
+        "emotion": "neutral"
+      }
+    ]
+    }
+  ]
+}
