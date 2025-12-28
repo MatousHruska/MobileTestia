@@ -6,7 +6,7 @@ class_name ItemData
 enum Rarity { COMMON, UNCOMMON, RARE, EPIC, LEGENDARY }
 
 ## Item types
-enum ItemType { EQUIPMENT, CONSUMABLE }
+enum ItemType { EQUIPMENT, CONSUMABLE, KEY }
 
 ## Equipment slots
 enum EquipSlot {

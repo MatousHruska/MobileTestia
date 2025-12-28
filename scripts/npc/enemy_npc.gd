@@ -338,8 +338,15 @@ func _drop_loot() -> void:
 
 
 func _spawn_loot_pickup(item_id: String) -> void:
-	# Create the item from database
-	var item := DatabaseLoader.create_equipment(item_id)
+	var item: ItemData = null
+
+	# Check if it's a key (starts with "key_")
+	if item_id.begins_with("key_"):
+		item = _create_key_from_id(item_id)
+	else:
+		# Create equipment from database
+		item = DatabaseLoader.create_equipment(item_id)
+
 	if item == null:
 		Debug.warn("Loot", "Failed to create item: %s" % item_id)
 		return
@@ -348,6 +355,13 @@ func _spawn_loot_pickup(item_id: String) -> void:
 	var pickup := LootPickup.create_at(global_position, item)
 	get_tree().current_scene.add_child(pickup)
 	Debug.info("Loot", "Spawned loot pickup: %s at %s" % [item.item_name, global_position])
+
+
+func _create_key_from_id(key_id: String) -> KeyData:
+	## Create a key from an id like "key_treasury" -> "Treasury Key"
+	var name_part := key_id.substr(4)  # Remove "key_" prefix
+	var key_name := name_part.replace("_", " ").capitalize() + " Key"
+	return KeyData.create(key_id, key_name)
 
 
 func _cleanup() -> void:
