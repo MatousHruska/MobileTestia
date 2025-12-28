@@ -26,6 +26,7 @@ NPCManager="*res://autoloads/npc_manager.gd"
 DatabaseLoader="*res://autoloads/database_loader.gd"
 UIManager="*res://autoloads/ui_manager.gd"
 Persistence="*res://autoloads/persistence_manager.gd"
+QuestManager="*res://scripts/quests/quest_manager.gd"
 
 [display]
 
