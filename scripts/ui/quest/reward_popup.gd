@@ -194,7 +194,7 @@ func close_popup() -> void:
 	tween.tween_property(self, "modulate:a", 0.0, 0.15)
 	tween.tween_callback(func():
 		hide()
-		modulate.a = 1.0
+		self.modulate.a = 1.0
 		popup_closed.emit()
 	)
 
