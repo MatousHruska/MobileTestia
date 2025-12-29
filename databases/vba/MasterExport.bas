@@ -46,6 +46,9 @@ Public Sub ExportAll()
     ' Interactables
     ExportChests
 
+    ' Spawn Points
+    ExportSpawnPoints
+
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -76,6 +79,7 @@ Public Sub ValidateAll()
     ValidateStatusEffects
     ValidateZones
     ValidateChests
+    ValidateSpawnPoints
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -114,6 +118,7 @@ Public Sub SetupWorkbook()
     SetupStatusEffectsSheet
     SetupZonesSheet
     SetupChestsSheet
+    SetupSpawnPointsSheet
     SetupStatModifiersSheet
     SetupRaritiesSheet
 
