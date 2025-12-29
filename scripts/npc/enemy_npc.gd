@@ -363,7 +363,7 @@ func perform_attack() -> void:
 		# Use new ability system
 		var player := Game.player if Game else null
 		if player:
-			var success := ability_controller.try_attack(player)
+			var success: bool = ability_controller.try_attack(player)
 			Debug.log("NPC", "%s try_attack result: %s" % [enemy_name, success])
 			if success:
 				play_attack()
