@@ -22,6 +22,7 @@ Public Sub ExportAll()
     ExportEnemies
     ExportEnemyAbilities
     ExportEnemyVariants
+    ExportBehaviorProfiles
 
     ' Loot
     ExportLootTables
@@ -70,6 +71,7 @@ Public Sub ValidateAll()
     ValidateItemBases
     ValidateAffixes
     ValidateEnemies
+    ValidateBehaviorProfiles
     ValidateLootTables
     ValidateSkills
     ValidateQuests
@@ -107,6 +109,7 @@ Public Sub SetupWorkbook()
     SetupEnemiesSheet
     SetupEnemyAbilitiesSheet
     SetupEnemyVariantsSheet
+    SetupBehaviorProfilesSheet
     SetupLootTablesSheet
     SetupSkillsSheet
     SetupQuestsSheet
@@ -205,16 +208,41 @@ Private Sub SetupEnemiesSheet()
     Dim headers As Variant
     headers = Array("id", "name", "type", "base_health", "base_damage", "armor", _
                     "move_speed", "attack_speed", "attack_range", "detection_range", _
-                    "xp_reward", "loot_table_id", "ability_ids", "description")
+                    "xp_reward", "loot_table_id", "ability_ids", "behavior_profile", "description")
     SetHeaders ws, headers
+
+    ' Add column notes
+    SafeAddComment ws.Cells(1, 13), "Comma-separated ability IDs from EnemyAbilities"
+    SafeAddComment ws.Cells(1, 14), "Links to BehaviorProfiles id (e.g., bhv_basic_melee)"
 End Sub
 
 Private Sub SetupEnemyAbilitiesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("EnemyAbilities")
     Dim headers As Variant
-    headers = Array("id", "name", "type", "damage", "damage_type", "cooldown", "range", "description")
+    ' 20 columns for the expanded AI ability system
+    headers = Array("id", "name", "description", "type", "damage_mult", "damage_type", _
+                    "cooldown", "range_min", "range_max", "shape", "shape_size", "shape_angle", _
+                    "windup", "recovery", "animation", "priority", "conditions", "effects_on_hit", _
+                    "projectile_speed", "dash_speed")
     SetHeaders ws, headers
+
+    ' Add column notes
+    SafeAddComment ws.Cells(1, 4), "melee, dash_attack, aoe, projectile, pattern, teleport_attack, beam"
+    SafeAddComment ws.Cells(1, 5), "Multiplier applied to enemy base_damage"
+    SafeAddComment ws.Cells(1, 6), "physical, fire, cold, lightning, poison, chaos, pure"
+    SafeAddComment ws.Cells(1, 8), "Minimum range to use ability"
+    SafeAddComment ws.Cells(1, 9), "Maximum range to use ability"
+    SafeAddComment ws.Cells(1, 10), "circle, cone, line, cross, ring"
+    SafeAddComment ws.Cells(1, 11), "Size/radius of hitbox shape"
+    SafeAddComment ws.Cells(1, 12), "Angle for cones/beams (degrees)"
+    SafeAddComment ws.Cells(1, 13), "Wind-up time before damage (seconds)"
+    SafeAddComment ws.Cells(1, 14), "Recovery time after attack (seconds)"
+    SafeAddComment ws.Cells(1, 16), "AI priority (higher = preferred)"
+    SafeAddComment ws.Cells(1, 17), "Conditions: distance>50, health<50%, etc."
+    SafeAddComment ws.Cells(1, 18), "Effects: stun:0.5, burn:3:5, knockback:100"
+    SafeAddComment ws.Cells(1, 19), "For projectile abilities (pixels/sec)"
+    SafeAddComment ws.Cells(1, 20), "For dash abilities (pixels/sec)"
 End Sub
 
 Private Sub SetupEnemyVariantsSheet()
@@ -224,6 +252,44 @@ Private Sub SetupEnemyVariantsSheet()
     headers = Array("id", "name", "health_multiplier", "damage_multiplier", _
                     "xp_multiplier", "extra_abilities", "visual_effect")
     SetHeaders ws, headers
+End Sub
+
+Private Sub SetupBehaviorProfilesSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet("BehaviorProfiles")
+    Dim headers As Variant
+    ' 29 columns for behavior profile configuration
+    headers = Array("id", "name", "description", _
+                    "idle_behavior", "idle_roam_radius", "idle_roam_speed_mult", _
+                    "idle_pause_min", "idle_pause_max", "patrol_loop", _
+                    "detection_range", "detection_type", "aggro_on_damage", _
+                    "aggro_memory_time", "leash_range", _
+                    "combat_style", "approach_behavior", "preferred_range", _
+                    "chase_speed_mult", "strafe_chance", _
+                    "kite_distance", "kite_speed_mult", "circle_direction", _
+                    "attack_retreat_distance", "attack_retreat_duration", _
+                    "flee_health_threshold", "flee_speed_mult", _
+                    "ability_use_chance", "ability_priority_mode", "abilities")
+    SetHeaders ws, headers
+
+    ' Add column notes
+    SafeAddComment ws.Cells(1, 4), "stand, roam, patrol"
+    SafeAddComment ws.Cells(1, 5), "Roam radius in pixels (for roam behavior)"
+    SafeAddComment ws.Cells(1, 6), "Speed multiplier when roaming (0.5 = half speed)"
+    SafeAddComment ws.Cells(1, 9), "TRUE/FALSE - loop patrol route"
+    SafeAddComment ws.Cells(1, 11), "sight, none"
+    SafeAddComment ws.Cells(1, 12), "TRUE/FALSE - aggro when damaged even outside detection"
+    SafeAddComment ws.Cells(1, 14), "Max distance from home before giving up chase"
+    SafeAddComment ws.Cells(1, 15), "aggressive, ranged, opportunist, hit_run"
+    SafeAddComment ws.Cells(1, 16), "direct, charge, kite, phase, circle"
+    SafeAddComment ws.Cells(1, 17), "Preferred combat distance (for ranged)"
+    SafeAddComment ws.Cells(1, 19), "0.0-1.0 chance to strafe during combat"
+    SafeAddComment ws.Cells(1, 20), "Distance to maintain when kiting"
+    SafeAddComment ws.Cells(1, 22), "clockwise, counter, random"
+    SafeAddComment ws.Cells(1, 25), "0.0-1.0 - health % to trigger flee"
+    SafeAddComment ws.Cells(1, 27), "0.0-1.0 - chance to use ability vs basic attack"
+    SafeAddComment ws.Cells(1, 28), "highest, conditional, random_weighted"
+    SafeAddComment ws.Cells(1, 29), "Comma-separated ability IDs"
 End Sub
 
 Private Sub SetupLootTablesSheet()
