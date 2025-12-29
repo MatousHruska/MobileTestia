@@ -1,0 +1,61 @@
+{
+  "spawn_points": [
+    {
+      "id": "sp_meadow_zombies",
+      "name": "Meadow Zombie Spawn",
+      "description": "Basic zombie spawn for meadow zone",
+      "enemy_pool": "ene_zombie_basic:100",
+      "min_level": 1,
+      "max_level": 3,
+      "check_interval": 60,
+      "spawn_chance": 1.0,
+      "max_active_enemies": 1,
+      "respawn_delay": 0,
+      "spawn_radius": 20,
+      "spawn_group": "meadow_enemies"
+    },
+    {
+      "id": "sp_forest_ghouls",
+      "name": "Forest Ghoul Spawn",
+      "description": "Mixed ghoul spawn for forest zone",
+      "enemy_pool": "ene_ghoul_basic:80,ene_zombie_basic:20",
+      "min_level": 3,
+      "max_level": 6,
+      "check_interval": 60,
+      "spawn_chance": 0.8,
+      "max_active_enemies": 2,
+      "respawn_delay": 5,
+      "spawn_radius": 30,
+      "spawn_group": "forest_enemies"
+    },
+    {
+      "id": "sp_crypt_vampires",
+      "name": "Crypt Vampire Spawn",
+      "description": "Vampire spawn for crypt dungeon",
+      "enemy_pool": "ene_Vampire_basic:70,ene_ghoul_basic:30",
+      "min_level": 5,
+      "max_level": 10,
+      "check_interval": 90,
+      "spawn_chance": 0.7,
+      "max_active_enemies": 1,
+      "respawn_delay": 10,
+      "spawn_radius": 25,
+      "spawn_group": "crypt_enemies"
+    },
+    {
+      "id": "sp_vampire_lord_boss",
+      "name": "Vampire Lord Boss Spawn",
+      "description": "Boss spawn - only spawns once per playthrough",
+      "enemy_pool": "ene_vampire_lord:100",
+      "min_level": 8,
+      "max_level": 10,
+      "check_interval": 0,
+      "spawn_chance": 1.0,
+      "max_active_enemies": 1,
+      "respawn_delay": 0,
+      "spawn_radius": 0,
+      "spawn_group": "boss_spawns",
+      "disable_after_quest": "quest_vampire_lord_defeated"
+    }
+  ]
+}

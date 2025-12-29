@@ -8,11 +8,13 @@ signal enemy_unregistered(enemy: Node2D)
 signal friendly_registered(npc: Node2D)
 signal friendly_unregistered(npc: Node2D)
 signal spawner_registered(spawner: Node2D)
+signal spawn_point_registered(spawn_point: Node2D)
 
 ## Tracking (untyped arrays to avoid class loading issues)
 var all_enemies: Array = []
 var all_friendlies: Array = []
 var all_spawners: Array = []
+var all_spawn_points: Array = []
 
 ## Persistence (for unique/boss NPCs)
 var killed_unique_ids: Array[String] = []
@@ -94,6 +96,22 @@ func register_spawner(spawner: Node2D) -> void:
 func unregister_spawner(spawner: Node2D) -> void:
 	all_spawners.erase(spawner)
 	Debug.log("NPC", "Unregistered spawner")
+
+
+func register_spawn_point(spawn_point: Node2D) -> void:
+	if spawn_point in all_spawn_points:
+		return
+
+	all_spawn_points.append(spawn_point)
+	spawn_point.add_to_group("spawn_points")
+
+	spawn_point_registered.emit(spawn_point)
+	Debug.log("NPC", "Registered spawn point: %s" % spawn_point.get_spawn_point_id())
+
+
+func unregister_spawn_point(spawn_point: Node2D) -> void:
+	all_spawn_points.erase(spawn_point)
+	Debug.log("NPC", "Unregistered spawn point")
 
 
 ## Event handlers
@@ -260,6 +278,7 @@ func print_state() -> void:
 		"enemies_alive": all_enemies.size(),
 		"friendlies": all_friendlies.size(),
 		"spawners": all_spawners.size(),
+		"spawn_points": all_spawn_points.size(),
 		"total_killed": total_enemies_killed,
 		"total_xp": total_experience_gained,
 		"unique_kills": killed_unique_ids.size(),
@@ -298,6 +317,52 @@ func print_all_spawners() -> void:
 			spawner.print_state()
 
 
+func print_all_spawn_points() -> void:
+	Debug.info("NPC", "=== ALL SPAWN POINTS ===")
+	for spawn_point in all_spawn_points:
+		if is_instance_valid(spawn_point):
+			spawn_point.debug_print_state()
+
+
+## Spawn point utilities
+func get_spawn_points_by_group(group: String) -> Array:
+	## Get all spawn points in a group
+	var result: Array = []
+	for spawn_point in all_spawn_points:
+		if is_instance_valid(spawn_point) and spawn_point.spawn_group == group:
+			result.append(spawn_point)
+	return result
+
+
+func enable_spawn_group(group: String) -> void:
+	## Enable all spawn points in a group
+	Debug.info("NPC", "Enabling spawn group: %s" % group)
+	for spawn_point in get_spawn_points_by_group(group):
+		spawn_point.set_enabled(true)
+
+
+func disable_spawn_group(group: String) -> void:
+	## Disable all spawn points in a group
+	Debug.info("NPC", "Disabling spawn group: %s" % group)
+	for spawn_point in get_spawn_points_by_group(group):
+		spawn_point.set_enabled(false)
+
+
+func refresh_all_spawn_points() -> void:
+	## Refresh conditions on all spawn points (call after quest state changes)
+	for spawn_point in all_spawn_points:
+		if is_instance_valid(spawn_point):
+			spawn_point.refresh_conditions()
+
+
+func debug_force_spawn_all() -> void:
+	## Force all spawn points to spawn one enemy
+	Debug.info("NPC", "Force spawning from all spawn points")
+	for spawn_point in all_spawn_points:
+		if is_instance_valid(spawn_point) and spawn_point.enabled:
+			spawn_point.force_spawn()
+
+
 ## Export for AI analysis
 func export_npc_state() -> String:
 	var output := "=== NPC STATE EXPORT ===\n"
@@ -307,6 +372,7 @@ func export_npc_state() -> String:
 	output += "Enemies alive: %d\n" % all_enemies.size()
 	output += "Friendlies: %d\n" % all_friendlies.size()
 	output += "Spawners: %d\n" % all_spawners.size()
+	output += "Spawn points: %d\n" % all_spawn_points.size()
 	output += "Total killed: %d\n" % total_enemies_killed
 	output += "Total XP: %d\n\n" % total_experience_gained
 

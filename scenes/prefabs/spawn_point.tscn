@@ -1,0 +1,24 @@
+[gd_scene load_steps=2 format=3 uid="uid://spawn_point_prefab"]
+
+[ext_resource type="Script" path="res://scripts/npc/spawn_point.gd" id="1_spawn_point"]
+
+[node name="SpawnPoint" type="Node2D"]
+script = ExtResource("1_spawn_point")
+enemy_id = ""
+enemy_pool = []
+min_level = 1
+max_level = 5
+check_interval = 10.0
+spawn_chance = 1.0
+max_active_enemies = 1
+respawn_delay = 0.0
+enabled = true
+spawn_radius = 0.0
+spawn_offsets = []
+require_quest_active = ""
+require_quest_completed = ""
+disable_after_quest = ""
+disable_during_quest = ""
+require_player_level = 0
+spawn_group = ""
+spawn_point_id = ""
