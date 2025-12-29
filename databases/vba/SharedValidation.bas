@@ -244,3 +244,13 @@ Public Function ParseCommaSeparated(ByVal str As String) As String()
     Next i
     ParseCommaSeparated = result
 End Function
+
+'-------------------------------------------------------------------------------
+' SafeAddComment - Safely add comment to cell (delete existing first)
+'-------------------------------------------------------------------------------
+Public Sub SafeAddComment(ByVal cell As Range, ByVal commentText As String)
+    On Error Resume Next
+    cell.ClearComments
+    cell.AddComment commentText
+    On Error GoTo 0
+End Sub

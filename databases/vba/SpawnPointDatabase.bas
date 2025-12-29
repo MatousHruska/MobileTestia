@@ -249,12 +249,12 @@ Public Sub SetupSpawnPointsSheet()
     ws.Rows(1).AutoFilter
 
     ' Add column notes
-    ws.Cells(1, 4).AddComment "Format: enemy_id:weight,enemy_id:weight (e.g., ene_zombie_basic:70,ene_ghoul_basic:30)"
-    ws.Cells(1, 8).AddComment "0.0 to 1.0 (1.0 = 100% chance)"
-    ws.Cells(1, 13).AddComment "Quest ID - only spawn if this quest is active"
-    ws.Cells(1, 14).AddComment "Quest ID - only spawn if this quest is completed"
-    ws.Cells(1, 15).AddComment "Quest ID - stop spawning after quest completed"
-    ws.Cells(1, 16).AddComment "Quest ID - don't spawn while quest active or completed"
+    SafeAddComment ws.Cells(1, 4), "Format: enemy_id:weight,enemy_id:weight (e.g., ene_zombie_basic:70,ene_ghoul_basic:30)"
+    SafeAddComment ws.Cells(1, 8), "0.0 to 1.0 (1.0 = 100% chance)"
+    SafeAddComment ws.Cells(1, 13), "Quest ID - only spawn if this quest is active"
+    SafeAddComment ws.Cells(1, 14), "Quest ID - only spawn if this quest is completed"
+    SafeAddComment ws.Cells(1, 15), "Quest ID - stop spawning after quest completed"
+    SafeAddComment ws.Cells(1, 16), "Quest ID - don't spawn while quest active or completed"
 
     MsgBox "SpawnPoints sheet created with headers!", vbInformation
 End Sub
