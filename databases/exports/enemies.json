@@ -13,7 +13,8 @@
       "detection_range": 100,
       "xp_reward": 15,
       "loot_table_id": "loot_test_guaranteed",
-      "ability_ids": "abl_melee_basic"
+      "ability_ids": "abl_melee_basic",
+      "behavior_profile": "bhv_basic_melee"
     },
     {
       "id": "ene_ghoul_basic",
@@ -28,7 +29,8 @@
       "detection_range": 100,
       "xp_reward": 15,
       "loot_table_id": "loot_test_guaranteed",
-      "ability_ids": "abl_melee_basic"
+      "ability_ids": "abl_melee_basic",
+      "behavior_profile": "bhv_basic_melee"
     },
     {
       "id": "ene_Vampire_basic",
@@ -43,7 +45,8 @@
       "detection_range": 100,
       "xp_reward": 15,
       "loot_table_id": "loot_test_guaranteed",
-      "ability_ids": "abl_melee_basic"
+      "ability_ids": "abl_melee_basic",
+      "behavior_profile": "bhv_basic_melee"
     },
     {
       "id": "ene_vampire_lord",
@@ -58,7 +61,24 @@
       "detection_range": 150,
       "xp_reward": 100,
       "loot_table_id": "loot_vampire_lord",
-      "ability_ids": ""
+      "ability_ids": "",
+      "behavior_profile": "bhv_basic_melee"
+    },
+    {
+      "id": "ene_zombie_basic",
+      "name": "Zombie",
+      "type": "Normal",
+      "base_health": 100,
+      "base_damage": 10,
+      "armor": 0,
+      "move_speed": 60,
+      "attack_speed": 1,
+      "attack_range": 24,
+      "detection_range": 150,
+      "xp_reward": 25,
+      "loot_table_id": "loot_basic",
+      "ability_ids": "abl_basic_slash",
+      "behavior_profile": "bhv_basic_melee"
     }
   ]
 }
