@@ -177,7 +177,7 @@
       "shape_size": 80,
       "shape_angle": 0,
       "windup": 1,
-      "recovery": 0,3,
+      "recovery": 0.3,
       "animation": "cast",
       "priority": 3,
       "conditions": "health<40%",
