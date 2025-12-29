@@ -23,6 +23,7 @@ var consumables: Dictionary = {}
 var status_effects: Dictionary = {}
 var zones: Dictionary = {}
 var chests: Dictionary = {}
+var spawn_points: Dictionary = {}
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -35,6 +36,7 @@ var npcs_list: Array = []
 var dialogues_list: Array = []
 var zones_list: Array = []
 var chests_list: Array = []
+var spawn_points_list: Array = []
 
 ## Signals
 signal databases_loaded
@@ -83,6 +85,9 @@ func load_all_databases() -> void:
 
 	# Interactables
 	success = _load_database("chests.json", "chests", chests, chests_list) and success
+
+	# Spawn points
+	success = _load_database("spawn_points.json", "spawn_points", spawn_points, spawn_points_list) and success
 
 	if success:
 		Debug.info("Database", "All databases loaded successfully")
@@ -382,6 +387,76 @@ func get_chests_by_type(chest_type: String) -> Array:
 		if chest.get("chest_type", "loot") == chest_type:
 			result.append(chest)
 	return result
+
+
+#===============================================================================
+# SPAWN POINT ACCESS
+#===============================================================================
+
+## Get spawn point preset by id
+func get_spawn_point(id: String) -> Dictionary:
+	return spawn_points.get(id, {})
+
+
+## Get spawn points by group
+func get_spawn_points_by_group(group: String) -> Array:
+	var result: Array = []
+	for sp in spawn_points_list:
+		if sp.get("spawn_group", "") == group:
+			result.append(sp)
+	return result
+
+
+## Parse enemy pool string into array of dictionaries
+## Format: "enemy_id:weight,enemy_id:weight" -> [{enemy_id: "x", weight: 100}, ...]
+func parse_enemy_pool(pool_string: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+
+	if pool_string.strip_edges().is_empty():
+		return result
+
+	var entries := pool_string.split(",")
+	for entry in entries:
+		var parts := entry.strip_edges().split(":")
+		if parts.size() >= 1:
+			var enemy_id := parts[0].strip_edges()
+			var weight := 100
+			if parts.size() >= 2:
+				weight = int(parts[1].strip_edges())
+			result.append({"enemy_id": enemy_id, "weight": weight})
+
+	return result
+
+
+## Apply spawn point preset to a SpawnPoint node
+func apply_spawn_point_preset(spawn_point: Node2D, preset_id: String) -> bool:
+	var preset := get_spawn_point(preset_id)
+	if preset.is_empty():
+		Debug.warn("Database", "Spawn point preset not found: %s" % preset_id)
+		return false
+
+	# Parse enemy pool
+	var pool_string: String = preset.get("enemy_pool", "")
+	spawn_point.enemy_pool = parse_enemy_pool(pool_string)
+
+	# Apply other settings
+	spawn_point.min_level = int(preset.get("min_level", 1))
+	spawn_point.max_level = int(preset.get("max_level", 5))
+	spawn_point.check_interval = float(preset.get("check_interval", 60))
+	spawn_point.spawn_chance = float(preset.get("spawn_chance", 1.0))
+	spawn_point.max_active_enemies = int(preset.get("max_active_enemies", 1))
+	spawn_point.respawn_delay = float(preset.get("respawn_delay", 0))
+	spawn_point.spawn_radius = float(preset.get("spawn_radius", 0))
+	spawn_point.spawn_group = preset.get("spawn_group", "")
+
+	# Quest conditions
+	spawn_point.require_quest_active = preset.get("require_quest_active", "")
+	spawn_point.require_quest_completed = preset.get("require_quest_completed", "")
+	spawn_point.disable_after_quest = preset.get("disable_after_quest", "")
+	spawn_point.disable_during_quest = preset.get("disable_during_quest", "")
+
+	Debug.log("Database", "Applied spawn point preset: %s" % preset_id)
+	return true
 
 
 #===============================================================================
@@ -690,4 +765,5 @@ func print_stats() -> void:
 		"dialogues": dialogues.size(),
 		"zones": zones.size(),
 		"chests": chests.size(),
+		"spawn_points": spawn_points.size(),
 	})

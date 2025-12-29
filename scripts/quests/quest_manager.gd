@@ -118,6 +118,11 @@ func _connect_game_signals() -> void:
 		Game.zone_changed.connect(_on_zone_changed)
 		Debug.log("Quest", "Connected to Game.zone_changed")
 
+	# Connect our own signals to refresh spawn points
+	quest_started.connect(_on_quest_state_changed)
+	quest_completed.connect(_on_quest_state_changed)
+	quest_failed.connect(_on_quest_state_changed)
+
 	Debug.info("Quest", "Game signals connected")
 
 
@@ -733,6 +738,12 @@ func _on_inventory_changed() -> void:
 
 			if count != obj.current:
 				update_objective(quest_id, obj_id, count)
+
+
+func _on_quest_state_changed(_quest_id: String) -> void:
+	## Refresh spawn points when quest state changes
+	if NPCManager:
+		NPCManager.refresh_all_spawn_points()
 
 
 func _on_zone_changed(zone_name: String) -> void:
