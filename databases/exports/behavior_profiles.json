@@ -3,248 +3,32 @@
     {
       "id": "bhv_basic_melee",
       "name": "Basic Melee",
-      "description": "Standard melee enemy - approaches and attacks",
+      "description": "Standard aggressive melee enemy",
 
       "idle_behavior": "roam",
-      "idle_roam_radius": 50,
-      "idle_roam_speed_mult": 0.5,
-      "idle_pause_min": 2.0,
-      "idle_pause_max": 5.0,
+      "idle_roam_radius": 100,
+      "idle_roam_speed_mult": 0,5,
+      "idle_pause_min": 2,
+      "idle_pause_max": 5,
 
       "detection_range": 150,
       "detection_type": "sight",
       "aggro_on_damage": true,
-      "aggro_memory_time": 10.0,
+      "aggro_memory_time": 10,
       "leash_range": 300,
 
       "combat_style": "aggressive",
       "approach_behavior": "direct",
       "preferred_range": 30,
-      "chase_speed_mult": 1.0,
-      "strafe_chance": 0.0,
+      "chase_speed_mult": 1,
+      "strafe_chance": 0,
 
-      "flee_health_threshold": 0.0,
-      "flee_speed_mult": 1.2,
+      "flee_health_threshold": 0,
+      "flee_speed_mult": 1,
 
-      "ability_use_chance": 1.0,
+      "ability_use_chance": 1,
       "ability_priority_mode": "highest",
-      "abilities": ["abl_melee_basic"]
-    },
-    {
-      "id": "bhv_aggressive_charger",
-      "name": "Aggressive Charger",
-      "description": "Charges at target, uses dash attacks when in range",
-
-      "idle_behavior": "stand",
-      "idle_roam_radius": 0,
-      "idle_roam_speed_mult": 0.0,
-      "idle_pause_min": 0.0,
-      "idle_pause_max": 0.0,
-
-      "detection_range": 200,
-      "detection_type": "sight",
-      "aggro_on_damage": true,
-      "aggro_memory_time": 15.0,
-      "leash_range": 400,
-
-      "combat_style": "aggressive",
-      "approach_behavior": "charge",
-      "preferred_range": 0,
-      "chase_speed_mult": 1.5,
-      "strafe_chance": 0.0,
-
-      "flee_health_threshold": 0.0,
-      "flee_speed_mult": 1.0,
-
-      "ability_use_chance": 1.0,
-      "ability_priority_mode": "conditional",
-      "abilities": ["abl_wolf_pounce", "abl_melee_basic"]
-    },
-    {
-      "id": "bhv_ranged_kiter",
-      "name": "Ranged Kiter",
-      "description": "Keeps distance, uses ranged attacks, retreats when approached",
-
-      "idle_behavior": "roam",
-      "idle_roam_radius": 30,
-      "idle_roam_speed_mult": 0.4,
-      "idle_pause_min": 3.0,
-      "idle_pause_max": 6.0,
-
-      "detection_range": 250,
-      "detection_type": "sight",
-      "aggro_on_damage": true,
-      "aggro_memory_time": 8.0,
-      "leash_range": 350,
-
-      "combat_style": "ranged",
-      "approach_behavior": "kite",
-      "preferred_range": 120,
-      "chase_speed_mult": 0.8,
-      "strafe_chance": 0.6,
-      "kite_distance": 80,
-      "kite_speed_mult": 1.0,
-
-      "flee_health_threshold": 0.2,
-      "flee_speed_mult": 1.3,
-
-      "ability_use_chance": 1.0,
-      "ability_priority_mode": "highest",
-      "abilities": ["abl_mage_fireball", "abl_mage_cross_bolt"]
-    },
-    {
-      "id": "bhv_tank_boss",
-      "name": "Tank Boss",
-      "description": "Slow, heavy hitter with AoE attacks",
-
-      "idle_behavior": "stand",
-      "idle_roam_radius": 0,
-      "idle_roam_speed_mult": 0.0,
-      "idle_pause_min": 0.0,
-      "idle_pause_max": 0.0,
-
-      "detection_range": 180,
-      "detection_type": "sight",
-      "aggro_on_damage": true,
-      "aggro_memory_time": 30.0,
-      "leash_range": 500,
-
-      "combat_style": "aggressive",
-      "approach_behavior": "direct",
-      "preferred_range": 40,
-      "chase_speed_mult": 0.7,
-      "strafe_chance": 0.1,
-
-      "flee_health_threshold": 0.0,
-      "flee_speed_mult": 1.0,
-
-      "ability_use_chance": 1.0,
-      "ability_priority_mode": "conditional",
-      "abilities": ["abl_ogre_smash", "abl_skeleton_sweep", "abl_melee_basic"]
-    },
-    {
-      "id": "bhv_vampire",
-      "name": "Vampire",
-      "description": "Opportunistic fighter, drains life when low, teleports to engage",
-
-      "idle_behavior": "roam",
-      "idle_roam_radius": 40,
-      "idle_roam_speed_mult": 0.6,
-      "idle_pause_min": 2.0,
-      "idle_pause_max": 4.0,
-
-      "detection_range": 180,
-      "detection_type": "sight",
-      "aggro_on_damage": true,
-      "aggro_memory_time": 20.0,
-      "leash_range": 400,
-
-      "combat_style": "opportunist",
-      "approach_behavior": "phase",
-      "preferred_range": 35,
-      "chase_speed_mult": 1.1,
-      "strafe_chance": 0.3,
-
-      "flee_health_threshold": 0.15,
-      "flee_speed_mult": 1.4,
-
-      "ability_use_chance": 1.0,
-      "ability_priority_mode": "conditional",
-      "abilities": ["abl_ghost_phase", "abl_vampire_drain", "abl_melee_basic"]
-    },
-    {
-      "id": "bhv_passive_until_attacked",
-      "name": "Passive Until Attacked",
-      "description": "Ignores player until damaged, then becomes aggressive",
-
-      "idle_behavior": "roam",
-      "idle_roam_radius": 60,
-      "idle_roam_speed_mult": 0.5,
-      "idle_pause_min": 3.0,
-      "idle_pause_max": 8.0,
-
-      "detection_range": 0,
-      "detection_type": "none",
-      "aggro_on_damage": true,
-      "aggro_memory_time": 15.0,
-      "leash_range": 250,
-
-      "combat_style": "aggressive",
-      "approach_behavior": "direct",
-      "preferred_range": 30,
-      "chase_speed_mult": 1.2,
-      "strafe_chance": 0.0,
-
-      "flee_health_threshold": 0.0,
-      "flee_speed_mult": 1.0,
-
-      "ability_use_chance": 1.0,
-      "ability_priority_mode": "highest",
-      "abilities": ["abl_melee_basic"]
-    },
-    {
-      "id": "bhv_patrol",
-      "name": "Patrol Guard",
-      "description": "Patrols between points, investigates threats",
-
-      "idle_behavior": "patrol",
-      "idle_roam_radius": 0,
-      "idle_roam_speed_mult": 0.7,
-      "idle_pause_min": 1.0,
-      "idle_pause_max": 2.0,
-      "patrol_loop": true,
-
-      "detection_range": 120,
-      "detection_type": "sight",
-      "aggro_on_damage": true,
-      "aggro_memory_time": 12.0,
-      "leash_range": 200,
-
-      "combat_style": "aggressive",
-      "approach_behavior": "direct",
-      "preferred_range": 30,
-      "chase_speed_mult": 1.0,
-      "strafe_chance": 0.2,
-
-      "flee_health_threshold": 0.0,
-      "flee_speed_mult": 1.0,
-
-      "ability_use_chance": 1.0,
-      "ability_priority_mode": "highest",
-      "abilities": ["abl_melee_basic", "abl_skeleton_sweep"]
-    },
-    {
-      "id": "bhv_hit_and_run",
-      "name": "Hit and Run",
-      "description": "Strikes then retreats, circles target",
-
-      "idle_behavior": "roam",
-      "idle_roam_radius": 80,
-      "idle_roam_speed_mult": 0.8,
-      "idle_pause_min": 1.0,
-      "idle_pause_max": 2.0,
-
-      "detection_range": 160,
-      "detection_type": "sight",
-      "aggro_on_damage": true,
-      "aggro_memory_time": 10.0,
-      "leash_range": 300,
-
-      "combat_style": "hit_run",
-      "approach_behavior": "circle",
-      "preferred_range": 60,
-      "chase_speed_mult": 1.3,
-      "strafe_chance": 0.7,
-      "circle_direction": "random",
-      "attack_retreat_distance": 100,
-      "attack_retreat_duration": 1.5,
-
-      "flee_health_threshold": 0.25,
-      "flee_speed_mult": 1.5,
-
-      "ability_use_chance": 1.0,
-      "ability_priority_mode": "random_weighted",
-      "abilities": ["abl_wolf_pounce", "abl_melee_basic"]
+      "abilities": ["abl_basic_slash"]
     }
   ]
 }
