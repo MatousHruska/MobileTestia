@@ -1,5 +1,17 @@
 extends Node
 class_name AIStateMachine
+## DEPRECATED: AIStateMachine is replaced by the new database-driven AI system
+##
+## The new system uses:
+##   - EnemyBehavior: For basic movement/chase AI
+##   - EnemyAbilityController: For ability selection and execution
+##   - BehaviorProfileData: For database-driven behavior configuration
+##   - AbilityData: For database-driven ability definitions
+##
+## This class is kept for reference but is not used by EnemyNPC.
+## See EnemyBehavior + EnemyAbilityController for the new approach.
+##
+## Old description:
 ## AIStateMachine - Modular state machine for enemy AI behaviors
 ## Supports different archetypes (melee, ranged, mage, tank, etc.)
 
