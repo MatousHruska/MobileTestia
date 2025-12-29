@@ -251,10 +251,10 @@ func activate() -> void:
 		return
 
 	is_active = true
-	_check_timer = check_interval
+	_check_timer = 0.0  # Spawn immediately on first activation
 	spawn_point_activated.emit()
 
-	print("[SpawnPoint] ACTIVATED: ", _actual_id, " timer=", _check_timer)
+	print("[SpawnPoint] ACTIVATED: ", _actual_id, " (will spawn immediately)")
 
 
 func deactivate() -> void:
