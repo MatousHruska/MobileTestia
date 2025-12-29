@@ -456,6 +456,9 @@ func _complete_objective(quest_id: String, objective_id: String) -> void:
 		var turn_in_npc: String = quest_data.get("turn_in_npc", "")
 		if auto_complete or turn_in_npc.is_empty():
 			complete_quest(quest_id)
+		else:
+			# Quest needs to be turned in - show feedback to player
+			_show_floating_quest_text("Objectives Complete", Color(0.6, 1.0, 0.6))  # Light green
 
 
 #===============================================================================
@@ -873,8 +876,8 @@ func _count_items_in_inventory(item_id: String) -> int:
 	return count
 
 
-func _show_quest_complete_text() -> void:
-	## Show floating "Quest Complete" text above player
+func _show_floating_quest_text(message: String = "Quest Complete", color: Color = Color(1.0, 0.8, 0.3)) -> void:
+	## Show floating text above player
 	if not Game or not Game.player:
 		return
 
@@ -882,14 +885,14 @@ func _show_quest_complete_text() -> void:
 
 	# Create floating label
 	var label := Label.new()
-	label.text = "Quest Complete"
+	label.text = message
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.position = Vector2(-60, -50)
 	label.custom_minimum_size = Vector2(120, 20)
 
 	# Style matching unlockable door message
 	label.add_theme_font_size_override("font_size", 12)
-	label.add_theme_color_override("font_color", Color(1.0, 0.8, 0.3))  # Gold/yellow
+	label.add_theme_color_override("font_color", color)
 	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
@@ -902,6 +905,11 @@ func _show_quest_complete_text() -> void:
 	tween.tween_property(label, "position:y", -80.0, 1.5)
 	tween.tween_property(label, "modulate:a", 0.0, 1.5)
 	tween.chain().tween_callback(label.queue_free)
+
+
+func _show_quest_complete_text() -> void:
+	## Show floating "Quest Complete" text above player
+	_show_floating_quest_text("Quest Complete")
 
 
 func _deserialize_quest_state(data: Dictionary) -> QuestState:
