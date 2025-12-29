@@ -191,6 +191,25 @@ func _apply_behavior_profile() -> void:
 	if behavior_profile.chase_speed_mult != 1.0:
 		move_speed *= behavior_profile.chase_speed_mult
 
+	# Apply idle behavior settings
+	behavior.idle_behavior = _get_idle_behavior_string(behavior_profile.idle_behavior)
+	behavior.roam_radius = behavior_profile.idle_roam_radius
+	behavior.roam_speed_mult = behavior_profile.idle_roam_speed_mult
+	behavior.roam_pause_min = behavior_profile.idle_pause_min
+	behavior.roam_pause_max = behavior_profile.idle_pause_max
+
+
+func _get_idle_behavior_string(idle_enum) -> String:
+	## Convert IdleBehavior enum to string for EnemyBehavior
+	# Handle both enum and int values
+	if idle_enum is int:
+		match idle_enum:
+			0: return "stand"
+			1: return "roam"
+			2: return "patrol"
+			_: return "stand"
+	return "stand"
+
 
 func _setup_ability_controller() -> void:
 	## Setup the ability controller for database-driven attacks

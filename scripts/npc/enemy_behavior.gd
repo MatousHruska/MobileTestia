@@ -27,8 +27,15 @@ signal attack_performed
 @export_group("Movement")
 @export var chase_speed_multiplier: float = 1.0  ## Multiply base speed when chasing
 
+@export_group("Idle Behavior")
+@export_enum("stand", "roam", "patrol") var idle_behavior: String = "stand"
+@export var roam_radius: float = 60.0  ## Max distance to roam from home
+@export var roam_speed_mult: float = 0.5  ## Speed multiplier when roaming
+@export var roam_pause_min: float = 2.0  ## Min pause between roams
+@export var roam_pause_max: float = 5.0  ## Max pause between roams
+
 ## State (minimal - just what we need)
-enum State { IDLE, COMBAT, DEAD }
+enum State { IDLE, ROAMING, COMBAT, RETURNING, DEAD }
 var state: State = State.IDLE
 var target: Node2D = null
 var is_attacking: bool = false  ## Brief flag during attack animation
@@ -37,6 +44,12 @@ var is_attacking: bool = false  ## Brief flag during attack animation
 var _owner: CharacterBody2D = null
 var _attack_timer: float = 0.0
 var _home_position: Vector2 = Vector2.ZERO
+var _base_move_speed: float = 0.0  ## Store original move speed
+
+## Roaming state
+var _roam_target: Vector2 = Vector2.ZERO
+var _roam_pause_timer: float = 0.0
+var _is_roam_paused: bool = true  ## Start paused, then pick first roam target
 
 
 func _ready() -> void:
@@ -46,7 +59,15 @@ func _ready() -> void:
 		return
 
 	_home_position = _owner.global_position
-	Debug.info("AI", "EnemyBehavior ready", {"owner": _owner.name})
+
+	# Store base move speed for roaming speed adjustment
+	if "move_speed" in _owner:
+		_base_move_speed = _owner.move_speed
+
+	# Initialize roam pause timer
+	_roam_pause_timer = randf_range(roam_pause_min, roam_pause_max)
+
+	Debug.info("AI", "EnemyBehavior ready", {"owner": _owner.name, "idle": idle_behavior})
 
 
 func _process(delta: float) -> void:
@@ -60,7 +81,7 @@ func _process(delta: float) -> void:
 	_update_behavior(delta)
 
 
-func _update_behavior(_delta: float) -> void:
+func _update_behavior(delta: float) -> void:
 	## Core behavior logic - runs every frame
 
 	# Check if owner is locked (can't move during attack animation)
@@ -70,8 +91,8 @@ func _update_behavior(_delta: float) -> void:
 	if not _has_valid_target():
 		_try_acquire_target()
 		if not _has_valid_target():
-			# No target - idle
-			_do_idle()
+			# No target - idle/roam
+			_do_idle(delta)
 			return
 
 	# We have a target - check leash distance
@@ -106,13 +127,89 @@ func _update_behavior(_delta: float) -> void:
 		_do_chase()
 
 
-func _do_idle() -> void:
+func _do_idle(delta: float) -> void:
+	## Handle idle behavior based on idle_behavior setting
+
+	match idle_behavior:
+		"roam":
+			_do_roam(delta)
+		"patrol":
+			# TODO: Implement patrol paths
+			_do_stand()
+		_:  # "stand" or default
+			_do_stand()
+
+
+func _do_stand() -> void:
+	## Just stand in place
 	state = State.IDLE
 	_owner.stop_movement()
+	_restore_move_speed()
+
+
+func _do_roam(delta: float) -> void:
+	## Roam randomly within roam_radius of home position
+
+	if _is_roam_paused:
+		# Pausing between roams
+		state = State.IDLE
+		_owner.stop_movement()
+		_restore_move_speed()
+
+		_roam_pause_timer -= delta
+		if _roam_pause_timer <= 0:
+			# Pick new roam target
+			_pick_roam_target()
+			_is_roam_paused = false
+		return
+
+	# Currently roaming to target
+	state = State.ROAMING
+
+	# Apply roam speed
+	_apply_roam_speed()
+
+	var distance_to_roam_target := _owner.global_position.distance_to(_roam_target)
+
+	if distance_to_roam_target < 8.0:
+		# Reached roam target, pause
+		_is_roam_paused = true
+		_roam_pause_timer = randf_range(roam_pause_min, roam_pause_max)
+		_owner.stop_movement()
+		_restore_move_speed()
+		return
+
+	# Move toward roam target
+	var direction := _owner.global_position.direction_to(_roam_target)
+	_owner.set_move_direction(direction)
+
+	# Face movement direction
+	if _owner.has_method("_update_facing_from_direction"):
+		_owner._update_facing_from_direction(direction)
+
+
+func _pick_roam_target() -> void:
+	## Pick a random point within roam_radius of home
+	var angle := randf() * TAU
+	var distance := randf_range(roam_radius * 0.3, roam_radius)
+	_roam_target = _home_position + Vector2(cos(angle), sin(angle)) * distance
+
+
+func _apply_roam_speed() -> void:
+	## Apply roaming speed multiplier
+	if _base_move_speed > 0 and "move_speed" in _owner:
+		_owner.move_speed = _base_move_speed * roam_speed_mult
+
+
+func _restore_move_speed() -> void:
+	## Restore original movement speed
+	if _base_move_speed > 0 and "move_speed" in _owner:
+		_owner.move_speed = _base_move_speed
 
 
 func _do_chase() -> void:
 	state = State.COMBAT
+	_restore_move_speed()
 
 	if not _has_valid_target():
 		return
@@ -148,10 +245,13 @@ func _do_attack() -> void:
 
 func _do_return_home() -> void:
 	## Return to spawn position after losing target
+	state = State.RETURNING
+	_restore_move_speed()
+
 	var distance := _owner.global_position.distance_to(_home_position)
 
 	if distance < 8.0:
-		_do_idle()
+		_do_stand()
 		return
 
 	var direction := _owner.global_position.direction_to(_home_position)
@@ -187,6 +287,8 @@ func _try_acquire_target() -> void:
 func _acquire_target(new_target: Node2D) -> void:
 	target = new_target
 	state = State.COMBAT
+	_restore_move_speed()  # Ensure full speed when engaging
+	_is_roam_paused = true  # Reset roam state
 	target_acquired.emit(target)
 	Debug.log("AI", "%s acquired target: %s" % [_owner.name, target.name])
 
@@ -240,7 +342,10 @@ func reset() -> void:
 	state = State.IDLE
 	target = null
 	_attack_timer = 0.0
+	_is_roam_paused = true
+	_roam_pause_timer = randf_range(roam_pause_min, roam_pause_max)
 	_owner.stop_movement()
+	_restore_move_speed()
 
 
 ## External ability system integration
