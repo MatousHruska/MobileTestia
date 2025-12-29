@@ -40,7 +40,7 @@
       "id": "sp_crypt_vampires",
       "name": "Crypt Vampire Spawn",
       "description": "Vampire spawn for crypt dungeon",
-      "enemy_pool": "ene_Vampire_basic:100",
+      "enemy_pool": "ene_vampire_basic:100",
       "min_level": 5,
       "max_level": 10,
       "check_interval": 90,
