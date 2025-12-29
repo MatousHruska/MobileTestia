@@ -448,27 +448,14 @@ func _complete_objective(quest_id: String, objective_id: String) -> void:
 	})
 
 	# Check if quest is complete
-	var all_complete := _all_required_objectives_complete(state)
-	Debug.log("Quest", "Checking all objectives complete", {
-		"quest": quest_id,
-		"all_complete": all_complete,
-		"objectives": state.objectives.size()
-	})
-	if all_complete:
-		var quest_type: String = quest_data.get("type", "side")
+	if _all_required_objectives_complete(state):
 		var auto_complete: bool = quest_data.get("auto_complete", false)
-
-		# Auto-complete if specified or if there's no turn-in NPC
 		var turn_in_npc: String = quest_data.get("turn_in_npc", "")
-		Debug.log("Quest", "All objectives complete", {
-			"auto_complete": auto_complete,
-			"turn_in_npc": turn_in_npc
-		})
+
 		if auto_complete or turn_in_npc.is_empty():
 			complete_quest(quest_id)
 		else:
 			# Quest needs to be turned in - show feedback to player
-			Debug.info("Quest", "Showing objectives complete text")
 			_show_floating_quest_text("Objectives Complete", Color(0.6, 1.0, 0.6))  # Light green
 
 
@@ -889,9 +876,7 @@ func _count_items_in_inventory(item_id: String) -> int:
 
 func _show_floating_quest_text(message: String = "Quest Complete", color: Color = Color(1.0, 0.8, 0.3)) -> void:
 	## Show floating text above player
-	Debug.log("Quest", "Floating text called", {"message": message, "has_game": Game != null, "has_player": Game.player != null if Game else false})
 	if not Game or not Game.player:
-		Debug.warn("Quest", "Cannot show floating text - no player")
 		return
 
 	var player: Node2D = Game.player
@@ -900,23 +885,23 @@ func _show_floating_quest_text(message: String = "Quest Complete", color: Color 
 	var label := Label.new()
 	label.text = message
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.position = Vector2(-60, -50)
-	label.custom_minimum_size = Vector2(120, 20)
+	label.position = Vector2(-80, -60)
+	label.custom_minimum_size = Vector2(160, 30)
 
-	# Style matching unlockable door message
-	label.add_theme_font_size_override("font_size", 12)
+	# Make text more visible
+	label.add_theme_font_size_override("font_size", 16)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
-	label.add_theme_constant_override("shadow_offset_x", 1)
-	label.add_theme_constant_override("shadow_offset_y", 1)
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1.0))
+	label.add_theme_constant_override("shadow_offset_x", 2)
+	label.add_theme_constant_override("shadow_offset_y", 2)
 
 	player.add_child(label)
 
-	# Animate: float up and fade out
+	# Animate: float up and fade out over 2.5 seconds
 	var tween := label.create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(label, "position:y", -80.0, 1.5)
-	tween.tween_property(label, "modulate:a", 0.0, 1.5)
+	tween.tween_property(label, "position:y", -100.0, 2.5)
+	tween.tween_property(label, "modulate:a", 0.0, 2.5).set_delay(0.5)  # Delay fade so text is visible longer
 	tween.chain().tween_callback(label.queue_free)
 
 
