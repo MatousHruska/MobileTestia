@@ -124,6 +124,17 @@ Public Function GetDefaultBoolean(ByVal cell As Range, Optional ByVal defaultVal
 End Function
 
 '-------------------------------------------------------------------------------
+' FormatJsonNumber - Formats number with period decimal separator (locale-safe)
+'-------------------------------------------------------------------------------
+Public Function FormatJsonNumber(ByVal num As Double) As String
+    Dim result As String
+    result = CStr(num)
+    ' Replace locale decimal separator with period
+    result = Replace(result, ",", ".")
+    FormatJsonNumber = result
+End Function
+
+'-------------------------------------------------------------------------------
 ' EscapeJsonString - Escapes special characters for JSON
 '-------------------------------------------------------------------------------
 Public Function EscapeJsonString(ByVal str As String) As String
