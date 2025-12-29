@@ -1,25 +1,25 @@
 {
   "behavior_profiles": [
     {
-      "id": "bhv_basic_melee",
-      "name": "Basic Melee",
-      "description": "Standard aggressive melee enemy",
+      "id": "bhv_zombie_shamble",
+      "name": "Zombie Shambler",
+      "description": "Slow relentless undead",
 
       "idle_behavior": "roam",
-      "idle_roam_radius": 100,
+      "idle_roam_radius": 60,
       "idle_roam_speed_mult": 0,5,
-      "idle_pause_min": 2,
-      "idle_pause_max": 5,
+      "idle_pause_min": 3,
+      "idle_pause_max": 8,
 
-      "detection_range": 150,
+      "detection_range": 120,
       "detection_type": "sight",
       "aggro_on_damage": true,
-      "aggro_memory_time": 10,
-      "leash_range": 300,
+      "aggro_memory_time": 15,
+      "leash_range": 400,
 
       "combat_style": "aggressive",
       "approach_behavior": "direct",
-      "preferred_range": 30,
+      "preferred_range": 20,
       "chase_speed_mult": 1,
       "strafe_chance": 0,
 
@@ -28,7 +28,69 @@
 
       "ability_use_chance": 1,
       "ability_priority_mode": "highest",
-      "abilities": ["abl_basic_slash"]
+      "abilities": ["abl_zombie_bite", "abl_zombie_slam"]
+    },
+    {
+      "id": "bhv_ghoul_hunter",
+      "name": "Ghoul Hunter",
+      "description": "Fast aggressive predator",
+
+      "idle_behavior": "roam",
+      "idle_roam_radius": 120,
+      "idle_roam_speed_mult": 0,5,
+      "idle_pause_min": 1,
+      "idle_pause_max": 3,
+
+      "detection_range": 180,
+      "detection_type": "sight",
+      "aggro_on_damage": true,
+      "aggro_memory_time": 8,
+      "leash_range": 350,
+
+      "combat_style": "aggressive",
+      "approach_behavior": "charge",
+      "preferred_range": 25,
+      "chase_speed_mult": 1,
+      "strafe_chance": 0,
+      "attack_retreat_distance": 50,
+
+      "flee_health_threshold": 0,
+      "flee_speed_mult": 1,
+
+      "ability_use_chance": 1,
+      "ability_priority_mode": "conditional",
+      "abilities": ["abl_ghoul_claw", "abl_ghoul_leap", "abl_ghoul_frenzy"]
+    },
+    {
+      "id": "bhv_vampire_cunning",
+      "name": "Vampire Cunning",
+      "description": "Intelligent ranged fighter",
+
+      "idle_behavior": "stand",
+      "idle_roam_radius": 0,
+      "idle_roam_speed_mult": 0,
+      "idle_pause_min": 0,
+      "idle_pause_max": 0,
+
+      "detection_range": 200,
+      "detection_type": "sight",
+      "aggro_on_damage": true,
+      "aggro_memory_time": 20,
+      "leash_range": 500,
+
+      "combat_style": "ranged",
+      "approach_behavior": "kite",
+      "preferred_range": 60,
+      "chase_speed_mult": 1,
+      "strafe_chance": 0,
+      "kite_distance": 80,
+
+      "flee_health_threshold": 0,
+      "flee_speed_mult": 1,
+
+      "ability_use_chance": 1,
+      "ability_priority_mode": "conditional",
+      "abilities": ["abl_vampire_drain", "abl_vampire_bats", "abl_vampire_strike", "abl_vampire_aoe"]
     }
   ]
 }
