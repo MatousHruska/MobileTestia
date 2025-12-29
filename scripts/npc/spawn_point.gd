@@ -126,9 +126,12 @@ func _ready() -> void:
 	# Generate ID if not set
 	_actual_id = spawn_point_id if not spawn_point_id.is_empty() else str(get_path())
 
+	print("[SpawnPoint] _ready: ", _actual_id, " preset=", preset_id)
+
 	# Load preset if specified
 	if not preset_id.is_empty():
 		_load_preset()
+		print("[SpawnPoint] After preset - pool=", enemy_pool, " enemy_id=", enemy_id, " interval=", check_interval)
 
 	# Register with NPCManager if available
 	if NPCManager:
@@ -138,13 +141,7 @@ func _ready() -> void:
 	if enabled:
 		_check_and_activate()
 
-	Debug.log("SpawnPoint", "SpawnPoint ready", {
-		"id": _actual_id,
-		"position": global_position,
-		"preset": preset_id,
-		"enemy_pool_size": _get_pool_size(),
-		"enabled": enabled
-	})
+	print("[SpawnPoint] READY DONE: ", _actual_id, " active=", is_active, " pool_size=", _get_pool_size())
 
 
 func _exit_tree() -> void:
@@ -187,7 +184,8 @@ func _load_preset() -> void:
 		return
 
 	if DatabaseLoader:
-		DatabaseLoader.apply_spawn_point_preset(self, preset_id)
+		var result = DatabaseLoader.apply_spawn_point_preset(self, preset_id)
+		print("[SpawnPoint] Preset load result: ", result)
 
 
 #===============================================================================
@@ -256,7 +254,7 @@ func activate() -> void:
 	_check_timer = check_interval
 	spawn_point_activated.emit()
 
-	Debug.info("SpawnPoint", "Activated", _actual_id)
+	print("[SpawnPoint] ACTIVATED: ", _actual_id, " timer=", _check_timer)
 
 
 func deactivate() -> void:
@@ -276,23 +274,25 @@ func deactivate() -> void:
 
 func _try_spawn() -> void:
 	## Attempt to spawn an enemy
+	print("[SpawnPoint] _try_spawn called: ", _actual_id)
 
 	# Check if we can spawn more
 	if alive_enemies.size() >= max_active_enemies:
+		print("[SpawnPoint] Max enemies reached: ", alive_enemies.size(), "/", max_active_enemies)
 		return
 
 	# Re-check conditions (quest state may have changed)
 	if not _check_all_conditions():
+		print("[SpawnPoint] Conditions failed, deactivating")
 		deactivate()
 		return
 
 	# Roll spawn chance
 	if spawn_chance < 1.0 and randf() > spawn_chance:
-		Debug.log("SpawnPoint", "Spawn chance failed", {
-			"id": _actual_id,
-			"chance": spawn_chance
-		})
+		print("[SpawnPoint] Spawn chance failed")
 		return
+
+	print("[SpawnPoint] Spawning enemy...")
 
 	# Spawn the enemy
 	spawn_enemy()
