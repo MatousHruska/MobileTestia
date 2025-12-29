@@ -259,7 +259,7 @@ func _add_visual(hitbox: Area2D, ability: AbilityData, info: Dictionary) -> void
 	## Add animated visual to hitbox
 	var visual := HitboxVisual.new()
 	visual.draw_type = info.get("type", "circle")
-	visual.damage_type = ability.damage_type if ability.damage_type else "physical"
+	visual.damage_type = AbilityData.DamageType.keys()[ability.damage_type].to_lower() if ability.damage_type != null else "physical"
 
 	match visual.draw_type:
 		"circle":
@@ -339,7 +339,8 @@ func _process_hit(target: Node2D, hitbox: Area2D, ability: AbilityData) -> void:
 	hitbox.set_meta("hit_targets", hit_targets)
 
 	# Spawn hit effect at target position
-	spawn_hit_effect(target.global_position, ability.damage_type)
+	var dmg_type_str := AbilityData.DamageType.keys()[ability.damage_type].to_lower()
+	spawn_hit_effect(target.global_position, dmg_type_str)
 
 	# Emit signal
 	hit_detected.emit(target, ability)
