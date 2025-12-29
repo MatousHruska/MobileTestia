@@ -160,6 +160,16 @@ Private Sub SetHeaders(ByVal ws As Worksheet, ByRef headers As Variant)
 End Sub
 
 '-------------------------------------------------------------------------------
+' Helper: Safely add comment (delete existing first)
+'-------------------------------------------------------------------------------
+Private Sub SafeAddComment(ByVal cell As Range, ByVal commentText As String)
+    On Error Resume Next
+    cell.ClearComments
+    cell.AddComment commentText
+    On Error GoTo 0
+End Sub
+
+'-------------------------------------------------------------------------------
 ' Setup individual sheets
 '-------------------------------------------------------------------------------
 Private Sub SetupItemBasesSheet()
@@ -249,10 +259,10 @@ Private Sub SetupQuestsSheet()
     SetHeaders ws, headers
 
     ' Add column notes
-    ws.Cells(1, 4).AddComment "story or side"
-    ws.Cells(1, 10).AddComment "TRUE/FALSE - story quests should be FALSE"
-    ws.Cells(1, 11).AddComment "TRUE/FALSE - auto complete when objectives done"
-    ws.Cells(1, 14).AddComment "Comma-separated item IDs"
+    SafeAddComment ws.Cells(1, 4), "story or side"
+    SafeAddComment ws.Cells(1, 10), "TRUE/FALSE - story quests should be FALSE"
+    SafeAddComment ws.Cells(1, 11), "TRUE/FALSE - auto complete when objectives done"
+    SafeAddComment ws.Cells(1, 14), "Comma-separated item IDs"
 End Sub
 
 Private Sub SetupQuestObjectivesSheet()
@@ -264,10 +274,10 @@ Private Sub SetupQuestObjectivesSheet()
     SetHeaders ws, headers
 
     ' Add column notes
-    ws.Cells(1, 1).AddComment "Links to quest id in Quests sheet"
-    ws.Cells(1, 3).AddComment "kill_named, kill_count, gather, delivery, interact, talk, escort, defend, use_ability, defeat_no_kill, reach_location, race"
-    ws.Cells(1, 4).AddComment "enemy_id, item_id, npc_id, zone_id, etc."
-    ws.Cells(1, 7).AddComment "TRUE/FALSE"
+    SafeAddComment ws.Cells(1, 1), "Links to quest id in Quests sheet"
+    SafeAddComment ws.Cells(1, 3), "kill_named, kill_count, gather, delivery, interact, talk, escort, defend, use_ability, defeat_no_kill, reach_location, race"
+    SafeAddComment ws.Cells(1, 4), "enemy_id, item_id, npc_id, zone_id, etc."
+    SafeAddComment ws.Cells(1, 7), "TRUE/FALSE"
 End Sub
 
 Private Sub SetupStatModifiersSheet()
