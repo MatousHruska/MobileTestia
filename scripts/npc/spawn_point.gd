@@ -257,9 +257,10 @@ func activate() -> void:
 	spawn_point_activated.emit()
 
 	# For one-shot spawns (check_interval <= 0), spawn immediately since _process won't
+	# Use call_deferred to avoid spawning during _ready() which causes initialization issues
 	if check_interval <= 0:
-		print("[SpawnPoint] One-shot spawn, calling _try_spawn() immediately")
-		_try_spawn()
+		print("[SpawnPoint] One-shot spawn, deferring _try_spawn()")
+		call_deferred("_try_spawn")
 
 
 func deactivate() -> void:
