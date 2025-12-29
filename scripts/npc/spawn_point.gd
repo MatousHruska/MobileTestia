@@ -126,12 +126,9 @@ func _ready() -> void:
 	# Generate ID if not set
 	_actual_id = spawn_point_id if not spawn_point_id.is_empty() else str(get_path())
 
-	print("[SpawnPoint] _ready: ", _actual_id, " preset=", preset_id)
-
 	# Load preset if specified
 	if not preset_id.is_empty():
 		_load_preset()
-		print("[SpawnPoint] After preset - pool=", enemy_pool, " enemy_id=", enemy_id, " interval=", check_interval)
 
 	# Register with NPCManager if available
 	if NPCManager:
@@ -140,8 +137,6 @@ func _ready() -> void:
 	# Start active if enabled and conditions met
 	if enabled:
 		_check_and_activate()
-
-	print("[SpawnPoint] READY DONE: ", _actual_id, " active=", is_active, " pool_size=", _get_pool_size())
 
 
 func _exit_tree() -> void:
@@ -156,6 +151,10 @@ func _process(delta: float) -> void:
 	# Handle respawn cooldown
 	if _respawn_cooldown > 0:
 		_respawn_cooldown -= delta
+		return
+
+	# If check_interval <= 0, don't do timer-based spawning (spawn once on activation only)
+	if check_interval <= 0:
 		return
 
 	# Check timer
@@ -184,8 +183,7 @@ func _load_preset() -> void:
 		return
 
 	if DatabaseLoader:
-		var result = DatabaseLoader.apply_spawn_point_preset(self, preset_id)
-		print("[SpawnPoint] Preset load result: ", result)
+		DatabaseLoader.apply_spawn_point_preset(self, preset_id)
 
 
 #===============================================================================
@@ -254,8 +252,6 @@ func activate() -> void:
 	_check_timer = 0.0  # Spawn immediately on first activation
 	spawn_point_activated.emit()
 
-	print("[SpawnPoint] ACTIVATED: ", _actual_id, " (will spawn immediately)")
-
 
 func deactivate() -> void:
 	## Deactivate the spawn point
@@ -274,25 +270,19 @@ func deactivate() -> void:
 
 func _try_spawn() -> void:
 	## Attempt to spawn an enemy
-	print("[SpawnPoint] _try_spawn called: ", _actual_id)
 
 	# Check if we can spawn more
 	if alive_enemies.size() >= max_active_enemies:
-		print("[SpawnPoint] Max enemies reached: ", alive_enemies.size(), "/", max_active_enemies)
 		return
 
 	# Re-check conditions (quest state may have changed)
 	if not _check_all_conditions():
-		print("[SpawnPoint] Conditions failed, deactivating")
 		deactivate()
 		return
 
 	# Roll spawn chance
 	if spawn_chance < 1.0 and randf() > spawn_chance:
-		print("[SpawnPoint] Spawn chance failed")
 		return
-
-	print("[SpawnPoint] Spawning enemy...")
 
 	# Spawn the enemy
 	spawn_enemy()
