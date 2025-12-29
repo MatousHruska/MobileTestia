@@ -252,6 +252,10 @@ func activate() -> void:
 	_check_timer = 0.0  # Spawn immediately on first activation
 	spawn_point_activated.emit()
 
+	# For one-shot spawns (check_interval <= 0), spawn immediately since _process won't
+	if check_interval <= 0:
+		_try_spawn()
+
 
 func deactivate() -> void:
 	## Deactivate the spawn point
