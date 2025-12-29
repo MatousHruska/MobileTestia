@@ -5,6 +5,10 @@ extends Node
 ## Paths
 const DATABASE_PATH := "res://databases/exports/"
 
+## Preload data classes to avoid load order issues
+const AbilityDataScript := preload("res://scripts/data/ability_data.gd")
+const BehaviorProfileDataScript := preload("res://scripts/data/behavior_profile_data.gd")
+
 ## Loaded data dictionaries (keyed by id)
 var item_bases: Dictionary = {}
 var affixes: Dictionary = {}
@@ -241,22 +245,22 @@ func get_behavior_profile(id: String) -> Dictionary:
 
 
 ## Create AbilityData resource from database entry
-func create_ability_data(ability_id: String) -> AbilityData:
+func create_ability_data(ability_id: String):  # Returns AbilityData
 	var data: Dictionary = get_enemy_ability(ability_id)
 	if data.is_empty():
 		return null
 
-	var ability := AbilityData.new()
+	var ability = AbilityDataScript.new()
 	ability.id = data.get("id", ability_id)
 	ability.ability_name = data.get("name", "Attack")
 	ability.description = data.get("description", "")
-	ability.type = AbilityData.type_from_string(data.get("type", "melee"))
+	ability.type = AbilityDataScript.type_from_string(data.get("type", "melee"))
 	ability.damage_mult = float(data.get("damage_mult", 1.0))
-	ability.damage_type = AbilityData.damage_type_from_string(data.get("damage_type", "physical"))
+	ability.damage_type = AbilityDataScript.damage_type_from_string(data.get("damage_type", "physical"))
 	ability.cooldown = float(data.get("cooldown", 0.0))
 	ability.range_min = float(data.get("range_min", 0.0))
 	ability.range_max = float(data.get("range_max", 30.0))
-	ability.shape = AbilityData.shape_from_string(data.get("shape", "circle"))
+	ability.shape = AbilityDataScript.shape_from_string(data.get("shape", "circle"))
 	ability.shape_size = float(data.get("shape_size", 25.0))
 	ability.shape_angle = float(data.get("shape_angle", 0.0))
 	ability.windup = float(data.get("windup", 0.2))
@@ -272,18 +276,18 @@ func create_ability_data(ability_id: String) -> AbilityData:
 
 
 ## Create BehaviorProfileData resource from database entry
-func create_behavior_profile_data(profile_id: String) -> BehaviorProfileData:
+func create_behavior_profile_data(profile_id: String):  # Returns BehaviorProfileData
 	var data: Dictionary = get_behavior_profile(profile_id)
 	if data.is_empty():
 		return null
 
-	var profile := BehaviorProfileData.new()
+	var profile = BehaviorProfileDataScript.new()
 	profile.id = data.get("id", profile_id)
 	profile.profile_name = data.get("name", "Basic")
 	profile.description = data.get("description", "")
 
 	# Idle behavior
-	profile.idle_behavior = BehaviorProfileData.idle_from_string(data.get("idle_behavior", "stand"))
+	profile.idle_behavior = BehaviorProfileDataScript.idle_from_string(data.get("idle_behavior", "stand"))
 	profile.idle_roam_radius = float(data.get("idle_roam_radius", 0.0))
 	profile.idle_roam_speed_mult = float(data.get("idle_roam_speed_mult", 0.5))
 	profile.idle_pause_min = float(data.get("idle_pause_min", 2.0))
@@ -292,14 +296,14 @@ func create_behavior_profile_data(profile_id: String) -> BehaviorProfileData:
 
 	# Detection
 	profile.detection_range = float(data.get("detection_range", 150.0))
-	profile.detection_type = BehaviorProfileData.detection_from_string(data.get("detection_type", "sight"))
+	profile.detection_type = BehaviorProfileDataScript.detection_from_string(data.get("detection_type", "sight"))
 	profile.aggro_on_damage = data.get("aggro_on_damage", true)
 	profile.aggro_memory_time = float(data.get("aggro_memory_time", 10.0))
 	profile.leash_range = float(data.get("leash_range", 300.0))
 
 	# Combat
-	profile.combat_style = BehaviorProfileData.combat_from_string(data.get("combat_style", "aggressive"))
-	profile.approach_behavior = BehaviorProfileData.approach_from_string(data.get("approach_behavior", "direct"))
+	profile.combat_style = BehaviorProfileDataScript.combat_from_string(data.get("combat_style", "aggressive"))
+	profile.approach_behavior = BehaviorProfileDataScript.approach_from_string(data.get("approach_behavior", "direct"))
 	profile.preferred_range = float(data.get("preferred_range", 30.0))
 	profile.chase_speed_mult = float(data.get("chase_speed_mult", 1.0))
 	profile.strafe_chance = float(data.get("strafe_chance", 0.0))
@@ -317,7 +321,7 @@ func create_behavior_profile_data(profile_id: String) -> BehaviorProfileData:
 
 	# Abilities
 	profile.ability_use_chance = float(data.get("ability_use_chance", 1.0))
-	profile.ability_priority_mode = BehaviorProfileData.priority_mode_from_string(data.get("ability_priority_mode", "highest"))
+	profile.ability_priority_mode = BehaviorProfileDataScript.priority_mode_from_string(data.get("ability_priority_mode", "highest"))
 
 	# Parse abilities array
 	var abilities_raw = data.get("abilities", [])
@@ -333,8 +337,8 @@ func create_behavior_profile_data(profile_id: String) -> BehaviorProfileData:
 
 
 ## Get abilities for an enemy by parsing ability_ids string
-func get_abilities_for_enemy(enemy_id: String) -> Array[AbilityData]:
-	var result: Array[AbilityData] = []
+func get_abilities_for_enemy(enemy_id: String) -> Array:  # Returns Array of AbilityData
+	var result: Array = []
 	var enemy_data := get_enemy(enemy_id)
 	if enemy_data.is_empty():
 		return result
@@ -348,7 +352,7 @@ func get_abilities_for_enemy(enemy_id: String) -> Array[AbilityData]:
 		ability_id = ability_id.strip_edges()
 		if ability_id.is_empty():
 			continue
-		var ability := create_ability_data(ability_id)
+		var ability = create_ability_data(ability_id)
 		if ability:
 			result.append(ability)
 
@@ -356,7 +360,7 @@ func get_abilities_for_enemy(enemy_id: String) -> Array[AbilityData]:
 
 
 ## Get behavior profile for an enemy
-func get_behavior_for_enemy(enemy_id: String) -> BehaviorProfileData:
+func get_behavior_for_enemy(enemy_id: String):  # Returns BehaviorProfileData
 	var enemy_data := get_enemy(enemy_id)
 	if enemy_data.is_empty():
 		return null
