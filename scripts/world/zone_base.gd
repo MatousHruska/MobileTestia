@@ -1,14 +1,14 @@
 extends Node2D
 class_name ZoneBase
 ## ZoneBase - Base script for game zones
-## Handles zone setup, player spawning, and enemy spawning from database
+## Handles zone setup, player spawning, and enemy spawning via EnemySpawnPoints
 
 ## Zone identification - links to zones database
 @export var zone_id: String = ""
 @export var zone_name: String = "Unknown Zone"
 
-## Enemy spawning
-@export var spawn_enemies: bool = true
+## Legacy enemy spawning (DEPRECATED - use EnemySpawnPoint nodes instead)
+@export var spawn_enemies: bool = false
 @export var enemy_spawn_positions: Array[Vector2] = []
 
 ## Auto-find references
@@ -28,8 +28,9 @@ func _ready() -> void:
 	if Game.game_time < 1.0:
 		Inventory.add_starting_items()
 
-	# Spawn enemies from database
+	# Legacy spawn system (deprecated - use EnemySpawnPoint nodes instead)
 	if spawn_enemies:
+		Debug.warn("Zone", "Using deprecated spawn_enemies - migrate to EnemySpawnPoint nodes")
 		_spawn_zone_enemies()
 
 
