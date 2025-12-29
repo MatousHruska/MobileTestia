@@ -339,7 +339,7 @@ func _process_hit(target: Node2D, hitbox: Area2D, ability: AbilityData) -> void:
 	hitbox.set_meta("hit_targets", hit_targets)
 
 	# Spawn hit effect at target position
-	var dmg_type_str := AbilityData.DamageType.keys()[ability.damage_type].to_lower()
+	var dmg_type_str: String = AbilityData.DamageType.keys()[ability.damage_type].to_lower()
 	spawn_hit_effect(target.global_position, dmg_type_str)
 
 	# Emit signal
