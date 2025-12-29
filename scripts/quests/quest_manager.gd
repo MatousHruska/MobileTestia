@@ -448,16 +448,27 @@ func _complete_objective(quest_id: String, objective_id: String) -> void:
 	})
 
 	# Check if quest is complete
-	if _all_required_objectives_complete(state):
+	var all_complete := _all_required_objectives_complete(state)
+	Debug.log("Quest", "Checking all objectives complete", {
+		"quest": quest_id,
+		"all_complete": all_complete,
+		"objectives": state.objectives.size()
+	})
+	if all_complete:
 		var quest_type: String = quest_data.get("type", "side")
 		var auto_complete: bool = quest_data.get("auto_complete", false)
 
 		# Auto-complete if specified or if there's no turn-in NPC
 		var turn_in_npc: String = quest_data.get("turn_in_npc", "")
+		Debug.log("Quest", "All objectives complete", {
+			"auto_complete": auto_complete,
+			"turn_in_npc": turn_in_npc
+		})
 		if auto_complete or turn_in_npc.is_empty():
 			complete_quest(quest_id)
 		else:
 			# Quest needs to be turned in - show feedback to player
+			Debug.info("Quest", "Showing objectives complete text")
 			_show_floating_quest_text("Objectives Complete", Color(0.6, 1.0, 0.6))  # Light green
 
 
@@ -878,7 +889,9 @@ func _count_items_in_inventory(item_id: String) -> int:
 
 func _show_floating_quest_text(message: String = "Quest Complete", color: Color = Color(1.0, 0.8, 0.3)) -> void:
 	## Show floating text above player
+	Debug.log("Quest", "Floating text called", {"message": message, "has_game": Game != null, "has_player": Game.player != null if Game else false})
 	if not Game or not Game.player:
+		Debug.warn("Quest", "Cannot show floating text - no player")
 		return
 
 	var player: Node2D = Game.player
