@@ -230,9 +230,15 @@ func _setup_ability_controller() -> void:
 
 	# Update attack radius based on abilities
 	var max_range: float = ability_controller.get_max_attack_range()
+	Debug.log("NPC", "Ability range check for %s" % enemy_name, {
+		"max_range": max_range,
+		"current_attack_radius": attack_radius,
+		"abilities_count": abilities.size()
+	})
 	if max_range > attack_radius:
 		attack_radius = max_range
 		behavior.attack_radius = attack_radius
+		Debug.log("NPC", "Updated %s attack radius to %.0f" % [enemy_name, attack_radius])
 
 
 func _on_ability_attack_started() -> void:
@@ -343,11 +349,18 @@ func _damage_flash() -> void:
 
 func perform_attack() -> void:
 	## Called by AI when in attack state
+	Debug.log("NPC", "%s perform_attack called" % enemy_name, {
+		"use_ability_system": _use_ability_system,
+		"has_controller": ability_controller != null,
+		"distance_to_player": get_distance_to_player()
+	})
 	if _use_ability_system and ability_controller:
 		# Use new ability system
 		var player := Game.player if Game else null
 		if player:
-			if ability_controller.try_attack(player):
+			var success := ability_controller.try_attack(player)
+			Debug.log("NPC", "%s try_attack result: %s" % [enemy_name, success])
+			if success:
 				play_attack()
 				return
 			# Fall through to basic attack if no ability available
