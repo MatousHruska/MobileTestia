@@ -7,7 +7,7 @@
 
       "idle_behavior": "roam",
       "idle_roam_radius": 60,
-      "idle_roam_speed_mult": 0,5,
+      "idle_roam_speed_mult": 0.5,
       "idle_pause_min": 3,
       "idle_pause_max": 8,
 
@@ -37,7 +37,7 @@
 
       "idle_behavior": "roam",
       "idle_roam_radius": 120,
-      "idle_roam_speed_mult": 0,5,
+      "idle_roam_speed_mult": 0.5,
       "idle_pause_min": 1,
       "idle_pause_max": 3,
 
