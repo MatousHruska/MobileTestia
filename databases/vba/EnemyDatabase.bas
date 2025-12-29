@@ -186,14 +186,14 @@ Public Sub ExportEnemies()
         json = json & "      ""id"": """ & EscapeJsonString(id) & """," & vbCrLf
         json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_NAME))) & """," & vbCrLf
         json = json & "      ""type"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_TYPE), "Normal")) & """," & vbCrLf
-        json = json & "      ""base_health"": " & GetDefaultNumeric(ws.Cells(i, COL_EN_BASE_HEALTH), 100) & "," & vbCrLf
-        json = json & "      ""base_damage"": " & GetDefaultNumeric(ws.Cells(i, COL_EN_BASE_DAMAGE), 10) & "," & vbCrLf
-        json = json & "      ""armor"": " & GetDefaultNumeric(ws.Cells(i, COL_EN_ARMOR)) & "," & vbCrLf
-        json = json & "      ""move_speed"": " & GetDefaultNumeric(ws.Cells(i, COL_EN_MOVE_SPEED), 80) & "," & vbCrLf
-        json = json & "      ""attack_speed"": " & GetDefaultNumeric(ws.Cells(i, COL_EN_ATTACK_SPEED), 1) & "," & vbCrLf
-        json = json & "      ""attack_range"": " & GetDefaultNumeric(ws.Cells(i, COL_EN_ATTACK_RANGE), 24) & "," & vbCrLf
-        json = json & "      ""detection_range"": " & GetDefaultNumeric(ws.Cells(i, COL_EN_DETECTION_RANGE), 150) & "," & vbCrLf
-        json = json & "      ""xp_reward"": " & GetDefaultNumeric(ws.Cells(i, COL_EN_XP_REWARD), 25) & "," & vbCrLf
+        json = json & "      ""base_health"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_BASE_HEALTH), 100)) & "," & vbCrLf
+        json = json & "      ""base_damage"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_BASE_DAMAGE), 10)) & "," & vbCrLf
+        json = json & "      ""armor"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_ARMOR))) & "," & vbCrLf
+        json = json & "      ""move_speed"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_MOVE_SPEED), 80)) & "," & vbCrLf
+        json = json & "      ""attack_speed"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_ATTACK_SPEED), 1)) & "," & vbCrLf
+        json = json & "      ""attack_range"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_ATTACK_RANGE), 24)) & "," & vbCrLf
+        json = json & "      ""detection_range"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_DETECTION_RANGE), 150)) & "," & vbCrLf
+        json = json & "      ""xp_reward"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_XP_REWARD), 25)) & "," & vbCrLf
         json = json & "      ""loot_table_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_LOOT_TABLE_ID))) & """," & vbCrLf
         json = json & "      ""ability_ids"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_ABILITY_IDS))) & """," & vbCrLf
         json = json & "      ""behavior_profile"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_BEHAVIOR_PROFILE), "bhv_basic_melee")) & """" & vbCrLf
@@ -256,18 +256,18 @@ Public Sub ExportEnemyAbilities()
         json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_NAME))) & """," & vbCrLf
         json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_DESCRIPTION))) & """," & vbCrLf
         json = json & "      ""type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_EA_TYPE), "melee"))) & """," & vbCrLf
-        json = json & "      ""damage_mult"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_DAMAGE_MULT), 1) & "," & vbCrLf
+        json = json & "      ""damage_mult"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_DAMAGE_MULT), 1)) & "," & vbCrLf
         json = json & "      ""damage_type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_EA_DAMAGE_TYPE), "physical"))) & """," & vbCrLf
-        json = json & "      ""cooldown"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_COOLDOWN), 0) & "," & vbCrLf
-        json = json & "      ""range_min"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_RANGE_MIN), 0) & "," & vbCrLf
-        json = json & "      ""range_max"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_RANGE_MAX), 30) & "," & vbCrLf
+        json = json & "      ""cooldown"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_COOLDOWN), 0)) & "," & vbCrLf
+        json = json & "      ""range_min"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_RANGE_MIN), 0)) & "," & vbCrLf
+        json = json & "      ""range_max"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_RANGE_MAX), 30)) & "," & vbCrLf
         json = json & "      ""shape"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_EA_SHAPE), "circle"))) & """," & vbCrLf
-        json = json & "      ""shape_size"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_SHAPE_SIZE), 25) & "," & vbCrLf
-        json = json & "      ""shape_angle"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_SHAPE_ANGLE), 0) & "," & vbCrLf
-        json = json & "      ""windup"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_WINDUP), 0.2) & "," & vbCrLf
-        json = json & "      ""recovery"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_RECOVERY), 0.3) & "," & vbCrLf
+        json = json & "      ""shape_size"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_SHAPE_SIZE), 25)) & "," & vbCrLf
+        json = json & "      ""shape_angle"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_SHAPE_ANGLE), 0)) & "," & vbCrLf
+        json = json & "      ""windup"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_WINDUP), 0.2)) & "," & vbCrLf
+        json = json & "      ""recovery"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_RECOVERY), 0.3)) & "," & vbCrLf
         json = json & "      ""animation"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_ANIMATION), "attack")) & """," & vbCrLf
-        json = json & "      ""priority"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_PRIORITY), 1) & "," & vbCrLf
+        json = json & "      ""priority"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_PRIORITY), 1)) & "," & vbCrLf
         json = json & "      ""conditions"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_CONDITIONS))) & """," & vbCrLf
         json = json & "      ""effects_on_hit"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_EFFECTS_ON_HIT))) & """"
 
@@ -278,10 +278,10 @@ Public Sub ExportEnemyAbilities()
         dashSpeed = GetDefaultNumeric(ws.Cells(i, COL_EA_DASH_SPEED), 0)
 
         If projSpeed > 0 Then
-            json = json & "," & vbCrLf & "      ""projectile_speed"": " & projSpeed
+            json = json & "," & vbCrLf & "      ""projectile_speed"": " & FormatJsonNumber(projSpeed)
         End If
         If dashSpeed > 0 Then
-            json = json & "," & vbCrLf & "      ""dash_speed"": " & dashSpeed
+            json = json & "," & vbCrLf & "      ""dash_speed"": " & FormatJsonNumber(dashSpeed)
         End If
 
         json = json & vbCrLf & "    }"
@@ -339,9 +339,9 @@ Public Sub ExportEnemyVariants()
         json = json & "    {" & vbCrLf
         json = json & "      ""id"": """ & EscapeJsonString(id) & """," & vbCrLf
         json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EV_NAME))) & """," & vbCrLf
-        json = json & "      ""health_multiplier"": " & GetDefaultNumeric(ws.Cells(i, COL_EV_HEALTH_MULT), 1) & "," & vbCrLf
-        json = json & "      ""damage_multiplier"": " & GetDefaultNumeric(ws.Cells(i, COL_EV_DAMAGE_MULT), 1) & "," & vbCrLf
-        json = json & "      ""xp_multiplier"": " & GetDefaultNumeric(ws.Cells(i, COL_EV_XP_MULT), 1) & "," & vbCrLf
+        json = json & "      ""health_multiplier"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EV_HEALTH_MULT), 1)) & "," & vbCrLf
+        json = json & "      ""damage_multiplier"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EV_DAMAGE_MULT), 1)) & "," & vbCrLf
+        json = json & "      ""xp_multiplier"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EV_XP_MULT), 1)) & "," & vbCrLf
         json = json & "      ""extra_abilities"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EV_EXTRA_ABILITIES))) & """," & vbCrLf
         json = json & "      ""visual_effect"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EV_VISUAL_EFFECT))) & """" & vbCrLf
         json = json & "    }"

@@ -199,10 +199,10 @@ Public Sub ExportBehaviorProfiles()
 
         ' Idle behavior
         json = json & "      ""idle_behavior"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_BP_IDLE_BEHAVIOR), "stand"))) & """," & vbCrLf
-        json = json & "      ""idle_roam_radius"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_IDLE_ROAM_RADIUS), 0) & "," & vbCrLf
-        json = json & "      ""idle_roam_speed_mult"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_IDLE_ROAM_SPEED_MULT), 0.5) & "," & vbCrLf
-        json = json & "      ""idle_pause_min"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_IDLE_PAUSE_MIN), 2) & "," & vbCrLf
-        json = json & "      ""idle_pause_max"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_IDLE_PAUSE_MAX), 5) & "," & vbCrLf
+        json = json & "      ""idle_roam_radius"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_IDLE_ROAM_RADIUS), 0)) & "," & vbCrLf
+        json = json & "      ""idle_roam_speed_mult"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_IDLE_ROAM_SPEED_MULT), 0.5)) & "," & vbCrLf
+        json = json & "      ""idle_pause_min"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_IDLE_PAUSE_MIN), 2)) & "," & vbCrLf
+        json = json & "      ""idle_pause_max"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_IDLE_PAUSE_MAX), 5)) & "," & vbCrLf
 
         ' Only add patrol_loop if it's a patrol behavior
         Dim idleBhv As String
@@ -213,19 +213,19 @@ Public Sub ExportBehaviorProfiles()
         json = json & vbCrLf
 
         ' Detection
-        json = json & "      ""detection_range"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_DETECTION_RANGE), 150) & "," & vbCrLf
+        json = json & "      ""detection_range"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_DETECTION_RANGE), 150)) & "," & vbCrLf
         json = json & "      ""detection_type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_BP_DETECTION_TYPE), "sight"))) & """," & vbCrLf
         json = json & "      ""aggro_on_damage"": " & LCase(GetDefaultString(ws.Cells(i, COL_BP_AGGRO_ON_DAMAGE), "true")) & "," & vbCrLf
-        json = json & "      ""aggro_memory_time"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_AGGRO_MEMORY_TIME), 10) & "," & vbCrLf
-        json = json & "      ""leash_range"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_LEASH_RANGE), 300) & "," & vbCrLf
+        json = json & "      ""aggro_memory_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_AGGRO_MEMORY_TIME), 10)) & "," & vbCrLf
+        json = json & "      ""leash_range"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_LEASH_RANGE), 300)) & "," & vbCrLf
         json = json & vbCrLf
 
         ' Combat style
         json = json & "      ""combat_style"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_BP_COMBAT_STYLE), "aggressive"))) & """," & vbCrLf
         json = json & "      ""approach_behavior"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_BP_APPROACH_BEHAVIOR), "direct"))) & """," & vbCrLf
-        json = json & "      ""preferred_range"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_PREFERRED_RANGE), 30) & "," & vbCrLf
-        json = json & "      ""chase_speed_mult"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_CHASE_SPEED_MULT), 1) & "," & vbCrLf
-        json = json & "      ""strafe_chance"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_STRAFE_CHANCE), 0) & "," & vbCrLf
+        json = json & "      ""preferred_range"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_PREFERRED_RANGE), 30)) & "," & vbCrLf
+        json = json & "      ""chase_speed_mult"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_CHASE_SPEED_MULT), 1)) & "," & vbCrLf
+        json = json & "      ""strafe_chance"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_STRAFE_CHANCE), 0)) & "," & vbCrLf
 
         ' Kite/Circle optional fields
         Dim kiteDistance As Double
@@ -234,10 +234,10 @@ Public Sub ExportBehaviorProfiles()
         kiteSpeed = GetDefaultNumeric(ws.Cells(i, COL_BP_KITE_SPEED_MULT), 0)
 
         If kiteDistance > 0 Then
-            json = json & "      ""kite_distance"": " & kiteDistance & "," & vbCrLf
+            json = json & "      ""kite_distance"": " & FormatJsonNumber(kiteDistance) & "," & vbCrLf
         End If
         If kiteSpeed > 0 Then
-            json = json & "      ""kite_speed_mult"": " & kiteSpeed & "," & vbCrLf
+            json = json & "      ""kite_speed_mult"": " & FormatJsonNumber(kiteSpeed) & "," & vbCrLf
         End If
 
         Dim circleDir As String
@@ -252,20 +252,20 @@ Public Sub ExportBehaviorProfiles()
         retreatDur = GetDefaultNumeric(ws.Cells(i, COL_BP_ATTACK_RETREAT_DURATION), 0)
 
         If retreatDist > 0 Then
-            json = json & "      ""attack_retreat_distance"": " & retreatDist & "," & vbCrLf
+            json = json & "      ""attack_retreat_distance"": " & FormatJsonNumber(retreatDist) & "," & vbCrLf
         End If
         If retreatDur > 0 Then
-            json = json & "      ""attack_retreat_duration"": " & retreatDur & "," & vbCrLf
+            json = json & "      ""attack_retreat_duration"": " & FormatJsonNumber(retreatDur) & "," & vbCrLf
         End If
         json = json & vbCrLf
 
         ' Flee behavior
-        json = json & "      ""flee_health_threshold"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_FLEE_HEALTH_THRESHOLD), 0) & "," & vbCrLf
-        json = json & "      ""flee_speed_mult"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_FLEE_SPEED_MULT), 1) & "," & vbCrLf
+        json = json & "      ""flee_health_threshold"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_FLEE_HEALTH_THRESHOLD), 0)) & "," & vbCrLf
+        json = json & "      ""flee_speed_mult"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_FLEE_SPEED_MULT), 1)) & "," & vbCrLf
         json = json & vbCrLf
 
         ' Ability AI
-        json = json & "      ""ability_use_chance"": " & GetDefaultNumeric(ws.Cells(i, COL_BP_ABILITY_USE_CHANCE), 1) & "," & vbCrLf
+        json = json & "      ""ability_use_chance"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_BP_ABILITY_USE_CHANCE), 1)) & "," & vbCrLf
         json = json & "      ""ability_priority_mode"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_BP_ABILITY_PRIORITY_MODE), "highest"))) & """," & vbCrLf
 
         ' Abilities array - parse comma-separated list into JSON array
