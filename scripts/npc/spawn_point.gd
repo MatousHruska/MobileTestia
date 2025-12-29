@@ -1,6 +1,6 @@
 extends Node2D
-class_name SpawnPoint
-## SpawnPoint - Inspector-configurable enemy spawn point
+class_name EnemySpawnPoint
+## EnemySpawnPoint - Inspector-configurable enemy spawn point
 ## Uses database for enemies, supports weighted pools, quest conditions, and respawning
 ##
 ## Usage:
