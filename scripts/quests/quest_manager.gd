@@ -887,6 +887,8 @@ func _show_floating_quest_text(message: String = "Quest Complete", color: Color 
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.position = Vector2(-80, -60)
 	label.custom_minimum_size = Vector2(160, 30)
+	label.z_index = 100  # Render on top of everything
+	label.z_as_relative = false  # Use absolute z-index
 
 	# Make text more visible
 	label.add_theme_font_size_override("font_size", 16)
