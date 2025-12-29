@@ -340,29 +340,29 @@ func _draw_ability_info(enemy: EnemyNPC, screen_pos: Vector2, _camera: Camera2D)
 
 	# Show current execution state
 	if enemy.ability_controller.is_busy():
-		var state_label := "WINDUP" if enemy.ability_controller.is_winding_up() else "RECOVERY"
-		var state_color := color_windup if enemy.ability_controller.is_winding_up() else color_recovery
+		var state_label: String = "WINDUP" if enemy.ability_controller.is_winding_up() else "RECOVERY"
+		var state_color: Color = color_windup if enemy.ability_controller.is_winding_up() else color_recovery
 		_draw_label(screen_pos + Vector2(x_offset, y_offset), state_label, state_color, 10)
 		y_offset += 12.0
 
 	# Show ability list with cooldowns
 	for i in range(min(enemy.abilities.size(), 4)):  # Max 4 abilities shown
-		var ability: AbilityData = enemy.abilities[i]
-		var on_cd := enemy.ability_controller._executor.is_on_cooldown(ability) if enemy.ability_controller._executor else false
-		var cd_remaining := enemy.ability_controller._executor.get_cooldown_remaining(ability) if on_cd else 0.0
+		var ability = enemy.abilities[i]  # AbilityData
+		var on_cd: bool = enemy.ability_controller._executor.is_on_cooldown(ability) if enemy.ability_controller._executor else false
+		var cd_remaining: float = enemy.ability_controller._executor.get_cooldown_remaining(ability) if on_cd else 0.0
 
-		var ability_text := ability.ability_name
+		var ability_text: String = ability.ability_name
 		if on_cd:
 			ability_text += " (%.1fs)" % cd_remaining
 
-		var ability_color := color_cooldown if on_cd else color_ability
+		var ability_color: Color = color_cooldown if on_cd else color_ability
 		_draw_label(screen_pos + Vector2(x_offset, y_offset), ability_text, ability_color, 9)
 		y_offset += 10.0
 
 
 func _draw_behavior_profile_info(enemy: EnemyNPC, screen_pos: Vector2) -> void:
 	## Draw behavior profile info
-	var profile: BehaviorProfileData = enemy.behavior_profile
+	var profile = enemy.behavior_profile  # BehaviorProfileData
 	if not profile:
 		return
 
@@ -372,6 +372,7 @@ func _draw_behavior_profile_info(enemy: EnemyNPC, screen_pos: Vector2) -> void:
 	_draw_label(screen_pos + Vector2(0, y_offset), "[%s]" % profile.profile_name, Color(0.6, 0.8, 1.0), 9)
 	y_offset -= 10.0
 
-	# Combat style
-	var style_text := BehaviorProfileData.combat_to_string(profile.combat_style).to_upper()
+	# Combat style - get from profile's debug info
+	var debug_info: Dictionary = profile.get_debug_info() if profile.has_method("get_debug_info") else {}
+	var style_text: String = debug_info.get("combat", "unknown").to_upper()
 	_draw_label(screen_pos + Vector2(0, y_offset), style_text, Color(0.8, 0.6, 0.4), 8)

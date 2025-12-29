@@ -55,13 +55,13 @@ var current_health: float = 100.0:
 
 ## Components
 var behavior: EnemyBehavior
-var ability_controller: EnemyAbilityController
+var ability_controller  # EnemyAbilityController - dynamic to avoid load order issues
 var hitbox: Area2D
 var hurtbox: Area2D
 
-## AI/Ability Data
-var behavior_profile: BehaviorProfileData
-var abilities: Array[AbilityData] = []
+## AI/Ability Data (dynamic types to avoid load order issues with autoloads)
+var behavior_profile  # BehaviorProfileData
+var abilities: Array = []  # Array of AbilityData
 
 ## Internal
 var _damage_flash_timer: float = 0.0
@@ -194,7 +194,8 @@ func _apply_behavior_profile() -> void:
 
 func _setup_ability_controller() -> void:
 	## Setup the ability controller for database-driven attacks
-	ability_controller = EnemyAbilityController.new()
+	var EnemyAbilityControllerScript = preload("res://scripts/npc/enemy_ability_controller.gd")
+	ability_controller = EnemyAbilityControllerScript.new()
 	ability_controller.name = "AbilityController"
 	add_child(ability_controller)
 
@@ -209,7 +210,7 @@ func _setup_ability_controller() -> void:
 	_use_ability_system = true
 
 	# Update attack radius based on abilities
-	var max_range := ability_controller.get_max_attack_range()
+	var max_range: float = ability_controller.get_max_attack_range()
 	if max_range > attack_radius:
 		attack_radius = max_range
 		behavior.attack_radius = attack_radius
