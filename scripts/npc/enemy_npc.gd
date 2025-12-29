@@ -160,10 +160,15 @@ func _setup_ai() -> void:
 	if not abilities.is_empty():
 		_setup_ability_controller()
 
+	var ability_names: Array = []
+	for a in abilities:
+		ability_names.append(a.id)
 	Debug.log("NPC", "AI setup for %s" % enemy_name, {
 		"behavior_profile": behavior_profile.id if behavior_profile else "none",
-		"abilities": abilities.size(),
-		"use_ability_system": _use_ability_system
+		"abilities": ability_names,
+		"use_ability_system": _use_ability_system,
+		"attack_radius": attack_radius,
+		"behavior_attack_radius": behavior.attack_radius
 	})
 
 
