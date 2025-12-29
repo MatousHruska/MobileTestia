@@ -306,6 +306,9 @@ func complete_quest(quest_id: String, force: bool = false) -> bool:
 	_save_state()
 	quest_completed.emit(quest_id)
 
+	# Show floating "Quest Complete" text above player
+	_show_quest_complete_text()
+
 	Debug.info("Quest", "Quest completed", {
 		"id": quest_id,
 		"name": quest_data.get("name", "Unknown"),
@@ -868,6 +871,37 @@ func _count_items_in_inventory(item_id: String) -> int:
 			count += slot.get("quantity", 1)
 
 	return count
+
+
+func _show_quest_complete_text() -> void:
+	## Show floating "Quest Complete" text above player
+	if not Game or not Game.player:
+		return
+
+	var player: Node2D = Game.player
+
+	# Create floating label
+	var label := Label.new()
+	label.text = "Quest Complete"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.position = Vector2(-60, -50)
+	label.custom_minimum_size = Vector2(120, 20)
+
+	# Style matching unlockable door message
+	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_color_override("font_color", Color(1.0, 0.8, 0.3))  # Gold/yellow
+	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+
+	player.add_child(label)
+
+	# Animate: float up and fade out
+	var tween := label.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", -80.0, 1.5)
+	tween.tween_property(label, "modulate:a", 0.0, 1.5)
+	tween.chain().tween_callback(label.queue_free)
 
 
 func _deserialize_quest_state(data: Dictionary) -> QuestState:
