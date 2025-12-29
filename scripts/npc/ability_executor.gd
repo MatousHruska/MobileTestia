@@ -56,9 +56,21 @@ var ability_cooldowns: Dictionary = {}  ## ability_id -> remaining cooldown
 #===============================================================================
 
 func _ready() -> void:
-	_caster = get_parent() as Node2D
+	# Find the caster - walk up the tree to find the first Node2D
+	# (AbilityExecutor is child of EnemyAbilityController which is child of EnemyNPC)
+	var parent := get_parent()
+	while parent:
+		if parent is Node2D:
+			_caster = parent as Node2D
+			break
+		# Also check if parent has an _owner that's a Node2D (for EnemyAbilityController)
+		if "_owner" in parent and parent._owner is Node2D:
+			_caster = parent._owner as Node2D
+			break
+		parent = parent.get_parent()
+
 	if not _caster:
-		Debug.warn("AbilityExecutor", "Parent is not Node2D")
+		Debug.warn("AbilityExecutor", "Could not find Node2D caster in parent chain")
 		return
 
 	# Create hitbox spawner
