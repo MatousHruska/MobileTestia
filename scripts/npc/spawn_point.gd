@@ -192,7 +192,9 @@ func _load_preset() -> void:
 
 func _check_and_activate() -> void:
 	## Check conditions and activate if met
-	if _check_all_conditions():
+	var conditions_met := _check_all_conditions()
+	print("[SpawnPoint] _check_and_activate: ", _actual_id, " conditions_met=", conditions_met, " check_interval=", check_interval)
+	if conditions_met:
 		activate()
 	else:
 		deactivate()
@@ -245,7 +247,9 @@ func _check_quest_conditions() -> bool:
 
 func activate() -> void:
 	## Activate the spawn point
+	print("[SpawnPoint] activate() called: ", _actual_id, " is_active=", is_active, " check_interval=", check_interval)
 	if is_active:
+		print("[SpawnPoint] Already active, returning")
 		return
 
 	is_active = true
@@ -254,6 +258,7 @@ func activate() -> void:
 
 	# For one-shot spawns (check_interval <= 0), spawn immediately since _process won't
 	if check_interval <= 0:
+		print("[SpawnPoint] One-shot spawn, calling _try_spawn() immediately")
 		_try_spawn()
 
 
@@ -274,20 +279,25 @@ func deactivate() -> void:
 
 func _try_spawn() -> void:
 	## Attempt to spawn an enemy
+	print("[SpawnPoint] _try_spawn: ", _actual_id, " pool_size=", _get_pool_size(), " enemy_pool=", enemy_pool)
 
 	# Check if we can spawn more
 	if alive_enemies.size() >= max_active_enemies:
+		print("[SpawnPoint] Max enemies reached: ", alive_enemies.size(), "/", max_active_enemies)
 		return
 
 	# Re-check conditions (quest state may have changed)
 	if not _check_all_conditions():
+		print("[SpawnPoint] Conditions failed, deactivating")
 		deactivate()
 		return
 
 	# Roll spawn chance
 	if spawn_chance < 1.0 and randf() > spawn_chance:
+		print("[SpawnPoint] Spawn chance failed")
 		return
 
+	print("[SpawnPoint] Calling spawn_enemy()")
 	# Spawn the enemy
 	spawn_enemy()
 
