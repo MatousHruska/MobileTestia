@@ -65,7 +65,6 @@ var _anim_rows: Dictionary = {
 
 
 func _ready() -> void:
-	Debug.info("Animation", "CharacterAnimator ready")
 	_setup_default_sprites()
 	set_state(AnimState.IDLE)
 
@@ -86,17 +85,14 @@ func _setup_default_sprites() -> void:
 	## Create placeholder colored rectangles if no sprites assigned
 	if body_sprite and body_sprite.texture == null:
 		body_sprite.texture = _create_placeholder_texture(Color(0.4, 0.5, 0.7))
-		Debug.log("Animation", "Created placeholder body texture")
 
 	if head_sprite and head_sprite.texture == null:
 		head_sprite.texture = _create_placeholder_texture(Color(0.9, 0.75, 0.6), Vector2i(16, 16))
 		head_sprite.position = Vector2(0, -12)
-		Debug.log("Animation", "Created placeholder head texture")
 
 	if weapon_sprite and weapon_sprite.texture == null:
 		weapon_sprite.texture = _create_placeholder_texture(Color(0.6, 0.6, 0.6), Vector2i(8, 24))
 		weapon_sprite.position = Vector2(12, 0)
-		Debug.log("Animation", "Created placeholder weapon texture")
 
 
 func _create_placeholder_texture(color: Color, size: Vector2i = Vector2i(32, 32)) -> ImageTexture:
@@ -121,8 +117,6 @@ func set_facing(facing: PlayerController.Facing) -> void:
 
 	# Update weapon z-order based on facing
 	_update_weapon_z_order()
-
-	Debug.trace("Animation", "Facing set", PlayerController.Facing.keys()[facing])
 
 
 func set_state(state: AnimState) -> void:
@@ -156,7 +150,6 @@ func set_state(state: AnimState) -> void:
 			_current_fps = idle_fps
 
 	_update_sprite_frame()
-	Debug.log("Animation", "State changed", AnimState.keys()[state])
 
 
 func play_attack() -> void:
@@ -190,7 +183,6 @@ func _advance_frame() -> void:
 	# Check for attack hit frame
 	if current_state == AnimState.ATTACK and current_frame == attack_hit_frame_index:
 		attack_hit_frame.emit()
-		Debug.log("Combat", "Attack hit frame triggered")
 
 	# Check for animation end
 	if current_frame >= _current_frame_count:
@@ -203,7 +195,6 @@ func _advance_frame() -> void:
 
 func _on_animation_complete() -> void:
 	animation_finished.emit(AnimState.keys()[current_state])
-	Debug.log("Animation", "Animation complete", AnimState.keys()[current_state])
 
 	# Return to appropriate state
 	match current_state:
@@ -295,8 +286,6 @@ func _update_weapon_z_order() -> void:
 			weapon_sprite.z_index = -1
 		_:
 			weapon_sprite.z_index = 1
-
-	Debug.trace("Animation", "Weapon z-index", weapon_sprite.z_index)
 
 
 ## Debug
