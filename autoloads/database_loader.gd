@@ -12,6 +12,7 @@ var unique_items: Dictionary = {}
 var enemies: Dictionary = {}
 var enemy_abilities: Dictionary = {}
 var enemy_variants: Dictionary = {}
+var behavior_profiles: Dictionary = {}
 var loot_tables: Dictionary = {}
 var skills: Dictionary = {}
 var quests: Dictionary = {}
@@ -30,6 +31,8 @@ var item_bases_list: Array = []
 var affixes_list: Array = []
 var unique_items_list: Array = []
 var enemies_list: Array = []
+var enemy_abilities_list: Array = []
+var behavior_profiles_list: Array = []
 var skills_list: Array = []
 var quests_list: Array = []
 var npcs_list: Array = []
@@ -60,8 +63,9 @@ func load_all_databases() -> void:
 
 	# Enemies
 	success = _load_database("enemies.json", "enemies", enemies, enemies_list) and success
-	success = _load_database("enemy_abilities.json", "enemy_abilities", enemy_abilities) and success
+	success = _load_database("enemy_abilities.json", "enemy_abilities", enemy_abilities, enemy_abilities_list) and success
 	success = _load_database("enemy_variants.json", "enemy_variants", enemy_variants) and success
+	success = _load_database("behavior_profiles.json", "behavior_profiles", behavior_profiles, behavior_profiles_list) and success
 
 	# Loot
 	success = _load_database("loot_tables.json", "loot_tables", loot_tables) and success
@@ -229,6 +233,136 @@ func get_enemies_by_type(enemy_type: String) -> Array:
 		if enemy.get("type", "Normal") == enemy_type:
 			result.append(enemy)
 	return result
+
+
+## Get behavior profile by id
+func get_behavior_profile(id: String) -> Dictionary:
+	return behavior_profiles.get(id, {})
+
+
+## Create AbilityData resource from database entry
+func create_ability_data(ability_id: String) -> AbilityData:
+	var data: Dictionary = get_enemy_ability(ability_id)
+	if data.is_empty():
+		return null
+
+	var ability := AbilityData.new()
+	ability.id = data.get("id", ability_id)
+	ability.ability_name = data.get("name", "Attack")
+	ability.description = data.get("description", "")
+	ability.type = AbilityData.type_from_string(data.get("type", "melee"))
+	ability.damage_mult = float(data.get("damage_mult", 1.0))
+	ability.damage_type = AbilityData.damage_type_from_string(data.get("damage_type", "physical"))
+	ability.cooldown = float(data.get("cooldown", 0.0))
+	ability.range_min = float(data.get("range_min", 0.0))
+	ability.range_max = float(data.get("range_max", 30.0))
+	ability.shape = AbilityData.shape_from_string(data.get("shape", "circle"))
+	ability.shape_size = float(data.get("shape_size", 25.0))
+	ability.shape_angle = float(data.get("shape_angle", 0.0))
+	ability.windup = float(data.get("windup", 0.2))
+	ability.recovery = float(data.get("recovery", 0.3))
+	ability.animation = data.get("animation", "attack")
+	ability.priority = int(data.get("priority", 1))
+	ability.conditions = data.get("conditions", "")
+	ability.effects_on_hit = data.get("effects_on_hit", "")
+	ability.projectile_speed = float(data.get("projectile_speed", 0.0))
+	ability.dash_speed = float(data.get("dash_speed", 0.0))
+
+	return ability
+
+
+## Create BehaviorProfileData resource from database entry
+func create_behavior_profile_data(profile_id: String) -> BehaviorProfileData:
+	var data: Dictionary = get_behavior_profile(profile_id)
+	if data.is_empty():
+		return null
+
+	var profile := BehaviorProfileData.new()
+	profile.id = data.get("id", profile_id)
+	profile.profile_name = data.get("name", "Basic")
+	profile.description = data.get("description", "")
+
+	# Idle behavior
+	profile.idle_behavior = BehaviorProfileData.idle_from_string(data.get("idle_behavior", "stand"))
+	profile.idle_roam_radius = float(data.get("idle_roam_radius", 0.0))
+	profile.idle_roam_speed_mult = float(data.get("idle_roam_speed_mult", 0.5))
+	profile.idle_pause_min = float(data.get("idle_pause_min", 2.0))
+	profile.idle_pause_max = float(data.get("idle_pause_max", 5.0))
+	profile.patrol_loop = data.get("patrol_loop", true)
+
+	# Detection
+	profile.detection_range = float(data.get("detection_range", 150.0))
+	profile.detection_type = BehaviorProfileData.detection_from_string(data.get("detection_type", "sight"))
+	profile.aggro_on_damage = data.get("aggro_on_damage", true)
+	profile.aggro_memory_time = float(data.get("aggro_memory_time", 10.0))
+	profile.leash_range = float(data.get("leash_range", 300.0))
+
+	# Combat
+	profile.combat_style = BehaviorProfileData.combat_from_string(data.get("combat_style", "aggressive"))
+	profile.approach_behavior = BehaviorProfileData.approach_from_string(data.get("approach_behavior", "direct"))
+	profile.preferred_range = float(data.get("preferred_range", 30.0))
+	profile.chase_speed_mult = float(data.get("chase_speed_mult", 1.0))
+	profile.strafe_chance = float(data.get("strafe_chance", 0.0))
+
+	# Advanced movement
+	profile.kite_distance = float(data.get("kite_distance", 0.0))
+	profile.kite_speed_mult = float(data.get("kite_speed_mult", 1.0))
+	profile.circle_direction = data.get("circle_direction", "random")
+	profile.attack_retreat_distance = float(data.get("attack_retreat_distance", 0.0))
+	profile.attack_retreat_duration = float(data.get("attack_retreat_duration", 0.0))
+
+	# Flee
+	profile.flee_health_threshold = float(data.get("flee_health_threshold", 0.0))
+	profile.flee_speed_mult = float(data.get("flee_speed_mult", 1.2))
+
+	# Abilities
+	profile.ability_use_chance = float(data.get("ability_use_chance", 1.0))
+	profile.ability_priority_mode = BehaviorProfileData.priority_mode_from_string(data.get("ability_priority_mode", "highest"))
+
+	# Parse abilities array
+	var abilities_raw = data.get("abilities", [])
+	if abilities_raw is Array:
+		for ability_id in abilities_raw:
+			profile.ability_ids.append(str(ability_id))
+	elif abilities_raw is String and not abilities_raw.is_empty():
+		# Support comma-separated string format
+		for ability_id in abilities_raw.split(","):
+			profile.ability_ids.append(ability_id.strip_edges())
+
+	return profile
+
+
+## Get abilities for an enemy by parsing ability_ids string
+func get_abilities_for_enemy(enemy_id: String) -> Array[AbilityData]:
+	var result: Array[AbilityData] = []
+	var enemy_data := get_enemy(enemy_id)
+	if enemy_data.is_empty():
+		return result
+
+	var ability_ids_str: String = enemy_data.get("ability_ids", "")
+	if ability_ids_str.is_empty():
+		return result
+
+	var ability_ids := ability_ids_str.split(",")
+	for ability_id in ability_ids:
+		ability_id = ability_id.strip_edges()
+		if ability_id.is_empty():
+			continue
+		var ability := create_ability_data(ability_id)
+		if ability:
+			result.append(ability)
+
+	return result
+
+
+## Get behavior profile for an enemy
+func get_behavior_for_enemy(enemy_id: String) -> BehaviorProfileData:
+	var enemy_data := get_enemy(enemy_id)
+	if enemy_data.is_empty():
+		return null
+
+	var profile_id: String = enemy_data.get("behavior_profile", "bhv_basic_melee")
+	return create_behavior_profile_data(profile_id)
 
 
 #===============================================================================
@@ -757,6 +891,7 @@ func print_stats() -> void:
 		"unique_items": unique_items.size(),
 		"enemies": enemies.size(),
 		"enemy_abilities": enemy_abilities.size(),
+		"behavior_profiles": behavior_profiles.size(),
 		"loot_tables": loot_tables.size(),
 		"skills": skills.size(),
 		"quests": quests.size(),

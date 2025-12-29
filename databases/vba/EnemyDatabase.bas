@@ -24,17 +24,30 @@ Private Const COL_EN_DETECTION_RANGE As Integer = 10
 Private Const COL_EN_XP_REWARD As Integer = 11
 Private Const COL_EN_LOOT_TABLE_ID As Integer = 12
 Private Const COL_EN_ABILITY_IDS As Integer = 13
-Private Const COL_EN_DESCRIPTION As Integer = 14
+Private Const COL_EN_BEHAVIOR_PROFILE As Integer = 14  ' Links to behavior_profiles.json
+Private Const COL_EN_DESCRIPTION As Integer = 15
 
-' Column indices for EnemyAbilities
+' Column indices for EnemyAbilities (expanded for AI system)
 Private Const COL_EA_ID As Integer = 1
 Private Const COL_EA_NAME As Integer = 2
-Private Const COL_EA_TYPE As Integer = 3           ' melee, ranged, aoe, buff, summon
-Private Const COL_EA_DAMAGE As Integer = 4
-Private Const COL_EA_DAMAGE_TYPE As Integer = 5    ' physical, fire, cold, etc
-Private Const COL_EA_COOLDOWN As Integer = 6
-Private Const COL_EA_RANGE As Integer = 7
-Private Const COL_EA_DESCRIPTION As Integer = 8
+Private Const COL_EA_DESCRIPTION As Integer = 3
+Private Const COL_EA_TYPE As Integer = 4           ' melee, dash_attack, aoe, projectile, pattern, teleport_attack, beam
+Private Const COL_EA_DAMAGE_MULT As Integer = 5    ' Multiplier applied to base damage
+Private Const COL_EA_DAMAGE_TYPE As Integer = 6    ' physical, fire, cold, chaos, etc
+Private Const COL_EA_COOLDOWN As Integer = 7
+Private Const COL_EA_RANGE_MIN As Integer = 8      ' Minimum range to use ability
+Private Const COL_EA_RANGE_MAX As Integer = 9      ' Maximum range to use ability
+Private Const COL_EA_SHAPE As Integer = 10         ' circle, cone, line, cross, ring
+Private Const COL_EA_SHAPE_SIZE As Integer = 11    ' Size/radius of shape
+Private Const COL_EA_SHAPE_ANGLE As Integer = 12   ' Angle for cones/beams
+Private Const COL_EA_WINDUP As Integer = 13        ' Wind-up time before damage
+Private Const COL_EA_RECOVERY As Integer = 14      ' Recovery time after attack
+Private Const COL_EA_ANIMATION As Integer = 15     ' Animation to play
+Private Const COL_EA_PRIORITY As Integer = 16      ' AI priority (higher = preferred)
+Private Const COL_EA_CONDITIONS As Integer = 17    ' Conditions like "distance>50" or "health<50%"
+Private Const COL_EA_EFFECTS_ON_HIT As Integer = 18 ' Effects: "stun:0.5", "burn:3:5", "knockback:100"
+Private Const COL_EA_PROJECTILE_SPEED As Integer = 19 ' For projectile abilities
+Private Const COL_EA_DASH_SPEED As Integer = 20    ' For dash abilities
 
 ' Column indices for EnemyVariants
 Private Const COL_EV_ID As Integer = 1
@@ -49,14 +62,16 @@ Private Const COL_EV_VISUAL_EFFECT As Integer = 7
 Private validEnemyTypes() As String
 Private validAbilityTypes() As String
 Private validDamageTypes() As String
+Private validAbilityShapes() As String
 
 '-------------------------------------------------------------------------------
 ' InitValidLists - Initialize validation dropdown arrays
 '-------------------------------------------------------------------------------
 Private Sub InitValidLists()
     validEnemyTypes = Split("Normal,Miniboss,Boss", ",")
-    validAbilityTypes = Split("melee,ranged,aoe,buff,debuff,summon,dash,teleport", ",")
+    validAbilityTypes = Split("melee,dash_attack,aoe,projectile,pattern,teleport_attack,beam", ",")
     validDamageTypes = Split("physical,fire,cold,lightning,poison,chaos,pure", ",")
+    validAbilityShapes = Split("circle,cone,line,cross,ring", ",")
 End Sub
 
 '===============================================================================
@@ -180,7 +195,8 @@ Public Sub ExportEnemies()
         json = json & "      ""detection_range"": " & GetDefaultNumeric(ws.Cells(i, COL_EN_DETECTION_RANGE), 150) & "," & vbCrLf
         json = json & "      ""xp_reward"": " & GetDefaultNumeric(ws.Cells(i, COL_EN_XP_REWARD), 25) & "," & vbCrLf
         json = json & "      ""loot_table_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_LOOT_TABLE_ID))) & """," & vbCrLf
-        json = json & "      ""ability_ids"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_ABILITY_IDS))) & """" & vbCrLf
+        json = json & "      ""ability_ids"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_ABILITY_IDS))) & """," & vbCrLf
+        json = json & "      ""behavior_profile"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_BEHAVIOR_PROFILE), "bhv_basic_melee")) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -202,7 +218,7 @@ End Sub
 '===============================================================================
 
 '-------------------------------------------------------------------------------
-' ExportEnemyAbilities - Exports EnemyAbilities to JSON
+' ExportEnemyAbilities - Exports EnemyAbilities to JSON (expanded for AI system)
 '-------------------------------------------------------------------------------
 Public Sub ExportEnemyAbilities()
     InitValidLists
@@ -238,12 +254,37 @@ Public Sub ExportEnemyAbilities()
         json = json & "    {" & vbCrLf
         json = json & "      ""id"": """ & EscapeJsonString(id) & """," & vbCrLf
         json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_NAME))) & """," & vbCrLf
+        json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_DESCRIPTION))) & """," & vbCrLf
         json = json & "      ""type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_EA_TYPE), "melee"))) & """," & vbCrLf
-        json = json & "      ""damage"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_DAMAGE)) & "," & vbCrLf
+        json = json & "      ""damage_mult"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_DAMAGE_MULT), 1) & "," & vbCrLf
         json = json & "      ""damage_type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_EA_DAMAGE_TYPE), "physical"))) & """," & vbCrLf
-        json = json & "      ""cooldown"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_COOLDOWN), 1) & "," & vbCrLf
-        json = json & "      ""range"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_RANGE), 24) & vbCrLf
-        json = json & "    }"
+        json = json & "      ""cooldown"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_COOLDOWN), 0) & "," & vbCrLf
+        json = json & "      ""range_min"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_RANGE_MIN), 0) & "," & vbCrLf
+        json = json & "      ""range_max"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_RANGE_MAX), 30) & "," & vbCrLf
+        json = json & "      ""shape"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_EA_SHAPE), "circle"))) & """," & vbCrLf
+        json = json & "      ""shape_size"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_SHAPE_SIZE), 25) & "," & vbCrLf
+        json = json & "      ""shape_angle"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_SHAPE_ANGLE), 0) & "," & vbCrLf
+        json = json & "      ""windup"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_WINDUP), 0.2) & "," & vbCrLf
+        json = json & "      ""recovery"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_RECOVERY), 0.3) & "," & vbCrLf
+        json = json & "      ""animation"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_ANIMATION), "attack")) & """," & vbCrLf
+        json = json & "      ""priority"": " & GetDefaultNumeric(ws.Cells(i, COL_EA_PRIORITY), 1) & "," & vbCrLf
+        json = json & "      ""conditions"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_CONDITIONS))) & """," & vbCrLf
+        json = json & "      ""effects_on_hit"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_EFFECTS_ON_HIT))) & """"
+
+        ' Add optional projectile/dash speed if present
+        Dim projSpeed As Double
+        Dim dashSpeed As Double
+        projSpeed = GetDefaultNumeric(ws.Cells(i, COL_EA_PROJECTILE_SPEED), 0)
+        dashSpeed = GetDefaultNumeric(ws.Cells(i, COL_EA_DASH_SPEED), 0)
+
+        If projSpeed > 0 Then
+            json = json & "," & vbCrLf & "      ""projectile_speed"": " & projSpeed
+        End If
+        If dashSpeed > 0 Then
+            json = json & "," & vbCrLf & "      ""dash_speed"": " & dashSpeed
+        End If
+
+        json = json & vbCrLf & "    }"
 
         itemCount = itemCount + 1
 

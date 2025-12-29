@@ -13,6 +13,9 @@ class_name NPCDebugOverlay
 @export var show_facing_arrows: bool = true
 @export var show_target_lines: bool = true
 @export var show_velocity_vectors: bool = false
+@export var show_ability_info: bool = true
+@export var show_ability_hitboxes: bool = false
+@export var show_behavior_profile: bool = true
 
 ## Colors
 var color_health_bar_bg := Color(0.2, 0.2, 0.2, 0.8)
@@ -26,6 +29,10 @@ var color_target_line := Color(1.0, 0.5, 0.0, 0.6)
 var color_velocity := Color(0.0, 1.0, 1.0, 0.7)
 var color_friendly := Color(0.3, 0.8, 1.0, 0.8)
 var color_enemy := Color(1.0, 0.4, 0.4, 0.8)
+var color_ability := Color(0.9, 0.6, 1.0, 0.8)
+var color_cooldown := Color(0.5, 0.5, 0.6, 0.7)
+var color_windup := Color(1.0, 0.8, 0.2, 0.9)
+var color_recovery := Color(0.4, 0.4, 0.8, 0.8)
 
 ## State colors for AI (using EnemyBehavior states)
 var ai_state_colors := {
@@ -145,6 +152,14 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 		var leash_screen: Vector2 = _world_to_screen(enemy.home_position, camera)
 		var leash_radius: float = enemy.leash_radius * camera.zoom.x
 		draw_node.draw_arc(leash_screen, leash_radius, 0, TAU, 32, Color(0.5, 0.3, 0.3, 0.2), 1.5)
+
+	# Ability system info
+	if show_ability_info and enemy._use_ability_system:
+		_draw_ability_info(enemy, screen_pos, camera)
+
+	# Behavior profile info
+	if show_behavior_profile and enemy.behavior_profile:
+		_draw_behavior_profile_info(enemy, screen_pos)
 
 
 func _draw_friendly(npc: Node2D, camera: Camera2D) -> void:
@@ -293,3 +308,70 @@ func toggle_target_lines() -> void:
 
 func toggle_velocity_vectors() -> void:
 	show_velocity_vectors = not show_velocity_vectors
+
+
+func toggle_ability_info() -> void:
+	show_ability_info = not show_ability_info
+
+
+func toggle_ability_hitboxes() -> void:
+	show_ability_hitboxes = not show_ability_hitboxes
+	# Enable hitbox visualization on all enemies
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if enemy is EnemyNPC and enemy.has_method("debug_enable_hitbox_visualization"):
+			enemy.debug_enable_hitbox_visualization(show_ability_hitboxes)
+
+
+func toggle_behavior_profile() -> void:
+	show_behavior_profile = not show_behavior_profile
+
+
+#===============================================================================
+# ABILITY SYSTEM DRAWING
+#===============================================================================
+
+func _draw_ability_info(enemy: EnemyNPC, screen_pos: Vector2, _camera: Camera2D) -> void:
+	## Draw ability system debug info for an enemy
+	if not enemy.ability_controller:
+		return
+
+	var y_offset := 15.0
+	var x_offset := 50.0
+
+	# Show current execution state
+	if enemy.ability_controller.is_busy():
+		var state_label := "WINDUP" if enemy.ability_controller.is_winding_up() else "RECOVERY"
+		var state_color := color_windup if enemy.ability_controller.is_winding_up() else color_recovery
+		_draw_label(screen_pos + Vector2(x_offset, y_offset), state_label, state_color, 10)
+		y_offset += 12.0
+
+	# Show ability list with cooldowns
+	for i in range(min(enemy.abilities.size(), 4)):  # Max 4 abilities shown
+		var ability: AbilityData = enemy.abilities[i]
+		var on_cd := enemy.ability_controller._executor.is_on_cooldown(ability) if enemy.ability_controller._executor else false
+		var cd_remaining := enemy.ability_controller._executor.get_cooldown_remaining(ability) if on_cd else 0.0
+
+		var ability_text := ability.ability_name
+		if on_cd:
+			ability_text += " (%.1fs)" % cd_remaining
+
+		var ability_color := color_cooldown if on_cd else color_ability
+		_draw_label(screen_pos + Vector2(x_offset, y_offset), ability_text, ability_color, 9)
+		y_offset += 10.0
+
+
+func _draw_behavior_profile_info(enemy: EnemyNPC, screen_pos: Vector2) -> void:
+	## Draw behavior profile info
+	var profile: BehaviorProfileData = enemy.behavior_profile
+	if not profile:
+		return
+
+	var y_offset := -65.0
+
+	# Profile name
+	_draw_label(screen_pos + Vector2(0, y_offset), "[%s]" % profile.profile_name, Color(0.6, 0.8, 1.0), 9)
+	y_offset -= 10.0
+
+	# Combat style
+	var style_text := BehaviorProfileData.combat_to_string(profile.combat_style).to_upper()
+	_draw_label(screen_pos + Vector2(0, y_offset), style_text, Color(0.8, 0.6, 0.4), 8)

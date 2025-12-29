@@ -243,6 +243,14 @@ func reset() -> void:
 	_owner.stop_movement()
 
 
+## External ability system integration
+func set_attacking(attacking: bool) -> void:
+	## Set attacking state (used by ability system)
+	is_attacking = attacking
+	if attacking:
+		_owner.stop_movement()
+
+
 ## Accessors for debug/UI
 func get_state_name() -> String:
 	return State.keys()[state]
