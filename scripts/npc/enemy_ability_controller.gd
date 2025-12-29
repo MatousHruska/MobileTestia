@@ -56,10 +56,13 @@ func _ready() -> void:
 	_executor.ability_interrupted.connect(_on_ability_interrupted)
 
 
-func setup(behavior: BehaviorProfileData, abilities: Array[AbilityData]) -> void:
+func setup(behavior, abilities: Array) -> void:
 	## Configure the controller with behavior and abilities
+	## Note: Using untyped params to avoid autoload type resolution issues
 	_behavior_profile = behavior
-	_abilities = abilities
+	_abilities.clear()
+	for ability in abilities:
+		_abilities.append(ability)
 
 	Debug.log("EnemyAbilityController", "Setup complete", {
 		"behavior": behavior.id if behavior else "none",
@@ -67,8 +70,10 @@ func setup(behavior: BehaviorProfileData, abilities: Array[AbilityData]) -> void
 	})
 
 
-func set_abilities(abilities: Array[AbilityData]) -> void:
-	_abilities = abilities
+func set_abilities(abilities: Array) -> void:
+	_abilities.clear()
+	for ability in abilities:
+		_abilities.append(ability)
 
 
 func add_ability(ability: AbilityData) -> void:
