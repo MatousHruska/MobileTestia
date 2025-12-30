@@ -1,5 +1,16 @@
 {
   "status_effects": [
-
+    {
+      "id": "status_rot",
+      "name": "Rot",
+      "type": "debuff_dot",
+      "stat_affected": "health",
+      "value": -3,
+      "duration": 5,
+      "tick_interval": 1,
+      "visual_effect": "rot_particles",
+      "stackable": false,
+      "max_stacks": 1
+    }
   ]
 }

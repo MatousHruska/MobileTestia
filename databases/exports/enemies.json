@@ -13,7 +13,7 @@
       "detection_range": 120,
       "xp_reward": 20,
       "loot_table_id": "loot_basic",
-      "ability_ids": "abl_zombie_bite,abl_zombie_slam",
+      "ability_ids": "abl_zombie_bite",
       "behavior_profile": "bhv_zombie_shamble"
     },
     {
