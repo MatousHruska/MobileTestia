@@ -19,6 +19,11 @@ var _subtab_panels: Array[Control] = []
 var _description_title: Label = null
 var _description_text: Label = null
 
+## Effects section
+var _effects_container: HBoxContainer = null
+var _effect_icons: Dictionary = {}  # effect_type -> icon button
+var _no_effects_label: Label = null
+
 
 func _ready() -> void:
 	_build_ui()
@@ -27,12 +32,23 @@ func _ready() -> void:
 	Debug.info("UI", "StatsPanel ready")
 
 
+func _process(_delta: float) -> void:
+	# Update effect timers in real-time while panel is visible
+	_update_effect_timers()
+
+
 func _build_ui() -> void:
-	# Main horizontal split: Left (primary) | Right (secondary)
+	# Main vertical layout: Top (stats panels) | Bottom (effects section)
+	var main_vbox := VBoxContainer.new()
+	main_vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	main_vbox.add_theme_constant_override("separation", 8)
+	add_child(main_vbox)
+
+	# === TOP: Horizontal split for stats ===
 	var main_hbox := HBoxContainer.new()
-	main_hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	main_hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	main_hbox.add_theme_constant_override("separation", 16)
-	add_child(main_hbox)
+	main_vbox.add_child(main_hbox)
 
 	# === LEFT SIDE: Primary Attributes + Resources ===
 	var left_panel := _create_left_panel()
@@ -49,6 +65,10 @@ func _build_ui() -> void:
 	right_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right_panel.size_flags_stretch_ratio = 0.55
 	main_hbox.add_child(right_panel)
+
+	# === BOTTOM: Active Effects Section ===
+	var effects_section := _create_effects_section()
+	main_vbox.add_child(effects_section)
 
 
 func _create_left_panel() -> Control:
@@ -349,6 +369,152 @@ func _create_description_box() -> Control:
 	return container
 
 
+func _create_effects_section() -> Control:
+	var container := PanelContainer.new()
+	container.custom_minimum_size = Vector2(0, 50)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 4)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+
+	# Title row
+	var title := Label.new()
+	title.text = "Active Effects"
+	title.add_theme_font_size_override("font_size", 13)
+	title.modulate = Color(0.7, 0.7, 0.7)
+	vbox.add_child(title)
+
+	# Effects icons container (horizontal row)
+	_effects_container = HBoxContainer.new()
+	_effects_container.add_theme_constant_override("separation", 6)
+	vbox.add_child(_effects_container)
+
+	# "No active effects" placeholder label
+	_no_effects_label = Label.new()
+	_no_effects_label.text = "No active effects"
+	_no_effects_label.add_theme_font_size_override("font_size", 11)
+	_no_effects_label.modulate = Color(0.5, 0.5, 0.5)
+	_effects_container.add_child(_no_effects_label)
+
+	margin.add_child(vbox)
+	container.add_child(margin)
+	return container
+
+
+func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button:
+	var btn := Button.new()
+	btn.custom_minimum_size = Vector2(40, 40)
+	btn.flat = true
+	btn.pressed.connect(_on_effect_tapped.bind(effect_type))
+
+	# Container for icon visuals
+	var icon_container := Control.new()
+	icon_container.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.add_child(icon_container)
+
+	# Background (border color indicates buff/debuff)
+	var is_debuff: bool = effect_data.get("is_debuff", true)
+	var background := ColorRect.new()
+	background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	background.color = Color(0.6, 0.1, 0.1, 0.9) if is_debuff else Color(0.1, 0.5, 0.1, 0.9)
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_container.add_child(background)
+
+	# Icon inner (colored based on effect type)
+	var icon_inner := ColorRect.new()
+	icon_inner.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon_inner.offset_left = 2
+	icon_inner.offset_top = 2
+	icon_inner.offset_right = -2
+	icon_inner.offset_bottom = -10  # Leave room for timer bar
+	icon_inner.color = _get_effect_color(effect_type)
+	icon_inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_container.add_child(icon_inner)
+
+	# Duration bar at bottom
+	var duration: float = effect_data.get("remaining_duration", 0.0)
+	var max_duration: float = effect_data.get("max_duration", duration)
+
+	var duration_bar := ProgressBar.new()
+	duration_bar.name = "DurationBar"
+	duration_bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	duration_bar.offset_top = -8
+	duration_bar.offset_left = 2
+	duration_bar.offset_right = -2
+	duration_bar.custom_minimum_size.y = 6
+	duration_bar.max_value = max_duration if max_duration > 0 else 1.0
+	duration_bar.value = duration
+	duration_bar.show_percentage = false
+	duration_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var bar_style := StyleBoxFlat.new()
+	bar_style.bg_color = Color(1.0, 1.0, 1.0, 0.8)
+	bar_style.corner_radius_bottom_left = 1
+	bar_style.corner_radius_bottom_right = 1
+	duration_bar.add_theme_stylebox_override("fill", bar_style)
+
+	var bar_bg := StyleBoxFlat.new()
+	bar_bg.bg_color = Color(0.2, 0.2, 0.2, 0.8)
+	bar_bg.corner_radius_bottom_left = 1
+	bar_bg.corner_radius_bottom_right = 1
+	duration_bar.add_theme_stylebox_override("background", bar_bg)
+
+	icon_container.add_child(duration_bar)
+
+	# Timer label (centered on icon)
+	var timer_label := Label.new()
+	timer_label.name = "TimerLabel"
+	timer_label.set_anchors_preset(Control.PRESET_CENTER)
+	timer_label.offset_top = -4  # Adjust for duration bar
+	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	timer_label.add_theme_font_size_override("font_size", 11)
+	timer_label.add_theme_color_override("font_color", Color.WHITE)
+	timer_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1.0))
+	timer_label.add_theme_constant_override("shadow_offset_x", 1)
+	timer_label.add_theme_constant_override("shadow_offset_y", 1)
+	timer_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	if max_duration > 0:
+		timer_label.text = "%d" % int(duration) if duration >= 10 else "%.1f" % duration
+	else:
+		timer_label.text = "∞"  # Permanent effect
+
+	icon_container.add_child(timer_label)
+
+	return btn
+
+
+func _get_effect_color(effect_type: String) -> Color:
+	match effect_type:
+		"rot":
+			return Color(0.4, 0.25, 0.1)  # Brown/rot color
+		"poison":
+			return Color(0.2, 0.5, 0.1)  # Green
+		"burn":
+			return Color(0.9, 0.4, 0.1)  # Orange
+		"bleed":
+			return Color(0.7, 0.1, 0.1)  # Dark red
+		"slow":
+			return Color(0.3, 0.3, 0.7)  # Blue-ish
+		"stun":
+			return Color(0.8, 0.8, 0.2)  # Yellow
+		"haste":
+			return Color(0.2, 0.7, 0.9)  # Cyan
+		"regen":
+			return Color(0.2, 0.8, 0.3)  # Bright green
+		"shield":
+			return Color(0.6, 0.6, 0.9)  # Light blue
+		_:
+			return Color(0.5, 0.5, 0.5)  # Gray default
+
+
 func _create_offensive_panel() -> Control:
 	var grid := GridContainer.new()
 	grid.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -444,6 +610,33 @@ func _connect_signals() -> void:
 	PlayerStats.skill_points_changed.connect(_on_skill_points_changed)
 	PlayerStats.resource_changed.connect(_on_resource_changed)
 
+	# Connect to StatusEffectManager if player exists
+	_connect_to_status_effect_manager()
+
+
+func _connect_to_status_effect_manager() -> void:
+	if not Game or not Game.is_player_valid():
+		# Try again later when player is ready
+		if Game:
+			Game.player_spawned.connect(_on_player_spawned_for_effects)
+		return
+
+	var player := Game.player as PlayerController
+	if not player:
+		return
+
+	var manager := player.get_node_or_null("StatusEffectManager") as StatusEffectManager
+	if manager:
+		manager.effect_applied.connect(_on_effect_applied)
+		manager.effect_removed.connect(_on_effect_removed)
+
+
+func _on_player_spawned_for_effects(_player: Node2D) -> void:
+	# Small delay to ensure StatusEffectManager is ready
+	await get_tree().process_frame
+	_connect_to_status_effect_manager()
+	_update_effects()
+
 
 func refresh_display() -> void:
 	_update_level_display()
@@ -451,6 +644,7 @@ func refresh_display() -> void:
 	_update_resources()
 	_update_derived_stats()
 	_update_plus_buttons()
+	_update_effects()
 
 
 func _update_level_display() -> void:
@@ -606,3 +800,141 @@ func _on_stat_tapped(stat_name: String) -> void:
 	if _description_title and _description_text:
 		_description_title.text = stat_name.capitalize().replace("_", " ")
 		_description_text.text = PlayerStats.get_stat_description(stat_name)
+
+
+#===============================================================================
+# EFFECTS SECTION
+#===============================================================================
+
+func _update_effects() -> void:
+	if not _effects_container:
+		return
+
+	# Get current effects from StatusEffectManager
+	var effects := _get_all_effects()
+
+	# Clear existing icons
+	for effect_type in _effect_icons.keys():
+		if is_instance_valid(_effect_icons[effect_type]):
+			_effect_icons[effect_type].queue_free()
+	_effect_icons.clear()
+
+	# Show/hide "No active effects" label
+	if _no_effects_label:
+		_no_effects_label.visible = effects.is_empty()
+
+	# Create icons for each active effect
+	for effect_type in effects:
+		var effect_data: Dictionary = effects[effect_type]
+		var icon := _create_effect_icon(effect_type, effect_data)
+		_effects_container.add_child(icon)
+		_effect_icons[effect_type] = icon
+
+
+func _get_all_effects() -> Dictionary:
+	if not Game or not Game.is_player_valid():
+		return {}
+
+	var player := Game.player as PlayerController
+	if not player:
+		return {}
+
+	var manager := player.get_node_or_null("StatusEffectManager") as StatusEffectManager
+	if manager:
+		return manager.get_all_effect_data()
+
+	return {}
+
+
+func _update_effect_timers() -> void:
+	if _effect_icons.is_empty():
+		return
+
+	var effects := _get_all_effects()
+
+	for effect_type in _effect_icons:
+		var icon: Button = _effect_icons[effect_type]
+		if not is_instance_valid(icon):
+			continue
+
+		var effect_data: Dictionary = effects.get(effect_type, {})
+		if effect_data.is_empty():
+			continue
+
+		var remaining: float = effect_data.get("remaining_duration", 0.0)
+		var max_duration: float = effect_data.get("max_duration", 0.0)
+
+		# Update timer label
+		var timer_label := icon.find_child("TimerLabel", true, false) as Label
+		if timer_label:
+			if max_duration > 0:
+				timer_label.text = "%d" % int(remaining) if remaining >= 10 else "%.1f" % remaining
+			else:
+				timer_label.text = "∞"
+
+		# Update duration bar
+		var duration_bar := icon.find_child("DurationBar", true, false) as ProgressBar
+		if duration_bar:
+			duration_bar.value = remaining
+
+
+func _on_effect_applied(_effect_type: String, _duration: float, _show_in_hud: bool) -> void:
+	_update_effects()
+
+
+func _on_effect_removed(_effect_type: String) -> void:
+	_update_effects()
+
+
+func _on_effect_tapped(effect_type: String) -> void:
+	if not _description_title or not _description_text:
+		return
+
+	# Get effect data for details
+	var effects := _get_all_effects()
+	var effect_data: Dictionary = effects.get(effect_type, {})
+
+	# Build description
+	var title := effect_type.capitalize()
+	var description := _get_effect_description(effect_type, effect_data)
+
+	_description_title.text = title
+	_description_text.text = description
+
+
+func _get_effect_description(effect_type: String, effect_data: Dictionary) -> String:
+	var lines: Array[String] = []
+
+	# Effect type (buff/debuff)
+	var is_debuff: bool = effect_data.get("is_debuff", true)
+	lines.append("Type: %s" % ("Debuff" if is_debuff else "Buff"))
+
+	# Duration info
+	var remaining: float = effect_data.get("remaining_duration", 0.0)
+	var max_dur: float = effect_data.get("max_duration", 0.0)
+	if max_dur > 0:
+		lines.append("Duration: %.1fs remaining" % remaining)
+	else:
+		lines.append("Duration: Permanent")
+
+	# Damage info (for DoTs)
+	var damage: float = effect_data.get("damage_per_tick", 0.0)
+	if damage > 0:
+		var interval: float = effect_data.get("tick_interval", 1.0)
+		lines.append("Damage: %.1f per %.1fs" % [damage, interval])
+
+	# Try to get description from database
+	var db_desc := _get_effect_db_description(effect_type)
+	if not db_desc.is_empty():
+		lines.append("")
+		lines.append(db_desc)
+
+	return "\n".join(lines)
+
+
+func _get_effect_db_description(effect_type: String) -> String:
+	var status_id := "status_" + effect_type
+	if DatabaseLoader.status_effects.has(status_id):
+		var data: Dictionary = DatabaseLoader.status_effects[status_id]
+		return data.get("description", "")
+	return ""
