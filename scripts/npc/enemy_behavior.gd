@@ -76,6 +76,11 @@ func _process(delta: float) -> void:
 	if not _owner or state == State.DEAD:
 		return
 
+	# Pause AI during cutscenes
+	if Game.is_in_cutscene:
+		_owner.stop_movement()
+		return
+
 	# Update attack cooldown
 	_attack_timer = max(0.0, _attack_timer - delta)
 
