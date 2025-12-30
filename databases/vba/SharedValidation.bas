@@ -265,3 +265,319 @@ Public Sub SafeAddComment(ByVal cell As Range, ByVal commentText As String)
     cell.AddComment commentText
     On Error GoTo 0
 End Sub
+
+'===============================================================================
+' ID RENAME UTILITY
+'===============================================================================
+
+'-------------------------------------------------------------------------------
+' RenameId - Renames an ID across ALL sheets in the workbook
+'-------------------------------------------------------------------------------
+Public Sub RenameId()
+    Dim oldId As String, newId As String
+    oldId = InputBox("Enter OLD ID to replace:", "Rename ID")
+    If Len(oldId) = 0 Then Exit Sub
+
+    newId = InputBox("Enter NEW ID:", "Rename ID")
+    If Len(newId) = 0 Then Exit Sub
+
+    Dim ws As Worksheet
+    Dim cell As Range
+    Dim count As Long
+    count = 0
+
+    Application.ScreenUpdating = False
+
+    For Each ws In ThisWorkbook.Worksheets
+        For Each cell In ws.UsedRange
+            If VarType(cell.Value) = vbString Then
+                If cell.Value = oldId Then
+                    cell.Value = newId
+                    count = count + 1
+                ElseIf InStr(cell.Value, oldId) > 0 Then
+                    ' Handle comma-separated lists
+                    cell.Value = Replace(cell.Value, oldId, newId)
+                    count = count + 1
+                End If
+            End If
+        Next cell
+    Next ws
+
+    Application.ScreenUpdating = True
+
+    MsgBox "Replaced " & count & " occurrences of '" & oldId & "' with '" & newId & "'", _
+           vbInformation, "Rename Complete"
+End Sub
+
+'===============================================================================
+' DATA VALIDATION SETUP
+'===============================================================================
+
+'-------------------------------------------------------------------------------
+' SetupAllDataValidation - Creates named ranges and applies dropdowns
+'-------------------------------------------------------------------------------
+Public Sub SetupAllDataValidation()
+    Dim response As VbMsgBoxResult
+    response = MsgBox("This will set up data validation dropdowns for all sheets." & vbCrLf & _
+                      "Named ranges will be created for ID columns." & vbCrLf & vbCrLf & _
+                      "Continue?", vbYesNo + vbQuestion, "Setup Data Validation")
+
+    If response <> vbYes Then Exit Sub
+
+    Application.ScreenUpdating = False
+
+    ' Create named ranges for ID columns
+    CreateIdNamedRanges
+
+    ' Apply foreign key dropdowns
+    ApplyForeignKeyValidation
+
+    ' Apply enum dropdowns
+    ApplyEnumValidation
+
+    Application.ScreenUpdating = True
+
+    MsgBox "Data validation setup complete!" & vbCrLf & vbCrLf & _
+           "Named ranges created for ID columns." & vbCrLf & _
+           "Dropdowns applied to foreign key and enum columns.", _
+           vbInformation, "Setup Complete"
+End Sub
+
+'-------------------------------------------------------------------------------
+' CreateIdNamedRanges - Creates named ranges for all ID columns
+'-------------------------------------------------------------------------------
+Private Sub CreateIdNamedRanges()
+    ' Delete existing named ranges first
+    On Error Resume Next
+    Dim nm As Name
+    For Each nm In ThisWorkbook.Names
+        If Left(nm.Name, 3) = "ID_" Then nm.Delete
+    Next nm
+    On Error GoTo 0
+
+    ' Create named ranges for each sheet's ID column
+    CreateNamedRange "Zones", 1, "ID_Zones"
+    CreateNamedRange "Enemies", 1, "ID_Enemies"
+    CreateNamedRange "EnemyAbilities", 1, "ID_EnemyAbilities"
+    CreateNamedRange "EnemyVariants", 1, "ID_EnemyVariants"
+    CreateNamedRange "BehaviorProfiles", 1, "ID_BehaviorProfiles"
+    CreateNamedRange "LootTables", 1, "ID_LootTables"
+    CreateNamedRange "ItemBases", 1, "ID_ItemBases"
+    CreateNamedRange "Affixes", 1, "ID_Affixes"
+    CreateNamedRange "UniqueItems", 1, "ID_UniqueItems"
+    CreateNamedRange "Skills", 1, "ID_Skills"
+    CreateNamedRange "Quests", 1, "ID_Quests"
+    CreateNamedRange "NPCs", 1, "ID_NPCs"
+    CreateNamedRange "ShopInventory", 1, "ID_ShopInventory"
+    CreateNamedRange "Dialogues", 1, "ID_Dialogues"
+    CreateNamedRange "Consumables", 1, "ID_Consumables"
+    CreateNamedRange "StatusEffects", 1, "ID_StatusEffects"
+    CreateNamedRange "Chests", 1, "ID_Chests"
+    CreateNamedRange "SpawnPoints", 1, "ID_SpawnPoints"
+    CreateNamedRange "Cutscenes", 1, "ID_Cutscenes"
+    CreateNamedRange "FloatingDialogues", 1, "ID_FloatingDialogues"
+End Sub
+
+'-------------------------------------------------------------------------------
+' CreateNamedRange - Creates a named range for a column in a sheet
+'-------------------------------------------------------------------------------
+Private Sub CreateNamedRange(ByVal sheetName As String, ByVal col As Integer, ByVal rangeName As String)
+    On Error Resume Next
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets(sheetName)
+    If ws Is Nothing Then Exit Sub
+
+    Dim lastRow As Long
+    lastRow = ws.Cells(ws.Rows.count, col).End(xlUp).Row
+    If lastRow < 2 Then lastRow = 2
+
+    ' Create dynamic named range (row 2 to last row with data + 100 buffer)
+    Dim rng As Range
+    Set rng = ws.Range(ws.Cells(2, col), ws.Cells(lastRow + 100, col))
+
+    ThisWorkbook.Names.Add Name:=rangeName, RefersTo:=rng
+    On Error GoTo 0
+End Sub
+
+'-------------------------------------------------------------------------------
+' ApplyForeignKeyValidation - Applies dropdown validation for foreign keys
+'-------------------------------------------------------------------------------
+Private Sub ApplyForeignKeyValidation()
+    ' NPCs
+    ApplyValidation "NPCs", 5, "ID_ShopInventory"   ' shop_inventory_id
+    ApplyValidation "NPCs", 12, "ID_Dialogues"      ' dialogue_talk_id
+
+    ' ShopInventory
+    ApplyValidation "ShopInventory", 3, "ID_ItemBases"  ' item_id
+
+    ' Zones
+    ApplyValidation "Zones", 7, "ID_LootTables"     ' loot_table_id
+
+    ' Enemies
+    ApplyValidation "Enemies", 12, "ID_LootTables"  ' loot_table_id
+    ApplyValidation "Enemies", 14, "ID_BehaviorProfiles"  ' behavior_profile
+
+    ' Chests
+    ApplyValidation "Chests", 5, "ID_Zones"         ' zone_id
+    ApplyValidation "Chests", 9, "ID_LootTables"    ' loot_table_id
+    ApplyValidation "Chests", 13, "ID_Quests"       ' quest_id
+
+    ' SpawnPoints
+    ApplyValidation "SpawnPoints", 13, "ID_Quests"  ' require_quest_active
+    ApplyValidation "SpawnPoints", 14, "ID_Quests"  ' require_quest_completed
+    ApplyValidation "SpawnPoints", 15, "ID_Quests"  ' disable_after_quest
+    ApplyValidation "SpawnPoints", 16, "ID_Quests"  ' disable_during_quest
+
+    ' Quests
+    ApplyValidation "Quests", 6, "ID_NPCs"          ' giver_npc
+    ApplyValidation "Quests", 7, "ID_NPCs"          ' turn_in_npc
+    ApplyValidation "Quests", 9, "ID_Quests"        ' next_quest
+    ApplyValidation "Quests", 15, "ID_Dialogues"    ' start_dialogue
+    ApplyValidation "Quests", 16, "ID_Dialogues"    ' complete_dialogue
+
+    ' QuestObjectives
+    ApplyValidation "QuestObjectives", 1, "ID_Quests"  ' quest_id
+
+    ' UniqueItems
+    ApplyValidation "UniqueItems", 3, "ID_ItemBases"   ' base_id
+
+    ' Cutscenes
+    ApplyValidation "Cutscenes", 4, "ID_Zones"      ' trigger_target (for zone_enter)
+
+    ' FloatingDialogues - trigger_filter contains zone_id but is free-form text
+End Sub
+
+'-------------------------------------------------------------------------------
+' ApplyEnumValidation - Applies dropdown validation for enum fields
+'-------------------------------------------------------------------------------
+Private Sub ApplyEnumValidation()
+    ' BehaviorProfiles
+    ApplyListValidation "BehaviorProfiles", 4, "stand,roam,patrol"  ' idle_behavior
+    ApplyListValidation "BehaviorProfiles", 11, "sight,none"        ' detection_type
+    ApplyListValidation "BehaviorProfiles", 15, "aggressive,ranged,opportunist,hit_run"  ' combat_style
+    ApplyListValidation "BehaviorProfiles", 16, "direct,charge,kite,phase,circle"  ' approach_behavior
+    ApplyListValidation "BehaviorProfiles", 22, "clockwise,counter,random"  ' circle_direction
+    ApplyListValidation "BehaviorProfiles", 28, "highest,conditional,random_weighted"  ' ability_priority_mode
+
+    ' Skills
+    ApplyListValidation "Skills", 3, "active,passive,buff,toggle"   ' type
+    ApplyListValidation "Skills", 4, "combat,magic,utility"         ' tree
+    ApplyListValidation "Skills", 12, "damage,heal,buff,debuff,summon,teleport,projectile"  ' effect_type
+
+    ' NPCs
+    ApplyListValidation "NPCs", 3, "quest_giver,trader,trainer,innkeeper,blacksmith,generic"  ' type
+
+    ' ShopInventory
+    ApplyListValidation "ShopInventory", 4, "base,unique,consumable"  ' item_type
+    ApplyListValidation "ShopInventory", 8, "gold,gems"               ' currency_type
+
+    ' FloatingDialogues
+    ApplyListValidation "FloatingDialogues", 2, "zone_enter,zone_exit,item_pickup,item_equip,potion_use,skill_use,enemy_kill,boss_kill,critical_hit,near_death,level_up,quest_complete,quest_start,gold_pickup,chest_open,shrine_activate,player_idle,combat_start,combat_end,revive"  ' trigger_event
+
+    ' Cutscenes
+    ApplyListValidation "Cutscenes", 2, "zone_enter,quest_complete,quest_start,interact,manual"  ' trigger
+
+    ' Consumables
+    ApplyListValidation "Consumables", 3, "potion,scroll,food,elixir"  ' consumable_type
+    ApplyListValidation "Consumables", 4, "heal_health,heal_mana,buff_stat,cure_status,teleport_town,resurrect"  ' effect_type
+
+    ' StatusEffects
+    ApplyListValidation "StatusEffects", 3, "buff,debuff,debuff_dot,buff_hot,control"  ' type
+
+    ' Zones
+    ApplyListValidation "Zones", 3, "outdoor,dungeon,cave,town,boss_room,camp"  ' zone_type
+
+    ' Enemies
+    ApplyListValidation "Enemies", 3, "Normal,Miniboss,Boss"  ' type
+
+    ' EnemyAbilities
+    ApplyListValidation "EnemyAbilities", 4, "melee,dash_attack,aoe,projectile,pattern,teleport_attack,beam"  ' type
+    ApplyListValidation "EnemyAbilities", 6, "physical,fire,cold,lightning,poison,chaos,pure"  ' damage_type
+    ApplyListValidation "EnemyAbilities", 10, "circle,cone,line,cross,ring"  ' shape
+
+    ' Chests
+    ApplyListValidation "Chests", 3, "loot,quest"           ' chest_type
+    ApplyListValidation "Chests", 4, "wooden,iron,golden"   ' tier
+
+    ' Quests
+    ApplyListValidation "Quests", 4, "story,side"           ' type
+
+    ' QuestObjectives
+    ApplyListValidation "QuestObjectives", 3, "kill_named,kill_count,gather,delivery,interact,talk,escort,defend,use_ability,defeat_no_kill,reach_location,race"  ' type
+
+    ' ItemBases
+    ApplyListValidation "ItemBases", 3, "Weapon,Head,Chest,Hands,Legs,Feet,Ring,Amulet,Offhand"  ' slot
+    ApplyListValidation "ItemBases", 4, "Sword,Axe,Mace,Dagger,Staff,Wand,Bow,Crossbow,Shield,Helmet,Chest,Gloves,Boots,Leggings,Ring,Amulet"  ' item_type
+
+    ' Affixes
+    ApplyListValidation "Affixes", 3, "prefix,suffix"       ' type
+    ApplyListValidation "Affixes", 4, "melee_damage,ranged_damage,magic_damage,fire_damage,cold_damage,lightning_damage,poison_damage,strength,dexterity,intelligence,vitality,energy,luck,armor,magic_resistance,dodge_chance,attack_speed,critical_chance,critical_damage,life,mana,life_regen,mana_regen,movement_speed"  ' stat_modifier
+
+    ' Boolean fields (TRUE/FALSE)
+    ApplyListValidation "BehaviorProfiles", 9, "TRUE,FALSE"   ' patrol_loop
+    ApplyListValidation "BehaviorProfiles", 12, "TRUE,FALSE"  ' aggro_on_damage
+    ApplyListValidation "Quests", 10, "TRUE,FALSE"            ' can_abandon
+    ApplyListValidation "Quests", 11, "TRUE,FALSE"            ' auto_complete
+    ApplyListValidation "QuestObjectives", 7, "TRUE,FALSE"    ' optional
+    ApplyListValidation "NPCs", 10, "TRUE,FALSE"              ' is_interactable
+    ApplyListValidation "StatusEffects", 9, "TRUE,FALSE"      ' stackable
+    ApplyListValidation "StatusEffects", 11, "TRUE,FALSE"     ' show_in_hud
+    ApplyListValidation "EnemyAbilities", 21, "TRUE,FALSE"    ' cardinal_only
+    ApplyListValidation "Cutscenes", 6, "TRUE,FALSE"          ' once_only
+End Sub
+
+'-------------------------------------------------------------------------------
+' ApplyValidation - Applies named range validation to a column
+'-------------------------------------------------------------------------------
+Private Sub ApplyValidation(ByVal sheetName As String, ByVal col As Integer, ByVal namedRange As String)
+    On Error Resume Next
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets(sheetName)
+    If ws Is Nothing Then Exit Sub
+
+    Dim lastRow As Long
+    lastRow = ws.Cells(ws.Rows.count, 1).End(xlUp).Row
+    If lastRow < 2 Then lastRow = 100
+
+    Dim rng As Range
+    Set rng = ws.Range(ws.Cells(2, col), ws.Cells(lastRow + 100, col))
+
+    With rng.Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertWarning, _
+             Formula1:="=" & namedRange
+        .IgnoreBlank = True
+        .ShowError = True
+        .ErrorTitle = "Invalid ID"
+        .ErrorMessage = "Please select a valid ID from the dropdown list."
+    End With
+    On Error GoTo 0
+End Sub
+
+'-------------------------------------------------------------------------------
+' ApplyListValidation - Applies static list validation to a column
+'-------------------------------------------------------------------------------
+Private Sub ApplyListValidation(ByVal sheetName As String, ByVal col As Integer, ByVal listValues As String)
+    On Error Resume Next
+    Dim ws As Worksheet
+    Set ws = ThisWorkbook.Sheets(sheetName)
+    If ws Is Nothing Then Exit Sub
+
+    Dim lastRow As Long
+    lastRow = ws.Cells(ws.Rows.count, 1).End(xlUp).Row
+    If lastRow < 2 Then lastRow = 100
+
+    Dim rng As Range
+    Set rng = ws.Range(ws.Cells(2, col), ws.Cells(lastRow + 100, col))
+
+    With rng.Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertWarning, _
+             Formula1:=listValues
+        .IgnoreBlank = True
+        .ShowError = True
+        .ErrorTitle = "Invalid Value"
+        .ErrorMessage = "Please select a valid value from the dropdown list."
+    End With
+    On Error GoTo 0
+End Sub
