@@ -413,7 +413,7 @@ func _create_projectile(direction: Vector2) -> Node2D:
 		_caster.global_position, direction, current_ability.projectile_speed
 	])
 
-	# Movement script
+	# Movement script - must reload() to compile before use
 	var script := GDScript.new()
 	script.source_code = """
 extends Area2D
@@ -429,6 +429,7 @@ func _process(delta: float) -> void:
 	if lifetime <= 0:
 		queue_free()
 """
+	script.reload()  # Compile the script!
 	projectile.set_script(script)
 	projectile.set("direction", direction)
 	projectile.set("speed", current_ability.projectile_speed if current_ability.projectile_speed > 0 else 300.0)
