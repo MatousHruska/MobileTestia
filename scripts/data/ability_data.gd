@@ -355,7 +355,7 @@ func _parse_single_effect(effect_str: String) -> Dictionary:
 			result["duration"] = float(parts[1]) if parts.size() > 1 else 1.0
 		"knockback":
 			result["force"] = float(parts[1]) if parts.size() > 1 else 100.0
-		"burn", "bleed":
+		"burn", "bleed", "rot", "poison":
 			result["duration"] = float(parts[1]) if parts.size() > 1 else 3.0
 			result["damage"] = float(parts[2]) if parts.size() > 2 else 5.0
 		"slow":
