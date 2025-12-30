@@ -23,6 +23,9 @@ var mana_label: Label
 var stamina_label: Label
 var level_label: Label
 
+## Status effect display
+var status_effect_display: StatusEffectDisplay
+
 ## Player reference
 var player: PlayerController = null
 
@@ -101,6 +104,12 @@ func _setup_resource_bars() -> void:
 	level_label.add_theme_font_size_override("font_size", 14)
 	level_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.5))
 	bars_container.add_child(level_label)
+
+	# Status effect display (DoTs, buffs, debuffs)
+	status_effect_display = StatusEffectDisplay.new()
+	status_effect_display.name = "StatusEffectDisplay"
+	status_effect_display.custom_minimum_size = Vector2(0, 32)
+	bars_container.add_child(status_effect_display)
 
 
 func _create_resource_bar(bar_name: String, fill_color: Color, bg_color: Color) -> ProgressBar:
