@@ -18,7 +18,7 @@ var current_action_index: int = 0
 var is_waiting_for_input: bool = false
 
 ## UI Reference
-var _dialogue_ui: Control = null
+var _dialogue_ui: CanvasLayer = null
 const DIALOGUE_UI_SCENE := preload("res://scenes/ui/cutscene/cutscene_dialogue_ui.tscn")
 
 ## Action executors - map action type to handler function
