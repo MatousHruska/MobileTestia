@@ -242,6 +242,6 @@ func _save_persisted_effects() -> void:
 func _get_show_in_hud(effect_type: String) -> bool:
 	# Look up in database - effect_type maps to status_id like "status_rot" for "rot"
 	var status_id := "status_" + effect_type
-	if Database.status_effects.has(status_id):
-		return Database.status_effects[status_id].get("show_in_hud", true)
+	if DatabaseLoader.status_effects.has(status_id):
+		return DatabaseLoader.status_effects[status_id].get("show_in_hud", true)
 	return true  # Default to showing in HUD
