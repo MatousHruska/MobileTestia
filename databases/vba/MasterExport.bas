@@ -426,7 +426,7 @@ Private Sub SetupStatusEffectsSheet()
     Set ws = GetOrCreateSheet("StatusEffects")
     Dim headers As Variant
     headers = Array("id", "name", "type", "stat_affected", "value", "duration", _
-                    "tick_interval", "visual_effect", "stackable", "max_stacks", "description")
+                    "tick_interval", "visual_effect", "stackable", "max_stacks", "show_in_hud", "description")
     SetHeaders ws, headers
 End Sub
 

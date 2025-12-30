@@ -15,11 +15,12 @@ var _states: Dictionary = {
 	"enemies": {},  # For boss kill tracking
 	"quests": {},
 	"npcs": {},
+	"status_effects": {},  # Player status effects (buffs/debuffs)
 	"misc": {}  # Catch-all for anything else
 }
 
 ## Valid categories
-const CATEGORIES := ["doors", "levers", "chests", "enemies", "quests", "npcs", "misc"]
+const CATEGORIES := ["doors", "levers", "chests", "enemies", "quests", "npcs", "status_effects", "misc"]
 
 
 func _ready() -> void:
@@ -133,6 +134,19 @@ func save_enemy_killed(enemy_id: String) -> void:
 func is_enemy_killed(enemy_id: String) -> bool:
 	var state := load_state("enemies", enemy_id)
 	return state.get("is_dead", false)
+
+
+## Status Effects - stores all active effects for player
+func save_status_effects(effects_data: Dictionary) -> void:
+	save_state("status_effects", "player", effects_data)
+
+
+func load_status_effects() -> Dictionary:
+	return load_state("status_effects", "player")
+
+
+func clear_status_effects() -> void:
+	clear_state("status_effects", "player")
 
 
 ## Debug
