@@ -346,5 +346,33 @@ Public Sub SetupCutscenesSheet()
                                    "move:target:x:y:speed, camera_pan:x:y:duration, camera_shake:intensity:duration, " & _
                                    "camera_reset:duration, set_facing:target:direction, spawn:npc_id:x:y, despawn:target, play_sound:sound_id"
 
-    MsgBox "Cutscenes sheet created with headers!", vbInformation
+    ' Add data validation for trigger column (C)
+    Dim triggerRange As Range
+    Set triggerRange = ws.Range("C2:C1000")
+    With triggerRange.Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, _
+             Formula1:="zone_enter,quest_complete,quest_start,interact,manual"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .ShowError = True
+        .ErrorTitle = "Invalid Trigger"
+        .ErrorMessage = "Please select a valid trigger type from the dropdown."
+    End With
+
+    ' Add data validation for once_only column (E)
+    Dim onceOnlyRange As Range
+    Set onceOnlyRange = ws.Range("E2:E1000")
+    With onceOnlyRange.Validation
+        .Delete
+        .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, _
+             Formula1:="TRUE,FALSE"
+        .IgnoreBlank = True
+        .InCellDropdown = True
+        .ShowError = True
+        .ErrorTitle = "Invalid Value"
+        .ErrorMessage = "Please select TRUE or FALSE."
+    End With
+
+    MsgBox "Cutscenes sheet created with headers and data validation!", vbInformation
 End Sub
