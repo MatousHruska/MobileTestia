@@ -158,12 +158,16 @@ func skip() -> void:
 #===============================================================================
 
 func _execute_next_action() -> void:
+	Debug.info("Cutscene", "Execute next action", {"index": current_action_index, "total": current_actions.size()})
+
 	if current_action_index >= current_actions.size():
 		_finish_cutscene()
 		return
 
 	var action: Dictionary = current_actions[current_action_index]
 	var action_type: String = action.get("type", "")
+
+	Debug.info("Cutscene", "Executing action", {"index": current_action_index, "type": action_type})
 
 	if action_type.is_empty():
 		Debug.warn("Cutscene", "Action missing type at index", current_action_index)
@@ -267,11 +271,15 @@ func _execute_move(action: Dictionary) -> void:
 	var speed: float = action.get("speed", 100.0)
 	var wait_for_arrival: bool = action.get("wait", true)
 
+	Debug.info("Cutscene", "Executing move", {"target": target_id, "position": position, "speed": speed})
+
 	var target := _get_target_node(target_id)
 	if not target:
 		Debug.warn("Cutscene", "Move target not found", target_id)
 		_action_completed()
 		return
+
+	Debug.info("Cutscene", "Move target found", target.name)
 
 	var target_pos := Vector2(position[0], position[1])
 	var distance := target.global_position.distance_to(target_pos)
@@ -401,6 +409,8 @@ func _get_cutscene_data(cutscene_id: String) -> Dictionary:
 
 
 func _get_target_node(target_id: String) -> Node2D:
+	Debug.info("Cutscene", "Looking up target", target_id)
+
 	if target_id == "player":
 		return Game.player
 
@@ -408,11 +418,20 @@ func _get_target_node(target_id: String) -> Node2D:
 	if NPCManager:
 		var npc := NPCManager.get_friendly_by_id(target_id)
 		if npc:
+			Debug.info("Cutscene", "Found friendly NPC", npc.name)
 			return npc
 		var enemy := NPCManager.get_enemy_by_id(target_id)
 		if enemy:
+			Debug.info("Cutscene", "Found enemy", enemy.name)
 			return enemy
 
+		# Also try by display name for convenience
+		for e in NPCManager.all_enemies:
+			if is_instance_valid(e) and e.npc_name == target_id:
+				Debug.info("Cutscene", "Found enemy by name", e.name)
+				return e
+
+	Debug.warn("Cutscene", "Target not found in any lookup", target_id)
 	return null
 
 
