@@ -111,6 +111,11 @@ func play(cutscene_id: String) -> void:
 	# Enter cutscene state
 	Game.start_cutscene()
 
+	# Put camera in cutscene mode (stops following player)
+	var camera := get_viewport().get_camera_2d()
+	if camera and camera.has_method("enter_cutscene_mode"):
+		camera.enter_cutscene_mode()
+
 	# Show dialogue UI
 	_show_dialogue_ui()
 
@@ -187,6 +192,11 @@ func _finish_cutscene() -> void:
 
 	# Hide dialogue UI
 	_hide_dialogue_ui()
+
+	# Exit camera cutscene mode (resume following player)
+	var camera := get_viewport().get_camera_2d()
+	if camera and camera.has_method("exit_cutscene_mode"):
+		camera.exit_cutscene_mode()
 
 	# Exit cutscene state
 	Game.end_cutscene()

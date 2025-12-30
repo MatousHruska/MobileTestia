@@ -31,6 +31,7 @@ class_name GameCamera
 var target_position: Vector2 = Vector2.ZERO
 var look_ahead_offset: Vector2 = Vector2.ZERO
 var trauma: float = 0.0  ## 0-1, drives camera shake
+var cutscene_mode: bool = false  ## When true, camera is manually controlled
 
 ## Internal
 var _last_target_velocity: Vector2 = Vector2.ZERO
@@ -56,6 +57,11 @@ func _setup_noise() -> void:
 
 
 func _process(delta: float) -> void:
+	# In cutscene mode, only process shake (position is manually controlled)
+	if cutscene_mode:
+		_update_shake(delta)
+		return
+
 	if not follow_target or not is_instance_valid(follow_target):
 		_try_find_player()
 		return
@@ -144,6 +150,18 @@ func _update_shake(delta: float) -> void:
 func set_target(target: Node2D) -> void:
 	follow_target = target
 	Debug.info("Camera", "Target set", target.name if target else "null")
+
+
+func enter_cutscene_mode() -> void:
+	## Stop following player, allow manual camera control
+	cutscene_mode = true
+	Debug.info("Camera", "Entered cutscene mode")
+
+
+func exit_cutscene_mode() -> void:
+	## Resume following player
+	cutscene_mode = false
+	Debug.info("Camera", "Exited cutscene mode")
 
 
 func snap_to_target() -> void:
