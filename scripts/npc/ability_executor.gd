@@ -393,8 +393,10 @@ func _spawn_ability_hitbox() -> void:
 func _create_projectile(direction: Vector2) -> Node2D:
 	## Create a simple projectile node
 	var projectile := Area2D.new()
+	projectile.name = "Projectile"
 	projectile.global_position = _caster.global_position
 	projectile.rotation = direction.angle()
+	projectile.z_index = 100  # Render above most things
 
 	# Collision shape
 	var shape := CircleShape2D.new()
@@ -407,6 +409,10 @@ func _create_projectile(direction: Vector2) -> Node2D:
 	var visual := _create_projectile_visual(current_ability.shape_size)
 	projectile.add_child(visual)
 
+	Debug.log("Combat", "Spawning projectile at %s direction %s speed %s" % [
+		_caster.global_position, direction, current_ability.projectile_speed
+	])
+
 	# Movement script
 	var script := GDScript.new()
 	script.source_code = """
@@ -418,7 +424,7 @@ var caster: Node2D
 var lifetime: float = 3.0
 
 func _process(delta: float) -> void:
-	position += direction * speed * delta
+	global_position += direction * speed * delta
 	lifetime -= delta
 	if lifetime <= 0:
 		queue_free()
@@ -443,36 +449,37 @@ func _create_projectile_visual(size: float) -> Node2D:
 	var container := Node2D.new()
 	container.name = "ProjectileVisual"
 
+	var radius := maxf(size * 0.5, 8.0)  # Minimum 8 pixel radius for visibility
+	var segments := 16
+
 	# Main circle (filled)
 	var circle := Polygon2D.new()
 	var points := PackedVector2Array()
-	var radius := size * 0.5
-	var segments := 12
 	for i in range(segments):
 		var angle := (float(i) / segments) * TAU
 		points.append(Vector2(cos(angle), sin(angle)) * radius)
 	circle.polygon = points
-	circle.color = Color(0.8, 0.2, 0.9, 0.8)  # Purple/magenta for enemy projectile
+	circle.color = Color(0.9, 0.3, 0.9, 0.9)  # Bright purple/magenta
 	container.add_child(circle)
 
 	# Outline circle
 	var outline := Line2D.new()
-	outline.width = 2.0
-	outline.default_color = Color(1.0, 1.0, 1.0, 0.9)
+	outline.width = 3.0
+	outline.default_color = Color(1.0, 1.0, 1.0, 1.0)
 	for i in range(segments + 1):
 		var angle := (float(i) / segments) * TAU
 		outline.add_point(Vector2(cos(angle), sin(angle)) * radius)
 	container.add_child(outline)
 
-	# Direction indicator (small triangle pointing forward)
-	var arrow := Polygon2D.new()
-	arrow.polygon = PackedVector2Array([
-		Vector2(radius * 0.8, 0),
-		Vector2(radius * 0.3, -radius * 0.3),
-		Vector2(radius * 0.3, radius * 0.3)
-	])
-	arrow.color = Color(1.0, 1.0, 1.0, 0.9)
-	container.add_child(arrow)
+	# Center dot for visibility
+	var center := Polygon2D.new()
+	var center_points := PackedVector2Array()
+	for i in range(8):
+		var angle := (float(i) / 8) * TAU
+		center_points.append(Vector2(cos(angle), sin(angle)) * 3.0)
+	center.polygon = center_points
+	center.color = Color(1.0, 1.0, 1.0, 1.0)
+	container.add_child(center)
 
 	return container
 
