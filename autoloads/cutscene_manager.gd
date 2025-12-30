@@ -128,7 +128,7 @@ func play(cutscene_id: String) -> void:
 
 ## Advance the cutscene (called when player taps)
 func advance() -> void:
-	Debug.info("Cutscene", "advance() called", {"is_playing": is_playing, "is_waiting_for_input": is_waiting_for_input})
+	Debug.info("Cutscene", "advance() called", {"is_playing": is_playing, "is_waiting_for_input": is_waiting_for_input, "action_index": current_action_index})
 	if not is_playing:
 		Debug.warn("Cutscene", "advance() ignored - not playing")
 		return
@@ -138,6 +138,7 @@ func advance() -> void:
 	if is_waiting_for_input:
 		Debug.info("Cutscene", "Advancing to next action")
 		is_waiting_for_input = false
+		current_action_index += 1  # Move to next action before executing
 		_execute_next_action()
 	else:
 		Debug.info("Cutscene", "Not waiting for input, ignoring advance")
