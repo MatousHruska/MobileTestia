@@ -28,6 +28,7 @@ This guide explains how to set up and use the Excel database system for MobileTe
    - `QuestDatabase.bas`
    - `NPCDatabase.bas` (NEW)
    - `GameplayDatabase.bas` (NEW - for Consumables, StatusEffects, Zones)
+   - `CutsceneDatabase.bas` (NEW - for Cutscenes)
    - `MasterExport.bas`
 5. Save workbook as `.xlsm` (macro-enabled)
 
@@ -81,6 +82,7 @@ This guide explains how to set up and use the Excel database system for MobileTe
 - **Skills** - Player skills and abilities
 - **StatusEffects** - Buffs, debuffs, DoTs
 - **Zones** - Game areas and their properties
+- **Cutscenes** - Scripted cutscene sequences
 
 ---
 
@@ -479,6 +481,58 @@ This guide explains how to set up and use the Excel database system for MobileTe
 
 ---
 
+### Cutscenes (NEW)
+| Column | Type | Required | Example |
+|--------|------|----------|---------|
+| id | string | Yes | `cut_crypt_vampire` |
+| name | string | Yes | `Vampire Lord Entrance` |
+| trigger | dropdown | Yes | `zone_enter`, `quest_complete` |
+| trigger_target | string | Yes | `zone_crypt` |
+| once_only | dropdown | Yes | `true`, `false` |
+| actions | string | Yes | `dialogue:Vampire Lord:Muhahahaha` |
+
+**ID Prefix:** `cut_`
+
+**Valid Triggers:**
+- `zone_enter` - Plays when player enters a zone (trigger_target = zone_id)
+- `quest_complete` - Plays when quest is completed (trigger_target = quest_id)
+- `quest_start` - Plays when quest is started (trigger_target = quest_id)
+- `interact` - Plays when interacting with object (trigger_target = object_id)
+- `manual` - Only played via code (trigger_target = n/a)
+
+**Actions Format:**
+Actions are separated by `###` and each action uses `:` to separate type from parameters.
+
+**Action Types:**
+| Type | Parameters | Example |
+|------|------------|---------|
+| `dialogue` | `speaker:text[:portrait]` | `dialogue:Guard:Hello there!` |
+| `wait` | `duration` | `wait:1.5` |
+| `fade_in` | `duration` | `fade_in:0.5` |
+| `fade_out` | `duration` | `fade_out:0.5` |
+| `move` | `target:x:y:speed[:wait]` | `move:player:400:300:100:true` |
+| `spawn` | `npc_id:x:y` | `spawn:ene_guard:100:200` |
+| `despawn` | `target` | `despawn:ene_guard` |
+| `camera_pan` | `x:y:duration` | `camera_pan:400:200:1.0` |
+| `camera_shake` | `intensity:duration` | `camera_shake:0.5:0.3` |
+| `camera_reset` | `duration` | `camera_reset:0.5` |
+| `set_facing` | `target:direction` | `set_facing:player:left` |
+| `play_sound` | `sound_id` | `play_sound:sfx_thunder` |
+| `parallel` | `action1\|action2\|...` | `parallel:move:npc1:100:100:50\|move:npc2:200:100:50` |
+
+**Full Example:**
+```
+camera_pan:400:200:1###wait:0.5###dialogue:Vampire Lord:Muhahahaha###move:ene_vampire_lord:400:350:100###camera_pan:400:350:1
+```
+
+**Notes:**
+- During cutscenes, player loses control and enemy AI is paused
+- Camera stops following player and can be panned manually
+- Tap anywhere to advance dialogue or speed up typewriter effect
+- `once_only: true` means cutscene plays only once per save file
+
+---
+
 ## Data Validation (Dropdowns)
 
 To prevent typos, add Data Validation to these columns:
@@ -511,6 +565,8 @@ To prevent typos, add Data Validation to these columns:
 | Zones | zone_type | `outdoor,dungeon,cave,town,boss_room,camp` |
 | Quests | type | `main,side,daily,event,tutorial` |
 | QuestObjectives | type | `kill,collect,talk,explore,escort,defend,craft,use` |
+| Cutscenes | trigger | `zone_enter,quest_complete,quest_start,interact,manual` |
+| Cutscenes | once_only | `true,false` |
 
 ### Valid Stat Modifiers (for Affixes):
 `melee_damage,ranged_damage,magic_damage,fire_damage,cold_damage,lightning_damage,poison_damage,strength,dexterity,intelligence,vitality,energy,luck,armor,magic_resistance,dodge_chance,attack_speed,critical_chance,critical_damage,life,mana,life_regen,mana_regen,movement_speed`
@@ -543,6 +599,7 @@ To prevent typos, add Data Validation to these columns:
 | `zone_` | Zones | `zone_dark_forest`, `zone_goblin_camp` |
 | `qst_` | Quests | `qst_main_intro`, `qst_side_bones` |
 | `obj_` | Quest Objectives | `obj_kill_zombies_5`, `obj_collect_bones` |
+| `cut_` | Cutscenes | `cut_crypt_vampire`, `cut_intro_tutorial` |
 | `debug_` | Debug Items | `debug_god_sword`, `debug_all_stats` |
 
 ### Examples:
@@ -657,6 +714,7 @@ After running `ExportAll`, you should have these files:
 - `skills.json`
 - `status_effects.json`
 - `zones.json`
+- `cutscenes.json`
 
 ---
 
@@ -714,6 +772,14 @@ shop_armor_basic	Basic Armor	arm_chest_leather	base	-1	0	1.5	gold	1	10
 shop_consumables	Potions & Scrolls	con_potion_health_small	consumable	50	24	2.0	gold	1	100
 shop_consumables	Potions & Scrolls	con_potion_mana_small	consumable	50	24	2.0	gold	1	100
 shop_smithing	Smithing Materials	mat_iron_ore	base	20	48	1.8	gold	5	100
+```
+
+**Cutscenes:**
+```
+id	name	trigger	trigger_target	once_only	actions
+cut_crypt_vampire	Vampire Lord Entrance	zone_enter	zone_crypt	true	camera_pan:400:200:1###wait:0.5###dialogue:Vampire Lord:Muhahahaha! Another fool dares enter my domain!###move:ene_vampire_lord:400:350:100###camera_pan:400:350:1###camera_reset:0.5
+cut_tutorial_intro	Tutorial Introduction	zone_enter	zone_training_grounds	true	fade_in:1###dialogue:Guide:Welcome, adventurer! Let me teach you the basics.###dialogue:Guide:Tap to attack enemies. Use the joystick to move.###fade_out:0.5
+cut_boss_defeated	Boss Victory	manual	n/a	false	camera_shake:0.8:0.5###wait:0.5###dialogue:Narrator:Victory! The beast has fallen.###fade_out:1
 ```
 
 ---
