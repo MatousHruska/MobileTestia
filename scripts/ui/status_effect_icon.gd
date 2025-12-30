@@ -9,6 +9,7 @@ var effect_type: String = ""
 var is_debuff: bool = true
 var duration: float = 0.0
 var max_duration: float = 0.0
+var is_permanent: bool = false
 
 ## Visual components
 var _background: ColorRect
@@ -26,6 +27,10 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	# Permanent effects don't count down
+	if is_permanent:
+		return
+
 	if duration > 0:
 		duration -= delta
 		_update_timer_display()
@@ -58,9 +63,15 @@ func _setup_visuals() -> void:
 	_duration_bar.offset_left = 2
 	_duration_bar.offset_right = -2
 	_duration_bar.custom_minimum_size.y = 4
-	_duration_bar.max_value = max_duration
-	_duration_bar.value = duration
 	_duration_bar.show_percentage = false
+
+	if is_permanent:
+		# Permanent effects show full bar
+		_duration_bar.max_value = 1.0
+		_duration_bar.value = 1.0
+	else:
+		_duration_bar.max_value = max_duration
+		_duration_bar.value = duration
 
 	var bar_style := StyleBoxFlat.new()
 	bar_style.bg_color = Color(1.0, 1.0, 1.0, 0.8)
@@ -93,12 +104,14 @@ func _setup_visuals() -> void:
 
 func _update_timer_display() -> void:
 	if _timer_label:
-		if duration >= 10:
+		if is_permanent:
+			_timer_label.text = "∞"
+		elif duration >= 10:
 			_timer_label.text = "%d" % int(duration)
 		else:
 			_timer_label.text = "%.1f" % duration
 
-	if _duration_bar:
+	if _duration_bar and not is_permanent:
 		_duration_bar.value = duration
 
 
@@ -122,15 +135,28 @@ func _get_effect_color() -> Color:
 
 func setup(p_effect_type: String, p_duration: float, p_is_debuff: bool = true) -> void:
 	effect_type = p_effect_type
-	duration = p_duration
-	max_duration = p_duration
 	is_debuff = p_is_debuff
+
+	# Negative duration or zero means permanent effect
+	if p_duration < 0:
+		is_permanent = true
+		duration = 0.0
+		max_duration = 0.0
+	else:
+		is_permanent = false
+		duration = p_duration
+		max_duration = p_duration
 
 	if is_inside_tree():
 		_setup_visuals()
 
 
 func refresh_duration(new_duration: float) -> void:
+	# Handle permanent effect refresh
+	if new_duration < 0:
+		is_permanent = true
+		return
+
 	duration = new_duration
 	if new_duration > max_duration:
 		max_duration = new_duration
