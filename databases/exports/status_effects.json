@@ -10,7 +10,8 @@
       "tick_interval": 1,
       "visual_effect": "rot_particles",
       "stackable": false,
-      "max_stacks": 1
+      "max_stacks": 1,
+      "show_in_hud": true
     }
   ]
 }
