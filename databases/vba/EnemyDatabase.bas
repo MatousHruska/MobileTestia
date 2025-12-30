@@ -48,6 +48,7 @@ Private Const COL_EA_CONDITIONS As Integer = 17    ' Conditions like "distance>5
 Private Const COL_EA_EFFECTS_ON_HIT As Integer = 18 ' Effects: "stun:0.5", "burn:3:5", "knockback:100"
 Private Const COL_EA_PROJECTILE_SPEED As Integer = 19 ' For projectile abilities
 Private Const COL_EA_DASH_SPEED As Integer = 20    ' For dash abilities
+Private Const COL_EA_CARDINAL_ONLY As Integer = 21 ' Snap attack to 4 cardinal directions (TRUE/FALSE, default TRUE)
 
 ' Column indices for EnemyVariants
 Private Const COL_EV_ID As Integer = 1
@@ -282,6 +283,13 @@ Public Sub ExportEnemyAbilities()
         End If
         If dashSpeed > 0 Then
             json = json & "," & vbCrLf & "      ""dash_speed"": " & FormatJsonNumber(dashSpeed)
+        End If
+
+        ' Add cardinal_only if explicitly set to FALSE (default is TRUE)
+        Dim cardinalOnly As String
+        cardinalOnly = UCase(Trim(GetDefaultString(ws.Cells(i, COL_EA_CARDINAL_ONLY), "TRUE")))
+        If cardinalOnly = "FALSE" Then
+            json = json & "," & vbCrLf & "      ""cardinal_only"": false"
         End If
 
         json = json & vbCrLf & "    }"

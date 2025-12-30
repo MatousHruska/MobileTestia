@@ -23,6 +23,8 @@ signal attack_performed
 @export var attack_radius: float = 24.0
 @export var attack_cooldown: float = 1.0
 @export var face_target: bool = true
+@export var cardinal_attack_alignment: bool = true  ## Align on X or Y axis before attacking
+@export var alignment_tolerance: float = 16.0  ## Pixels tolerance for "aligned"
 
 @export_group("Movement")
 @export var chase_speed_multiplier: float = 1.0  ## Multiply base speed when chasing
@@ -230,6 +232,16 @@ func _do_chase() -> void:
 func _do_attack() -> void:
 	state = State.COMBAT
 
+	if not _has_valid_target():
+		return
+
+	# Check cardinal alignment if required
+	if cardinal_attack_alignment:
+		if not AbilityData.is_cardinally_aligned(_owner.global_position, target.global_position, alignment_tolerance):
+			# Not aligned - move to align instead of attacking
+			_do_align_for_attack()
+			return
+
 	# Attack if cooldown ready
 	if _attack_timer <= 0:
 		# Only stop moving during the actual attack
@@ -237,10 +249,29 @@ func _do_attack() -> void:
 		_perform_attack()
 		_attack_timer = attack_cooldown
 	else:
-		# Still in attack range but on cooldown - keep chasing to stay on target
-		if _has_valid_target():
-			var direction := _owner.global_position.direction_to(target.global_position)
-			_owner.set_move_direction(direction)
+		# Still in attack range but on cooldown - keep moving to stay aligned
+		_do_align_for_attack()
+
+
+func _do_align_for_attack() -> void:
+	## Move to align on X or Y axis with target for cardinal attack
+	if not _has_valid_target():
+		return
+
+	var align_dir := AbilityData.get_cardinal_alignment_axis(_owner.global_position, target.global_position)
+
+	if align_dir == Vector2.ZERO:
+		# Already aligned, stop
+		_owner.stop_movement()
+		return
+
+	# Move perpendicular to get aligned
+	_owner.set_move_direction(align_dir)
+
+	# Face target while aligning (not movement direction)
+	if face_target and _owner.has_method("_update_facing_from_direction"):
+		var face_dir := _owner.global_position.direction_to(target.global_position)
+		_owner._update_facing_from_direction(AbilityData.snap_to_cardinal(face_dir))
 
 
 func _do_return_home() -> void:

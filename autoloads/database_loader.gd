@@ -271,6 +271,7 @@ func create_ability_data(ability_id: String):  # Returns AbilityData
 	ability.effects_on_hit = data.get("effects_on_hit", "")
 	ability.projectile_speed = float(data.get("projectile_speed", 0.0))
 	ability.dash_speed = float(data.get("dash_speed", 0.0))
+	ability.cardinal_only = data.get("cardinal_only", true)  # Default true for cardinal snapping
 
 	return ability
 

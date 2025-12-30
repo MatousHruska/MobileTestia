@@ -296,7 +296,18 @@ func _start_dash_attack() -> void:
 		return
 
 	_dash_start_pos = _caster.global_position
-	_dash_target_pos = current_target.global_position
+
+	# Calculate dash direction and target
+	var raw_direction := _caster.global_position.direction_to(current_target.global_position)
+	var direction := raw_direction
+
+	# Snap to cardinal if required
+	if current_ability.cardinal_only:
+		direction = AbilityData.snap_to_cardinal(raw_direction)
+
+	# Calculate dash target position along the snapped direction
+	var dash_distance := _caster.global_position.distance_to(current_target.global_position)
+	_dash_target_pos = _dash_start_pos + direction * dash_distance
 	_dash_progress = 0.0
 
 
@@ -308,7 +319,11 @@ func _execute_projectile() -> void:
 
 	var direction := Vector2.RIGHT
 	if current_target:
-		direction = (_caster.global_position.direction_to(current_target.global_position))
+		direction = _caster.global_position.direction_to(current_target.global_position)
+
+	# Snap to cardinal if required
+	if current_ability.cardinal_only:
+		direction = AbilityData.snap_to_cardinal(direction)
 
 	# Create projectile node
 	var projectile := _create_projectile(direction)
@@ -324,8 +339,13 @@ func _execute_teleport_attack() -> void:
 		_start_recovery()
 		return
 
-	# Calculate position behind target
+	# Calculate position behind target (opposite of attack direction)
 	var direction := current_target.global_position.direction_to(_caster.global_position)
+
+	# Snap to cardinal if required
+	if current_ability.cardinal_only:
+		direction = AbilityData.snap_to_cardinal(direction)
+
 	var teleport_pos := current_target.global_position + direction * 30.0
 
 	_caster.global_position = teleport_pos
@@ -358,6 +378,10 @@ func _spawn_ability_hitbox() -> void:
 		direction = _caster.global_position.direction_to(current_target.global_position)
 	elif "facing_direction" in _caster:
 		direction = _caster.facing_direction
+
+	# Snap to cardinal if required
+	if current_ability.cardinal_only:
+		direction = AbilityData.snap_to_cardinal(direction)
 
 	_hitbox_spawner.spawn_hitbox(current_ability, _caster, direction)
 

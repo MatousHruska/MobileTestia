@@ -134,6 +134,14 @@ enum DamageType {
 @export var dash_speed: float = 0.0  ## For dash abilities
 
 #===============================================================================
+# DIRECTIONAL CONSTRAINTS
+#===============================================================================
+
+## If true, attack direction snaps to 4 cardinal directions (up/down/left/right)
+## If false, attack can be aimed in any direction including diagonals
+@export var cardinal_only: bool = true
+
+#===============================================================================
 # STATIC HELPERS
 #===============================================================================
 
@@ -203,6 +211,47 @@ static func damage_type_to_string(d: DamageType) -> String:
 		DamageType.CHAOS: return "chaos"
 		DamageType.PURE: return "pure"
 		_: return "physical"
+
+
+static func snap_to_cardinal(direction: Vector2) -> Vector2:
+	## Snap a direction vector to the nearest cardinal direction (up/down/left/right)
+	if direction.is_zero_approx():
+		return Vector2.RIGHT
+
+	# Find which cardinal is closest based on the dominant axis
+	if absf(direction.x) >= absf(direction.y):
+		# Horizontal dominant
+		return Vector2.RIGHT if direction.x >= 0 else Vector2.LEFT
+	else:
+		# Vertical dominant
+		return Vector2.DOWN if direction.y >= 0 else Vector2.UP
+
+
+static func get_cardinal_alignment_axis(from_pos: Vector2, to_pos: Vector2) -> Vector2:
+	## Get which axis to move along to align with target for cardinal attack
+	## Returns the perpendicular movement direction to align, or Vector2.ZERO if aligned
+	var diff := to_pos - from_pos
+	var tolerance := 16.0  # Pixels tolerance for "aligned"
+
+	# Check if already aligned on one axis
+	if absf(diff.x) <= tolerance:
+		return Vector2.ZERO  # Aligned vertically
+	if absf(diff.y) <= tolerance:
+		return Vector2.ZERO  # Aligned horizontally
+
+	# Pick axis with shorter distance to align (move perpendicular to attack direction)
+	if absf(diff.x) < absf(diff.y):
+		# Closer to vertical alignment - move horizontally to match X
+		return Vector2.RIGHT if diff.x > 0 else Vector2.LEFT
+	else:
+		# Closer to horizontal alignment - move vertically to match Y
+		return Vector2.DOWN if diff.y > 0 else Vector2.UP
+
+
+static func is_cardinally_aligned(from_pos: Vector2, to_pos: Vector2, tolerance: float = 16.0) -> bool:
+	## Check if two positions are aligned on either X or Y axis
+	var diff := to_pos - from_pos
+	return absf(diff.x) <= tolerance or absf(diff.y) <= tolerance
 
 
 #===============================================================================
