@@ -350,7 +350,18 @@ func _connect_player_signals() -> void:
 func _on_zone_changed(zone_id: String) -> void:
 	# Small delay to let zone load
 	await get_tree().create_timer(0.5).timeout
-	trigger_event("zone_enter", {"zone_id": zone_id})
+
+	# Look up zone name from database
+	var zone_name := ""
+	for zone in DatabaseLoader.zones_list:
+		# Match by id (zone_meadow) or by file basename (test_zone -> zone_test_zone)
+		var db_zone_id: String = zone.get("id", "")
+		if db_zone_id == zone_id or db_zone_id == "zone_" + zone_id or db_zone_id.ends_with("_" + zone_id):
+			zone_name = zone.get("name", "")
+			break
+
+	# Pass both zone_id and zone_name for flexible filtering
+	trigger_event("zone_enter", {"zone_id": zone_id, "zone_name": zone_name})
 
 
 func _on_quest_started(quest_id: String) -> void:
