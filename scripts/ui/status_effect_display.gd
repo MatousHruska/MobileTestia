@@ -39,10 +39,17 @@ func _on_player_ready() -> void:
 	# Find the StatusEffectManager
 	var manager := player.get_node_or_null("StatusEffectManager") as StatusEffectManager
 	if manager:
+		# Disconnect old signals if reconnecting (zone change)
+		if manager.effect_applied.is_connected(_on_effect_applied):
+			return  # Already connected to this manager
+
 		manager.effect_applied.connect(_on_effect_applied)
 		manager.effect_removed.connect(_on_effect_removed)
 		manager.effect_tick.connect(_on_effect_tick)
 		Debug.log("UI", "StatusEffectDisplay connected to StatusEffectManager")
+
+		# Sync with existing effects (loaded from persistence)
+		_sync_with_manager(manager)
 
 
 func _on_effect_applied(effect_type: String, duration: float, show_in_hud: bool = true) -> void:
@@ -104,3 +111,23 @@ func clear_all() -> void:
 		if is_instance_valid(icon):
 			icon.queue_free()
 	_effect_icons.clear()
+
+
+## Sync display with current effects from manager (for zone changes / reconnection)
+func _sync_with_manager(manager: StatusEffectManager) -> void:
+	# Clear any stale icons from previous zone
+	clear_all()
+
+	# Get all HUD-visible effects and display them
+	var effects := manager.get_hud_visible_effects()
+	for effect_type in effects:
+		var effect_data: Dictionary = effects[effect_type]
+		var duration: float = effect_data.get("remaining_duration", 0.0)
+		var max_duration: float = effect_data.get("max_duration", 0.0)
+		var is_debuff: bool = effect_data.get("is_debuff", true)
+
+		# For permanent effects, use a special display
+		if max_duration <= 0:
+			duration = -1.0  # Signal to StatusEffectIcon that it's permanent
+
+		_add_effect_icon(effect_type, duration, is_debuff)
