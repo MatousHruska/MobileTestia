@@ -48,25 +48,22 @@ func _process(delta: float) -> void:
 			_advance_hint.show()
 
 
-func _input(event: InputEvent) -> void:
-	if not visible:
-		return
-
+## Handle clicks/taps on the background dimmer
+func _on_background_input(event: InputEvent) -> void:
 	# Handle tap/click to advance
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if _is_typing:
-			_complete_typewriter()
-		else:
-			advance_requested.emit()
-		get_viewport().set_input_as_handled()
+		_handle_advance_tap()
 
 	# Handle touch
 	if event is InputEventScreenTouch and event.pressed:
-		if _is_typing:
-			_complete_typewriter()
-		else:
-			advance_requested.emit()
-		get_viewport().set_input_as_handled()
+		_handle_advance_tap()
+
+
+func _handle_advance_tap() -> void:
+	if _is_typing:
+		_complete_typewriter()
+	else:
+		advance_requested.emit()
 
 
 #===============================================================================
@@ -151,6 +148,7 @@ func _build_ui() -> void:
 	_background_dimmer.color = Color(0, 0, 0, 0.3)
 	_background_dimmer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_background_dimmer.mouse_filter = Control.MOUSE_FILTER_STOP
+	_background_dimmer.gui_input.connect(_on_background_input)
 	add_child(_background_dimmer)
 
 	# Main panel at bottom
