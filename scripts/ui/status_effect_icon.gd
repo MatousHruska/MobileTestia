@@ -1,0 +1,138 @@
+extends Control
+class_name StatusEffectIcon
+## StatusEffectIcon - Individual status effect icon with timer display
+##
+## Shows an icon with remaining duration, used for both DoTs and buffs
+
+## Effect data
+var effect_type: String = ""
+var is_debuff: bool = true
+var duration: float = 0.0
+var max_duration: float = 0.0
+
+## Visual components
+var _background: ColorRect
+var _icon: ColorRect
+var _timer_label: Label
+var _duration_bar: ProgressBar
+
+## Icon size
+const ICON_SIZE := Vector2(32, 32)
+
+
+func _ready() -> void:
+	custom_minimum_size = ICON_SIZE
+	_setup_visuals()
+
+
+func _process(delta: float) -> void:
+	if duration > 0:
+		duration -= delta
+		_update_timer_display()
+
+		if duration <= 0:
+			queue_free()
+
+
+func _setup_visuals() -> void:
+	# Background (border color indicates buff/debuff)
+	_background = ColorRect.new()
+	_background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_background.color = Color(0.6, 0.1, 0.1, 0.9) if is_debuff else Color(0.1, 0.5, 0.1, 0.9)
+	add_child(_background)
+
+	# Icon placeholder (inner colored square)
+	_icon = ColorRect.new()
+	_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_icon.offset_left = 2
+	_icon.offset_top = 2
+	_icon.offset_right = -2
+	_icon.offset_bottom = -8  # Leave room for timer
+	_icon.color = _get_effect_color()
+	add_child(_icon)
+
+	# Duration bar at bottom
+	_duration_bar = ProgressBar.new()
+	_duration_bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	_duration_bar.offset_top = -6
+	_duration_bar.offset_left = 2
+	_duration_bar.offset_right = -2
+	_duration_bar.custom_minimum_size.y = 4
+	_duration_bar.max_value = max_duration
+	_duration_bar.value = duration
+	_duration_bar.show_percentage = false
+
+	var bar_style := StyleBoxFlat.new()
+	bar_style.bg_color = Color(1.0, 1.0, 1.0, 0.8)
+	bar_style.corner_radius_bottom_left = 1
+	bar_style.corner_radius_bottom_right = 1
+	_duration_bar.add_theme_stylebox_override("fill", bar_style)
+
+	var bar_bg := StyleBoxFlat.new()
+	bar_bg.bg_color = Color(0.2, 0.2, 0.2, 0.8)
+	bar_bg.corner_radius_bottom_left = 1
+	bar_bg.corner_radius_bottom_right = 1
+	_duration_bar.add_theme_stylebox_override("background", bar_bg)
+
+	add_child(_duration_bar)
+
+	# Timer label (centered on icon)
+	_timer_label = Label.new()
+	_timer_label.set_anchors_preset(Control.PRESET_CENTER)
+	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_timer_label.add_theme_font_size_override("font_size", 10)
+	_timer_label.add_theme_color_override("font_color", Color.WHITE)
+	_timer_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1.0))
+	_timer_label.add_theme_constant_override("shadow_offset_x", 1)
+	_timer_label.add_theme_constant_override("shadow_offset_y", 1)
+	add_child(_timer_label)
+
+	_update_timer_display()
+
+
+func _update_timer_display() -> void:
+	if _timer_label:
+		if duration >= 10:
+			_timer_label.text = "%d" % int(duration)
+		else:
+			_timer_label.text = "%.1f" % duration
+
+	if _duration_bar:
+		_duration_bar.value = duration
+
+
+func _get_effect_color() -> Color:
+	match effect_type:
+		"rot":
+			return Color(0.4, 0.25, 0.1)  # Brown/rot color
+		"poison":
+			return Color(0.2, 0.5, 0.1)  # Green
+		"burn":
+			return Color(0.9, 0.4, 0.1)  # Orange
+		"bleed":
+			return Color(0.7, 0.1, 0.1)  # Dark red
+		"slow":
+			return Color(0.3, 0.3, 0.7)  # Blue-ish
+		"stun":
+			return Color(0.8, 0.8, 0.2)  # Yellow
+		_:
+			return Color(0.5, 0.5, 0.5)  # Gray default
+
+
+func setup(p_effect_type: String, p_duration: float, p_is_debuff: bool = true) -> void:
+	effect_type = p_effect_type
+	duration = p_duration
+	max_duration = p_duration
+	is_debuff = p_is_debuff
+
+	if is_inside_tree():
+		_setup_visuals()
+
+
+func refresh_duration(new_duration: float) -> void:
+	duration = new_duration
+	if new_duration > max_duration:
+		max_duration = new_duration
+		if _duration_bar:
+			_duration_bar.max_value = max_duration
