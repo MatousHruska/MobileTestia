@@ -50,7 +50,8 @@ func setup(ability_data, windup_time: float = 0.0) -> void:
 	windup_duration = windup_time
 
 	if ability_data:
-		damage_type = ability_data.damage_type if ability_data.damage_type else "physical"
+		# Convert enum to string for damage type
+		damage_type = AbilityData.damage_type_to_string(ability_data.damage_type)
 		base_color = DAMAGE_COLORS.get(damage_type, DAMAGE_COLORS["physical"])
 
 	# Start in windup if there's windup time
