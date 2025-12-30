@@ -37,7 +37,7 @@
       "name": "Vampire",
       "type": "Normal",
       "base_health": 120,
-      "base_damage": 15,
+      "base_damage": 1,
       "armor": 5,
       "move_speed": 70,
       "attack_speed": 1,
@@ -45,7 +45,7 @@
       "detection_range": 200,
       "xp_reward": 50,
       "loot_table_id": "loot_rare",
-      "ability_ids": "abl_vampire_drain,abl_vampire_bats,abl_vampire_strike,abl_vampire_aoe",
+      "ability_ids": "abl_vampire_bats",
       "behavior_profile": "bhv_vampire_cunning"
     },
     {
@@ -53,7 +53,7 @@
       "name": "Vampire Lord",
       "type": "Miniboss",
       "base_health": 400,
-      "base_damage": 25,
+      "base_damage": 2,
       "armor": 15,
       "move_speed": 80,
       "attack_speed": 1,
@@ -61,7 +61,7 @@
       "detection_range": 250,
       "xp_reward": 150,
       "loot_table_id": "loot_vampire_lord",
-      "ability_ids": "abl_vampire_drain,abl_vampire_bats,abl_vampire_strike,abl_vampire_aoe",
+      "ability_ids": "abl_vampire_bats",
       "behavior_profile": "bhv_vampire_cunning"
     }
   ]

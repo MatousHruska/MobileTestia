@@ -69,7 +69,7 @@
       "damage_type": "physical",
       "cooldown": 5,
       "range_min": 40,
-      "range_max": 120,
+      "range_max": 250,
       "shape": "circle",
       "shape_size": 40,
       "shape_angle": 0,
@@ -140,7 +140,8 @@
       "priority": 1,
       "conditions": "",
       "effects_on_hit": "",
-      "projectile_speed": 120
+      "projectile_speed": 120,
+      "cardinal_only": false
     },
     {
       "id": "abl_vampire_strike",
