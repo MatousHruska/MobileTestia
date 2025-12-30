@@ -29,6 +29,7 @@ var status_effects: Dictionary = {}
 var zones: Dictionary = {}
 var chests: Dictionary = {}
 var spawn_points: Dictionary = {}
+var cutscenes: Dictionary = {}
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -44,6 +45,7 @@ var dialogues_list: Array = []
 var zones_list: Array = []
 var chests_list: Array = []
 var spawn_points_list: Array = []
+var cutscenes_list: Array = []
 
 ## Signals
 signal databases_loaded
@@ -96,6 +98,9 @@ func load_all_databases() -> void:
 
 	# Spawn points
 	success = _load_database("spawn_points.json", "spawn_points", spawn_points, spawn_points_list) and success
+
+	# Cutscenes
+	success = _load_database("cutscenes.json", "cutscenes", cutscenes, cutscenes_list) and success
 
 	if success:
 		Debug.info("Database", "All databases loaded successfully")
@@ -499,6 +504,38 @@ func get_dialogue(id: String) -> Dictionary:
 func get_dialogue_frames(id: String) -> Array:
 	var dialogue := get_dialogue(id)
 	return dialogue.get("frames", [])
+
+
+#===============================================================================
+# CUTSCENE ACCESS
+#===============================================================================
+
+## Get cutscene by id
+func get_cutscene(id: String) -> Dictionary:
+	return cutscenes.get(id, {})
+
+
+## Get cutscene actions by id (convenience function)
+func get_cutscene_actions(id: String) -> Array:
+	var cutscene := get_cutscene(id)
+	return cutscene.get("actions", [])
+
+
+## Get all cutscenes for a trigger type
+func get_cutscenes_by_trigger(trigger: String) -> Array:
+	var result: Array = []
+	for cutscene in cutscenes_list:
+		if cutscene.get("trigger", "") == trigger:
+			result.append(cutscene)
+	return result
+
+
+## Get cutscene for zone entry (convenience function)
+func get_zone_entry_cutscene(zone_id: String) -> Dictionary:
+	for cutscene in cutscenes_list:
+		if cutscene.get("trigger", "") == "zone_enter" and cutscene.get("trigger_zone", "") == zone_id:
+			return cutscene
+	return {}
 
 
 #===============================================================================
@@ -906,4 +943,5 @@ func print_stats() -> void:
 		"zones": zones.size(),
 		"chests": chests.size(),
 		"spawn_points": spawn_points.size(),
+		"cutscenes": cutscenes.size(),
 	})
