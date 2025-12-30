@@ -28,7 +28,45 @@ var _action_handlers: Dictionary = {}
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_register_action_handlers()
+
+	# Connect to zone changes to trigger zone_enter cutscenes
+	Game.zone_changed.connect(_on_zone_changed)
+
 	Debug.info("Cutscene", "CutsceneManager initialized")
+
+
+## Called when player enters a new zone
+func _on_zone_changed(zone_name: String) -> void:
+	# Check for zone_enter cutscene
+	var cutscene := DatabaseLoader.get_zone_entry_cutscene(zone_name)
+	if cutscene.is_empty():
+		return
+
+	var cutscene_id: String = cutscene.get("id", "")
+	var once_only: bool = cutscene.get("once_only", false)
+
+	# Check if already played (for once_only cutscenes)
+	if once_only and _has_played_cutscene(cutscene_id):
+		return
+
+	# Delay slightly to let zone finish loading
+	await get_tree().create_timer(0.1).timeout
+
+	play(cutscene_id)
+
+	if once_only:
+		_mark_cutscene_played(cutscene_id)
+
+
+## Track played cutscenes (for once_only)
+var _played_cutscenes: Array[String] = []
+
+func _has_played_cutscene(cutscene_id: String) -> bool:
+	return cutscene_id in _played_cutscenes
+
+func _mark_cutscene_played(cutscene_id: String) -> void:
+	if cutscene_id not in _played_cutscenes:
+		_played_cutscenes.append(cutscene_id)
 
 
 func _register_action_handlers() -> void:
