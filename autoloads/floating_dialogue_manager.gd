@@ -351,17 +351,17 @@ func _on_zone_changed(zone_id: String) -> void:
 	# Small delay to let zone load
 	await get_tree().create_timer(0.5).timeout
 
-	# Look up zone name from database
-	var zone_name := ""
+	# Look up database zone ID (e.g., "zone_meadow")
+	var db_zone_id := ""
 	for zone in DatabaseLoader.zones_list:
-		# Match by id (zone_meadow) or by file basename (test_zone -> zone_test_zone)
-		var db_zone_id: String = zone.get("id", "")
-		if db_zone_id == zone_id or db_zone_id == "zone_" + zone_id or db_zone_id.ends_with("_" + zone_id):
-			zone_name = zone.get("name", "")
+		var id: String = zone.get("id", "")
+		# Match by exact id, or by file basename (test_zone -> zone_test_zone)
+		if id == zone_id or id == "zone_" + zone_id or id.ends_with("_" + zone_id):
+			db_zone_id = id
 			break
 
-	# Pass both zone_id and zone_name for flexible filtering
-	trigger_event("zone_enter", {"zone_id": zone_id, "zone_name": zone_name})
+	# Use database zone ID for filtering
+	trigger_event("zone_enter", {"zone_id": db_zone_id if db_zone_id else zone_id})
 
 
 func _on_quest_started(quest_id: String) -> void:
