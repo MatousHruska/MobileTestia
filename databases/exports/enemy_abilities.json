@@ -18,7 +18,7 @@
       "animation": "attack",
       "priority": 1,
       "conditions": "",
-      "effects_on_hit": "poison:3:2"
+      "effects_on_hit": "rot:5:3"
     },
     {
       "id": "abl_zombie_slam",
