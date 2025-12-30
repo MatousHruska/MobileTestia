@@ -403,11 +403,8 @@ func _create_projectile(direction: Vector2) -> Node2D:
 	collision.shape = shape
 	projectile.add_child(collision)
 
-	# Visual
-	var visual := ColorRect.new()
-	visual.size = Vector2(current_ability.shape_size, current_ability.shape_size * 0.5)
-	visual.position = -visual.size / 2.0
-	visual.color = Color(1.0, 0.5, 0.2)
+	# Visual placeholder - circular projectile with outline
+	var visual := _create_projectile_visual(current_ability.shape_size)
 	projectile.add_child(visual)
 
 	# Movement script
@@ -439,6 +436,45 @@ func _process(delta: float) -> void:
 	projectile.body_entered.connect(_on_projectile_hit.bind(projectile))
 
 	return projectile
+
+
+func _create_projectile_visual(size: float) -> Node2D:
+	## Create a placeholder visual for projectile
+	var container := Node2D.new()
+	container.name = "ProjectileVisual"
+
+	# Main circle (filled)
+	var circle := Polygon2D.new()
+	var points := PackedVector2Array()
+	var radius := size * 0.5
+	var segments := 12
+	for i in range(segments):
+		var angle := (float(i) / segments) * TAU
+		points.append(Vector2(cos(angle), sin(angle)) * radius)
+	circle.polygon = points
+	circle.color = Color(0.8, 0.2, 0.9, 0.8)  # Purple/magenta for enemy projectile
+	container.add_child(circle)
+
+	# Outline circle
+	var outline := Line2D.new()
+	outline.width = 2.0
+	outline.default_color = Color(1.0, 1.0, 1.0, 0.9)
+	for i in range(segments + 1):
+		var angle := (float(i) / segments) * TAU
+		outline.add_point(Vector2(cos(angle), sin(angle)) * radius)
+	container.add_child(outline)
+
+	# Direction indicator (small triangle pointing forward)
+	var arrow := Polygon2D.new()
+	arrow.polygon = PackedVector2Array([
+		Vector2(radius * 0.8, 0),
+		Vector2(radius * 0.3, -radius * 0.3),
+		Vector2(radius * 0.3, radius * 0.3)
+	])
+	arrow.color = Color(1.0, 1.0, 1.0, 0.9)
+	container.add_child(arrow)
+
+	return container
 
 
 func _on_projectile_hit(body: Node2D, projectile: Node2D) -> void:
