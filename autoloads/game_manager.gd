@@ -10,7 +10,7 @@ signal zone_changed(zone_name: String)
 signal game_state_changed(old_state: GameState, new_state: GameState)
 
 ## Game states
-enum GameState { LOADING, MENU, PLAYING, PAUSED, DIALOGUE, INVENTORY, GAME_OVER }
+enum GameState { LOADING, MENU, PLAYING, PAUSED, DIALOGUE, INVENTORY, CUTSCENE, GAME_OVER }
 
 ## Current state
 var current_state: GameState = GameState.LOADING:
@@ -117,6 +117,25 @@ func end_dialogue() -> void:
 		return
 	current_state = GameState.PLAYING
 	Debug.info("UI", "Dialogue ended")
+
+
+## Cutscene state management
+func start_cutscene() -> void:
+	if current_state not in [GameState.PLAYING, GameState.DIALOGUE]:
+		return
+	current_state = GameState.CUTSCENE
+	Debug.info("Cutscene", "Cutscene started")
+
+
+func end_cutscene() -> void:
+	if current_state != GameState.CUTSCENE:
+		return
+	current_state = GameState.PLAYING
+	Debug.info("Cutscene", "Cutscene ended")
+
+
+var is_in_cutscene: bool:
+	get: return current_state == GameState.CUTSCENE
 
 
 ## Hub UI (NPC Interaction Menu)

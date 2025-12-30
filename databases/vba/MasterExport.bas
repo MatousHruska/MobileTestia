@@ -50,6 +50,9 @@ Public Sub ExportAll()
     ' Spawn Points
     ExportSpawnPoints
 
+    ' Cutscenes
+    ExportCutscenes
+
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -82,6 +85,7 @@ Public Sub ValidateAll()
     ValidateZones
     ValidateChests
     ValidateSpawnPoints
+    ValidateCutscenes
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -122,6 +126,7 @@ Public Sub SetupWorkbook()
     SetupZonesSheet
     SetupChestsSheet
     SetupSpawnPointsSheet
+    SetupCutscenesSheet
     SetupStatModifiersSheet
     SetupRaritiesSheet
 
