@@ -548,6 +548,10 @@ func _apply_effects_to_target(target: Node2D, ability: AbilityData) -> void:
 				_apply_dot(target, "burn", effect.duration, effect.damage)
 			"bleed":
 				_apply_dot(target, "bleed", effect.duration, effect.damage)
+			"rot":
+				_apply_dot(target, "rot", effect.duration, effect.damage)
+			"poison":
+				_apply_dot(target, "poison", effect.duration, effect.damage)
 			"slow":
 				_apply_slow(target, effect.duration, effect.percent)
 			"lifesteal":

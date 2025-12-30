@@ -41,6 +41,9 @@ var is_locked: bool = false  ## Prevents input during certain actions
 ## Level up effect
 var _level_up_effect: LevelUpEffect
 
+## Status effect manager
+var _status_effect_manager: StatusEffectManager
+
 ## Internal
 var _lunge_velocity: Vector2 = Vector2.ZERO
 var _lunge_timer: float = 0.0
@@ -53,6 +56,7 @@ func _ready() -> void:
 	Game.player = self
 	_update_facing(Facing.DOWN)
 	_setup_level_up_effect()
+	_setup_status_effect_manager()
 
 
 func _setup_level_up_effect() -> void:
@@ -63,6 +67,13 @@ func _setup_level_up_effect() -> void:
 
 	## Connect to level up signal
 	PlayerStats.leveled_up.connect(_on_leveled_up)
+
+
+func _setup_status_effect_manager() -> void:
+	## Create and add status effect manager
+	_status_effect_manager = StatusEffectManager.new()
+	_status_effect_manager.name = "StatusEffectManager"
+	add_child(_status_effect_manager)
 
 
 func _physics_process(delta: float) -> void:
@@ -259,6 +270,38 @@ func _facing_to_rotation(facing: Facing) -> float:
 func _on_leveled_up(new_level: int) -> void:
 	if _level_up_effect:
 		_level_up_effect.play(new_level)
+
+
+#===============================================================================
+# DAMAGE AND STATUS EFFECTS
+#===============================================================================
+
+func take_damage(amount: float, _source: Node2D = null) -> void:
+	## Called by enemy abilities when hitting player
+	PlayerStats.damage(amount)
+	Debug.log("Combat", "Player took damage", amount)
+
+
+func apply_dot(effect_type: String, duration: float, damage_per_tick: float) -> void:
+	## Apply a damage-over-time effect to the player
+	if _status_effect_manager:
+		_status_effect_manager.apply_dot(effect_type, duration, damage_per_tick)
+
+
+func apply_stun(duration: float) -> void:
+	## Apply stun effect (lock player input)
+	is_locked = true
+	Debug.log("Combat", "Player stunned", duration)
+	# Create a timer to unlock after duration
+	get_tree().create_timer(duration).timeout.connect(func(): is_locked = false)
+
+
+func apply_slow(duration: float, percent: float) -> void:
+	## Apply slow effect (reduce movement speed)
+	var original_speed := move_speed
+	move_speed *= (1.0 - percent)
+	Debug.log("Combat", "Player slowed", {"duration": duration, "percent": percent * 100})
+	get_tree().create_timer(duration).timeout.connect(func(): move_speed = original_speed)
 
 
 ## Debug
