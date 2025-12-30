@@ -1,7 +1,7 @@
 {
   "cutscenes": [
     {
-      "id": "ut_crypt_vampire",
+      "id": "cut_crypt_vampire",
       "name": "Vampire Lord Entrance",
       "trigger": "zone_enter",
       "trigger_target": "zone_crypt",
