@@ -33,7 +33,8 @@ Private Const COL_SE_TICK_INTERVAL As Integer = 7
 Private Const COL_SE_VISUAL_EFFECT As Integer = 8
 Private Const COL_SE_STACKABLE As Integer = 9
 Private Const COL_SE_MAX_STACKS As Integer = 10
-Private Const COL_SE_DESCRIPTION As Integer = 11
+Private Const COL_SE_SHOW_IN_HUD As Integer = 11
+Private Const COL_SE_DESCRIPTION As Integer = 12
 
 ' Column indices for Zones
 Private Const COL_ZN_ID As Integer = 1
@@ -317,6 +318,15 @@ Public Sub ExportStatusEffects()
             stackable = "false"
         End If
 
+        ' Handle boolean show_in_hud field (default true)
+        Dim showInHud As String
+        showInHud = LCase(Trim(ws.Cells(i, COL_SE_SHOW_IN_HUD).value))
+        If showInHud = "false" Or showInHud = "0" Or showInHud = "no" Then
+            showInHud = "false"
+        Else
+            showInHud = "true"
+        End If
+
         json = json & "    {" & vbCrLf
         json = json & "      ""id"": """ & EscapeJsonString(id) & """," & vbCrLf
         json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SE_NAME))) & """," & vbCrLf
@@ -327,7 +337,8 @@ Public Sub ExportStatusEffects()
         json = json & "      ""tick_interval"": " & GetDefaultNumeric(ws.Cells(i, COL_SE_TICK_INTERVAL), 1) & "," & vbCrLf
         json = json & "      ""visual_effect"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SE_VISUAL_EFFECT))) & """," & vbCrLf
         json = json & "      ""stackable"": " & stackable & "," & vbCrLf
-        json = json & "      ""max_stacks"": " & GetDefaultNumeric(ws.Cells(i, COL_SE_MAX_STACKS), 1) & vbCrLf
+        json = json & "      ""max_stacks"": " & GetDefaultNumeric(ws.Cells(i, COL_SE_MAX_STACKS), 1) & "," & vbCrLf
+        json = json & "      ""show_in_hud"": " & showInHud & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1

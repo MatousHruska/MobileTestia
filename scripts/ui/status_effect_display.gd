@@ -45,7 +45,11 @@ func _on_player_ready() -> void:
 		Debug.log("UI", "StatusEffectDisplay connected to StatusEffectManager")
 
 
-func _on_effect_applied(effect_type: String, duration: float) -> void:
+func _on_effect_applied(effect_type: String, duration: float, show_in_hud: bool = true) -> void:
+	# Skip effects that shouldn't show in HUD
+	if not show_in_hud:
+		return
+
 	if effect_type in _effect_icons:
 		# Refresh existing icon
 		var icon: StatusEffectIcon = _effect_icons[effect_type]
