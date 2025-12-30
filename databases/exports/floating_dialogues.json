@@ -1,12 +1,12 @@
 {
   "floating_dialogues": [
     {
-      "id": "fld_zone_meadow",
+      "id": "fld_zone_meadows",
       "trigger_event": "zone_enter",
       "trigger_filter": "zone_id:zone_meadow",
       "text": "This place is den of evil!",
       "voice_file": "",
-      "probability": 1.0,
+      "probability": 1,
       "priority": 5,
       "cooldown_group": "zone_comment",
       "cooldown": 120,
