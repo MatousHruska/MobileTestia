@@ -53,6 +53,9 @@ Public Sub ExportAll()
     ' Cutscenes
     ExportCutscenes
 
+    ' Floating Dialogues
+    ExportFloatingDialogues
+
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -86,6 +89,7 @@ Public Sub ValidateAll()
     ValidateChests
     ValidateSpawnPoints
     ValidateCutscenes
+    ValidateFloatingDialogues
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -127,6 +131,7 @@ Public Sub SetupWorkbook()
     SetupChestsSheet
     SetupSpawnPointsSheet
     SetupCutscenesSheet
+    SetupFloatingDialoguesSheet
     SetupStatModifiersSheet
     SetupRaritiesSheet
 

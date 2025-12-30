@@ -30,6 +30,7 @@ var zones: Dictionary = {}
 var chests: Dictionary = {}
 var spawn_points: Dictionary = {}
 var cutscenes: Dictionary = {}
+var floating_dialogues: Dictionary = {}
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -46,6 +47,7 @@ var zones_list: Array = []
 var chests_list: Array = []
 var spawn_points_list: Array = []
 var cutscenes_list: Array = []
+var floating_dialogues_list: Array = []
 
 ## Signals
 signal databases_loaded
@@ -101,6 +103,9 @@ func load_all_databases() -> void:
 
 	# Cutscenes
 	success = _load_database("cutscenes.json", "cutscenes", cutscenes, cutscenes_list) and success
+
+	# Floating Dialogues
+	success = _load_database("floating_dialogues.json", "floating_dialogues", floating_dialogues, floating_dialogues_list) and success
 
 	if success:
 		Debug.info("Database", "All databases loaded successfully")
@@ -539,6 +544,67 @@ func get_zone_entry_cutscene(zone_id: String) -> Dictionary:
 
 
 #===============================================================================
+# FLOATING DIALOGUE ACCESS
+#===============================================================================
+
+## Get floating dialogue by id
+func get_floating_dialogue(id: String) -> Dictionary:
+	return floating_dialogues.get(id, {})
+
+
+## Get all floating dialogues for a specific trigger event
+func get_floating_dialogues_by_trigger(trigger_event: String) -> Array:
+	var result: Array = []
+	for dialogue in floating_dialogues_list:
+		if dialogue.get("trigger_event", "") == trigger_event:
+			result.append(dialogue)
+	return result
+
+
+## Get matching floating dialogues with filter
+## Returns dialogues matching both trigger_event and filter conditions
+func get_matching_floating_dialogues(trigger_event: String, context: Dictionary = {}) -> Array:
+	var result: Array = []
+
+	for dialogue in floating_dialogues_list:
+		if dialogue.get("trigger_event", "") != trigger_event:
+			continue
+
+		# Check filter conditions
+		var filter_str: String = dialogue.get("trigger_filter", "")
+		if not filter_str.is_empty():
+			if not _matches_filter(filter_str, context):
+				continue
+
+		result.append(dialogue)
+
+	return result
+
+
+## Check if context matches filter string
+## Filter format: "key:value" or "key:value,key2:value2"
+func _matches_filter(filter_str: String, context: Dictionary) -> bool:
+	var conditions := filter_str.split(",")
+
+	for condition in conditions:
+		var parts := condition.strip_edges().split(":")
+		if parts.size() != 2:
+			continue
+
+		var key := parts[0].strip_edges()
+		var expected_value := parts[1].strip_edges()
+
+		if not context.has(key):
+			return false
+
+		var actual_value := str(context[key])
+		if actual_value != expected_value:
+			return false
+
+	return true
+
+
+#===============================================================================
 # CHEST ACCESS
 #===============================================================================
 
@@ -944,4 +1010,5 @@ func print_stats() -> void:
 		"chests": chests.size(),
 		"spawn_points": spawn_points.size(),
 		"cutscenes": cutscenes.size(),
+		"floating_dialogues": floating_dialogues.size(),
 	})
