@@ -533,7 +533,7 @@ func get_cutscenes_by_trigger(trigger: String) -> Array:
 ## Get cutscene for zone entry (convenience function)
 func get_zone_entry_cutscene(zone_id: String) -> Dictionary:
 	for cutscene in cutscenes_list:
-		if cutscene.get("trigger", "") == "zone_enter" and cutscene.get("trigger_zone", "") == zone_id:
+		if cutscene.get("trigger", "") == "zone_enter" and cutscene.get("trigger_target", "") == zone_id:
 			return cutscene
 	return {}
 
