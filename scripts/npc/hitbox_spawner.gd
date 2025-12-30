@@ -26,7 +26,7 @@ signal hitbox_expired(ability: AbilityData)
 #===============================================================================
 
 const HITBOX_LAYER := 0b00000100  ## Layer for hitboxes
-const PLAYER_LAYER := 0b00000001  ## Player layer to detect
+const PLAYER_LAYER := 0b00000010  ## Player layer to detect (layer 2)
 
 #===============================================================================
 # STATE
