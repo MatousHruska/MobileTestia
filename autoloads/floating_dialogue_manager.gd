@@ -87,11 +87,15 @@ func _process_queue() -> void:
 ## context: Dictionary with filter values (zone_id, item_rarity, etc.)
 ## source: The node to display the dialogue above (usually player)
 func trigger_event(trigger_event: String, context: Dictionary = {}, source: Node2D = null) -> void:
+	Debug.info("FloatingDialogue", "trigger_event called", {"event": trigger_event, "context": context})
+
 	if not enabled:
+		Debug.log("FloatingDialogue", "Disabled, skipping")
 		return
 
 	# During cutscenes, don't show floating dialogues
 	if Cutscene and Cutscene.is_playing:
+		Debug.log("FloatingDialogue", "Cutscene playing, skipping")
 		return
 
 	# Check global cooldown
@@ -100,8 +104,11 @@ func trigger_event(trigger_event: String, context: Dictionary = {}, source: Node
 		return
 
 	# Get matching dialogues from database
+	Debug.log("FloatingDialogue", "Total floating dialogues in DB", DatabaseLoader.floating_dialogues.size())
 	var matches := DatabaseLoader.get_matching_floating_dialogues(trigger_event, context)
+	Debug.log("FloatingDialogue", "Matching dialogues found", matches.size())
 	if matches.is_empty():
+		Debug.log("FloatingDialogue", "No matching dialogues for event", trigger_event)
 		return
 
 	# Select dialogue based on weights and cooldowns
