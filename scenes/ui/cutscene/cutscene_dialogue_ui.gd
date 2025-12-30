@@ -50,19 +50,24 @@ func _process(delta: float) -> void:
 
 ## Handle clicks/taps on the background dimmer
 func _on_background_input(event: InputEvent) -> void:
+	Debug.info("CutsceneUI", "Background input received", event.get_class())
 	# Handle tap/click to advance
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		Debug.info("CutsceneUI", "Mouse click detected")
 		_handle_advance_tap()
 
 	# Handle touch
 	if event is InputEventScreenTouch and event.pressed:
+		Debug.info("CutsceneUI", "Touch detected")
 		_handle_advance_tap()
 
 
 func _handle_advance_tap() -> void:
+	Debug.info("CutsceneUI", "Handle advance tap", {"is_typing": _is_typing})
 	if _is_typing:
 		_complete_typewriter()
 	else:
+		Debug.info("CutsceneUI", "Emitting advance_requested signal")
 		advance_requested.emit()
 
 

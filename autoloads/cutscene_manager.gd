@@ -128,14 +128,19 @@ func play(cutscene_id: String) -> void:
 
 ## Advance the cutscene (called when player taps)
 func advance() -> void:
+	Debug.info("Cutscene", "advance() called", {"is_playing": is_playing, "is_waiting_for_input": is_waiting_for_input})
 	if not is_playing:
+		Debug.warn("Cutscene", "advance() ignored - not playing")
 		return
 
 	dialogue_advance_requested.emit()
 
 	if is_waiting_for_input:
+		Debug.info("Cutscene", "Advancing to next action")
 		is_waiting_for_input = false
 		_execute_next_action()
+	else:
+		Debug.info("Cutscene", "Not waiting for input, ignoring advance")
 
 
 ## Skip to end of cutscene
@@ -216,8 +221,12 @@ func _execute_dialogue(action: Dictionary) -> void:
 	var auto_advance: bool = action.get("auto_advance", false)
 	var auto_delay: float = action.get("auto_delay", 2.0)
 
+	Debug.info("Cutscene", "Executing dialogue", {"speaker": speaker, "text": text, "auto_advance": auto_advance})
+
 	if _dialogue_ui:
 		_dialogue_ui.show_dialogue(speaker, text, portrait)
+	else:
+		Debug.err("Cutscene", "No dialogue UI available!")
 
 	dialogue_displayed.emit(speaker, text)
 
@@ -228,6 +237,7 @@ func _execute_dialogue(action: Dictionary) -> void:
 	else:
 		# Wait for player input
 		is_waiting_for_input = true
+		Debug.info("Cutscene", "Waiting for player input to advance")
 
 
 func _execute_wait(action: Dictionary) -> void:
