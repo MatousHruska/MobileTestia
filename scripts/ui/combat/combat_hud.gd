@@ -137,42 +137,30 @@ func _layout_buttons() -> void:
 	# Get screen size
 	var screen_size := get_viewport_rect().size
 
-	# Calculate attack button position (bottom-right offset)
-	var attack_pos := Vector2(
-		screen_size.x + config.attack_offset.x,
-		screen_size.y + config.attack_offset.y
-	)
+	# Calculate attack button position using percentage-based offset
+	var attack_pos := config.get_position_from_pct(config.attack_offset_pct, screen_size)
 	attack_button.position = attack_pos - Vector2(config.attack_radius, config.attack_radius)
 
 	# Calculate attack button center for arc positioning
 	var attack_center := attack_pos
 
 	# Position ability slots in arc around attack button
-	var ability_positions := config.get_ability_positions(attack_center)
+	var ability_positions := config.get_ability_positions(attack_center, screen_size.y)
 	for i in ability_slots.size():
 		if i < ability_positions.size():
 			var pos := ability_positions[i]
 			ability_slots[i].position = pos - Vector2(config.ability_radius, config.ability_radius)
 
 	# Position dodge button
-	var dodge_pos := Vector2(
-		screen_size.x + config.dodge_offset.x,
-		screen_size.y + config.dodge_offset.y
-	)
+	var dodge_pos := config.get_position_from_pct(config.dodge_offset_pct, screen_size)
 	dodge_button.position = dodge_pos - Vector2(config.dodge_radius, config.dodge_radius)
 
 	# Position quick slot button
-	var quick_slot_pos := Vector2(
-		screen_size.x + config.quick_slot_offset.x,
-		screen_size.y + config.quick_slot_offset.y
-	)
+	var quick_slot_pos := config.get_position_from_pct(config.quick_slot_offset_pct, screen_size)
 	quick_slot_button.position = quick_slot_pos - Vector2(config.quick_slot_radius, config.quick_slot_radius)
 
 	# Position interact button
-	var interact_pos := Vector2(
-		screen_size.x + config.interact_offset.x,
-		screen_size.y + config.interact_offset.y
-	)
+	var interact_pos := config.get_position_from_pct(config.interact_offset_pct, screen_size)
 	interact_button.position = interact_pos
 
 

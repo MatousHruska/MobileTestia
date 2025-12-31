@@ -1,48 +1,49 @@
 extends Resource
 class_name CombatHUDConfig
 ## CombatHUDConfig - Configuration resource for combat HUD layout
-## Allows easy adjustment of button sizes, positions, and arc layout
+## Uses percentage-based positioning for multi-device support
+## All offset values are percentages (0.0 to 1.0) of screen dimensions
 
 @export_group("Attack Button")
-@export var attack_radius: float = 116.0
+@export var attack_radius: float = 81.0
 @export var attack_color: Color = Color(0.98, 0.6, 0.6, 0.85)
 @export var attack_pressed_color: Color = Color(1.0, 0.8, 0.8, 0.95)
-## Offset from bottom-right corner of screen
-@export var attack_offset: Vector2 = Vector2(-150, -150)
+## Offset from bottom-right corner as percentage of screen (x=width%, y=height%)
+@export var attack_offset_pct: Vector2 = Vector2(0.12, 0.18)
 
 @export_group("Ability Arc")
 @export var ability_count: int = 5
-@export var ability_radius: float = 45.0
+@export var ability_radius: float = 32.0
 @export var ability_color: Color = Color(0.55, 1.0, 0.98, 0.85)
 @export var ability_pressed_color: Color = Color(0.75, 1.0, 1.0, 0.95)
 @export var ability_no_mana_color: Color = Color(0.3, 0.3, 0.5, 0.7)
 @export var ability_cooldown_color: Color = Color(0.2, 0.2, 0.2, 0.6)
-## Distance from attack button center to ability buttons
-@export var arc_distance: float = 175.0
+## Distance from attack button center as percentage of screen height
+@export var arc_distance_pct: float = 0.17
 ## Arc angles in degrees (0 = right, 90 = down, 180 = left, 270 = up)
-@export var arc_start_angle: float = 200.0
-@export var arc_end_angle: float = 340.0
+@export var arc_start_angle: float = 155.0
+@export var arc_end_angle: float = 295.0
 
 @export_group("Dodge Button")
-@export var dodge_radius: float = 60.0
+@export var dodge_radius: float = 42.0
 @export var dodge_color: Color = Color(0.38, 0.27, 1.0, 0.85)
 @export var dodge_pressed_color: Color = Color(0.55, 0.45, 1.0, 0.95)
 @export var dodge_no_stamina_color: Color = Color(0.3, 0.3, 0.4, 0.7)
-## Offset from bottom-right corner
-@export var dodge_offset: Vector2 = Vector2(-450, -100)
+## Offset from bottom-right corner as percentage
+@export var dodge_offset_pct: Vector2 = Vector2(0.35, 0.12)
 
 @export_group("Quick Slot")
-@export var quick_slot_radius: float = 60.0
+@export var quick_slot_radius: float = 42.0
 @export var quick_slot_color: Color = Color(0.51, 1.0, 0.37, 0.85)
 @export var quick_slot_pressed_color: Color = Color(0.7, 1.0, 0.6, 0.95)
 @export var quick_slot_empty_color: Color = Color(0.3, 0.4, 0.3, 0.5)
-## Offset from bottom-right corner
-@export var quick_slot_offset: Vector2 = Vector2(-600, -100)
+## Offset from bottom-right corner as percentage
+@export var quick_slot_offset_pct: Vector2 = Vector2(0.47, 0.12)
 
 @export_group("Interact Button")
-## Offset from bottom-right corner (above attack button area)
-@export var interact_offset: Vector2 = Vector2(-100, -320)
-@export var interact_size: Vector2 = Vector2(120, 50)
+## Offset from bottom-right corner as percentage
+@export var interact_offset_pct: Vector2 = Vector2(0.18, 0.45)
+@export var interact_size: Vector2 = Vector2(84, 35)
 
 @export_group("Visual Feedback")
 ## Scale multiplier when button is pressed
@@ -50,7 +51,7 @@ class_name CombatHUDConfig
 ## Duration of press animation in seconds
 @export var press_animation_duration: float = 0.08
 ## Border/outline width
-@export var button_border_width: float = 2.0
+@export var button_border_width: float = 1.4
 @export var button_border_color: Color = Color(1.0, 1.0, 1.0, 0.4)
 
 @export_group("Scaling (Stubs)")
@@ -68,9 +69,23 @@ class_name CombatHUDConfig
 @export var layout_preset: String = "default"
 
 
+## Convert percentage offset to pixel position from bottom-right
+func get_position_from_pct(offset_pct: Vector2, screen_size: Vector2) -> Vector2:
+	return Vector2(
+		screen_size.x - (offset_pct.x * screen_size.x),
+		screen_size.y - (offset_pct.y * screen_size.y)
+	)
+
+
+## Get arc distance in pixels based on screen height
+func get_arc_distance(screen_height: float) -> float:
+	return arc_distance_pct * screen_height
+
+
 ## Calculate ability button positions around the attack button
-func get_ability_positions(attack_center: Vector2) -> Array[Vector2]:
+func get_ability_positions(attack_center: Vector2, screen_height: float) -> Array[Vector2]:
 	var positions: Array[Vector2] = []
+	var arc_distance := get_arc_distance(screen_height)
 
 	if ability_count <= 1:
 		# Single ability goes at the middle of the arc
@@ -98,9 +113,9 @@ func get_screen_scale() -> float:
 	return scale
 
 
-## Apply left-handed mode transformation to an offset
-func apply_handedness(offset: Vector2, screen_width: float) -> Vector2:
+## Apply left-handed mode transformation to a position
+func apply_handedness(pos: Vector2, screen_width: float) -> Vector2:
 	if left_handed_mode:
 		# Mirror horizontally
-		return Vector2(-offset.x - screen_width, offset.y)
-	return offset
+		return Vector2(screen_width - pos.x, pos.y)
+	return pos
