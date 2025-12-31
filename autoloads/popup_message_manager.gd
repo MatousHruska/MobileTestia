@@ -240,17 +240,18 @@ func _create_popup(popup_data: Dictionary) -> void:
 		Debug.warn("PopupMessage", "Popup scene not loaded")
 		return
 
-	var popup = _popup_scene.instantiate()
-	_canvas_layer.add_child(popup)
+	# Create a full-rect container for proper anchor calculations
+	var container := Control.new()
+	container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_canvas_layer.add_child(container)
 
-	# Store reference
-	_current_popup = popup
+	var popup = _popup_scene.instantiate()
+	container.add_child(popup)
+
+	# Store reference (store container so we can free it)
+	_current_popup = container
 	_current_popup_id = popup_data.get("id", "")
 	_current_priority = int(popup_data.get("priority", 5))
-
-	# Position at top center
-	var viewport_size := get_viewport().get_visible_rect().size
-	popup.position = Vector2(viewport_size.x / 2, POPUP_OFFSET_Y)
 
 	# Initialize popup
 	var title: String = popup_data.get("title", "")
@@ -262,9 +263,9 @@ func _create_popup(popup_data: Dictionary) -> void:
 	if popup.has_method("show_popup"):
 		popup.show_popup(title, subtitle, icon, duration)
 
-	# Connect to finished signal
+	# Connect to finished signal - also free the container
 	if popup.has_signal("finished"):
-		popup.finished.connect(_on_popup_finished.bind(_current_popup_id))
+		popup.finished.connect(_on_popup_finished.bind(_current_popup_id, container))
 
 	# Play sound if specified
 	if not sound.is_empty():
@@ -276,11 +277,15 @@ func _create_popup(popup_data: Dictionary) -> void:
 	Debug.info("PopupMessage", "Showing popup", {"id": _current_popup_id, "title": title, "subtitle": subtitle})
 
 
-func _on_popup_finished(popup_id: String) -> void:
+func _on_popup_finished(popup_id: String, container: Control = null) -> void:
 	if popup_id == _current_popup_id:
 		_current_popup = null
 		_current_popup_id = ""
 		_current_priority = 0
+
+		# Free the container if provided
+		if container and is_instance_valid(container):
+			container.queue_free()
 
 		popup_hidden.emit(popup_id)
 
