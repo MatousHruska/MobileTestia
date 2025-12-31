@@ -191,14 +191,11 @@ func _on_zone_changed(zone_id: String) -> void:
 
 func _on_location_discovered(location_id: String) -> void:
 	var loc_data := DatabaseLoader.get_location(location_id)
-	var discovery_popup: String = loc_data.get("discovery_popup", "")
+	var discovery_popup = loc_data.get("discovery_popup", false)
 
 	# Just log for now - popup system will be added later
-	if not discovery_popup.is_empty():
-		Debug.info("Location", "Discovery popup (future): %s - %s" % [
-			loc_data.get("name", location_id),
-			discovery_popup
-		])
+	if discovery_popup:
+		Debug.info("Location", "Discovery popup (future): %s" % loc_data.get("name", location_id))
 	else:
 		Debug.log("Location", "Discovered location: %s" % loc_data.get("name", location_id))
 
@@ -237,23 +234,23 @@ func _get_effective_setting(location_id: String, setting_name: String):
 	return DatabaseLoader.get_effective_setting(location_id, setting_name, null)
 
 
-func _on_music_changed(new_music: String) -> void:
+func _on_music_changed(new_music) -> void:
 	# TODO: Tell audio manager to change music
-	if not new_music.is_empty():
+	if new_music is String and not new_music.is_empty():
 		Debug.log("Location", "Music should change to: %s" % new_music)
 
 
-func _on_ambient_changed(new_ambient: String) -> void:
+func _on_ambient_changed(new_ambient) -> void:
 	# TODO: Tell audio manager to change ambient
-	if not new_ambient.is_empty():
+	if new_ambient is String and not new_ambient.is_empty():
 		Debug.log("Location", "Ambient should change to: %s" % new_ambient)
 
 
-func _on_status_effect_changed(old_effect: String, new_effect: String) -> void:
+func _on_status_effect_changed(old_effect, new_effect) -> void:
 	# TODO: Apply/remove status effects
-	if not old_effect.is_empty():
+	if old_effect is String and not old_effect.is_empty():
 		Debug.log("Location", "Should remove status effect: %s" % old_effect)
-	if not new_effect.is_empty():
+	if new_effect is String and not new_effect.is_empty():
 		Debug.log("Location", "Should apply status effect: %s" % new_effect)
 
 
