@@ -164,9 +164,9 @@ func _auto_generate_popup(trigger_event: String, context: Dictionary) -> void:
 			if not show_popup:
 				return
 
-			title = "Discovered"
+			title = "Entering"
 			subtitle = loc_data.get("name", location_id)
-			icon = "discovery"
+			icon = "location"
 			priority = 5
 
 		"quest_start":
