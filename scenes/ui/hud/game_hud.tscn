@@ -1,20 +1,22 @@
 [gd_scene load_steps=5 format=3 uid="uid://hud001"]
 
-[ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
-[ext_resource type="Script" path="res://scripts/ui/virtual_joystick.gd" id="2_joystick"]
-[ext_resource type="Script" path="res://scripts/ui/combat/combat_hud.gd" id="3_combat_hud"]
-[ext_resource type="Resource" path="res://resources/combat_hud_config.tres" id="4_config"]
+[ext_resource type="Script" uid="uid://br4h1ax47ulgc" path="res://scripts/ui/hud.gd" id="1_hud"]
+[ext_resource type="Script" uid="uid://btbo036keydtr" path="res://scripts/ui/virtual_joystick.gd" id="2_joystick"]
+[ext_resource type="Script" uid="uid://33cvvlcwf3ea" path="res://scripts/ui/combat/combat_hud.gd" id="3_combat_hud"]
+[ext_resource type="Resource" uid="uid://cq84144a0oxct" path="res://resources/combat_hud_config.tres" id="4_config"]
 
 [node name="HUD" type="CanvasLayer"]
 layer = 10
 script = ExtResource("1_hud")
 
 [node name="PlayerFrame" type="Control" parent="."]
+layout_mode = 3
 anchors_preset = 0
 offset_right = 200.0
 offset_bottom = 130.0
 
 [node name="MenuButton" type="Control" parent="."]
+layout_mode = 3
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
@@ -31,6 +33,7 @@ offset_bottom = 52.0
 text = "☰"
 
 [node name="Controls" type="Control" parent="."]
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -48,7 +51,6 @@ offset_top = -200.0
 offset_right = 216.0
 offset_bottom = -16.0
 grow_vertical = 0
-mouse_filter = 0
 
 [node name="VirtualJoystick" type="Control" parent="Controls/JoystickArea"]
 layout_mode = 1
@@ -57,9 +59,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 script = ExtResource("2_joystick")
-mode = 0
 joystick_radius = 80.0
 knob_radius = 40.0
 
