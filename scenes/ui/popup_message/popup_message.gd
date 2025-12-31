@@ -1,6 +1,5 @@
 extends Control
-class_name PopupMessage
-## PopupMessage - Screen announcement popup UI
+## PopupMessageUI - Screen announcement popup UI
 ## Displays at top-center of screen with title, subtitle, and optional icon
 
 signal finished
@@ -16,9 +15,6 @@ var _duration: float = 3.0
 var _elapsed: float = 0.0
 var _is_active: bool = false
 var _is_hiding: bool = false
-
-## Icon textures (will be loaded on demand)
-var _icon_textures: Dictionary = {}
 
 
 func _ready() -> void:
