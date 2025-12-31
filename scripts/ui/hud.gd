@@ -8,9 +8,7 @@ signal menu_button_pressed
 
 ## References (set in scene or found automatically)
 @onready var joystick: VirtualJoystick = $Controls/JoystickArea/VirtualJoystick
-@onready var attack_button: ActionButton = $Controls/ActionButtons/AttackButton
-@onready var dodge_button: ActionButton = $Controls/ActionButtons/DodgeButton
-@onready var interact_button: Button = $Controls/ActionButtons/InteractButton
+@onready var combat_hud: CombatHUD = $Controls/CombatHUD
 @onready var player_frame: Control = $PlayerFrame
 @onready var menu_button: Button = $MenuButton/Button
 
@@ -208,27 +206,11 @@ func _on_player_spawned(new_player: Node2D) -> void:
 
 
 func _setup_controls() -> void:
-	if attack_button:
-		attack_button.pressed.connect(_on_attack_pressed)
-
-	if dodge_button:
-		dodge_button.pressed.connect(_on_dodge_pressed)
-
-	if interact_button:
-		interact_button.pressed.connect(_on_interact_pressed)
+	if combat_hud:
+		combat_hud.interact_button.pressed.connect(_on_interact_pressed)
 
 	if menu_button:
 		menu_button.pressed.connect(_on_menu_pressed)
-
-
-func _on_attack_pressed() -> void:
-	# DEBUG: Kill all enemies for loot testing (no combat system yet)
-	NPCManager.debug_kill_all_enemies()
-
-
-func _on_dodge_pressed() -> void:
-	if player and Game.can_player_move:
-		player.request_dodge()
 
 
 func _on_interact_pressed() -> void:
@@ -277,8 +259,10 @@ func update_stamina(current: float, maximum: float) -> void:
 
 ## Interaction handling
 func _update_interact_button() -> void:
-	if not interact_button or not Game.is_playing:
+	if not combat_hud or not Game.is_playing:
 		return
+
+	var interact_button := combat_hud.interact_button
 
 	# Find nearby interactable object (NPC or chest)
 	nearby_npc = null
