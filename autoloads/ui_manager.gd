@@ -17,6 +17,7 @@ var quest_debug_overlay = null  # QuestDebugOverlay
 
 func _ready() -> void:
 	layer = 100  # Always on top of game UI
+	process_mode = Node.PROCESS_MODE_ALWAYS  # Keep processing when game is paused
 	Debug.info("UI", "UIManager initialized")
 
 	# Create quest UI elements

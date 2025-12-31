@@ -62,6 +62,9 @@ var _quest_log_instance = null  # QuestLogPanel
 func _ready() -> void:
 	Debug.info("UI", "CharacterMenu ready")
 
+	# Allow processing while game is paused
+	process_mode = Node.PROCESS_MODE_ALWAYS
+
 	# Hide on start
 	visible = false
 	is_open = false
