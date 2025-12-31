@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1_script")
-attack_offset_pct = Vector2(0.10, 0.15)
-dodge_offset_pct = Vector2(0.26, 0.10)
-quick_slot_offset_pct = Vector2(0.36, 0.10)
+attack_offset_pct = Vector2(0.1, 0.15)
+dodge_offset_pct = Vector2(0.26, 0.09)
+quick_slot_offset_pct = Vector2(0.34, 0.09)
 interact_offset_pct = Vector2(0.15, 0.42)
