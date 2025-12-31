@@ -266,6 +266,37 @@ Public Sub SafeAddComment(ByVal cell As Range, ByVal commentText As String)
     On Error GoTo 0
 End Sub
 
+'-------------------------------------------------------------------------------
+' GetOrCreateSheet - Creates a sheet if it doesn't exist, or returns existing
+'-------------------------------------------------------------------------------
+Public Function GetOrCreateSheet(ByVal sheetName As String) As Worksheet
+    Dim ws As Worksheet
+
+    On Error Resume Next
+    Set ws = ThisWorkbook.Sheets(sheetName)
+    On Error GoTo 0
+
+    If ws Is Nothing Then
+        Set ws = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
+        ws.Name = sheetName
+    End If
+
+    Set GetOrCreateSheet = ws
+End Function
+
+'-------------------------------------------------------------------------------
+' SetupSheetHeaders - Set headers for a sheet (0-based array)
+'-------------------------------------------------------------------------------
+Public Sub SetupSheetHeaders(ByVal ws As Worksheet, ByRef headers As Variant)
+    Dim col As Integer
+    For col = 0 To UBound(headers)
+        ws.Cells(1, col + 1).Value = headers(col)
+        ws.Cells(1, col + 1).Font.Bold = True
+        ws.Cells(1, col + 1).Interior.Color = RGB(200, 200, 200)
+    Next col
+    ws.Rows(1).AutoFilter
+End Sub
+
 '===============================================================================
 ' ID RENAME UTILITY
 '===============================================================================
