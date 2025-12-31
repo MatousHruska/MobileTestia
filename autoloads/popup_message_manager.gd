@@ -14,6 +14,7 @@ const FADE_OUT_DURATION := 0.5
 const POPUP_OFFSET_Y := 80  # Pixels from top of screen
 
 ## State
+var _current_container: Control = null
 var _current_popup: Control = null
 var _current_popup_id: String = ""
 var _current_priority: int = 0
@@ -229,7 +230,8 @@ func _display_popup(popup_data: Dictionary) -> void:
 			return
 		else:
 			# Higher priority, replace current
-			_current_popup.hide_popup()
+			if _current_popup.has_method("hide_popup"):
+				_current_popup.hide_popup()
 
 	# Create and show popup
 	_create_popup(popup_data)
@@ -248,8 +250,9 @@ func _create_popup(popup_data: Dictionary) -> void:
 	var popup = _popup_scene.instantiate()
 	container.add_child(popup)
 
-	# Store reference (store container so we can free it)
-	_current_popup = container
+	# Store references
+	_current_container = container
+	_current_popup = popup
 	_current_popup_id = popup_data.get("id", "")
 	_current_priority = int(popup_data.get("priority", 5))
 
@@ -279,6 +282,7 @@ func _create_popup(popup_data: Dictionary) -> void:
 
 func _on_popup_finished(popup_id: String, container: Control = null) -> void:
 	if popup_id == _current_popup_id:
+		_current_container = null
 		_current_popup = null
 		_current_popup_id = ""
 		_current_priority = 0
