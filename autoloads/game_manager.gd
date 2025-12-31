@@ -98,13 +98,15 @@ func open_inventory() -> void:
 	if current_state != GameState.PLAYING:
 		return
 	current_state = GameState.INVENTORY
-	Debug.info("UI", "Inventory opened")
+	get_tree().paused = true
+	Debug.info("UI", "Inventory opened (game paused)")
 
 func close_inventory() -> void:
 	if current_state != GameState.INVENTORY:
 		return
 	current_state = GameState.PLAYING
-	Debug.info("UI", "Inventory closed")
+	get_tree().paused = false
+	Debug.info("UI", "Inventory closed (game resumed)")
 
 func start_dialogue() -> void:
 	if current_state != GameState.PLAYING:
