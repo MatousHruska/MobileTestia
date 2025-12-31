@@ -141,6 +141,13 @@ func _auto_generate_popup(trigger_event: String, context: Dictionary) -> void:
 			if not show_popup:
 				return
 
+			# Skip zone popup if player is in a location (location popup takes priority)
+			if LocationManager and LocationManager.is_in_location():
+				var loc_data := LocationManager.get_current_location()
+				if loc_data.get("discovery_popup", false):
+					Debug.log("PopupMessage", "Skipping zone popup - location popup takes priority")
+					return
+
 			title = "Entering"
 			subtitle = zone_data.get("name", zone_id)
 			icon = "location"
