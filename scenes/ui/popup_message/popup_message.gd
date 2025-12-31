@@ -40,7 +40,7 @@ func _process(delta: float) -> void:
 
 
 ## Show the popup with content
-func show_popup(title: String, subtitle: String = "", icon: String = "none", duration: float = 3.0) -> void:
+func show_popup(title: String, subtitle: String = "", _icon: String = "none", duration: float = 3.0) -> void:
 	_duration = duration
 	_elapsed = 0.0
 	_is_active = true
