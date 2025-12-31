@@ -10,7 +10,7 @@ signal zone_changed(zone_name: String)
 signal game_state_changed(old_state: GameState, new_state: GameState)
 
 ## Game states
-enum GameState { LOADING, MENU, PLAYING, PAUSED, DIALOGUE, INVENTORY, CUTSCENE, GAME_OVER }
+enum GameState { LOADING, MENU, PLAYING, PAUSED, DIALOGUE, CHARACTER_MENU, CUTSCENE, GAME_OVER }
 
 ## Current state
 var current_state: GameState = GameState.LOADING:
@@ -94,19 +94,19 @@ func toggle_pause() -> void:
 	elif is_playing:
 		pause_game()
 
-func open_inventory() -> void:
+func open_character_menu() -> void:
 	if current_state != GameState.PLAYING:
 		return
-	current_state = GameState.INVENTORY
+	current_state = GameState.CHARACTER_MENU
 	get_tree().paused = true
-	Debug.info("UI", "Inventory opened (game paused)")
+	Debug.info("UI", "Character menu opened (game paused)")
 
-func close_inventory() -> void:
-	if current_state != GameState.INVENTORY:
+func close_character_menu() -> void:
+	if current_state != GameState.CHARACTER_MENU:
 		return
 	current_state = GameState.PLAYING
 	get_tree().paused = false
-	Debug.info("UI", "Inventory closed (game resumed)")
+	Debug.info("UI", "Character menu closed (game resumed)")
 
 func start_dialogue() -> void:
 	if current_state != GameState.PLAYING:
