@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
 [ext_resource type="Script" path="res://scripts/ui/virtual_joystick.gd" id="2_joystick"]
-[ext_resource type="Script" path="res://scripts/ui/action_button.gd" id="3_action"]
+[ext_resource type="Script" path="res://scripts/ui/combat/combat_hud.gd" id="3_combat_hud"]
 
 [node name="HUD" type="CanvasLayer"]
 layer = 10
@@ -11,7 +11,7 @@ script = ExtResource("1_hud")
 [node name="PlayerFrame" type="Control" parent="."]
 anchors_preset = 0
 offset_right = 200.0
-offset_bottom = 110.0
+offset_bottom = 130.0
 
 [node name="MenuButton" type="Control" parent="."]
 anchors_preset = 1
@@ -62,50 +62,12 @@ mode = 0
 joystick_radius = 80.0
 knob_radius = 40.0
 
-[node name="ActionButtons" type="Control" parent="Controls"]
+[node name="CombatHUD" type="Control" parent="Controls"]
 layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -200.0
-offset_top = -200.0
-grow_horizontal = 0
-grow_vertical = 0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
-
-[node name="InteractButton" type="Button" parent="Controls/ActionButtons"]
-visible = false
-layout_mode = 0
-offset_left = 60.0
-offset_top = -20.0
-offset_right = 180.0
-offset_bottom = 30.0
-text = "Interact"
-autowrap_mode = 2
-
-[node name="AttackButton" type="Control" parent="Controls/ActionButtons"]
-layout_mode = 0
-offset_left = 80.0
-offset_top = 60.0
-offset_right = 180.0
-offset_bottom = 160.0
-mouse_filter = 0
-script = ExtResource("3_action")
-button_type = 0
-button_radius = 50.0
-icon_text = "⚔"
-
-[node name="DodgeButton" type="Control" parent="Controls/ActionButtons"]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 110.0
-offset_right = 80.0
-offset_bottom = 180.0
-mouse_filter = 0
-script = ExtResource("3_action")
-button_type = 1
-button_radius = 35.0
-icon_text = "💨"
-cooldown_duration = 1.0
+script = ExtResource("3_combat_hud")

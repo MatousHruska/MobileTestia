@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="CombatHUDConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/combat/combat_hud_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+attack_radius = 116.0
+attack_color = Color(0.98, 0.6, 0.6, 0.85)
+attack_pressed_color = Color(1, 0.8, 0.8, 0.95)
+attack_offset = Vector2(-150, -150)
+ability_count = 5
+ability_radius = 45.0
+ability_color = Color(0.55, 1, 0.98, 0.85)
+ability_pressed_color = Color(0.75, 1, 1, 0.95)
+ability_no_mana_color = Color(0.3, 0.3, 0.5, 0.7)
+ability_cooldown_color = Color(0.2, 0.2, 0.2, 0.6)
+arc_distance = 175.0
+arc_start_angle = 200.0
+arc_end_angle = 340.0
+dodge_radius = 60.0
+dodge_color = Color(0.38, 0.27, 1, 0.85)
+dodge_pressed_color = Color(0.55, 0.45, 1, 0.95)
+dodge_no_stamina_color = Color(0.3, 0.3, 0.4, 0.7)
+dodge_offset = Vector2(-450, -100)
+quick_slot_radius = 60.0
+quick_slot_color = Color(0.51, 1, 0.37, 0.85)
+quick_slot_pressed_color = Color(0.7, 1, 0.6, 0.95)
+quick_slot_empty_color = Color(0.3, 0.4, 0.3, 0.5)
+quick_slot_offset = Vector2(-600, -100)
+interact_offset = Vector2(-100, -320)
+interact_size = Vector2(120, 50)
+press_scale = 0.9
+press_animation_duration = 0.08
+button_border_width = 2.0
+button_border_color = Color(1, 1, 1, 0.4)
+base_screen_height = 720.0
+min_scale = 0.7
+max_scale = 1.4
+user_scale = 1.0
+left_handed_mode = false
+layout_preset = "default"
