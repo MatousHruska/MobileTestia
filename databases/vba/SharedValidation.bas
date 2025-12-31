@@ -376,6 +376,7 @@ Private Sub CreateIdNamedRanges()
     CreateNamedRange "SpawnPoints", 1, "ID_SpawnPoints"
     CreateNamedRange "Cutscenes", 1, "ID_Cutscenes"
     CreateNamedRange "FloatingDialogues", 1, "ID_FloatingDialogues"
+    CreateNamedRange "Locations", 1, "ID_Locations"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -412,6 +413,11 @@ Private Sub ApplyForeignKeyValidation()
 
     ' Zones
     ApplyValidation "Zones", 7, "ID_LootTables"     ' loot_table_id
+    ApplyValidation "Zones", 13, "ID_StatusEffects" ' status_effect_id
+
+    ' Locations
+    ApplyValidation "Locations", 2, "ID_Zones"          ' zone_id
+    ApplyValidation "Locations", 7, "ID_StatusEffects"  ' status_effect_id
 
     ' Enemies
     ApplyValidation "Enemies", 12, "ID_LootTables"  ' loot_table_id
@@ -472,7 +478,7 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "ShopInventory", 8, "gold,gems"               ' currency_type
 
     ' FloatingDialogues
-    ApplyListValidation "FloatingDialogues", 2, "zone_enter,zone_exit,item_pickup,item_equip,potion_use,skill_use,enemy_kill,boss_kill,critical_hit,near_death,level_up,quest_complete,quest_start,gold_pickup,chest_open,shrine_activate,player_idle,combat_start,combat_end,revive"  ' trigger_event
+    ApplyListValidation "FloatingDialogues", 2, "zone_enter,zone_exit,location_enter,location_exit,item_pickup,item_equip,potion_use,skill_use,enemy_kill,boss_kill,critical_hit,near_death,level_up,quest_complete,quest_start,gold_pickup,chest_open,shrine_activate,player_idle,combat_start,combat_end,revive"  ' trigger_event
 
     ' Cutscenes
     ApplyListValidation "Cutscenes", 2, "zone_enter,quest_complete,quest_start,interact,manual"  ' trigger
@@ -486,6 +492,9 @@ Private Sub ApplyEnumValidation()
 
     ' Zones
     ApplyListValidation "Zones", 3, "outdoor,dungeon,cave,town,boss_room,camp"  ' zone_type
+
+    ' Locations
+    ApplyListValidation "Locations", 4, "town,camp,poi,dungeon_entrance,quest_area,danger_zone,sanctuary,boss_arena,secret_area"  ' location_type
 
     ' Enemies
     ApplyListValidation "Enemies", 3, "Normal,Miniboss,Boss"  ' type

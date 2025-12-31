@@ -27,6 +27,7 @@ var dialogues: Dictionary = {}
 var consumables: Dictionary = {}
 var status_effects: Dictionary = {}
 var zones: Dictionary = {}
+var locations: Dictionary = {}
 var chests: Dictionary = {}
 var spawn_points: Dictionary = {}
 var cutscenes: Dictionary = {}
@@ -44,6 +45,7 @@ var quests_list: Array = []
 var npcs_list: Array = []
 var dialogues_list: Array = []
 var zones_list: Array = []
+var locations_list: Array = []
 var chests_list: Array = []
 var spawn_points_list: Array = []
 var cutscenes_list: Array = []
@@ -94,6 +96,7 @@ func load_all_databases() -> void:
 	success = _load_database("consumables.json", "consumables", consumables) and success
 	success = _load_database("status_effects.json", "status_effects", status_effects) and success
 	success = _load_database("zones.json", "zones", zones, zones_list) and success
+	success = _load_database("locations.json", "locations", locations, locations_list) and success
 
 	# Interactables
 	success = _load_database("chests.json", "chests", chests, chests_list) and success
@@ -605,6 +608,98 @@ func _matches_filter(filter_str: String, context: Dictionary) -> bool:
 
 
 #===============================================================================
+# ZONE ACCESS
+#===============================================================================
+
+## Get zone by id
+func get_zone(id: String) -> Dictionary:
+	return zones.get(id, {})
+
+
+## Get all zones
+func get_all_zones() -> Array:
+	return zones_list
+
+
+#===============================================================================
+# LOCATION ACCESS
+#===============================================================================
+
+## Get location by id
+func get_location(id: String) -> Dictionary:
+	return locations.get(id, {})
+
+
+## Get all locations in a zone
+func get_locations_by_zone(zone_id: String) -> Array:
+	var result: Array = []
+	for loc in locations_list:
+		if loc.get("zone_id", "") == zone_id:
+			result.append(loc)
+	return result
+
+
+## Get locations by type
+func get_locations_by_type(location_type: String) -> Array:
+	var result: Array = []
+	for loc in locations_list:
+		if loc.get("location_type", "") == location_type:
+			result.append(loc)
+	return result
+
+
+## Get effective setting for a location, with zone fallback
+## Returns the location's value if set (not null/empty), otherwise zone's value
+## setting_name: one of "is_safe_zone", "is_pvp_enabled", "status_effect_id",
+##               "music_track", "ambient_sound"
+func get_effective_setting(location_id: String, setting_name: String, default_value = null):
+	var loc := get_location(location_id)
+	if loc.is_empty():
+		return default_value
+
+	# Check if location has this setting defined (not null)
+	var loc_value = loc.get(setting_name, null)
+	if loc_value != null and (not loc_value is String or not loc_value.is_empty()):
+		return loc_value
+
+	# Fall back to zone
+	var zone_id: String = loc.get("zone_id", "")
+	if zone_id.is_empty():
+		return default_value
+
+	var zone := get_zone(zone_id)
+	if zone.is_empty():
+		return default_value
+
+	return zone.get(setting_name, default_value)
+
+
+## Check if location (or its zone) is a safe zone
+func is_location_safe(location_id: String) -> bool:
+	return get_effective_setting(location_id, "is_safe_zone", false)
+
+
+## Check if location (or its zone) allows PvP
+func is_location_pvp_enabled(location_id: String) -> bool:
+	return get_effective_setting(location_id, "is_pvp_enabled", false)
+
+
+## Get status effect for location (or zone)
+func get_location_status_effect(location_id: String) -> String:
+	return get_effective_setting(location_id, "status_effect_id", "")
+
+
+## Get music track for location (or zone)
+func get_location_music(location_id: String) -> String:
+	return get_effective_setting(location_id, "music_track", "")
+
+
+## Get ambient sound for location (or zone)
+func get_location_ambient(location_id: String) -> String:
+	return get_effective_setting(location_id, "ambient_sound", "")
+
+
+#===============================================================================
 # CHEST ACCESS
 #===============================================================================
 
@@ -1007,6 +1102,7 @@ func print_stats() -> void:
 		"npcs": npcs.size(),
 		"dialogues": dialogues.size(),
 		"zones": zones.size(),
+		"locations": locations.size(),
 		"chests": chests.size(),
 		"spawn_points": spawn_points.size(),
 		"cutscenes": cutscenes.size(),

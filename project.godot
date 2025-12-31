@@ -29,6 +29,7 @@ Persistence="*res://autoloads/persistence_manager.gd"
 QuestManager="*res://scripts/quests/quest_manager.gd"
 Cutscene="*res://autoloads/cutscene_manager.gd"
 FloatingDialogue="*res://autoloads/floating_dialogue_manager.gd"
+LocationManager="*res://autoloads/location_manager.gd"
 
 [display]
 

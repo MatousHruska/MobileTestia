@@ -43,6 +43,7 @@ Public Sub ExportAll()
     ExportConsumables
     ExportStatusEffects
     ExportZones
+    ExportLocations
 
     ' Interactables
     ExportChests
@@ -86,6 +87,7 @@ Public Sub ValidateAll()
     ValidateConsumables
     ValidateStatusEffects
     ValidateZones
+    ValidateLocations
     ValidateChests
     ValidateSpawnPoints
     ValidateCutscenes
@@ -128,6 +130,7 @@ Public Sub SetupWorkbook()
     SetupConsumablesSheet
     SetupStatusEffectsSheet
     SetupZonesSheet
+    SetupLocationsSheet
     SetupChestsSheet
     SetupSpawnPointsSheet
     SetupCutscenesSheet
@@ -445,8 +448,16 @@ Private Sub SetupZonesSheet()
     Set ws = GetOrCreateSheet("Zones")
     Dim headers As Variant
     headers = Array("id", "name", "zone_type", "min_level", "max_level", "enemy_spawn_list", _
-                    "loot_table_id", "respawn_time", "music_track", "description")
+                    "loot_table_id", "respawn_time", "music_track", "ambient_sound", _
+                    "is_safe_zone", "is_pvp_enabled", "status_effect_id", "discovery_popup", "description")
     SetHeaders ws, headers
+
+    ' Add comments
+    SafeAddComment ws.Cells(1, 10), "Background ambient sound file"
+    SafeAddComment ws.Cells(1, 11), "true/false - No combat allowed in this zone"
+    SafeAddComment ws.Cells(1, 12), "true/false - PvP enabled in this zone"
+    SafeAddComment ws.Cells(1, 13), "Status effect applied while in zone (e.g., status_cold)"
+    SafeAddComment ws.Cells(1, 14), "true/false - Show discovery popup on first visit"
 End Sub
 
 Private Sub SetupDialoguesSheet()

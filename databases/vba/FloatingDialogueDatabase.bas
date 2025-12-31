@@ -23,11 +23,12 @@ Private Const COL_FLD_WEIGHT As Integer = 11
 
 ' Valid trigger events
 Private Function GetValidTriggerEvents() As Variant
-    GetValidTriggerEvents = Array("zone_enter", "zone_exit", "item_pickup", "item_equip", _
-                                   "potion_use", "skill_use", "enemy_kill", "boss_kill", _
-                                   "critical_hit", "near_death", "level_up", "quest_complete", _
-                                   "quest_start", "gold_pickup", "chest_open", "shrine_activate", _
-                                   "player_idle", "combat_start", "combat_end", "revive")
+    GetValidTriggerEvents = Array("zone_enter", "zone_exit", "location_enter", "location_exit", _
+                                   "item_pickup", "item_equip", "potion_use", "skill_use", _
+                                   "enemy_kill", "boss_kill", "critical_hit", "near_death", _
+                                   "level_up", "quest_complete", "quest_start", "gold_pickup", _
+                                   "chest_open", "shrine_activate", "player_idle", "combat_start", _
+                                   "combat_end", "revive")
 End Function
 
 '-------------------------------------------------------------------------------
@@ -217,7 +218,7 @@ Public Sub SetupFloatingDialoguesSheet()
 
     ' Add column notes
     SafeAddComment ws.Cells(1, 1), "Format: fld_trigger_name (e.g., fld_zone_evil_lair, fld_potion_quip)"
-    SafeAddComment ws.Cells(1, 2), "zone_enter, zone_exit, item_pickup, item_equip, potion_use, skill_use, enemy_kill, boss_kill, critical_hit, near_death, level_up, quest_complete, quest_start, gold_pickup, chest_open, shrine_activate, player_idle, combat_start, combat_end, revive"
+    SafeAddComment ws.Cells(1, 2), "zone_enter, zone_exit, location_enter, location_exit, item_pickup, item_equip, potion_use, skill_use, enemy_kill, boss_kill, critical_hit, near_death, level_up, quest_complete, quest_start, gold_pickup, chest_open, shrine_activate, player_idle, combat_start, combat_end, revive"
     SafeAddComment ws.Cells(1, 3), "Filter conditions: zone_id:evil_lair, item_rarity:legendary, enemy_type:boss, etc. Use key:value format"
     SafeAddComment ws.Cells(1, 4), "The dialogue text to display"
     SafeAddComment ws.Cells(1, 5), "Future: audio file path for voice line"
