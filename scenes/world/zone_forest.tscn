@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://zone_forest_001"]
+[gd_scene load_steps=12 format=3 uid="uid://zone_forest_001"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
 [ext_resource type="Script" path="res://scripts/interactable/unlockable_door.gd" id="8_door"]
 [ext_resource type="Script" path="res://scripts/npc/spawn_point.gd" id="9_spawn_point"]
+[ext_resource type="Script" path="res://scripts/world/location.gd" id="10_location"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
@@ -20,6 +21,12 @@ size = Vector2(16, 120)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v2"]
 size = Vector2(16, 88)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_loc_north"]
+size = Vector2(400, 300)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_loc_south"]
+size = Vector2(400, 300)
 
 [node name="ZoneForest" type="Node2D"]
 script = ExtResource("4_zone")
@@ -207,6 +214,30 @@ wooden_weight = 0
 iron_weight = 20
 golden_weight = 80
 allow_wooden = false
+
+[node name="Locations" type="Node2D" parent="."]
+
+[node name="NorthernForest" type="Area2D" parent="Locations"]
+position = Vector2(-200, -150)
+script = ExtResource("10_location")
+location_id = "loc_forest_north"
+display_name = "Northern Forest"
+show_debug_bounds = true
+debug_color = Color(0.2, 0.4, 0.6, 0.3)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Locations/NorthernForest"]
+shape = SubResource("RectangleShape2D_loc_north")
+
+[node name="SouthernForest" type="Area2D" parent="Locations"]
+position = Vector2(-200, 150)
+script = ExtResource("10_location")
+location_id = "loc_forest_south"
+display_name = "Southern Forest"
+show_debug_bounds = true
+debug_color = Color(0.6, 0.5, 0.2, 0.3)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Locations/SouthernForest"]
+shape = SubResource("RectangleShape2D_loc_south")
 
 [node name="HUD" parent="." instance=ExtResource("2_hud")]
 
