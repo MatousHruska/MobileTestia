@@ -9,7 +9,13 @@
       "enemy_spawn_list": "",
       "loot_table_id": "Central hub - no enemies",
       "respawn_time": 60,
-      "music_track": ""
+      "music_track": "",
+      "ambient_sound": "",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": false,
+      "description": ""
     },
     {
       "id": "zone_meadow",
@@ -20,18 +26,30 @@
       "enemy_spawn_list": "ene_zombie_basic",
       "loot_table_id": "Zombies",
       "respawn_time": 60,
-      "music_track": ""
+      "music_track": "",
+      "ambient_sound": "",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": false,
+      "description": ""
     },
     {
       "id": "zone_forest",
-      "name": "Dark Forest",
+      "name": "Whispering Woods",
       "zone_type": "outdoor",
-      "min_level": 3,
-      "max_level": 6,
-      "enemy_spawn_list": "ene_ghoul_basic",
-      "loot_table_id": "Ghouls",
+      "min_level": 1,
+      "max_level": 10,
+      "enemy_spawn_list": "ene_wolf_basic,ene_spider_forest",
+      "loot_table_id": "loot_forest",
       "respawn_time": 60,
-      "music_track": ""
+      "music_track": "music_forest",
+      "ambient_sound": "amb_forest_birds",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": true,
+      "description": "A peaceful forest teeming with wildlife"
     },
     {
       "id": "zone_crypt",
@@ -42,7 +60,13 @@
       "enemy_spawn_list": "ene_Vampire_basic,ene_vampire_lord",
       "loot_table_id": "Vampires",
       "respawn_time": 60,
-      "music_track": ""
+      "music_track": "",
+      "ambient_sound": "",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": false,
+      "description": ""
     }
   ]
 }
