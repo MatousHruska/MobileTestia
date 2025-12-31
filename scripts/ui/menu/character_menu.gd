@@ -378,7 +378,7 @@ func open_menu(start_tab: Tab = Tab.INVENTORY) -> void:
 	_switch_to_tab(start_tab)
 
 	# Pause game
-	Game.open_inventory()
+	Game.open_character_menu()
 
 	menu_opened.emit()
 	Debug.info("UI", "Character menu opened")
@@ -396,7 +396,7 @@ func close_menu() -> void:
 	Inventory.deselect()
 
 	# Resume game
-	Game.close_inventory()
+	Game.close_character_menu()
 
 	menu_closed.emit()
 	Debug.info("UI", "Character menu closed")
