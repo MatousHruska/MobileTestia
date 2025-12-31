@@ -1,0 +1,68 @@
+[gd_scene load_steps=3 format=3 uid="uid://cpopup_message_scene"]
+
+[ext_resource type="Script" path="res://scenes/ui/popup_message/popup_message.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0.08, 0.08, 0.12, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.3, 0.3, 0.4, 0.8)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.3)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[node name="PopupMessage" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 300.0
+offset_bottom = 80.0
+script = ExtResource("1_script")
+
+[node name="Background" type="Panel" parent="."]
+layout_mode = 0
+offset_left = -150.0
+offset_right = 150.0
+offset_bottom = 80.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="Icon" type="TextureRect" parent="Background"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 20.0
+offset_right = 44.0
+offset_bottom = 52.0
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="Background"]
+layout_mode = 0
+offset_left = 52.0
+offset_top = 12.0
+offset_right = 288.0
+offset_bottom = 68.0
+
+[node name="Title" type="Label" parent="Background/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.85, 0.7, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5)
+theme_override_font_sizes/font_size = 18
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+text = "Entering"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Background/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.5)
+theme_override_font_sizes/font_size = 14
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+text = "Dark Forest"
+horizontal_alignment = 1
+autowrap_mode = 2

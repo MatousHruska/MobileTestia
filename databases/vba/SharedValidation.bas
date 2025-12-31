@@ -408,6 +408,7 @@ Private Sub CreateIdNamedRanges()
     CreateNamedRange "Cutscenes", 1, "ID_Cutscenes"
     CreateNamedRange "FloatingDialogues", 1, "ID_FloatingDialogues"
     CreateNamedRange "Locations", 1, "ID_Locations"
+    CreateNamedRange "PopupMessages", 1, "ID_PopupMessages"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -510,6 +511,10 @@ Private Sub ApplyEnumValidation()
 
     ' FloatingDialogues
     ApplyListValidation "FloatingDialogues", 2, "zone_enter,zone_exit,location_enter,location_exit,item_pickup,item_equip,potion_use,skill_use,enemy_kill,boss_kill,critical_hit,near_death,level_up,quest_complete,quest_start,gold_pickup,chest_open,shrine_activate,player_idle,combat_start,combat_end,revive"  ' trigger_event
+
+    ' PopupMessages
+    ApplyListValidation "PopupMessages", 2, "zone_enter,zone_exit,location_enter,location_exit,quest_start,quest_complete,quest_objective,cutscene_end,manual"  ' trigger_event
+    ApplyListValidation "PopupMessages", 6, "none,location,quest,warning,info,combat,discovery"  ' icon
 
     ' Cutscenes
     ApplyListValidation "Cutscenes", 2, "zone_enter,quest_complete,quest_start,interact,manual"  ' trigger

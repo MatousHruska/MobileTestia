@@ -32,6 +32,7 @@ var chests: Dictionary = {}
 var spawn_points: Dictionary = {}
 var cutscenes: Dictionary = {}
 var floating_dialogues: Dictionary = {}
+var popup_messages: Dictionary = {}
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -50,6 +51,7 @@ var chests_list: Array = []
 var spawn_points_list: Array = []
 var cutscenes_list: Array = []
 var floating_dialogues_list: Array = []
+var popup_messages_list: Array = []
 
 ## Signals
 signal databases_loaded
@@ -109,6 +111,9 @@ func load_all_databases() -> void:
 
 	# Floating Dialogues
 	success = _load_database("floating_dialogues.json", "floating_dialogues", floating_dialogues, floating_dialogues_list) and success
+
+	# Popup Messages
+	success = _load_database("popup_messages.json", "popup_messages", popup_messages, popup_messages_list) and success
 
 	if success:
 		Debug.info("Database", "All databases loaded successfully")
@@ -605,6 +610,44 @@ func _matches_filter(filter_str: String, context: Dictionary) -> bool:
 			return false
 
 	return true
+
+
+#===============================================================================
+# POPUP MESSAGE ACCESS
+#===============================================================================
+
+## Get popup message by id
+func get_popup_message(id: String) -> Dictionary:
+	return popup_messages.get(id, {})
+
+
+## Get all popup messages for a specific trigger event
+func get_popup_messages_by_trigger(trigger_event: String) -> Array:
+	var result: Array = []
+	for popup in popup_messages_list:
+		if popup.get("trigger_event", "") == trigger_event:
+			result.append(popup)
+	return result
+
+
+## Get matching popup messages with filter
+## Returns popups matching both trigger_event and filter conditions
+func get_matching_popup_messages(trigger_event: String, context: Dictionary = {}) -> Array:
+	var result: Array = []
+
+	for popup in popup_messages_list:
+		if popup.get("trigger_event", "") != trigger_event:
+			continue
+
+		# Check filter conditions
+		var filter_str: String = popup.get("trigger_filter", "")
+		if not filter_str.is_empty():
+			if not _matches_filter(filter_str, context):
+				continue
+
+		result.append(popup)
+
+	return result
 
 
 #===============================================================================
@@ -1107,4 +1150,5 @@ func print_stats() -> void:
 		"spawn_points": spawn_points.size(),
 		"cutscenes": cutscenes.size(),
 		"floating_dialogues": floating_dialogues.size(),
+		"popup_messages": popup_messages.size(),
 	})

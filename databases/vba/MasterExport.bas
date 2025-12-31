@@ -57,6 +57,9 @@ Public Sub ExportAll()
     ' Floating Dialogues
     ExportFloatingDialogues
 
+    ' Popup Messages
+    ExportPopupMessages
+
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -92,6 +95,7 @@ Public Sub ValidateAll()
     ValidateSpawnPoints
     ValidateCutscenes
     ValidateFloatingDialogues
+    ValidatePopupMessages
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -135,6 +139,7 @@ Public Sub SetupWorkbook()
     SetupSpawnPointsSheet
     SetupCutscenesSheet
     SetupFloatingDialoguesSheet
+    SetupPopupMessagesSheet
     SetupStatModifiersSheet
     SetupRaritiesSheet
 
