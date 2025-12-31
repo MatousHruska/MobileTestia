@@ -46,7 +46,12 @@ Private Const COL_ZN_ENEMY_SPAWN_LIST As Integer = 6
 Private Const COL_ZN_LOOT_TABLE_ID As Integer = 7
 Private Const COL_ZN_RESPAWN_TIME As Integer = 8
 Private Const COL_ZN_MUSIC_TRACK As Integer = 9
-Private Const COL_ZN_DESCRIPTION As Integer = 10
+Private Const COL_ZN_AMBIENT_SOUND As Integer = 10
+Private Const COL_ZN_IS_SAFE_ZONE As Integer = 11
+Private Const COL_ZN_IS_PVP_ENABLED As Integer = 12
+Private Const COL_ZN_STATUS_EFFECT_ID As Integer = 13
+Private Const COL_ZN_DISCOVERY_POPUP As Integer = 14
+Private Const COL_ZN_DESCRIPTION As Integer = 15
 
 ' Valid dropdown values
 Private validConsumableTypes() As String
@@ -464,6 +469,31 @@ Public Sub ExportZones()
 
         If itemCount > 0 Then json = json & "," & vbCrLf
 
+        ' Handle boolean fields
+        Dim isSafeZone As String
+        isSafeZone = LCase(Trim(ws.Cells(i, COL_ZN_IS_SAFE_ZONE).value))
+        If isSafeZone = "true" Or isSafeZone = "1" Or isSafeZone = "yes" Then
+            isSafeZone = "true"
+        Else
+            isSafeZone = "false"
+        End If
+
+        Dim isPvpEnabled As String
+        isPvpEnabled = LCase(Trim(ws.Cells(i, COL_ZN_IS_PVP_ENABLED).value))
+        If isPvpEnabled = "true" Or isPvpEnabled = "1" Or isPvpEnabled = "yes" Then
+            isPvpEnabled = "true"
+        Else
+            isPvpEnabled = "false"
+        End If
+
+        Dim discoveryPopup As String
+        discoveryPopup = LCase(Trim(ws.Cells(i, COL_ZN_DISCOVERY_POPUP).value))
+        If discoveryPopup = "true" Or discoveryPopup = "1" Or discoveryPopup = "yes" Then
+            discoveryPopup = "true"
+        Else
+            discoveryPopup = "false"
+        End If
+
         json = json & "    {" & vbCrLf
         json = json & "      ""id"": """ & EscapeJsonString(id) & """," & vbCrLf
         json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_NAME))) & """," & vbCrLf
@@ -473,7 +503,13 @@ Public Sub ExportZones()
         json = json & "      ""enemy_spawn_list"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_ENEMY_SPAWN_LIST))) & """," & vbCrLf
         json = json & "      ""loot_table_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_LOOT_TABLE_ID))) & """," & vbCrLf
         json = json & "      ""respawn_time"": " & GetDefaultNumeric(ws.Cells(i, COL_ZN_RESPAWN_TIME), 60) & "," & vbCrLf
-        json = json & "      ""music_track"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_MUSIC_TRACK))) & """" & vbCrLf
+        json = json & "      ""music_track"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_MUSIC_TRACK))) & """," & vbCrLf
+        json = json & "      ""ambient_sound"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_AMBIENT_SOUND))) & """," & vbCrLf
+        json = json & "      ""is_safe_zone"": " & isSafeZone & "," & vbCrLf
+        json = json & "      ""is_pvp_enabled"": " & isPvpEnabled & "," & vbCrLf
+        json = json & "      ""status_effect_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_STATUS_EFFECT_ID))) & """," & vbCrLf
+        json = json & "      ""discovery_popup"": " & discoveryPopup & "," & vbCrLf
+        json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_DESCRIPTION))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
