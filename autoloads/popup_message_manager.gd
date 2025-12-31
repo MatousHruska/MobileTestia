@@ -137,13 +137,14 @@ func _auto_generate_popup(trigger_event: String, context: Dictionary) -> void:
 				return
 
 			# Only show popup if discovery_popup is true
-			var show_popup: bool = zone_data.get("discovery_popup", false)
-			if not show_popup:
+			var should_show: bool = zone_data.get("discovery_popup", false)
+			if not should_show:
 				return
 
 			# Skip zone popup if player is in a location (location popup takes priority)
-			if LocationManager and LocationManager.is_in_location():
-				var loc_data := LocationManager.get_current_location()
+			var loc_manager = get_node_or_null("/root/LocationManager")
+			if loc_manager and loc_manager.is_in_location():
+				var loc_data: Dictionary = loc_manager.get_current_location()
 				if loc_data.get("discovery_popup", false):
 					Debug.log("PopupMessage", "Skipping zone popup - location popup takes priority")
 					return
@@ -160,8 +161,8 @@ func _auto_generate_popup(trigger_event: String, context: Dictionary) -> void:
 				return
 
 			# Only show popup if discovery_popup is true
-			var show_popup: bool = loc_data.get("discovery_popup", false)
-			if not show_popup:
+			var should_show: bool = loc_data.get("discovery_popup", false)
+			if not should_show:
 				return
 
 			title = "Entering"
