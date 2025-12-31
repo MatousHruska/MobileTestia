@@ -351,17 +351,19 @@ func _on_pickup_failed() -> void:
 
 
 func _flash_interact_button_red() -> void:
-	if not interact_button:
+	if not combat_hud or not combat_hud.interact_button:
 		return
 
+	var btn := combat_hud.interact_button
+
 	# Store original modulate
-	var original_color := interact_button.modulate
+	var original_color: Color = btn.modulate
 
 	# Flash red a few times
 	var tween := create_tween()
 	for i in 3:
-		tween.tween_property(interact_button, "modulate", Color(1.0, 0.3, 0.3), 0.1)
-		tween.tween_property(interact_button, "modulate", original_color, 0.1)
+		tween.tween_property(btn, "modulate", Color(1.0, 0.3, 0.3), 0.1)
+		tween.tween_property(btn, "modulate", original_color, 0.1)
 
 
 ## Debug
