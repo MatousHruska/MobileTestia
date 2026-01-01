@@ -29,7 +29,7 @@
       "duration": 0,
       "stat_bonuses": "",
       "description": "A simple weapon swing in front of you.",
-      "rank_descriptions": "Deals 100% weapon damage.|Deals 100% weapon damage.",
+      "rank_descriptions": "Deals 100% weapon damage.",
       "icon_name": "tal_basic_strike"
     }
   ]
