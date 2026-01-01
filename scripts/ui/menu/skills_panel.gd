@@ -78,6 +78,8 @@ var _desc_icon: TextureRect
 var _desc_name: Label
 var _desc_text: RichTextLabel
 var _desc_rank: Label
+var _desc_col_left: VBoxContainer
+var _desc_col_right: VBoxContainer
 
 ## Action buttons
 var _button1: Button
@@ -238,6 +240,7 @@ func _build_description_panel() -> void:
 	_right_panel.add_child(header)
 
 	_desc_panel = PanelContainer.new()
+	_desc_panel.custom_minimum_size = Vector2(0, 100)
 	_desc_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_right_panel.add_child(_desc_panel)
 
@@ -249,48 +252,75 @@ func _build_description_panel() -> void:
 	desc_style.set_corner_radius_all(4)
 	_desc_panel.add_theme_stylebox_override("panel", desc_style)
 
-	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 12)
-	_desc_panel.add_child(hbox)
+	# Scrollable container
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_desc_panel.add_child(scroll)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 8)
 	margin.add_theme_constant_override("margin_right", 8)
 	margin.add_theme_constant_override("margin_top", 8)
 	margin.add_theme_constant_override("margin_bottom", 8)
-	hbox.add_child(margin)
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(margin)
 
-	var inner_hbox := HBoxContainer.new()
-	inner_hbox.add_theme_constant_override("separation", 12)
-	margin.add_child(inner_hbox)
+	var content_vbox := VBoxContainer.new()
+	content_vbox.add_theme_constant_override("separation", 6)
+	content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.add_child(content_vbox)
+
+	# Top row: Icon + Name/Rank
+	var top_hbox := HBoxContainer.new()
+	top_hbox.add_theme_constant_override("separation", 10)
+	content_vbox.add_child(top_hbox)
 
 	# Icon
 	_desc_icon = TextureRect.new()
-	_desc_icon.custom_minimum_size = Vector2(48, 48)
+	_desc_icon.custom_minimum_size = Vector2(40, 40)
 	_desc_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_desc_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	inner_hbox.add_child(_desc_icon)
+	top_hbox.add_child(_desc_icon)
 
-	# Text content
-	var text_vbox := VBoxContainer.new()
-	text_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inner_hbox.add_child(text_vbox)
+	# Name and rank
+	var name_vbox := VBoxContainer.new()
+	name_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top_hbox.add_child(name_vbox)
 
 	_desc_name = Label.new()
-	_desc_name.add_theme_font_size_override("font_size", 14)
-	text_vbox.add_child(_desc_name)
+	_desc_name.add_theme_font_size_override("font_size", 13)
+	name_vbox.add_child(_desc_name)
 
 	_desc_rank = Label.new()
-	_desc_rank.add_theme_font_size_override("font_size", 11)
+	_desc_rank.add_theme_font_size_override("font_size", 10)
 	_desc_rank.add_theme_color_override("font_color", COLOR_AVAILABLE)
-	text_vbox.add_child(_desc_rank)
+	name_vbox.add_child(_desc_rank)
 
+	# Two-column stats layout
+	var columns_hbox := HBoxContainer.new()
+	columns_hbox.add_theme_constant_override("separation", 16)
+	columns_hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_vbox.add_child(columns_hbox)
+
+	# Left column
+	_desc_col_left = VBoxContainer.new()
+	_desc_col_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns_hbox.add_child(_desc_col_left)
+
+	# Right column
+	_desc_col_right = VBoxContainer.new()
+	_desc_col_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns_hbox.add_child(_desc_col_right)
+
+	# Description text (full width below columns)
 	_desc_text = RichTextLabel.new()
 	_desc_text.bbcode_enabled = true
 	_desc_text.fit_content = true
-	_desc_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_desc_text.add_theme_font_size_override("normal_font_size", 11)
-	text_vbox.add_child(_desc_text)
+	_desc_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_desc_text.add_theme_font_size_override("normal_font_size", 10)
+	content_vbox.add_child(_desc_text)
 
 
 func _build_action_buttons() -> void:
@@ -654,6 +684,12 @@ func _update_points_label() -> void:
 
 
 func _update_description_panel() -> void:
+	# Clear columns
+	for child in _desc_col_left.get_children():
+		child.queue_free()
+	for child in _desc_col_right.get_children():
+		child.queue_free()
+
 	if selected_talent_id.is_empty():
 		_desc_name.text = "Select a talent or skill"
 		_desc_rank.text = ""
@@ -669,30 +705,44 @@ func _update_description_panel() -> void:
 	_desc_name.text = talent.talent_name
 	_desc_rank.text = "Rank: %d / %d" % [invested, talent.max_points]
 
-	# Build description
-	var desc := talent.description + "\n\n"
-
+	# Left column: Type and costs
 	if talent.is_active():
-		desc += "[color=cyan]Active Ability[/color]\n"
+		_add_stat_row(_desc_col_left, "Type", "Active", Color(0.4, 0.9, 1.0))
 		if talent.mana_cost > 0:
-			desc += "Mana: %d  " % int(talent.mana_cost)
+			_add_stat_row(_desc_col_left, "Mana", str(int(talent.mana_cost)), Color(0.4, 0.6, 1.0))
 		if talent.stamina_cost > 0:
-			desc += "Stamina: %d  " % int(talent.stamina_cost)
+			_add_stat_row(_desc_col_left, "Stamina", str(int(talent.stamina_cost)), Color(0.4, 1.0, 0.6))
 		if talent.cooldown > 0:
-			desc += "CD: %.1fs" % talent.cooldown
-		desc += "\n"
+			_add_stat_row(_desc_col_left, "Cooldown", "%.1fs" % talent.cooldown, Color(0.9, 0.9, 0.9))
 	else:
-		desc += "[color=yellow]Passive[/color]\n"
+		_add_stat_row(_desc_col_left, "Type", "Passive", Color(1.0, 0.9, 0.3))
 
-	# Show current rank description
+	# Right column: Rank effects
 	if invested > 0 and invested <= talent.rank_descriptions.size():
-		desc += "\nCurrent: " + talent.rank_descriptions[invested - 1]
-
-	# Show next rank description
+		_add_stat_row(_desc_col_right, "Current", talent.rank_descriptions[invested - 1], Color(0.7, 1.0, 0.7))
 	if invested < talent.max_points and invested < talent.rank_descriptions.size():
-		desc += "\n[color=gray]Next: " + talent.rank_descriptions[invested] + "[/color]"
+		_add_stat_row(_desc_col_right, "Next", talent.rank_descriptions[invested], Color(0.6, 0.6, 0.6))
 
-	_desc_text.text = desc
+	# Description text
+	_desc_text.text = talent.description
+
+
+func _add_stat_row(column: VBoxContainer, label_text: String, value_text: String, value_color: Color) -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 4)
+	column.add_child(row)
+
+	var label := Label.new()
+	label.text = label_text + ":"
+	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	row.add_child(label)
+
+	var value := Label.new()
+	value.text = value_text
+	value.add_theme_font_size_override("font_size", 10)
+	value.add_theme_color_override("font_color", value_color)
+	row.add_child(value)
 
 
 func _update_buttons() -> void:
