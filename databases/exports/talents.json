@@ -13,7 +13,7 @@
       "weapon_damage_percent": 100,
       "flat_damage_bonus": 0,
       "damage_type": "physical",
-      "lunge_force": 80,
+      "lunge_force": 40,
       "recovery_time": 0,
       "hit_range": 50,
       "hit_arc": 120,
