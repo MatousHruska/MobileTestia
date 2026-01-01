@@ -119,6 +119,15 @@ func _build_ui() -> void:
 	_build_right_panel(main_hbox)
 
 
+func _create_section_header(text: String) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", 14)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	return label
+
+
 func _build_talent_tree_panel(parent: Control) -> void:
 	_left_panel = PanelContainer.new()
 	_left_panel.custom_minimum_size.x = TREE_WIDTH
@@ -171,11 +180,7 @@ func _build_right_panel(parent: Control) -> void:
 	parent.add_child(_right_panel)
 
 	# Skillbook header (centered)
-	_skillbook_header = Label.new()
-	_skillbook_header.text = "Skillbook"
-	_skillbook_header.add_theme_font_size_override("font_size", 18)
-	_skillbook_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_skillbook_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_skillbook_header = _create_section_header("Skillbook")
 	_right_panel.add_child(_skillbook_header)
 
 	# Skillbook container with border
@@ -228,6 +233,10 @@ func _build_right_panel(parent: Control) -> void:
 
 
 func _build_description_panel() -> void:
+	# Skill Description header
+	var header := _create_section_header("Skill Description")
+	_right_panel.add_child(header)
+
 	_desc_panel = PanelContainer.new()
 	_desc_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_right_panel.add_child(_desc_panel)
@@ -307,11 +316,8 @@ func _build_action_buttons() -> void:
 
 
 func _build_skill_bind_ui() -> void:
-	# Active Skills label
-	var label := Label.new()
-	label.text = "Active Skills"
-	label.add_theme_font_size_override("font_size", 14)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# Active Skills header
+	var label := _create_section_header("Active Skills")
 	_right_panel.add_child(label)
 
 	_bind_panel = PanelContainer.new()
