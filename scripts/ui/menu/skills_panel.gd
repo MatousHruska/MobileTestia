@@ -21,7 +21,7 @@ signal binding_mode_exited
 # CONSTANTS
 #===============================================================================
 
-const TALENT_NODE_SIZE := Vector2(56, 56)  ## Size of talent node buttons
+const TALENT_NODE_SIZE := Vector2(52, 52)  ## Size of talent node buttons (square)
 const TALENT_SPACING := Vector2(16, 24)  ## Spacing between talent nodes
 const ROW_HEIGHT := 80  ## Height per talent row
 const TREE_WIDTH := 340  ## Width of talent tree panel
@@ -62,11 +62,11 @@ var _left_panel: PanelContainer
 var _right_panel: VBoxContainer
 
 ## Talent tree
-var _tree_tabs: HBoxContainer
-var _tree_description: Label
+var _tree_tabs: VBoxContainer
 var _tree_scroll: ScrollContainer
 var _tree_content: VBoxContainer
 var _points_label: Label
+var _points_tree_label: Label
 
 ## Skillbook
 var _skillbook_header: Label
@@ -176,41 +176,70 @@ func _build_talent_tree_panel(parent: Control) -> void:
 	_left_panel.add_child(margin)
 
 	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
 	margin.add_child(vbox)
 
-	# Tree tabs
-	_tree_tabs = HBoxContainer.new()
+	# Talents header (left-aligned)
+	var header := Label.new()
+	header.text = "Talents"
+	header.add_theme_font_size_override("font_size", 14)
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	vbox.add_child(header)
+
+	# Tree tabs container (vertical, each tab has outline)
+	_tree_tabs = VBoxContainer.new()
+	_tree_tabs.add_theme_constant_override("separation", 4)
 	_tree_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_child(_tree_tabs)
-
-	# Tree description (short flavor text)
-	_tree_description = Label.new()
-	_tree_description.add_theme_font_size_override("font_size", 11)
-	_tree_description.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	_tree_description.autowrap_mode = TextServer.AUTOWRAP_WORD
-	_tree_description.custom_minimum_size.y = 40
-	vbox.add_child(_tree_description)
-
-	# Points label
-	_points_label = Label.new()
-	_points_label.add_theme_font_size_override("font_size", 12)
-	_points_label.add_theme_color_override("font_color", COLOR_AVAILABLE)
-	_points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(_points_label)
-
-	# Separator
-	var sep := HSeparator.new()
-	vbox.add_child(sep)
 
 	# Scrollable tree content
 	_tree_scroll = ScrollContainer.new()
 	_tree_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_tree_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_tree_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	vbox.add_child(_tree_scroll)
 
 	_tree_content = VBoxContainer.new()
 	_tree_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tree_content.add_theme_constant_override("separation", 12)
 	_tree_scroll.add_child(_tree_content)
+
+	# Static points section at bottom (outside scroll)
+	_build_points_section(vbox)
+
+
+func _build_points_section(parent: Control) -> void:
+	var panel := PanelContainer.new()
+	parent.add_child(panel)
+
+	# Style with border
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.1, 0.1, 0.12, 0.9)
+	style.border_color = Color(0.3, 0.3, 0.35)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(3)
+	panel.add_theme_stylebox_override("panel", style)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 6)
+	margin.add_theme_constant_override("margin_right", 6)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	panel.add_child(margin)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 2)
+	margin.add_child(vbox)
+
+	_points_label = Label.new()
+	_points_label.add_theme_font_size_override("font_size", 11)
+	_points_label.add_theme_color_override("font_color", COLOR_AVAILABLE)
+	vbox.add_child(_points_label)
+
+	_points_tree_label = Label.new()
+	_points_tree_label.add_theme_font_size_override("font_size", 10)
+	_points_tree_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	vbox.add_child(_points_tree_label)
 
 
 func _build_right_panel(parent: Control) -> void:
@@ -487,7 +516,24 @@ func _build_tree_tabs() -> void:
 		tab.toggle_mode = true
 		tab.button_pressed = (tree_data.get("id", "") == current_tree_id)
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab.custom_minimum_size.y = 28
 		tab.pressed.connect(_on_tree_tab_pressed.bind(tree_data.get("id", "")))
+
+		# Style with outline
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.15, 0.15, 0.18) if not tab.button_pressed else Color(0.25, 0.25, 0.3)
+		style.border_color = Color(0.4, 0.4, 0.45) if not tab.button_pressed else COLOR_AVAILABLE
+		style.set_border_width_all(1)
+		style.set_corner_radius_all(3)
+		tab.add_theme_stylebox_override("normal", style)
+
+		var pressed_style := StyleBoxFlat.new()
+		pressed_style.bg_color = Color(0.25, 0.25, 0.3)
+		pressed_style.border_color = COLOR_AVAILABLE
+		pressed_style.set_border_width_all(1)
+		pressed_style.set_corner_radius_all(3)
+		tab.add_theme_stylebox_override("pressed", pressed_style)
+
 		_tree_tabs.add_child(tab)
 
 
@@ -499,10 +545,6 @@ func _refresh_talent_tree() -> void:
 
 	if current_tree_id.is_empty():
 		return
-
-	# Get tree description
-	var tree_data := DatabaseLoader.get_talent_tree(current_tree_id)
-	_tree_description.text = tree_data.get("description", "")
 
 	# Build rows
 	var max_row := TalentManager.get_max_row(current_tree_id)
@@ -538,19 +580,44 @@ func _build_talent_row(row: int) -> void:
 			row_container.add_child(spacer)
 
 
-func _create_talent_node(talent: TalentData) -> Button:
+func _create_talent_node(talent: TalentData) -> Control:
+	# Container for square node
+	var container := Control.new()
+	container.custom_minimum_size = TALENT_NODE_SIZE
+
+	# Main button (square)
 	var node := Button.new()
-	node.custom_minimum_size = TALENT_NODE_SIZE
+	node.set_anchors_preset(Control.PRESET_FULL_RECT)
 	node.toggle_mode = true
 	node.pressed.connect(_on_talent_node_pressed.bind(talent.id))
+	node.set_meta("talent_id", talent.id)
+	container.add_child(node)
+
+	# Points label in bottom right corner
+	var points_label := Label.new()
+	points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	points_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	points_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	points_label.add_theme_font_size_override("font_size", 9)
+	points_label.set_meta("points_label", true)
+	container.add_child(points_label)
+
+	# Name label (abbreviated)
+	var name_label := Label.new()
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	name_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	name_label.add_theme_font_size_override("font_size", 10)
+	name_label.set_meta("name_label", true)
+	container.add_child(name_label)
 
 	# Update visual state
-	_update_talent_node_visual(node, talent)
+	_update_talent_node_visual(container, talent)
 
-	return node
+	return container
 
 
-func _update_talent_node_visual(node: Button, talent: TalentData) -> void:
+func _update_talent_node_visual(container: Control, talent: TalentData) -> void:
 	var invested := TalentManager.get_invested_points(talent.id)
 	var can_learn := TalentManager.can_learn_talent(talent.id)
 	var is_selected := (talent.id == selected_talent_id)
@@ -568,18 +635,39 @@ func _update_talent_node_visual(node: Button, talent: TalentData) -> void:
 	else:
 		color = COLOR_LOCKED
 
-	# Create stylebox
+	# Find the button child
+	var node: Button = null
+	var points_label: Label = null
+	var name_label: Label = null
+	for child in container.get_children():
+		if child is Button:
+			node = child
+		elif child is Label and child.has_meta("points_label"):
+			points_label = child
+		elif child is Label and child.has_meta("name_label"):
+			name_label = child
+
+	if not node:
+		return
+
+	# Create stylebox (square corners)
 	var stylebox := StyleBoxFlat.new()
 	stylebox.bg_color = Color(0.15, 0.15, 0.2) if invested == 0 else Color(0.2, 0.25, 0.3)
 	stylebox.border_color = color
 	stylebox.set_border_width_all(2 if not is_selected else 3)
-	stylebox.set_corner_radius_all(6)
+	stylebox.set_corner_radius_all(4)
 	node.add_theme_stylebox_override("normal", stylebox)
 	node.add_theme_stylebox_override("pressed", stylebox)
 
-	# Text showing points
-	node.text = "%d/%d" % [invested, talent.max_points]
-	node.add_theme_font_size_override("font_size", 10)
+	# Update points label
+	if points_label:
+		points_label.text = "%d/%d" % [invested, talent.max_points]
+		points_label.add_theme_color_override("font_color", color)
+
+	# Update name label (abbreviated to 2-3 chars)
+	if name_label:
+		name_label.text = talent.talent_name.substr(0, 3).to_upper()
+		name_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
 
 	# Tooltip
 	node.tooltip_text = "%s\n%s" % [talent.talent_name, talent.description]
@@ -718,7 +806,8 @@ func _update_bind_slot_visual(slot: Button, index: int) -> void:
 func _update_points_label() -> void:
 	var available := TalentManager.get_available_points()
 	var tree_invested := TalentManager.get_tree_invested_points(current_tree_id)
-	_points_label.text = "Available Points: %d | Tree: %d" % [available, tree_invested]
+	_points_label.text = "Available: %d" % available
+	_points_tree_label.text = "Invested in tree: %d" % tree_invested
 
 
 func _update_description_panel() -> void:
