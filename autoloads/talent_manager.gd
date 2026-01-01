@@ -13,14 +13,20 @@ signal talent_points_changed(total_invested: int, available: int)
 signal skillbook_updated(active_talents: Array)
 signal skill_bound(slot_index: int, talent_id: String)
 signal skill_unbound(slot_index: int)
+signal skill_rank_changed(talent_id: String, new_rank: int)
 
 ## Constants
 const POINTS_PER_ROW: int = 5  ## Points needed to unlock each row
 const MAIN_SLOT_INDEX: int = 0  ## Index of the main ability slot
 const MAX_SLOTS: int = 6  ## 1 main + 5 secondary
+const MAX_SKILL_RANK: int = 20  ## Maximum rank for active skills (trained at trainers)
 
 ## Invested points per talent (talent_id -> points)
 var invested_talents: Dictionary = {}
+
+## Skill ranks for active abilities (talent_id -> rank 1-20)
+## Ranks are leveled at trainers, not in the talent tree
+var skill_ranks: Dictionary = {}
 
 ## Currently selected tree for display
 var current_tree_id: String = ""
@@ -193,6 +199,7 @@ func learn_talent(talent_id: String) -> bool:
 ## Reset all talents (for Potion of Forget)
 func reset_all_talents() -> void:
 	invested_talents.clear()
+	skill_ranks.clear()
 
 	# Clear all skill bindings
 	for i in range(MAX_SLOTS):
@@ -203,7 +210,7 @@ func reset_all_talents() -> void:
 	talent_points_changed.emit(0, get_available_points())
 	_emit_skillbook_update()
 
-	Debug.info("Talents", "All talents reset")
+	Debug.info("Talents", "All talents and skill ranks reset")
 
 
 #===============================================================================
@@ -238,6 +245,50 @@ func _emit_skillbook_update() -> void:
 	for t in talents:
 		talent_ids.append(t.id)
 	skillbook_updated.emit(talent_ids)
+
+
+#===============================================================================
+# SKILL RANKS (for active abilities, leveled at trainers)
+#===============================================================================
+
+## Get current rank of an active skill (1-20, 0 if not learned)
+func get_skill_rank(talent_id: String) -> int:
+	if not is_in_skillbook(talent_id):
+		return 0
+	return skill_ranks.get(talent_id, 1)
+
+
+## Set skill rank (called by trainers)
+func set_skill_rank(talent_id: String, rank: int) -> bool:
+	if not is_in_skillbook(talent_id):
+		Debug.warn("Talents", "Cannot set rank for unlearned skill: %s" % talent_id)
+		return false
+
+	rank = clampi(rank, 1, MAX_SKILL_RANK)
+	var old_rank := get_skill_rank(talent_id)
+
+	if rank != old_rank:
+		skill_ranks[talent_id] = rank
+		skill_rank_changed.emit(talent_id, rank)
+		Debug.info("Talents", "Skill %s rank changed: %d -> %d" % [talent_id, old_rank, rank])
+
+	return true
+
+
+## Increase skill rank by 1 (called by trainers)
+func train_skill(talent_id: String) -> bool:
+	var current_rank := get_skill_rank(talent_id)
+	if current_rank >= MAX_SKILL_RANK:
+		Debug.warn("Talents", "Skill %s already at max rank" % talent_id)
+		return false
+	return set_skill_rank(talent_id, current_rank + 1)
+
+
+## Check if skill can be trained (has room to increase rank)
+func can_train_skill(talent_id: String) -> bool:
+	if not is_in_skillbook(talent_id):
+		return false
+	return get_skill_rank(talent_id) < MAX_SKILL_RANK
 
 
 #===============================================================================
@@ -384,12 +435,14 @@ func get_save_data() -> Dictionary:
 	return {
 		"invested_talents": invested_talents.duplicate(),
 		"skill_bindings": skill_bindings.duplicate(),
+		"skill_ranks": skill_ranks.duplicate(),
 	}
 
 
 ## Load save data
 func load_save_data(data: Dictionary) -> void:
 	invested_talents = data.get("invested_talents", {})
+	skill_ranks = data.get("skill_ranks", {})
 
 	var bindings: Array = data.get("skill_bindings", [])
 	for i in range(min(bindings.size(), MAX_SLOTS)):
@@ -403,7 +456,7 @@ func load_save_data(data: Dictionary) -> void:
 		if skill_bindings[i] != "":
 			skill_bound.emit(i, skill_bindings[i])
 
-	Debug.info("Talents", "Loaded save data: %d talents invested" % invested_talents.size())
+	Debug.info("Talents", "Loaded save data: %d talents invested, %d skill ranks" % [invested_talents.size(), skill_ranks.size()])
 
 
 #===============================================================================

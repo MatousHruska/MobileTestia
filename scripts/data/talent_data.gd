@@ -100,6 +100,10 @@ static func from_dict(data: Dictionary) -> TalentData:
 	var type_str: String = data.get("type", "passive").to_lower()
 	talent.type = TalentType.ACTIVE if type_str == "active" else TalentType.PASSIVE
 
+	# Active skills always have max_points = 1 (unlocked in tree, ranked at trainers)
+	if talent.type == TalentType.ACTIVE:
+		talent.max_points = 1
+
 	# Parse prerequisites
 	var prereqs_str: String = data.get("prerequisite_ids", "")
 	if not prereqs_str.is_empty():
