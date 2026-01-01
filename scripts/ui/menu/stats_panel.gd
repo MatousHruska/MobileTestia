@@ -744,14 +744,16 @@ func _update_derived_stats() -> void:
 	# Offensive - Weapon stats
 	var weapon_damage := Inventory.get_equipped_weapon_damage()
 	var weapon_speed := Inventory.get_equipped_weapon_attack_speed()
-	var weapon_dps := weapon_damage * weapon_speed
+	var attack_speed_bonus := PlayerStats.attack_speed  # Percentage bonus
+	var final_attack_speed := weapon_speed * (1.0 + attack_speed_bonus / 100.0)
+	var weapon_dps := weapon_damage * final_attack_speed
 	_set_stat_value("weapon_damage", "%.0f" % weapon_damage)
 	_set_stat_value("weapon_dps", "%.1f" % weapon_dps)
 
 	# Offensive - Player stats
 	_set_stat_value("attack_power", "%.0f" % PlayerStats.attack_power)
 	_set_stat_value("spell_power", "%.0f" % PlayerStats.spell_power)
-	_set_stat_value("attack_speed", "+%.1f%%" % PlayerStats.attack_speed)
+	_set_stat_value("attack_speed", "%.2f/s" % final_attack_speed)
 	_set_stat_value("critical_chance", "%.1f%%" % PlayerStats.critical_chance)
 	_set_stat_value("critical_damage", "%.0f%%" % PlayerStats.critical_damage)
 
