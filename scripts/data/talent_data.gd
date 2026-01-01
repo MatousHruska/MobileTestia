@@ -48,6 +48,9 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, SUMMON, TELEPORT
 ## Skill category (melee, ranged, magic) - determines damage formula
 @export var skill_category: String = ""
 
+## Auto-learn: If true, skill is learned automatically at game start
+@export var auto_learn: bool = false
+
 ## Resource costs
 @export var mana_cost: float = 0.0
 @export var stamina_cost: float = 0.0
@@ -65,6 +68,12 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, SUMMON, TELEPORT
 
 ## Damage type (physical, fire, cold, etc.)
 @export var damage_type_id: int = 0
+
+## Combat mechanics
+@export var lunge_force: float = 0.0            # Lunge force when using skill
+@export var recovery_time: float = 0.0          # Time before player can act again
+@export var hit_range: float = 50.0             # Attack range in pixels
+@export var hit_arc: float = 360.0              # Hit arc in degrees (360 = all around, 90 = forward cone)
 
 ## Legacy field (kept for backwards compatibility)
 @export var damage_per_point: float = 0.0
@@ -127,6 +136,7 @@ static func from_dict(data: Dictionary) -> TalentData:
 
 	# Active talent properties
 	talent.skill_category = data.get("skill_category", "")
+	talent.auto_learn = _parse_bool(data.get("auto_learn", false))
 	talent.mana_cost = float(data.get("mana_cost", 0))
 	talent.stamina_cost = float(data.get("stamina_cost", 0))
 	talent.cooldown = float(data.get("cooldown", 0))
@@ -141,6 +151,12 @@ static func from_dict(data: Dictionary) -> TalentData:
 
 	# Damage type
 	talent.damage_type_id = int(data.get("damage_type", 0))
+
+	# Combat mechanics
+	talent.lunge_force = float(data.get("lunge_force", 0))
+	talent.recovery_time = float(data.get("recovery_time", 0))
+	talent.hit_range = float(data.get("hit_range", 50))
+	talent.hit_arc = float(data.get("hit_arc", 360))
 
 	# Legacy fields
 	talent.damage_per_point = float(data.get("damage_per_point", 0))
@@ -173,6 +189,17 @@ static func from_dict(data: Dictionary) -> TalentData:
 			talent.rank_descriptions.append(rank_desc.strip_edges())
 
 	return talent
+
+
+## Parse boolean from various formats (true, false, 1, 0, "true", "false")
+static func _parse_bool(value: Variant) -> bool:
+	if value is bool:
+		return value
+	if value is int:
+		return value != 0
+	if value is String:
+		return value.to_lower() in ["true", "1", "yes"]
+	return false
 
 
 ## Parse stat bonuses string "stat:value;stat2:value2" into dictionary

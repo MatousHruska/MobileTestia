@@ -194,6 +194,30 @@ func end_attack() -> void:
 	Debug.log("Combat", "Attack ended")
 
 
+## Skill mechanics (called by CombatHUD when using skills)
+func apply_skill_lunge(force: float) -> void:
+	## Apply lunge in facing direction from skill
+	var lunge_dir := _facing_to_vector(current_facing)
+	_lunge_velocity = lunge_dir * force
+	_lunge_timer = attack_lunge_duration  # Use same duration as regular attacks
+	Debug.log("Combat", "Skill lunge applied", {"force": force, "direction": lunge_dir})
+
+
+func apply_recovery_lockout(duration: float) -> void:
+	## Lock player input for recovery time after skill
+	is_locked = true
+	# Create a timer to unlock after duration
+	get_tree().create_timer(duration).timeout.connect(_end_recovery_lockout)
+	Debug.log("Combat", "Recovery lockout", {"duration": duration})
+
+
+func _end_recovery_lockout() -> void:
+	## Called when recovery timer expires
+	if not is_dodging:  # Don't unlock if in middle of dodge
+		is_locked = false
+	Debug.log("Combat", "Recovery ended")
+
+
 ## Facing logic
 func _update_facing_from_input(direction: Vector2) -> void:
 	if direction == Vector2.ZERO:

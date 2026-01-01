@@ -242,19 +242,29 @@ func _on_attack_activated(_slot_index: int, _ability_id: String) -> void:
 	Debug.log("Combat", "Attack activated")
 	attack_pressed.emit()
 
-	# TODO: Connect to player attack system
-	# For now, trigger the debug kill
-	if NPCManager:
-		NPCManager.debug_kill_all_enemies()
+	# Basic attack uses the player's request_attack which triggers animation
+	if player:
+		player.request_attack()
 
 
 func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 	Debug.log("Combat", "Ability activated", {"slot": slot_index, "ability": ability_id})
 
+	# Debug kill moved to slot 1 (index 0) - check if this is the debug slot
+	if slot_index == 0 and ability_id == "debug_kill_all":
+		if NPCManager:
+			NPCManager.debug_kill_all_enemies()
+		return
+
 	# Get the talent data
 	var talent := TalentManager.get_talent(ability_id)
 	if not talent:
 		Debug.warn("Combat", "Talent not found: %s" % ability_id)
+		return
+
+	# Check if player can act (not in recovery)
+	if player and player.is_locked:
+		Debug.log("Combat", "Player is locked, cannot use %s" % talent.talent_name)
 		return
 
 	# Check resource costs
@@ -275,7 +285,10 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 	var invested := TalentManager.get_invested_points(ability_id)
 	var damage_result := DamageCalculator.calculate_final_damage(talent, invested)
 
-	# Apply damage to nearby enemies
+	# Apply combat mechanics (lunge, animation, recovery)
+	_apply_skill_mechanics(talent)
+
+	# Apply damage to enemies in range/arc
 	_apply_skill_damage(talent, damage_result)
 
 	# Start cooldown
@@ -289,25 +302,52 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 		"damage": int(damage_result.final_damage),
 		"crit": damage_result.is_critical,
 		"type": DamageCalculator.get_damage_type_name(damage_result.damage_type),
+		"range": talent.hit_range,
+		"arc": talent.hit_arc,
 	})
 
 
-func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
-	## Apply skill damage to enemies in range
+func _apply_skill_mechanics(talent: TalentData) -> void:
+	## Apply lunge, animation, and recovery to player
 	if not player:
 		return
 
-	# Get skill range based on category
-	var skill_range := 50.0  # Default melee range
-	if talent.skill_category.to_lower() == "ranged":
-		skill_range = 150.0
-	elif talent.skill_category.to_lower() == "magic":
-		skill_range = 100.0
+	# Trigger attack animation for melee skills
+	if talent.skill_category.to_lower() == "melee":
+		player.request_attack()
+
+	# Apply lunge if specified
+	if talent.lunge_force > 0:
+		player.apply_skill_lunge(talent.lunge_force)
+
+	# Apply recovery lockout if specified
+	if talent.recovery_time > 0:
+		player.apply_recovery_lockout(talent.recovery_time)
+
+
+func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
+	## Apply skill damage to enemies in range and arc
+	if not player:
+		return
+
+	# Use hit_range from talent
+	var skill_range := talent.hit_range
+	var skill_arc := talent.hit_arc
 
 	# Find enemies in range
 	var enemies := NPCManager.get_enemies_in_radius(player.global_position, skill_range)
 
+	# Get player facing direction for arc check
+	var facing_vector := _get_player_facing_vector()
+
 	for enemy in enemies:
+		# Check if enemy is within hit arc (skip if arc is 360 = all around)
+		if skill_arc < 360.0:
+			var to_enemy := (enemy.global_position - player.global_position).normalized()
+			var angle := rad_to_deg(facing_vector.angle_to(to_enemy))
+			if abs(angle) > skill_arc / 2.0:
+				continue  # Enemy is outside hit arc
+
 		if enemy.has_method("take_damage"):
 			# Apply armor/resistance reduction on enemy
 			var final_damage: float = damage_result.final_damage
@@ -319,6 +359,24 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 			# Log crit hits
 			if damage_result.is_critical:
 				Debug.log("Combat", "CRITICAL %s on %s!" % [talent.talent_name, enemy.enemy_name], "%.0f damage" % final_damage)
+
+
+func _get_player_facing_vector() -> Vector2:
+	## Get player's facing direction as a vector
+	if not player:
+		return Vector2.DOWN
+
+	match player.current_facing:
+		PlayerController.Facing.DOWN:
+			return Vector2.DOWN
+		PlayerController.Facing.UP:
+			return Vector2.UP
+		PlayerController.Facing.LEFT:
+			return Vector2.LEFT
+		PlayerController.Facing.RIGHT:
+			return Vector2.RIGHT
+
+	return Vector2.DOWN
 
 
 func _on_ability_ready(slot_index: int) -> void:
