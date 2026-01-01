@@ -528,12 +528,17 @@ func _create_offensive_panel() -> Control:
 
 	var stats := [
 		["weapon_damage", "Weapon Damage"],
+		["attack_speed", "Attack Speed"],
 		["weapon_dps", "Weapon DPS"],
 		["attack_power", "Attack Power"],
-		["spell_power", "Spell Power"],
-		["attack_speed", "Attack Speed"],
 		["critical_chance", "Crit Chance"],
 		["critical_damage", "Crit Damage"],
+		["spell_power", "Spell Power"],
+		["fire_spell_damage", "Fire Spell Dmg"],
+		["cold_spell_damage", "Cold Spell Dmg"],
+		["lightning_spell_damage", "Lightning Spell Dmg"],
+		["poison_spell_damage", "Poison Spell Dmg"],
+		["arcane_spell_damage", "Arcane Spell Dmg"],
 	]
 
 	for stat in stats:
@@ -748,14 +753,21 @@ func _update_derived_stats() -> void:
 	var final_attack_speed := weapon_speed * (1.0 + attack_speed_bonus / 100.0)
 	var weapon_dps := weapon_damage * final_attack_speed
 	_set_stat_value("weapon_damage", "%.0f" % weapon_damage)
+	_set_stat_value("attack_speed", "%.2f/s" % final_attack_speed)
 	_set_stat_value("weapon_dps", "%.1f" % weapon_dps)
 
-	# Offensive - Player stats
+	# Offensive - Physical stats
 	_set_stat_value("attack_power", "%.0f" % PlayerStats.attack_power)
-	_set_stat_value("spell_power", "%.0f" % PlayerStats.spell_power)
-	_set_stat_value("attack_speed", "%.2f/s" % final_attack_speed)
 	_set_stat_value("critical_chance", "%.1f%%" % PlayerStats.critical_chance)
 	_set_stat_value("critical_damage", "%.0f%%" % PlayerStats.critical_damage)
+
+	# Offensive - Spell stats
+	_set_stat_value("spell_power", "%.0f" % PlayerStats.spell_power)
+	_set_stat_value("fire_spell_damage", "+%.0f%%" % PlayerStats.get_equipment_bonus("fire_spell_damage"))
+	_set_stat_value("cold_spell_damage", "+%.0f%%" % PlayerStats.get_equipment_bonus("cold_spell_damage"))
+	_set_stat_value("lightning_spell_damage", "+%.0f%%" % PlayerStats.get_equipment_bonus("lightning_spell_damage"))
+	_set_stat_value("poison_spell_damage", "+%.0f%%" % PlayerStats.get_equipment_bonus("poison_spell_damage"))
+	_set_stat_value("arcane_spell_damage", "+%.0f%%" % PlayerStats.get_equipment_bonus("arcane_spell_damage"))
 
 	# Defensive
 	_set_stat_value("armor", "%.0f" % PlayerStats.armor)
