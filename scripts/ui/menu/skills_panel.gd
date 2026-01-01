@@ -23,7 +23,7 @@ signal binding_mode_exited
 
 const TALENT_NODE_SIZE := Vector2(52, 52)  ## Size of talent node buttons (square)
 const TALENT_SPACING := Vector2(16, 24)  ## Spacing between talent nodes
-const ROW_HEIGHT := 80  ## Height per talent row
+const ROW_HEIGHT := 56  ## Height per talent row (slightly larger than node)
 const TREE_WIDTH := 340  ## Width of talent tree panel
 const SKILLBOOK_COLS := 6  ## Columns in skillbook grid
 const SKILLBOOK_CELL_SIZE := 52  ## Size of skillbook cells
@@ -154,11 +154,26 @@ func _create_section_header(text: String) -> Label:
 
 
 func _build_talent_tree_panel(parent: Control) -> void:
+	var outer_vbox := VBoxContainer.new()
+	outer_vbox.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	outer_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer_vbox.add_theme_constant_override("separation", 4)
+	parent.add_child(outer_vbox)
+
+	# Talents header (outside the panel, like Skillbook)
+	var header := Label.new()
+	header.text = "Talents"
+	header.add_theme_font_size_override("font_size", 14)
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	outer_vbox.add_child(header)
+
+	# Main panel with border
 	_left_panel = PanelContainer.new()
 	_left_panel.custom_minimum_size.x = TREE_WIDTH
-	_left_panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_left_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_left_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent.add_child(_left_panel)
+	outer_vbox.add_child(_left_panel)
 
 	# Style with border
 	var panel_style := StyleBoxFlat.new()
@@ -176,16 +191,8 @@ func _build_talent_tree_panel(parent: Control) -> void:
 	_left_panel.add_child(margin)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 6)
+	vbox.add_theme_constant_override("separation", 10)
 	margin.add_child(vbox)
-
-	# Talents header (centered)
-	var header := Label.new()
-	header.text = "Talents"
-	header.add_theme_font_size_override("font_size", 14)
-	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.add_child(header)
 
 	# Tree tabs container (horizontal row, names can wrap)
 	_tree_tabs = HBoxContainer.new()
@@ -193,7 +200,7 @@ func _build_talent_tree_panel(parent: Control) -> void:
 	_tree_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_child(_tree_tabs)
 
-	# Scrollable tree content
+	# Scrollable tree content with top padding
 	_tree_scroll = ScrollContainer.new()
 	_tree_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_tree_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -202,7 +209,7 @@ func _build_talent_tree_panel(parent: Control) -> void:
 
 	_tree_content = VBoxContainer.new()
 	_tree_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_tree_content.add_theme_constant_override("separation", 12)
+	_tree_content.add_theme_constant_override("separation", 20)  # Prominent row padding
 	_tree_scroll.add_child(_tree_content)
 
 	# Static points section at bottom (outside scroll)
