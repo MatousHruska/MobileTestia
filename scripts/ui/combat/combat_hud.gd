@@ -355,14 +355,14 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 			enemy.take_damage(final_damage, player)
 
 			# Spawn hit effect on enemy
-			_spawn_hit_effect(enemy.global_position, talent.damage_type)
+			_spawn_hit_effect(enemy.global_position, _get_damage_type_string(talent.damage_type_id))
 
 			# Log crit hits
 			if damage_result.is_critical:
 				Debug.log("Combat", "CRITICAL %s on %s!" % [talent.talent_name, enemy.enemy_name], "%.0f damage" % final_damage)
 
 
-func _spawn_skill_visual(talent: TalentData, damage_result: Dictionary) -> void:
+func _spawn_skill_visual(talent: TalentData, _damage_result: Dictionary) -> void:
 	## Spawn visual indicator for skill hitbox
 	var visual := HitboxVisual.new()
 
@@ -376,8 +376,8 @@ func _spawn_skill_visual(talent: TalentData, damage_result: Dictionary) -> void:
 		visual.draw_type = "polygon"
 		visual.points = _generate_cone_points(talent.hit_range, talent.hit_arc)
 
-	# Set damage type for color
-	visual.damage_type = talent.damage_type if talent.damage_type else "physical"
+	# Set damage type for color (convert from int id to string)
+	visual.damage_type = _get_damage_type_string(talent.damage_type_id)
 
 	# Position at player, rotated to facing direction
 	visual.global_position = player.global_position
@@ -417,6 +417,22 @@ func _spawn_hit_effect(pos: Vector2, damage_type: String) -> void:
 	## Spawn particle effect when hitting an enemy
 	if player and player.get_parent():
 		HitboxVisual.spawn_hit_effect(player.get_parent(), pos, damage_type)
+
+
+func _get_damage_type_string(damage_type_id: int) -> String:
+	## Convert damage type ID to string for visuals
+	match damage_type_id:
+		0: return "physical"
+		1: return "fire"
+		2: return "cold"
+		3: return "lightning"
+		4: return "poison"
+		5: return "arcane"
+		6: return "holy"
+		7: return "shadow"
+		8: return "physical"  # Bleed = physical color
+		9: return "poison"    # Nature = poison color
+		_: return "physical"
 
 
 func _get_player_facing_vector() -> Vector2:
