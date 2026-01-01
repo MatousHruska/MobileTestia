@@ -250,12 +250,6 @@ func _on_attack_activated(_slot_index: int, _ability_id: String) -> void:
 func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 	Debug.log("Combat", "Ability activated", {"slot": slot_index, "ability": ability_id})
 
-	# Debug kill moved to slot 1 (index 0) - check if this is the debug slot
-	if slot_index == 0 and ability_id == "debug_kill_all":
-		if NPCManager:
-			NPCManager.debug_kill_all_enemies()
-		return
-
 	# Get the talent data
 	var talent := TalentManager.get_talent(ability_id)
 	if not talent:
