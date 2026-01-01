@@ -343,8 +343,9 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 	for enemy in enemies:
 		# Check if enemy is within hit arc (skip if arc is 360 = all around)
 		if skill_arc < 360.0:
-			var to_enemy := (enemy.global_position - player.global_position).normalized()
-			var angle := rad_to_deg(facing_vector.angle_to(to_enemy))
+			var enemy_pos: Vector2 = enemy.global_position
+			var to_enemy: Vector2 = (enemy_pos - player.global_position).normalized()
+			var angle: float = rad_to_deg(facing_vector.angle_to(to_enemy))
 			if abs(angle) > skill_arc / 2.0:
 				continue  # Enemy is outside hit arc
 
