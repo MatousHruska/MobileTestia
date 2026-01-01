@@ -25,9 +25,9 @@ const TALENT_NODE_SIZE := Vector2(56, 56)  ## Size of talent node buttons
 const TALENT_SPACING := Vector2(16, 24)  ## Spacing between talent nodes
 const ROW_HEIGHT := 80  ## Height per talent row
 const TREE_WIDTH := 340  ## Width of talent tree panel
-const SKILLBOOK_COLS := 4  ## Columns in skillbook grid
+const SKILLBOOK_COLS := 6  ## Columns in skillbook grid
 const SKILLBOOK_CELL_SIZE := 52  ## Size of skillbook cells
-const SKILLBOOK_MIN_SLOTS := 8  ## Minimum visible slots (2 rows)
+const SKILLBOOK_MIN_SLOTS := 6  ## Minimum visible slots (1 row)
 
 ## Colors
 const COLOR_LOCKED := Color(0.4, 0.4, 0.4)
@@ -200,14 +200,14 @@ func _build_right_panel(parent: Control) -> void:
 	_skillbook_grid.add_theme_constant_override("v_separation", 4)
 	skillbook_scroll.add_child(_skillbook_grid)
 
+	# Build skill bind UI (below skillbook)
+	_build_skill_bind_ui()
+
 	# Build description panel
 	_build_description_panel()
 
 	# Build action buttons
 	_build_action_buttons()
-
-	# Build skill bind UI
-	_build_skill_bind_ui()
 
 
 func _build_description_panel() -> void:
@@ -282,15 +282,22 @@ func _build_action_buttons() -> void:
 
 
 func _build_skill_bind_ui() -> void:
+	# Active Skills label
+	var label := Label.new()
+	label.text = "Active Skills"
+	label.add_theme_font_size_override("font_size", 14)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_right_panel.add_child(label)
+
 	_bind_panel = PanelContainer.new()
-	_bind_panel.custom_minimum_size = Vector2(0, 60)
+	_bind_panel.custom_minimum_size = Vector2(0, 54)
 	_right_panel.add_child(_bind_panel)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 8)
 	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_top", 6)
+	margin.add_theme_constant_override("margin_bottom", 6)
 	_bind_panel.add_child(margin)
 
 	# Simple horizontal row
