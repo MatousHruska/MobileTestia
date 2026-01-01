@@ -232,6 +232,14 @@ func _build_description_panel() -> void:
 	_desc_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_right_panel.add_child(_desc_panel)
 
+	# Style with border
+	var desc_style := StyleBoxFlat.new()
+	desc_style.bg_color = Color(0.12, 0.12, 0.14, 0.9)
+	desc_style.border_color = Color(0.3, 0.3, 0.35)
+	desc_style.set_border_width_all(1)
+	desc_style.set_corner_radius_all(4)
+	_desc_panel.add_theme_stylebox_override("panel", desc_style)
+
 	var hbox := HBoxContainer.new()
 	hbox.add_theme_constant_override("separation", 12)
 	_desc_panel.add_child(hbox)
@@ -309,6 +317,14 @@ func _build_skill_bind_ui() -> void:
 	_bind_panel = PanelContainer.new()
 	_bind_panel.custom_minimum_size = Vector2(0, 54)
 	_right_panel.add_child(_bind_panel)
+
+	# Style with border
+	var bind_style := StyleBoxFlat.new()
+	bind_style.bg_color = Color(0.12, 0.12, 0.14, 0.9)
+	bind_style.border_color = Color(0.3, 0.3, 0.35)
+	bind_style.set_border_width_all(1)
+	bind_style.set_corner_radius_all(4)
+	_bind_panel.add_theme_stylebox_override("panel", bind_style)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 8)
