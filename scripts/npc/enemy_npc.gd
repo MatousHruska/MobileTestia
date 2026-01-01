@@ -299,8 +299,8 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 	if area.is_in_group("player_attack"):
 		# TODO: Implement proper damage formula with weapon damage
 		# For now, use weapon damage from equipped weapon + attack power
-		var weapon_dmg := InventoryManager.get_equipped_weapon_damage()
-		var total_damage := weapon_dmg + PlayerStats.attack_power
+		var weapon_dmg: float = Inventory.get_equipped_weapon_damage()
+		var total_damage: float = weapon_dmg + PlayerStats.attack_power
 		var damage := _calculate_incoming_damage(total_damage)
 		take_damage(damage, Game.player)
 
