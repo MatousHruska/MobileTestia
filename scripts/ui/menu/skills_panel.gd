@@ -938,10 +938,17 @@ func _update_description_panel() -> void:
 	var invested := TalentManager.get_invested_points(selected_talent_id)
 
 	_desc_name.text = talent.talent_name
-	_desc_rank.text = "Rank: %d / %d" % [invested, talent.max_points]
 
-	# Left column: Type and costs
+	# Different display for active vs passive talents
 	if talent.is_active():
+		# Active skills: show skill rank (1-20, leveled at trainers)
+		var skill_rank := TalentManager.get_skill_rank(selected_talent_id)
+		if invested > 0:
+			_desc_rank.text = "Skill Rank: %d / %d" % [skill_rank, TalentManager.MAX_SKILL_RANK]
+		else:
+			_desc_rank.text = "Not Learned"
+
+		# Left column: Type and costs
 		_add_stat_row(_desc_col_left, "Type", "Active", Color(0.4, 0.9, 1.0))
 		if talent.mana_cost > 0:
 			_add_stat_row(_desc_col_left, "Mana", str(int(talent.mana_cost)), Color(0.4, 0.6, 1.0))
@@ -949,14 +956,22 @@ func _update_description_panel() -> void:
 			_add_stat_row(_desc_col_left, "Stamina", str(int(talent.stamina_cost)), Color(0.4, 1.0, 0.6))
 		if talent.cooldown > 0:
 			_add_stat_row(_desc_col_left, "Cooldown", "%.1fs" % talent.cooldown, Color(0.9, 0.9, 0.9))
+
+		# Right column: Rank info for active skills
+		if invested > 0 and skill_rank > 0 and skill_rank <= talent.rank_descriptions.size():
+			_add_stat_row(_desc_col_right, "Effect", talent.rank_descriptions[skill_rank - 1], Color(0.7, 1.0, 0.7))
 	else:
+		# Passive talents: show invested points / max
+		_desc_rank.text = "Points: %d / %d" % [invested, talent.max_points]
+
+		# Left column: Type
 		_add_stat_row(_desc_col_left, "Type", "Passive", Color(1.0, 0.9, 0.3))
 
-	# Right column: Rank effects
-	if invested > 0 and invested <= talent.rank_descriptions.size():
-		_add_stat_row(_desc_col_right, "Current", talent.rank_descriptions[invested - 1], Color(0.7, 1.0, 0.7))
-	if invested < talent.max_points and invested < talent.rank_descriptions.size():
-		_add_stat_row(_desc_col_right, "Next", talent.rank_descriptions[invested], Color(0.6, 0.6, 0.6))
+		# Right column: Rank effects for passive talents
+		if invested > 0 and invested <= talent.rank_descriptions.size():
+			_add_stat_row(_desc_col_right, "Current", talent.rank_descriptions[invested - 1], Color(0.7, 1.0, 0.7))
+		if invested < talent.max_points and invested < talent.rank_descriptions.size():
+			_add_stat_row(_desc_col_right, "Next", talent.rank_descriptions[invested], Color(0.6, 0.6, 0.6))
 
 	# Description text
 	_desc_text.text = talent.description
