@@ -16,14 +16,19 @@ Private Const COL_IB_ID As Integer = 1
 Private Const COL_IB_NAME As Integer = 2
 Private Const COL_IB_SLOT As Integer = 3
 Private Const COL_IB_TYPE As Integer = 4
-Private Const COL_IB_BASE_DAMAGE As Integer = 5
-Private Const COL_IB_ATTACK_SPEED As Integer = 6
-Private Const COL_IB_BASE_ARMOR As Integer = 7
-Private Const COL_IB_REQ_STR As Integer = 8
-Private Const COL_IB_REQ_DEX As Integer = 9
-Private Const COL_IB_REQ_INT As Integer = 10
-Private Const COL_IB_ALLOWED_AFFIX_TAGS As Integer = 11
-Private Const COL_IB_DESCRIPTION As Integer = 12
+Private Const COL_IB_WEAPON_DAMAGE As Integer = 5
+Private Const COL_IB_PHYSICAL_DAMAGE As Integer = 6
+Private Const COL_IB_FIRE_DAMAGE As Integer = 7
+Private Const COL_IB_COLD_DAMAGE As Integer = 8
+Private Const COL_IB_LIGHTNING_DAMAGE As Integer = 9
+Private Const COL_IB_POISON_DAMAGE As Integer = 10
+Private Const COL_IB_ATTACK_SPEED As Integer = 11
+Private Const COL_IB_BASE_ARMOR As Integer = 12
+Private Const COL_IB_REQ_STR As Integer = 13
+Private Const COL_IB_REQ_DEX As Integer = 14
+Private Const COL_IB_REQ_INT As Integer = 15
+Private Const COL_IB_ALLOWED_AFFIX_TAGS As Integer = 16
+Private Const COL_IB_DESCRIPTION As Integer = 17
 
 ' Column indices for Affixes
 Private Const COL_AX_ID As Integer = 1
@@ -126,8 +131,12 @@ Public Sub ValidateItemBases()
         End If
 
         ' Validate numeric fields are non-negative
-        If GetDefaultNumeric(ws.Cells(i, COL_IB_BASE_DAMAGE)) < 0 Then
-            LogValidationError errors, errorCount, i, "Base Damage", "Cannot be negative"
+        If GetDefaultNumeric(ws.Cells(i, COL_IB_WEAPON_DAMAGE)) < 0 Then
+            LogValidationError errors, errorCount, i, "Weapon Damage", "Cannot be negative"
+        End If
+
+        If GetDefaultNumeric(ws.Cells(i, COL_IB_PHYSICAL_DAMAGE)) < 0 Then
+            LogValidationError errors, errorCount, i, "Physical Damage", "Cannot be negative"
         End If
 
         If GetDefaultNumeric(ws.Cells(i, COL_IB_ATTACK_SPEED)) < 0 Then
@@ -179,13 +188,19 @@ Public Sub ExportItemBases()
         json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_NAME))) & """," & vbCrLf
         json = json & "      ""slot"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_SLOT))) & """," & vbCrLf
         json = json & "      ""item_type"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_TYPE))) & """," & vbCrLf
-        json = json & "      ""base_damage"": " & GetDefaultNumeric(ws.Cells(i, COL_IB_BASE_DAMAGE)) & "," & vbCrLf
-        json = json & "      ""attack_speed"": " & GetDefaultNumeric(ws.Cells(i, COL_IB_ATTACK_SPEED), 1) & "," & vbCrLf
-        json = json & "      ""base_armor"": " & GetDefaultNumeric(ws.Cells(i, COL_IB_BASE_ARMOR)) & "," & vbCrLf
-        json = json & "      ""req_str"": " & GetDefaultNumeric(ws.Cells(i, COL_IB_REQ_STR)) & "," & vbCrLf
-        json = json & "      ""req_dex"": " & GetDefaultNumeric(ws.Cells(i, COL_IB_REQ_DEX)) & "," & vbCrLf
-        json = json & "      ""req_int"": " & GetDefaultNumeric(ws.Cells(i, COL_IB_REQ_INT)) & "," & vbCrLf
-        json = json & "      ""allowed_affix_tags"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_ALLOWED_AFFIX_TAGS))) & """" & vbCrLf
+        json = json & "      ""weapon_damage"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_WEAPON_DAMAGE))) & "," & vbCrLf
+        json = json & "      ""physical_damage"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_PHYSICAL_DAMAGE))) & "," & vbCrLf
+        json = json & "      ""fire_damage"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_FIRE_DAMAGE))) & "," & vbCrLf
+        json = json & "      ""cold_damage"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_COLD_DAMAGE))) & "," & vbCrLf
+        json = json & "      ""lightning_damage"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_LIGHTNING_DAMAGE))) & "," & vbCrLf
+        json = json & "      ""poison_damage"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_POISON_DAMAGE))) & "," & vbCrLf
+        json = json & "      ""attack_speed"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_ATTACK_SPEED), 1)) & "," & vbCrLf
+        json = json & "      ""base_armor"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_BASE_ARMOR))) & "," & vbCrLf
+        json = json & "      ""req_str"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_REQ_STR))) & "," & vbCrLf
+        json = json & "      ""req_dex"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_REQ_DEX))) & "," & vbCrLf
+        json = json & "      ""req_int"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_REQ_INT))) & "," & vbCrLf
+        json = json & "      ""allowed_affix_tags"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_ALLOWED_AFFIX_TAGS))) & """," & vbCrLf
+        json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_DESCRIPTION))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1

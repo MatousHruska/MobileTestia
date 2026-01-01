@@ -76,12 +76,10 @@ func _recalculate_equipment_bonuses() -> void:
 			PlayerStats.set_equipment_bonus("luck", PlayerStats.get_equipment_bonus("luck") + equip.bonus_luck)
 
 		# Offensive stat bonuses
-		if equip.bonus_melee_damage != 0:
-			PlayerStats.set_equipment_bonus("melee_damage", PlayerStats.get_equipment_bonus("melee_damage") + equip.bonus_melee_damage)
-		if equip.bonus_ranged_damage != 0:
-			PlayerStats.set_equipment_bonus("ranged_damage", PlayerStats.get_equipment_bonus("ranged_damage") + equip.bonus_ranged_damage)
-		if equip.bonus_magic_damage != 0:
-			PlayerStats.set_equipment_bonus("magic_damage", PlayerStats.get_equipment_bonus("magic_damage") + equip.bonus_magic_damage)
+		if equip.bonus_attack_power != 0:
+			PlayerStats.set_equipment_bonus("attack_power", PlayerStats.get_equipment_bonus("attack_power") + equip.bonus_attack_power)
+		if equip.bonus_spell_power != 0:
+			PlayerStats.set_equipment_bonus("spell_power", PlayerStats.get_equipment_bonus("spell_power") + equip.bonus_spell_power)
 		if equip.bonus_attack_speed != 0.0:
 			PlayerStats.set_equipment_bonus("attack_speed", PlayerStats.get_equipment_bonus("attack_speed") + equip.bonus_attack_speed)
 		if equip.bonus_crit_chance != 0.0:
@@ -318,6 +316,28 @@ func get_equipped_item(slot: ItemData.EquipSlot) -> Dictionary:
 	if not equipped.has(slot):
 		return {}
 	return equipped[slot]
+
+
+## Get the weapon damage from equipped weapon (for combat calculations)
+func get_equipped_weapon_damage() -> float:
+	var weapon_slot := get_equipped_item(ItemData.EquipSlot.MAIN_HAND)
+	if weapon_slot.is_empty():
+		return 1.0  # Unarmed base damage
+	var weapon: ItemData = weapon_slot.get("item")
+	if weapon is EquipmentData:
+		return float(weapon.weapon_damage) if weapon.weapon_damage > 0 else 1.0
+	return 1.0
+
+
+## Get the attack speed from equipped weapon
+func get_equipped_weapon_attack_speed() -> float:
+	var weapon_slot := get_equipped_item(ItemData.EquipSlot.MAIN_HAND)
+	if weapon_slot.is_empty():
+		return 1.0  # Unarmed attack speed
+	var weapon: ItemData = weapon_slot.get("item")
+	if weapon is EquipmentData:
+		return weapon.weapon_attack_speed if weapon.weapon_attack_speed > 0 else 1.0
+	return 1.0
 
 
 func is_slot_blocked(_slot: ItemData.EquipSlot) -> bool:

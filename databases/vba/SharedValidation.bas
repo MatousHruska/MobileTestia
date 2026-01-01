@@ -501,7 +501,9 @@ Private Sub ApplyEnumValidation()
     ' Talents
     ApplyValidation "Talents", 3, "ID_TalentTrees"     ' tree reference
     ApplyListValidation "Talents", 7, "active,passive" ' type
-    ApplyListValidation "Talents", 14, "damage,heal,buff,debuff,projectile,summon,teleport,aoe"  ' effect_type
+    ApplyListValidation "Talents", 8, "melee,ranged,magic" ' skill_category
+    ApplyListValidation "Talents", 11, "physical,fire,cold,lightning,poison,arcane,holy,shadow" ' damage_type
+    ApplyListValidation "Talents", 18, "damage,heal,buff,debuff,projectile,summon,teleport,aoe"  ' effect_type
 
     ' NPCs
     ApplyListValidation "NPCs", 3, "quest_giver,trader,trainer,innkeeper,blacksmith,generic"  ' type
@@ -557,7 +559,7 @@ Private Sub ApplyEnumValidation()
 
     ' Affixes
     ApplyListValidation "Affixes", 3, "prefix,suffix"       ' type
-    ApplyListValidation "Affixes", 4, "melee_damage,ranged_damage,magic_damage,fire_damage,cold_damage,lightning_damage,poison_damage,strength,dexterity,intelligence,vitality,energy,luck,armor,magic_resistance,dodge_chance,attack_speed,critical_chance,critical_damage,life,mana,life_regen,mana_regen,movement_speed"  ' stat_modifier
+    ApplyListValidation "Affixes", 4, "attack_power,spell_power,fire_power,cold_power,lightning_power,poison_power,strength,dexterity,intelligence,vitality,energy,luck,armor,magic_resistance,dodge_chance,attack_speed,critical_chance,critical_damage,life,mana,life_regen,mana_regen,movement_speed"  ' stat_modifier
 
     ' Boolean fields (TRUE/FALSE)
     ApplyListValidation "BehaviorProfiles", 9, "TRUE,FALSE"   ' patrol_loop

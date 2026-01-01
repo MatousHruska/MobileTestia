@@ -17,20 +17,24 @@ Private Const COL_TAL_ROW As Integer = 4            ' 1-5+ (vertical position)
 Private Const COL_TAL_COLUMN As Integer = 5         ' 1-3 (horizontal position)
 Private Const COL_TAL_MAX_POINTS As Integer = 6     ' 1-5
 Private Const COL_TAL_TYPE As Integer = 7           ' active, passive
-Private Const COL_TAL_PREREQUISITE_IDS As Integer = 8
-Private Const COL_TAL_MANA_COST As Integer = 9
-Private Const COL_TAL_STAMINA_COST As Integer = 10
-Private Const COL_TAL_COOLDOWN As Integer = 11
-Private Const COL_TAL_BASE_DAMAGE As Integer = 12
-Private Const COL_TAL_DAMAGE_PER_POINT As Integer = 13
-Private Const COL_TAL_EFFECT_TYPE As Integer = 14   ' damage, heal, buff, debuff, projectile
-Private Const COL_TAL_EFFECT_VALUE As Integer = 15
-Private Const COL_TAL_EFFECT_PER_POINT As Integer = 16
-Private Const COL_TAL_DURATION As Integer = 17
-Private Const COL_TAL_STAT_BONUSES As Integer = 18  ' For passive: "strength:2;armor:5"
-Private Const COL_TAL_DESCRIPTION As Integer = 19
-Private Const COL_TAL_RANK_DESCRIPTIONS As Integer = 20  ' "Rank 1 desc|Rank 2 desc|..."
-Private Const COL_TAL_ICON_NAME As Integer = 21
+Private Const COL_TAL_SKILL_CATEGORY As Integer = 8 ' melee, ranged, magic
+Private Const COL_TAL_WEAPON_DAMAGE_PERCENT As Integer = 9  ' e.g., 150 = 150% weapon damage
+Private Const COL_TAL_FLAT_DAMAGE_BONUS As Integer = 10     ' flat damage added before %
+Private Const COL_TAL_DAMAGE_TYPE As Integer = 11   ' physical, fire, cold, lightning, arcane
+Private Const COL_TAL_PREREQUISITE_IDS As Integer = 12
+Private Const COL_TAL_MANA_COST As Integer = 13
+Private Const COL_TAL_STAMINA_COST As Integer = 14
+Private Const COL_TAL_COOLDOWN As Integer = 15
+Private Const COL_TAL_BASE_DAMAGE As Integer = 16   ' For magic skills: base flat damage
+Private Const COL_TAL_DAMAGE_PER_RANK As Integer = 17 ' Magic skill damage per rank (1-20)
+Private Const COL_TAL_EFFECT_TYPE As Integer = 18   ' damage, heal, buff, debuff, projectile
+Private Const COL_TAL_EFFECT_VALUE As Integer = 19
+Private Const COL_TAL_EFFECT_PER_POINT As Integer = 20
+Private Const COL_TAL_DURATION As Integer = 21
+Private Const COL_TAL_STAT_BONUSES As Integer = 22  ' For passive: "strength:2;armor:5"
+Private Const COL_TAL_DESCRIPTION As Integer = 23
+Private Const COL_TAL_RANK_DESCRIPTIONS As Integer = 24  ' "Rank 1 desc|Rank 2 desc|..."
+Private Const COL_TAL_ICON_NAME As Integer = 25
 
 ' Column indices for TalentTrees (1-based)
 Private Const COL_TT_ID As Integer = 1
@@ -41,6 +45,8 @@ Private Const COL_TT_ICON_NAME As Integer = 4
 ' Valid dropdown values
 Private validTalentTypes() As String
 Private validEffectTypes() As String
+Private validSkillCategories() As String
+Private validDamageTypes() As String
 
 '-------------------------------------------------------------------------------
 ' InitValidLists - Initialize validation dropdown arrays
@@ -48,6 +54,8 @@ Private validEffectTypes() As String
 Private Sub InitValidLists()
     validTalentTypes = Split("active,passive", ",")
     validEffectTypes = Split("damage,heal,buff,debuff,projectile,summon,teleport,aoe", ",")
+    validSkillCategories = Split("melee,ranged,magic", ",")
+    validDamageTypes = Split("physical,fire,cold,lightning,poison,arcane,holy,shadow", ",")
 End Sub
 
 '===============================================================================
@@ -292,12 +300,16 @@ Public Sub ExportTalents()
         json = json & "      ""column"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_COLUMN), 1)) & "," & vbCrLf
         json = json & "      ""max_points"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_MAX_POINTS), 1)) & "," & vbCrLf
         json = json & "      ""type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_TYPE), "passive"))) & """," & vbCrLf
+        json = json & "      ""skill_category"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_SKILL_CATEGORY)))) & """," & vbCrLf
+        json = json & "      ""weapon_damage_percent"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_WEAPON_DAMAGE_PERCENT))) & "," & vbCrLf
+        json = json & "      ""flat_damage_bonus"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_FLAT_DAMAGE_BONUS))) & "," & vbCrLf
+        json = json & "      ""damage_type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_DAMAGE_TYPE), "physical"))) & """," & vbCrLf
         json = json & "      ""prerequisite_ids"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_PREREQUISITE_IDS))) & """," & vbCrLf
         json = json & "      ""mana_cost"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_MANA_COST))) & "," & vbCrLf
         json = json & "      ""stamina_cost"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_STAMINA_COST))) & "," & vbCrLf
         json = json & "      ""cooldown"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_COOLDOWN))) & "," & vbCrLf
         json = json & "      ""base_damage"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_BASE_DAMAGE))) & "," & vbCrLf
-        json = json & "      ""damage_per_point"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_DAMAGE_PER_POINT))) & "," & vbCrLf
+        json = json & "      ""damage_per_rank"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_DAMAGE_PER_RANK))) & "," & vbCrLf
         json = json & "      ""effect_type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_EFFECT_TYPE)))) & """," & vbCrLf
         json = json & "      ""effect_value"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_EFFECT_VALUE))) & "," & vbCrLf
         json = json & "      ""effect_per_point"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_EFFECT_PER_POINT))) & "," & vbCrLf
@@ -352,8 +364,9 @@ Public Sub SetupTalentsSheet()
     Set ws = GetOrCreateSheet(SHEET_TALENTS)
     Dim headers As Variant
     headers = Array("id", "name", "tree", "row", "column", "max_points", "type", _
+                    "skill_category", "weapon_damage_percent", "flat_damage_bonus", "damage_type", _
                     "prerequisite_ids", "mana_cost", "stamina_cost", "cooldown", _
-                    "base_damage", "damage_per_point", "effect_type", "effect_value", _
+                    "base_damage", "damage_per_rank", "effect_type", "effect_value", _
                     "effect_per_point", "duration", "stat_bonuses", "description", _
                     "rank_descriptions", "icon_name")
     SetupSheetHeaders ws, headers
@@ -363,11 +376,17 @@ Public Sub SetupTalentsSheet()
     SafeAddComment ws.Cells(1, 3), "Reference to TalentTrees id (e.g., tree_noble_legacy)"
     SafeAddComment ws.Cells(1, 4), "Vertical position in tree (1-10). Row 1 = top"
     SafeAddComment ws.Cells(1, 5), "Horizontal position in tree (1-3). 1=left, 2=center, 3=right"
-    SafeAddComment ws.Cells(1, 6), "Maximum points investable (1-5)"
+    SafeAddComment ws.Cells(1, 6), "Maximum points investable (1-5, or 1 for active)"
     SafeAddComment ws.Cells(1, 7), "active = appears in skillbook, passive = stat bonus only"
-    SafeAddComment ws.Cells(1, 8), "Comma-separated talent IDs. Must be MAXED to unlock this talent"
-    SafeAddComment ws.Cells(1, 18), "For passive: stat:value_per_point pairs (e.g., strength:2;armor:5)"
-    SafeAddComment ws.Cells(1, 20), "Pipe-separated descriptions per rank (e.g., +5 damage|+10 damage|+15 damage)"
+    SafeAddComment ws.Cells(1, 8), "melee, ranged, or magic - determines damage formula"
+    SafeAddComment ws.Cells(1, 9), "For melee/ranged: % of weapon damage (e.g., 150 = 150%)"
+    SafeAddComment ws.Cells(1, 10), "Flat damage added before % calculation"
+    SafeAddComment ws.Cells(1, 11), "physical, fire, cold, lightning, poison, arcane, holy, shadow"
+    SafeAddComment ws.Cells(1, 12), "Comma-separated talent IDs. Must be MAXED to unlock"
+    SafeAddComment ws.Cells(1, 16), "For magic: base flat damage at rank 1"
+    SafeAddComment ws.Cells(1, 17), "For magic: additional damage per rank (1-20)"
+    SafeAddComment ws.Cells(1, 22), "For passive: stat:value_per_point pairs (e.g., strength:2;armor:5)"
+    SafeAddComment ws.Cells(1, 24), "Pipe-separated descriptions per rank"
 End Sub
 
 '-------------------------------------------------------------------------------

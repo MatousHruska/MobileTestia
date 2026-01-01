@@ -297,7 +297,11 @@ func _setup_hurtbox() -> void:
 func _on_hurtbox_area_entered(area: Area2D) -> void:
 	# Received hit from player attack
 	if area.is_in_group("player_attack"):
-		var damage := _calculate_incoming_damage(PlayerStats.melee_damage)
+		# TODO: Implement proper damage formula with weapon damage
+		# For now, use weapon damage from equipped weapon + attack power
+		var weapon_dmg := InventoryManager.get_equipped_weapon_damage()
+		var total_damage := weapon_dmg + PlayerStats.attack_power
+		var damage := _calculate_incoming_damage(total_damage)
 		take_damage(damage, Game.player)
 
 

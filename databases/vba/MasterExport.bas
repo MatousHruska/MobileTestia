@@ -200,9 +200,20 @@ Private Sub SetupItemBasesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("ItemBases")
     Dim headers As Variant
-    headers = Array("id", "name", "slot", "item_type", "base_damage", "attack_speed", _
-                    "base_armor", "req_str", "req_dex", "req_int", "allowed_affix_tags", "description")
+    headers = Array("id", "name", "slot", "item_type", "weapon_damage", "physical_damage", _
+                    "fire_damage", "cold_damage", "lightning_damage", "poison_damage", _
+                    "attack_speed", "base_armor", "req_str", "req_dex", "req_int", _
+                    "allowed_affix_tags", "description")
     SetHeaders ws, headers
+
+    ' Add column notes
+    SafeAddComment ws.Cells(1, 5), "Total weapon damage (sum of all damage types)"
+    SafeAddComment ws.Cells(1, 6), "Physical portion of weapon damage"
+    SafeAddComment ws.Cells(1, 7), "Fire elemental damage"
+    SafeAddComment ws.Cells(1, 8), "Cold elemental damage"
+    SafeAddComment ws.Cells(1, 9), "Lightning elemental damage"
+    SafeAddComment ws.Cells(1, 10), "Poison elemental damage"
+    SafeAddComment ws.Cells(1, 11), "Attacks per second (1.0 = normal)"
 End Sub
 
 Private Sub SetupAffixesSheet()
@@ -376,9 +387,10 @@ Private Sub SetupStatModifiersSheet()
     SetHeaders ws, headers
 
     ' Pre-populate with valid stat modifiers
+    ' Updated: removed melee_damage/ranged_damage, added attack_power/spell_power
     Dim stats As Variant
-    stats = Array("melee_damage", "ranged_damage", "magic_damage", "fire_damage", _
-                  "cold_damage", "lightning_damage", "poison_damage", _
+    stats = Array("attack_power", "spell_power", "fire_power", "cold_power", _
+                  "lightning_power", "poison_power", _
                   "strength", "dexterity", "intelligence", "vitality", "energy", "luck", _
                   "armor", "magic_resistance", "dodge_chance", _
                   "attack_speed", "critical_chance", "critical_damage", _

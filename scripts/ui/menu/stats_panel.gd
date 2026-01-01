@@ -523,9 +523,8 @@ func _create_offensive_panel() -> Control:
 	grid.add_theme_constant_override("v_separation", 4)
 
 	var stats := [
-		["melee_damage", "Melee Damage"],
-		["ranged_damage", "Ranged Damage"],
-		["magic_damage", "Magic Damage"],
+		["attack_power", "Attack Power"],
+		["spell_power", "Spell Power"],
 		["attack_speed", "Attack Speed"],
 		["critical_chance", "Crit Chance"],
 		["critical_damage", "Crit Damage"],
@@ -719,9 +718,8 @@ func _update_resources() -> void:
 
 func _update_derived_stats() -> void:
 	# Offensive
-	_set_stat_value("melee_damage", "%.0f" % PlayerStats.melee_damage)
-	_set_stat_value("ranged_damage", "%.0f" % PlayerStats.ranged_damage)
-	_set_stat_value("magic_damage", "%.0f" % PlayerStats.magic_damage)
+	_set_stat_value("attack_power", "%.0f" % PlayerStats.attack_power)
+	_set_stat_value("spell_power", "%.0f" % PlayerStats.spell_power)
 	_set_stat_value("attack_speed", "+%.1f%%" % PlayerStats.attack_speed)
 	_set_stat_value("critical_chance", "%.1f%%" % PlayerStats.critical_chance)
 	_set_stat_value("critical_damage", "%.0f%%" % PlayerStats.critical_damage)

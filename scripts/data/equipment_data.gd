@@ -5,6 +5,16 @@ class_name EquipmentData
 ## What type of equipment this is
 @export var equipment_type: EquipmentType = EquipmentType.NONE
 
+## Weapon properties (only for weapons)
+@export_group("Weapon Stats")
+@export var weapon_damage: int = 0         # Total weapon damage (sum of all types)
+@export var physical_damage: int = 0       # Physical portion of weapon damage
+@export var fire_damage: int = 0           # Fire elemental damage
+@export var cold_damage: int = 0           # Cold elemental damage
+@export var lightning_damage: int = 0      # Lightning elemental damage
+@export var poison_damage: int = 0         # Poison elemental damage
+@export var weapon_attack_speed: float = 1.0  # Attacks per second (weapon base)
+
 ## Stat bonuses provided when equipped
 @export_group("Stat Bonuses")
 @export var bonus_strength: int = 0
@@ -16,12 +26,11 @@ class_name EquipmentData
 
 ## Offensive stat bonuses
 @export_group("Offensive Bonuses")
-@export var bonus_melee_damage: int = 0
-@export var bonus_ranged_damage: int = 0
-@export var bonus_magic_damage: int = 0
+@export var bonus_attack_power: int = 0      # Flat bonus added to weapon-based attacks
+@export var bonus_spell_power: int = 0       # Flat bonus added to spell damage
 @export var bonus_attack_speed: float = 0.0  # Percentage
-@export var bonus_crit_chance: float = 0.0  # Percentage
-@export var bonus_crit_damage: float = 0.0  # Percentage
+@export var bonus_crit_chance: float = 0.0   # Percentage
+@export var bonus_crit_damage: float = 0.0   # Percentage
 
 ## Defensive stat bonuses
 @export_group("Defensive Bonuses")
@@ -66,6 +75,27 @@ func is_two_handed() -> bool:
 func get_stat_text() -> String:
 	var lines: PackedStringArray = []
 
+	# Weapon damage (only for weapons)
+	if weapon_damage > 0:
+		var dmg_parts: PackedStringArray = []
+		if physical_damage > 0:
+			dmg_parts.append("%d Physical" % physical_damage)
+		if fire_damage > 0:
+			dmg_parts.append("%d Fire" % fire_damage)
+		if cold_damage > 0:
+			dmg_parts.append("%d Cold" % cold_damage)
+		if lightning_damage > 0:
+			dmg_parts.append("%d Lightning" % lightning_damage)
+		if poison_damage > 0:
+			dmg_parts.append("%d Poison" % poison_damage)
+
+		if dmg_parts.size() > 0:
+			lines.append("%d Damage (%s)" % [weapon_damage, ", ".join(dmg_parts)])
+		else:
+			lines.append("%d Damage" % weapon_damage)
+
+		lines.append("%.1f Attacks/sec" % weapon_attack_speed)
+
 	# Primary stats
 	if bonus_strength != 0:
 		lines.append("+%d STR" % bonus_strength)
@@ -81,12 +111,10 @@ func get_stat_text() -> String:
 		lines.append("+%d LUK" % bonus_luck)
 
 	# Offensive stats
-	if bonus_melee_damage != 0:
-		lines.append("+%d Melee Dmg" % bonus_melee_damage)
-	if bonus_ranged_damage != 0:
-		lines.append("+%d Ranged Dmg" % bonus_ranged_damage)
-	if bonus_magic_damage != 0:
-		lines.append("+%d Magic Dmg" % bonus_magic_damage)
+	if bonus_attack_power != 0:
+		lines.append("+%d Attack Power" % bonus_attack_power)
+	if bonus_spell_power != 0:
+		lines.append("+%d Spell Power" % bonus_spell_power)
 	if bonus_attack_speed != 0.0:
 		lines.append("+%.0f%% Atk Spd" % bonus_attack_speed)
 	if bonus_crit_chance != 0.0:
