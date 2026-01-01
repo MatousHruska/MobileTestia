@@ -297,12 +297,18 @@ func _setup_hurtbox() -> void:
 func _on_hurtbox_area_entered(area: Area2D) -> void:
 	# Received hit from player attack
 	if area.is_in_group("player_attack"):
-		# TODO: Implement proper damage formula with weapon damage
-		# For now, use weapon damage from equipped weapon + attack power
-		var weapon_dmg: float = Inventory.get_equipped_weapon_damage()
-		var total_damage: float = weapon_dmg + PlayerStats.attack_power
-		var damage := _calculate_incoming_damage(total_damage)
-		take_damage(damage, Game.player)
+		# Use DamageCalculator for proper damage formula
+		var damage_result := DamageCalculator.calculate_basic_attack()
+		var final_damage: float = damage_result.final_damage
+
+		# Apply armor reduction
+		final_damage = _calculate_damage_after_armor(final_damage)
+
+		# Visual crit feedback
+		if damage_result.is_critical:
+			Debug.log("Combat", "Critical hit on %s!" % enemy_name, "%.0f damage" % final_damage)
+
+		take_damage(final_damage, Game.player)
 
 
 ## Combat
@@ -310,8 +316,9 @@ func take_damage(amount: float, attacker: Node2D = null) -> void:
 	if is_dead or _invulnerable_timer > 0:
 		return
 
-	var final_damage := _calculate_damage_after_armor(amount)
-	current_health -= final_damage
+	# Note: Armor reduction should already be applied by caller
+	# This method receives final damage amount
+	current_health -= amount
 
 	# Visual feedback
 	_damage_flash()
@@ -323,26 +330,11 @@ func take_damage(amount: float, attacker: Node2D = null) -> void:
 	if behavior:
 		behavior.on_hit(attacker)
 
-	damaged.emit(final_damage, attacker)
+	damaged.emit(amount, attacker)
 	Debug.log("Combat", "%s took damage" % enemy_name, {
-		"raw": amount,
-		"final": final_damage,
+		"damage": int(amount),
 		"health": "%d/%d" % [int(current_health), int(max_health)]
 	})
-
-
-func _calculate_incoming_damage(base: float) -> float:
-	## Calculate damage from player stats
-	var damage := base
-	if damage <= 0:
-		damage = 5.0  ## Minimum damage
-
-	# Apply player crit
-	if randf() * 100 < PlayerStats.critical_chance:
-		damage *= PlayerStats.critical_damage / 100.0
-		Debug.log("Combat", "Critical hit on %s!" % enemy_name)
-
-	return damage
 
 
 func _calculate_damage_after_armor(raw_damage: float) -> float:
