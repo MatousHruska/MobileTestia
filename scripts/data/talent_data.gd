@@ -45,6 +45,9 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, SUMMON, TELEPORT
 # ACTIVE TALENT PROPERTIES (only used when type == ACTIVE)
 #===============================================================================
 
+## Skill category (melee, ranged, magic) - determines damage formula
+@export var skill_category: String = ""
+
 ## Resource costs
 @export var mana_cost: float = 0.0
 @export var stamina_cost: float = 0.0
@@ -52,8 +55,18 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, SUMMON, TELEPORT
 ## Cooldown in seconds
 @export var cooldown: float = 0.0
 
-## Base damage and scaling
-@export var base_damage: float = 0.0
+## Weapon-based damage (for melee/ranged)
+@export var weapon_damage_percent: float = 0.0  # % of weapon damage
+@export var flat_damage_bonus: float = 0.0      # Flat damage added
+
+## Magic-based damage (for spells)
+@export var base_damage: float = 0.0            # Base spell damage
+@export var damage_per_rank: float = 0.0        # Damage increase per skill rank
+
+## Damage type (physical, fire, cold, etc.)
+@export var damage_type_id: int = 0
+
+## Legacy field (kept for backwards compatibility)
 @export var damage_per_point: float = 0.0
 
 ## Effect properties
@@ -113,20 +126,44 @@ static func from_dict(data: Dictionary) -> TalentData:
 				talent.prerequisite_ids.append(trimmed)
 
 	# Active talent properties
+	talent.skill_category = data.get("skill_category", "")
 	talent.mana_cost = float(data.get("mana_cost", 0))
 	talent.stamina_cost = float(data.get("stamina_cost", 0))
 	talent.cooldown = float(data.get("cooldown", 0))
+
+	# Weapon-based damage (melee/ranged)
+	talent.weapon_damage_percent = float(data.get("weapon_damage_percent", 0))
+	talent.flat_damage_bonus = float(data.get("flat_damage_bonus", 0))
+
+	# Magic-based damage
 	talent.base_damage = float(data.get("base_damage", 0))
+	talent.damage_per_rank = float(data.get("damage_per_rank", 0))
+
+	# Damage type
+	talent.damage_type_id = int(data.get("damage_type", 0))
+
+	# Legacy fields
 	talent.damage_per_point = float(data.get("damage_per_point", 0))
-	talent.effect_type = _effect_type_from_string(data.get("effect_type", ""))
+
+	# Effect properties (for buffs/debuffs, parsed from effect_type string for passives)
+	var effect_str: String = data.get("effect_type", "")
+	if talent.is_passive() and ":" in effect_str:
+		# For passives, effect_type contains stat bonuses like "strength:2;vitality:1"
+		talent.stat_bonuses = _parse_stat_bonuses(effect_str)
+		talent.effect_type = EffectType.NONE
+	else:
+		talent.effect_type = _effect_type_from_string(effect_str)
+
 	talent.effect_value = float(data.get("effect_value", 0))
 	talent.effect_per_point = float(data.get("effect_per_point", 0))
 	talent.duration = float(data.get("duration", 0))
 
-	# Parse stat bonuses for passive talents
+	# Parse stat bonuses for passive talents (from stat_bonuses field, merges with effect_type)
 	var bonuses_str: String = data.get("stat_bonuses", "")
 	if not bonuses_str.is_empty():
-		talent.stat_bonuses = _parse_stat_bonuses(bonuses_str)
+		var additional := _parse_stat_bonuses(bonuses_str)
+		for stat in additional:
+			talent.stat_bonuses[stat] = additional[stat]
 
 	# Descriptions
 	talent.description = data.get("description", "")

@@ -365,11 +365,16 @@ static func get_stat_description(stat_name: String) -> String:
 			return "Magic Points\nConsumed to cast Spells and use active Abilities."
 		"stamina":
 			return "Endurance\nConsumed by Sprinting and Dodging.\nRegenerates quickly when inactive."
-		# Offensive
+		# Offensive - Weapon
+		"weapon_damage":
+			return "Weapon Damage\nBase damage of your equipped weapon.\nMelee and ranged skills scale from this value."
+		"weapon_dps":
+			return "Weapon DPS\nDamage per second from basic attacks.\nCalculated as Weapon Damage × Attack Speed."
+		# Offensive - Player
 		"attack_power":
 			return "Attack Power\nFlat damage bonus added to weapon-based attacks.\nAffects melee and ranged skills."
 		"spell_power":
-			return "Spell Power\nFlat damage bonus added to spell damage.\nAffects magic skills."
+			return "Spell Power\nFlat damage bonus added to spell damage.\nAffects magic skills (not weapon-based)."
 		"attack_speed":
 			return "Attack Speed\nIncreases attack frequency and reduces animation duration."
 		"critical_chance":

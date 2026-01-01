@@ -516,13 +516,19 @@ func _get_effect_color(effect_type: String) -> Color:
 
 
 func _create_offensive_panel() -> Control:
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
 	var grid := GridContainer.new()
-	grid.set_anchors_preset(Control.PRESET_FULL_RECT)
 	grid.columns = 2
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 4)
 
 	var stats := [
+		["weapon_damage", "Weapon Damage"],
+		["weapon_dps", "Weapon DPS"],
 		["attack_power", "Attack Power"],
 		["spell_power", "Spell Power"],
 		["attack_speed", "Attack Speed"],
@@ -535,13 +541,18 @@ func _create_offensive_panel() -> Control:
 		for child in row:
 			grid.add_child(child)
 
-	return grid
+	scroll.add_child(grid)
+	return scroll
 
 
 func _create_defensive_panel() -> Control:
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
 	var grid := GridContainer.new()
-	grid.set_anchors_preset(Control.PRESET_FULL_RECT)
 	grid.columns = 2
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 4)
 
@@ -556,13 +567,18 @@ func _create_defensive_panel() -> Control:
 		for child in row:
 			grid.add_child(child)
 
-	return grid
+	scroll.add_child(grid)
+	return scroll
 
 
 func _create_utility_panel() -> Control:
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
 	var grid := GridContainer.new()
-	grid.set_anchors_preset(Control.PRESET_FULL_RECT)
 	grid.columns = 2
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 8)
 	grid.add_theme_constant_override("v_separation", 4)
 
@@ -578,7 +594,8 @@ func _create_utility_panel() -> Control:
 		for child in row:
 			grid.add_child(child)
 
-	return grid
+	scroll.add_child(grid)
+	return scroll
 
 
 func _create_derived_stat_row(stat_name: String, display_name: String) -> Array:
@@ -612,8 +629,15 @@ func _connect_signals() -> void:
 	# Connect to TalentManager for when skill points are spent
 	TalentManager.talent_points_changed.connect(_on_talent_points_changed)
 
+	# Connect to Inventory for equipment changes (updates weapon stats)
+	Inventory.equipment_changed.connect(_on_equipment_changed)
+
 	# Connect to StatusEffectManager if player exists
 	_connect_to_status_effect_manager()
+
+
+func _on_equipment_changed(_slot: ItemData.EquipSlot) -> void:
+	_update_derived_stats()
 
 
 func _connect_to_status_effect_manager() -> void:
@@ -717,7 +741,14 @@ func _update_resources() -> void:
 
 
 func _update_derived_stats() -> void:
-	# Offensive
+	# Offensive - Weapon stats
+	var weapon_damage := Inventory.get_equipped_weapon_damage()
+	var weapon_speed := Inventory.get_equipped_weapon_attack_speed()
+	var weapon_dps := weapon_damage * weapon_speed
+	_set_stat_value("weapon_damage", "%.0f" % weapon_damage)
+	_set_stat_value("weapon_dps", "%.1f" % weapon_dps)
+
+	# Offensive - Player stats
 	_set_stat_value("attack_power", "%.0f" % PlayerStats.attack_power)
 	_set_stat_value("spell_power", "%.0f" % PlayerStats.spell_power)
 	_set_stat_value("attack_speed", "+%.1f%%" % PlayerStats.attack_speed)
