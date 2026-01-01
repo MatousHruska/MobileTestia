@@ -62,7 +62,7 @@ var _left_panel: PanelContainer
 var _right_panel: VBoxContainer
 
 ## Talent tree
-var _tree_tabs: VBoxContainer
+var _tree_tabs: HBoxContainer
 var _tree_scroll: ScrollContainer
 var _tree_content: VBoxContainer
 var _points_label: Label
@@ -179,15 +179,16 @@ func _build_talent_tree_panel(parent: Control) -> void:
 	vbox.add_theme_constant_override("separation", 6)
 	margin.add_child(vbox)
 
-	# Talents header (left-aligned)
+	# Talents header (centered)
 	var header := Label.new()
 	header.text = "Talents"
 	header.add_theme_font_size_override("font_size", 14)
-	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_child(header)
 
-	# Tree tabs container (vertical, each tab has outline)
-	_tree_tabs = VBoxContainer.new()
+	# Tree tabs container (horizontal row, names can wrap)
+	_tree_tabs = HBoxContainer.new()
 	_tree_tabs.add_theme_constant_override("separation", 4)
 	_tree_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_child(_tree_tabs)
@@ -227,19 +228,21 @@ func _build_points_section(parent: Control) -> void:
 	margin.add_theme_constant_override("margin_bottom", 4)
 	panel.add_child(margin)
 
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 2)
-	margin.add_child(vbox)
+	# Horizontal layout: Available on left, Invested on right
+	var hbox := HBoxContainer.new()
+	margin.add_child(hbox)
 
 	_points_label = Label.new()
-	_points_label.add_theme_font_size_override("font_size", 11)
+	_points_label.add_theme_font_size_override("font_size", 10)
 	_points_label.add_theme_color_override("font_color", COLOR_AVAILABLE)
-	vbox.add_child(_points_label)
+	_points_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(_points_label)
 
 	_points_tree_label = Label.new()
 	_points_tree_label.add_theme_font_size_override("font_size", 10)
 	_points_tree_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	vbox.add_child(_points_tree_label)
+	_points_tree_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	hbox.add_child(_points_tree_label)
 
 
 func _build_right_panel(parent: Control) -> void:
@@ -516,7 +519,10 @@ func _build_tree_tabs() -> void:
 		tab.toggle_mode = true
 		tab.button_pressed = (tree_data.get("id", "") == current_tree_id)
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		tab.custom_minimum_size.y = 28
+		tab.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		tab.custom_minimum_size = Vector2(0, 36)  # Taller for two-line text
+		tab.clip_text = false
+		tab.add_theme_font_size_override("font_size", 10)
 		tab.pressed.connect(_on_tree_tab_pressed.bind(tree_data.get("id", "")))
 
 		# Style with outline
