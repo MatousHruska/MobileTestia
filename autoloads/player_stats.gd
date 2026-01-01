@@ -54,6 +54,9 @@ var luck: int = 10:
 		_recalculate_derived()
 		stats_changed.emit()
 
+## Starting level for testing (set to 3 for skill point testing)
+const DEBUG_STARTING_LEVEL: int = 3
+
 ## Level and Experience
 var level: int = 1:
 	set(value):
@@ -101,9 +104,8 @@ var max_mana: float = 50.0
 var max_stamina: float = 100.0
 
 ## Offensive Stats (Derived)
-var melee_damage: float = 0.0
-var ranged_damage: float = 0.0
-var magic_damage: float = 0.0
+var attack_power: float = 0.0  # Flat bonus to weapon-based attacks
+var spell_power: float = 0.0   # Flat bonus to spell damage
 var attack_speed: float = 0.0  # Percentage bonus
 var critical_chance: float = 5.0  # Base 5%
 var critical_damage: float = BASE_CRIT_DAMAGE  # Base 150%
@@ -128,6 +130,16 @@ var _buff_modifiers: Dictionary = {}
 
 func _ready() -> void:
 	Debug.info("Stats", "PlayerStats initialized")
+
+	# Set starting level for testing
+	if DEBUG_STARTING_LEVEL > 1:
+		level = DEBUG_STARTING_LEVEL
+		attribute_points = (DEBUG_STARTING_LEVEL - 1) * POINTS_PER_LEVEL
+		skill_points = (DEBUG_STARTING_LEVEL - 1) * SKILL_POINTS_PER_LEVEL
+		Debug.info("Stats", "Debug starting level: %d (%d attr pts, %d skill pts)" % [
+			level, attribute_points, skill_points
+		])
+
 	_recalculate_derived()
 	# Start with full resources
 	current_life = max_life
@@ -299,10 +311,9 @@ func _recalculate_derived() -> void:
 	# Critical Damage: Base 150% + 1% per Luck point (uses total luck including equipment)
 	critical_damage = BASE_CRIT_DAMAGE + (total_luck * 1.0) + get_equipment_bonus("crit_damage")
 
-	# Offensive stats (from equipment and buffs only, primary stats are requirements)
-	melee_damage = get_equipment_bonus("melee_damage")
-	ranged_damage = get_equipment_bonus("ranged_damage")
-	magic_damage = get_equipment_bonus("magic_damage")
+	# Offensive stats (from equipment and buffs only)
+	attack_power = get_equipment_bonus("attack_power")
+	spell_power = get_equipment_bonus("spell_power")
 	attack_speed = get_equipment_bonus("attack_speed")
 	critical_chance = 5.0 + get_equipment_bonus("crit_chance")
 
@@ -355,12 +366,10 @@ static func get_stat_description(stat_name: String) -> String:
 		"stamina":
 			return "Endurance\nConsumed by Sprinting and Dodging.\nRegenerates quickly when inactive."
 		# Offensive
-		"melee_damage":
-			return "Melee Damage\nTotal damage dealt with melee weapons.\nCalculated from equipment bonuses."
-		"ranged_damage":
-			return "Ranged Damage\nTotal damage dealt with bows and thrown weapons."
-		"magic_damage":
-			return "Magic Damage\nTotal damage dealt by Spells.\nCan include Fire, Ice, Lightning, or Chaos damage."
+		"attack_power":
+			return "Attack Power\nFlat damage bonus added to weapon-based attacks.\nAffects melee and ranged skills."
+		"spell_power":
+			return "Spell Power\nFlat damage bonus added to spell damage.\nAffects magic skills."
 		"attack_speed":
 			return "Attack Speed\nIncreases attack frequency and reduces animation duration."
 		"critical_chance":

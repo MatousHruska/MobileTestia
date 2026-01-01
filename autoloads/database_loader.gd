@@ -1007,17 +1007,17 @@ func create_equipment(base_id: String, rarity: ItemData.Rarity = ItemData.Rarity
 	item.equipment_type = _map_slot_to_equipment_type(slot, item_type)
 
 	# Base stats become bonuses (base item = common with just base stats)
-	var base_damage: int = int(base.get("base_damage", 0))
 	var base_armor: int = int(base.get("base_armor", 0))
 
-	# Weapons get melee damage (can expand for ranged/magic later)
+	# Weapons get weapon damage properties
 	if slot == "Weapon":
-		if item_type in ["Bow", "Crossbow"]:
-			item.bonus_ranged_damage = base_damage
-		elif item_type in ["Staff", "Wand"]:
-			item.bonus_magic_damage = base_damage
-		else:
-			item.bonus_melee_damage = base_damage
+		item.weapon_damage = int(base.get("weapon_damage", 0))
+		item.physical_damage = int(base.get("physical_damage", 0))
+		item.fire_damage = int(base.get("fire_damage", 0))
+		item.cold_damage = int(base.get("cold_damage", 0))
+		item.lightning_damage = int(base.get("lightning_damage", 0))
+		item.poison_damage = int(base.get("poison_damage", 0))
+		item.weapon_attack_speed = float(base.get("attack_speed", 1.0))
 
 	# Armor pieces get armor bonus
 	if base_armor > 0:
@@ -1088,9 +1088,11 @@ func _apply_affix_to_item(item: EquipmentData, affix: Dictionary) -> void:
 	var value: int = randi_range(int(min_val), int(max_val))
 
 	match stat:
-		"melee_damage": item.bonus_melee_damage += value
-		"ranged_damage": item.bonus_ranged_damage += value
-		"magic_damage": item.bonus_magic_damage += value
+		"attack_power": item.bonus_attack_power += value
+		"spell_power": item.bonus_spell_power += value
+		"fire_power", "cold_power", "lightning_power", "poison_power":
+			# Elemental spell power could be implemented later
+			item.bonus_spell_power += value
 		"strength": item.bonus_strength += value
 		"dexterity": item.bonus_dexterity += value
 		"intelligence": item.bonus_intelligence += value
