@@ -376,7 +376,7 @@ static func get_stat_description(stat_name: String) -> String:
 		"spell_power":
 			return "Spell Power\nFlat damage bonus added to spell damage.\nAffects magic skills (not weapon-based)."
 		"attack_speed":
-			return "Attack Speed\nIncreases attack frequency and reduces animation duration."
+			return "Attack Speed\nFinal attacks per second.\nCalculated from weapon speed + bonuses."
 		"critical_chance":
 			return "Critical Chance\nThe percentage probability of an attack dealing bonus damage."
 		"critical_damage":
