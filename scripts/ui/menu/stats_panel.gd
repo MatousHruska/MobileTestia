@@ -610,6 +610,9 @@ func _connect_signals() -> void:
 	PlayerStats.skill_points_changed.connect(_on_skill_points_changed)
 	PlayerStats.resource_changed.connect(_on_resource_changed)
 
+	# Connect to TalentManager for when skill points are spent
+	TalentManager.talent_points_changed.connect(_on_talent_points_changed)
+
 	# Connect to StatusEffectManager if player exists
 	_connect_to_status_effect_manager()
 
@@ -655,8 +658,10 @@ func _update_level_display() -> void:
 		n.visible = PlayerStats.attribute_points > 0
 	)
 	_find_and_update_node("SkillPointsLabel", func(n: Label):
-		n.text = "Skill: %d" % PlayerStats.skill_points
-		n.visible = PlayerStats.skill_points > 0
+		# Show available (unspent) skill points, not total
+		var available := TalentManager.get_available_points()
+		n.text = "Skill: %d" % available
+		n.visible = available > 0
 	)
 	_find_and_update_node("XPBar", func(n: ProgressBar):
 		n.max_value = PlayerStats.experience_for_next_level
@@ -761,6 +766,10 @@ func _on_points_changed(_points: int) -> void:
 
 
 func _on_skill_points_changed(_points: int) -> void:
+	_update_level_display()
+
+
+func _on_talent_points_changed(_total: int, _available: int) -> void:
 	_update_level_display()
 
 
