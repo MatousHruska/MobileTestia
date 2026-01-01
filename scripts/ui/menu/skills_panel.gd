@@ -282,43 +282,36 @@ func _build_action_buttons() -> void:
 
 func _build_skill_bind_ui() -> void:
 	_bind_panel = PanelContainer.new()
-	_bind_panel.custom_minimum_size = Vector2(0, 100)
+	_bind_panel.custom_minimum_size = Vector2(0, 60)
 	_right_panel.add_child(_bind_panel)
 
-	var bind_center := CenterContainer.new()
-	bind_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bind_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_bind_panel.add_child(bind_center)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	_bind_panel.add_child(margin)
 
-	# Create the circular layout
-	var bind_container := Control.new()
-	bind_container.custom_minimum_size = Vector2(180, 90)
-	bind_center.add_child(bind_container)
+	# Simple horizontal row
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	margin.add_child(row)
 
-	# Main slot (center, larger)
+	# Main slot (attack button, first and bigger)
 	_bind_main_slot = _create_bind_slot(0, true)
-	_bind_main_slot.position = Vector2(75, 25)
-	bind_container.add_child(_bind_main_slot)
+	row.add_child(_bind_main_slot)
 
-	# Secondary slots in arc around main
-	var slot_positions: Array[Vector2] = [
-		Vector2(10, 50),   # Slot 1 (bottom-left)
-		Vector2(30, 15),   # Slot 2 (top-left)
-		Vector2(70, 0),    # Slot 3 (top-center)
-		Vector2(110, 15),  # Slot 4 (top-right)
-		Vector2(130, 50),  # Slot 5 (bottom-right)
-	]
-
+	# Secondary slots in a row to the right
 	for i in range(5):
 		var slot := _create_bind_slot(i + 1, false)
-		slot.position = slot_positions[i]
-		bind_container.add_child(slot)
+		row.add_child(slot)
 		_bind_slots.append(slot)
 
 
 func _create_bind_slot(index: int, is_main: bool) -> Button:
 	var slot := Button.new()
-	slot.custom_minimum_size = Vector2(40, 40) if is_main else Vector2(32, 32)
+	slot.custom_minimum_size = Vector2(44, 44) if is_main else Vector2(34, 34)
 	slot.add_theme_font_size_override("font_size", 10)
 	slot.pressed.connect(_on_bind_slot_pressed.bind(index))
 
@@ -326,7 +319,7 @@ func _create_bind_slot(index: int, is_main: bool) -> Button:
 	var stylebox := StyleBoxFlat.new()
 	stylebox.bg_color = Color(0.2, 0.2, 0.25, 0.8)
 	stylebox.border_color = COLOR_BINDING_AVAILABLE if is_main else Color(0.55, 1.0, 0.98, 0.7)
-	stylebox.set_border_width_all(2)
+	stylebox.set_border_width_all(2 if is_main else 1)
 	stylebox.set_corner_radius_all(6 if is_main else 4)
 	slot.add_theme_stylebox_override("normal", stylebox)
 
