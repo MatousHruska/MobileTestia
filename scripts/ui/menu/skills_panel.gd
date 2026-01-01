@@ -219,12 +219,12 @@ func _build_talent_tree_panel(parent: Control) -> void:
 	_tree_rows = VBoxContainer.new()
 	_tree_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_tree_rows.add_theme_constant_override("separation", 20)  # Prominent row padding
+	_tree_rows.resized.connect(_on_tree_rows_resized)
 	_tree_content.add_child(_tree_rows)
 
 	# Arrow layer on top of rows (draws dependency lines)
 	_arrow_layer = Control.new()
 	_arrow_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_arrow_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_arrow_layer.draw.connect(_draw_dependency_arrows)
 	_tree_content.add_child(_arrow_layer)
 
@@ -587,9 +587,14 @@ func _refresh_talent_tree() -> void:
 	for row in range(1, max_row + 1):
 		_build_talent_row(row)
 
-	# Update container size and redraw arrows after layout
-	await get_tree().process_frame
+
+## Called when tree rows container resizes - sync arrow layer
+func _on_tree_rows_resized() -> void:
+	if not _arrow_layer or not _tree_rows:
+		return
+	# Match arrow layer size to rows container
 	_tree_content.custom_minimum_size = _tree_rows.size
+	_arrow_layer.size = _tree_rows.size
 	_arrow_layer.queue_redraw()
 
 
