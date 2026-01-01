@@ -429,7 +429,7 @@ func _build_skill_bind_ui() -> void:
 	_right_panel.add_child(label)
 
 	_bind_panel = PanelContainer.new()
-	_bind_panel.custom_minimum_size = Vector2(0, 54)
+	_bind_panel.custom_minimum_size = Vector2(0, 58)
 	_right_panel.add_child(_bind_panel)
 
 	# Style with border
@@ -468,6 +468,8 @@ func _create_bind_slot(index: int, is_main: bool) -> Button:
 	var size := 44 if is_main else 36
 	var slot := Button.new()
 	slot.custom_minimum_size = Vector2(size, size)
+	# Prevent HBoxContainer from stretching the button vertically
+	slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	slot.add_theme_font_size_override("font_size", 10)
 	slot.set_meta("slot_index", index)
 	slot.set_meta("is_main", is_main)
