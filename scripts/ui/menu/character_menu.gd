@@ -58,6 +58,9 @@ var _stats_panel_instance: StatsPanel = null
 ## Quest log panel instance (created dynamically)
 var _quest_log_instance = null  # QuestLogPanel
 
+## Skills panel instance (created dynamically)
+var _skills_panel_instance: SkillsPanel = null
+
 
 func _ready() -> void:
 	Debug.info("UI", "CharacterMenu ready")
@@ -118,6 +121,9 @@ func _setup_tabs() -> void:
 
 	# Setup the quest log panel (replaces old content)
 	_setup_quest_panel()
+
+	# Setup the skills panel (replaces old content)
+	_setup_skills_panel()
 
 	# Setup notification badges on tabs
 	_setup_tab_badges()
@@ -200,6 +206,24 @@ func _setup_quest_panel() -> void:
 		Debug.info("UI", "QuestLogPanel created")
 	else:
 		Debug.warn("UI", "Failed to load QuestLogPanel script")
+
+
+func _setup_skills_panel() -> void:
+	if not skills_panel:
+		return
+
+	# Clear old skills panel content
+	for child in skills_panel.get_children():
+		child.queue_free()
+
+	# Create new skills panel
+	_skills_panel_instance = SkillsPanel.new()
+	_skills_panel_instance.name = "DynamicSkillsPanel"
+	_skills_panel_instance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_skills_panel_instance.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	skills_panel.add_child(_skills_panel_instance)
+
+	Debug.info("UI", "SkillsPanel created")
 
 
 func _setup_tab_badges() -> void:
@@ -309,7 +333,8 @@ func _refresh_inventory_panel() -> void:
 
 
 func _refresh_skills_panel() -> void:
-	# TODO: Populate with skill tree
+	if _skills_panel_instance:
+		_skills_panel_instance.refresh()
 	Debug.log("UI", "Refreshing skills panel")
 
 

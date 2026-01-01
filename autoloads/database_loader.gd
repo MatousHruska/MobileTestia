@@ -18,7 +18,8 @@ var enemy_abilities: Dictionary = {}
 var enemy_variants: Dictionary = {}
 var behavior_profiles: Dictionary = {}
 var loot_tables: Dictionary = {}
-var skills: Dictionary = {}
+var talent_trees: Dictionary = {}
+var talents: Dictionary = {}
 var quests: Dictionary = {}
 var quest_objectives: Dictionary = {}
 var npcs: Dictionary = {}
@@ -41,7 +42,8 @@ var unique_items_list: Array = []
 var enemies_list: Array = []
 var enemy_abilities_list: Array = []
 var behavior_profiles_list: Array = []
-var skills_list: Array = []
+var talent_trees_list: Array = []
+var talents_list: Array = []
 var quests_list: Array = []
 var npcs_list: Array = []
 var dialogues_list: Array = []
@@ -82,8 +84,9 @@ func load_all_databases() -> void:
 	# Loot
 	success = _load_database("loot_tables.json", "loot_tables", loot_tables) and success
 
-	# Skills
-	success = _load_database("skills.json", "skills", skills, skills_list) and success
+	# Talents & Talent Trees
+	success = _load_database("talent_trees.json", "talent_trees", talent_trees, talent_trees_list) and success
+	success = _load_database("talents.json", "talents", talents, talents_list) and success
 
 	# Quests
 	success = _load_database("quests.json", "quests", quests, quests_list) and success
@@ -398,29 +401,107 @@ func get_loot_table(id: String) -> Dictionary:
 
 
 #===============================================================================
-# SKILL ACCESS
+# TALENT TREE ACCESS
 #===============================================================================
 
-## Get skill by id
-func get_skill(id: String) -> Dictionary:
-	return skills.get(id, {})
+## Get talent tree by id
+func get_talent_tree(id: String) -> Dictionary:
+	return talent_trees.get(id, {})
 
 
-## Get all skills in a tree
-func get_skills_by_tree(tree: String) -> Array:
+## Get all talent trees
+func get_all_talent_trees() -> Array:
+	return talent_trees_list
+
+
+#===============================================================================
+# TALENT ACCESS
+#===============================================================================
+
+## Get talent by id
+func get_talent(id: String) -> Dictionary:
+	return talents.get(id, {})
+
+
+## Get all talents in a tree
+func get_talents_by_tree(tree_id: String) -> Array:
 	var result: Array = []
-	for skill in skills_list:
-		if skill.get("tree", "") == tree:
-			result.append(skill)
+	for talent in talents_list:
+		if talent.get("tree", "") == tree_id:
+			result.append(talent)
 	return result
 
 
-## Get all skills at a tier
-func get_skills_by_tier(tier: int) -> Array:
+## Get all talents at a row
+func get_talents_by_row(row: int) -> Array:
 	var result: Array = []
-	for skill in skills_list:
-		if skill.get("tier", 1) == tier:
-			result.append(skill)
+	for talent in talents_list:
+		if talent.get("row", 1) == row:
+			result.append(talent)
+	return result
+
+
+## Get talents by tree and row
+func get_talents_by_tree_and_row(tree_id: String, row: int) -> Array:
+	var result: Array = []
+	for talent in talents_list:
+		if talent.get("tree", "") == tree_id and talent.get("row", 1) == row:
+			result.append(talent)
+	return result
+
+
+## Get talent at specific position in tree
+func get_talent_at_position(tree_id: String, row: int, column: int) -> Dictionary:
+	for talent in talents_list:
+		if talent.get("tree", "") == tree_id and talent.get("row", 1) == row and talent.get("column", 1) == column:
+			return talent
+	return {}
+
+
+## Get active talents (those that go into skillbook)
+func get_active_talents() -> Array:
+	var result: Array = []
+	for talent in talents_list:
+		if talent.get("type", "passive") == "active":
+			result.append(talent)
+	return result
+
+
+## Get passive talents
+func get_passive_talents() -> Array:
+	var result: Array = []
+	for talent in talents_list:
+		if talent.get("type", "passive") == "passive":
+			result.append(talent)
+	return result
+
+
+## Get maximum row number in a tree
+func get_max_row_in_tree(tree_id: String) -> int:
+	var max_row: int = 0
+	for talent in talents_list:
+		if talent.get("tree", "") == tree_id:
+			var row: int = talent.get("row", 1)
+			if row > max_row:
+				max_row = row
+	return max_row
+
+
+## Parse stat bonuses string into dictionary
+## Format: "stat:value;stat2:value2" -> {stat: value, stat2: value2}
+func parse_stat_bonuses(bonuses_str: String) -> Dictionary:
+	return parse_stat_string(bonuses_str)
+
+
+## Parse rank descriptions into array
+## Format: "desc1|desc2|desc3" -> ["desc1", "desc2", "desc3"]
+func parse_rank_descriptions(ranks_str: String) -> Array:
+	if ranks_str.strip_edges().is_empty():
+		return []
+	var parts := ranks_str.split("|")
+	var result: Array = []
+	for part in parts:
+		result.append(part.strip_edges())
 	return result
 
 
@@ -1139,7 +1220,8 @@ func print_stats() -> void:
 		"enemy_abilities": enemy_abilities.size(),
 		"behavior_profiles": behavior_profiles.size(),
 		"loot_tables": loot_tables.size(),
-		"skills": skills.size(),
+		"talent_trees": talent_trees.size(),
+		"talents": talents.size(),
 		"quests": quests.size(),
 		"quest_objectives": quest_objectives.size(),
 		"npcs": npcs.size(),

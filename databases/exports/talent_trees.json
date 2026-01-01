@@ -1,0 +1,22 @@
+{
+  "talent_trees": [
+    {
+      "id": "tree_noble_legacy",
+      "name": "Noble Legacy",
+      "description": "The path of nobility grants leadership and martial prowess.",
+      "icon_name": "tree_noble_legacy"
+    },
+    {
+      "id": "tree_mountain_hunter",
+      "name": "Mountain Hunter",
+      "description": "Master the ways of the wild through cunning and precision.",
+      "icon_name": "tree_mountain_hunter"
+    },
+    {
+      "id": "tree_spirit_whisperer",
+      "name": "Spirit Whisperer",
+      "description": "Commune with ancient spirits to unlock mystical powers.",
+      "icon_name": "tree_spirit_whisperer"
+    }
+  ]
+}
