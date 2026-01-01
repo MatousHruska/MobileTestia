@@ -45,6 +45,13 @@ var selected_talent_id: String = ""
 var selected_from_skillbook: bool = false
 var binding_mode: bool = false
 
+## Drag and drop state
+var _is_dragging: bool = false
+var _drag_talent_id: String = ""
+var _drag_start_pos: Vector2 = Vector2.ZERO
+var _drag_preview: Control = null
+const DRAG_THRESHOLD: float = 10.0  ## Pixels to move before drag starts
+
 #===============================================================================
 # UI REFERENCES
 #===============================================================================
@@ -493,8 +500,10 @@ func _create_skillbook_slot(talent: TalentData) -> Button:
 	slot.toggle_mode = true
 	slot.text = talent.talent_name.substr(0, 2).to_upper()
 	slot.add_theme_font_size_override("font_size", 12)
-	slot.tooltip_text = talent.talent_name
-	slot.pressed.connect(_on_skillbook_slot_pressed.bind(talent.id))
+	slot.tooltip_text = talent.talent_name + "\n[Hold and drag to bind]"
+
+	# Use gui_input for drag detection instead of pressed signal
+	slot.gui_input.connect(_on_skillbook_slot_input.bind(talent.id, slot))
 
 	# Visual state
 	var is_bound := TalentManager.is_talent_bound(talent.id)
@@ -507,7 +516,35 @@ func _create_skillbook_slot(talent: TalentData) -> Button:
 	stylebox.set_corner_radius_all(4)
 	slot.add_theme_stylebox_override("normal", stylebox)
 
+	# Store metadata for drag detection
+	slot.set_meta("talent_id", talent.id)
+	slot.set_meta("press_pos", Vector2.ZERO)
+	slot.set_meta("is_pressed", false)
+
 	return slot
+
+
+## Handle input on skillbook slots for drag detection
+func _on_skillbook_slot_input(event: InputEvent, talent_id: String, slot: Button) -> void:
+	if event is InputEventMouseButton or event is InputEventScreenTouch:
+		if event.pressed:
+			# Start potential drag
+			slot.set_meta("press_pos", event.position)
+			slot.set_meta("is_pressed", true)
+		else:
+			# Release - if we didn't drag, treat as click
+			if slot.get_meta("is_pressed", false) and not _is_dragging:
+				_on_skillbook_slot_pressed(talent_id)
+			slot.set_meta("is_pressed", false)
+
+	elif (event is InputEventMouseMotion or event is InputEventScreenDrag) and slot.get_meta("is_pressed", false):
+		# Check if we should start dragging
+		var press_pos: Vector2 = slot.get_meta("press_pos", Vector2.ZERO)
+		var delta := event.position - press_pos
+
+		if delta.length() > DRAG_THRESHOLD and not _is_dragging:
+			slot.set_meta("is_pressed", false)
+			_start_drag(talent_id, slot.get_global_position() + event.position)
 
 
 func _refresh_bind_slots() -> void:
@@ -781,3 +818,157 @@ func _on_skill_points_changed(_points: int) -> void:
 		var talent := TalentManager.get_talent(id)
 		if talent:
 			_update_talent_node_visual(_talent_nodes[id], talent)
+
+
+#===============================================================================
+# DRAG AND DROP
+#===============================================================================
+
+## Handle input for drag and drop
+func _input(event: InputEvent) -> void:
+	if _is_dragging:
+		if event is InputEventMouseMotion or event is InputEventScreenDrag:
+			_update_drag_position(event.position)
+		elif event is InputEventMouseButton or event is InputEventScreenTouch:
+			if not event.pressed:
+				_end_drag(event.position)
+
+
+## Start dragging a skill from the skillbook
+func _start_drag(talent_id: String, start_pos: Vector2) -> void:
+	var talent := TalentManager.get_talent(talent_id)
+	if not talent or not TalentManager.is_in_skillbook(talent_id):
+		return
+
+	_is_dragging = true
+	_drag_talent_id = talent_id
+	_drag_start_pos = start_pos
+
+	# Create drag preview
+	_create_drag_preview(talent)
+
+	# Enter visual binding mode
+	binding_mode = true
+	_refresh_bind_slots()
+	binding_mode_entered.emit()
+
+	Debug.log("UI", "Started dragging skill: %s" % talent_id)
+
+
+## Create the visual drag preview
+func _create_drag_preview(talent: TalentData) -> void:
+	if _drag_preview:
+		_drag_preview.queue_free()
+
+	_drag_preview = PanelContainer.new()
+	_drag_preview.z_index = 100
+	_drag_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var stylebox := StyleBoxFlat.new()
+	stylebox.bg_color = Color(0.3, 0.4, 0.5, 0.9)
+	stylebox.border_color = COLOR_BINDING_AVAILABLE
+	stylebox.set_border_width_all(2)
+	stylebox.set_corner_radius_all(6)
+	_drag_preview.add_theme_stylebox_override("panel", stylebox)
+
+	var label := Label.new()
+	label.text = talent.talent_name.substr(0, 3).to_upper()
+	label.add_theme_font_size_override("font_size", 14)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.custom_minimum_size = Vector2(48, 48)
+	_drag_preview.add_child(label)
+
+	# Add to root so it's not clipped
+	get_tree().root.add_child(_drag_preview)
+	_drag_preview.global_position = _drag_start_pos - Vector2(24, 24)
+
+
+## Update drag preview position
+func _update_drag_position(pos: Vector2) -> void:
+	if _drag_preview:
+		_drag_preview.global_position = pos - Vector2(24, 24)
+
+
+## End drag and check for drop target
+func _end_drag(end_pos: Vector2) -> void:
+	if not _is_dragging:
+		return
+
+	_is_dragging = false
+
+	# Check if dropped on a bind slot
+	var dropped_on_slot := _get_slot_at_position(end_pos)
+	if dropped_on_slot >= 0:
+		TalentManager.bind_skill(dropped_on_slot, _drag_talent_id)
+		Debug.log("UI", "Dropped skill %s on slot %d" % [_drag_talent_id, dropped_on_slot])
+
+	# Clean up
+	if _drag_preview:
+		_drag_preview.queue_free()
+		_drag_preview = null
+
+	_drag_talent_id = ""
+	binding_mode = false
+	binding_mode_exited.emit()
+
+	_refresh_skillbook()
+	_refresh_bind_slots()
+	_update_buttons()
+
+
+## Get which bind slot is at the given position (-1 if none)
+func _get_slot_at_position(pos: Vector2) -> int:
+	# Check main slot
+	if _bind_main_slot and _is_point_in_control(_bind_main_slot, pos):
+		return 0
+
+	# Check secondary slots
+	for i in range(_bind_slots.size()):
+		if _is_point_in_control(_bind_slots[i], pos):
+			return i + 1
+
+	return -1
+
+
+## Check if a point is inside a control's global rect
+func _is_point_in_control(control: Control, point: Vector2) -> bool:
+	var rect := control.get_global_rect()
+	return rect.has_point(point)
+
+
+## Cancel any ongoing drag operation
+func _cancel_drag() -> void:
+	if _is_dragging:
+		_is_dragging = false
+		_drag_talent_id = ""
+
+		if _drag_preview:
+			_drag_preview.queue_free()
+			_drag_preview = null
+
+		binding_mode = false
+		binding_mode_exited.emit()
+		_refresh_bind_slots()
+
+
+#===============================================================================
+# FLASH ANIMATION FOR NEW SKILLS
+#===============================================================================
+
+## Play flash animation when a new skill is added to the skillbook
+func _play_skillbook_flash(slot: Button) -> void:
+	if not slot:
+		return
+
+	# Store original modulate
+	var original_color := slot.modulate
+
+	# Create flash tween
+	var tween := create_tween()
+	tween.tween_property(slot, "modulate", Color(2.0, 2.0, 2.0, 1.0), 0.1)
+	tween.tween_property(slot, "modulate", original_color, 0.3)
+
+	# Also scale pulse
+	tween.parallel().tween_property(slot, "scale", Vector2(1.2, 1.2), 0.1)
+	tween.tween_property(slot, "scale", Vector2(1.0, 1.0), 0.2).set_ease(Tween.EASE_OUT)
