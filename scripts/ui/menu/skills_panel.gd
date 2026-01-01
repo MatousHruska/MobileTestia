@@ -65,7 +65,9 @@ var _right_panel: VBoxContainer
 ## Talent tree
 var _tree_tabs: HBoxContainer
 var _tree_scroll: ScrollContainer
-var _tree_content: VBoxContainer
+var _tree_content: Control  # Container for nodes and arrow layer
+var _tree_rows: VBoxContainer  # Holds the talent row containers
+var _arrow_layer: Control  # For drawing dependency arrows
 var _points_label: Label
 var _points_tree_label: Label
 
@@ -208,10 +210,23 @@ func _build_talent_tree_panel(parent: Control) -> void:
 	_tree_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	vbox.add_child(_tree_scroll)
 
-	_tree_content = VBoxContainer.new()
+	# Container that holds both rows and arrow layer
+	_tree_content = Control.new()
 	_tree_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_tree_content.add_theme_constant_override("separation", 20)  # Prominent row padding
 	_tree_scroll.add_child(_tree_content)
+
+	# VBoxContainer for talent rows
+	_tree_rows = VBoxContainer.new()
+	_tree_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tree_rows.add_theme_constant_override("separation", 20)  # Prominent row padding
+	_tree_content.add_child(_tree_rows)
+
+	# Arrow layer on top of rows (draws dependency lines)
+	_arrow_layer = Control.new()
+	_arrow_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_arrow_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_arrow_layer.draw.connect(_draw_dependency_arrows)
+	_tree_content.add_child(_arrow_layer)
 
 	# Static points section at bottom (outside scroll)
 	_build_points_section(vbox)
@@ -559,8 +574,8 @@ func _build_tree_tabs() -> void:
 
 
 func _refresh_talent_tree() -> void:
-	# Clear existing content
-	for child in _tree_content.get_children():
+	# Clear existing rows
+	for child in _tree_rows.get_children():
 		child.queue_free()
 	_talent_nodes.clear()
 
@@ -572,13 +587,18 @@ func _refresh_talent_tree() -> void:
 	for row in range(1, max_row + 1):
 		_build_talent_row(row)
 
+	# Update container size and redraw arrows after layout
+	await get_tree().process_frame
+	_tree_content.custom_minimum_size = _tree_rows.size
+	_arrow_layer.queue_redraw()
+
 
 func _build_talent_row(row: int) -> void:
 	var row_container := HBoxContainer.new()
 	row_container.custom_minimum_size.y = ROW_HEIGHT
 	row_container.add_theme_constant_override("separation", 8)
 	row_container.alignment = BoxContainer.ALIGNMENT_CENTER
-	_tree_content.add_child(row_container)
+	_tree_rows.add_child(row_container)
 
 	# Get talents for this row
 	var talents := TalentManager.get_talents_at_row(current_tree_id, row)
@@ -692,6 +712,68 @@ func _update_talent_node_visual(container: Control, talent: TalentData) -> void:
 
 	# Tooltip
 	node.tooltip_text = "%s\n%s" % [talent.talent_name, talent.description]
+
+
+## Draw dependency arrows between talents with prerequisites
+func _draw_dependency_arrows() -> void:
+	if current_tree_id.is_empty():
+		return
+
+	var arrow_color := Color(0.6, 0.6, 0.65, 0.8)
+	var arrow_color_met := Color(0.5, 1.0, 0.5, 0.9)  # Green when prereq is maxed
+	var line_width := 2.0
+	var arrow_size := 8.0
+
+	# Iterate through all talents in current tree
+	var talents := TalentManager.get_talents_for_tree(current_tree_id)
+	for talent in talents:
+		if not talent.has_prerequisites():
+			continue
+
+		# Get the node for this talent
+		var target_node := _talent_nodes.get(talent.id) as Control
+		if not target_node:
+			continue
+
+		# Draw arrow from each prerequisite to this talent
+		for prereq_id in talent.prerequisite_ids:
+			var prereq_node := _talent_nodes.get(prereq_id) as Control
+			if not prereq_node:
+				continue
+
+			# Calculate positions relative to arrow layer
+			var start_pos := prereq_node.get_global_position() - _arrow_layer.get_global_position()
+			var end_pos := target_node.get_global_position() - _arrow_layer.get_global_position()
+
+			# Center horizontally, connect bottom of prereq to top of target
+			start_pos += Vector2(prereq_node.size.x / 2, prereq_node.size.y)
+			end_pos += Vector2(target_node.size.x / 2, 0)
+
+			# Determine if prerequisite is met (maxed)
+			var prereq_talent := TalentManager.get_talent(prereq_id)
+			var invested := TalentManager.get_invested_points(prereq_id)
+			var is_met := prereq_talent and invested >= prereq_talent.max_points
+
+			var color := arrow_color_met if is_met else arrow_color
+
+			# Draw line
+			_arrow_layer.draw_line(start_pos, end_pos, color, line_width, true)
+
+			# Draw arrow head at the end
+			_draw_arrow_head(end_pos, start_pos, color, arrow_size)
+
+
+## Draw arrow head pointing from start towards end
+func _draw_arrow_head(tip: Vector2, from: Vector2, color: Color, size: float) -> void:
+	var direction := (tip - from).normalized()
+	var perpendicular := Vector2(-direction.y, direction.x)
+
+	var base := tip - direction * size
+	var left := base + perpendicular * (size * 0.5)
+	var right := base - perpendicular * (size * 0.5)
+
+	var points := PackedVector2Array([tip, left, right])
+	_arrow_layer.draw_polygon(points, PackedColorArray([color, color, color]))
 
 
 func _refresh_skillbook() -> void:
@@ -1081,6 +1163,10 @@ func _on_talent_learned(talent_id: String, _new_points: int) -> void:
 		var talent := TalentManager.get_talent(id)
 		if talent:
 			_update_talent_node_visual(_talent_nodes[id], talent)
+
+	# Redraw arrows (color changes when prereqs are met)
+	if _arrow_layer:
+		_arrow_layer.queue_redraw()
 
 	_update_description_panel()
 	_update_buttons()
