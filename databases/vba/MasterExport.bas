@@ -173,6 +173,9 @@ Private Function GetOrCreateSheet(ByVal sheetName As String) As Worksheet
     If ws Is Nothing Then
         Set ws = ThisWorkbook.Sheets.Add(After:=ThisWorkbook.Sheets(ThisWorkbook.Sheets.Count))
         ws.Name = sheetName
+    Else
+        ' Make sure existing sheet is visible
+        ws.Visible = xlSheetVisible
     End If
 
     Set GetOrCreateSheet = ws
