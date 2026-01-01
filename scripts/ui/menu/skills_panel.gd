@@ -27,7 +27,7 @@ const ROW_HEIGHT := 80  ## Height per talent row
 const TREE_WIDTH := 340  ## Width of talent tree panel
 const SKILLBOOK_COLS := 6  ## Columns in skillbook grid
 const SKILLBOOK_CELL_SIZE := 52  ## Size of skillbook cells
-const SKILLBOOK_MIN_SLOTS := 6  ## Minimum visible slots (1 row)
+const SKILLBOOK_MIN_SLOTS := 30  ## Total slots (5 rows x 6 columns)
 
 ## Colors
 const COLOR_LOCKED := Color(0.4, 0.4, 0.4)
@@ -170,17 +170,28 @@ func _build_right_panel(parent: Control) -> void:
 	_right_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(_right_panel)
 
-	# Skillbook header
+	# Skillbook header (centered)
 	_skillbook_header = Label.new()
 	_skillbook_header.text = "Skillbook"
 	_skillbook_header.add_theme_font_size_override("font_size", 18)
 	_skillbook_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_skillbook_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_right_panel.add_child(_skillbook_header)
 
-	# Skillbook grid
+	# Skillbook container with border
 	var skillbook_panel := PanelContainer.new()
-	skillbook_panel.custom_minimum_size = Vector2(SKILLBOOK_COLS * (SKILLBOOK_CELL_SIZE + 4) + 16, 120)
+	# Height shows ~2.5 rows to imply scrolling
+	var visible_height := int(2.5 * (SKILLBOOK_CELL_SIZE + 4)) + 16
+	skillbook_panel.custom_minimum_size = Vector2(0, visible_height)
 	_right_panel.add_child(skillbook_panel)
+
+	# Style with border
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.12, 0.12, 0.14, 0.9)
+	panel_style.border_color = Color(0.3, 0.3, 0.35)
+	panel_style.set_border_width_all(1)
+	panel_style.set_corner_radius_all(4)
+	skillbook_panel.add_theme_stylebox_override("panel", panel_style)
 
 	var skillbook_margin := MarginContainer.new()
 	skillbook_margin.add_theme_constant_override("margin_left", 8)
@@ -192,13 +203,19 @@ func _build_right_panel(parent: Control) -> void:
 	var skillbook_scroll := ScrollContainer.new()
 	skillbook_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	skillbook_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	skillbook_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	skillbook_margin.add_child(skillbook_scroll)
+
+	# Center container for the grid
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	skillbook_scroll.add_child(center)
 
 	_skillbook_grid = GridContainer.new()
 	_skillbook_grid.columns = SKILLBOOK_COLS
 	_skillbook_grid.add_theme_constant_override("h_separation", 4)
 	_skillbook_grid.add_theme_constant_override("v_separation", 4)
-	skillbook_scroll.add_child(_skillbook_grid)
+	center.add_child(_skillbook_grid)
 
 	# Build skill bind UI (below skillbook)
 	_build_skill_bind_ui()
