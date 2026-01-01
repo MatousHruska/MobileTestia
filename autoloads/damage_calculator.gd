@@ -76,20 +76,25 @@ func _calculate_weapon_damage(talent: TalentData, skill_rank: int) -> Dictionary
 
 
 ## Calculate magic damage (spells)
-## Formula: base_damage + (damage_per_rank * (rank - 1)) + Spell Power
+## Formula: (base_damage + (damage_per_rank * (rank - 1)) + Spell Power) * (1 + elemental_bonus%)
 func _calculate_magic_damage(talent: TalentData, skill_rank: int) -> Dictionary:
 	var spell_power := PlayerStats.spell_power
 
 	var base := talent.base_damage
 	var per_rank := talent.damage_per_rank
 	var rank_bonus := per_rank * (skill_rank - 1)
-	var total_damage := base + rank_bonus + spell_power
+	var pre_bonus_damage := base + rank_bonus + spell_power
+
+	# Apply elemental damage bonus
+	var elemental_bonus := _get_elemental_bonus(talent.damage_type_id)
+	var total_damage := pre_bonus_damage * (1.0 + elemental_bonus / 100.0)
 
 	return {
 		"base_damage": total_damage,
 		"skill_base": base,
 		"rank_bonus": rank_bonus,
 		"spell_power": spell_power,
+		"elemental_bonus": elemental_bonus,
 		"damage_type": talent.damage_type_id,
 		"category": SkillCategory.MAGIC,
 	}
@@ -221,6 +226,29 @@ func apply_damage_reduction(incoming_damage: float, damage_type: int, attacker_l
 #===============================================================================
 # UTILITY
 #===============================================================================
+
+## Get elemental damage bonus from equipment based on damage type
+func _get_elemental_bonus(damage_type: int) -> float:
+	match damage_type:
+		DamageType.FIRE:
+			return PlayerStats.get_equipment_bonus("fire_spell_damage")
+		DamageType.COLD:
+			return PlayerStats.get_equipment_bonus("cold_spell_damage")
+		DamageType.LIGHTNING:
+			return PlayerStats.get_equipment_bonus("lightning_spell_damage")
+		DamageType.POISON:
+			return PlayerStats.get_equipment_bonus("poison_spell_damage")
+		DamageType.ARCANE:
+			return PlayerStats.get_equipment_bonus("arcane_spell_damage")
+		DamageType.HOLY:
+			return PlayerStats.get_equipment_bonus("holy_spell_damage")
+		DamageType.SHADOW:
+			return PlayerStats.get_equipment_bonus("shadow_spell_damage")
+		DamageType.NATURE:
+			return PlayerStats.get_equipment_bonus("nature_spell_damage")
+		_:
+			return 0.0
+
 
 ## Get skill category from talent data
 func _get_skill_category(talent: TalentData) -> SkillCategory:
