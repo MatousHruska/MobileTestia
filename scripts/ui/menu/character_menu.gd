@@ -131,6 +131,7 @@ func _setup_tabs() -> void:
 	# Connect to PlayerStats for badge updates
 	PlayerStats.attribute_points_changed.connect(_on_attribute_points_changed)
 	PlayerStats.skill_points_changed.connect(_on_skill_points_changed)
+	TalentManager.talent_points_changed.connect(_on_talent_points_changed)
 
 	# Initial badge update
 	_update_stats_badge()
@@ -250,9 +251,10 @@ func _update_skills_badge() -> void:
 	if not skills_tab:
 		return
 
-	var points := PlayerStats.skill_points
-	if points > 0:
-		skills_tab.text = "Skills (+%d)" % points
+	# Show available (unspent) skill points, not total
+	var available := TalentManager.get_available_points()
+	if available > 0:
+		skills_tab.text = "Skills (+%d)" % available
 		skills_tab.add_theme_color_override("font_color", BADGE_COLOR)
 		skills_tab.add_theme_color_override("font_hover_color", BADGE_COLOR)
 	else:
@@ -266,6 +268,10 @@ func _on_attribute_points_changed(_points: int) -> void:
 
 
 func _on_skill_points_changed(_points: int) -> void:
+	_update_skills_badge()
+
+
+func _on_talent_points_changed(_total: int, _available: int) -> void:
 	_update_skills_badge()
 
 
