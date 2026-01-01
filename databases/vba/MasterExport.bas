@@ -335,17 +335,6 @@ Private Sub SetupLootTablesSheet()
     SetHeaders ws, headers
 End Sub
 
-Private Sub SetupSkillsSheet()
-    Dim ws As Worksheet
-    Set ws = GetOrCreateSheet("Skills")
-    Dim headers As Variant
-    headers = Array("id", "name", "type", "tree", "tier", "max_level", "mana_cost", _
-                    "stamina_cost", "cooldown", "base_damage", "damage_per_level", _
-                    "effect_type", "effect_value", "effect_per_level", "duration", _
-                    "prerequisite_ids", "description", "icon_name")
-    SetHeaders ws, headers
-End Sub
-
 Private Sub SetupQuestsSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("Quests")
