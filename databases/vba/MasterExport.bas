@@ -118,38 +118,46 @@ Public Sub SetupWorkbook()
 
     If response <> vbYes Then Exit Sub
 
+    On Error GoTo SheetError
+    Dim currentSheet As String
+
     ' Create/setup each sheet
-    SetupItemBasesSheet
-    SetupAffixesSheet
-    SetupUniqueItemsSheet
-    SetupEnemiesSheet
-    SetupEnemyAbilitiesSheet
-    SetupEnemyVariantsSheet
-    SetupBehaviorProfilesSheet
-    SetupLootTablesSheet
-    SetupTalentTreesSheet
-    SetupTalentsSheet
-    SetupQuestsSheet
-    SetupQuestObjectivesSheet
-    SetupNPCsSheet
-    SetupShopInventorySheet
-    SetupDialoguesSheet
-    SetupConsumablesSheet
-    SetupStatusEffectsSheet
-    SetupZonesSheet
-    SetupLocationsSheet
-    SetupChestsSheet
-    SetupSpawnPointsSheet
-    SetupCutscenesSheet
-    SetupFloatingDialoguesSheet
-    SetupPopupMessagesSheet
-    SetupStatModifiersSheet
-    SetupRaritiesSheet
+    currentSheet = "ItemBases": SetupItemBasesSheet
+    currentSheet = "Affixes": SetupAffixesSheet
+    currentSheet = "UniqueItems": SetupUniqueItemsSheet
+    currentSheet = "Enemies": SetupEnemiesSheet
+    currentSheet = "EnemyAbilities": SetupEnemyAbilitiesSheet
+    currentSheet = "EnemyVariants": SetupEnemyVariantsSheet
+    currentSheet = "BehaviorProfiles": SetupBehaviorProfilesSheet
+    currentSheet = "LootTables": SetupLootTablesSheet
+    currentSheet = "TalentTrees": SetupTalentTreesSheet
+    currentSheet = "Talents": SetupTalentsSheet
+    currentSheet = "Quests": SetupQuestsSheet
+    currentSheet = "QuestObjectives": SetupQuestObjectivesSheet
+    currentSheet = "NPCs": SetupNPCsSheet
+    currentSheet = "ShopInventory": SetupShopInventorySheet
+    currentSheet = "Dialogues": SetupDialoguesSheet
+    currentSheet = "Consumables": SetupConsumablesSheet
+    currentSheet = "StatusEffects": SetupStatusEffectsSheet
+    currentSheet = "Zones": SetupZonesSheet
+    currentSheet = "Locations": SetupLocationsSheet
+    currentSheet = "Chests": SetupChestsSheet
+    currentSheet = "SpawnPoints": SetupSpawnPointsSheet
+    currentSheet = "Cutscenes": SetupCutscenesSheet
+    currentSheet = "FloatingDialogues": SetupFloatingDialoguesSheet
+    currentSheet = "PopupMessages": SetupPopupMessagesSheet
+    currentSheet = "StatModifiers": SetupStatModifiersSheet
+    currentSheet = "Rarities": SetupRaritiesSheet
 
     MsgBox "Workbook setup complete!" & vbCrLf & vbCrLf & _
            "All sheets have been created with proper headers." & vbCrLf & _
            "Don't forget to add Data Validation (dropdowns) to relevant columns!", _
            vbInformation, "Setup Complete"
+    Exit Sub
+
+SheetError:
+    MsgBox "Error setting up sheet: " & currentSheet & vbCrLf & vbCrLf & _
+           "Error " & Err.Number & ": " & Err.Description, vbCritical, "Setup Error"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -531,4 +539,43 @@ Public Sub AddDebugItems()
     ws.Cells(row, 6).value = 0.5
 
     MsgBox "Debug items added to ItemBases!", vbInformation
+End Sub
+
+'-------------------------------------------------------------------------------
+' SetupEnemySheetsOnly - Creates just the Enemies, EnemyAbilities, EnemyVariants sheets
+' Use this if SetupWorkbook fails to create enemy sheets
+'-------------------------------------------------------------------------------
+Public Sub SetupEnemySheetsOnly()
+    On Error GoTo EnemyError
+
+    SetupEnemiesSheet
+    SetupEnemyAbilitiesSheet
+    SetupEnemyVariantsSheet
+
+    MsgBox "Enemy sheets created successfully!" & vbCrLf & vbCrLf & _
+           "Sheets created: Enemies, EnemyAbilities, EnemyVariants", _
+           vbInformation, "Setup Complete"
+    Exit Sub
+
+EnemyError:
+    MsgBox "Error creating enemy sheets:" & vbCrLf & vbCrLf & _
+           "Error " & Err.Number & ": " & Err.Description, vbCritical, "Setup Error"
+End Sub
+
+'-------------------------------------------------------------------------------
+' DiagnosticCheck - Lists all modules and checks for duplicates
+'-------------------------------------------------------------------------------
+Public Sub DiagnosticCheck()
+    Dim msg As String
+    msg = "VBA Modules in this workbook:" & vbCrLf & vbCrLf
+
+    Dim vbComp As Object
+    For Each vbComp In ThisWorkbook.VBProject.VBComponents
+        msg = msg & "- " & vbComp.Name & " (" & vbComp.Type & ")" & vbCrLf
+    Next vbComp
+
+    msg = msg & vbCrLf & "If you see duplicate modules (like MasterExport1), " & vbCrLf
+    msg = msg & "delete the duplicates and reimport the .bas files."
+
+    MsgBox msg, vbInformation, "Diagnostic Check"
 End Sub
