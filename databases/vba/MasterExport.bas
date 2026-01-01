@@ -551,19 +551,7 @@ End Sub
 Public Sub SetupEnemySheetsOnly()
     On Error GoTo EnemyError
 
-    MsgBox "Starting Enemies sheet creation...", vbInformation, "Debug"
-
-    Dim ws As Worksheet
-    Set ws = GetOrCreateSheet("Enemies")
-    MsgBox "Sheet object created. Name: " & ws.Name, vbInformation, "Debug"
-
-    Dim headers As Variant
-    headers = Array("id", "name", "type", "base_health", "base_damage", "armor", _
-                    "move_speed", "attack_speed", "attack_range", "detection_range", _
-                    "xp_reward", "loot_table_id", "ability_ids", "behavior_profile", "description")
-    SetHeaders ws, headers
-    MsgBox "Headers set for Enemies sheet", vbInformation, "Debug"
-
+    SetupEnemiesSheet
     SetupEnemyAbilitiesSheet
     SetupEnemyVariantsSheet
 
