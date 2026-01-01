@@ -381,3 +381,92 @@ Public Sub ExportAllEnemies()
     ExportEnemyVariants
     MsgBox "All enemy databases exported!", vbInformation, "Export Complete"
 End Sub
+
+'===============================================================================
+' SHEET SETUP
+'===============================================================================
+
+'-------------------------------------------------------------------------------
+' SetupEnemiesSheet - Creates Enemies sheet with headers
+'-------------------------------------------------------------------------------
+Public Sub SetupEnemiesSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet(SHEET_ENEMIES)
+    Dim headers As Variant
+    headers = Array("id", "name", "type", "base_health", "base_damage", "armor", _
+                    "move_speed", "attack_speed", "attack_range", "detection_range", _
+                    "xp_reward", "loot_table_id", "ability_ids", "behavior_profile", "description")
+    SetupSheetHeaders ws, headers
+
+    ' Add column notes
+    SafeAddComment ws.Cells(1, 1), "Format: ene_type_name (e.g., ene_zombie_basic)"
+    SafeAddComment ws.Cells(1, 3), "Normal, Miniboss, or Boss"
+    SafeAddComment ws.Cells(1, 4), "Base health points"
+    SafeAddComment ws.Cells(1, 5), "Base damage dealt"
+    SafeAddComment ws.Cells(1, 7), "Movement speed (default 80)"
+    SafeAddComment ws.Cells(1, 8), "Attacks per second (default 1)"
+    SafeAddComment ws.Cells(1, 9), "Melee attack range (default 24)"
+    SafeAddComment ws.Cells(1, 10), "Range to detect player (default 150)"
+    SafeAddComment ws.Cells(1, 12), "Reference to LootTables id"
+    SafeAddComment ws.Cells(1, 13), "Comma-separated ability IDs (e.g., abl_slash,abl_bite)"
+    SafeAddComment ws.Cells(1, 14), "Reference to BehaviorProfiles id (default: bhv_basic_melee)"
+End Sub
+
+'-------------------------------------------------------------------------------
+' SetupEnemyAbilitiesSheet - Creates EnemyAbilities sheet with headers
+'-------------------------------------------------------------------------------
+Public Sub SetupEnemyAbilitiesSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet(SHEET_ABILITIES)
+    Dim headers As Variant
+    headers = Array("id", "name", "description", "type", "damage_mult", "damage_type", _
+                    "cooldown", "range_min", "range_max", "shape", "shape_size", "shape_angle", _
+                    "windup", "recovery", "animation", "priority", "conditions", "effects_on_hit", _
+                    "projectile_speed", "dash_speed", "cardinal_only")
+    SetupSheetHeaders ws, headers
+
+    ' Add column notes
+    SafeAddComment ws.Cells(1, 1), "Format: abl_name (e.g., abl_zombie_bite)"
+    SafeAddComment ws.Cells(1, 4), "melee, dash_attack, aoe, projectile, pattern, teleport_attack, beam"
+    SafeAddComment ws.Cells(1, 5), "Damage multiplier (1 = 100% base damage)"
+    SafeAddComment ws.Cells(1, 6), "physical, fire, cold, lightning, poison, chaos, pure"
+    SafeAddComment ws.Cells(1, 8), "Minimum range to use ability"
+    SafeAddComment ws.Cells(1, 9), "Maximum range to use ability"
+    SafeAddComment ws.Cells(1, 10), "circle, cone, line, cross, ring"
+    SafeAddComment ws.Cells(1, 13), "Wind-up time before damage"
+    SafeAddComment ws.Cells(1, 14), "Recovery time after attack"
+    SafeAddComment ws.Cells(1, 16), "AI priority (higher = preferred)"
+    SafeAddComment ws.Cells(1, 17), "Conditions like distance>50 or health<50%"
+    SafeAddComment ws.Cells(1, 18), "Effects: stun:0.5, burn:3:5, knockback:100"
+    SafeAddComment ws.Cells(1, 21), "TRUE/FALSE - snap to 4 cardinal directions (default TRUE)"
+End Sub
+
+'-------------------------------------------------------------------------------
+' SetupEnemyVariantsSheet - Creates EnemyVariants sheet with headers
+'-------------------------------------------------------------------------------
+Public Sub SetupEnemyVariantsSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet(SHEET_VARIANTS)
+    Dim headers As Variant
+    headers = Array("id", "name", "health_multiplier", "damage_multiplier", _
+                    "xp_multiplier", "extra_abilities", "visual_effect")
+    SetupSheetHeaders ws, headers
+
+    ' Add column notes
+    SafeAddComment ws.Cells(1, 1), "Format: var_name (e.g., var_elite, var_enraged)"
+    SafeAddComment ws.Cells(1, 3), "Health multiplier (1.5 = 150% health)"
+    SafeAddComment ws.Cells(1, 4), "Damage multiplier (1.5 = 150% damage)"
+    SafeAddComment ws.Cells(1, 5), "XP reward multiplier"
+    SafeAddComment ws.Cells(1, 6), "Additional ability IDs"
+    SafeAddComment ws.Cells(1, 7), "Visual effect to apply (glow, aura, etc)"
+End Sub
+
+'-------------------------------------------------------------------------------
+' SetupAllEnemySheets - Creates all enemy-related sheets
+'-------------------------------------------------------------------------------
+Public Sub SetupAllEnemySheets()
+    SetupEnemiesSheet
+    SetupEnemyAbilitiesSheet
+    SetupEnemyVariantsSheet
+    MsgBox "All enemy sheets created!", vbInformation, "Setup Complete"
+End Sub
