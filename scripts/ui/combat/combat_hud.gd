@@ -250,14 +250,75 @@ func _on_attack_activated(_slot_index: int, _ability_id: String) -> void:
 
 func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 	Debug.log("Combat", "Ability activated", {"slot": slot_index, "ability": ability_id})
-	ability_pressed.emit(slot_index, ability_id)
 
-	# TODO: Connect to player ability system
-	# For now, just start a test cooldown
+	# Get the talent data
+	var talent := TalentManager.get_talent(ability_id)
+	if not talent:
+		Debug.warn("Combat", "Talent not found: %s" % ability_id)
+		return
+
+	# Check resource costs
+	if talent.mana_cost > 0 and PlayerStats.current_mana < talent.mana_cost:
+		Debug.log("Combat", "Not enough mana for %s" % talent.talent_name)
+		return
+	if talent.stamina_cost > 0 and PlayerStats.current_stamina < talent.stamina_cost:
+		Debug.log("Combat", "Not enough stamina for %s" % talent.talent_name)
+		return
+
+	# Consume resources
+	if talent.mana_cost > 0:
+		PlayerStats.use_mana(talent.mana_cost)
+	if talent.stamina_cost > 0:
+		PlayerStats.use_stamina(talent.stamina_cost)
+
+	# Calculate damage
+	var invested := TalentManager.get_invested_points(ability_id)
+	var damage_result := DamageCalculator.calculate_final_damage(talent, invested)
+
+	# Apply damage to nearby enemies
+	_apply_skill_damage(talent, damage_result)
+
+	# Start cooldown
 	if slot_index >= 0 and slot_index < ability_slots.size():
 		var slot := ability_slots[slot_index]
-		var cooldown := slot.ability_data.get("cooldown", 5.0) as float
-		slot.start_cooldown(cooldown)
+		if talent.cooldown > 0:
+			slot.start_cooldown(talent.cooldown)
+
+	ability_pressed.emit(slot_index, ability_id)
+	Debug.log("Combat", "Skill executed: %s" % talent.talent_name, {
+		"damage": int(damage_result.final_damage),
+		"crit": damage_result.is_critical,
+		"type": DamageCalculator.get_damage_type_name(damage_result.damage_type),
+	})
+
+
+func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
+	## Apply skill damage to enemies in range
+	if not player:
+		return
+
+	# Get skill range based on category
+	var skill_range := 50.0  # Default melee range
+	if talent.skill_category.to_lower() == "ranged":
+		skill_range = 150.0
+	elif talent.skill_category.to_lower() == "magic":
+		skill_range = 100.0
+
+	# Find enemies in range
+	var enemies := NPCManager.get_enemies_in_radius(player.global_position, skill_range)
+
+	for enemy in enemies:
+		if enemy.has_method("take_damage"):
+			# Apply armor/resistance reduction on enemy
+			var final_damage: float = damage_result.final_damage
+			if enemy.has_method("_calculate_damage_after_armor"):
+				final_damage = enemy._calculate_damage_after_armor(final_damage)
+
+			enemy.take_damage(final_damage, player)
+
+			# Log crit hits
+			if damage_result.is_critical:
+				Debug.log("Combat", "CRITICAL %s on %s!" % [talent.talent_name, enemy.enemy_name], "%.0f damage" % final_damage)
 
 
 func _on_ability_ready(slot_index: int) -> void:
