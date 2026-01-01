@@ -282,7 +282,12 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 	# Apply combat mechanics (lunge, animation, recovery)
 	_apply_skill_mechanics(talent)
 
-	# Apply damage to enemies in range/arc
+	# Wait for lunge to complete before applying damage
+	var lunge_delay := 0.1  # Match player's attack_lunge_duration
+	if talent.lunge_force > 0:
+		await get_tree().create_timer(lunge_delay).timeout
+
+	# Apply damage to enemies in range/arc (after lunge)
 	_apply_skill_damage(talent, damage_result)
 
 	# Start cooldown
