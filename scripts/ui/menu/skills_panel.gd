@@ -51,6 +51,7 @@ var _is_dragging: bool = false
 var _drag_talent_id: String = ""
 var _drag_start_pos: Vector2 = Vector2.ZERO
 var _drag_preview: Control = null
+var _drag_source_slot: int = -1  # -1 if from skillbook, 0-5 if from bind slot
 const DRAG_THRESHOLD: float = 10.0  ## Pixels to move before drag starts
 
 #===============================================================================
@@ -87,8 +88,8 @@ var _button2: Button
 
 ## Skill bind UI
 var _bind_panel: PanelContainer
-var _bind_main_slot: Control
-var _bind_slots: Array[Control] = []
+var _bind_main_slot: Button
+var _bind_slots: Array[Button] = []
 
 ## Talent nodes (talent_id -> Button)
 var _talent_nodes: Dictionary = {}
@@ -463,14 +464,10 @@ func _build_skill_bind_ui() -> void:
 		_bind_slots.append(slot)
 
 
-func _create_bind_slot(index: int, is_main: bool) -> Control:
-	# Container for square slot with drag support
-	var container := Control.new()
+func _create_bind_slot(index: int, is_main: bool) -> Button:
 	var size := 44 if is_main else 36
-	container.custom_minimum_size = Vector2(size, size)
-
 	var slot := Button.new()
-	slot.set_anchors_preset(Control.PRESET_FULL_RECT)
+	slot.custom_minimum_size = Vector2(size, size)
 	slot.add_theme_font_size_override("font_size", 10)
 	slot.set_meta("slot_index", index)
 	slot.set_meta("is_main", is_main)
@@ -486,8 +483,7 @@ func _create_bind_slot(index: int, is_main: bool) -> Control:
 	stylebox.set_corner_radius_all(4)
 	slot.add_theme_stylebox_override("normal", stylebox)
 
-	container.add_child(slot)
-	return container
+	return slot
 
 
 #===============================================================================
@@ -800,16 +796,7 @@ func _refresh_bind_slots() -> void:
 		_update_bind_slot_visual(_bind_slots[i], i + 1)
 
 
-func _update_bind_slot_visual(container: Control, index: int) -> void:
-	# Find the button inside the container
-	var slot: Button = null
-	for child in container.get_children():
-		if child is Button:
-			slot = child
-			break
-	if not slot:
-		return
-
+func _update_bind_slot_visual(slot: Button, index: int) -> void:
 	var talent := TalentManager.get_bound_talent(index)
 	var is_main := (index == 0)
 
@@ -1012,9 +999,9 @@ func _on_bind_slot_input(event: InputEvent, slot_index: int, slot: Button) -> vo
 
 			if delta.length() > DRAG_THRESHOLD and not _is_dragging:
 				slot.set_meta("is_pressed", false)
-				# Unbind from current slot and start drag
+				# Unbind from current slot and start drag (pass source slot for swapping)
 				TalentManager.unbind_skill(slot_index)
-				_start_drag(talent.id, slot.get_global_position() + event_pos)
+				_start_drag(talent.id, slot.get_global_position() + event_pos, slot_index)
 
 
 func _on_bind_slot_pressed(slot_index: int) -> void:
@@ -1138,8 +1125,9 @@ func _input(event: InputEvent) -> void:
 				_end_drag(event.position)
 
 
-## Start dragging a skill from the skillbook
-func _start_drag(talent_id: String, start_pos: Vector2) -> void:
+## Start dragging a skill from skillbook or bind slot
+## source_slot: -1 if from skillbook, 0-5 if from bind slot
+func _start_drag(talent_id: String, start_pos: Vector2, source_slot: int = -1) -> void:
 	var talent := TalentManager.get_talent(talent_id)
 	if not talent or not TalentManager.is_in_skillbook(talent_id):
 		return
@@ -1147,6 +1135,7 @@ func _start_drag(talent_id: String, start_pos: Vector2) -> void:
 	_is_dragging = true
 	_drag_talent_id = talent_id
 	_drag_start_pos = start_pos
+	_drag_source_slot = source_slot
 
 	# Create drag preview
 	_create_drag_preview(talent)
@@ -1156,7 +1145,7 @@ func _start_drag(talent_id: String, start_pos: Vector2) -> void:
 	_refresh_bind_slots()
 	binding_mode_entered.emit()
 
-	Debug.log("UI", "Started dragging skill: %s" % talent_id)
+	Debug.log("UI", "Started dragging skill: %s from slot %d" % [talent_id, source_slot])
 
 
 ## Create the visual drag preview
@@ -1204,8 +1193,19 @@ func _end_drag(end_pos: Vector2) -> void:
 	# Check if dropped on a bind slot
 	var dropped_on_slot := _get_slot_at_position(end_pos)
 	if dropped_on_slot >= 0:
+		# Check if target slot already has a skill (for swapping)
+		var existing_talent := TalentManager.get_bound_talent(dropped_on_slot)
+		var existing_talent_id := existing_talent.id if existing_talent else ""
+
+		# Bind the dragged skill to target slot
 		TalentManager.bind_skill(dropped_on_slot, _drag_talent_id)
-		Debug.log("UI", "Dropped skill %s on slot %d" % [_drag_talent_id, dropped_on_slot])
+
+		# If there was an existing skill and we dragged from another slot, swap
+		if not existing_talent_id.is_empty() and _drag_source_slot >= 0 and _drag_source_slot != dropped_on_slot:
+			TalentManager.bind_skill(_drag_source_slot, existing_talent_id)
+			Debug.log("UI", "Swapped skills: %s to slot %d, %s to slot %d" % [_drag_talent_id, dropped_on_slot, existing_talent_id, _drag_source_slot])
+		else:
+			Debug.log("UI", "Dropped skill %s on slot %d" % [_drag_talent_id, dropped_on_slot])
 
 	# Clean up
 	if _drag_preview:
@@ -1213,6 +1213,7 @@ func _end_drag(end_pos: Vector2) -> void:
 		_drag_preview = null
 
 	_drag_talent_id = ""
+	_drag_source_slot = -1
 	binding_mode = false
 	binding_mode_exited.emit()
 
@@ -1246,6 +1247,7 @@ func _cancel_drag() -> void:
 	if _is_dragging:
 		_is_dragging = false
 		_drag_talent_id = ""
+		_drag_source_slot = -1
 
 		if _drag_preview:
 			_drag_preview.queue_free()
