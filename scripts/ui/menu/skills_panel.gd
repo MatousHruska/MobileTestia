@@ -540,11 +540,12 @@ func _on_skillbook_slot_input(event: InputEvent, talent_id: String, slot: Button
 	elif (event is InputEventMouseMotion or event is InputEventScreenDrag) and slot.get_meta("is_pressed", false):
 		# Check if we should start dragging
 		var press_pos: Vector2 = slot.get_meta("press_pos", Vector2.ZERO)
-		var delta := event.position - press_pos
+		var event_pos: Vector2 = event.position
+		var delta: Vector2 = event_pos - press_pos
 
 		if delta.length() > DRAG_THRESHOLD and not _is_dragging:
 			slot.set_meta("is_pressed", false)
-			_start_drag(talent_id, slot.get_global_position() + event.position)
+			_start_drag(talent_id, slot.get_global_position() + event_pos)
 
 
 func _refresh_bind_slots() -> void:
