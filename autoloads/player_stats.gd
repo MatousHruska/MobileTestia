@@ -415,3 +415,9 @@ func debug_add_points(amount: int = 10) -> void:
 func debug_add_experience(amount: int = 500) -> void:
 	add_experience(amount)
 	Debug.info("Stats", "Debug: Added experience", amount)
+
+
+func debug_add_skill_points(amount: int = 10) -> void:
+	skill_points += amount
+	skill_points_changed.emit(skill_points)
+	Debug.info("Stats", "Debug: Added skill points", amount)

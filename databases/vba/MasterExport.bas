@@ -27,8 +27,9 @@ Public Sub ExportAll()
     ' Loot
     ExportLootTables
 
-    ' Skills
-    ExportSkills
+    ' Talents & Talent Trees
+    ExportTalentTrees
+    ExportTalents
 
     ' Quests
     ExportQuests
@@ -83,7 +84,8 @@ Public Sub ValidateAll()
     ValidateEnemies
     ValidateBehaviorProfiles
     ValidateLootTables
-    ValidateSkills
+    ValidateTalentTrees
+    ValidateTalents
     ValidateQuests
     ValidateNPCs
     ValidateShopInventory
@@ -125,7 +127,8 @@ Public Sub SetupWorkbook()
     SetupEnemyVariantsSheet
     SetupBehaviorProfilesSheet
     SetupLootTablesSheet
-    SetupSkillsSheet
+    SetupTalentTreesSheet
+    SetupTalentsSheet
     SetupQuestsSheet
     SetupQuestObjectivesSheet
     SetupNPCsSheet

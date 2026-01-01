@@ -396,7 +396,8 @@ Private Sub CreateIdNamedRanges()
     CreateNamedRange "ItemBases", 1, "ID_ItemBases"
     CreateNamedRange "Affixes", 1, "ID_Affixes"
     CreateNamedRange "UniqueItems", 1, "ID_UniqueItems"
-    CreateNamedRange "Skills", 1, "ID_Skills"
+    CreateNamedRange "TalentTrees", 1, "ID_TalentTrees"
+    CreateNamedRange "Talents", 1, "ID_Talents"
     CreateNamedRange "Quests", 1, "ID_Quests"
     CreateNamedRange "NPCs", 1, "ID_NPCs"
     CreateNamedRange "ShopInventory", 1, "ID_ShopInventory"
@@ -497,10 +498,10 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "BehaviorProfiles", 22, "clockwise,counter,random"  ' circle_direction
     ApplyListValidation "BehaviorProfiles", 28, "highest,conditional,random_weighted"  ' ability_priority_mode
 
-    ' Skills
-    ApplyListValidation "Skills", 3, "active,passive,buff,toggle"   ' type
-    ApplyListValidation "Skills", 4, "combat,magic,utility"         ' tree
-    ApplyListValidation "Skills", 12, "damage,heal,buff,debuff,summon,teleport,projectile"  ' effect_type
+    ' Talents
+    ApplyValidation "Talents", 3, "ID_TalentTrees"     ' tree reference
+    ApplyListValidation "Talents", 7, "active,passive" ' type
+    ApplyListValidation "Talents", 14, "damage,heal,buff,debuff,projectile,summon,teleport,aoe"  ' effect_type
 
     ' NPCs
     ApplyListValidation "NPCs", 3, "quest_giver,trader,trainer,innkeeper,blacksmith,generic"  ' type

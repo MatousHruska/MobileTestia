@@ -1,0 +1,783 @@
+extends VBoxContainer
+class_name SkillsPanel
+## SkillsPanel - Main UI for the talent tree and skill system
+##
+## Layout (based on SVG design):
+## - Left side: Talent Tree with 3 tabs (Noble Legacy, Mountain Hunter, Spirit Whisperer)
+## - Right top: Skillbook grid showing learned active abilities
+## - Right middle: Skill/Talent description panel with icon
+## - Right bottom: Skill Bind UI (1 main + 5 secondary slots)
+
+#===============================================================================
+# SIGNALS
+#===============================================================================
+
+signal talent_selected(talent_id: String)
+signal skill_selected(talent_id: String)
+signal binding_mode_entered
+signal binding_mode_exited
+
+#===============================================================================
+# CONSTANTS
+#===============================================================================
+
+const TALENT_NODE_SIZE := Vector2(56, 56)  ## Size of talent node buttons
+const TALENT_SPACING := Vector2(16, 24)  ## Spacing between talent nodes
+const ROW_HEIGHT := 80  ## Height per talent row
+const TREE_WIDTH := 340  ## Width of talent tree panel
+const SKILLBOOK_COLS := 4  ## Columns in skillbook grid
+const SKILLBOOK_CELL_SIZE := 52  ## Size of skillbook cells
+
+## Colors
+const COLOR_LOCKED := Color(0.4, 0.4, 0.4)
+const COLOR_AVAILABLE := Color(1.0, 0.85, 0.3)
+const COLOR_LEARNED := Color(0.5, 1.0, 0.5)
+const COLOR_MAXED := Color(0.3, 0.8, 1.0)
+const COLOR_SELECTED := Color(1.0, 1.0, 1.0)
+const COLOR_BINDING_AVAILABLE := Color(0.55, 1.0, 0.98)  ## Cyan for binding slots
+
+#===============================================================================
+# STATE
+#===============================================================================
+
+var current_tree_id: String = ""
+var selected_talent_id: String = ""
+var selected_from_skillbook: bool = false
+var binding_mode: bool = false
+
+#===============================================================================
+# UI REFERENCES
+#===============================================================================
+
+## Main containers
+var _left_panel: PanelContainer
+var _right_panel: VBoxContainer
+
+## Talent tree
+var _tree_tabs: HBoxContainer
+var _tree_description: Label
+var _tree_scroll: ScrollContainer
+var _tree_content: VBoxContainer
+var _points_label: Label
+
+## Skillbook
+var _skillbook_header: Label
+var _skillbook_grid: GridContainer
+
+## Description panel
+var _desc_panel: PanelContainer
+var _desc_icon: TextureRect
+var _desc_name: Label
+var _desc_text: RichTextLabel
+var _desc_rank: Label
+
+## Action buttons
+var _button1: Button
+var _button2: Button
+
+## Skill bind UI
+var _bind_panel: PanelContainer
+var _bind_main_slot: Button
+var _bind_slots: Array[Button] = []
+
+## Talent nodes (talent_id -> Button)
+var _talent_nodes: Dictionary = {}
+
+## Skillbook slots (index -> Button)
+var _skillbook_slots: Array[Button] = []
+
+
+func _ready() -> void:
+	_build_ui()
+	_connect_signals()
+	refresh()
+
+
+#===============================================================================
+# UI BUILDING
+#===============================================================================
+
+func _build_ui() -> void:
+	# Main horizontal split
+	var main_hbox := HBoxContainer.new()
+	main_hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	main_hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	add_child(main_hbox)
+
+	# Build left panel (Talent Tree)
+	_build_talent_tree_panel(main_hbox)
+
+	# Build right panel (Skillbook + Description + Bind UI)
+	_build_right_panel(main_hbox)
+
+
+func _build_talent_tree_panel(parent: Control) -> void:
+	_left_panel = PanelContainer.new()
+	_left_panel.custom_minimum_size.x = TREE_WIDTH
+	_left_panel.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_left_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent.add_child(_left_panel)
+
+	var vbox := VBoxContainer.new()
+	_left_panel.add_child(vbox)
+
+	# Tree tabs
+	_tree_tabs = HBoxContainer.new()
+	_tree_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_child(_tree_tabs)
+
+	# Tree description (short flavor text)
+	_tree_description = Label.new()
+	_tree_description.add_theme_font_size_override("font_size", 11)
+	_tree_description.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	_tree_description.autowrap_mode = TextServer.AUTOWRAP_WORD
+	_tree_description.custom_minimum_size.y = 40
+	vbox.add_child(_tree_description)
+
+	# Points label
+	_points_label = Label.new()
+	_points_label.add_theme_font_size_override("font_size", 12)
+	_points_label.add_theme_color_override("font_color", COLOR_AVAILABLE)
+	_points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(_points_label)
+
+	# Separator
+	var sep := HSeparator.new()
+	vbox.add_child(sep)
+
+	# Scrollable tree content
+	_tree_scroll = ScrollContainer.new()
+	_tree_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_tree_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vbox.add_child(_tree_scroll)
+
+	_tree_content = VBoxContainer.new()
+	_tree_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_tree_scroll.add_child(_tree_content)
+
+
+func _build_right_panel(parent: Control) -> void:
+	_right_panel = VBoxContainer.new()
+	_right_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_right_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent.add_child(_right_panel)
+
+	# Skillbook header
+	_skillbook_header = Label.new()
+	_skillbook_header.text = "Skillbook"
+	_skillbook_header.add_theme_font_size_override("font_size", 18)
+	_skillbook_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_right_panel.add_child(_skillbook_header)
+
+	# Skillbook grid
+	var skillbook_panel := PanelContainer.new()
+	skillbook_panel.custom_minimum_size = Vector2(SKILLBOOK_COLS * (SKILLBOOK_CELL_SIZE + 4) + 16, 120)
+	_right_panel.add_child(skillbook_panel)
+
+	var skillbook_margin := MarginContainer.new()
+	skillbook_margin.add_theme_constant_override("margin_left", 8)
+	skillbook_margin.add_theme_constant_override("margin_right", 8)
+	skillbook_margin.add_theme_constant_override("margin_top", 8)
+	skillbook_margin.add_theme_constant_override("margin_bottom", 8)
+	skillbook_panel.add_child(skillbook_margin)
+
+	var skillbook_scroll := ScrollContainer.new()
+	skillbook_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	skillbook_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	skillbook_margin.add_child(skillbook_scroll)
+
+	_skillbook_grid = GridContainer.new()
+	_skillbook_grid.columns = SKILLBOOK_COLS
+	_skillbook_grid.add_theme_constant_override("h_separation", 4)
+	_skillbook_grid.add_theme_constant_override("v_separation", 4)
+	skillbook_scroll.add_child(_skillbook_grid)
+
+	# Build description panel
+	_build_description_panel()
+
+	# Build action buttons
+	_build_action_buttons()
+
+	# Build skill bind UI
+	_build_skill_bind_ui()
+
+
+func _build_description_panel() -> void:
+	_desc_panel = PanelContainer.new()
+	_desc_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_right_panel.add_child(_desc_panel)
+
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 12)
+	_desc_panel.add_child(hbox)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	hbox.add_child(margin)
+
+	var inner_hbox := HBoxContainer.new()
+	inner_hbox.add_theme_constant_override("separation", 12)
+	margin.add_child(inner_hbox)
+
+	# Icon
+	_desc_icon = TextureRect.new()
+	_desc_icon.custom_minimum_size = Vector2(48, 48)
+	_desc_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_desc_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	inner_hbox.add_child(_desc_icon)
+
+	# Text content
+	var text_vbox := VBoxContainer.new()
+	text_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner_hbox.add_child(text_vbox)
+
+	_desc_name = Label.new()
+	_desc_name.add_theme_font_size_override("font_size", 14)
+	text_vbox.add_child(_desc_name)
+
+	_desc_rank = Label.new()
+	_desc_rank.add_theme_font_size_override("font_size", 11)
+	_desc_rank.add_theme_color_override("font_color", COLOR_AVAILABLE)
+	text_vbox.add_child(_desc_rank)
+
+	_desc_text = RichTextLabel.new()
+	_desc_text.bbcode_enabled = true
+	_desc_text.fit_content = true
+	_desc_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_desc_text.add_theme_font_size_override("normal_font_size", 11)
+	text_vbox.add_child(_desc_text)
+
+
+func _build_action_buttons() -> void:
+	var btn_hbox := HBoxContainer.new()
+	btn_hbox.add_theme_constant_override("separation", 8)
+	_right_panel.add_child(btn_hbox)
+
+	_button1 = Button.new()
+	_button1.text = "Learn"
+	_button1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_button1.pressed.connect(_on_button1_pressed)
+	btn_hbox.add_child(_button1)
+
+	_button2 = Button.new()
+	_button2.text = "Cancel"
+	_button2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_button2.pressed.connect(_on_button2_pressed)
+	btn_hbox.add_child(_button2)
+
+	# Initially hide buttons
+	_button1.visible = false
+	_button2.visible = false
+
+
+func _build_skill_bind_ui() -> void:
+	_bind_panel = PanelContainer.new()
+	_bind_panel.custom_minimum_size = Vector2(0, 100)
+	_right_panel.add_child(_bind_panel)
+
+	var bind_center := CenterContainer.new()
+	bind_center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bind_center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_bind_panel.add_child(bind_center)
+
+	# Create the circular layout
+	var bind_container := Control.new()
+	bind_container.custom_minimum_size = Vector2(180, 90)
+	bind_center.add_child(bind_container)
+
+	# Main slot (center, larger)
+	_bind_main_slot = _create_bind_slot(0, true)
+	_bind_main_slot.position = Vector2(75, 25)
+	bind_container.add_child(_bind_main_slot)
+
+	# Secondary slots in arc around main
+	var slot_positions: Array[Vector2] = [
+		Vector2(10, 50),   # Slot 1 (bottom-left)
+		Vector2(30, 15),   # Slot 2 (top-left)
+		Vector2(70, 0),    # Slot 3 (top-center)
+		Vector2(110, 15),  # Slot 4 (top-right)
+		Vector2(130, 50),  # Slot 5 (bottom-right)
+	]
+
+	for i in range(5):
+		var slot := _create_bind_slot(i + 1, false)
+		slot.position = slot_positions[i]
+		bind_container.add_child(slot)
+		_bind_slots.append(slot)
+
+
+func _create_bind_slot(index: int, is_main: bool) -> Button:
+	var slot := Button.new()
+	slot.custom_minimum_size = Vector2(40, 40) if is_main else Vector2(32, 32)
+	slot.add_theme_font_size_override("font_size", 10)
+	slot.pressed.connect(_on_bind_slot_pressed.bind(index))
+
+	# Style
+	var stylebox := StyleBoxFlat.new()
+	stylebox.bg_color = Color(0.2, 0.2, 0.25, 0.8)
+	stylebox.border_color = COLOR_BINDING_AVAILABLE if is_main else Color(0.55, 1.0, 0.98, 0.7)
+	stylebox.set_border_width_all(2)
+	stylebox.set_corner_radius_all(6 if is_main else 4)
+	slot.add_theme_stylebox_override("normal", stylebox)
+
+	return slot
+
+
+#===============================================================================
+# SIGNAL CONNECTIONS
+#===============================================================================
+
+func _connect_signals() -> void:
+	TalentManager.talent_learned.connect(_on_talent_learned)
+	TalentManager.talent_points_changed.connect(_on_talent_points_changed)
+	TalentManager.skillbook_updated.connect(_on_skillbook_updated)
+	TalentManager.skill_bound.connect(_on_skill_bound)
+	TalentManager.skill_unbound.connect(_on_skill_unbound)
+	PlayerStats.skill_points_changed.connect(_on_skill_points_changed)
+
+
+#===============================================================================
+# REFRESH / UPDATE
+#===============================================================================
+
+func refresh() -> void:
+	_build_tree_tabs()
+	_refresh_talent_tree()
+	_refresh_skillbook()
+	_refresh_bind_slots()
+	_update_points_label()
+	_update_description_panel()
+	_update_buttons()
+
+
+func _build_tree_tabs() -> void:
+	# Clear existing tabs
+	for child in _tree_tabs.get_children():
+		child.queue_free()
+
+	var trees := DatabaseLoader.get_all_talent_trees()
+	if trees.is_empty():
+		return
+
+	# Set default tree if not set
+	if current_tree_id.is_empty():
+		current_tree_id = trees[0].get("id", "")
+
+	for tree_data in trees:
+		var tab := Button.new()
+		tab.text = tree_data.get("name", "Unknown")
+		tab.toggle_mode = true
+		tab.button_pressed = (tree_data.get("id", "") == current_tree_id)
+		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		tab.pressed.connect(_on_tree_tab_pressed.bind(tree_data.get("id", "")))
+		_tree_tabs.add_child(tab)
+
+
+func _refresh_talent_tree() -> void:
+	# Clear existing content
+	for child in _tree_content.get_children():
+		child.queue_free()
+	_talent_nodes.clear()
+
+	if current_tree_id.is_empty():
+		return
+
+	# Get tree description
+	var tree_data := DatabaseLoader.get_talent_tree(current_tree_id)
+	_tree_description.text = tree_data.get("description", "")
+
+	# Build rows
+	var max_row := TalentManager.get_max_row(current_tree_id)
+	for row in range(1, max_row + 1):
+		_build_talent_row(row)
+
+
+func _build_talent_row(row: int) -> void:
+	var row_container := HBoxContainer.new()
+	row_container.custom_minimum_size.y = ROW_HEIGHT
+	row_container.add_theme_constant_override("separation", 8)
+	row_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	_tree_content.add_child(row_container)
+
+	# Get talents for this row
+	var talents := TalentManager.get_talents_at_row(current_tree_id, row)
+
+	# Create 3 columns (some may be empty)
+	for col in range(1, 4):
+		var found := false
+		for talent in talents:
+			if talent.column == col:
+				var node := _create_talent_node(talent)
+				row_container.add_child(node)
+				_talent_nodes[talent.id] = node
+				found = true
+				break
+
+		if not found:
+			# Empty spacer
+			var spacer := Control.new()
+			spacer.custom_minimum_size = TALENT_NODE_SIZE
+			row_container.add_child(spacer)
+
+
+func _create_talent_node(talent: TalentData) -> Button:
+	var node := Button.new()
+	node.custom_minimum_size = TALENT_NODE_SIZE
+	node.toggle_mode = true
+	node.pressed.connect(_on_talent_node_pressed.bind(talent.id))
+
+	# Update visual state
+	_update_talent_node_visual(node, talent)
+
+	return node
+
+
+func _update_talent_node_visual(node: Button, talent: TalentData) -> void:
+	var invested := TalentManager.get_invested_points(talent.id)
+	var can_learn := TalentManager.can_learn_talent(talent.id)
+	var is_selected := (talent.id == selected_talent_id)
+
+	# Determine color
+	var color: Color
+	if is_selected:
+		color = COLOR_SELECTED
+	elif invested >= talent.max_points:
+		color = COLOR_MAXED
+	elif invested > 0:
+		color = COLOR_LEARNED
+	elif can_learn:
+		color = COLOR_AVAILABLE
+	else:
+		color = COLOR_LOCKED
+
+	# Create stylebox
+	var stylebox := StyleBoxFlat.new()
+	stylebox.bg_color = Color(0.15, 0.15, 0.2) if invested == 0 else Color(0.2, 0.25, 0.3)
+	stylebox.border_color = color
+	stylebox.set_border_width_all(2 if not is_selected else 3)
+	stylebox.set_corner_radius_all(6)
+	node.add_theme_stylebox_override("normal", stylebox)
+	node.add_theme_stylebox_override("pressed", stylebox)
+
+	# Text showing points
+	node.text = "%d/%d" % [invested, talent.max_points]
+	node.add_theme_font_size_override("font_size", 10)
+
+	# Tooltip
+	node.tooltip_text = "%s\n%s" % [talent.talent_name, talent.description]
+
+
+func _refresh_skillbook() -> void:
+	# Clear existing slots
+	for child in _skillbook_grid.get_children():
+		child.queue_free()
+	_skillbook_slots.clear()
+
+	# Get learned active talents
+	var active_talents := TalentManager.get_skillbook_talents()
+
+	# Create slots for each
+	for i in range(active_talents.size()):
+		var talent := active_talents[i]
+		var slot := _create_skillbook_slot(talent)
+		_skillbook_grid.add_child(slot)
+		_skillbook_slots.append(slot)
+
+
+func _create_skillbook_slot(talent: TalentData) -> Button:
+	var slot := Button.new()
+	slot.custom_minimum_size = Vector2(SKILLBOOK_CELL_SIZE, SKILLBOOK_CELL_SIZE)
+	slot.toggle_mode = true
+	slot.text = talent.talent_name.substr(0, 2).to_upper()
+	slot.add_theme_font_size_override("font_size", 12)
+	slot.tooltip_text = talent.talent_name
+	slot.pressed.connect(_on_skillbook_slot_pressed.bind(talent.id))
+
+	# Visual state
+	var is_bound := TalentManager.is_talent_bound(talent.id)
+	var is_selected := (talent.id == selected_talent_id and selected_from_skillbook)
+
+	var stylebox := StyleBoxFlat.new()
+	stylebox.bg_color = Color(0.2, 0.25, 0.35) if is_bound else Color(0.15, 0.15, 0.2)
+	stylebox.border_color = COLOR_SELECTED if is_selected else (COLOR_BINDING_AVAILABLE if is_bound else COLOR_LEARNED)
+	stylebox.set_border_width_all(2)
+	stylebox.set_corner_radius_all(4)
+	slot.add_theme_stylebox_override("normal", stylebox)
+
+	return slot
+
+
+func _refresh_bind_slots() -> void:
+	# Update main slot
+	_update_bind_slot_visual(_bind_main_slot, 0)
+
+	# Update secondary slots
+	for i in range(_bind_slots.size()):
+		_update_bind_slot_visual(_bind_slots[i], i + 1)
+
+
+func _update_bind_slot_visual(slot: Button, index: int) -> void:
+	var talent := TalentManager.get_bound_talent(index)
+	var is_main := (index == 0)
+
+	if talent:
+		slot.text = talent.talent_name.substr(0, 2).to_upper()
+		slot.tooltip_text = talent.talent_name
+	else:
+		slot.text = "+" if is_main else ""
+		slot.tooltip_text = "Main Slot" if is_main else "Slot %d" % index
+
+	# Highlight in binding mode
+	var stylebox := StyleBoxFlat.new()
+	stylebox.bg_color = Color(0.2, 0.2, 0.25, 0.8) if not talent else Color(0.25, 0.3, 0.4, 0.9)
+
+	if binding_mode:
+		stylebox.border_color = COLOR_BINDING_AVAILABLE
+		stylebox.set_border_width_all(3)
+	else:
+		stylebox.border_color = COLOR_BINDING_AVAILABLE if is_main else Color(0.55, 1.0, 0.98, 0.5)
+		stylebox.set_border_width_all(2)
+
+	stylebox.set_corner_radius_all(6 if is_main else 4)
+	slot.add_theme_stylebox_override("normal", stylebox)
+
+
+func _update_points_label() -> void:
+	var available := TalentManager.get_available_points()
+	var tree_invested := TalentManager.get_tree_invested_points(current_tree_id)
+	_points_label.text = "Available Points: %d | Tree: %d" % [available, tree_invested]
+
+
+func _update_description_panel() -> void:
+	if selected_talent_id.is_empty():
+		_desc_name.text = "Select a talent or skill"
+		_desc_rank.text = ""
+		_desc_text.text = "Click on a talent in the tree or a skill in the skillbook to view its details."
+		return
+
+	var talent := TalentManager.get_talent(selected_talent_id)
+	if not talent:
+		return
+
+	var invested := TalentManager.get_invested_points(selected_talent_id)
+
+	_desc_name.text = talent.talent_name
+	_desc_rank.text = "Rank: %d / %d" % [invested, talent.max_points]
+
+	# Build description
+	var desc := talent.description + "\n\n"
+
+	if talent.is_active():
+		desc += "[color=cyan]Active Ability[/color]\n"
+		if talent.mana_cost > 0:
+			desc += "Mana: %d  " % int(talent.mana_cost)
+		if talent.stamina_cost > 0:
+			desc += "Stamina: %d  " % int(talent.stamina_cost)
+		if talent.cooldown > 0:
+			desc += "CD: %.1fs" % talent.cooldown
+		desc += "\n"
+	else:
+		desc += "[color=yellow]Passive[/color]\n"
+
+	# Show current rank description
+	if invested > 0 and invested <= talent.rank_descriptions.size():
+		desc += "\nCurrent: " + talent.rank_descriptions[invested - 1]
+
+	# Show next rank description
+	if invested < talent.max_points and invested < talent.rank_descriptions.size():
+		desc += "\n[color=gray]Next: " + talent.rank_descriptions[invested] + "[/color]"
+
+	_desc_text.text = desc
+
+
+func _update_buttons() -> void:
+	if selected_talent_id.is_empty():
+		_button1.visible = false
+		_button2.visible = false
+		return
+
+	_button1.visible = true
+	_button2.visible = true
+
+	if selected_from_skillbook:
+		# Selected from skillbook
+		var is_bound := TalentManager.is_talent_bound(selected_talent_id)
+		if binding_mode:
+			_button1.text = "Cancel Bind"
+			_button2.visible = false
+		elif is_bound:
+			_button1.text = "Unbind"
+			_button2.text = "Move"
+		else:
+			_button1.text = "Bind"
+			_button2.visible = false
+	else:
+		# Selected from talent tree
+		var can_learn := TalentManager.can_learn_talent(selected_talent_id)
+		_button1.text = "Learn"
+		_button1.disabled = not can_learn
+		_button2.visible = false
+
+		if not can_learn:
+			var reason := TalentManager.get_learn_block_reason(selected_talent_id)
+			_button1.tooltip_text = reason
+
+
+#===============================================================================
+# EVENT HANDLERS
+#===============================================================================
+
+func _on_tree_tab_pressed(tree_id: String) -> void:
+	current_tree_id = tree_id
+	selected_talent_id = ""
+	selected_from_skillbook = false
+
+	# Update tab visuals
+	for child in _tree_tabs.get_children():
+		if child is Button:
+			child.button_pressed = false
+
+	_refresh_talent_tree()
+	_update_points_label()
+	_update_description_panel()
+	_update_buttons()
+
+
+func _on_talent_node_pressed(talent_id: String) -> void:
+	selected_talent_id = talent_id
+	selected_from_skillbook = false
+	binding_mode = false
+
+	# Update all node visuals
+	for id in _talent_nodes:
+		var talent := TalentManager.get_talent(id)
+		if talent:
+			_update_talent_node_visual(_talent_nodes[id], talent)
+
+	_update_description_panel()
+	_update_buttons()
+	talent_selected.emit(talent_id)
+
+
+func _on_skillbook_slot_pressed(talent_id: String) -> void:
+	selected_talent_id = talent_id
+	selected_from_skillbook = true
+
+	if binding_mode:
+		# Cancel binding mode
+		binding_mode = false
+		binding_mode_exited.emit()
+
+	_refresh_skillbook()
+	_refresh_bind_slots()
+	_update_description_panel()
+	_update_buttons()
+	skill_selected.emit(talent_id)
+
+
+func _on_bind_slot_pressed(slot_index: int) -> void:
+	if binding_mode and not selected_talent_id.is_empty():
+		# Bind the selected skill to this slot
+		TalentManager.bind_skill(slot_index, selected_talent_id)
+		binding_mode = false
+		binding_mode_exited.emit()
+		_refresh_skillbook()
+		_refresh_bind_slots()
+		_update_buttons()
+	else:
+		# Select the bound skill
+		var talent := TalentManager.get_bound_talent(slot_index)
+		if talent:
+			selected_talent_id = talent.id
+			selected_from_skillbook = true
+			_refresh_skillbook()
+			_update_description_panel()
+			_update_buttons()
+
+
+func _on_button1_pressed() -> void:
+	if selected_talent_id.is_empty():
+		return
+
+	if selected_from_skillbook:
+		if binding_mode:
+			# Cancel binding
+			binding_mode = false
+			binding_mode_exited.emit()
+			_refresh_bind_slots()
+			_update_buttons()
+		else:
+			var is_bound := TalentManager.is_talent_bound(selected_talent_id)
+			if is_bound:
+				# Unbind
+				var slot := TalentManager.get_talent_slot(selected_talent_id)
+				TalentManager.unbind_skill(slot)
+				_refresh_skillbook()
+				_refresh_bind_slots()
+				_update_buttons()
+			else:
+				# Enter binding mode
+				binding_mode = true
+				binding_mode_entered.emit()
+				_refresh_bind_slots()
+				_update_buttons()
+	else:
+		# Learn talent
+		if TalentManager.can_learn_talent(selected_talent_id):
+			TalentManager.learn_talent(selected_talent_id)
+
+
+func _on_button2_pressed() -> void:
+	if selected_from_skillbook and TalentManager.is_talent_bound(selected_talent_id):
+		# Move - enter binding mode
+		binding_mode = true
+		binding_mode_entered.emit()
+		_refresh_bind_slots()
+		_update_buttons()
+
+
+func _on_talent_learned(talent_id: String, _new_points: int) -> void:
+	# Update the node visual
+	if _talent_nodes.has(talent_id):
+		var talent := TalentManager.get_talent(talent_id)
+		if talent:
+			_update_talent_node_visual(_talent_nodes[talent_id], talent)
+
+	# Update all nodes (some may become available)
+	for id in _talent_nodes:
+		var talent := TalentManager.get_talent(id)
+		if talent:
+			_update_talent_node_visual(_talent_nodes[id], talent)
+
+	_update_description_panel()
+	_update_buttons()
+
+
+func _on_talent_points_changed(_total: int, _available: int) -> void:
+	_update_points_label()
+
+
+func _on_skillbook_updated(_talents: Array) -> void:
+	_refresh_skillbook()
+
+
+func _on_skill_bound(_slot: int, _talent_id: String) -> void:
+	_refresh_skillbook()
+	_refresh_bind_slots()
+
+
+func _on_skill_unbound(_slot: int) -> void:
+	_refresh_skillbook()
+	_refresh_bind_slots()
+
+
+func _on_skill_points_changed(_points: int) -> void:
+	_update_points_label()
+	# Update all talent nodes since availability may have changed
+	for id in _talent_nodes:
+		var talent := TalentManager.get_talent(id)
+		if talent:
+			_update_talent_node_visual(_talent_nodes[id], talent)
