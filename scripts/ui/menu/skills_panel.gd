@@ -87,8 +87,8 @@ var _button2: Button
 
 ## Skill bind UI
 var _bind_panel: PanelContainer
-var _bind_main_slot: Button
-var _bind_slots: Array[Button] = []
+var _bind_main_slot: Control
+var _bind_slots: Array[Control] = []
 
 ## Talent nodes (talent_id -> Button)
 var _talent_nodes: Dictionary = {}
@@ -463,21 +463,31 @@ func _build_skill_bind_ui() -> void:
 		_bind_slots.append(slot)
 
 
-func _create_bind_slot(index: int, is_main: bool) -> Button:
-	var slot := Button.new()
-	slot.custom_minimum_size = Vector2(44, 44) if is_main else Vector2(34, 34)
-	slot.add_theme_font_size_override("font_size", 10)
-	slot.pressed.connect(_on_bind_slot_pressed.bind(index))
+func _create_bind_slot(index: int, is_main: bool) -> Control:
+	# Container for square slot with drag support
+	var container := Control.new()
+	var size := 44 if is_main else 36
+	container.custom_minimum_size = Vector2(size, size)
 
-	# Style
+	var slot := Button.new()
+	slot.set_anchors_preset(Control.PRESET_FULL_RECT)
+	slot.add_theme_font_size_override("font_size", 10)
+	slot.set_meta("slot_index", index)
+	slot.set_meta("is_main", is_main)
+
+	# Use gui_input for drag detection
+	slot.gui_input.connect(_on_bind_slot_input.bind(index, slot))
+
+	# Style - square corners
 	var stylebox := StyleBoxFlat.new()
 	stylebox.bg_color = Color(0.2, 0.2, 0.25, 0.8)
 	stylebox.border_color = COLOR_BINDING_AVAILABLE if is_main else Color(0.55, 1.0, 0.98, 0.7)
 	stylebox.set_border_width_all(2 if is_main else 1)
-	stylebox.set_corner_radius_all(6 if is_main else 4)
+	stylebox.set_corner_radius_all(4)
 	slot.add_theme_stylebox_override("normal", stylebox)
 
-	return slot
+	container.add_child(slot)
+	return container
 
 
 #===============================================================================
@@ -790,7 +800,16 @@ func _refresh_bind_slots() -> void:
 		_update_bind_slot_visual(_bind_slots[i], i + 1)
 
 
-func _update_bind_slot_visual(slot: Button, index: int) -> void:
+func _update_bind_slot_visual(container: Control, index: int) -> void:
+	# Find the button inside the container
+	var slot: Button = null
+	for child in container.get_children():
+		if child is Button:
+			slot = child
+			break
+	if not slot:
+		return
+
 	var talent := TalentManager.get_bound_talent(index)
 	var is_main := (index == 0)
 
@@ -812,7 +831,7 @@ func _update_bind_slot_visual(slot: Button, index: int) -> void:
 		stylebox.border_color = COLOR_BINDING_AVAILABLE if is_main else Color(0.55, 1.0, 0.98, 0.5)
 		stylebox.set_border_width_all(2)
 
-	stylebox.set_corner_radius_all(6 if is_main else 4)
+	stylebox.set_corner_radius_all(4)
 	slot.add_theme_stylebox_override("normal", stylebox)
 
 
@@ -970,6 +989,34 @@ func _on_skillbook_slot_pressed(talent_id: String) -> void:
 	skill_selected.emit(talent_id)
 
 
+func _on_bind_slot_input(event: InputEvent, slot_index: int, slot: Button) -> void:
+	var talent := TalentManager.get_bound_talent(slot_index)
+
+	if event is InputEventMouseButton or event is InputEventScreenTouch:
+		if event.pressed:
+			# Start potential drag
+			slot.set_meta("press_pos", event.position)
+			slot.set_meta("is_pressed", true)
+		else:
+			# Release - if we didn't drag, treat as click
+			if slot.get_meta("is_pressed", false) and not _is_dragging:
+				_on_bind_slot_pressed(slot_index)
+			slot.set_meta("is_pressed", false)
+
+	elif (event is InputEventMouseMotion or event is InputEventScreenDrag) and slot.get_meta("is_pressed", false):
+		# Check if we should start dragging (only if slot has a talent)
+		if talent:
+			var press_pos: Vector2 = slot.get_meta("press_pos", Vector2.ZERO)
+			var event_pos: Vector2 = event.position
+			var delta: Vector2 = event_pos - press_pos
+
+			if delta.length() > DRAG_THRESHOLD and not _is_dragging:
+				slot.set_meta("is_pressed", false)
+				# Unbind from current slot and start drag
+				TalentManager.unbind_skill(slot_index)
+				_start_drag(talent.id, slot.get_global_position() + event_pos)
+
+
 func _on_bind_slot_pressed(slot_index: int) -> void:
 	if binding_mode and not selected_talent_id.is_empty():
 		# Bind the selected skill to this slot
@@ -1006,9 +1053,11 @@ func _on_button1_pressed() -> void:
 			if is_bound:
 				# Unbind
 				var slot := TalentManager.get_talent_slot(selected_talent_id)
-				TalentManager.unbind_skill(slot)
+				if slot >= 0:
+					TalentManager.unbind_skill(slot)
 				_refresh_skillbook()
 				_refresh_bind_slots()
+				_update_description_panel()
 				_update_buttons()
 			else:
 				# Enter binding mode
