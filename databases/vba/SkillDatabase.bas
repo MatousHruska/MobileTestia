@@ -18,23 +18,28 @@ Private Const COL_TAL_COLUMN As Integer = 5         ' 1-3 (horizontal position)
 Private Const COL_TAL_MAX_POINTS As Integer = 6     ' 1-5
 Private Const COL_TAL_TYPE As Integer = 7           ' active, passive
 Private Const COL_TAL_SKILL_CATEGORY As Integer = 8 ' melee, ranged, magic
-Private Const COL_TAL_WEAPON_DAMAGE_PERCENT As Integer = 9  ' e.g., 150 = 150% weapon damage
-Private Const COL_TAL_FLAT_DAMAGE_BONUS As Integer = 10     ' flat damage added before %
-Private Const COL_TAL_DAMAGE_TYPE As Integer = 11   ' physical, fire, cold, lightning, arcane
-Private Const COL_TAL_PREREQUISITE_IDS As Integer = 12
-Private Const COL_TAL_MANA_COST As Integer = 13
-Private Const COL_TAL_STAMINA_COST As Integer = 14
-Private Const COL_TAL_COOLDOWN As Integer = 15
-Private Const COL_TAL_BASE_DAMAGE As Integer = 16   ' For magic skills: base flat damage
-Private Const COL_TAL_DAMAGE_PER_RANK As Integer = 17 ' Magic skill damage per rank (1-20)
-Private Const COL_TAL_EFFECT_TYPE As Integer = 18   ' damage, heal, buff, debuff, projectile
-Private Const COL_TAL_EFFECT_VALUE As Integer = 19
-Private Const COL_TAL_EFFECT_PER_POINT As Integer = 20
-Private Const COL_TAL_DURATION As Integer = 21
-Private Const COL_TAL_STAT_BONUSES As Integer = 22  ' For passive: "strength:2;armor:5"
-Private Const COL_TAL_DESCRIPTION As Integer = 23
-Private Const COL_TAL_RANK_DESCRIPTIONS As Integer = 24  ' "Rank 1 desc|Rank 2 desc|..."
-Private Const COL_TAL_ICON_NAME As Integer = 25
+Private Const COL_TAL_AUTO_LEARN As Integer = 9     ' true/false - auto-learned at game start
+Private Const COL_TAL_WEAPON_DAMAGE_PERCENT As Integer = 10 ' e.g., 150 = 150% weapon damage
+Private Const COL_TAL_FLAT_DAMAGE_BONUS As Integer = 11     ' flat damage added before %
+Private Const COL_TAL_DAMAGE_TYPE As Integer = 12   ' physical, fire, cold, lightning, arcane
+Private Const COL_TAL_LUNGE_FORCE As Integer = 13   ' Lunge force when using skill
+Private Const COL_TAL_RECOVERY_TIME As Integer = 14 ' Recovery lockout after skill
+Private Const COL_TAL_HIT_RANGE As Integer = 15     ' Attack range in pixels
+Private Const COL_TAL_HIT_ARC As Integer = 16       ' Hit arc in degrees (360=all around)
+Private Const COL_TAL_PREREQUISITE_IDS As Integer = 17
+Private Const COL_TAL_MANA_COST As Integer = 18
+Private Const COL_TAL_STAMINA_COST As Integer = 19
+Private Const COL_TAL_COOLDOWN As Integer = 20
+Private Const COL_TAL_BASE_DAMAGE As Integer = 21   ' For magic skills: base flat damage
+Private Const COL_TAL_DAMAGE_PER_RANK As Integer = 22 ' Magic skill damage per rank (1-20)
+Private Const COL_TAL_EFFECT_TYPE As Integer = 23   ' damage, heal, buff, debuff, projectile
+Private Const COL_TAL_EFFECT_VALUE As Integer = 24
+Private Const COL_TAL_EFFECT_PER_POINT As Integer = 25
+Private Const COL_TAL_DURATION As Integer = 26
+Private Const COL_TAL_STAT_BONUSES As Integer = 27  ' For passive: "strength:2;armor:5"
+Private Const COL_TAL_DESCRIPTION As Integer = 28
+Private Const COL_TAL_RANK_DESCRIPTIONS As Integer = 29  ' "Rank 1 desc|Rank 2 desc|..."
+Private Const COL_TAL_ICON_NAME As Integer = 30
 
 ' Column indices for TalentTrees (1-based)
 Private Const COL_TT_ID As Integer = 1
@@ -301,9 +306,14 @@ Public Sub ExportTalents()
         json = json & "      ""max_points"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_MAX_POINTS), 1)) & "," & vbCrLf
         json = json & "      ""type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_TYPE), "passive"))) & """," & vbCrLf
         json = json & "      ""skill_category"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_SKILL_CATEGORY)))) & """," & vbCrLf
+        json = json & "      ""auto_learn"": " & LCase(GetDefaultString(ws.Cells(i, COL_TAL_AUTO_LEARN), "false")) & "," & vbCrLf
         json = json & "      ""weapon_damage_percent"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_WEAPON_DAMAGE_PERCENT))) & "," & vbCrLf
         json = json & "      ""flat_damage_bonus"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_FLAT_DAMAGE_BONUS))) & "," & vbCrLf
         json = json & "      ""damage_type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_DAMAGE_TYPE), "physical"))) & """," & vbCrLf
+        json = json & "      ""lunge_force"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_LUNGE_FORCE))) & "," & vbCrLf
+        json = json & "      ""recovery_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_RECOVERY_TIME))) & "," & vbCrLf
+        json = json & "      ""hit_range"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_HIT_RANGE), 50)) & "," & vbCrLf
+        json = json & "      ""hit_arc"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_HIT_ARC), 360)) & "," & vbCrLf
         json = json & "      ""prerequisite_ids"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_PREREQUISITE_IDS))) & """," & vbCrLf
         json = json & "      ""mana_cost"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_MANA_COST))) & "," & vbCrLf
         json = json & "      ""stamina_cost"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_STAMINA_COST))) & "," & vbCrLf
@@ -364,7 +374,8 @@ Public Sub SetupTalentsSheet()
     Set ws = GetOrCreateSheet(SHEET_TALENTS)
     Dim headers As Variant
     headers = Array("id", "name", "tree", "row", "column", "max_points", "type", _
-                    "skill_category", "weapon_damage_percent", "flat_damage_bonus", "damage_type", _
+                    "skill_category", "auto_learn", "weapon_damage_percent", "flat_damage_bonus", _
+                    "damage_type", "lunge_force", "recovery_time", "hit_range", "hit_arc", _
                     "prerequisite_ids", "mana_cost", "stamina_cost", "cooldown", _
                     "base_damage", "damage_per_rank", "effect_type", "effect_value", _
                     "effect_per_point", "duration", "stat_bonuses", "description", _
@@ -379,14 +390,19 @@ Public Sub SetupTalentsSheet()
     SafeAddComment ws.Cells(1, 6), "Maximum points investable (1-5, or 1 for active)"
     SafeAddComment ws.Cells(1, 7), "active = appears in skillbook, passive = stat bonus only"
     SafeAddComment ws.Cells(1, 8), "melee, ranged, or magic - determines damage formula"
-    SafeAddComment ws.Cells(1, 9), "For melee/ranged: % of weapon damage (e.g., 150 = 150%)"
-    SafeAddComment ws.Cells(1, 10), "Flat damage added before % calculation"
-    SafeAddComment ws.Cells(1, 11), "physical, fire, cold, lightning, poison, arcane, holy, shadow"
-    SafeAddComment ws.Cells(1, 12), "Comma-separated talent IDs. Must be MAXED to unlock"
-    SafeAddComment ws.Cells(1, 16), "For magic: base flat damage at rank 1"
-    SafeAddComment ws.Cells(1, 17), "For magic: additional damage per rank (1-20)"
-    SafeAddComment ws.Cells(1, 22), "For passive: stat:value_per_point pairs (e.g., strength:2;armor:5)"
-    SafeAddComment ws.Cells(1, 24), "Pipe-separated descriptions per rank"
+    SafeAddComment ws.Cells(1, 9), "true/false - if true, skill is auto-learned at game start"
+    SafeAddComment ws.Cells(1, 10), "For melee/ranged: % of weapon damage (e.g., 150 = 150%)"
+    SafeAddComment ws.Cells(1, 11), "Flat damage added before % calculation"
+    SafeAddComment ws.Cells(1, 12), "physical, fire, cold, lightning, poison, arcane, holy, shadow"
+    SafeAddComment ws.Cells(1, 13), "Lunge force applied when using skill (e.g., 80)"
+    SafeAddComment ws.Cells(1, 14), "Recovery lockout time in seconds (e.g., 0.3)"
+    SafeAddComment ws.Cells(1, 15), "Attack range in pixels (default 50)"
+    SafeAddComment ws.Cells(1, 16), "Hit arc in degrees (360=all around, 90=forward cone)"
+    SafeAddComment ws.Cells(1, 17), "Comma-separated talent IDs. Must be MAXED to unlock"
+    SafeAddComment ws.Cells(1, 21), "For magic: base flat damage at rank 1"
+    SafeAddComment ws.Cells(1, 22), "For magic: additional damage per rank (1-20)"
+    SafeAddComment ws.Cells(1, 27), "For passive: stat:value_per_point pairs (e.g., strength:2;armor:5)"
+    SafeAddComment ws.Cells(1, 29), "Pipe-separated descriptions per rank"
 End Sub
 
 '-------------------------------------------------------------------------------

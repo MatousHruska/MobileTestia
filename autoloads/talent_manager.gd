@@ -65,6 +65,35 @@ func _on_databases_loaded() -> void:
 
 	Debug.info("Talents", "Cached %d talents" % _talent_cache.size())
 
+	# Auto-learn skills marked with auto_learn
+	_auto_learn_starting_skills()
+
+
+func _auto_learn_starting_skills() -> void:
+	## Automatically learn and bind skills marked with auto_learn
+	var next_slot := 1  # Start at slot 1 (slot 0 is reserved for main skill later)
+
+	for talent_id in _talent_cache:
+		var talent: TalentData = _talent_cache[talent_id]
+
+		if talent.is_active() and talent.auto_learn:
+			# Force-learn the skill (bypass prerequisites and point requirements)
+			if not is_talent_learned(talent_id):
+				invested_talents[talent_id] = 1
+				skill_ranks[talent_id] = 1
+				Debug.info("Talents", "Auto-learned starting skill: %s" % talent.talent_name)
+
+			# Auto-bind to next available slot
+			if next_slot < MAX_SLOTS and not is_talent_bound(talent_id):
+				skill_bindings[next_slot] = talent_id
+				skill_bound.emit(next_slot, talent_id)
+				Debug.info("Talents", "Auto-bound %s to slot %d" % [talent.talent_name, next_slot])
+				next_slot += 1
+
+	if next_slot > 1:
+		_emit_skillbook_update()
+		talent_points_changed.emit(get_total_invested_points(), get_available_points())
+
 
 #===============================================================================
 # TALENT POINT QUERIES
