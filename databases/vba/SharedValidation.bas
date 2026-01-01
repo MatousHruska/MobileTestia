@@ -502,8 +502,9 @@ Private Sub ApplyEnumValidation()
     ApplyValidation "Talents", 3, "ID_TalentTrees"     ' tree reference
     ApplyListValidation "Talents", 7, "active,passive" ' type
     ApplyListValidation "Talents", 8, "melee,ranged,magic" ' skill_category
-    ApplyListValidation "Talents", 11, "physical,fire,cold,lightning,poison,arcane,holy,shadow" ' damage_type
-    ApplyListValidation "Talents", 18, "damage,heal,buff,debuff,projectile,summon,teleport,aoe"  ' effect_type
+    ApplyListValidation "Talents", 9, "true,false" ' auto_learn
+    ApplyListValidation "Talents", 12, "physical,fire,cold,lightning,poison,arcane,holy,shadow" ' damage_type
+    ApplyListValidation "Talents", 23, "damage,heal,buff,debuff,projectile,summon,teleport,aoe"  ' effect_type
 
     ' NPCs
     ApplyListValidation "NPCs", 3, "quest_giver,trader,trainer,innkeeper,blacksmith,generic"  ' type
