@@ -27,6 +27,7 @@ const ROW_HEIGHT := 80  ## Height per talent row
 const TREE_WIDTH := 340  ## Width of talent tree panel
 const SKILLBOOK_COLS := 4  ## Columns in skillbook grid
 const SKILLBOOK_CELL_SIZE := 52  ## Size of skillbook cells
+const SKILLBOOK_MIN_SLOTS := 8  ## Minimum visible slots (2 rows)
 
 ## Colors
 const COLOR_LOCKED := Color(0.4, 0.4, 0.4)
@@ -479,12 +480,18 @@ func _refresh_skillbook() -> void:
 	# Get learned active talents
 	var active_talents := TalentManager.get_skillbook_talents()
 
-	# Create slots for each
+	# Create slots for learned talents
 	for i in range(active_talents.size()):
 		var talent := active_talents[i]
 		var slot := _create_skillbook_slot(talent)
 		_skillbook_grid.add_child(slot)
 		_skillbook_slots.append(slot)
+
+	# Add empty slots to fill minimum grid
+	var empty_count := maxi(0, SKILLBOOK_MIN_SLOTS - active_talents.size())
+	for i in range(empty_count):
+		var empty_slot := _create_empty_skillbook_slot()
+		_skillbook_grid.add_child(empty_slot)
 
 
 func _create_skillbook_slot(talent: TalentData) -> Button:
@@ -513,6 +520,24 @@ func _create_skillbook_slot(talent: TalentData) -> Button:
 	slot.set_meta("talent_id", talent.id)
 	slot.set_meta("press_pos", Vector2.ZERO)
 	slot.set_meta("is_pressed", false)
+
+	return slot
+
+
+func _create_empty_skillbook_slot() -> Control:
+	var slot := Control.new()
+	slot.custom_minimum_size = Vector2(SKILLBOOK_CELL_SIZE, SKILLBOOK_CELL_SIZE)
+
+	var stylebox := StyleBoxFlat.new()
+	stylebox.bg_color = Color(0.1, 0.1, 0.12, 0.5)
+	stylebox.border_color = Color(0.3, 0.3, 0.35, 0.5)
+	stylebox.set_border_width_all(1)
+	stylebox.set_corner_radius_all(4)
+
+	var panel := Panel.new()
+	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.add_theme_stylebox_override("panel", stylebox)
+	slot.add_child(panel)
 
 	return slot
 
