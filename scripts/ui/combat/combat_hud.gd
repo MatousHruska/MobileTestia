@@ -328,6 +328,9 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 	var skill_range := talent.hit_range
 	var skill_arc := talent.hit_arc
 
+	# Spawn visual hitbox indicator
+	_spawn_skill_visual(talent, damage_result)
+
 	# Find enemies in range
 	var enemies := NPCManager.get_enemies_in_radius(player.global_position, skill_range)
 
@@ -351,9 +354,69 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 
 			enemy.take_damage(final_damage, player)
 
+			# Spawn hit effect on enemy
+			_spawn_hit_effect(enemy.global_position, talent.damage_type)
+
 			# Log crit hits
 			if damage_result.is_critical:
 				Debug.log("Combat", "CRITICAL %s on %s!" % [talent.talent_name, enemy.enemy_name], "%.0f damage" % final_damage)
+
+
+func _spawn_skill_visual(talent: TalentData, damage_result: Dictionary) -> void:
+	## Spawn visual indicator for skill hitbox
+	var visual := HitboxVisual.new()
+
+	# Configure shape based on arc
+	if talent.hit_arc >= 360.0:
+		# Full circle
+		visual.draw_type = "circle"
+		visual.radius = talent.hit_range
+	else:
+		# Cone shape
+		visual.draw_type = "polygon"
+		visual.points = _generate_cone_points(talent.hit_range, talent.hit_arc)
+
+	# Set damage type for color
+	visual.damage_type = talent.damage_type if talent.damage_type else "physical"
+
+	# Position at player, rotated to facing direction
+	visual.global_position = player.global_position
+
+	# Rotate to face direction (only for cones)
+	if talent.hit_arc < 360.0:
+		var facing := _get_player_facing_vector()
+		visual.rotation = facing.angle()
+
+	# Setup with no windup (instant)
+	visual.setup(null, 0.0)
+
+	# Add to world (not UI)
+	player.get_parent().add_child(visual)
+
+
+func _generate_cone_points(length: float, angle_deg: float) -> PackedVector2Array:
+	## Generate cone polygon points for visual
+	var points := PackedVector2Array()
+	var half_angle := deg_to_rad(angle_deg / 2.0)
+	var segments := 12  # Smooth arc
+
+	# Start at origin
+	points.append(Vector2.ZERO)
+
+	# Arc points
+	for i in range(segments + 1):
+		var t := float(i) / float(segments)
+		var current_angle := -half_angle + t * half_angle * 2
+		var point := Vector2(cos(current_angle), sin(current_angle)) * length
+		points.append(point)
+
+	return points
+
+
+func _spawn_hit_effect(pos: Vector2, damage_type: String) -> void:
+	## Spawn particle effect when hitting an enemy
+	if player and player.get_parent():
+		HitboxVisual.spawn_hit_effect(player.get_parent(), pos, damage_type)
 
 
 func _get_player_facing_vector() -> Vector2:
