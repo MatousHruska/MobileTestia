@@ -981,36 +981,23 @@ func _add_stat_row(column: VBoxContainer, label_text: String, value_text: String
 
 
 func _update_buttons() -> void:
-	if selected_talent_id.is_empty():
+	# Hide buttons if nothing selected or selected from skillbook
+	# (skillbook uses drag-and-drop for binding)
+	if selected_talent_id.is_empty() or selected_from_skillbook:
 		_button1.visible = false
 		_button2.visible = false
 		return
 
+	# Selected from talent tree - show Learn button
+	var can_learn := TalentManager.can_learn_talent(selected_talent_id)
 	_button1.visible = true
-	_button2.visible = true
+	_button1.text = "Learn"
+	_button1.disabled = not can_learn
+	_button2.visible = false
 
-	if selected_from_skillbook:
-		# Selected from skillbook
-		var is_bound := TalentManager.is_talent_bound(selected_talent_id)
-		if binding_mode:
-			_button1.text = "Cancel Bind"
-			_button2.visible = false
-		elif is_bound:
-			_button1.text = "Unbind"
-			_button2.text = "Move"
-		else:
-			_button1.text = "Bind"
-			_button2.visible = false
-	else:
-		# Selected from talent tree
-		var can_learn := TalentManager.can_learn_talent(selected_talent_id)
-		_button1.text = "Learn"
-		_button1.disabled = not can_learn
-		_button2.visible = false
-
-		if not can_learn:
-			var reason := TalentManager.get_learn_block_reason(selected_talent_id)
-			_button1.tooltip_text = reason
+	if not can_learn:
+		var reason := TalentManager.get_learn_block_reason(selected_talent_id)
+		_button1.tooltip_text = reason
 
 
 #===============================================================================
@@ -1114,46 +1101,17 @@ func _on_bind_slot_pressed(slot_index: int) -> void:
 
 
 func _on_button1_pressed() -> void:
-	if selected_talent_id.is_empty():
+	# Only handles "Learn" from talent tree (skillbook uses drag-and-drop)
+	if selected_talent_id.is_empty() or selected_from_skillbook:
 		return
 
-	if selected_from_skillbook:
-		if binding_mode:
-			# Cancel binding
-			binding_mode = false
-			binding_mode_exited.emit()
-			_refresh_bind_slots()
-			_update_buttons()
-		else:
-			var is_bound := TalentManager.is_talent_bound(selected_talent_id)
-			if is_bound:
-				# Unbind
-				var slot := TalentManager.get_talent_slot(selected_talent_id)
-				if slot >= 0:
-					TalentManager.unbind_skill(slot)
-				_refresh_skillbook()
-				_refresh_bind_slots()
-				_update_description_panel()
-				_update_buttons()
-			else:
-				# Enter binding mode
-				binding_mode = true
-				binding_mode_entered.emit()
-				_refresh_bind_slots()
-				_update_buttons()
-	else:
-		# Learn talent
-		if TalentManager.can_learn_talent(selected_talent_id):
-			TalentManager.learn_talent(selected_talent_id)
+	if TalentManager.can_learn_talent(selected_talent_id):
+		TalentManager.learn_talent(selected_talent_id)
 
 
 func _on_button2_pressed() -> void:
-	if selected_from_skillbook and TalentManager.is_talent_bound(selected_talent_id):
-		# Move - enter binding mode
-		binding_mode = true
-		binding_mode_entered.emit()
-		_refresh_bind_slots()
-		_update_buttons()
+	# No longer used - kept for signal connection
+	pass
 
 
 func _on_talent_learned(talent_id: String, _new_points: int) -> void:
