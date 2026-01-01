@@ -42,7 +42,73 @@ func _ready() -> void:
 		if Game.is_player_valid():
 			_on_player_spawned(Game.player)
 
+	# Connect to TalentManager for skill bindings
+	_connect_talent_manager()
+
 	Debug.info("Combat", "CombatHUD initialized", {"abilities": config.ability_count})
+
+
+func _connect_talent_manager() -> void:
+	## Connect to TalentManager to sync bound skills
+	if TalentManager:
+		TalentManager.skill_bound.connect(_on_talent_skill_bound)
+		TalentManager.skill_unbound.connect(_on_talent_skill_unbound)
+		# Sync existing bindings
+		call_deferred("_sync_talent_bindings")
+
+
+func _sync_talent_bindings() -> void:
+	## Sync all bound talents from TalentManager to ability slots
+	for i in range(ability_slots.size()):
+		# TalentManager slot 1-5 maps to ability slots 0-4 (main slot 0 is special)
+		var talent := TalentManager.get_bound_talent(i + 1)
+		if talent:
+			_bind_talent_to_slot(i, talent)
+		else:
+			clear_ability_slot(i)
+
+
+func _bind_talent_to_slot(slot_index: int, talent: TalentData) -> void:
+	## Bind a talent's ability to an ability slot
+	if slot_index < 0 or slot_index >= ability_slots.size():
+		return
+
+	var invested := TalentManager.get_invested_points(talent.id)
+	var data := {
+		"name": talent.talent_name,
+		"icon": talent.talent_name.substr(0, 2).to_upper(),
+		"mana_cost": talent.mana_cost,
+		"stamina_cost": talent.stamina_cost,
+		"cooldown": talent.cooldown,
+		"damage": talent.get_damage_at_points(invested),
+		"effect_type": talent.effect_type,
+		"effect_value": talent.get_effect_at_points(invested),
+		"duration": talent.duration,
+		"talent_id": talent.id,
+	}
+
+	ability_slots[slot_index].bind_ability(talent.id, data)
+	Debug.log("Combat", "Bound talent to HUD slot", {"slot": slot_index, "talent": talent.talent_name})
+
+
+func _on_talent_skill_bound(slot_index: int, talent_id: String) -> void:
+	## Handle skill bound event from TalentManager
+	# TalentManager uses slot 0 as main, 1-5 as secondary
+	# CombatHUD ability slots are 0-based
+	var hud_slot := slot_index - 1  # Convert to HUD slot index
+	if hud_slot < 0 or hud_slot >= ability_slots.size():
+		return
+
+	var talent := TalentManager.get_talent(talent_id)
+	if talent:
+		_bind_talent_to_slot(hud_slot, talent)
+
+
+func _on_talent_skill_unbound(slot_index: int) -> void:
+	## Handle skill unbound event from TalentManager
+	var hud_slot := slot_index - 1
+	if hud_slot >= 0 and hud_slot < ability_slots.size():
+		clear_ability_slot(hud_slot)
 
 
 func _load_or_create_config() -> void:
