@@ -112,13 +112,36 @@ func _build_ui() -> void:
 	var main_hbox := HBoxContainer.new()
 	main_hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	main_hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_hbox.add_theme_constant_override("separation", 8)
 	add_child(main_hbox)
 
+	# Left margin wrapper for talent tree
+	var left_margin := _create_percentage_margin()
+	left_margin.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	main_hbox.add_child(left_margin)
+
 	# Build left panel (Talent Tree)
-	_build_talent_tree_panel(main_hbox)
+	_build_talent_tree_panel(left_margin)
+
+	# Right margin wrapper for skillbook/description
+	var right_margin := _create_percentage_margin()
+	right_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_hbox.add_child(right_margin)
 
 	# Build right panel (Skillbook + Description + Bind UI)
-	_build_right_panel(main_hbox)
+	_build_right_panel(right_margin)
+
+
+func _create_percentage_margin() -> MarginContainer:
+	var margin := MarginContainer.new()
+	# Use ~2% of typical screen width (around 8-12 pixels)
+	var side_margin := 10
+	margin.add_theme_constant_override("margin_left", side_margin)
+	margin.add_theme_constant_override("margin_right", side_margin)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	return margin
 
 
 func _create_section_header(text: String) -> Label:
@@ -137,8 +160,23 @@ func _build_talent_tree_panel(parent: Control) -> void:
 	_left_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	parent.add_child(_left_panel)
 
+	# Style with border
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.12, 0.12, 0.14, 0.9)
+	panel_style.border_color = Color(0.3, 0.3, 0.35)
+	panel_style.set_border_width_all(1)
+	panel_style.set_corner_radius_all(4)
+	_left_panel.add_theme_stylebox_override("panel", panel_style)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	_left_panel.add_child(margin)
+
 	var vbox := VBoxContainer.new()
-	_left_panel.add_child(vbox)
+	margin.add_child(vbox)
 
 	# Tree tabs
 	_tree_tabs = HBoxContainer.new()
