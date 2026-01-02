@@ -257,6 +257,7 @@ static func _effect_type_from_string(type_str: String) -> EffectType:
 		"buff": return EffectType.BUFF
 		"debuff": return EffectType.DEBUFF
 		"projectile": return EffectType.PROJECTILE
+		"magic_projectile": return EffectType.MAGIC_PROJECTILE
 		"summon": return EffectType.SUMMON
 		"teleport": return EffectType.TELEPORT
 		"aoe": return EffectType.AOE
