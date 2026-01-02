@@ -391,14 +391,17 @@ Private Sub SetupStatModifiersSheet()
     SetHeaders ws, headers
 
     ' Pre-populate with valid stat modifiers
-    ' Updated: removed melee_damage/ranged_damage, added attack_power/spell_power
+    ' Categories: offensive, defensive, primary, utility, skill
     Dim stats As Variant
-    stats = Array("attack_power", "spell_power", "fire_power", "cold_power", _
-                  "lightning_power", "poison_power", _
-                  "strength", "dexterity", "intelligence", "vitality", "energy", "luck", _
-                  "armor", "magic_resistance", "dodge_chance", _
-                  "attack_speed", "critical_chance", "critical_damage", _
-                  "life", "mana", "life_regen", "mana_regen", "movement_speed")
+    stats = Array( _
+        "attack_power", "spell_power", "fire_power", "cold_power", _
+        "lightning_power", "poison_power", _
+        "strength", "dexterity", "intelligence", "vitality", "energy", "luck", _
+        "armor", "magic_resistance", "dodge_chance", _
+        "attack_speed", "critical_chance", "critical_damage", _
+        "life", "mana", "life_regen", "mana_regen", "movement_speed", _
+        "hit_range", "hit_arc", "lunge_force", "lunge_duration", _
+        "explosion_radius", "projectile_speed", "cast_speed", "cooldown_reduction")
 
     Dim row As Integer
     row = 2
