@@ -26,7 +26,7 @@
       "min_level": 3,
       "max_level": 6,
       "check_interval": 60,
-      "spawn_chance": 1,
+      "spawn_chance": 0.8,
       "max_active_enemies": 2,
       "respawn_delay": 1,
       "spawn_radius": 30,
