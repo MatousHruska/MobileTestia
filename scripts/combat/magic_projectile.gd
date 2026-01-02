@@ -57,20 +57,25 @@ var collision_shape: CollisionShape2D = null
 var target_indicator: Node2D = null  ## Shows explosion radius at target (added to world, not child)
 var raycast: RayCast2D = null  ## For wall detection
 
+## Debug
+var _frame_count: int = 0
+
 
 func _ready() -> void:
+	print("[FIREBALL] _ready() called")
 	_setup_collision()
 	_setup_raycast()
 
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
+	print("[FIREBALL] Setup complete, is_flying=%s, speed=%s, range=%s" % [is_flying, base_speed, max_range])
 
 
 func _draw() -> void:
 	## Draw the projectile as a visible circle
 	if not is_flying:
 		return
-	# Main projectile body
+	# Main projectile body (large red circle)
 	draw_circle(Vector2.ZERO, projectile_size, projectile_color)
 	# Bright center
 	draw_circle(Vector2.ZERO, projectile_size * 0.5, projectile_color.lightened(0.5))
@@ -105,6 +110,14 @@ func _physics_process(delta: float) -> void:
 	if not is_flying:
 		return
 
+	_frame_count += 1
+
+	# Debug every 30 frames
+	if _frame_count % 30 == 1:
+		print("[FIREBALL] Frame %d: pos=%s, dist=%.1f/%.1f, dir=%s, speed=%s" % [
+			_frame_count, global_position, travel_distance, max_range, direction, current_speed
+		])
+
 	# Update raycast direction
 	if raycast:
 		raycast.target_position = direction * 20.0
@@ -113,8 +126,14 @@ func _physics_process(delta: float) -> void:
 		# Check for wall hit
 		if raycast.is_colliding() and explodes_on_wall:
 			var collider = raycast.get_collider()
+			print("[FIREBALL] Raycast hit: %s (groups: walls=%s, obstacles=%s, is_tilemap=%s)" % [
+				collider.name if collider else "null",
+				collider.is_in_group("walls") if collider else false,
+				collider.is_in_group("obstacles") if collider else false,
+				collider is TileMap if collider else false
+			])
 			if collider and (collider.is_in_group("walls") or collider.is_in_group("obstacles") or collider is TileMap):
-				Debug.log("Combat", "Fireball hit wall via raycast")
+				print("[FIREBALL] Exploding due to wall hit!")
 				_explode()
 				return
 
@@ -128,6 +147,7 @@ func _physics_process(delta: float) -> void:
 
 	# Check if reached max range
 	if travel_distance >= max_range:
+		print("[FIREBALL] Reached max range, exploding!")
 		_explode()
 
 
@@ -136,6 +156,11 @@ func _physics_process(delta: float) -> void:
 #===============================================================================
 
 func launch(from: Vector2, dir: Vector2, speed_multiplier: float = 1.0) -> void:
+	print("[FIREBALL] launch() called: from=%s, dir=%s, speed_mult=%s" % [from, dir, speed_multiplier])
+	print("[FIREBALL] BEFORE: base_speed=%s, max_range=%s, explosion_radius=%s, explosion_damage=%s" % [
+		base_speed, max_range, explosion_radius, explosion_damage
+	])
+
 	start_position = from
 	global_position = from
 	direction = dir.normalized()
@@ -146,16 +171,14 @@ func launch(from: Vector2, dir: Vector2, speed_multiplier: float = 1.0) -> void:
 	# Calculate target position
 	target_position = from + direction * max_range
 
+	print("[FIREBALL] AFTER: is_flying=%s, current_speed=%s, target_pos=%s" % [is_flying, current_speed, target_position])
+	print("[FIREBALL] Parent node: %s" % (get_parent().name if get_parent() else "NO PARENT"))
+
 	# Create target indicator in the world (not as child)
 	_create_target_indicator()
 
-	Debug.log("Combat", "Magic projectile launched", {
-		"from": from,
-		"direction": direction,
-		"speed": current_speed,
-		"max_range": max_range,
-		"target": target_position
-	})
+	# Force initial redraw
+	queue_redraw()
 
 
 func _create_target_indicator() -> void:
@@ -234,21 +257,21 @@ func _contact_enemy(enemy: Node2D) -> void:
 
 func _explode() -> void:
 	## Explode at current position, dealing AOE damage
+	print("[FIREBALL] _explode() called at pos=%s, is_flying=%s" % [global_position, is_flying])
+
 	if not is_flying:
+		print("[FIREBALL] Already exploded (is_flying=false), skipping")
 		return
 
 	is_flying = false
 
-	Debug.log("Combat", "Magic projectile exploded", {
-		"position": global_position,
-		"radius": explosion_radius,
-		"damage": explosion_damage
-	})
+	print("[FIREBALL] EXPLODING! pos=%s, radius=%s, damage=%s" % [global_position, explosion_radius, explosion_damage])
 
 	# Deal AOE damage to all enemies in radius
 	_apply_explosion_damage()
 
 	# Spawn explosion visual
+	print("[FIREBALL] Spawning explosion effect...")
 	_spawn_explosion_effect()
 
 	exploded.emit(global_position, self)
@@ -257,6 +280,7 @@ func _explode() -> void:
 	_remove_target_indicator()
 
 	# Destroy projectile
+	print("[FIREBALL] Destroying projectile...")
 	_destroy()
 
 
