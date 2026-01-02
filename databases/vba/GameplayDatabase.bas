@@ -593,6 +593,14 @@ End Sub
 
 '-------------------------------------------------------------------------------
 ' SetupGameplaySettingsSheet - Creates GameplaySettings sheet with headers
+' This sheet contains ALL base numeric values for the game:
+' - Primary stat starting values (base_vitality, base_strength, etc.)
+' - Stat conversion constants (health_per_vitality, mana_per_energy, etc.)
+' - Flat base values (health_base_flat, crit_chance_base, etc.)
+' - Regeneration rates (base_life_regen, base_mana_regen, etc.)
+' - Movement/combat defaults (base_move_speed, base_lunge_force, etc.)
+' - Skill defaults for multiplier system (base_hit_range, base_projectile_speed, etc.)
+' - Combat constants (armor_constant, etc.)
 '-------------------------------------------------------------------------------
 Public Sub SetupGameplaySettingsSheet()
     Dim ws As Worksheet
@@ -602,7 +610,7 @@ Public Sub SetupGameplaySettingsSheet()
     SetupSheetHeaders ws, headers
 
     ' Add column notes
-    SafeAddComment ws.Cells(1, 1), "Setting key name (e.g., armor_constant)"
+    SafeAddComment ws.Cells(1, 1), "Setting key name (e.g., armor_constant, base_vitality, health_per_vitality)"
     SafeAddComment ws.Cells(1, 2), "Numeric value for the setting"
     SafeAddComment ws.Cells(1, 3), "Description of what this setting controls"
 End Sub

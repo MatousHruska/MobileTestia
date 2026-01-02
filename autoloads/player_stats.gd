@@ -11,11 +11,27 @@ signal attribute_points_changed(points: int)
 signal skill_points_changed(points: int)
 signal leveled_up(new_level: int)  ## Emitted for level up visual effect
 
-## Constants
-const POINTS_PER_LEVEL: int = 5  ## Attribute points per level
-const SKILL_POINTS_PER_LEVEL: int = 1  ## Skill points per level
-const XP_PER_LEVEL: int = 100  ## XP required for each level (flat for testing)
-const BASE_CRIT_DAMAGE: float = 150.0  # Base 150% crit damage
+## Constants (loaded from database, these are fallback defaults)
+var POINTS_PER_LEVEL: int = 5  ## Attribute points per level
+var SKILL_POINTS_PER_LEVEL: int = 1  ## Skill points per level
+var XP_PER_LEVEL: int = 100  ## XP required for each level (flat for testing)
+
+## Base stat values (loaded from database)
+var _health_base_flat: float = 80.0
+var _mana_base_flat: float = 30.0
+var _stamina_base_flat: float = 100.0
+var _crit_chance_base: float = 5.0
+var _crit_damage_base: float = 150.0
+
+## Stat conversion constants (loaded from database)
+var _health_per_vitality: float = 2.0
+var _mana_per_energy: float = 1.5
+var _crit_damage_per_luck: float = 1.0
+
+## Regeneration bases (loaded from database)
+var _base_life_regen: float = 1.0
+var _base_mana_regen: float = 0.5
+var _base_stamina_regen: float = 10.0
 
 ## Primary Attributes - Player allocates these manually
 var strength: int = 10:
@@ -131,6 +147,9 @@ var _buff_modifiers: Dictionary = {}
 func _ready() -> void:
 	Debug.info("Stats", "PlayerStats initialized")
 
+	# Load base values from database
+	_load_base_values_from_database()
+
 	# Set starting level for testing
 	if DEBUG_STARTING_LEVEL > 1:
 		level = DEBUG_STARTING_LEVEL
@@ -145,6 +164,47 @@ func _ready() -> void:
 	current_life = max_life
 	current_mana = max_mana
 	current_stamina = max_stamina
+
+
+func _load_base_values_from_database() -> void:
+	## Load all base stat values from gameplay_settings.json
+	## Uses code defaults as fallback if database values don't exist
+
+	# Primary stat starting values
+	strength = int(DatabaseLoader.get_setting("base_strength", strength))
+	dexterity = int(DatabaseLoader.get_setting("base_dexterity", dexterity))
+	intelligence = int(DatabaseLoader.get_setting("base_intelligence", intelligence))
+	vitality = int(DatabaseLoader.get_setting("base_vitality", vitality))
+	energy = int(DatabaseLoader.get_setting("base_energy", energy))
+	luck = int(DatabaseLoader.get_setting("base_luck", luck))
+
+	# Progression constants
+	POINTS_PER_LEVEL = int(DatabaseLoader.get_setting("points_per_level", POINTS_PER_LEVEL))
+	SKILL_POINTS_PER_LEVEL = int(DatabaseLoader.get_setting("skill_points_per_level", SKILL_POINTS_PER_LEVEL))
+	XP_PER_LEVEL = int(DatabaseLoader.get_setting("xp_per_level", XP_PER_LEVEL))
+
+	# Flat base values
+	_health_base_flat = DatabaseLoader.get_setting("health_base_flat", _health_base_flat)
+	_mana_base_flat = DatabaseLoader.get_setting("mana_base_flat", _mana_base_flat)
+	_stamina_base_flat = DatabaseLoader.get_setting("stamina_base_flat", _stamina_base_flat)
+	_crit_chance_base = DatabaseLoader.get_setting("crit_chance_base", _crit_chance_base)
+	_crit_damage_base = DatabaseLoader.get_setting("crit_damage_base", _crit_damage_base)
+
+	# Stat conversion constants
+	_health_per_vitality = DatabaseLoader.get_setting("health_per_vitality", _health_per_vitality)
+	_mana_per_energy = DatabaseLoader.get_setting("mana_per_energy", _mana_per_energy)
+	_crit_damage_per_luck = DatabaseLoader.get_setting("crit_damage_per_luck", _crit_damage_per_luck)
+
+	# Regeneration rates
+	_base_life_regen = DatabaseLoader.get_setting("base_life_regen", _base_life_regen)
+	_base_mana_regen = DatabaseLoader.get_setting("base_mana_regen", _base_mana_regen)
+	_base_stamina_regen = DatabaseLoader.get_setting("base_stamina_regen", _base_stamina_regen)
+
+	Debug.log("Stats", "Loaded base values from database", {
+		"health_base": _health_base_flat,
+		"health_per_vit": _health_per_vitality,
+		"crit_damage_base": _crit_damage_base
+	})
 
 
 func _process(delta: float) -> void:
@@ -289,44 +349,40 @@ func _recalculate_derived() -> void:
 	var old_max_mana := max_mana
 	var old_max_stamina := max_stamina
 
-	# Base values
-	var base_life := 80.0
-	var base_mana := 30.0
-	var base_stamina := 100.0
-
 	# Total primary stats (base + equipment bonuses)
 	var total_vitality := vitality + int(get_equipment_bonus("vitality"))
 	var total_energy := energy + int(get_equipment_bonus("energy"))
 	var total_luck := luck + int(get_equipment_bonus("luck"))
 
-	# Vitality: +2 Life per point (uses total vitality including equipment)
-	max_life = base_life + (total_vitality * 2.0) + get_equipment_bonus("health")
+	# Derived stats using database conversion constants:
+	# max_health = health_base_flat + (vitality × health_per_vitality) + equipment
+	max_life = _health_base_flat + (total_vitality * _health_per_vitality) + get_equipment_bonus("health")
 
-	# Energy: +1.5 Mana per point (uses total energy including equipment)
-	max_mana = base_mana + (total_energy * 1.5) + get_equipment_bonus("mana")
+	# max_mana = mana_base_flat + (energy × mana_per_energy) + equipment
+	max_mana = _mana_base_flat + (total_energy * _mana_per_energy) + get_equipment_bonus("mana")
 
-	# Stamina is fixed (could add modifiers later)
-	max_stamina = base_stamina + get_equipment_bonus("stamina")
+	# Stamina uses flat base only (no stat conversion)
+	max_stamina = _stamina_base_flat + get_equipment_bonus("stamina")
 
-	# Critical Damage: Base 150% + 1% per Luck point (uses total luck including equipment)
-	critical_damage = BASE_CRIT_DAMAGE + (total_luck * 1.0) + get_equipment_bonus("crit_damage")
+	# crit_damage = crit_damage_base + (luck × crit_damage_per_luck) + equipment
+	critical_damage = _crit_damage_base + (total_luck * _crit_damage_per_luck) + get_equipment_bonus("crit_damage")
 
-	# Offensive stats (from equipment and buffs only)
+	# Offensive stats (from equipment and buffs only - not derived from primary stats)
 	attack_power = get_equipment_bonus("attack_power")
 	spell_power = get_equipment_bonus("spell_power")
 	attack_speed = get_equipment_bonus("attack_speed")
-	critical_chance = 5.0 + get_equipment_bonus("crit_chance")
+	critical_chance = _crit_chance_base + get_equipment_bonus("crit_chance")
 
 	# Defensive stats
 	armor = get_equipment_bonus("armor")
 	magic_resistance = get_equipment_bonus("magic_resistance")
 	dodge_chance = get_equipment_bonus("dodge_chance")
 
-	# Utility stats
+	# Utility stats using database regeneration bases
 	movement_speed = get_equipment_bonus("movement_speed")
-	life_regen = 1.0 + get_equipment_bonus("life_regen")  # Base 1/s
-	mana_regen = 0.5 + get_equipment_bonus("mana_regen")  # Base 0.5/s
-	stamina_regen = 10.0 + get_equipment_bonus("stamina_regen")  # Base 10/s
+	life_regen = _base_life_regen + get_equipment_bonus("life_regen")
+	mana_regen = _base_mana_regen + get_equipment_bonus("mana_regen")
+	stamina_regen = _base_stamina_regen + get_equipment_bonus("stamina_regen")
 
 	# Adjust current values if max changed and emit resource signals
 	if max_life != old_max_life:
@@ -353,11 +409,11 @@ static func get_stat_description(stat_name: String) -> String:
 		"intelligence":
 			return "Arcane Mastery\nRequired to equip Robes, Staves, Wands, and magical accessories.\nDoes not increase damage directly."
 		"vitality":
-			return "Life Force\nDirectly increases Maximum Health.\n+2 Life per point."
+			return "Life Force\nDirectly increases Maximum Health.\nScaling defined in database."
 		"energy":
-			return "Magical Capacity\nDirectly increases Maximum Mana.\n+1.5 Mana per point."
+			return "Magical Capacity\nDirectly increases Maximum Mana.\nScaling defined in database."
 		"luck":
-			return "Fortune\nIncreases Critical Damage.\n+1% Critical Damage per point."
+			return "Fortune\nIncreases Critical Damage.\nScaling defined in database."
 		# Resources
 		"life":
 			return "Health Points\nThe character's survival gauge.\nDeath occurs at 0."
