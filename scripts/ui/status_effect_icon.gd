@@ -43,7 +43,7 @@ func _setup_visuals() -> void:
 	# Background (border color indicates buff/debuff)
 	_background = ColorRect.new()
 	_background.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_background.color = Color(0.6, 0.1, 0.1, 0.9) if is_debuff else Color(0.1, 0.5, 0.1, 0.9)
+	_background.color = Color(0.6, 0.1, 0.1, 0.9) if is_debuff else Color(0.2, 0.7, 0.2, 0.9)
 	add_child(_background)
 
 	# Icon placeholder (inner colored square)
@@ -117,11 +117,12 @@ func _update_timer_display() -> void:
 
 func _get_effect_color() -> Color:
 	match effect_type:
+		# Debuffs
 		"rot":
 			return Color(0.4, 0.25, 0.1)  # Brown/rot color
 		"poison":
 			return Color(0.2, 0.5, 0.1)  # Green
-		"burn":
+		"burn", "burning":
 			return Color(0.9, 0.4, 0.1)  # Orange
 		"bleed":
 			return Color(0.7, 0.1, 0.1)  # Dark red
@@ -129,8 +130,14 @@ func _get_effect_color() -> Color:
 			return Color(0.3, 0.3, 0.7)  # Blue-ish
 		"stun":
 			return Color(0.8, 0.8, 0.2)  # Yellow
+		# Buffs
+		"bandage":
+			return Color(0.9, 0.9, 0.8)  # Cream/white bandage
+		"regen", "heal":
+			return Color(0.3, 0.8, 0.3)  # Bright green
 		_:
-			return Color(0.5, 0.5, 0.5)  # Gray default
+			# Default: greenish for buffs, gray for debuffs
+			return Color(0.4, 0.7, 0.4) if not is_debuff else Color(0.5, 0.5, 0.5)
 
 
 func setup(p_effect_type: String, p_duration: float, p_is_debuff: bool = true) -> void:
