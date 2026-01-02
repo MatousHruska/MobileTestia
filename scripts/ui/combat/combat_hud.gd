@@ -338,9 +338,18 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 		return
 
 	# Check if this is a magic projectile with cast time
+	print("[ABILITY] Checking magic projectile: effect_type=%s (MAGIC_PROJECTILE=%s), cast_time=%s" % [
+		talent.effect_type, TalentData.EffectType.MAGIC_PROJECTILE, talent.cast_time
+	])
 	if talent.effect_type == TalentData.EffectType.MAGIC_PROJECTILE and talent.cast_time > 0:
+		print("[ABILITY] Detected magic projectile, starting cast!")
 		_start_casting(slot_index, talent)
 		return
+	else:
+		print("[ABILITY] Not a magic projectile (effect_type match=%s, cast_time>0=%s)" % [
+			talent.effect_type == TalentData.EffectType.MAGIC_PROJECTILE,
+			talent.cast_time > 0
+		])
 
 	# Consume resources
 	if talent.mana_cost > 0:
@@ -572,7 +581,10 @@ func _end_aiming() -> void:
 
 func _start_casting(slot_index: int, talent: TalentData) -> void:
 	## Start casting a magic projectile spell
+	print("[CAST] _start_casting called for %s" % talent.talent_name)
+
 	if not player:
+		print("[CAST] ERROR: No player!")
 		return
 
 	# Consume resources immediately
@@ -588,13 +600,7 @@ func _start_casting(slot_index: int, talent: TalentData) -> void:
 	cast_start_time = Time.get_ticks_msec() / 1000.0
 	cast_direction = _get_player_facing_vector()
 
-	# Lock player during cast (optional, for short cast times this feels smoother without)
-	# player.apply_recovery_lockout(talent.cast_time)
-
-	Debug.log("Combat", "Started casting %s" % talent.talent_name, {
-		"cast_time": talent.cast_time,
-		"direction": cast_direction
-	})
+	print("[CAST] Casting started: cast_time=%s, direction=%s" % [talent.cast_time, cast_direction])
 
 
 func _update_casting() -> void:
@@ -626,16 +632,21 @@ func _update_casting() -> void:
 
 func _fire_magic_projectile(talent: TalentData, direction: Vector2) -> void:
 	## Fire a magic projectile (fireball etc)
+	print("[CAST] _fire_magic_projectile called for %s, dir=%s" % [talent.talent_name, direction])
+
 	if not player:
+		print("[CAST] ERROR: No player!")
 		return
 
 	# Calculate damage
 	var invested := TalentManager.get_invested_points(talent.id)
 	var damage_result := DamageCalculator.calculate_final_damage(talent, invested)
+	print("[CAST] Damage calculated: %s (crit=%s)" % [damage_result.final_damage, damage_result.is_critical])
 
 	# Create magic projectile
 	var projectile: Area2D = MagicProjectileClass.new()
 	projectile.name = talent.talent_name.replace(" ", "")
+	print("[CAST] Projectile created: %s" % projectile.name)
 
 	# Set projectile properties from talent
 	projectile.base_speed = talent.projectile_speed if talent.projectile_speed > 0 else 350.0
@@ -645,22 +656,32 @@ func _fire_magic_projectile(talent: TalentData, direction: Vector2) -> void:
 	projectile.damage_type = _get_damage_type_string(talent.damage_type_id)
 	projectile.source = player
 
+	print("[CAST] Projectile config: speed=%s, range=%s, radius=%s, damage=%s" % [
+		projectile.base_speed, projectile.max_range, projectile.explosion_radius, damage_result.final_damage
+	])
+
 	# Set contact status effect
 	if not talent.contact_status_effect.is_empty():
 		projectile.set_contact_effect(talent.contact_status_effect, 0.0)
+		print("[CAST] Contact effect set: %s" % talent.contact_status_effect)
 
 	# Add to world
 	if player.get_parent():
 		player.get_parent().add_child(projectile)
+		print("[CAST] Projectile added to world: %s" % player.get_parent().name)
+	else:
+		print("[CAST] ERROR: Player has no parent!")
 
 	# Launch projectile
 	var spawn_pos := player.global_position
+	print("[CAST] Launching from %s in direction %s" % [spawn_pos, direction])
 	projectile.launch(spawn_pos, direction)
 
 	# Apply recovery lockout after firing
 	if talent.recovery_time > 0:
 		player.apply_recovery_lockout(talent.recovery_time)
 
+	print("[CAST] Projectile launched successfully!")
 	Debug.log("Combat", "Fired magic projectile: %s" % talent.talent_name, {
 		"direction": direction,
 		"range": talent.hit_range,
