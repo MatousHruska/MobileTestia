@@ -67,7 +67,7 @@ Private validRequiredWeaponCategories() As String
 '-------------------------------------------------------------------------------
 Private Sub InitValidLists()
     validTalentTypes = Split("active,passive", ",")
-    validEffectTypes = Split("damage,heal,buff,debuff,projectile,summon,teleport,aoe", ",")
+    validEffectTypes = Split("damage,heal,buff,debuff,projectile,magic_projectile,summon,teleport,aoe,self_buff", ",")
     validSkillCategories = Split("melee,ranged,magic", ",")
     validDamageTypes = Split("physical,fire,cold,lightning,poison,arcane,holy,shadow", ",")
     ' Weapon categories: melee matches melee_1h AND melee_2h, specific ones match exactly

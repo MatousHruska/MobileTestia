@@ -7,6 +7,7 @@ class_name StatusEffectManager
 signal effect_applied(effect_type: String, duration: float, show_in_hud: bool)
 signal effect_removed(effect_type: String)
 signal effect_tick(effect_type: String, damage: float)
+signal heal_tick(effect_type: String, heal_amount: float)
 
 ## Active effects - key: effect_type, value: effect data
 var _active_effects: Dictionary = {}
@@ -34,10 +35,14 @@ func _process_effects(delta: float) -> void:
 		effect.remaining_duration -= delta
 		effect.tick_timer -= delta
 
-		# Check for tick (DoT effects only)
-		if effect.get("damage_per_tick", 0.0) > 0 and effect.tick_timer <= 0:
-			_do_effect_tick(effect_type, effect)
-			effect.tick_timer = effect.tick_interval
+		# Check for tick (DoT/HoT effects)
+		if effect.tick_timer <= 0:
+			if effect.get("damage_per_tick", 0.0) > 0:
+				_do_damage_tick(effect_type, effect)
+				effect.tick_timer = effect.tick_interval
+			elif effect.get("heal_per_tick", 0.0) > 0:
+				_do_heal_tick(effect_type, effect)
+				effect.tick_timer = effect.tick_interval
 
 		# Check for expiration (duration <= 0 means permanent)
 		if effect.max_duration > 0 and effect.remaining_duration <= 0:
@@ -52,7 +57,7 @@ func _process_effects(delta: float) -> void:
 		_save_persisted_effects()
 
 
-func _do_effect_tick(effect_type: String, effect: Dictionary) -> void:
+func _do_damage_tick(effect_type: String, effect: Dictionary) -> void:
 	var damage := effect.damage_per_tick as float
 
 	# Apply damage through PlayerStats
@@ -62,6 +67,20 @@ func _do_effect_tick(effect_type: String, effect: Dictionary) -> void:
 	Debug.log("StatusEffect", "DoT tick", {
 		"type": effect_type,
 		"damage": damage,
+		"remaining": effect.remaining_duration
+	})
+
+
+func _do_heal_tick(effect_type: String, effect: Dictionary) -> void:
+	var heal_amount := effect.heal_per_tick as float
+
+	# Apply healing through PlayerStats
+	PlayerStats.heal(heal_amount)
+	heal_tick.emit(effect_type, heal_amount)
+
+	Debug.log("StatusEffect", "HoT tick", {
+		"type": effect_type,
+		"heal": heal_amount,
 		"remaining": effect.remaining_duration
 	})
 
@@ -107,6 +126,67 @@ func apply_dot(effect_type: String, duration: float, damage_per_tick: float, tic
 			"type": effect_type,
 			"duration": duration,
 			"damage": damage_per_tick,
+			"interval": tick_interval
+		})
+
+	_save_persisted_effects()
+
+
+## Apply a status effect from the database by ID (e.g., "status_bandage")
+func apply_status_effect(effect_id: String) -> void:
+	if not DatabaseLoader.status_effects.has(effect_id):
+		Debug.warn("StatusEffect", "Unknown status effect: %s" % effect_id)
+		return
+
+	var effect_data: Dictionary = DatabaseLoader.status_effects[effect_id]
+	var effect_type: String = effect_data.get("type", "")
+	var duration: float = effect_data.get("duration", 0.0)
+	var value: float = effect_data.get("value", 0.0)
+	var tick_interval: float = effect_data.get("tick_interval", 1.0)
+
+	# Strip "status_" prefix for effect type name
+	var effect_name: String = effect_id.replace("status_", "")
+
+	match effect_type:
+		"debuff_dot":
+			apply_dot(effect_name, duration, absf(value), tick_interval)
+		"buff_hot":
+			apply_hot(effect_name, duration, absf(value), tick_interval)
+		"buff":
+			apply_buff(effect_name, duration)
+		_:
+			Debug.warn("StatusEffect", "Unknown effect type: %s" % effect_type)
+
+
+## Apply a HoT (Heal over Time) effect
+## Format: apply_hot("bandage", 30.0, 10.0, 2.0) = heal 10 HP every 2 seconds for 30 seconds
+func apply_hot(effect_type: String, duration: float, heal_per_tick: float, tick_interval: float = 1.0) -> void:
+	var show_in_hud := _get_show_in_hud(effect_type)
+
+	if effect_type in _active_effects:
+		# Refresh duration if already active (don't stack healing)
+		var existing: Dictionary = _active_effects[effect_type]
+		existing.remaining_duration = maxf(existing.remaining_duration, duration)
+		Debug.log("StatusEffect", "HoT refreshed", {
+			"type": effect_type,
+			"duration": existing.remaining_duration
+		})
+	else:
+		# Apply new effect
+		_active_effects[effect_type] = {
+			"remaining_duration": duration,
+			"max_duration": duration,
+			"heal_per_tick": heal_per_tick,
+			"tick_interval": tick_interval,
+			"tick_timer": tick_interval,
+			"is_debuff": false,
+			"show_in_hud": show_in_hud
+		}
+		effect_applied.emit(effect_type, duration, show_in_hud)
+		Debug.log("StatusEffect", "HoT applied", {
+			"type": effect_type,
+			"duration": duration,
+			"heal": heal_per_tick,
 			"interval": tick_interval
 		})
 

@@ -351,6 +351,17 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 			_fire_magic_projectile_instant(slot_index, talent)
 		return
 
+	# Check if this is a self-buff (like Bandage)
+	if talent.effect_type == TalentData.EffectType.SELF_BUFF:
+		print("[ABILITY] Detected self-buff!")
+		if talent.cast_time > 0:
+			# Has cast time - start casting sequence
+			_start_casting_self_buff(slot_index, talent)
+		else:
+			# No cast time - apply immediately
+			_apply_self_buff_instant(slot_index, talent)
+		return
+
 	# Consume resources
 	if talent.mana_cost > 0:
 		PlayerStats.use_mana(talent.mana_cost)
@@ -608,7 +619,12 @@ func _update_casting() -> void:
 	if not is_casting or not casting_talent:
 		return
 
-	# Update cast direction based on player input
+	# Handle different casting types
+	if casting_talent.effect_type == TalentData.EffectType.SELF_BUFF:
+		_update_self_buff_casting()
+		return
+
+	# Update cast direction based on player input (for directional spells)
 	if player.input_direction.length_squared() > 0.01:
 		cast_direction = player.input_direction.normalized()
 	else:
@@ -719,6 +735,89 @@ func _fire_magic_projectile_instant(slot_index: int, talent: TalentData) -> void
 	if slot_index >= 0 and slot_index < ability_slots.size():
 		if talent.cooldown > 0:
 			ability_slots[slot_index].start_cooldown(talent.cooldown)
+
+
+#===============================================================================
+# SELF-BUFF CASTING (Bandage, etc.)
+#===============================================================================
+
+func _start_casting_self_buff(slot_index: int, talent: TalentData) -> void:
+	## Start casting a self-buff spell with cast time
+	print("[CAST] _start_casting_self_buff called for %s" % talent.talent_name)
+
+	if not player:
+		return
+
+	# Consume resources immediately
+	if talent.mana_cost > 0:
+		PlayerStats.use_mana(talent.mana_cost)
+	if talent.stamina_cost > 0:
+		PlayerStats.use_stamina(talent.stamina_cost)
+
+	# Set up casting state (reuse the same casting variables)
+	is_casting = true
+	casting_slot_index = slot_index
+	casting_talent = talent
+	cast_start_time = Time.get_ticks_msec() / 1000.0
+	# Self-buff doesn't need direction
+	cast_direction = Vector2.ZERO
+
+	print("[CAST] Self-buff casting started: cast_time=%s" % talent.cast_time)
+
+
+func _update_self_buff_casting() -> void:
+	## Update self-buff casting state - check completion
+	if not is_casting or not casting_talent:
+		return
+
+	# Self-buffs don't update direction
+
+	# Check if cast time has completed
+	var current_time := Time.get_ticks_msec() / 1000.0
+	var elapsed := current_time - cast_start_time
+
+	if elapsed >= casting_talent.cast_time:
+		# Cast complete, apply the buff
+		_apply_self_buff(casting_talent)
+
+		# Start cooldown
+		if casting_talent.cooldown > 0 and casting_slot_index >= 0 and casting_slot_index < ability_slots.size():
+			ability_slots[casting_slot_index].start_cooldown(casting_talent.cooldown)
+
+		# End casting
+		_end_casting()
+
+
+func _apply_self_buff_instant(slot_index: int, talent: TalentData) -> void:
+	## Apply a self-buff instantly (no cast time)
+	print("[CAST] _apply_self_buff_instant called for %s" % talent.talent_name)
+
+	# Consume resources
+	if talent.mana_cost > 0:
+		PlayerStats.use_mana(talent.mana_cost)
+	if talent.stamina_cost > 0:
+		PlayerStats.use_stamina(talent.stamina_cost)
+
+	# Apply the buff
+	_apply_self_buff(talent)
+
+	# Start cooldown
+	if slot_index >= 0 and slot_index < ability_slots.size():
+		if talent.cooldown > 0:
+			ability_slots[slot_index].start_cooldown(talent.cooldown)
+
+
+func _apply_self_buff(talent: TalentData) -> void:
+	## Apply the self-buff effect to the player
+	print("[CAST] Applying self-buff: %s" % talent.talent_name)
+
+	# Apply status effect from contact_status_effect field
+	if not talent.contact_status_effect.is_empty():
+		if Game.player and Game.player.status_effect_manager:
+			Game.player.status_effect_manager.apply_status_effect(talent.contact_status_effect)
+			Debug.log("Combat", "Self-buff applied: %s -> %s" % [talent.talent_name, talent.contact_status_effect])
+		else:
+			Debug.warn("Combat", "Cannot apply self-buff: no status_effect_manager")
 
 
 func _apply_skill_mechanics(talent: TalentData) -> void:
