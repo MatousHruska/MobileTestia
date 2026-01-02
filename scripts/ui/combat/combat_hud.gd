@@ -3,6 +3,10 @@ class_name CombatHUD
 ## CombatHUD - Layout manager for combat action buttons
 ## Positions attack, abilities, dodge, and quick slot based on config
 
+## Preload combat classes (needed until Godot generates .uid files)
+const AimIndicatorClass = preload("res://scripts/combat/aim_indicator.gd")
+const ProjectileClass = preload("res://scripts/combat/projectile.gd")
+
 signal attack_pressed
 signal ability_pressed(slot_index: int, ability_id: String)
 signal dodge_pressed
@@ -22,7 +26,7 @@ var interact_button: Button
 var player: PlayerController = null
 
 ## Ranged aiming
-var aim_indicator: AimIndicator = null
+var aim_indicator: Node2D = null  ## AimIndicator instance
 var is_aiming: bool = false
 var aiming_slot_index: int = -1
 var aiming_talent: TalentData = null
@@ -439,7 +443,7 @@ func _ensure_aim_indicator() -> void:
 	if aim_indicator:
 		return
 
-	aim_indicator = AimIndicator.new()
+	aim_indicator = AimIndicatorClass.new()
 	aim_indicator.name = "AimIndicator"
 
 	# Add to world (not UI) so it moves with the player
@@ -485,7 +489,7 @@ func _fire_projectile(talent: TalentData, direction: Vector2, range_dist: float,
 	var damage_result := DamageCalculator.calculate_final_damage(talent, invested)
 
 	# Create projectile
-	var projectile := Projectile.create_arrow()
+	var projectile: Area2D = ProjectileClass.create_arrow()
 	projectile.max_range = range_dist
 	projectile.damage = damage_result.final_damage
 	projectile.damage_type = _get_damage_type_string(talent.damage_type_id)
