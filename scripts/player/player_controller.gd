@@ -43,6 +43,8 @@ var _level_up_effect: LevelUpEffect
 
 ## Status effect manager
 var _status_effect_manager: StatusEffectManager
+var status_effect_manager: StatusEffectManager:
+	get: return _status_effect_manager
 
 ## Internal
 var _lunge_velocity: Vector2 = Vector2.ZERO
