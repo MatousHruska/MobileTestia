@@ -13,8 +13,8 @@ This document provides a comprehensive overview of the combat system, its buildi
 5. [Status Effects System](#status-effects-system)
 6. [Projectile System](#projectile-system)
 7. [Enemy AI and Abilities](#enemy-ai-and-abilities)
-8. [Shared vs Duplicated Systems](#shared-vs-duplicated-systems)
-9. [Refactoring Recommendations](#refactoring-recommendations)
+8. [Unified Building Blocks](#unified-building-blocks)
+9. [Godot Patterns & Gotchas](#godot-patterns--gotchas)
 10. [Database-Driven vs Hardcoded](#database-driven-vs-hardcoded)
 11. [Adding New Content Guide](#adding-new-content-guide)
 
@@ -439,6 +439,25 @@ The following systems are now **unified** and shared between player and enemies:
 - Signal-based UI updates
 - Database-driven effect definitions
 
+**Godot Load Order Note:**
+Due to Godot's class_name resolution order, direct `extends StatusEffectComponent` or
+`var x: StatusEffectComponent` may fail. Use these patterns instead:
+
+```gdscript
+# For inheritance (status_effect_manager.gd):
+extends "res://scripts/combat/status_effect_component.gd"
+class_name StatusEffectManager
+
+# For composition (enemy_npc.gd):
+const StatusEffectComponentScript = preload("res://scripts/combat/status_effect_component.gd")
+var status_effects: Node = null  # StatusEffectComponent instance
+
+func _setup_status_effects() -> void:
+    status_effects = StatusEffectComponentScript.new()
+    status_effects.setup(self)
+    add_child(status_effects)
+```
+
 **Usage:**
 ```gdscript
 # Player (via StatusEffectManager)
@@ -537,6 +556,77 @@ player.take_damage(result.final_damage, enemy)
 | Projectiles | `projectile.gd`, `magic_projectile.gd` | Player and enemy projectiles |
 | Collision Layers | `COLLISION_LAYERS.md` | Documented standard |
 | Visual Effects | `hitbox_visual.gd` | Debug visualization |
+
+---
+
+## Godot Patterns & Gotchas
+
+### Class Name Load Order Issues
+
+Godot parses scripts in an unpredictable order. When Script A tries to reference Script B's
+`class_name` before Script B has been parsed, you get:
+
+```
+Parse Error: Could not find type "ClassName" in the current scope
+```
+
+**Solutions:**
+
+#### 1. Path-Based Extends (for inheritance)
+
+Instead of:
+```gdscript
+extends StatusEffectComponent  # May fail!
+class_name StatusEffectManager
+```
+
+Use:
+```gdscript
+extends "res://scripts/combat/status_effect_component.gd"
+class_name StatusEffectManager
+```
+
+#### 2. Preload Pattern (for composition/instantiation)
+
+Instead of:
+```gdscript
+var component: StatusEffectComponent = null  # May fail!
+
+func _ready():
+    component = StatusEffectComponent.new()  # May fail!
+```
+
+Use:
+```gdscript
+const StatusEffectComponentScript = preload("res://scripts/combat/status_effect_component.gd")
+var component: Node = null  # Use Node or untyped
+
+func _ready():
+    component = StatusEffectComponentScript.new()  # Works!
+```
+
+#### 3. Dynamic Type Annotations
+
+For function parameters and return types, use `Node` or omit the type:
+```gdscript
+# Instead of: func get_status_effects() -> StatusEffectComponent:
+func get_status_effects() -> Node:
+    return status_effects
+```
+
+### Files Using These Patterns
+
+| File | Pattern | Why |
+|------|---------|-----|
+| `status_effect_manager.gd` | Path-based extends | Extends StatusEffectComponent |
+| `enemy_npc.gd` | Preload + composition | Creates StatusEffectComponent instance |
+| `enemy_npc.gd` | Dynamic typing | `ability_controller` and `behavior_profile` vars |
+
+### When This Happens
+
+- Custom classes in `scripts/` referencing each other
+- Especially common with component/manager patterns
+- Autoloads (in `autoloads/`) are usually safe to reference by class_name
 
 ---
 
@@ -700,3 +790,4 @@ player.take_damage(result.final_damage, enemy)
 |------|---------|
 | 2026-01-02 | Initial documentation |
 | 2026-01-02 | Unified systems: StatusEffectComponent, MovementAction, DamageCalculator for enemies, SkillBase |
+| 2026-01-02 | Added Godot load order patterns (preload/path-based extends) for StatusEffectComponent |
