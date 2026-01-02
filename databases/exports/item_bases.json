@@ -17,7 +17,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": "melee_1h"
     },
     {
       "id": "wep_sword_steel",
@@ -36,7 +37,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": "melee_1h"
     },
     {
       "id": "wep_dagger_iron",
@@ -55,7 +57,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": "melee_1h"
     },
     {
       "id": "wep_staff_oak",
@@ -74,7 +77,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": "magic"
     },
     {
       "id": "wep_bow_short",
@@ -93,7 +97,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": "ranged"
     },
     {
       "id": "arm_helmet_iron",
@@ -112,7 +117,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     },
     {
       "id": "arm_helmet_leather",
@@ -131,7 +137,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     },
     {
       "id": "arm_chest_chainmail",
@@ -150,7 +157,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     },
     {
       "id": "arm_chest_leather",
@@ -169,7 +177,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     },
     {
       "id": "arm_gloves_leather",
@@ -188,7 +197,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     },
     {
       "id": "arm_gloves_iron",
@@ -207,7 +217,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     },
     {
       "id": "arm_boots_leather",
@@ -226,7 +237,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     },
     {
       "id": "arm_boots_traveler",
@@ -245,7 +257,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     },
     {
       "id": "acc_ring_copper",
@@ -264,7 +277,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     },
     {
       "id": "acc_ring_silver",
@@ -283,7 +297,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     },
     {
       "id": "acc_amulet_bone",
@@ -302,7 +317,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     },
     {
       "id": "acc_amulet_jade",
@@ -321,7 +337,8 @@
       "req_dex": 0,
       "req_int": 0,
       "allowed_affix_tags": "",
-      "description": ""
+      "description": "",
+      "weapon_category": ""
     }
   ]
 }
