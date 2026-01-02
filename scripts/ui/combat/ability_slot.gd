@@ -16,7 +16,8 @@ enum SlotType { ABILITY, ATTACK, DODGE, QUICK_SLOT }
 @export_group("Colors")
 @export var normal_color: Color = Color(0.55, 1.0, 0.98, 0.85)
 @export var pressed_color: Color = Color(0.75, 1.0, 1.0, 0.95)
-@export var no_resource_color: Color = Color(0.3, 0.3, 0.5, 0.7)
+@export var no_resource_color: Color = Color(0.3, 0.4, 0.6, 0.7)  ## Blueish for not enough mana/stamina
+@export var no_weapon_color: Color = Color(0.35, 0.35, 0.35, 0.6)  ## Grayed out for wrong/no weapon
 @export var cooldown_color: Color = Color(0.2, 0.2, 0.2, 0.6)
 @export var empty_color: Color = Color(0.3, 0.3, 0.3, 0.5)
 @export var border_color: Color = Color(1.0, 1.0, 1.0, 0.4)
@@ -38,6 +39,7 @@ var is_on_cooldown: bool = false
 var cooldown_remaining: float = 0.0
 var cooldown_duration: float = 0.0
 var has_enough_resource: bool = true
+var has_valid_weapon: bool = true  ## False if skill requires a weapon type not equipped
 var is_empty: bool = true
 var touch_index: int = -1
 
@@ -134,8 +136,10 @@ func _get_current_color() -> Color:
 		return empty_color
 	if is_on_cooldown:
 		return cooldown_color
+	if not has_valid_weapon:
+		return no_weapon_color  # Gray for wrong/no weapon (highest priority)
 	if not has_enough_resource:
-		return no_resource_color
+		return no_resource_color  # Blueish for not enough mana/stamina
 	if is_pressed_state:
 		return pressed_color
 	return normal_color
@@ -200,6 +204,8 @@ func _can_activate() -> bool:
 	if is_empty and slot_type != SlotType.ATTACK:
 		return false
 	if is_on_cooldown:
+		return false
+	if not has_valid_weapon:
 		return false
 	if not has_enough_resource:
 		return false
@@ -304,3 +310,29 @@ func set_radius(radius: float) -> void:
 	custom_minimum_size = Vector2(radius * 2, radius * 2)
 	pivot_offset = custom_minimum_size / 2.0
 	queue_redraw()
+
+
+## Update weapon validity based on equipped weapon category
+func update_weapon_validity(equipped_weapon_category: String) -> void:
+	var old_state := has_valid_weapon
+
+	# Get the required weapon category from ability data
+	var required_cat: String = ability_data.get("required_weapon_category", "")
+
+	if required_cat.is_empty():
+		# No weapon requirement
+		has_valid_weapon = true
+	elif equipped_weapon_category.is_empty():
+		# Weapon required but none equipped
+		has_valid_weapon = false
+	elif required_cat == equipped_weapon_category:
+		# Exact match
+		has_valid_weapon = true
+	elif required_cat == "melee" and equipped_weapon_category.begins_with("melee"):
+		# "melee" matches melee_1h and melee_2h
+		has_valid_weapon = true
+	else:
+		has_valid_weapon = false
+
+	if old_state != has_valid_weapon:
+		queue_redraw()
