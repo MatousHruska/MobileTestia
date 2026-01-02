@@ -9,6 +9,7 @@
 [ext_resource type="Script" path="res://scripts/interactable/unlockable_door.gd" id="8_door"]
 [ext_resource type="Script" path="res://scripts/npc/spawn_point.gd" id="9_spawn_point"]
 [ext_resource type="Script" path="res://scripts/world/location.gd" id="10_location"]
+[ext_resource type="Script" path="res://scripts/world/wall.gd" id="11_wall"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
@@ -145,6 +146,7 @@ position = Vector2(400, 100)
 
 [node name="WallTop" type="StaticBody2D" parent="SecretRoom"]
 position = Vector2(0, -60)
+script = ExtResource("11_wall")
 
 [node name="Visual" type="ColorRect" parent="SecretRoom/WallTop"]
 offset_left = -50.0
@@ -158,6 +160,7 @@ shape = SubResource("RectangleShape2D_wall_h")
 
 [node name="WallBottom" type="StaticBody2D" parent="SecretRoom"]
 position = Vector2(0, 60)
+script = ExtResource("11_wall")
 
 [node name="Visual" type="ColorRect" parent="SecretRoom/WallBottom"]
 offset_left = -50.0
@@ -171,6 +174,7 @@ shape = SubResource("RectangleShape2D_wall_h")
 
 [node name="WallLeft" type="StaticBody2D" parent="SecretRoom"]
 position = Vector2(-50, 0)
+script = ExtResource("11_wall")
 
 [node name="Visual" type="ColorRect" parent="SecretRoom/WallLeft"]
 offset_left = -8.0
@@ -184,6 +188,7 @@ shape = SubResource("RectangleShape2D_wall_v")
 
 [node name="WallRight" type="StaticBody2D" parent="SecretRoom"]
 position = Vector2(50, 0)
+script = ExtResource("11_wall")
 
 [node name="Visual" type="ColorRect" parent="SecretRoom/WallRight"]
 offset_left = -8.0
