@@ -182,7 +182,8 @@
       "animation": "cast",
       "priority": 3,
       "conditions": "health<40%",
-      "effects_on_hit": "knockback:80"
+      "effects_on_hit": "knockback:80",
+      "explosion_falloff": 30
     }
   ]
 }
