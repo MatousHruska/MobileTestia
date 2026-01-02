@@ -7,16 +7,17 @@ This document provides a comprehensive overview of the combat system, its buildi
 ## Table of Contents
 
 1. [System Overview](#system-overview)
-2. [The Four Skill Templates](#the-four-skill-templates)
+2. [Skill Categories & Examples](#skill-categories--examples)
 3. [Building Blocks Reference](#building-blocks-reference)
 4. [Attack Execution Phases](#attack-execution-phases)
 5. [Status Effects System](#status-effects-system)
 6. [Projectile System](#projectile-system)
 7. [Enemy AI and Abilities](#enemy-ai-and-abilities)
 8. [Unified Building Blocks](#unified-building-blocks)
-9. [Godot Patterns & Gotchas](#godot-patterns--gotchas)
-10. [Database-Driven vs Hardcoded](#database-driven-vs-hardcoded)
-11. [Adding New Content Guide](#adding-new-content-guide)
+9. [Database-Driven Stats & Skills](#database-driven-stats--skills)
+10. [Equipment Modifier System](#equipment-modifier-system)
+11. [Godot Patterns & Gotchas](#godot-patterns--gotchas)
+12. [Adding New Content Guide](#adding-new-content-guide)
 
 ---
 
@@ -46,9 +47,17 @@ CombatHUD (input routing)              AbilityExecutor (execution)
 
 ---
 
-## The Four Skill Templates
+## Skill Categories & Examples
 
-### 1. MELEE Skills
+The following skill examples demonstrate different combat mechanics. These are **examples, not rigid templates**:
+- Not every melee skill needs lunge
+- Not every ranged skill needs charge-to-fire
+- Not every magic skill fires projectiles
+- Skills can mix and match mechanics as needed
+
+Each skill is fully database-driven - properties like range, damage, and effects are configured per-skill in the Talents database.
+
+### 1. MELEE Skills (Example: Basic Strike)
 
 **Player Flow:**
 ```
@@ -81,7 +90,7 @@ Button Press → CombatHUD._on_ability_activated()
 
 ---
 
-### 2. RANGED Skills (Hold-to-Charge)
+### 2. RANGED Skills (Example: Basic Shot)
 
 **Player Flow:**
 ```
@@ -121,7 +130,7 @@ Button Release → _on_ability_released()
 
 ---
 
-### 3. MAGIC Skills (Cast Time + Projectile)
+### 3. MAGIC Skills (Example: Basic Fireball)
 
 **Player Flow:**
 ```
@@ -163,7 +172,7 @@ _fire_magic_projectile():
 
 ---
 
-### 4. SELF-BUFF Skills (Cast Time + Status Effect)
+### 4. SELF-BUFF Skills (Example: Basic Bandage)
 
 **Player Flow:**
 ```
@@ -642,46 +651,221 @@ func get_status_effects() -> Node:
 
 ---
 
-## Database-Driven vs Hardcoded
+## Database-Driven Stats & Skills
 
-### Database-Driven (Flexible, No Code Changes)
+The game uses a **3-layer precedence system** for all numeric values:
 
-| Category | Examples |
-|----------|----------|
-| Skill definitions | name, damage, costs, cooldowns, ranges |
-| Status effects | duration, tick interval, value |
-| Enemy abilities | type, damage mult, hitbox shape |
-| Behavior profiles | detection range, ability selection mode |
+```
+┌─────────────────────────────────────────────────────────────┐
+│  LAYER 1: Talent/Ability Data (Highest Priority)           │
+│  Skills can override any value specifically                 │
+│  Example: tal_heavy_slam has lunge_duration: 0.3            │
+├─────────────────────────────────────────────────────────────┤
+│  LAYER 2: GameplaySettings Database                         │
+│  Global defaults for all base values                        │
+│  Example: base_lunge_duration: 0.1                          │
+├─────────────────────────────────────────────────────────────┤
+│  LAYER 3: Code Defaults (Fallback)                          │
+│  Hardcoded values if database missing                       │
+│  Example: const DEFAULT_LUNGE_DURATION = 0.1                │
+└─────────────────────────────────────────────────────────────┘
+```
 
-### Now Database-Driven (Previously Hardcoded)
+### Value Resolution Example
 
-| Category | Database Field | Default | Notes |
-|----------|---------------|---------|-------|
-| Max charge time | `max_charge_time` | 2.0s | Per-talent in talents.json |
-| Base range | `base_range` | 150px | Per-talent in talents.json |
-| Lunge duration | `lunge_duration` | 0.1s | Per-talent in talents.json |
-| Explosion falloff | `explosion_falloff` | 30% | Per-talent AND per-enemy-ability |
-| Armor constant | `armor_constant` | 50.0 | gameplay_settings.json |
-| Effect colors | `icon_color` | (fallback) | Per-effect in status_effects.json |
+```gdscript
+# When executing a skill:
+var lunge_duration: float
 
-### gameplay_settings.json Keys
+# 1. Check talent data first
+if talent.lunge_duration > 0:
+    lunge_duration = talent.lunge_duration
+# 2. Fall back to database setting
+elif DatabaseLoader.has_setting("base_lunge_duration"):
+    lunge_duration = DatabaseLoader.get_setting("base_lunge_duration", 0.1)
+# 3. Use code default
+else:
+    lunge_duration = 0.1
+```
+
+### GameplaySettings Database
+
+All base values are stored in `gameplay_settings.json` and loaded by `DatabaseLoader`:
+
+**Base Stats (Character)**
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `armor_constant` | 50.0 | The "k" value in armor formula: `armor / (armor + k * level)` |
-| `default_crit_multiplier` | 150.0 | Base crit damage multiplier % |
-| `player_move_speed` | 150.0 | Default player movement speed |
-| `player_dodge_speed` | 300.0 | Dodge roll speed |
-| `player_dodge_duration` | 0.3 | Dodge roll duration in seconds |
-| `player_dodge_stamina_cost` | 25.0 | Stamina cost for dodge |
-| `player_attack_lunge_force` | 80.0 | Default attack lunge force |
-| `player_attack_lunge_duration` | 0.1 | Default attack lunge duration |
+| `base_health_flat` | 80.0 | Starting health before vitality |
+| `base_mana_flat` | 30.0 | Starting mana before energy |
+| `base_stamina_flat` | 100.0 | Starting stamina |
+| `base_crit_chance` | 5.0 | Base critical hit chance % |
+| `base_crit_damage` | 150.0 | Base critical damage multiplier % |
+
+**Derived Stat Conversions**
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `health_per_vitality` | 2.0 | Health gained per point of vitality |
+| `mana_per_energy` | 1.5 | Mana gained per point of energy |
+| `crit_damage_per_luck` | 1.0 | Crit damage % gained per point of luck |
+
+**Regeneration Rates**
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `base_life_regen` | 1.0 | Health regenerated per second |
+| `base_mana_regen` | 0.5 | Mana regenerated per second |
+| `base_stamina_regen` | 10.0 | Stamina regenerated per second |
+
+**Movement & Combat**
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `base_move_speed` | 150.0 | Default player movement speed |
+| `base_dodge_speed` | 300.0 | Dodge roll speed |
+| `base_dodge_duration` | 0.3 | Dodge roll duration in seconds |
+| `base_dodge_stamina_cost` | 25.0 | Stamina cost for dodge |
+| `base_lunge_force` | 80.0 | Default attack lunge force |
+| `base_lunge_duration` | 0.1 | Default attack lunge duration |
+| `armor_constant` | 50.0 | The "k" in armor formula |
+
+### Derived vs Stored Stats
+
+Some stats are **derived** (calculated) rather than stored:
+
+```gdscript
+# Stored in database/character - these are BASE values
+var health_base_flat: float = 80.0    # From GameplaySettings
+var vitality: int = 10                 # From character/equipment
+
+# Derived at runtime - NEVER stored in database
+var max_health: float = health_base_flat + (vitality * health_per_vitality)
+var max_mana: float = mana_base_flat + (energy * mana_per_energy)
+var critical_damage: float = crit_damage_base + (luck * crit_damage_per_luck)
+```
+
+**Why This Matters:**
+- Primary stats (STR, DEX, INT) are for item requirements only
+- VIT, ENE, LCK directly affect derived stats
+- Equipment bonuses stack additively before derivation
+
+### Skill Properties (Per-Talent)
+
+Each skill can define its own values in `talents.json`:
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `hit_range` | float | 50 | Melee/projectile range in pixels |
+| `hit_arc` | float | 90 | Cone angle for melee (360 = all around) |
+| `lunge_force` | float | 80 | Forward momentum on attack |
+| `lunge_duration` | float | 0.1 | How long lunge lasts |
+| `explosion_radius` | float | 0 | AOE size for magic |
+| `projectile_speed` | float | 400 | Speed of projectiles |
+| `cast_time` | float | 0 | Channel time before effect |
+| `recovery_time` | float | 0.3 | Input lockout after attack |
+| `cooldown` | float | 0 | Time before reuse |
+| `min_charge_time` | float | 0.5 | Minimum hold for charged attacks |
+| `max_charge_time` | float | 2.0 | Maximum charge time |
+| `base_range` | float | 150 | Range at minimum charge |
+| `weak_shot_damage_percent` | float | 30 | Damage % if released early |
+
+---
+
+## Equipment Modifier System
+
+Equipment can provide percentage bonuses to skill properties. This allows items to enhance specific playstyles.
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  FORMULA: final_value = talent_value × (1 + bonus% / 100)  │
+└─────────────────────────────────────────────────────────────┘
+
+Example:
+- Talent hit_range: 60 pixels
+- Equipment bonus: +25% hit_range
+- Final: 60 × (1 + 25/100) = 60 × 1.25 = 75 pixels
+```
+
+### Available Skill Modifiers
+
+Equipment affixes can modify these skill properties:
+
+| Modifier | Effect | Example |
+|----------|--------|---------|
+| `hit_range` | Increases melee/projectile range | "+15% Hit Range" |
+| `hit_arc` | Wider melee attack arc | "+20% Hit Arc" |
+| `lunge_force` | Stronger forward momentum | "+10% Lunge Force" |
+| `lunge_duration` | Longer lunge movement | "+25% Lunge Duration" |
+| `explosion_radius` | Larger AOE effects | "+30% Explosion Radius" |
+| `projectile_speed` | Faster projectiles | "+15% Projectile Speed" |
+| `cast_speed` | Faster spell casting | "+20% Cast Speed" (reduces cast_time) |
+| `cooldown_reduction` | Lower cooldowns | "+10% Cooldown Reduction" (capped at 75%) |
+
+### Implementation (combat_hud.gd)
+
+```gdscript
+# Get modified skill values with equipment bonuses applied
+static func calc_skill_value(base_value: float, stat_name: String) -> float:
+    if base_value <= 0:
+        return base_value
+    var bonus := PlayerStats.get_equipment_bonus(stat_name)
+    return base_value * (1.0 + bonus / 100.0)
+
+static func get_hit_range(talent: TalentData) -> float:
+    return calc_skill_value(talent.hit_range, "hit_range")
+
+static func get_explosion_radius(talent: TalentData) -> float:
+    return calc_skill_value(talent.explosion_radius, "explosion_radius")
+
+# Special handling for cast_speed (inverse - faster = less time)
+static func get_cast_time(talent: TalentData) -> float:
+    var cast_speed_bonus := PlayerStats.get_equipment_bonus("cast_speed")
+    if cast_speed_bonus > 0 and talent.cast_time > 0:
+        return talent.cast_time / (1.0 + cast_speed_bonus / 100.0)
+    return talent.cast_time
+
+# Special handling for cooldown reduction (capped at 75%)
+static func get_cooldown(talent: TalentData) -> float:
+    var cdr := PlayerStats.get_equipment_bonus("cooldown_reduction")
+    if cdr > 0 and talent.cooldown > 0:
+        return talent.cooldown * (1.0 - minf(cdr, 75.0) / 100.0)
+    return talent.cooldown
+```
+
+### Adding Skill Modifiers to Items
+
+In the Excel database, add skill modifiers to the Affixes sheet:
+
+```
+ID: pre_extended
+Name: Extended
+Type: prefix
+Stat Modifier: hit_range
+Min Value: 10
+Max Value: 25
+Allowed Tags: weapon,melee
+```
+
+This creates items like "Extended Iron Sword" with "+10-25% Hit Range".
+
+### Files Involved
+
+| File | Purpose |
+|------|---------|
+| `autoloads/player_stats.gd` | Loads base values, calculates equipment bonuses |
+| `scripts/ui/combat/combat_hud.gd` | Applies modifiers when using skills |
+| `scripts/player/player_controller.gd` | Applies movement-related modifiers |
+| `databases/vba/ItemDatabase.bas` | Validates skill modifier affix names |
 
 ### Still Hardcoded (Requires Code Changes)
 
 | Category | Values | Location |
 |----------|--------|----------|
 | Enemy phases defaults | windup=0.2s, recovery=0.3s | ability_executor.gd |
+| CDR cap | 75% maximum | combat_hud.gd |
 
 ---
 
@@ -820,3 +1004,6 @@ func get_status_effects() -> Node:
 | 2026-01-02 | Initial documentation |
 | 2026-01-02 | Unified systems: StatusEffectComponent, MovementAction, DamageCalculator for enemies, SkillBase |
 | 2026-01-02 | Added Godot load order patterns (preload/path-based extends) for StatusEffectComponent |
+| 2026-01-02 | Major refactor: Database-driven stats system with 3-layer precedence (Talent > GameplaySettings > Code) |
+| 2026-01-02 | Added Equipment Modifier System for skill properties (hit_range, explosion_radius, cast_speed, etc.) |
+| 2026-01-02 | Clarified skill categories are examples, not rigid templates |
