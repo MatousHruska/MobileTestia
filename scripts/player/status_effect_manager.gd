@@ -4,7 +4,7 @@ class_name StatusEffectManager
 ## Persists across zone changes via PersistenceManager
 
 ## Signals
-signal effect_applied(effect_type: String, duration: float, show_in_hud: bool)
+signal effect_applied(effect_type: String, duration: float, show_in_hud: bool, is_debuff: bool)
 signal effect_removed(effect_type: String)
 signal effect_tick(effect_type: String, damage: float)
 signal heal_tick(effect_type: String, heal_amount: float)
@@ -121,7 +121,7 @@ func apply_dot(effect_type: String, duration: float, damage_per_tick: float, tic
 			"is_debuff": true,
 			"show_in_hud": show_in_hud
 		}
-		effect_applied.emit(effect_type, duration, show_in_hud)
+		effect_applied.emit(effect_type, duration, show_in_hud, true)
 		Debug.log("StatusEffect", "DoT applied", {
 			"type": effect_type,
 			"duration": duration,
@@ -182,7 +182,7 @@ func apply_hot(effect_type: String, duration: float, heal_per_tick: float, tick_
 			"is_debuff": false,
 			"show_in_hud": show_in_hud
 		}
-		effect_applied.emit(effect_type, duration, show_in_hud)
+		effect_applied.emit(effect_type, duration, show_in_hud, false)
 		Debug.log("StatusEffect", "HoT applied", {
 			"type": effect_type,
 			"duration": duration,
@@ -210,7 +210,7 @@ func apply_buff(effect_type: String, duration: float) -> void:
 			"is_debuff": false,
 			"show_in_hud": show_in_hud
 		}
-		effect_applied.emit(effect_type, duration, show_in_hud)
+		effect_applied.emit(effect_type, duration, show_in_hud, false)
 		Debug.log("StatusEffect", "Buff applied", {
 			"type": effect_type,
 			"duration": duration
@@ -233,7 +233,7 @@ func apply_permanent(effect_type: String, is_debuff: bool = false) -> void:
 			"is_debuff": is_debuff,
 			"show_in_hud": show_in_hud
 		}
-		effect_applied.emit(effect_type, 0.0, show_in_hud)
+		effect_applied.emit(effect_type, 0.0, show_in_hud, is_debuff)
 		Debug.log("StatusEffect", "Permanent effect applied", effect_type)
 		_save_persisted_effects()
 
@@ -309,7 +309,8 @@ func _load_persisted_effects() -> void:
 		_active_effects[effect_type] = effect_data.duplicate()
 		# Emit signal for UI to pick up
 		var show_in_hud: bool = effect_data.get("show_in_hud", true)
-		effect_applied.emit(effect_type, effect_data.remaining_duration, show_in_hud)
+		var is_debuff: bool = effect_data.get("is_debuff", true)
+		effect_applied.emit(effect_type, effect_data.remaining_duration, show_in_hud, is_debuff)
 
 	Debug.log("StatusEffect", "Loaded persisted effects", persisted.keys())
 
