@@ -31,6 +31,7 @@ signal exploded(position: Vector2, projectile: MagicProjectile)
 ## Visual
 @export var projectile_color: Color = Color(1.0, 0.5, 0.1, 1.0)  ## Fireball orange
 @export var explosion_color: Color = Color(1.0, 0.3, 0.0, 1.0)   ## Explosion red-orange
+@export var projectile_size: float = 12.0  ## Radius of projectile visual
 
 ## Damage info (set by spawner)
 var damage_type: String = "fire"
@@ -43,6 +44,7 @@ var source: Node2D = null
 ## Flight state
 var direction: Vector2 = Vector2.RIGHT
 var start_position: Vector2 = Vector2.ZERO
+var target_position: Vector2 = Vector2.ZERO  ## Where explosion will occur
 var travel_distance: float = 0.0
 var current_speed: float = 0.0
 var is_flying: bool = false
@@ -52,12 +54,13 @@ var contacted_targets: Array[Node2D] = []
 
 ## Visual components
 var collision_shape: CollisionShape2D = null
-var target_indicator: Node2D = null  ## Shows explosion radius at target
+var target_indicator: Node2D = null  ## Shows explosion radius at target (added to world, not child)
+var raycast: RayCast2D = null  ## For wall detection
 
 
 func _ready() -> void:
 	_setup_collision()
-	_setup_target_indicator()
+	_setup_raycast()
 
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
@@ -65,22 +68,24 @@ func _ready() -> void:
 
 func _draw() -> void:
 	## Draw the projectile as a visible circle
+	if not is_flying:
+		return
 	# Main projectile body
-	draw_circle(Vector2.ZERO, 12.0, projectile_color)
+	draw_circle(Vector2.ZERO, projectile_size, projectile_color)
 	# Bright center
-	draw_circle(Vector2.ZERO, 6.0, projectile_color.lightened(0.5))
+	draw_circle(Vector2.ZERO, projectile_size * 0.5, projectile_color.lightened(0.5))
 	# White hot core
-	draw_circle(Vector2.ZERO, 3.0, Color.WHITE)
+	draw_circle(Vector2.ZERO, projectile_size * 0.25, Color.WHITE)
 
 
-func _setup_target_indicator() -> void:
-	## Create target indicator that shows where explosion will land
-	target_indicator = ExplosionTargetIndicatorClass.new()
-	target_indicator.name = "TargetIndicator"
-	target_indicator.setup(explosion_radius, explosion_color)
-	# Position at max range ahead
-	target_indicator.position = direction * max_range
-	add_child(target_indicator)
+func _setup_raycast() -> void:
+	## Setup raycast for wall detection
+	raycast = RayCast2D.new()
+	raycast.name = "WallRaycast"
+	raycast.enabled = true
+	raycast.collision_mask = 0b00000100  # Layer 3 (obstacles/walls)
+	raycast.target_position = Vector2(30, 0)  # Will be updated in physics_process
+	add_child(raycast)
 
 
 func _setup_collision() -> void:
@@ -100,15 +105,23 @@ func _physics_process(delta: float) -> void:
 	if not is_flying:
 		return
 
+	# Update raycast direction
+	if raycast:
+		raycast.target_position = direction * 20.0
+		raycast.force_raycast_update()
+
+		# Check for wall hit
+		if raycast.is_colliding() and explodes_on_wall:
+			var collider = raycast.get_collider()
+			if collider and (collider.is_in_group("walls") or collider.is_in_group("obstacles") or collider is TileMap):
+				Debug.log("Combat", "Fireball hit wall via raycast")
+				_explode()
+				return
+
 	# Move projectile (straight line, no arc)
 	var movement := direction * current_speed * delta
 	travel_distance += movement.length()
 	global_position += movement
-
-	# Update target indicator position (relative to projectile, at remaining distance)
-	if target_indicator:
-		var remaining := max_range - travel_distance
-		target_indicator.position = direction * remaining
 
 	# Redraw projectile
 	queue_redraw()
@@ -130,16 +143,31 @@ func launch(from: Vector2, dir: Vector2, speed_multiplier: float = 1.0) -> void:
 	travel_distance = 0.0
 	is_flying = true
 
-	# Update target indicator to show explosion location
-	if target_indicator:
-		target_indicator.position = direction * max_range
+	# Calculate target position
+	target_position = from + direction * max_range
+
+	# Create target indicator in the world (not as child)
+	_create_target_indicator()
 
 	Debug.log("Combat", "Magic projectile launched", {
 		"from": from,
 		"direction": direction,
 		"speed": current_speed,
-		"max_range": max_range
+		"max_range": max_range,
+		"target": target_position
 	})
+
+
+func _create_target_indicator() -> void:
+	## Create target indicator at explosion destination
+	if not get_parent():
+		return
+
+	target_indicator = ExplosionTargetIndicatorClass.new()
+	target_indicator.name = "FireballTarget"
+	target_indicator.setup(explosion_radius, explosion_color)
+	target_indicator.global_position = target_position
+	get_parent().add_child(target_indicator)
 
 
 func set_explosion_damage(dmg: float) -> void:
@@ -179,6 +207,7 @@ func _handle_collision(target: Node2D) -> void:
 	if is_enemy:
 		_contact_enemy(target)
 	elif is_obstacle and explodes_on_wall:
+		Debug.log("Combat", "Fireball hit obstacle via collision")
 		_explode()
 
 
@@ -223,6 +252,9 @@ func _explode() -> void:
 	_spawn_explosion_effect()
 
 	exploded.emit(global_position, self)
+
+	# Remove target indicator
+	_remove_target_indicator()
 
 	# Destroy projectile
 	_destroy()
@@ -276,8 +308,16 @@ func _spawn_explosion_effect() -> void:
 	get_parent().add_child(explosion)
 
 
+func _remove_target_indicator() -> void:
+	## Remove target indicator from world
+	if target_indicator and is_instance_valid(target_indicator):
+		target_indicator.queue_free()
+		target_indicator = null
+
+
 func _destroy() -> void:
 	is_flying = false
+	_remove_target_indicator()
 
 	var tween := create_tween()
 	tween.tween_property(self, "modulate:a", 0.0, 0.1)
