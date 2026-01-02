@@ -68,7 +68,7 @@
       "rank_descriptions": "Deals 100% weapon damage. Hold to charge for longer range.",
       "icon_name": "tal_basic_shot",
       "required_weapon_category": "ranged",
-      "min_charge_time": 0.5,
+      "min_charge_time": 0,
       "weak_shot_damage_percent": 30,
       "weak_shot_range_percent": 30
     }
