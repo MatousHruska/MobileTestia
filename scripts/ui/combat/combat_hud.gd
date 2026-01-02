@@ -500,7 +500,7 @@ func _fire_projectile(talent: TalentData, direction: Vector2, range_dist: float,
 	# Calculate damage with multiplier (for weak shots)
 	var invested := TalentManager.get_invested_points(talent.id)
 	var damage_result := DamageCalculator.calculate_final_damage(talent, invested)
-	var final_damage := damage_result.final_damage * damage_multiplier
+	var final_damage: float = damage_result.final_damage * damage_multiplier
 
 	# Create projectile
 	var projectile: Area2D = ProjectileClass.create_arrow()
