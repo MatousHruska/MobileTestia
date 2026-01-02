@@ -71,6 +71,9 @@ var _spawner: Node = null  ## Reference to spawner that created this enemy
 var home_position: Vector2 = Vector2.ZERO
 var _use_ability_system: bool = false  ## True if using new ability system
 
+## Status effects (DoTs, debuffs)
+var _status_effects: Dictionary = {}  ## key: effect_id, value: { remaining_duration, tick_timer, damage_per_tick, tick_interval }
+
 
 func _ready() -> void:
 	super._ready()
@@ -116,6 +119,7 @@ func _physics_process(delta: float) -> void:
 
 	_process_timers(delta)
 	_process_health_regen(delta)
+	_process_status_effects(delta)
 	super._physics_process(delta)
 
 
@@ -134,6 +138,79 @@ func _process_timers(delta: float) -> void:
 func _process_health_regen(delta: float) -> void:
 	if health_regen > 0 and current_health < max_health:
 		current_health += health_regen * delta
+
+
+func _process_status_effects(delta: float) -> void:
+	## Process active status effects (DoTs)
+	var expired_effects: Array[String] = []
+
+	for effect_id in _status_effects.keys():
+		var effect: Dictionary = _status_effects[effect_id]
+
+		# Update timers
+		effect.remaining_duration -= delta
+		effect.tick_timer -= delta
+
+		# Apply DoT damage on tick
+		if effect.tick_timer <= 0 and effect.damage_per_tick > 0:
+			var dot_damage: float = effect.damage_per_tick
+			current_health -= dot_damage
+			effect.tick_timer = effect.tick_interval
+			Debug.log("Combat", "%s took DoT damage from %s" % [enemy_name, effect_id], int(dot_damage))
+
+			# Visual feedback for burning
+			if effect_id == "status_burning":
+				modulate = Color(1.0, 0.6, 0.3)
+				_damage_flash_timer = 0.1
+
+		# Check expiration
+		if effect.remaining_duration <= 0:
+			expired_effects.append(effect_id)
+
+	# Remove expired effects
+	for effect_id in expired_effects:
+		_status_effects.erase(effect_id)
+		Debug.log("Combat", "%s: %s expired" % [enemy_name, effect_id])
+
+
+func apply_status_effect(effect_id: String, source_node: Node2D = null) -> void:
+	## Apply a status effect from the database (e.g., "status_burning")
+	if is_dead:
+		return
+
+	# Look up effect in database
+	if not DatabaseLoader.status_effects.has(effect_id):
+		Debug.warn("Combat", "Unknown status effect: %s" % effect_id)
+		return
+
+	var effect_data: Dictionary = DatabaseLoader.status_effects[effect_id]
+	var effect_type: String = effect_data.get("type", "")
+
+	# Handle DoT debuffs
+	if effect_type == "debuff_dot":
+		var duration: float = effect_data.get("duration", 3.0)
+		var value: float = effect_data.get("value", -5.0)
+		var tick_interval: float = effect_data.get("tick_interval", 1.0)
+		var damage_per_tick: float = absf(value)  # Convert negative to positive damage
+
+		if effect_id in _status_effects:
+			# Refresh duration if already active
+			_status_effects[effect_id].remaining_duration = duration
+			Debug.log("Combat", "%s: %s refreshed" % [enemy_name, effect_id])
+		else:
+			# Apply new effect
+			_status_effects[effect_id] = {
+				"remaining_duration": duration,
+				"tick_timer": tick_interval,
+				"damage_per_tick": damage_per_tick,
+				"tick_interval": tick_interval,
+				"source": source_node
+			}
+			Debug.log("Combat", "%s: %s applied" % [enemy_name, effect_id], {
+				"duration": duration,
+				"damage": damage_per_tick,
+				"interval": tick_interval
+			})
 
 
 ## Setup
