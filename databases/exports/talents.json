@@ -31,7 +31,10 @@
       "description": "A simple weapon swing in front of you.",
       "rank_descriptions": "Deals 100% weapon damage.",
       "icon_name": "tal_basic_strike",
-      "required_weapon_category": "melee"
+      "required_weapon_category": "melee",
+      "min_charge_time": 0,
+      "weak_shot_damage_percent": 0,
+      "weak_shot_range_percent": 0
     },
     {
       "id": "tal_basic_shot",
@@ -64,7 +67,10 @@
       "description": "Fire an arrow at your target. Hold to aim and increase range.",
       "rank_descriptions": "Deals 100% weapon damage. Hold to charge for longer range.",
       "icon_name": "tal_basic_shot",
-      "required_weapon_category": "ranged"
+      "required_weapon_category": "ranged",
+      "min_charge_time": 0.5,
+      "weak_shot_damage_percent": 30,
+      "weak_shot_range_percent": 30
     }
   ]
 }

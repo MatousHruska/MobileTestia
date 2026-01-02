@@ -78,6 +78,11 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, SUMMON, TELEPORT
 ## Required weapon category (melee, melee_1h, melee_2h, ranged, magic, or empty for any)
 @export var required_weapon_category: String = ""
 
+## Projectile charge settings (for hold-to-charge ranged skills)
+@export var min_charge_time: float = 0.5           # Min seconds to charge for full damage
+@export var weak_shot_damage_percent: float = 30.0 # Damage % for quick shot (0 = disabled)
+@export var weak_shot_range_percent: float = 30.0  # Range % for quick shot
+
 ## Legacy field (kept for backwards compatibility)
 @export var damage_per_point: float = 0.0
 
@@ -163,6 +168,11 @@ static func from_dict(data: Dictionary) -> TalentData:
 
 	# Required weapon category
 	talent.required_weapon_category = data.get("required_weapon_category", "")
+
+	# Projectile charge settings
+	talent.min_charge_time = float(data.get("min_charge_time", 0.5))
+	talent.weak_shot_damage_percent = float(data.get("weak_shot_damage_percent", 30))
+	talent.weak_shot_range_percent = float(data.get("weak_shot_range_percent", 30))
 
 	# Legacy fields
 	talent.damage_per_point = float(data.get("damage_per_point", 0))

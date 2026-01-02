@@ -32,8 +32,7 @@ var aiming_slot_index: int = -1
 var aiming_talent: TalentData = null
 var aim_start_time: float = 0.0
 
-## Charge constants
-const MIN_CHARGE_TIME: float = 0.5      ## Minimum time to hold before shooting
+## Charge constants (min_charge_time is now database-driven per talent)
 const MAX_CHARGE_TIME: float = 2.0      ## Maximum charge time for full range
 const BASE_RANGE: float = 150.0         ## Range at minimum charge
 const MAX_RANGE: float = 300.0          ## Range at maximum charge
@@ -415,20 +414,33 @@ func _on_ability_released(slot_index: int, ability_id: String, hold_duration: fl
 	if not is_aiming or slot_index != aiming_slot_index:
 		return
 
-	# Check minimum charge time
-	if hold_duration < MIN_CHARGE_TIME:
-		Debug.log("Combat", "Charge too short, cancelled")
-		_cancel_aiming()
-		return
+	# Get charge settings from talent (database-driven)
+	var min_charge := aiming_talent.min_charge_time
+	var weak_damage_pct := aiming_talent.weak_shot_damage_percent
+	var weak_range_pct := aiming_talent.weak_shot_range_percent
 
-	# Calculate charge progress (0-1)
-	var charge_progress := clampf((hold_duration - MIN_CHARGE_TIME) / (MAX_CHARGE_TIME - MIN_CHARGE_TIME), 0.0, 1.0)
+	var is_weak_shot := hold_duration < min_charge
+	var damage_multiplier := 1.0
+	var effective_range := MAX_RANGE
 
-	# Calculate range based on charge
-	var effective_range := lerpf(BASE_RANGE, MAX_RANGE, charge_progress)
+	if is_weak_shot:
+		# Check if weak shot is enabled (damage > 0)
+		if weak_damage_pct <= 0:
+			Debug.log("Combat", "Charge too short, weak shot disabled")
+			_cancel_aiming()
+			return
+
+		# Fire weak shot with reduced damage and range
+		damage_multiplier = weak_damage_pct / 100.0
+		effective_range = MAX_RANGE * (weak_range_pct / 100.0)
+		Debug.log("Combat", "Weak shot fired", {"damage%": weak_damage_pct, "range%": weak_range_pct})
+	else:
+		# Calculate charge progress (0-1) for full shots
+		var charge_progress := clampf((hold_duration - min_charge) / (MAX_CHARGE_TIME - min_charge), 0.0, 1.0)
+		effective_range = lerpf(BASE_RANGE, MAX_RANGE, charge_progress)
 
 	# Fire the projectile
-	_fire_projectile(aiming_talent, aim_indicator.get_aim_direction(), effective_range, charge_progress)
+	_fire_projectile(aiming_talent, aim_indicator.get_aim_direction(), effective_range, damage_multiplier)
 
 	# Start cooldown
 	if aiming_talent.cooldown > 0 and slot_index >= 0 and slot_index < ability_slots.size():
@@ -468,14 +480,15 @@ func _update_aiming() -> void:
 
 	aim_indicator.update_direction(aim_dir)
 
-	# Update charge progress
+	# Update charge progress (use talent's min_charge_time)
 	var current_time := Time.get_ticks_msec() / 1000.0
 	var hold_duration := current_time - aim_start_time
-	var charge_progress := clampf((hold_duration - MIN_CHARGE_TIME) / (MAX_CHARGE_TIME - MIN_CHARGE_TIME), 0.0, 1.0)
+	var min_charge := aiming_talent.min_charge_time if aiming_talent else 0.5
+	var charge_progress := clampf((hold_duration - min_charge) / (MAX_CHARGE_TIME - min_charge), 0.0, 1.0)
 	aim_indicator.update_charge(charge_progress)
 
 
-func _fire_projectile(talent: TalentData, direction: Vector2, range_dist: float, charge_progress: float) -> void:
+func _fire_projectile(talent: TalentData, direction: Vector2, range_dist: float, damage_multiplier: float) -> void:
 	## Fire a projectile in the given direction
 	if not player:
 		return
@@ -484,19 +497,20 @@ func _fire_projectile(talent: TalentData, direction: Vector2, range_dist: float,
 	if talent.stamina_cost > 0:
 		PlayerStats.use_stamina(talent.stamina_cost)
 
-	# Calculate damage
+	# Calculate damage with multiplier (for weak shots)
 	var invested := TalentManager.get_invested_points(talent.id)
 	var damage_result := DamageCalculator.calculate_final_damage(talent, invested)
+	var final_damage := damage_result.final_damage * damage_multiplier
 
 	# Create projectile
 	var projectile: Area2D = ProjectileClass.create_arrow()
 	projectile.max_range = range_dist
-	projectile.damage = damage_result.final_damage
+	projectile.damage = final_damage
 	projectile.damage_type = _get_damage_type_string(talent.damage_type_id)
 	projectile.source = player
 
-	# Speed multiplier based on charge
-	var speed_mult := lerpf(0.8, 1.2, charge_progress)
+	# Speed multiplier based on damage (weak shots are slower)
+	var speed_mult := lerpf(0.7, 1.0, damage_multiplier)
 
 	# Add to world
 	if player.get_parent():
@@ -513,8 +527,9 @@ func _fire_projectile(talent: TalentData, direction: Vector2, range_dist: float,
 	Debug.log("Combat", "Fired projectile: %s" % talent.talent_name, {
 		"direction": direction,
 		"range": range_dist,
-		"damage": int(damage_result.final_damage),
-		"crit": damage_result.is_critical
+		"damage": int(final_damage),
+		"crit": damage_result.is_critical,
+		"multiplier": damage_multiplier
 	})
 
 
