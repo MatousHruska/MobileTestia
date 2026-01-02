@@ -10,7 +10,7 @@ class_name TalentData
 enum TalentType { PASSIVE, ACTIVE }
 
 ## Effect type for active talents
-enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, SUMMON, TELEPORT, AOE }
+enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, MAGIC_PROJECTILE, SUMMON, TELEPORT, AOE }
 
 #===============================================================================
 # IDENTIFICATION
@@ -82,6 +82,12 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, SUMMON, TELEPORT
 @export var min_charge_time: float = 0.5           # Min seconds to charge for full damage
 @export var weak_shot_damage_percent: float = 30.0 # Damage % for quick shot (0 = disabled)
 @export var weak_shot_range_percent: float = 30.0  # Range % for quick shot
+
+## Magic projectile settings
+@export var cast_time: float = 0.0                 # Cast time before firing (magic skills)
+@export var explosion_radius: float = 0.0          # AOE explosion radius (magic projectiles)
+@export var contact_status_effect: String = ""     # Status effect applied on projectile contact
+@export var projectile_speed: float = 0.0          # Projectile travel speed (0 = default)
 
 ## Legacy field (kept for backwards compatibility)
 @export var damage_per_point: float = 0.0
@@ -173,6 +179,12 @@ static func from_dict(data: Dictionary) -> TalentData:
 	talent.min_charge_time = float(data.get("min_charge_time", 0.5))
 	talent.weak_shot_damage_percent = float(data.get("weak_shot_damage_percent", 30))
 	talent.weak_shot_range_percent = float(data.get("weak_shot_range_percent", 30))
+
+	# Magic projectile settings
+	talent.cast_time = float(data.get("cast_time", 0))
+	talent.explosion_radius = float(data.get("explosion_radius", 0))
+	talent.contact_status_effect = data.get("contact_status_effect", "")
+	talent.projectile_speed = float(data.get("projectile_speed", 0))
 
 	# Legacy fields
 	talent.damage_per_point = float(data.get("damage_per_point", 0))

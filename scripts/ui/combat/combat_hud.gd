@@ -6,6 +6,7 @@ class_name CombatHUD
 ## Preload combat classes (needed until Godot generates .uid files)
 const AimIndicatorClass = preload("res://scripts/combat/aim_indicator.gd")
 const ProjectileClass = preload("res://scripts/combat/projectile.gd")
+const MagicProjectileClass = preload("res://scripts/combat/magic_projectile.gd")
 
 signal attack_pressed
 signal ability_pressed(slot_index: int, ability_id: String)
@@ -31,6 +32,13 @@ var is_aiming: bool = false
 var aiming_slot_index: int = -1
 var aiming_talent: TalentData = null
 var aim_start_time: float = 0.0
+
+## Magic casting
+var is_casting: bool = false
+var casting_slot_index: int = -1
+var casting_talent: TalentData = null
+var cast_start_time: float = 0.0
+var cast_direction: Vector2 = Vector2.DOWN
 
 ## Charge constants (min_charge_time is now database-driven per talent)
 const MAX_CHARGE_TIME: float = 2.0      ## Maximum charge time for full range
@@ -68,6 +76,10 @@ func _process(_delta: float) -> void:
 	# Update aim indicator during aiming
 	if is_aiming and aim_indicator and player:
 		_update_aiming()
+
+	# Update magic casting
+	if is_casting and casting_talent and player:
+		_update_casting()
 
 
 func _connect_talent_manager() -> void:
@@ -325,6 +337,11 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 		Debug.log("Combat", "Not enough stamina for %s" % talent.talent_name)
 		return
 
+	# Check if this is a magic projectile with cast time
+	if talent.effect_type == TalentData.EffectType.MAGIC_PROJECTILE and talent.cast_time > 0:
+		_start_casting(slot_index, talent)
+		return
+
 	# Consume resources
 	if talent.mana_cost > 0:
 		PlayerStats.use_mana(talent.mana_cost)
@@ -547,6 +564,118 @@ func _end_aiming() -> void:
 
 	if aim_indicator:
 		aim_indicator.deactivate()
+
+
+#===============================================================================
+# MAGIC CASTING
+#===============================================================================
+
+func _start_casting(slot_index: int, talent: TalentData) -> void:
+	## Start casting a magic projectile spell
+	if not player:
+		return
+
+	# Consume resources immediately
+	if talent.mana_cost > 0:
+		PlayerStats.use_mana(talent.mana_cost)
+	if talent.stamina_cost > 0:
+		PlayerStats.use_stamina(talent.stamina_cost)
+
+	# Set up casting state
+	is_casting = true
+	casting_slot_index = slot_index
+	casting_talent = talent
+	cast_start_time = Time.get_ticks_msec() / 1000.0
+	cast_direction = _get_player_facing_vector()
+
+	# Lock player during cast (optional, for short cast times this feels smoother without)
+	# player.apply_recovery_lockout(talent.cast_time)
+
+	Debug.log("Combat", "Started casting %s" % talent.talent_name, {
+		"cast_time": talent.cast_time,
+		"direction": cast_direction
+	})
+
+
+func _update_casting() -> void:
+	## Update casting state - check completion and update direction
+	if not is_casting or not casting_talent:
+		return
+
+	# Update cast direction based on player input
+	if player.input_direction.length_squared() > 0.01:
+		cast_direction = player.input_direction.normalized()
+	else:
+		cast_direction = _get_player_facing_vector()
+
+	# Check if cast time has completed
+	var current_time := Time.get_ticks_msec() / 1000.0
+	var elapsed := current_time - cast_start_time
+
+	if elapsed >= casting_talent.cast_time:
+		# Cast complete, fire the magic projectile
+		_fire_magic_projectile(casting_talent, cast_direction)
+
+		# Start cooldown
+		if casting_talent.cooldown > 0 and casting_slot_index >= 0 and casting_slot_index < ability_slots.size():
+			ability_slots[casting_slot_index].start_cooldown(casting_talent.cooldown)
+
+		# End casting
+		_end_casting()
+
+
+func _fire_magic_projectile(talent: TalentData, direction: Vector2) -> void:
+	## Fire a magic projectile (fireball etc)
+	if not player:
+		return
+
+	# Calculate damage
+	var invested := TalentManager.get_invested_points(talent.id)
+	var damage_result := DamageCalculator.calculate_final_damage(talent, invested)
+
+	# Create magic projectile
+	var projectile: Area2D = MagicProjectileClass.new()
+	projectile.name = talent.talent_name.replace(" ", "")
+
+	# Set projectile properties from talent
+	projectile.base_speed = talent.projectile_speed if talent.projectile_speed > 0 else 350.0
+	projectile.max_range = talent.hit_range
+	projectile.explosion_radius = talent.explosion_radius
+	projectile.set_explosion_damage(damage_result.final_damage)
+	projectile.damage_type = _get_damage_type_string(talent.damage_type_id)
+	projectile.source = player
+
+	# Set contact status effect
+	if not talent.contact_status_effect.is_empty():
+		projectile.set_contact_effect(talent.contact_status_effect, 0.0)
+
+	# Add to world
+	if player.get_parent():
+		player.get_parent().add_child(projectile)
+
+	# Launch projectile
+	var spawn_pos := player.global_position
+	projectile.launch(spawn_pos, direction)
+
+	# Apply recovery lockout after firing
+	if talent.recovery_time > 0:
+		player.apply_recovery_lockout(talent.recovery_time)
+
+	Debug.log("Combat", "Fired magic projectile: %s" % talent.talent_name, {
+		"direction": direction,
+		"range": talent.hit_range,
+		"explosion_radius": talent.explosion_radius,
+		"damage": int(damage_result.final_damage),
+		"crit": damage_result.is_critical,
+		"status_effect": talent.contact_status_effect
+	})
+
+
+func _end_casting() -> void:
+	## Clean up after casting completes
+	is_casting = false
+	casting_slot_index = -1
+	casting_talent = null
 
 
 func _apply_skill_mechanics(talent: TalentData) -> void:

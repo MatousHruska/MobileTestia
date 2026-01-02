@@ -1,0 +1,315 @@
+extends Area2D
+class_name MagicProjectile
+## MagicProjectile - A magic projectile that passes through enemies and explodes at destination
+## Used for spells like fireball that apply debuffs on contact and deal AOE damage on explosion
+
+signal hit_target(target: Node2D, projectile: MagicProjectile)
+signal exploded(position: Vector2, projectile: MagicProjectile)
+
+#===============================================================================
+# CONFIGURATION
+#===============================================================================
+
+## Movement
+@export var base_speed: float = 350.0   ## Base travel speed in pixels/sec
+@export var max_range: float = 300.0    ## Exact travel distance before explosion
+
+## Explosion
+@export var explosion_radius: float = 60.0   ## AOE radius on explosion
+@export var explosion_damage: float = 0.0    ## Damage dealt by explosion
+@export var explodes_on_wall: bool = true    ## Explode immediately on wall hit
+
+## Pass-through debuff
+@export var pass_through_enemies: bool = true     ## Pass through enemies instead of stopping
+@export var contact_status_effect: String = ""    ## Status effect to apply on contact (e.g., "status_burning")
+@export var contact_damage: float = 0.0           ## Damage on contact (optional, 0 = none)
+
+## Visual
+@export var projectile_color: Color = Color(1.0, 0.5, 0.1, 1.0)  ## Fireball orange
+@export var explosion_color: Color = Color(1.0, 0.3, 0.0, 1.0)   ## Explosion red-orange
+
+## Damage info (set by spawner)
+var damage_type: String = "fire"
+var source: Node2D = null
+
+#===============================================================================
+# STATE
+#===============================================================================
+
+## Flight state
+var direction: Vector2 = Vector2.RIGHT
+var start_position: Vector2 = Vector2.ZERO
+var travel_distance: float = 0.0
+var current_speed: float = 0.0
+var is_flying: bool = false
+
+## Contact tracking (for pass-through)
+var contacted_targets: Array[Node2D] = []
+
+## Visual components
+var sprite: Sprite2D = null
+var collision_shape: CollisionShape2D = null
+var glow_effect: PointLight2D = null
+
+
+func _ready() -> void:
+	_setup_visuals()
+	_setup_collision()
+
+	body_entered.connect(_on_body_entered)
+	area_entered.connect(_on_area_entered)
+
+
+func _setup_visuals() -> void:
+	## Create fireball sprite placeholder
+	sprite = Sprite2D.new()
+	sprite.name = "Sprite"
+
+	# Create a circular fireball texture
+	var size := 16
+	var fireball_image := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	fireball_image.fill(Color.TRANSPARENT)
+
+	var center := Vector2(size / 2.0, size / 2.0)
+	for x in range(size):
+		for y in range(size):
+			var pos := Vector2(x, y)
+			var dist := pos.distance_to(center)
+			var radius := size / 2.0 - 1
+
+			if dist < radius:
+				# Gradient from center (bright) to edge (darker)
+				var t := dist / radius
+				var color := projectile_color.lerp(Color(1.0, 0.2, 0.0, 0.8), t)
+				# Add some brightness in center
+				if dist < radius * 0.4:
+					color = color.lightened(0.3)
+				fireball_image.set_pixel(x, y, color)
+
+	var texture := ImageTexture.create_from_image(fireball_image)
+	sprite.texture = texture
+	add_child(sprite)
+
+	# Optional: Add glow effect
+	glow_effect = PointLight2D.new()
+	glow_effect.name = "Glow"
+	glow_effect.color = projectile_color
+	glow_effect.energy = 0.5
+	glow_effect.texture_scale = 0.3
+	# Use a simple white texture for glow
+	var glow_image := Image.create(32, 32, false, Image.FORMAT_RGBA8)
+	for x in range(32):
+		for y in range(32):
+			var pos := Vector2(x, y)
+			var dist := pos.distance_to(Vector2(16, 16))
+			var alpha := maxf(0, 1.0 - dist / 16.0)
+			glow_image.set_pixel(x, y, Color(1, 1, 1, alpha))
+	glow_effect.texture = ImageTexture.create_from_image(glow_image)
+	add_child(glow_effect)
+
+
+func _setup_collision() -> void:
+	collision_shape = CollisionShape2D.new()
+	collision_shape.name = "CollisionShape"
+
+	var circle := CircleShape2D.new()
+	circle.radius = 8.0
+	collision_shape.shape = circle
+	add_child(collision_shape)
+
+	collision_layer = 0
+	collision_mask = 0b00000110  # Enemies (layer 2) and obstacles (layer 3)
+
+
+func _physics_process(delta: float) -> void:
+	if not is_flying:
+		return
+
+	# Move projectile (straight line, no arc)
+	var movement := direction * current_speed * delta
+	travel_distance += movement.length()
+	global_position += movement
+
+	# Check if reached max range
+	if travel_distance >= max_range:
+		_explode()
+
+
+#===============================================================================
+# PUBLIC API
+#===============================================================================
+
+func launch(from: Vector2, dir: Vector2, speed_multiplier: float = 1.0) -> void:
+	start_position = from
+	global_position = from
+	direction = dir.normalized()
+	current_speed = base_speed * speed_multiplier
+	travel_distance = 0.0
+	is_flying = true
+
+	Debug.log("Combat", "Magic projectile launched", {
+		"from": from,
+		"direction": direction,
+		"speed": current_speed,
+		"max_range": max_range
+	})
+
+
+func set_explosion_damage(dmg: float) -> void:
+	explosion_damage = dmg
+
+
+func set_contact_effect(status_id: String, dmg: float = 0.0) -> void:
+	contact_status_effect = status_id
+	contact_damage = dmg
+
+
+#===============================================================================
+# COLLISION HANDLING
+#===============================================================================
+
+func _on_body_entered(body: Node2D) -> void:
+	_handle_collision(body)
+
+
+func _on_area_entered(area: Area2D) -> void:
+	var parent := area.get_parent()
+	if parent is Node2D:
+		_handle_collision(parent)
+
+
+func _handle_collision(target: Node2D) -> void:
+	if not is_flying:
+		return
+
+	# Skip already contacted targets
+	if target in contacted_targets:
+		return
+
+	var is_enemy := target.is_in_group("enemies")
+	var is_obstacle := target.is_in_group("obstacles") or target.is_in_group("walls")
+
+	if is_enemy:
+		_contact_enemy(target)
+	elif is_obstacle and explodes_on_wall:
+		_explode()
+
+
+func _contact_enemy(enemy: Node2D) -> void:
+	## Pass through enemy, apply debuff
+	contacted_targets.append(enemy)
+
+	# Apply contact damage if any
+	if contact_damage > 0 and enemy.has_method("take_damage"):
+		enemy.take_damage(contact_damage, source)
+
+	# Apply status effect
+	if not contact_status_effect.is_empty() and enemy.has_method("apply_status_effect"):
+		enemy.apply_status_effect(contact_status_effect, source)
+		Debug.log("Combat", "Applied %s to %s" % [contact_status_effect, enemy.name])
+
+	hit_target.emit(enemy, self)
+
+	# Spawn small hit effect
+	_spawn_contact_effect(enemy.global_position)
+
+	# Continue flying (pass-through)
+
+
+func _explode() -> void:
+	## Explode at current position, dealing AOE damage
+	if not is_flying:
+		return
+
+	is_flying = false
+
+	Debug.log("Combat", "Magic projectile exploded", {
+		"position": global_position,
+		"radius": explosion_radius,
+		"damage": explosion_damage
+	})
+
+	# Deal AOE damage to all enemies in radius
+	_apply_explosion_damage()
+
+	# Spawn explosion visual
+	_spawn_explosion_effect()
+
+	exploded.emit(global_position, self)
+
+	# Destroy projectile
+	_destroy()
+
+
+func _apply_explosion_damage() -> void:
+	## Find all enemies in explosion radius and damage them
+	if explosion_damage <= 0:
+		return
+
+	# Get all bodies in explosion radius using a physics query
+	var space_state := get_world_2d().direct_space_state
+	var query := PhysicsShapeQueryParameters2D.new()
+	var circle := CircleShape2D.new()
+	circle.radius = explosion_radius
+	query.shape = circle
+	query.transform = Transform2D(0, global_position)
+	query.collision_mask = 0b00000010  # Enemies only
+
+	var results := space_state.intersect_shape(query, 32)
+
+	for result in results:
+		var collider = result.get("collider")
+		if collider and collider.is_in_group("enemies"):
+			if collider.has_method("take_damage"):
+				# Calculate damage falloff based on distance (optional)
+				var dist := global_position.distance_to(collider.global_position)
+				var falloff := 1.0 - (dist / explosion_radius) * 0.3  # 30% falloff at edge
+				var final_dmg := explosion_damage * falloff
+
+				collider.take_damage(final_dmg, source)
+				Debug.log("Combat", "Explosion hit %s for %.0f damage" % [collider.name, final_dmg])
+
+
+func _spawn_contact_effect(pos: Vector2) -> void:
+	## Small effect when passing through enemy
+	if get_parent():
+		HitboxVisual.spawn_hit_effect(get_parent(), pos, damage_type)
+
+
+func _spawn_explosion_effect() -> void:
+	## Spawn explosion visual at current position
+	if not get_parent():
+		return
+
+	# Create explosion visual
+	var explosion := ExplosionEffect.new()
+	explosion.radius = explosion_radius
+	explosion.color = explosion_color
+	explosion.global_position = global_position
+	get_parent().add_child(explosion)
+
+
+func _destroy() -> void:
+	is_flying = false
+
+	var tween := create_tween()
+	tween.tween_property(self, "modulate:a", 0.0, 0.1)
+	tween.tween_callback(queue_free)
+
+
+#===============================================================================
+# FACTORY
+#===============================================================================
+
+static func create_fireball() -> MagicProjectile:
+	var fireball := MagicProjectile.new()
+	fireball.name = "Fireball"
+	fireball.base_speed = 350.0
+	fireball.max_range = 300.0
+	fireball.explosion_radius = 60.0
+	fireball.pass_through_enemies = true
+	fireball.explodes_on_wall = true
+	fireball.projectile_color = Color(1.0, 0.5, 0.1, 1.0)
+	fireball.explosion_color = Color(1.0, 0.3, 0.0, 1.0)
+	fireball.damage_type = "fire"
+	return fireball
