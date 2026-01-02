@@ -337,19 +337,19 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 		Debug.log("Combat", "Not enough stamina for %s" % talent.talent_name)
 		return
 
-	# Check if this is a magic projectile with cast time
+	# Check if this is a magic projectile
 	print("[ABILITY] Checking magic projectile: effect_type=%s (MAGIC_PROJECTILE=%s), cast_time=%s" % [
 		talent.effect_type, TalentData.EffectType.MAGIC_PROJECTILE, talent.cast_time
 	])
-	if talent.effect_type == TalentData.EffectType.MAGIC_PROJECTILE and talent.cast_time > 0:
-		print("[ABILITY] Detected magic projectile, starting cast!")
-		_start_casting(slot_index, talent)
+	if talent.effect_type == TalentData.EffectType.MAGIC_PROJECTILE:
+		print("[ABILITY] Detected magic projectile!")
+		if talent.cast_time > 0:
+			# Has cast time - start casting sequence
+			_start_casting(slot_index, talent)
+		else:
+			# No cast time - fire immediately
+			_fire_magic_projectile_instant(slot_index, talent)
 		return
-	else:
-		print("[ABILITY] Not a magic projectile (effect_type match=%s, cast_time>0=%s)" % [
-			talent.effect_type == TalentData.EffectType.MAGIC_PROJECTILE,
-			talent.cast_time > 0
-		])
 
 	# Consume resources
 	if talent.mana_cost > 0:
@@ -697,6 +697,28 @@ func _end_casting() -> void:
 	is_casting = false
 	casting_slot_index = -1
 	casting_talent = null
+
+
+func _fire_magic_projectile_instant(slot_index: int, talent: TalentData) -> void:
+	## Fire a magic projectile instantly (no cast time)
+	print("[CAST] _fire_magic_projectile_instant called for %s" % talent.talent_name)
+
+	# Consume resources
+	if talent.mana_cost > 0:
+		PlayerStats.use_mana(talent.mana_cost)
+	if talent.stamina_cost > 0:
+		PlayerStats.use_stamina(talent.stamina_cost)
+
+	# Get direction from player facing
+	var direction := _get_player_facing_vector()
+
+	# Fire the projectile
+	_fire_magic_projectile(talent, direction)
+
+	# Start cooldown
+	if slot_index >= 0 and slot_index < ability_slots.size():
+		if talent.cooldown > 0:
+			ability_slots[slot_index].start_cooldown(talent.cooldown)
 
 
 func _apply_skill_mechanics(talent: TalentData) -> void:
