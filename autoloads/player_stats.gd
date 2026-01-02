@@ -124,7 +124,7 @@ var attack_power: float = 0.0  # Flat bonus to weapon-based attacks
 var spell_power: float = 0.0   # Flat bonus to spell damage
 var attack_speed: float = 0.0  # Percentage bonus
 var critical_chance: float = 5.0  # Base 5%
-var critical_damage: float = BASE_CRIT_DAMAGE  # Base 150%
+var critical_damage: float = 150.0  # Base 150% (recalculated from database)
 
 ## Defensive Stats (Derived)
 var armor: float = 0.0
