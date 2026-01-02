@@ -264,11 +264,11 @@ Private Sub SetupEnemyAbilitiesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("EnemyAbilities")
     Dim headers As Variant
-    ' 21 columns for the expanded AI ability system
+    ' 22 columns for the expanded AI ability system
     headers = Array("id", "name", "description", "type", "damage_mult", "damage_type", _
                     "cooldown", "range_min", "range_max", "shape", "shape_size", "shape_angle", _
                     "windup", "recovery", "animation", "priority", "conditions", "effects_on_hit", _
-                    "projectile_speed", "dash_speed", "cardinal_only")
+                    "projectile_speed", "dash_speed", "cardinal_only", "explosion_falloff")
     SetHeaders ws, headers
 
     ' Add column notes
@@ -288,6 +288,7 @@ Private Sub SetupEnemyAbilitiesSheet()
     SafeAddComment ws.Cells(1, 19), "For projectile abilities (pixels/sec)"
     SafeAddComment ws.Cells(1, 20), "For dash abilities (pixels/sec)"
     SafeAddComment ws.Cells(1, 21), "TRUE/FALSE - snap attack to 4 cardinal directions (default TRUE)"
+    SafeAddComment ws.Cells(1, 22), "AOE: damage falloff % at edge (default 30, 0=no falloff)"
 End Sub
 
 Private Sub SetupEnemyVariantsSheet()
