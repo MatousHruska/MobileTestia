@@ -3,6 +3,9 @@ class_name MagicProjectile
 ## MagicProjectile - A magic projectile that passes through enemies and explodes at destination
 ## Used for spells like fireball that apply debuffs on contact and deal AOE damage on explosion
 
+## Preload ExplosionEffect (needed until Godot generates .uid file)
+const ExplosionEffectClass = preload("res://scripts/combat/explosion_effect.gd")
+
 signal hit_target(target: Node2D, projectile: MagicProjectile)
 signal exploded(position: Vector2, projectile: MagicProjectile)
 
@@ -282,7 +285,7 @@ func _spawn_explosion_effect() -> void:
 		return
 
 	# Create explosion visual
-	var explosion := ExplosionEffect.new()
+	var explosion := ExplosionEffectClass.new()
 	explosion.radius = explosion_radius
 	explosion.color = explosion_color
 	explosion.global_position = global_position
