@@ -1018,6 +1018,7 @@ func create_equipment(base_id: String, rarity: ItemData.Rarity = ItemData.Rarity
 		item.lightning_damage = int(base.get("lightning_damage", 0))
 		item.poison_damage = int(base.get("poison_damage", 0))
 		item.weapon_attack_speed = float(base.get("attack_speed", 1.0))
+		item.weapon_category = base.get("weapon_category", "")
 
 	# Armor pieces get armor bonus
 	if base_armor > 0:
