@@ -41,6 +41,9 @@ Private Const COL_TAL_DESCRIPTION As Integer = 28
 Private Const COL_TAL_RANK_DESCRIPTIONS As Integer = 29  ' "Rank 1 desc|Rank 2 desc|..."
 Private Const COL_TAL_ICON_NAME As Integer = 30
 Private Const COL_TAL_REQUIRED_WEAPON_CATEGORY As Integer = 31  ' melee, melee_1h, melee_2h, ranged, magic
+Private Const COL_TAL_MIN_CHARGE_TIME As Integer = 32           ' Minimum charge time for full power (projectiles)
+Private Const COL_TAL_WEAK_SHOT_DAMAGE_PCT As Integer = 33      ' Damage % for quick/weak shot (e.g., 30)
+Private Const COL_TAL_WEAK_SHOT_RANGE_PCT As Integer = 34       ' Range % for quick/weak shot (e.g., 30)
 
 ' Column indices for TalentTrees (1-based)
 Private Const COL_TT_ID As Integer = 1
@@ -342,7 +345,10 @@ Public Sub ExportTalents()
         json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_DESCRIPTION))) & """," & vbCrLf
         json = json & "      ""rank_descriptions"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_RANK_DESCRIPTIONS))) & """," & vbCrLf
         json = json & "      ""icon_name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_ICON_NAME), id)) & """," & vbCrLf
-        json = json & "      ""required_weapon_category"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_REQUIRED_WEAPON_CATEGORY)))) & """" & vbCrLf
+        json = json & "      ""required_weapon_category"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_REQUIRED_WEAPON_CATEGORY)))) & """," & vbCrLf
+        json = json & "      ""min_charge_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_MIN_CHARGE_TIME))) & "," & vbCrLf
+        json = json & "      ""weak_shot_damage_percent"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_WEAK_SHOT_DAMAGE_PCT))) & "," & vbCrLf
+        json = json & "      ""weak_shot_range_percent"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_WEAK_SHOT_RANGE_PCT))) & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -394,7 +400,8 @@ Public Sub SetupTalentsSheet()
                     "prerequisite_ids", "mana_cost", "stamina_cost", "cooldown", _
                     "base_damage", "damage_per_rank", "effect_type", "effect_value", _
                     "effect_per_point", "duration", "stat_bonuses", "description", _
-                    "rank_descriptions", "icon_name", "required_weapon_category")
+                    "rank_descriptions", "icon_name", "required_weapon_category", _
+                    "min_charge_time", "weak_shot_damage_percent", "weak_shot_range_percent")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -419,6 +426,9 @@ Public Sub SetupTalentsSheet()
     SafeAddComment ws.Cells(1, 27), "For passive: stat:value_per_point pairs (e.g., strength:2;armor:5)"
     SafeAddComment ws.Cells(1, 29), "Pipe-separated descriptions per rank"
     SafeAddComment ws.Cells(1, 31), "Required weapon: melee (any), melee_1h, melee_2h, ranged, magic"
+    SafeAddComment ws.Cells(1, 32), "Projectiles: min seconds to charge for full damage (e.g., 0.5)"
+    SafeAddComment ws.Cells(1, 33), "Projectiles: damage % for quick shot below min_charge_time (e.g., 30)"
+    SafeAddComment ws.Cells(1, 34), "Projectiles: range % for quick shot below min_charge_time (e.g., 30)"
 End Sub
 
 '-------------------------------------------------------------------------------
