@@ -73,6 +73,7 @@ var _use_ability_system: bool = false  ## True if using new ability system
 
 ## Status effects (DoTs, debuffs)
 var _status_effects: Dictionary = {}  ## key: effect_id, value: { remaining_duration, tick_timer, damage_per_tick, tick_interval }
+var _burning_visual: Node2D = null  ## Visual effect for burning status
 
 
 func _ready() -> void:
@@ -158,7 +159,7 @@ func _process_status_effects(delta: float) -> void:
 			effect.tick_timer = effect.tick_interval
 			Debug.log("Combat", "%s took DoT damage from %s" % [enemy_name, effect_id], int(dot_damage))
 
-			# Visual feedback for burning
+			# Visual feedback for burning - flash orange on tick
 			if effect_id == "status_burning":
 				modulate = Color(1.0, 0.6, 0.3)
 				_damage_flash_timer = 0.1
@@ -170,6 +171,8 @@ func _process_status_effects(delta: float) -> void:
 	# Remove expired effects
 	for effect_id in expired_effects:
 		_status_effects.erase(effect_id)
+		if effect_id == "status_burning":
+			_remove_burning_visual()
 		Debug.log("Combat", "%s: %s expired" % [enemy_name, effect_id])
 
 
@@ -206,11 +209,34 @@ func apply_status_effect(effect_id: String, source_node: Node2D = null) -> void:
 				"tick_interval": tick_interval,
 				"source": source_node
 			}
+
+			# Spawn visual effect for burning
+			if effect_id == "status_burning":
+				_spawn_burning_visual()
+
 			Debug.log("Combat", "%s: %s applied" % [enemy_name, effect_id], {
 				"duration": duration,
 				"damage": damage_per_tick,
 				"interval": tick_interval
 			})
+
+
+func _spawn_burning_visual() -> void:
+	## Create blinking red particles visual for burning effect
+	if _burning_visual:
+		return  # Already has visual
+
+	var BurningEffectScript = preload("res://scripts/effects/burning_effect.gd")
+	_burning_visual = BurningEffectScript.new()
+	_burning_visual.name = "BurningEffect"
+	add_child(_burning_visual)
+
+
+func _remove_burning_visual() -> void:
+	## Remove burning visual effect
+	if _burning_visual and is_instance_valid(_burning_visual):
+		_burning_visual.queue_free()
+		_burning_visual = null
 
 
 ## Setup

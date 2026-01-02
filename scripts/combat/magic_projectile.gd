@@ -312,6 +312,12 @@ func _apply_explosion_damage() -> void:
 				collider.take_damage(final_dmg, source)
 				Debug.log("Combat", "Explosion hit %s for %.0f damage" % [collider.name, final_dmg])
 
+			# Apply burning to enemies hit by explosion (if not already contacted)
+			if not contact_status_effect.is_empty() and collider.has_method("apply_status_effect"):
+				if collider not in contacted_targets:
+					collider.apply_status_effect(contact_status_effect, source)
+					Debug.log("Combat", "Explosion applied %s to %s" % [contact_status_effect, collider.name])
+
 
 func _spawn_contact_effect(pos: Vector2) -> void:
 	## Small effect when passing through enemy
