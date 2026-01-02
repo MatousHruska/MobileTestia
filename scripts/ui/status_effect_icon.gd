@@ -116,6 +116,20 @@ func _update_timer_display() -> void:
 
 
 func _get_effect_color() -> Color:
+	# First check database for icon_color
+	var status_id := "status_" + effect_type
+	var status_data: Dictionary = DatabaseLoader.status_effects.get(status_id, {})
+	var icon_color_str: String = status_data.get("icon_color", "")
+
+	# If database has a color defined, use it (supports hex like #FF5500)
+	if not icon_color_str.is_empty():
+		if icon_color_str.begins_with("#"):
+			return Color.html(icon_color_str)
+		else:
+			# Try parsing as Color name or direct value
+			return Color(icon_color_str)
+
+	# Fallback to hardcoded defaults if not in database
 	match effect_type:
 		# Debuffs
 		"rot":

@@ -43,6 +43,7 @@ Public Sub ExportAll()
     ' Gameplay
     ExportConsumables
     ExportStatusEffects
+    ExportGameplaySettings
     ExportZones
     ExportLocations
 
@@ -139,6 +140,7 @@ Public Sub SetupWorkbook()
     currentSheet = "Dialogues": SetupDialoguesSheet
     currentSheet = "Consumables": SetupConsumablesSheet
     currentSheet = "StatusEffects": SetupStatusEffectsSheet
+    currentSheet = "GameplaySettings": SetupGameplaySettingsSheet
     currentSheet = "Zones": SetupZonesSheet
     currentSheet = "Locations": SetupLocationsSheet
     currentSheet = "Chests": SetupChestsSheet
@@ -461,8 +463,25 @@ Private Sub SetupStatusEffectsSheet()
     Set ws = GetOrCreateSheet("StatusEffects")
     Dim headers As Variant
     headers = Array("id", "name", "type", "stat_affected", "value", "duration", _
-                    "tick_interval", "visual_effect", "stackable", "max_stacks", "show_in_hud", "description")
+                    "tick_interval", "visual_effect", "stackable", "max_stacks", "show_in_hud", _
+                    "icon_color", "description")
     SetHeaders ws, headers
+
+    ' Add comments
+    SafeAddComment ws.Cells(1, 12), "Hex color for HUD icon (e.g., #FF5500 for orange)"
+End Sub
+
+Private Sub SetupGameplaySettingsSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet("GameplaySettings")
+    Dim headers As Variant
+    headers = Array("key", "value", "description")
+    SetHeaders ws, headers
+
+    ' Add comments
+    SafeAddComment ws.Cells(1, 1), "Setting key name (e.g., armor_constant)"
+    SafeAddComment ws.Cells(1, 2), "Numeric value for the setting"
+    SafeAddComment ws.Cells(1, 3), "Description of what this setting controls"
 End Sub
 
 Private Sub SetupZonesSheet()

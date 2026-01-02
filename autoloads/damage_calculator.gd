@@ -191,12 +191,11 @@ func get_weapon_stats_text() -> String:
 #===============================================================================
 
 ## Calculate damage reduction from armor (physical)
-## Uses diminishing returns formula
+## Uses diminishing returns formula: reduction = armor / (armor + k * level)
 func calculate_armor_reduction(incoming_damage: float, attacker_level: int = 1) -> float:
 	var armor := PlayerStats.armor
-	# Diminishing returns formula: reduction = armor / (armor + k * level)
-	# At high armor values, reduction approaches but never reaches 100%
-	var k := 50.0  # Tuning constant
+	# k is the armor constant from database (default 50.0)
+	var k := DatabaseLoader.get_setting("armor_constant", 50.0)
 	var reduction := armor / (armor + k * attacker_level)
 	var mitigated := incoming_damage * (1.0 - reduction)
 	return maxf(mitigated, 1.0)  # Minimum 1 damage
@@ -205,7 +204,7 @@ func calculate_armor_reduction(incoming_damage: float, attacker_level: int = 1) 
 ## Calculate damage reduction from magic resistance
 func calculate_magic_reduction(incoming_damage: float, attacker_level: int = 1) -> float:
 	var resist := PlayerStats.magic_resistance
-	var k := 50.0
+	var k := DatabaseLoader.get_setting("armor_constant", 50.0)  # Uses same constant
 	var reduction := resist / (resist + k * attacker_level)
 	var mitigated := incoming_damage * (1.0 - reduction)
 	return maxf(mitigated, 1.0)
@@ -369,7 +368,7 @@ func calculate_enemy_basic_attack(enemy_base_damage: float, enemy_level: int = 1
 ## Calculate damage reduction for enemy taking damage (player attacking enemy)
 ## Enemies use their own armor stat
 func calculate_enemy_damage_taken(incoming_damage: float, enemy_armor: float, enemy_magic_resist: float, damage_type: int, attacker_level: int = 1) -> float:
-	var k := 50.0  # Same tuning constant as player
+	var k := DatabaseLoader.get_setting("armor_constant", 50.0)
 
 	match damage_type:
 		DamageType.PHYSICAL, DamageType.BLEED:

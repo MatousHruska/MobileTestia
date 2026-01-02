@@ -1,7 +1,7 @@
 Attribute VB_Name = "GameplayDatabase"
 '===============================================================================
 ' GameplayDatabase Module
-' Handles validation and export for Consumables, StatusEffects, and Zones
+' Handles validation and export for Consumables, StatusEffects, Zones, and GameplaySettings
 '===============================================================================
 Option Explicit
 
@@ -9,6 +9,7 @@ Option Explicit
 Private Const SHEET_CONSUMABLES As String = "Consumables"
 Private Const SHEET_STATUS_EFFECTS As String = "StatusEffects"
 Private Const SHEET_ZONES As String = "Zones"
+Private Const SHEET_GAMEPLAY_SETTINGS As String = "GameplaySettings"
 
 ' Column indices for Consumables (1-based)
 Private Const COL_CON_ID As Integer = 1
@@ -34,7 +35,8 @@ Private Const COL_SE_VISUAL_EFFECT As Integer = 8
 Private Const COL_SE_STACKABLE As Integer = 9
 Private Const COL_SE_MAX_STACKS As Integer = 10
 Private Const COL_SE_SHOW_IN_HUD As Integer = 11
-Private Const COL_SE_DESCRIPTION As Integer = 12
+Private Const COL_SE_ICON_COLOR As Integer = 12
+Private Const COL_SE_DESCRIPTION As Integer = 13
 
 ' Column indices for Zones
 Private Const COL_ZN_ID As Integer = 1
@@ -52,6 +54,11 @@ Private Const COL_ZN_IS_PVP_ENABLED As Integer = 12
 Private Const COL_ZN_STATUS_EFFECT_ID As Integer = 13
 Private Const COL_ZN_DISCOVERY_POPUP As Integer = 14
 Private Const COL_ZN_DESCRIPTION As Integer = 15
+
+' Column indices for GameplaySettings (key-value pairs)
+Private Const COL_GS_KEY As Integer = 1
+Private Const COL_GS_VALUE As Integer = 2
+Private Const COL_GS_DESCRIPTION As Integer = 3
 
 ' Valid dropdown values
 Private validConsumableTypes() As String
@@ -343,7 +350,8 @@ Public Sub ExportStatusEffects()
         json = json & "      ""visual_effect"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SE_VISUAL_EFFECT))) & """," & vbCrLf
         json = json & "      ""stackable"": " & stackable & "," & vbCrLf
         json = json & "      ""max_stacks"": " & GetDefaultNumeric(ws.Cells(i, COL_SE_MAX_STACKS), 1) & "," & vbCrLf
-        json = json & "      ""show_in_hud"": " & showInHud & vbCrLf
+        json = json & "      ""show_in_hud"": " & showInHud & "," & vbCrLf
+        json = json & "      ""icon_color"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SE_ICON_COLOR))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -530,6 +538,75 @@ End Sub
 ' MASTER EXPORT
 '===============================================================================
 
+'===============================================================================
+' GAMEPLAY SETTINGS
+'===============================================================================
+
+'-------------------------------------------------------------------------------
+' ExportGameplaySettings - Exports GameplaySettings to JSON (key-value pairs)
+'-------------------------------------------------------------------------------
+Public Sub ExportGameplaySettings()
+    Dim ws As Worksheet
+    On Error Resume Next
+    Set ws = ThisWorkbook.Sheets(SHEET_GAMEPLAY_SETTINGS)
+    On Error GoTo 0
+
+    If ws Is Nothing Then
+        MsgBox "Sheet '" & SHEET_GAMEPLAY_SETTINGS & "' not found!", vbExclamation
+        Exit Sub
+    End If
+
+    Dim json As String
+    json = "{" & vbCrLf
+
+    Dim lastRow As Long
+    lastRow = ws.Cells(ws.Rows.Count, COL_GS_KEY).End(xlUp).Row
+
+    Dim itemCount As Integer
+    itemCount = 0
+
+    Dim i As Long
+    For i = 2 To lastRow
+        Dim keyName As String
+        keyName = Trim(ws.Cells(i, COL_GS_KEY).value)
+
+        If Len(keyName) = 0 Then GoTo NextExportSetting
+
+        If itemCount > 0 Then json = json & "," & vbCrLf
+
+        ' Export as number (all gameplay settings are numeric)
+        json = json & "  """ & EscapeJsonString(keyName) & """: " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_GS_VALUE)))
+
+        itemCount = itemCount + 1
+
+NextExportSetting:
+    Next i
+
+    json = json & vbCrLf & "}"
+
+    Dim filePath As String
+    filePath = GetExportPath() & "gameplay_settings.json"
+    WriteJsonFile filePath, json
+
+    MsgBox "Exported " & itemCount & " gameplay settings to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+End Sub
+
+'-------------------------------------------------------------------------------
+' SetupGameplaySettingsSheet - Creates GameplaySettings sheet with headers
+'-------------------------------------------------------------------------------
+Public Sub SetupGameplaySettingsSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet(SHEET_GAMEPLAY_SETTINGS)
+    Dim headers As Variant
+    headers = Array("key", "value", "description")
+    SetupSheetHeaders ws, headers
+
+    ' Add column notes
+    SafeAddComment ws.Cells(1, 1), "Setting key name (e.g., armor_constant)"
+    SafeAddComment ws.Cells(1, 2), "Numeric value for the setting"
+    SafeAddComment ws.Cells(1, 3), "Description of what this setting controls"
+End Sub
+
 '-------------------------------------------------------------------------------
 ' ExportAllGameplay - Exports all gameplay-related sheets
 '-------------------------------------------------------------------------------
@@ -537,6 +614,7 @@ Public Sub ExportAllGameplay()
     ExportConsumables
     ExportStatusEffects
     ExportZones
+    ExportGameplaySettings
     MsgBox "All gameplay databases exported!", vbInformation, "Export Complete"
 End Sub
 

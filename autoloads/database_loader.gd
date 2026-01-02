@@ -34,6 +34,7 @@ var spawn_points: Dictionary = {}
 var cutscenes: Dictionary = {}
 var floating_dialogues: Dictionary = {}
 var popup_messages: Dictionary = {}
+var gameplay_settings: Dictionary = {}  ## Key-value pairs for global game settings
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -100,6 +101,7 @@ func load_all_databases() -> void:
 	# Gameplay
 	success = _load_database("consumables.json", "consumables", consumables) and success
 	success = _load_database("status_effects.json", "status_effects", status_effects) and success
+	success = _load_gameplay_settings() and success
 	success = _load_database("zones.json", "zones", zones, zones_list) and success
 	success = _load_database("locations.json", "locations", locations, locations_list) and success
 
@@ -174,6 +176,43 @@ func _load_database(filename: String, root_key: String, target_dict: Dictionary,
 
 	Debug.log("Database", "Loaded %d entries from %s" % [count, filename])
 	return true
+
+
+## Load gameplay settings (flat key-value JSON)
+func _load_gameplay_settings() -> bool:
+	var path := DATABASE_PATH + "gameplay_settings.json"
+
+	if not FileAccess.file_exists(path):
+		Debug.warn("Database", "gameplay_settings.json not found (using defaults)")
+		return true  # Not an error
+
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		Debug.warn("Database", "Failed to open gameplay_settings.json")
+		return false
+
+	var json_text := file.get_as_text()
+	file.close()
+
+	var json := JSON.new()
+	var error := json.parse(json_text)
+	if error != OK:
+		Debug.warn("Database", "JSON parse error in gameplay_settings.json: %s" % json.get_error_message())
+		return false
+
+	gameplay_settings = json.data
+	Debug.log("Database", "Loaded %d gameplay settings" % gameplay_settings.size())
+	return true
+
+
+## Get a gameplay setting value with default fallback
+func get_setting(key: String, default_value: float = 0.0) -> float:
+	return float(gameplay_settings.get(key, default_value))
+
+
+## Get a gameplay setting as int
+func get_setting_int(key: String, default_value: int = 0) -> int:
+	return int(gameplay_settings.get(key, default_value))
 
 
 #===============================================================================
