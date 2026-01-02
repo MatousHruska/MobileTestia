@@ -47,7 +47,7 @@
       "flat_damage_bonus": 0,
       "damage_type": "physical",
       "lunge_force": 0,
-      "recovery_time": 0.3,
+      "recovery_time": 0,
       "hit_range": 300,
       "hit_arc": 0,
       "prerequisite_ids": "",
