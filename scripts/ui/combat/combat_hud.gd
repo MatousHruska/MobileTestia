@@ -437,8 +437,8 @@ func _on_ability_hold_started(slot_index: int, ability_id: String) -> void:
 	# Get aim direction from player facing
 	var aim_dir := _get_player_facing_vector()
 
-	# Activate aim indicator
-	aim_indicator.activate(aim_dir, MAX_RANGE)
+	# Activate aim indicator (use talent's hit_range as max range)
+	aim_indicator.activate(aim_dir, talent.hit_range)
 	aim_indicator.global_position = player.global_position
 
 	Debug.log("Combat", "Started aiming %s" % talent.talent_name)
