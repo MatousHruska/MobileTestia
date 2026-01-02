@@ -44,6 +44,10 @@ Private Const COL_TAL_REQUIRED_WEAPON_CATEGORY As Integer = 31  ' melee, melee_1
 Private Const COL_TAL_MIN_CHARGE_TIME As Integer = 32           ' Minimum charge time for full power (projectiles)
 Private Const COL_TAL_WEAK_SHOT_DAMAGE_PCT As Integer = 33      ' Damage % for quick/weak shot (e.g., 30)
 Private Const COL_TAL_WEAK_SHOT_RANGE_PCT As Integer = 34       ' Range % for quick/weak shot (e.g., 30)
+Private Const COL_TAL_CAST_TIME As Integer = 35                 ' Cast time before firing (magic skills)
+Private Const COL_TAL_EXPLOSION_RADIUS As Integer = 36          ' AOE explosion radius (magic projectiles)
+Private Const COL_TAL_CONTACT_STATUS_EFFECT As Integer = 37     ' Status effect applied on projectile contact
+Private Const COL_TAL_PROJECTILE_SPEED As Integer = 38          ' Projectile travel speed
 
 ' Column indices for TalentTrees (1-based)
 Private Const COL_TT_ID As Integer = 1
@@ -348,7 +352,11 @@ Public Sub ExportTalents()
         json = json & "      ""required_weapon_category"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_REQUIRED_WEAPON_CATEGORY)))) & """," & vbCrLf
         json = json & "      ""min_charge_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_MIN_CHARGE_TIME))) & "," & vbCrLf
         json = json & "      ""weak_shot_damage_percent"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_WEAK_SHOT_DAMAGE_PCT))) & "," & vbCrLf
-        json = json & "      ""weak_shot_range_percent"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_WEAK_SHOT_RANGE_PCT))) & vbCrLf
+        json = json & "      ""weak_shot_range_percent"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_WEAK_SHOT_RANGE_PCT))) & "," & vbCrLf
+        json = json & "      ""cast_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_CAST_TIME))) & "," & vbCrLf
+        json = json & "      ""explosion_radius"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_EXPLOSION_RADIUS))) & "," & vbCrLf
+        json = json & "      ""contact_status_effect"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_CONTACT_STATUS_EFFECT))) & """," & vbCrLf
+        json = json & "      ""projectile_speed"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_PROJECTILE_SPEED))) & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -401,7 +409,8 @@ Public Sub SetupTalentsSheet()
                     "base_damage", "damage_per_rank", "effect_type", "effect_value", _
                     "effect_per_point", "duration", "stat_bonuses", "description", _
                     "rank_descriptions", "icon_name", "required_weapon_category", _
-                    "min_charge_time", "weak_shot_damage_percent", "weak_shot_range_percent")
+                    "min_charge_time", "weak_shot_damage_percent", "weak_shot_range_percent", _
+                    "cast_time", "explosion_radius", "contact_status_effect", "projectile_speed")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -429,6 +438,10 @@ Public Sub SetupTalentsSheet()
     SafeAddComment ws.Cells(1, 32), "Projectiles: min seconds to charge for full damage (e.g., 0.5)"
     SafeAddComment ws.Cells(1, 33), "Projectiles: damage % for quick shot below min_charge_time (e.g., 30)"
     SafeAddComment ws.Cells(1, 34), "Projectiles: range % for quick shot below min_charge_time (e.g., 30)"
+    SafeAddComment ws.Cells(1, 35), "Magic: cast time in seconds before spell fires (e.g., 0.2)"
+    SafeAddComment ws.Cells(1, 36), "Magic projectile: AOE explosion radius in pixels (e.g., 60)"
+    SafeAddComment ws.Cells(1, 37), "Status effect ID applied on projectile contact (e.g., status_burning)"
+    SafeAddComment ws.Cells(1, 38), "Projectile travel speed in pixels/sec (e.g., 350)"
 End Sub
 
 '-------------------------------------------------------------------------------
