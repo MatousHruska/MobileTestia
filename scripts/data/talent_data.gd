@@ -89,6 +89,12 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, MAGIC_PROJECTILE
 @export var contact_status_effect: String = ""     # Status effect applied on projectile contact
 @export var projectile_speed: float = 0.0          # Projectile travel speed (0 = default)
 
+## Database-driven timing (previously hardcoded)
+@export var max_charge_time: float = 2.0           # Max charge time for full range (ranged)
+@export var base_range: float = 150.0              # Base range at minimum charge (ranged)
+@export var lunge_duration: float = 0.1            # Lunge movement duration (melee)
+@export var explosion_falloff: float = 30.0        # Damage falloff % at explosion edge (magic, 0=no falloff)
+
 ## Legacy field (kept for backwards compatibility)
 @export var damage_per_point: float = 0.0
 
@@ -185,6 +191,12 @@ static func from_dict(data: Dictionary) -> TalentData:
 	talent.explosion_radius = float(data.get("explosion_radius", 0))
 	talent.contact_status_effect = data.get("contact_status_effect", "")
 	talent.projectile_speed = float(data.get("projectile_speed", 0))
+
+	# Database-driven timing (previously hardcoded)
+	talent.max_charge_time = float(data.get("max_charge_time", 2.0))
+	talent.base_range = float(data.get("base_range", 150.0))
+	talent.lunge_duration = float(data.get("lunge_duration", 0.1))
+	talent.explosion_falloff = float(data.get("explosion_falloff", 30.0))
 
 	# Legacy fields
 	talent.damage_per_point = float(data.get("damage_per_point", 0))

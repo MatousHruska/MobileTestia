@@ -91,8 +91,8 @@ Button Hold → CombatHUD._on_ability_hold_started()
 
 During Hold → _update_aiming()
   → Update direction from input/facing
-  → Calculate charge_progress: (hold_time - min_charge) / (MAX_CHARGE - min_charge)
-  → Update range: lerp(BASE_RANGE, MAX_RANGE, charge_progress)
+  → Calculate charge_progress: (hold_time - min_charge) / (max_charge_time - min_charge)
+  → Update range: lerp(base_range, hit_range, charge_progress)
 
 Button Release → _on_ability_released()
   → If hold_time < min_charge_time:
@@ -107,15 +107,12 @@ Button Release → _on_ability_released()
 **Key Properties (TalentData):**
 - `effect_type`: PROJECTILE
 - `min_charge_time`: Minimum hold for full power
+- `max_charge_time`: Maximum charge time for full range (default 2.0s)
+- `base_range`: Range at minimum charge (default 150px)
 - `weak_shot_damage_percent`: Damage % if released early
 - `weak_shot_range_percent`: Range % if released early
 - `projectile_speed`: Travel speed
 - `hit_range`: Maximum range at full charge
-
-**Hardcoded Constants:**
-- `MAX_CHARGE_TIME`: 2.0 seconds
-- `BASE_RANGE`: 150 pixels (weak shot minimum)
-- `MAX_RANGE`: 300 pixels (full charge maximum)
 
 **Files:**
 - `scripts/ui/combat/combat_hud.gd:402-588` - Aiming logic
@@ -656,17 +653,22 @@ func get_status_effects() -> Node:
 | Enemy abilities | type, damage mult, hitbox shape |
 | Behavior profiles | detection range, ability selection mode |
 
-### Hardcoded (Requires Code Changes)
+### Now Database-Driven (Previously Hardcoded)
+
+| Category | Database Field | Default | Notes |
+|----------|---------------|---------|-------|
+| Max charge time | `max_charge_time` | 2.0s | Per-talent in talents.json |
+| Base range | `base_range` | 150px | Per-talent in talents.json |
+| Lunge duration | `lunge_duration` | 0.1s | Per-talent in talents.json |
+| Explosion falloff | `explosion_falloff` | 30% | Per-talent AND per-enemy-ability |
+
+### Still Hardcoded (Requires Code Changes)
 
 | Category | Values | Location |
 |----------|--------|----------|
-| Charge timing | MAX_CHARGE_TIME = 2.0s | combat_hud.gd |
-| Base ranges | BASE_RANGE = 150, MAX_RANGE = 300 | combat_hud.gd |
-| Lunge duration | 0.1s | player_controller.gd |
 | Armor formula | `armor / (armor + 50 * level)` | damage_calculator.gd |
 | Crit multiplier | 150% base | damage_calculator.gd |
-| Explosion falloff | 30% at edge | magic_projectile.gd |
-| Enemy phases | windup=0.2s, recovery=0.3s | ability_executor.gd |
+| Enemy phases defaults | windup=0.2s, recovery=0.3s | ability_executor.gd |
 | Effect colors | Icon colors by type | status_effect_icon.gd |
 
 ---

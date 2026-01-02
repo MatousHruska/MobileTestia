@@ -529,6 +529,14 @@ func _apply_damage_to_target(target: Node2D, ability: AbilityData) -> void:
 	)
 	var final_damage: float = damage_result.final_damage
 
+	# Apply explosion falloff for AOE abilities (database-driven)
+	if ability.type == AbilityData.AbilityType.AOE and ability.explosion_falloff > 0:
+		var dist := _caster.global_position.distance_to(target.global_position)
+		var falloff_pct := ability.explosion_falloff / 100.0
+		var falloff := 1.0 - (dist / ability.shape_size) * falloff_pct
+		falloff = clampf(falloff, 1.0 - falloff_pct, 1.0)  # Don't go below min damage
+		final_damage *= falloff
+
 	# Apply damage
 	if target.has_method("take_damage"):
 		target.take_damage(final_damage, _caster)

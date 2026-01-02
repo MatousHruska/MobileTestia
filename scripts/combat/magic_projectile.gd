@@ -22,6 +22,7 @@ signal exploded(position: Vector2, projectile: MagicProjectile)
 @export var explosion_radius: float = 60.0   ## AOE radius on explosion
 @export var explosion_damage: float = 0.0    ## Damage dealt by explosion
 @export var explodes_on_wall: bool = true    ## Explode immediately on wall hit
+@export var explosion_falloff: float = 30.0  ## Damage falloff % at edge (30 = 70% damage at edge, 0 = no falloff)
 
 ## Pass-through debuff
 @export var pass_through_enemies: bool = true     ## Pass through enemies instead of stopping
@@ -304,13 +305,14 @@ func _apply_explosion_damage() -> void:
 		var collider = result.get("collider")
 		if collider and collider.is_in_group("enemies"):
 			if collider.has_method("take_damage"):
-				# Calculate damage falloff based on distance (optional)
+				# Calculate damage falloff based on distance (database-driven)
 				var dist := global_position.distance_to(collider.global_position)
-				var falloff := 1.0 - (dist / explosion_radius) * 0.3  # 30% falloff at edge
+				var falloff_pct := explosion_falloff / 100.0  # Convert % to decimal
+				var falloff := 1.0 - (dist / explosion_radius) * falloff_pct if explosion_falloff > 0 else 1.0
 				var final_dmg := explosion_damage * falloff
 
 				collider.take_damage(final_dmg, source)
-				Debug.log("Combat", "Explosion hit %s for %.0f damage" % [collider.name, final_dmg])
+				Debug.log("Combat", "Explosion hit %s for %.0f damage (falloff: %.0f%%)" % [collider.name, final_dmg, (1.0 - falloff) * 100])
 
 			# Apply burning to enemies hit by explosion (if not already contacted)
 			if not contact_status_effect.is_empty() and collider.has_method("apply_status_effect"):
