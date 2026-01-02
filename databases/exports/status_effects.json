@@ -11,7 +11,8 @@
       "visual_effect": "rot_particles",
       "stackable": false,
       "max_stacks": 1,
-      "show_in_hud": true
+      "show_in_hud": true,
+      "icon_color": "#66401A"
     },
     {
       "id": "status_burning",
@@ -24,7 +25,8 @@
       "visual_effect": "fire_particles",
       "stackable": false,
       "max_stacks": 1,
-      "show_in_hud": true
+      "show_in_hud": true,
+      "icon_color": "#E66619"
     },
     {
       "id": "status_bandage",
@@ -37,7 +39,8 @@
       "visual_effect": "bandage_particles",
       "stackable": false,
       "max_stacks": 1,
-      "show_in_hud": true
+      "show_in_hud": true,
+      "icon_color": "#E6E6CC"
     }
   ]
 }
