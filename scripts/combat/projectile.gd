@@ -50,11 +50,13 @@ var pierce_count: int = 0
 ## Visual components
 var sprite: Sprite2D = null
 var collision_shape: CollisionShape2D = null
+var raycast: RayCast2D = null  ## For wall detection
 
 
 func _ready() -> void:
 	_setup_visuals()
 	_setup_collision()
+	_setup_raycast()
 
 	# Connect collision signal
 	body_entered.connect(_on_body_entered)
@@ -109,9 +111,30 @@ func _setup_collision() -> void:
 	collision_mask = 0b00000110  # Detect enemies (layer 2) and obstacles (layer 3)
 
 
+func _setup_raycast() -> void:
+	## Setup raycast for wall detection
+	raycast = RayCast2D.new()
+	raycast.name = "WallRaycast"
+	raycast.enabled = true
+	raycast.collision_mask = 0b00000100  # Layer 3 (obstacles/walls)
+	raycast.target_position = Vector2(20, 0)  # Will be updated in physics_process
+	add_child(raycast)
+
+
 func _physics_process(delta: float) -> void:
 	if not is_flying:
 		return
+
+	# Update raycast direction and check for wall hit
+	if raycast:
+		raycast.target_position = direction * 15.0
+		raycast.force_raycast_update()
+
+		if raycast.is_colliding():
+			var collider = raycast.get_collider()
+			if collider and (collider.is_in_group("walls") or collider.is_in_group("obstacles") or collider is TileMap):
+				_hit_obstacle()
+				return
 
 	# Move projectile
 	var movement := direction * current_speed * delta
