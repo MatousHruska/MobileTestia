@@ -203,16 +203,19 @@ _apply_self_buff():
 
 ## Building Blocks Reference
 
-### Already Shared (Use These!)
+### Unified Components (Use These!)
 
 | Component | Location | Used By | Purpose |
 |-----------|----------|---------|---------|
+| `StatusEffectComponent` | `scripts/combat/status_effect_component.gd` | Player & Enemy | DoT, HoT, buffs, debuffs |
+| `MovementAction` | `scripts/combat/movement_action.gd` | Player & Enemy | Lunge, dash, knockback, charge |
+| `DamageCalculator` | `autoloads/damage_calculator.gd` | Player & Enemy | All damage formulas with crit |
+| `SkillBase` | `scripts/data/skill_base.gd` | TalentData & AbilityData | Shared enums and properties |
 | `HitboxSpawner` | `scripts/npc/hitbox_spawner.gd` | Player & Enemy | Creates Area2D hitboxes for melee attacks |
 | `Projectile` | `scripts/combat/projectile.gd` | Player (arrows) | Physical projectile with arc |
 | `MagicProjectile` | `scripts/combat/magic_projectile.gd` | Player (spells) | Pass-through + AOE explosion |
 | `HitboxVisual` | `scripts/ui/combat/hitbox_visual.gd` | Player & Enemy | Debug/feedback visualization |
 | `AimIndicator` | `scripts/ui/combat/aim_indicator.gd` | Player (ranged) | Trajectory preview |
-| `DamageCalculator` | `autoloads/damage_calculator.gd` | Player attacks | Damage formulas with crit |
 
 ### Hitbox Shapes (HitboxSpawner)
 
@@ -252,13 +255,15 @@ fireball.launch(spawn_pos, direction, 1.0)
 ### Status Effect Application
 
 ```gdscript
-# Player (via StatusEffectManager)
+# Player (via StatusEffectManager - extends StatusEffectComponent)
 Game.player.status_effect_manager.apply_status_effect("status_bandage")
 Game.player.status_effect_manager.apply_dot("burn", 5.0, 3.0, 1.0)
 Game.player.status_effect_manager.apply_hot("regen", 10.0, 5.0, 1.0)
 
-# Enemy (direct method)
-enemy.apply_status_effect("status_burning", source_node)
+# Enemy (via StatusEffectComponent instance)
+enemy.status_effects.apply_status_effect("status_burning")
+enemy.status_effects.apply_dot("poison", 8.0, 5.0, 2.0)
+enemy.apply_status_effect("status_burning")  # Convenience wrapper
 ```
 
 ---
@@ -320,13 +325,23 @@ Both player and enemy attacks follow the same **three-phase pattern**:
 
 ### Player vs Enemy Implementation
 
-| Feature | Player | Enemy |
-|---------|--------|-------|
-| Manager | `StatusEffectManager` class | Dictionary in `_status_effects` |
-| Persistence | Yes (saved/loaded) | No |
-| Supported | DoT, HoT, Buff, Permanent | DoT only |
-| Signals | Yes (for UI updates) | No |
-| Visual | HUD icons + effects | Burning particles only |
+Both player and enemies now use the **unified StatusEffectComponent**:
+
+| Feature | Player (StatusEffectManager) | Enemy (StatusEffectComponent) |
+|---------|------------------------------|-------------------------------|
+| Base Class | Extends StatusEffectComponent | Direct instance |
+| Persistence | Yes (saved/loaded across zones) | No |
+| Supported | DoT, HoT, Buff, Debuff, Permanent | DoT, HoT, Buff, Debuff, Permanent |
+| Signals | Yes (effect_applied, effect_removed, effect_tick) | Yes (same signals) |
+| Visual | HUD icons + effects | Effect-specific visuals (burning, etc.) |
+| Damage/Heal | Routes through PlayerStats | Direct to current_health |
+
+**Architecture:**
+```
+StatusEffectComponent (base class)
+├── StatusEffectManager (player extension with persistence)
+└── Instance on EnemyNPC (via composition)
+```
 
 ---
 
