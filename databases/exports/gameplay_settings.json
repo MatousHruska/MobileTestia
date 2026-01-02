@@ -1,0 +1,10 @@
+{
+  "armor_constant": 50,
+  "default_crit_multiplier": 150,
+  "player_move_speed": 150,
+  "player_dodge_speed": 300,
+  "player_dodge_duration": 0,
+  "player_dodge_stamina_cost": 25,
+  "player_attack_lunge_force": 80,
+  "player_attack_lunge_duration": 0
+}
