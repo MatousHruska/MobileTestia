@@ -95,7 +95,7 @@ func _bind_talent_to_slot(slot_index: int, talent: TalentData) -> void:
 	ability_slots[slot_index].bind_ability(talent.id, data)
 
 	# Update weapon validity for this slot
-	var weapon_cat := Inventory.get_equipped_weapon_category()
+	var weapon_cat: String = Inventory.get_equipped_weapon_category()
 	ability_slots[slot_index].update_weapon_validity(weapon_cat)
 
 	Debug.log("Combat", "Bound talent to HUD slot", {"slot": slot_index, "talent": talent.talent_name})
@@ -129,7 +129,7 @@ func _on_equipment_changed(slot: ItemData.EquipSlot) -> void:
 
 func _update_all_weapon_validity() -> void:
 	## Update weapon validity state for all ability slots
-	var weapon_cat := Inventory.get_equipped_weapon_category()
+	var weapon_cat: String = Inventory.get_equipped_weapon_category()
 	for slot in ability_slots:
 		slot.update_weapon_validity(weapon_cat)
 
@@ -286,7 +286,7 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 
 	# Check weapon requirement
 	if talent.has_weapon_requirement():
-		var weapon_cat := Inventory.get_equipped_weapon_category()
+		var weapon_cat: String = Inventory.get_equipped_weapon_category()
 		if not talent.matches_weapon_category(weapon_cat):
 			Debug.log("Combat", "Wrong weapon for %s (requires %s, have %s)" % [
 				talent.talent_name, talent.required_weapon_category, weapon_cat if weapon_cat else "none"
