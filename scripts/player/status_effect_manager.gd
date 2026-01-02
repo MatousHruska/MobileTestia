@@ -1,4 +1,4 @@
-extends StatusEffectComponent
+extends "res://scripts/combat/status_effect_component.gd"
 class_name StatusEffectManager
 ## StatusEffectManager - Player-specific status effect handling
 ##

@@ -72,7 +72,8 @@ var home_position: Vector2 = Vector2.ZERO
 var _use_ability_system: bool = false  ## True if using new ability system
 
 ## Status effects - using unified StatusEffectComponent
-var status_effects: StatusEffectComponent = null
+const StatusEffectComponentScript = preload("res://scripts/combat/status_effect_component.gd")
+var status_effects: Node = null  ## StatusEffectComponent instance
 var _burning_visual: Node2D = null  ## Visual effect for burning status
 
 
@@ -101,7 +102,7 @@ func _ready() -> void:
 
 func _setup_status_effects() -> void:
 	## Setup the unified status effect component
-	status_effects = StatusEffectComponent.new()
+	status_effects = StatusEffectComponentScript.new()
 	status_effects.name = "StatusEffects"
 	status_effects.setup(self)
 	add_child(status_effects)
