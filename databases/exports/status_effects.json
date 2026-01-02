@@ -25,6 +25,19 @@
       "stackable": false,
       "max_stacks": 1,
       "show_in_hud": true
+    },
+    {
+      "id": "status_bandage",
+      "name": "Bandage",
+      "type": "buff_hot",
+      "stat_affected": "health",
+      "value": 10,
+      "duration": 30,
+      "tick_interval": 2,
+      "visual_effect": "bandage_particles",
+      "stackable": false,
+      "max_stacks": 1,
+      "show_in_hud": true
     }
   ]
 }
