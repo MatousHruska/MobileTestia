@@ -68,12 +68,16 @@ Private Sub InitValidLists()
     validItemTypes = Split("Sword,Axe,Mace,Dagger,Staff,Wand,Bow,Crossbow,Shield," & _
                            "Helmet,Chest,Gloves,Boots,Leggings,Ring,Amulet,Potion,Scroll", ",")
     validAffixTypes = Split("prefix,suffix", ",")
+    ' Stat modifiers for equipment affixes
+    ' Primary stats, offensive, defensive, utility, AND skill bonuses
     validStatModifiers = Split("melee_damage,ranged_damage,magic_damage,fire_damage," & _
                                "cold_damage,lightning_damage,poison_damage," & _
                                "strength,dexterity,intelligence,vitality,energy,luck," & _
                                "armor,magic_resistance,dodge_chance," & _
                                "attack_speed,critical_chance,critical_damage," & _
-                               "life,mana,life_regen,mana_regen,movement_speed", ",")
+                               "life,mana,life_regen,mana_regen,movement_speed," & _
+                               "hit_range,hit_arc,lunge_force,lunge_duration," & _
+                               "explosion_radius,projectile_speed,cast_speed,cooldown_reduction", ",")
     validWeaponCategories = Split("melee_1h,melee_2h,ranged,magic", ",")
 End Sub
 

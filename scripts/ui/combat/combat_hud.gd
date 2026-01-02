@@ -49,6 +49,53 @@ const DEFAULT_BASE_RANGE: float = 150.0         ## Default range at minimum char
 const DEFAULT_CONFIG_PATH := "res://resources/combat_hud_config.tres"
 
 
+#===============================================================================
+# SKILL VALUE CALCULATIONS (applies equipment bonuses)
+#===============================================================================
+
+## Calculate final skill value with equipment bonuses applied
+## Formula: base_value × (1 + equipment_bonus%)
+static func calc_skill_value(base_value: float, stat_name: String) -> float:
+	if base_value <= 0:
+		return base_value  # Don't modify zero/negative values
+	var bonus := PlayerStats.get_equipment_bonus(stat_name)
+	return base_value * (1.0 + bonus / 100.0)
+
+
+## Shorthand getters for common skill properties
+static func get_hit_range(talent: TalentData) -> float:
+	return calc_skill_value(talent.hit_range, "hit_range")
+
+static func get_hit_arc(talent: TalentData) -> float:
+	return calc_skill_value(talent.hit_arc, "hit_arc")
+
+static func get_lunge_force(talent: TalentData) -> float:
+	return calc_skill_value(talent.lunge_force, "lunge_force")
+
+static func get_lunge_duration(talent: TalentData) -> float:
+	return calc_skill_value(talent.lunge_duration, "lunge_duration")
+
+static func get_explosion_radius(talent: TalentData) -> float:
+	return calc_skill_value(talent.explosion_radius, "explosion_radius")
+
+static func get_projectile_speed(talent: TalentData) -> float:
+	return calc_skill_value(talent.projectile_speed, "projectile_speed")
+
+static func get_cast_time(talent: TalentData) -> float:
+	# cast_speed reduces cast time, so we divide instead of multiply
+	var cast_speed_bonus := PlayerStats.get_equipment_bonus("cast_speed")
+	if cast_speed_bonus > 0 and talent.cast_time > 0:
+		return talent.cast_time / (1.0 + cast_speed_bonus / 100.0)
+	return talent.cast_time
+
+static func get_cooldown(talent: TalentData) -> float:
+	# cooldown_reduction reduces cooldown
+	var cdr := PlayerStats.get_equipment_bonus("cooldown_reduction")
+	if cdr > 0 and talent.cooldown > 0:
+		return talent.cooldown * (1.0 - minf(cdr, 75.0) / 100.0)  # Cap at 75% CDR
+	return talent.cooldown
+
+
 func _ready() -> void:
 	# Load or create config
 	if config == null:
@@ -437,8 +484,9 @@ func _on_ability_hold_started(slot_index: int, ability_id: String) -> void:
 	# Get aim direction from player facing
 	var aim_dir := _get_player_facing_vector()
 
-	# Activate aim indicator (use talent's hit_range as max range)
-	aim_indicator.activate(aim_dir, talent.hit_range)
+	# Activate aim indicator (use talent's hit_range with equipment bonus as max range)
+	var final_range := get_hit_range(talent)
+	aim_indicator.activate(aim_dir, final_range)
 	aim_indicator.global_position = player.global_position
 
 	Debug.log("Combat", "Started aiming %s" % talent.talent_name)
@@ -451,11 +499,11 @@ func _on_ability_released(slot_index: int, ability_id: String, hold_duration: fl
 	if not is_aiming or slot_index != aiming_slot_index:
 		return
 
-	# Get charge settings from talent (database-driven)
+	# Get charge settings from talent (database-driven, with equipment bonuses on range)
 	var min_charge := aiming_talent.min_charge_time
 	var max_charge := aiming_talent.max_charge_time if aiming_talent.max_charge_time > 0 else DEFAULT_MAX_CHARGE_TIME
 	var base_range := aiming_talent.base_range if aiming_talent.base_range > 0 else DEFAULT_BASE_RANGE
-	var max_range := aiming_talent.hit_range  # hit_range is the maximum range
+	var max_range := get_hit_range(aiming_talent)  # hit_range with equipment bonus
 	var weak_damage_pct := aiming_talent.weak_shot_damage_percent
 	var weak_range_pct := aiming_talent.weak_shot_range_percent
 
@@ -668,17 +716,21 @@ func _fire_magic_projectile(talent: TalentData, direction: Vector2) -> void:
 	projectile.name = talent.talent_name.replace(" ", "")
 	print("[CAST] Projectile created: %s" % projectile.name)
 
-	# Set projectile properties from talent (database-driven)
-	projectile.base_speed = talent.projectile_speed if talent.projectile_speed > 0 else 350.0
-	projectile.max_range = talent.hit_range
-	projectile.explosion_radius = talent.explosion_radius
-	projectile.explosion_falloff = talent.explosion_falloff  # Damage falloff at edge
+	# Set projectile properties from talent (with equipment bonuses applied)
+	var final_speed := get_projectile_speed(talent) if talent.projectile_speed > 0 else 350.0
+	var final_range := get_hit_range(talent)
+	var final_radius := get_explosion_radius(talent)
+
+	projectile.base_speed = final_speed
+	projectile.max_range = final_range
+	projectile.explosion_radius = final_radius
+	projectile.explosion_falloff = talent.explosion_falloff  # Damage falloff stays as-is (percentage)
 	projectile.set_explosion_damage(damage_result.final_damage)
 	projectile.damage_type = _get_damage_type_string(talent.damage_type_id)
 	projectile.source = player
 
 	print("[CAST] Projectile config: speed=%s, range=%s, radius=%s, damage=%s, falloff=%s%%" % [
-		projectile.base_speed, projectile.max_range, projectile.explosion_radius, damage_result.final_damage, talent.explosion_falloff
+		final_speed, final_range, final_radius, damage_result.final_damage, talent.explosion_falloff
 	])
 
 	# Set contact status effect
@@ -834,9 +886,11 @@ func _apply_skill_mechanics(talent: TalentData) -> void:
 	if talent.skill_category.to_lower() == "melee":
 		player.request_attack()
 
-	# Apply lunge if specified (duration from database, defaults to player's attack_lunge_duration)
+	# Apply lunge if specified (with equipment bonuses applied)
 	if talent.lunge_force > 0:
-		player.apply_skill_lunge(talent.lunge_force, talent.lunge_duration)
+		var final_lunge_force := get_lunge_force(talent)
+		var final_lunge_duration := get_lunge_duration(talent)
+		player.apply_skill_lunge(final_lunge_force, final_lunge_duration)
 
 	# Apply recovery lockout if specified
 	if talent.recovery_time > 0:
@@ -848,9 +902,9 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 	if not player:
 		return
 
-	# Use hit_range from talent
-	var skill_range := talent.hit_range
-	var skill_arc := talent.hit_arc
+	# Use hit_range and hit_arc with equipment bonuses applied
+	var skill_range := get_hit_range(talent)
+	var skill_arc := get_hit_arc(talent)
 
 	# Spawn visual hitbox indicator
 	_spawn_skill_visual(talent, damage_result)
@@ -890,15 +944,19 @@ func _spawn_skill_visual(talent: TalentData, _damage_result: Dictionary) -> void
 	## Spawn visual indicator for skill hitbox
 	var visual := HitboxVisual.new()
 
+	# Get range and arc with equipment bonuses
+	var final_range := get_hit_range(talent)
+	var final_arc := get_hit_arc(talent)
+
 	# Configure shape based on arc
-	if talent.hit_arc >= 360.0:
+	if final_arc >= 360.0:
 		# Full circle
 		visual.draw_type = "circle"
-		visual.radius = talent.hit_range
+		visual.radius = final_range
 	else:
 		# Cone shape
 		visual.draw_type = "polygon"
-		visual.points = _generate_cone_points(talent.hit_range, talent.hit_arc)
+		visual.points = _generate_cone_points(final_range, final_arc)
 
 	# Set damage type for color (convert from int id to string)
 	visual.damage_type = _get_damage_type_string(talent.damage_type_id)
@@ -907,7 +965,7 @@ func _spawn_skill_visual(talent: TalentData, _damage_result: Dictionary) -> void
 	visual.global_position = player.global_position
 
 	# Rotate to face direction (only for cones)
-	if talent.hit_arc < 360.0:
+	if final_arc < 360.0:
 		var facing := _get_player_facing_vector()
 		visual.rotation = facing.angle()
 
