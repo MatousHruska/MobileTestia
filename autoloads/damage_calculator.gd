@@ -312,3 +312,79 @@ func debug_print_skill_damage(talent: TalentData, skill_rank: int = 1) -> void:
 		"category": SkillCategory.keys()[result.category],
 		"damage_type": get_damage_type_name(result.damage_type),
 	})
+
+
+#===============================================================================
+# ENEMY DAMAGE CALCULATION
+#===============================================================================
+
+## Calculate enemy ability damage
+## This routes enemy damage through the same system as player damage
+## for consistency and to enable enemy crits, elemental bonuses, etc.
+func calculate_enemy_ability_damage(ability: AbilityData, enemy_base_damage: float, enemy_level: int = 1, enable_crit: bool = false, crit_chance: float = 0.0, crit_multiplier: float = 150.0) -> Dictionary:
+	var base_damage := enemy_base_damage * ability.damage_mult
+	var damage_type := ability.damage_type as int
+
+	var is_crit := false
+	var final_damage := base_damage
+
+	# Optional critical strikes for enemies
+	if enable_crit and crit_chance > 0:
+		is_crit = randf() * 100.0 < crit_chance
+		if is_crit:
+			final_damage = base_damage * (crit_multiplier / 100.0)
+
+	return {
+		"final_damage": final_damage,
+		"base_damage": base_damage,
+		"is_critical": is_crit,
+		"crit_multiplier": crit_multiplier if is_crit else 100.0,
+		"damage_type": damage_type,
+		"enemy_base_damage": enemy_base_damage,
+		"damage_mult": ability.damage_mult,
+		"enemy_level": enemy_level
+	}
+
+
+## Calculate enemy basic attack damage (no ability, just base damage)
+func calculate_enemy_basic_attack(enemy_base_damage: float, enemy_level: int = 1, damage_type: int = DamageType.PHYSICAL, enable_crit: bool = false, crit_chance: float = 0.0, crit_multiplier: float = 150.0) -> Dictionary:
+	var is_crit := false
+	var final_damage := enemy_base_damage
+
+	if enable_crit and crit_chance > 0:
+		is_crit = randf() * 100.0 < crit_chance
+		if is_crit:
+			final_damage = enemy_base_damage * (crit_multiplier / 100.0)
+
+	return {
+		"final_damage": final_damage,
+		"base_damage": enemy_base_damage,
+		"is_critical": is_crit,
+		"crit_multiplier": crit_multiplier if is_crit else 100.0,
+		"damage_type": damage_type,
+		"enemy_level": enemy_level
+	}
+
+
+## Calculate damage reduction for enemy taking damage (player attacking enemy)
+## Enemies use their own armor stat
+func calculate_enemy_damage_taken(incoming_damage: float, enemy_armor: float, enemy_magic_resist: float, damage_type: int, attacker_level: int = 1) -> float:
+	var k := 50.0  # Same tuning constant as player
+
+	match damage_type:
+		DamageType.PHYSICAL, DamageType.BLEED:
+			var reduction := enemy_armor / (enemy_armor + k * attacker_level)
+			return maxf(incoming_damage * (1.0 - reduction), 1.0)
+		DamageType.TRUE:
+			return incoming_damage
+		_:
+			var reduction := enemy_magic_resist / (enemy_magic_resist + k * attacker_level)
+			return maxf(incoming_damage * (1.0 - reduction), 1.0)
+
+
+## Get damage after enemy armor/resist (convenience method)
+func get_damage_after_enemy_mitigation(incoming_damage: float, enemy: Node2D, damage_type: int, attacker_level: int = 1) -> float:
+	var armor: float = enemy.armor if "armor" in enemy else 0.0
+	var magic_resist: float = enemy.magic_resistance if "magic_resistance" in enemy else 0.0
+	return calculate_enemy_damage_taken(incoming_damage, armor, magic_resist, damage_type, attacker_level)
+
