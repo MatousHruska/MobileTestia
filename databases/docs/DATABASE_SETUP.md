@@ -144,6 +144,7 @@ This guide explains how to set up and use the Excel database system for MobileTe
 - Combat: `attack_speed`, `critical_chance`, `critical_damage`
 - Resources: `life`, `mana`, `life_regen`, `mana_regen`
 - Mobility: `movement_speed`
+- Skill Modifiers: `hit_range`, `hit_arc`, `lunge_force`, `lunge_duration`, `explosion_radius`, `projectile_speed`, `cast_speed`, `cooldown_reduction`
 
 ---
 
@@ -533,6 +534,64 @@ camera_pan:400:200:1###wait:0.5###dialogue:Vampire Lord:Muhahahaha###move:ene_va
 
 ---
 
+### GameplaySettings (Global Constants)
+
+The GameplaySettings sheet stores all global numeric constants that define base character stats, regeneration rates, and combat parameters. These values are loaded at game start and used as defaults throughout the codebase.
+
+| Column | Type | Required | Example |
+|--------|------|----------|---------|
+| key | string | Yes | `base_health_flat` |
+| value | number | Yes | `80` |
+| description | string | No | `Starting health before vitality` |
+
+**Key Naming Convention:** Use `base_` prefix for base values, `_per_` for conversion rates.
+
+**Character Base Stats:**
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `base_health_flat` | 80 | Starting health before vitality |
+| `base_mana_flat` | 30 | Starting mana before energy |
+| `base_stamina_flat` | 100 | Starting stamina |
+| `base_crit_chance` | 5 | Base critical hit chance % |
+| `base_crit_damage` | 150 | Base critical damage multiplier % |
+
+**Derived Stat Conversions:**
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `health_per_vitality` | 2 | Health gained per point of vitality |
+| `mana_per_energy` | 1.5 | Mana gained per point of energy |
+| `crit_damage_per_luck` | 1 | Crit damage % gained per point of luck |
+
+**Regeneration Rates:**
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `base_life_regen` | 1 | Health regenerated per second |
+| `base_mana_regen` | 0.5 | Mana regenerated per second |
+| `base_stamina_regen` | 10 | Stamina regenerated per second |
+
+**Movement & Combat:**
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `base_move_speed` | 150 | Default player movement speed |
+| `base_dodge_speed` | 300 | Dodge roll speed |
+| `base_dodge_duration` | 0.3 | Dodge roll duration in seconds |
+| `base_dodge_stamina_cost` | 25 | Stamina cost for dodge |
+| `base_lunge_force` | 80 | Default attack lunge force |
+| `base_lunge_duration` | 0.1 | Default attack lunge duration |
+| `armor_constant` | 50 | The "k" value in armor formula |
+
+**Important Notes:**
+- Values use period (.) as decimal separator in Excel
+- These are global defaults; individual skills can override with their own values
+- Primary stats (STR, DEX, INT) are for item requirements only, not damage conversion
+- Derived stats (max_health, max_mana) are calculated at runtime, never stored here
+
+---
+
 ## Data Validation (Dropdowns)
 
 To prevent typos, add Data Validation to these columns:
@@ -569,7 +628,7 @@ To prevent typos, add Data Validation to these columns:
 | Cutscenes | once_only | `true,false` |
 
 ### Valid Stat Modifiers (for Affixes):
-`melee_damage,ranged_damage,magic_damage,fire_damage,cold_damage,lightning_damage,poison_damage,strength,dexterity,intelligence,vitality,energy,luck,armor,magic_resistance,dodge_chance,attack_speed,critical_chance,critical_damage,life,mana,life_regen,mana_regen,movement_speed`
+`melee_damage,ranged_damage,magic_damage,fire_damage,cold_damage,lightning_damage,poison_damage,strength,dexterity,intelligence,vitality,energy,luck,armor,magic_resistance,dodge_chance,attack_speed,critical_chance,critical_damage,life,mana,life_regen,mana_regen,movement_speed,hit_range,hit_arc,lunge_force,lunge_duration,explosion_radius,projectile_speed,cast_speed,cooldown_reduction`
 
 ---
 
