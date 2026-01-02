@@ -108,7 +108,7 @@ func _setup_collision() -> void:
 
 	# Set collision layers
 	collision_layer = 0  # Projectile doesn't block anything
-	collision_mask = 0b00000110  # Detect enemies (layer 2) and obstacles (layer 3)
+	collision_mask = 0b00000011  # Detect walls (layer 1) and enemies (layer 2)
 
 
 func _setup_raycast() -> void:
@@ -116,7 +116,7 @@ func _setup_raycast() -> void:
 	raycast = RayCast2D.new()
 	raycast.name = "WallRaycast"
 	raycast.enabled = true
-	raycast.collision_mask = 0b00000100  # Layer 3 (obstacles/walls)
+	raycast.collision_mask = 0b00000001  # Layer 1 (walls/obstacles)
 	raycast.target_position = Vector2(20, 0)  # Will be updated in physics_process
 	add_child(raycast)
 

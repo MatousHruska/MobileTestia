@@ -88,7 +88,7 @@ func _setup_raycast() -> void:
 	raycast = RayCast2D.new()
 	raycast.name = "WallRaycast"
 	raycast.enabled = true
-	raycast.collision_mask = 0b00000100  # Layer 3 (obstacles/walls)
+	raycast.collision_mask = 0b00000001  # Layer 1 (walls/obstacles)
 	raycast.target_position = Vector2(30, 0)  # Will be updated in physics_process
 	add_child(raycast)
 
@@ -103,7 +103,7 @@ func _setup_collision() -> void:
 	add_child(collision_shape)
 
 	collision_layer = 0
-	collision_mask = 0b00000110  # Enemies (layer 2) and obstacles (layer 3)
+	collision_mask = 0b00000011  # Walls (layer 1) and enemies (layer 2)
 
 
 func _physics_process(delta: float) -> void:
