@@ -40,10 +40,10 @@ var casting_talent: TalentData = null
 var cast_start_time: float = 0.0
 var cast_direction: Vector2 = Vector2.DOWN
 
-## Charge constants (min_charge_time is now database-driven per talent)
-const MAX_CHARGE_TIME: float = 2.0      ## Maximum charge time for full range
-const BASE_RANGE: float = 150.0         ## Range at minimum charge
-const MAX_RANGE: float = 300.0          ## Range at maximum charge
+## Default charge constants (now database-driven per talent via max_charge_time, base_range)
+## These are fallbacks when talent data doesn't specify values
+const DEFAULT_MAX_CHARGE_TIME: float = 2.0      ## Default maximum charge time for full range
+const DEFAULT_BASE_RANGE: float = 150.0         ## Default range at minimum charge
 
 ## Constants
 const DEFAULT_CONFIG_PATH := "res://resources/combat_hud_config.tres"
@@ -453,12 +453,15 @@ func _on_ability_released(slot_index: int, ability_id: String, hold_duration: fl
 
 	# Get charge settings from talent (database-driven)
 	var min_charge := aiming_talent.min_charge_time
+	var max_charge := aiming_talent.max_charge_time if aiming_talent.max_charge_time > 0 else DEFAULT_MAX_CHARGE_TIME
+	var base_range := aiming_talent.base_range if aiming_talent.base_range > 0 else DEFAULT_BASE_RANGE
+	var max_range := aiming_talent.hit_range  # hit_range is the maximum range
 	var weak_damage_pct := aiming_talent.weak_shot_damage_percent
 	var weak_range_pct := aiming_talent.weak_shot_range_percent
 
 	var is_weak_shot := hold_duration < min_charge
 	var damage_multiplier := 1.0
-	var effective_range := MAX_RANGE
+	var effective_range := max_range
 
 	if is_weak_shot:
 		# Check if weak shot is enabled (damage > 0)
@@ -469,12 +472,12 @@ func _on_ability_released(slot_index: int, ability_id: String, hold_duration: fl
 
 		# Fire weak shot with reduced damage and range
 		damage_multiplier = weak_damage_pct / 100.0
-		effective_range = MAX_RANGE * (weak_range_pct / 100.0)
+		effective_range = max_range * (weak_range_pct / 100.0)
 		Debug.log("Combat", "Weak shot fired", {"damage%": weak_damage_pct, "range%": weak_range_pct})
 	else:
 		# Calculate charge progress (0-1) for full shots
-		var charge_progress := clampf((hold_duration - min_charge) / (MAX_CHARGE_TIME - min_charge), 0.0, 1.0)
-		effective_range = lerpf(BASE_RANGE, MAX_RANGE, charge_progress)
+		var charge_progress := clampf((hold_duration - min_charge) / (max_charge - min_charge), 0.0, 1.0)
+		effective_range = lerpf(base_range, max_range, charge_progress)
 
 	# Fire the projectile
 	_fire_projectile(aiming_talent, aim_indicator.get_aim_direction(), effective_range, damage_multiplier)
@@ -517,11 +520,12 @@ func _update_aiming() -> void:
 
 	aim_indicator.update_direction(aim_dir)
 
-	# Update charge progress (use talent's min_charge_time)
+	# Update charge progress (use talent's charge times from database)
 	var current_time := Time.get_ticks_msec() / 1000.0
 	var hold_duration := current_time - aim_start_time
 	var min_charge := aiming_talent.min_charge_time if aiming_talent else 0.5
-	var charge_progress := clampf((hold_duration - min_charge) / (MAX_CHARGE_TIME - min_charge), 0.0, 1.0)
+	var max_charge := aiming_talent.max_charge_time if aiming_talent and aiming_talent.max_charge_time > 0 else DEFAULT_MAX_CHARGE_TIME
+	var charge_progress := clampf((hold_duration - min_charge) / (max_charge - min_charge), 0.0, 1.0)
 	aim_indicator.update_charge(charge_progress)
 
 
@@ -664,16 +668,17 @@ func _fire_magic_projectile(talent: TalentData, direction: Vector2) -> void:
 	projectile.name = talent.talent_name.replace(" ", "")
 	print("[CAST] Projectile created: %s" % projectile.name)
 
-	# Set projectile properties from talent
+	# Set projectile properties from talent (database-driven)
 	projectile.base_speed = talent.projectile_speed if talent.projectile_speed > 0 else 350.0
 	projectile.max_range = talent.hit_range
 	projectile.explosion_radius = talent.explosion_radius
+	projectile.explosion_falloff = talent.explosion_falloff  # Damage falloff at edge
 	projectile.set_explosion_damage(damage_result.final_damage)
 	projectile.damage_type = _get_damage_type_string(talent.damage_type_id)
 	projectile.source = player
 
-	print("[CAST] Projectile config: speed=%s, range=%s, radius=%s, damage=%s" % [
-		projectile.base_speed, projectile.max_range, projectile.explosion_radius, damage_result.final_damage
+	print("[CAST] Projectile config: speed=%s, range=%s, radius=%s, damage=%s, falloff=%s%%" % [
+		projectile.base_speed, projectile.max_range, projectile.explosion_radius, damage_result.final_damage, talent.explosion_falloff
 	])
 
 	# Set contact status effect
@@ -829,9 +834,9 @@ func _apply_skill_mechanics(talent: TalentData) -> void:
 	if talent.skill_category.to_lower() == "melee":
 		player.request_attack()
 
-	# Apply lunge if specified
+	# Apply lunge if specified (duration from database, defaults to player's attack_lunge_duration)
 	if talent.lunge_force > 0:
-		player.apply_skill_lunge(talent.lunge_force)
+		player.apply_skill_lunge(talent.lunge_force, talent.lunge_duration)
 
 	# Apply recovery lockout if specified
 	if talent.recovery_time > 0:

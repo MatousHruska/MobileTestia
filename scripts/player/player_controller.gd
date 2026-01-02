@@ -197,12 +197,13 @@ func end_attack() -> void:
 
 
 ## Skill mechanics (called by CombatHUD when using skills)
-func apply_skill_lunge(force: float) -> void:
+func apply_skill_lunge(force: float, duration: float = 0.0) -> void:
 	## Apply lunge in facing direction from skill
+	## duration: Custom lunge duration from database (0 = use default attack_lunge_duration)
 	var lunge_dir := _facing_to_vector(current_facing)
 	_lunge_velocity = lunge_dir * force
-	_lunge_timer = attack_lunge_duration  # Use same duration as regular attacks
-	Debug.log("Combat", "Skill lunge applied", {"force": force, "direction": lunge_dir})
+	_lunge_timer = duration if duration > 0 else attack_lunge_duration
+	Debug.log("Combat", "Skill lunge applied", {"force": force, "duration": _lunge_timer, "direction": lunge_dir})
 
 
 func apply_recovery_lockout(duration: float) -> void:
