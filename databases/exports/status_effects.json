@@ -21,7 +21,7 @@
       "stat_affected": "health",
       "value": -5,
       "duration": 3,
-      "tick_interval": 1,
+      "tick_interval": 0,5,
       "visual_effect": "fire_particles",
       "stackable": false,
       "max_stacks": 1,
