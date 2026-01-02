@@ -56,9 +56,26 @@ var _dodge_direction: Vector2 = Vector2.ZERO
 func _ready() -> void:
 	Debug.info("Player", "PlayerController ready")
 	Game.player = self
+	_load_settings_from_database()
 	_update_facing(Facing.DOWN)
 	_setup_level_up_effect()
 	_setup_status_effect_manager()
+
+
+func _load_settings_from_database() -> void:
+	## Load player settings from gameplay_settings.json (if available)
+	## These override the @export defaults when database values exist
+	move_speed = DatabaseLoader.get_setting("player_move_speed", move_speed)
+	dodge_speed = DatabaseLoader.get_setting("player_dodge_speed", dodge_speed)
+	dodge_duration = DatabaseLoader.get_setting("player_dodge_duration", dodge_duration)
+	dodge_stamina_cost = DatabaseLoader.get_setting("player_dodge_stamina_cost", dodge_stamina_cost)
+	attack_lunge_force = DatabaseLoader.get_setting("player_attack_lunge_force", attack_lunge_force)
+	attack_lunge_duration = DatabaseLoader.get_setting("player_attack_lunge_duration", attack_lunge_duration)
+	Debug.log("Player", "Loaded settings from database", {
+		"move_speed": move_speed,
+		"dodge_speed": dodge_speed,
+		"attack_lunge_force": attack_lunge_force
+	})
 
 
 func _setup_level_up_effect() -> void:
