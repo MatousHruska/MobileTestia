@@ -75,6 +75,9 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, SUMMON, TELEPORT
 @export var hit_range: float = 50.0             # Attack range in pixels
 @export var hit_arc: float = 360.0              # Hit arc in degrees (360 = all around, 90 = forward cone)
 
+## Required weapon category (melee, melee_1h, melee_2h, ranged, magic, or empty for any)
+@export var required_weapon_category: String = ""
+
 ## Legacy field (kept for backwards compatibility)
 @export var damage_per_point: float = 0.0
 
@@ -157,6 +160,9 @@ static func from_dict(data: Dictionary) -> TalentData:
 	talent.recovery_time = float(data.get("recovery_time", 0))
 	talent.hit_range = float(data.get("hit_range", 50))
 	talent.hit_arc = float(data.get("hit_arc", 360))
+
+	# Required weapon category
+	talent.required_weapon_category = data.get("required_weapon_category", "")
 
 	# Legacy fields
 	talent.damage_per_point = float(data.get("damage_per_point", 0))
@@ -283,3 +289,27 @@ func get_required_row_points() -> int:
 ## Check if this talent has prerequisites
 func has_prerequisites() -> bool:
 	return not prerequisite_ids.is_empty()
+
+
+## Check if this talent requires a specific weapon category
+func has_weapon_requirement() -> bool:
+	return not required_weapon_category.is_empty()
+
+
+## Check if a weapon category matches this talent's requirement
+## "melee" matches both "melee_1h" and "melee_2h"
+func matches_weapon_category(weapon_cat: String) -> bool:
+	if required_weapon_category.is_empty():
+		return true  # No requirement, any weapon works
+	if weapon_cat.is_empty():
+		return false  # No weapon equipped, but requirement exists
+
+	# Exact match
+	if required_weapon_category == weapon_cat:
+		return true
+
+	# "melee" matches melee_1h and melee_2h
+	if required_weapon_category == "melee" and weapon_cat.begins_with("melee"):
+		return true
+
+	return false

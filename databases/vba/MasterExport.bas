@@ -214,7 +214,7 @@ Private Sub SetupItemBasesSheet()
     headers = Array("id", "name", "slot", "item_type", "weapon_damage", "physical_damage", _
                     "fire_damage", "cold_damage", "lightning_damage", "poison_damage", _
                     "attack_speed", "base_armor", "req_str", "req_dex", "req_int", _
-                    "allowed_affix_tags", "description")
+                    "allowed_affix_tags", "description", "weapon_category")
     SetHeaders ws, headers
 
     ' Add column notes
@@ -225,6 +225,7 @@ Private Sub SetupItemBasesSheet()
     SafeAddComment ws.Cells(1, 9), "Lightning elemental damage"
     SafeAddComment ws.Cells(1, 10), "Poison elemental damage"
     SafeAddComment ws.Cells(1, 11), "Attacks per second (1.0 = normal)"
+    SafeAddComment ws.Cells(1, 18), "Weapon category: melee_1h, melee_2h, ranged, magic"
 End Sub
 
 Private Sub SetupAffixesSheet()

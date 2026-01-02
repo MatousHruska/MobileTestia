@@ -14,6 +14,7 @@ class_name EquipmentData
 @export var lightning_damage: int = 0      # Lightning elemental damage
 @export var poison_damage: int = 0         # Poison elemental damage
 @export var weapon_attack_speed: float = 1.0  # Attacks per second (weapon base)
+@export var weapon_category: String = ""   # melee_1h, melee_2h, ranged, magic
 
 ## Stat bonuses provided when equipped
 @export_group("Stat Bonuses")

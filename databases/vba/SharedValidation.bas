@@ -505,6 +505,7 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "Talents", 9, "true,false" ' auto_learn
     ApplyListValidation "Talents", 12, "physical,fire,cold,lightning,poison,arcane,holy,shadow" ' damage_type
     ApplyListValidation "Talents", 23, "damage,heal,buff,debuff,projectile,summon,teleport,aoe"  ' effect_type
+    ApplyListValidation "Talents", 31, "melee,melee_1h,melee_2h,ranged,magic"  ' required_weapon_category
 
     ' NPCs
     ApplyListValidation "NPCs", 3, "quest_giver,trader,trainer,innkeeper,blacksmith,generic"  ' type
@@ -557,6 +558,7 @@ Private Sub ApplyEnumValidation()
     ' ItemBases
     ApplyListValidation "ItemBases", 3, "Weapon,Head,Chest,Hands,Legs,Feet,Ring,Amulet,Offhand"  ' slot
     ApplyListValidation "ItemBases", 4, "Sword,Axe,Mace,Dagger,Staff,Wand,Bow,Crossbow,Shield,Helmet,Chest,Gloves,Boots,Leggings,Ring,Amulet"  ' item_type
+    ApplyListValidation "ItemBases", 18, "melee_1h,melee_2h,ranged,magic"  ' weapon_category
 
     ' Affixes
     ApplyListValidation "Affixes", 3, "prefix,suffix"       ' type

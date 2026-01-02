@@ -29,6 +29,7 @@ Private Const COL_IB_REQ_DEX As Integer = 14
 Private Const COL_IB_REQ_INT As Integer = 15
 Private Const COL_IB_ALLOWED_AFFIX_TAGS As Integer = 16
 Private Const COL_IB_DESCRIPTION As Integer = 17
+Private Const COL_IB_WEAPON_CATEGORY As Integer = 18
 
 ' Column indices for Affixes
 Private Const COL_AX_ID As Integer = 1
@@ -57,6 +58,7 @@ Private validSlots() As String
 Private validItemTypes() As String
 Private validAffixTypes() As String
 Private validStatModifiers() As String
+Private validWeaponCategories() As String
 
 '-------------------------------------------------------------------------------
 ' InitValidLists - Initialize validation dropdown arrays
@@ -72,6 +74,7 @@ Private Sub InitValidLists()
                                "armor,magic_resistance,dodge_chance," & _
                                "attack_speed,critical_chance,critical_damage," & _
                                "life,mana,life_regen,mana_regen,movement_speed", ",")
+    validWeaponCategories = Split("melee_1h,melee_2h,ranged,magic", ",")
 End Sub
 
 '===============================================================================
@@ -143,6 +146,16 @@ Public Sub ValidateItemBases()
             LogValidationError errors, errorCount, i, "Attack Speed", "Cannot be negative"
         End If
 
+        ' Validate weapon_category for weapons
+        If LCase(Trim(ws.Cells(i, COL_IB_SLOT).value)) = "weapon" Then
+            Dim weaponCat As String
+            weaponCat = LCase(Trim(ws.Cells(i, COL_IB_WEAPON_CATEGORY).value))
+            If Len(weaponCat) > 0 And Not ValidateDropdown(weaponCat, validWeaponCategories) Then
+                LogValidationError errors, errorCount, i, "Weapon Category", _
+                    "Invalid weapon category. Valid: melee_1h, melee_2h, ranged, magic"
+            End If
+        End If
+
 NextItemBase:
     Next i
 
@@ -200,7 +213,8 @@ Public Sub ExportItemBases()
         json = json & "      ""req_dex"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_REQ_DEX))) & "," & vbCrLf
         json = json & "      ""req_int"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_REQ_INT))) & "," & vbCrLf
         json = json & "      ""allowed_affix_tags"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_ALLOWED_AFFIX_TAGS))) & """," & vbCrLf
-        json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_DESCRIPTION))) & """" & vbCrLf
+        json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_DESCRIPTION))) & """," & vbCrLf
+        json = json & "      ""weapon_category"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_IB_WEAPON_CATEGORY)))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1

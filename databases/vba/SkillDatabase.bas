@@ -40,6 +40,7 @@ Private Const COL_TAL_STAT_BONUSES As Integer = 27  ' For passive: "strength:2;a
 Private Const COL_TAL_DESCRIPTION As Integer = 28
 Private Const COL_TAL_RANK_DESCRIPTIONS As Integer = 29  ' "Rank 1 desc|Rank 2 desc|..."
 Private Const COL_TAL_ICON_NAME As Integer = 30
+Private Const COL_TAL_REQUIRED_WEAPON_CATEGORY As Integer = 31  ' melee, melee_1h, melee_2h, ranged, magic
 
 ' Column indices for TalentTrees (1-based)
 Private Const COL_TT_ID As Integer = 1
@@ -52,6 +53,7 @@ Private validTalentTypes() As String
 Private validEffectTypes() As String
 Private validSkillCategories() As String
 Private validDamageTypes() As String
+Private validRequiredWeaponCategories() As String
 
 '-------------------------------------------------------------------------------
 ' InitValidLists - Initialize validation dropdown arrays
@@ -61,6 +63,8 @@ Private Sub InitValidLists()
     validEffectTypes = Split("damage,heal,buff,debuff,projectile,summon,teleport,aoe", ",")
     validSkillCategories = Split("melee,ranged,magic", ",")
     validDamageTypes = Split("physical,fire,cold,lightning,poison,arcane,holy,shadow", ",")
+    ' Weapon categories: melee matches melee_1h AND melee_2h, specific ones match exactly
+    validRequiredWeaponCategories = Split("melee,melee_1h,melee_2h,ranged,magic", ",")
 End Sub
 
 '===============================================================================
@@ -250,6 +254,16 @@ Public Sub ValidateTalents()
             LogValidationError errors, errorCount, i, "Stamina Cost", "Cannot be negative"
         End If
 
+        ' Validate required_weapon_category for active talents
+        If talentType = "active" Then
+            Dim reqWeaponCat As String
+            reqWeaponCat = LCase(Trim(ws.Cells(i, COL_TAL_REQUIRED_WEAPON_CATEGORY).value))
+            If Len(reqWeaponCat) > 0 And Not ValidateDropdown(reqWeaponCat, validRequiredWeaponCategories) Then
+                LogValidationError errors, errorCount, i, "Required Weapon Category", _
+                    "Invalid category. Valid: melee, melee_1h, melee_2h, ranged, magic"
+            End If
+        End If
+
 NextTalent:
     Next i
 
@@ -327,7 +341,8 @@ Public Sub ExportTalents()
         json = json & "      ""stat_bonuses"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_STAT_BONUSES))) & """," & vbCrLf
         json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_DESCRIPTION))) & """," & vbCrLf
         json = json & "      ""rank_descriptions"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_RANK_DESCRIPTIONS))) & """," & vbCrLf
-        json = json & "      ""icon_name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_ICON_NAME), id)) & """" & vbCrLf
+        json = json & "      ""icon_name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_ICON_NAME), id)) & """," & vbCrLf
+        json = json & "      ""required_weapon_category"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_REQUIRED_WEAPON_CATEGORY)))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -379,7 +394,7 @@ Public Sub SetupTalentsSheet()
                     "prerequisite_ids", "mana_cost", "stamina_cost", "cooldown", _
                     "base_damage", "damage_per_rank", "effect_type", "effect_value", _
                     "effect_per_point", "duration", "stat_bonuses", "description", _
-                    "rank_descriptions", "icon_name")
+                    "rank_descriptions", "icon_name", "required_weapon_category")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -403,6 +418,7 @@ Public Sub SetupTalentsSheet()
     SafeAddComment ws.Cells(1, 22), "For magic: additional damage per rank (1-20)"
     SafeAddComment ws.Cells(1, 27), "For passive: stat:value_per_point pairs (e.g., strength:2;armor:5)"
     SafeAddComment ws.Cells(1, 29), "Pipe-separated descriptions per rank"
+    SafeAddComment ws.Cells(1, 31), "Required weapon: melee (any), melee_1h, melee_2h, ranged, magic"
 End Sub
 
 '-------------------------------------------------------------------------------
