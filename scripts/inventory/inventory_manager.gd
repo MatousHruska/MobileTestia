@@ -340,6 +340,17 @@ func get_equipped_weapon_attack_speed() -> float:
 	return 1.0
 
 
+## Get the weapon category from equipped weapon (melee_1h, melee_2h, ranged, magic)
+func get_equipped_weapon_category() -> String:
+	var weapon_slot := get_equipped_item(ItemData.EquipSlot.MAIN_HAND)
+	if weapon_slot.is_empty():
+		return ""  # No weapon equipped
+	var weapon: ItemData = weapon_slot.get("item")
+	if weapon is EquipmentData:
+		return weapon.weapon_category
+	return ""
+
+
 func is_slot_blocked(_slot: ItemData.EquipSlot) -> bool:
 	# No slots are blocked in this configuration
 	return false

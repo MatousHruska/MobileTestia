@@ -56,6 +56,10 @@ func _connect_talent_manager() -> void:
 		# Sync existing bindings
 		call_deferred("_sync_talent_bindings")
 
+	# Connect to Inventory for weapon changes
+	if Inventory:
+		Inventory.equipment_changed.connect(_on_equipment_changed)
+
 
 func _sync_talent_bindings() -> void:
 	## Sync all bound talents from TalentManager to ability slots
@@ -85,9 +89,15 @@ func _bind_talent_to_slot(slot_index: int, talent: TalentData) -> void:
 		"effect_value": talent.get_effect_at_points(invested),
 		"duration": talent.duration,
 		"talent_id": talent.id,
+		"required_weapon_category": talent.required_weapon_category,
 	}
 
 	ability_slots[slot_index].bind_ability(talent.id, data)
+
+	# Update weapon validity for this slot
+	var weapon_cat := Inventory.get_equipped_weapon_category()
+	ability_slots[slot_index].update_weapon_validity(weapon_cat)
+
 	Debug.log("Combat", "Bound talent to HUD slot", {"slot": slot_index, "talent": talent.talent_name})
 
 
@@ -109,6 +119,19 @@ func _on_talent_skill_unbound(slot_index: int) -> void:
 	var hud_slot := slot_index - 1
 	if hud_slot >= 0 and hud_slot < ability_slots.size():
 		clear_ability_slot(hud_slot)
+
+
+func _on_equipment_changed(slot: ItemData.EquipSlot) -> void:
+	## Handle equipment change - update weapon validity for all ability slots
+	if slot == ItemData.EquipSlot.MAIN_HAND:
+		_update_all_weapon_validity()
+
+
+func _update_all_weapon_validity() -> void:
+	## Update weapon validity state for all ability slots
+	var weapon_cat := Inventory.get_equipped_weapon_category()
+	for slot in ability_slots:
+		slot.update_weapon_validity(weapon_cat)
 
 
 func _load_or_create_config() -> void:
@@ -260,6 +283,15 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 	if player and player.is_locked:
 		Debug.log("Combat", "Player is locked, cannot use %s" % talent.talent_name)
 		return
+
+	# Check weapon requirement
+	if talent.has_weapon_requirement():
+		var weapon_cat := Inventory.get_equipped_weapon_category()
+		if not talent.matches_weapon_category(weapon_cat):
+			Debug.log("Combat", "Wrong weapon for %s (requires %s, have %s)" % [
+				talent.talent_name, talent.required_weapon_category, weapon_cat if weapon_cat else "none"
+			])
+			return
 
 	# Check resource costs
 	if talent.mana_cost > 0 and PlayerStats.current_mana < talent.mana_cost:

@@ -514,6 +514,7 @@ func _connect_signals() -> void:
 	TalentManager.skill_bound.connect(_on_skill_bound)
 	TalentManager.skill_unbound.connect(_on_skill_unbound)
 	PlayerStats.skill_points_changed.connect(_on_skill_points_changed)
+	Inventory.equipment_changed.connect(_on_equipment_changed)
 
 
 #===============================================================================
@@ -810,7 +811,14 @@ func _create_skillbook_slot(talent: TalentData) -> Button:
 	slot.toggle_mode = true
 	slot.text = talent.talent_name.substr(0, 2).to_upper()
 	slot.add_theme_font_size_override("font_size", 12)
-	slot.tooltip_text = talent.talent_name + "\n[Hold and drag to bind]"
+
+	# Check weapon requirement
+	var weapon_met := _is_weapon_requirement_met(talent)
+	if not weapon_met:
+		var req_name := _get_weapon_category_display_name(talent.required_weapon_category)
+		slot.tooltip_text = talent.talent_name + "\n[Requires: " + req_name + "]"
+	else:
+		slot.tooltip_text = talent.talent_name + "\n[Hold and drag to bind]"
 
 	# Use gui_input for drag detection instead of pressed signal
 	slot.gui_input.connect(_on_skillbook_slot_input.bind(talent.id, slot))
@@ -820,8 +828,16 @@ func _create_skillbook_slot(talent: TalentData) -> Button:
 	var is_selected := (talent.id == selected_talent_id and selected_from_skillbook)
 
 	var stylebox := StyleBoxFlat.new()
-	stylebox.bg_color = Color(0.2, 0.25, 0.35) if is_bound else Color(0.15, 0.15, 0.2)
-	stylebox.border_color = COLOR_SELECTED if is_selected else (COLOR_BINDING_AVAILABLE if is_bound else COLOR_LEARNED)
+
+	# Gray out if weapon requirement not met
+	if not weapon_met:
+		stylebox.bg_color = Color(0.15, 0.15, 0.15, 0.6)
+		stylebox.border_color = COLOR_LOCKED
+		slot.modulate = Color(0.6, 0.6, 0.6, 0.8)
+	else:
+		stylebox.bg_color = Color(0.2, 0.25, 0.35) if is_bound else Color(0.15, 0.15, 0.2)
+		stylebox.border_color = COLOR_SELECTED if is_selected else (COLOR_BINDING_AVAILABLE if is_bound else COLOR_LEARNED)
+
 	stylebox.set_border_width_all(2)
 	stylebox.set_corner_radius_all(4)
 	slot.add_theme_stylebox_override("normal", stylebox)
@@ -889,23 +905,39 @@ func _update_bind_slot_visual(slot: Button, index: int) -> void:
 	var talent := TalentManager.get_bound_talent(index)
 	var is_main := (index == 0)
 
+	# Check weapon requirement
+	var weapon_met := true
 	if talent:
+		weapon_met = _is_weapon_requirement_met(talent)
 		slot.text = talent.talent_name.substr(0, 2).to_upper()
-		slot.tooltip_text = talent.talent_name
+		if not weapon_met:
+			var req_name := _get_weapon_category_display_name(talent.required_weapon_category)
+			slot.tooltip_text = talent.talent_name + "\n[Requires: " + req_name + "]"
+		else:
+			slot.tooltip_text = talent.talent_name
 	else:
 		slot.text = "+" if is_main else ""
 		slot.tooltip_text = "Main Slot" if is_main else "Slot %d" % index
 
 	# Highlight in binding mode
 	var stylebox := StyleBoxFlat.new()
-	stylebox.bg_color = Color(0.2, 0.2, 0.25, 0.8) if not talent else Color(0.25, 0.3, 0.4, 0.9)
 
-	if binding_mode:
-		stylebox.border_color = COLOR_BINDING_AVAILABLE
-		stylebox.set_border_width_all(3)
-	else:
-		stylebox.border_color = COLOR_BINDING_AVAILABLE if is_main else Color(0.55, 1.0, 0.98, 0.5)
+	# Gray out if weapon requirement not met
+	if talent and not weapon_met:
+		stylebox.bg_color = Color(0.15, 0.15, 0.15, 0.6)
+		stylebox.border_color = COLOR_LOCKED
 		stylebox.set_border_width_all(2)
+		slot.modulate = Color(0.6, 0.6, 0.6, 0.8)
+	else:
+		stylebox.bg_color = Color(0.2, 0.2, 0.25, 0.8) if not talent else Color(0.25, 0.3, 0.4, 0.9)
+		slot.modulate = Color(1.0, 1.0, 1.0, 1.0)
+
+		if binding_mode:
+			stylebox.border_color = COLOR_BINDING_AVAILABLE
+			stylebox.set_border_width_all(3)
+		else:
+			stylebox.border_color = COLOR_BINDING_AVAILABLE if is_main else Color(0.55, 1.0, 0.98, 0.5)
+			stylebox.set_border_width_all(2)
 
 	stylebox.set_corner_radius_all(4)
 	slot.add_theme_stylebox_override("normal", stylebox)
@@ -956,6 +988,14 @@ func _update_description_panel() -> void:
 			_add_stat_row(_desc_col_left, "Stamina", str(int(talent.stamina_cost)), Color(0.4, 1.0, 0.6))
 		if talent.cooldown > 0:
 			_add_stat_row(_desc_col_left, "Cooldown", "%.1fs" % talent.cooldown, Color(0.9, 0.9, 0.9))
+
+		# Weapon requirement (show in red if not met)
+		if talent.has_weapon_requirement():
+			var weapon_cat := Inventory.get_equipped_weapon_category()
+			var is_met := talent.matches_weapon_category(weapon_cat)
+			var req_text := _get_weapon_category_display_name(talent.required_weapon_category)
+			var req_color := Color(0.5, 1.0, 0.5) if is_met else Color(1.0, 0.4, 0.4)
+			_add_stat_row(_desc_col_left, "Requires", req_text, req_color)
 
 		# Right column: Rank info for active skills
 		if invested > 0 and skill_rank > 0 and skill_rank <= talent.rank_descriptions.size():
@@ -1175,6 +1215,33 @@ func _on_skill_points_changed(_points: int) -> void:
 		var talent := TalentManager.get_talent(id)
 		if talent:
 			_update_talent_node_visual(_talent_nodes[id], talent)
+
+
+func _on_equipment_changed(slot: ItemData.EquipSlot) -> void:
+	## Handle equipment change - refresh skillbook and bind slots for weapon validity
+	if slot == ItemData.EquipSlot.MAIN_HAND:
+		_refresh_skillbook()
+		_refresh_bind_slots()
+		_update_description_panel()
+
+
+## Convert weapon category ID to display name
+func _get_weapon_category_display_name(category: String) -> String:
+	match category:
+		"melee": return "Melee Weapon"
+		"melee_1h": return "One-Handed Melee"
+		"melee_2h": return "Two-Handed Melee"
+		"ranged": return "Ranged Weapon"
+		"magic": return "Magic Weapon"
+		_: return category.capitalize()
+
+
+## Check if a talent's weapon requirement is met
+func _is_weapon_requirement_met(talent: TalentData) -> bool:
+	if not talent.has_weapon_requirement():
+		return true
+	var weapon_cat := Inventory.get_equipped_weapon_category()
+	return talent.matches_weapon_category(weapon_cat)
 
 
 #===============================================================================
