@@ -52,7 +52,7 @@ func _on_player_ready() -> void:
 		_sync_with_manager(manager)
 
 
-func _on_effect_applied(effect_type: String, duration: float, show_in_hud: bool = true) -> void:
+func _on_effect_applied(effect_type: String, duration: float, show_in_hud: bool = true, is_debuff: bool = true) -> void:
 	# Skip effects that shouldn't show in HUD
 	if not show_in_hud:
 		return
@@ -64,7 +64,7 @@ func _on_effect_applied(effect_type: String, duration: float, show_in_hud: bool 
 			icon.refresh_duration(duration)
 	else:
 		# Create new icon
-		_add_effect_icon(effect_type, duration, true)
+		_add_effect_icon(effect_type, duration, is_debuff)
 
 
 func _on_effect_removed(effect_type: String) -> void:
