@@ -134,6 +134,11 @@ func _process_movement(delta: float) -> void:
 
 	var target_velocity := Vector2.ZERO
 
+	# During lunge, use lunge velocity directly (like dodge)
+	if _lunge_timer > 0:
+		velocity = _lunge_velocity
+		return
+
 	if input_direction != Vector2.ZERO:
 		# Calculate effective move speed with equipment bonus
 		var effective_speed := move_speed * (1.0 + PlayerStats.movement_speed / 100.0)
@@ -146,9 +151,6 @@ func _process_movement(delta: float) -> void:
 	else:
 		# Apply friction when no input
 		velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
-
-	# Add lunge velocity
-	velocity += _lunge_velocity
 
 
 ## Input handling (called by InputManager or UI)
