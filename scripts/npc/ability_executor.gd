@@ -44,6 +44,7 @@ var _recovery_timer: float = 0.0
 var _dash_progress: float = 0.0
 var _dash_start_pos: Vector2
 var _dash_target_pos: Vector2
+var _last_damage_dealt: float = 0.0  ## For lifesteal calculations
 
 #===============================================================================
 # COOLDOWNS
@@ -508,14 +509,25 @@ func _apply_damage_to_target(target: Node2D, ability: AbilityData) -> void:
 	if not target or not ability or not _caster:
 		return
 
-	# Calculate damage
-	var base_damage := 10.0
+	# Get enemy stats
+	var enemy_base_damage := 10.0
 	if "base_damage" in _caster:
-		base_damage = _caster.base_damage
+		enemy_base_damage = _caster.base_damage
 	elif "damage" in _caster:
-		base_damage = _caster.damage
+		enemy_base_damage = _caster.damage
 
-	var final_damage := base_damage * ability.damage_mult
+	var enemy_level := 1
+	if "enemy_level" in _caster:
+		enemy_level = _caster.enemy_level
+
+	# Use DamageCalculator for unified damage formula
+	# This allows enemies to have crits, elemental bonuses, etc. in the future
+	var damage_result := DamageCalculator.calculate_enemy_ability_damage(
+		ability,
+		enemy_base_damage,
+		enemy_level
+	)
+	var final_damage: float = damage_result.final_damage
 
 	# Apply damage
 	if target.has_method("take_damage"):
@@ -525,13 +537,17 @@ func _apply_damage_to_target(target: Node2D, ability: AbilityData) -> void:
 
 	ability_hit.emit(target, ability, final_damage)
 
+	# Store last damage for lifesteal calculations
+	_last_damage_dealt = final_damage
+
 	# Apply effects
 	_apply_effects_to_target(target, ability)
 
 	Debug.log("AbilityExecutor", "Hit target", {
 		"target": target.name,
 		"ability": ability.id,
-		"damage": final_damage
+		"damage": final_damage,
+		"is_crit": damage_result.is_critical
 	})
 
 
@@ -585,16 +601,12 @@ func _apply_slow(target: Node2D, duration: float, percent: float) -> void:
 		target.apply_slow(duration, percent / 100.0)
 
 
-func _apply_lifesteal(percent: float, ability: AbilityData) -> void:
+func _apply_lifesteal(percent: float, _ability: AbilityData) -> void:
 	if not _caster:
 		return
 
-	var base_damage := 10.0
-	if "base_damage" in _caster:
-		base_damage = _caster.base_damage
-
-	var damage_dealt := base_damage * ability.damage_mult
-	var heal_amount := damage_dealt * (percent / 100.0)
+	# Use the stored damage from the actual hit (calculated via DamageCalculator)
+	var heal_amount := _last_damage_dealt * (percent / 100.0)
 
 	if _caster.has_method("heal"):
 		_caster.heal(heal_amount)

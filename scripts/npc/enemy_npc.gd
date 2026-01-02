@@ -71,8 +71,8 @@ var _spawner: Node = null  ## Reference to spawner that created this enemy
 var home_position: Vector2 = Vector2.ZERO
 var _use_ability_system: bool = false  ## True if using new ability system
 
-## Status effects (DoTs, debuffs)
-var _status_effects: Dictionary = {}  ## key: effect_id, value: { remaining_duration, tick_timer, damage_per_tick, tick_interval }
+## Status effects - using unified StatusEffectComponent
+var status_effects: StatusEffectComponent = null
 var _burning_visual: Node2D = null  ## Visual effect for burning status
 
 
@@ -82,6 +82,7 @@ func _ready() -> void:
 	home_position = global_position
 	_original_modulate = modulate
 
+	_setup_status_effects()
 	_setup_ai()
 	_setup_hitbox()
 	_setup_hurtbox()
@@ -96,6 +97,19 @@ func _ready() -> void:
 		"detection": detection_radius,
 		"attack_range": attack_radius
 	})
+
+
+func _setup_status_effects() -> void:
+	## Setup the unified status effect component
+	status_effects = StatusEffectComponent.new()
+	status_effects.name = "StatusEffects"
+	status_effects.setup(self)
+	add_child(status_effects)
+
+	# Connect signals for visual feedback
+	status_effects.effect_applied.connect(_on_status_effect_applied)
+	status_effects.effect_removed.connect(_on_status_effect_removed)
+	status_effects.effect_tick.connect(_on_status_effect_tick)
 
 
 ## Override placeholder color - RED for hostile
@@ -120,7 +134,9 @@ func _physics_process(delta: float) -> void:
 
 	_process_timers(delta)
 	_process_health_regen(delta)
-	_process_status_effects(delta)
+	# Status effects are processed by StatusEffectComponent
+	if status_effects:
+		status_effects.process_effects(delta)
 	super._physics_process(delta)
 
 
@@ -141,84 +157,39 @@ func _process_health_regen(delta: float) -> void:
 		current_health += health_regen * delta
 
 
-func _process_status_effects(delta: float) -> void:
-	## Process active status effects (DoTs)
-	var expired_effects: Array[String] = []
-
-	for effect_id in _status_effects.keys():
-		var effect: Dictionary = _status_effects[effect_id]
-
-		# Update timers
-		effect.remaining_duration -= delta
-		effect.tick_timer -= delta
-
-		# Apply DoT damage on tick
-		if effect.tick_timer <= 0 and effect.damage_per_tick > 0:
-			var dot_damage: float = effect.damage_per_tick
-			current_health -= dot_damage
-			effect.tick_timer = effect.tick_interval
-			Debug.log("Combat", "%s took DoT damage from %s" % [enemy_name, effect_id], int(dot_damage))
-
-			# Visual feedback for burning - flash orange on tick
-			if effect_id == "status_burning":
-				modulate = Color(1.0, 0.6, 0.3)
-				_damage_flash_timer = 0.1
-
-		# Check expiration
-		if effect.remaining_duration <= 0:
-			expired_effects.append(effect_id)
-
-	# Remove expired effects
-	for effect_id in expired_effects:
-		_status_effects.erase(effect_id)
-		if effect_id == "status_burning":
-			_remove_burning_visual()
-		Debug.log("Combat", "%s: %s expired" % [enemy_name, effect_id])
+## Status effect signal handlers
+func _on_status_effect_applied(effect_type: String, _duration: float, _show_in_hud: bool, is_debuff: bool) -> void:
+	## Handle visual effects when status effect is applied
+	if effect_type == "burning" or effect_type == "status_burning":
+		_spawn_burning_visual()
 
 
-func apply_status_effect(effect_id: String, source_node: Node2D = null) -> void:
+func _on_status_effect_removed(effect_type: String) -> void:
+	## Handle cleanup when status effect is removed
+	if effect_type == "burning" or effect_type == "status_burning":
+		_remove_burning_visual()
+
+
+func _on_status_effect_tick(effect_type: String, _damage: float) -> void:
+	## Handle visual feedback on DoT tick
+	if effect_type == "burning" or effect_type == "status_burning":
+		modulate = Color(1.0, 0.6, 0.3)
+		_damage_flash_timer = 0.1
+
+
+func take_effect_damage(damage: float) -> void:
+	## Called by StatusEffectComponent for DoT damage
+	current_health -= damage
+
+
+func apply_status_effect(effect_id: String, _source_node: Node2D = null) -> void:
 	## Apply a status effect from the database (e.g., "status_burning")
+	## Now uses the unified StatusEffectComponent
 	if is_dead:
 		return
 
-	# Look up effect in database
-	if not DatabaseLoader.status_effects.has(effect_id):
-		Debug.warn("Combat", "Unknown status effect: %s" % effect_id)
-		return
-
-	var effect_data: Dictionary = DatabaseLoader.status_effects[effect_id]
-	var effect_type: String = effect_data.get("type", "")
-
-	# Handle DoT debuffs
-	if effect_type == "debuff_dot":
-		var duration: float = effect_data.get("duration", 3.0)
-		var value: float = effect_data.get("value", -5.0)
-		var tick_interval: float = effect_data.get("tick_interval", 1.0)
-		var damage_per_tick: float = absf(value)  # Convert negative to positive damage
-
-		if effect_id in _status_effects:
-			# Refresh duration if already active
-			_status_effects[effect_id].remaining_duration = duration
-			Debug.log("Combat", "%s: %s refreshed" % [enemy_name, effect_id])
-		else:
-			# Apply new effect
-			_status_effects[effect_id] = {
-				"remaining_duration": duration,
-				"tick_timer": tick_interval,
-				"damage_per_tick": damage_per_tick,
-				"tick_interval": tick_interval,
-				"source": source_node
-			}
-
-			# Spawn visual effect for burning
-			if effect_id == "status_burning":
-				_spawn_burning_visual()
-
-			Debug.log("Combat", "%s: %s applied" % [enemy_name, effect_id], {
-				"duration": duration,
-				"damage": damage_per_tick,
-				"interval": tick_interval
-			})
+	if status_effects:
+		status_effects.apply_status_effect(effect_id)
 
 
 func _spawn_burning_visual() -> void:

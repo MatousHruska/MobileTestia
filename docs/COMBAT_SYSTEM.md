@@ -22,7 +22,7 @@ This document provides a comprehensive overview of the combat system, its buildi
 
 ## System Overview
 
-The combat system is built on **two parallel architectures**:
+The combat system is built on a **unified architecture** with shared building blocks:
 
 ```
 PLAYER COMBAT                          ENEMY COMBAT
@@ -33,14 +33,14 @@ TalentManager (skill bindings)         EnemyAbilityController (AI selection)
      ↓                                      ↓
 CombatHUD (input routing)              AbilityExecutor (execution)
      ↓                                      ↓
-DamageCalculator (math)                Direct damage calculation
-     ↓                                      ↓
   ┌──┴──────────────────────────────────────┴──┐
   │           SHARED SYSTEMS                    │
+  │  • DamageCalculator (unified damage math)  │
+  │  • StatusEffectComponent (buffs/debuffs)   │
+  │  • MovementAction (lunge/dash/knockback)   │
   │  • HitboxSpawner (collision detection)     │
   │  • Projectile / MagicProjectile            │
-  │  • Status Effect Application               │
-  │  • Visual Effects (HitboxVisual, etc.)     │
+  │  • SkillBase (shared skill properties)     │
   └─────────────────────────────────────────────┘
 ```
 
@@ -422,139 +422,121 @@ enum AbilityType {
 
 ---
 
-## Shared vs Duplicated Systems
+## Unified Building Blocks
 
-### Currently Shared (Good!)
+The following systems are now **unified** and shared between player and enemies:
+
+### StatusEffectComponent (Buffs/Debuffs)
+
+**Files:**
+- `scripts/combat/status_effect_component.gd` - Base class
+- `scripts/player/status_effect_manager.gd` - Player extension with persistence
+
+**Features:**
+- DoT (Damage over Time)
+- HoT (Heal over Time)
+- Buffs and debuffs
+- Signal-based UI updates
+- Database-driven effect definitions
+
+**Usage:**
+```gdscript
+# Player (via StatusEffectManager)
+Game.player.status_effect_manager.apply_status_effect("status_bandage")
+Game.player.status_effect_manager.apply_dot("burn", 5.0, 3.0, 1.0)
+
+# Enemy (via StatusEffectComponent)
+enemy.status_effects.apply_status_effect("status_burning")
+enemy.apply_status_effect("status_burning")  # Convenience method
+```
+
+---
+
+### MovementAction (Lunge/Dash/Knockback)
+
+**File:** `scripts/combat/movement_action.gd`
+
+**Features:**
+- Lunge (short forward burst for melee)
+- Dash (move to target position)
+- Knockback (forced movement away)
+- Charge (extended forward movement)
+- Teleport (instant position change)
+
+**Usage:**
+```gdscript
+# Create a lunge
+var lunge = MovementAction.create_lunge(direction, 80.0, 0.1)
+
+# Create a dash
+var dash = MovementAction.create_dash(start_pos, target_pos, 400.0)
+
+# Create knockback
+var knockback = MovementAction.create_knockback(source_pos, target_pos, 150.0)
+
+# Execute
+action.start(current_position)
+while action.is_active():
+    velocity = action.update(delta, current_position)
+```
+
+---
+
+### DamageCalculator (Unified Damage Math)
+
+**File:** `autoloads/damage_calculator.gd`
+
+**Player Methods:**
+- `calculate_skill_damage(talent, skill_rank)` - Weapon/magic damage
+- `calculate_final_damage(talent, skill_rank)` - With crit roll
+- `calculate_basic_attack()` - Weapon + attack power
+
+**Enemy Methods:**
+- `calculate_enemy_ability_damage(ability, base_damage, level)` - Ability damage
+- `calculate_enemy_basic_attack(base_damage, level)` - Basic attack
+- `calculate_enemy_damage_taken(damage, armor, resist, type)` - Mitigation
+
+**Usage:**
+```gdscript
+# Player attack
+var result = DamageCalculator.calculate_final_damage(talent, rank)
+enemy.take_damage(result.final_damage, player)
+
+# Enemy attack (now goes through DamageCalculator)
+var result = DamageCalculator.calculate_enemy_ability_damage(ability, enemy.base_damage, enemy.enemy_level)
+player.take_damage(result.final_damage, enemy)
+```
+
+---
+
+### SkillBase (Shared Skill Properties)
+
+**File:** `scripts/data/skill_base.gd`
+
+**Shared Enums:**
+- `DamageType` - PHYSICAL, FIRE, COLD, LIGHTNING, etc.
+- `HitboxShape` - CIRCLE, CONE, LINE, CROSS, RING
+
+**Shared Properties:**
+- `id`, `skill_name`, `description`
+- `damage_type`, `cooldown`, `skill_range`
+- `status_effect_on_hit`
+
+**Helper Methods:**
+- `damage_type_from_string()` / `damage_type_to_string()`
+- `hitbox_shape_from_string()` / `hitbox_shape_to_string()`
+- `get_damage_type_color()` - For visual effects
+
+---
+
+### Other Shared Systems
 
 | System | Files | Notes |
 |--------|-------|-------|
 | Hitbox Spawning | `hitbox_spawner.gd` | Both use same shapes |
-| Projectiles | `projectile.gd`, `magic_projectile.gd` | Could add enemy projectiles |
+| Projectiles | `projectile.gd`, `magic_projectile.gd` | Player and enemy projectiles |
 | Collision Layers | `COLLISION_LAYERS.md` | Documented standard |
 | Visual Effects | `hitbox_visual.gd` | Debug visualization |
-
-### Currently Duplicated (Needs Unification)
-
-| System | Player | Enemy | Recommendation |
-|--------|--------|-------|----------------|
-| **Lunge/Dash** | `PlayerController.apply_skill_lunge()` | `AbilityExecutor._update_dash()` | Create shared `MovementAction` class |
-| **Status Effects** | `StatusEffectManager` class | Dictionary in `enemy_npc.gd` | Use `StatusEffectManager` for both |
-| **Damage Calc** | `DamageCalculator` autoload | `base_damage * mult` inline | Route enemy damage through `DamageCalculator` |
-| **Ability Data** | `TalentData` | `AbilityData` | Consider unified `SkillData` base class |
-| **Attack Phases** | Implicit in animation | Explicit state machine | Document or unify |
-
----
-
-## Refactoring Recommendations
-
-### Priority 1: Unify Status Effects
-
-**Current State:**
-- Player: Full `StatusEffectManager` with persistence, signals, multiple effect types
-- Enemy: Simple dictionary with only DoT support
-
-**Recommendation:**
-```gdscript
-# Create base StatusEffectComponent
-class_name StatusEffectComponent extends Node
-
-# Use for both:
-# - PlayerController adds StatusEffectManager (full features)
-# - EnemyNPC adds StatusEffectComponent (subset)
-```
-
-**Benefits:**
-- Enemies could receive buffs/debuffs from player abilities
-- Consistent tick logic
-- Easier to add new effect types
-
----
-
-### Priority 2: Unify Movement Actions
-
-**Current State:**
-- Player lunge: `_lunge_velocity` applied in `_physics_process`
-- Enemy dash: `AbilityExecutor._update_dash()` with lerp
-
-**Recommendation:**
-```gdscript
-# Create MovementAction resource
-class_name MovementAction extends Resource
-
-enum Type { LUNGE, DASH, KNOCKBACK, TELEPORT }
-
-var type: Type
-var force: float
-var duration: float
-var direction: Vector2
-
-# Both PlayerController and EnemyNPC use same system
-func apply_movement_action(action: MovementAction):
-    match action.type:
-        Type.LUNGE: _apply_lunge(action)
-        Type.DASH: _apply_dash(action)
-        # ...
-```
-
-**Benefits:**
-- Knockback works identically for player and enemies
-- Easy to add new movement types (charge, leap, etc.)
-- Consistent timing and feel
-
----
-
-### Priority 3: Unified Damage Pipeline
-
-**Current State:**
-- Player: `DamageCalculator.calculate_final_damage()` with weapon scaling, crit, elemental bonuses
-- Enemy: `base_damage * ability.damage_mult` inline
-
-**Recommendation:**
-```gdscript
-# Extend DamageCalculator for enemies
-static func calculate_enemy_damage(ability: AbilityData, enemy_stats: Dictionary) -> Dictionary:
-    var base = enemy_stats.base_damage * ability.damage_mult
-    # Apply enemy-specific modifiers (enrage, buffs, etc.)
-    return { "final_damage": base, "damage_type": ability.damage_type }
-```
-
-**Benefits:**
-- Single place for all damage formulas
-- Easier to add enemy crits, elemental bonuses
-- Consistent damage preview/tooltips
-
----
-
-### Priority 4: Consider Unified Skill Data
-
-**Current State:**
-- `TalentData`: Player skills with tree structure, investment points
-- `AbilityData`: Enemy abilities with conditions, priorities
-
-**Analysis:**
-These serve different purposes and may not need full unification, but could share a base:
-
-```gdscript
-# Shared base
-class_name SkillBase extends Resource
-var id: String
-var damage_type: String
-var hit_range: float
-var effect_type: int
-var status_effect: String
-
-# Player extension
-class_name TalentData extends SkillBase
-var tree: String
-var max_points: int
-var weapon_damage_percent: float
-
-# Enemy extension
-class_name AbilityData extends SkillBase
-var priority: int
-var conditions: Array
-var windup: float
-```
 
 ---
 
@@ -700,13 +682,14 @@ var windup: float
 | **Player Combat** | `scripts/ui/combat/combat_hud.gd` |
 | **Player Movement** | `scripts/player/player_controller.gd` |
 | **Damage Math** | `autoloads/damage_calculator.gd` |
-| **Skill Data** | `scripts/data/talent_data.gd` |
+| **Skill Data** | `scripts/data/talent_data.gd`, `scripts/data/skill_base.gd` |
 | **Enemy AI** | `scripts/npc/enemy_behavior.gd` |
 | **Enemy Abilities** | `scripts/npc/enemy_ability_controller.gd`, `ability_executor.gd` |
 | **Ability Data** | `scripts/data/ability_data.gd` |
 | **Projectiles** | `scripts/combat/projectile.gd`, `magic_projectile.gd` |
 | **Hitboxes** | `scripts/npc/hitbox_spawner.gd` |
-| **Status Effects** | `scripts/player/status_effect_manager.gd` |
+| **Status Effects** | `scripts/combat/status_effect_component.gd`, `scripts/player/status_effect_manager.gd` |
+| **Movement Actions** | `scripts/combat/movement_action.gd` |
 | **Visual Effects** | `scripts/effects/`, `scripts/ui/combat/hitbox_visual.gd` |
 
 ---
@@ -716,3 +699,4 @@ var windup: float
 | Date | Changes |
 |------|---------|
 | 2026-01-02 | Initial documentation |
+| 2026-01-02 | Unified systems: StatusEffectComponent, MovementAction, DamageCalculator for enemies, SkillBase |
