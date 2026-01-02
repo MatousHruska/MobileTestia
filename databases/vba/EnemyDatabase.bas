@@ -49,6 +49,7 @@ Private Const COL_EA_EFFECTS_ON_HIT As Integer = 18 ' Effects: "stun:0.5", "burn
 Private Const COL_EA_PROJECTILE_SPEED As Integer = 19 ' For projectile abilities
 Private Const COL_EA_DASH_SPEED As Integer = 20    ' For dash abilities
 Private Const COL_EA_CARDINAL_ONLY As Integer = 21 ' Snap attack to 4 cardinal directions (TRUE/FALSE, default TRUE)
+Private Const COL_EA_EXPLOSION_FALLOFF As Integer = 22 ' Damage falloff % at AOE edge (default 30, 0=no falloff)
 
 ' Column indices for EnemyVariants
 Private Const COL_EV_ID As Integer = 1
@@ -292,6 +293,13 @@ Public Sub ExportEnemyAbilities()
             json = json & "," & vbCrLf & "      ""cardinal_only"": false"
         End If
 
+        ' Add explosion_falloff for AOE abilities (default 30)
+        Dim explosionFalloff As Double
+        explosionFalloff = GetDefaultNumeric(ws.Cells(i, COL_EA_EXPLOSION_FALLOFF), 0)
+        If explosionFalloff > 0 Then
+            json = json & "," & vbCrLf & "      ""explosion_falloff"": " & FormatJsonNumber(explosionFalloff)
+        End If
+
         json = json & vbCrLf & "    }"
 
         itemCount = itemCount + 1
@@ -422,7 +430,7 @@ Public Sub SetupEnemyAbilitiesSheet()
     headers = Array("id", "name", "description", "type", "damage_mult", "damage_type", _
                     "cooldown", "range_min", "range_max", "shape", "shape_size", "shape_angle", _
                     "windup", "recovery", "animation", "priority", "conditions", "effects_on_hit", _
-                    "projectile_speed", "dash_speed", "cardinal_only")
+                    "projectile_speed", "dash_speed", "cardinal_only", "explosion_falloff")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -439,6 +447,7 @@ Public Sub SetupEnemyAbilitiesSheet()
     SafeAddComment ws.Cells(1, 17), "Conditions like distance>50 or health<50%"
     SafeAddComment ws.Cells(1, 18), "Effects: stun:0.5, burn:3:5, knockback:100"
     SafeAddComment ws.Cells(1, 21), "TRUE/FALSE - snap to 4 cardinal directions (default TRUE)"
+    SafeAddComment ws.Cells(1, 22), "AOE: damage falloff % at edge (default 30, 0=no falloff)"
 End Sub
 
 '-------------------------------------------------------------------------------
