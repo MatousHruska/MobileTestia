@@ -593,6 +593,7 @@ func add_starting_items() -> void:
 	var starting_items := [
 		"wep_sword_iron",      # Basic iron sword
 		"wep_bow_short",       # Short bow (for testing ranged)
+		"wep_staff_oak",       # Oak staff (for testing magic)
 		"arm_helmet_leather",  # Leather cap
 		"arm_chest_leather",   # Leather tunic
 		"arm_gloves_leather",  # Leather gloves
