@@ -3,8 +3,9 @@ class_name MagicProjectile
 ## MagicProjectile - A magic projectile that passes through enemies and explodes at destination
 ## Used for spells like fireball that apply debuffs on contact and deal AOE damage on explosion
 
-## Preload ExplosionEffect (needed until Godot generates .uid file)
+## Preload classes (needed until Godot generates .uid files)
 const ExplosionEffectClass = preload("res://scripts/combat/explosion_effect.gd")
+const ExplosionTargetIndicatorClass = preload("res://scripts/combat/explosion_target_indicator.gd")
 
 signal hit_target(target: Node2D, projectile: MagicProjectile)
 signal exploded(position: Vector2, projectile: MagicProjectile)
@@ -50,65 +51,36 @@ var is_flying: bool = false
 var contacted_targets: Array[Node2D] = []
 
 ## Visual components
-var sprite: Sprite2D = null
 var collision_shape: CollisionShape2D = null
-var glow_effect: PointLight2D = null
+var target_indicator: Node2D = null  ## Shows explosion radius at target
 
 
 func _ready() -> void:
-	_setup_visuals()
 	_setup_collision()
+	_setup_target_indicator()
 
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
 
 
-func _setup_visuals() -> void:
-	## Create fireball sprite placeholder
-	sprite = Sprite2D.new()
-	sprite.name = "Sprite"
+func _draw() -> void:
+	## Draw the projectile as a visible circle
+	# Main projectile body
+	draw_circle(Vector2.ZERO, 12.0, projectile_color)
+	# Bright center
+	draw_circle(Vector2.ZERO, 6.0, projectile_color.lightened(0.5))
+	# White hot core
+	draw_circle(Vector2.ZERO, 3.0, Color.WHITE)
 
-	# Create a circular fireball texture
-	var size := 16
-	var fireball_image := Image.create(size, size, false, Image.FORMAT_RGBA8)
-	fireball_image.fill(Color.TRANSPARENT)
 
-	var center := Vector2(size / 2.0, size / 2.0)
-	for x in range(size):
-		for y in range(size):
-			var pos := Vector2(x, y)
-			var dist := pos.distance_to(center)
-			var radius := size / 2.0 - 1
-
-			if dist < radius:
-				# Gradient from center (bright) to edge (darker)
-				var t := dist / radius
-				var color := projectile_color.lerp(Color(1.0, 0.2, 0.0, 0.8), t)
-				# Add some brightness in center
-				if dist < radius * 0.4:
-					color = color.lightened(0.3)
-				fireball_image.set_pixel(x, y, color)
-
-	var texture := ImageTexture.create_from_image(fireball_image)
-	sprite.texture = texture
-	add_child(sprite)
-
-	# Optional: Add glow effect
-	glow_effect = PointLight2D.new()
-	glow_effect.name = "Glow"
-	glow_effect.color = projectile_color
-	glow_effect.energy = 0.5
-	glow_effect.texture_scale = 0.3
-	# Use a simple white texture for glow
-	var glow_image := Image.create(32, 32, false, Image.FORMAT_RGBA8)
-	for x in range(32):
-		for y in range(32):
-			var pos := Vector2(x, y)
-			var dist := pos.distance_to(Vector2(16, 16))
-			var alpha := maxf(0, 1.0 - dist / 16.0)
-			glow_image.set_pixel(x, y, Color(1, 1, 1, alpha))
-	glow_effect.texture = ImageTexture.create_from_image(glow_image)
-	add_child(glow_effect)
+func _setup_target_indicator() -> void:
+	## Create target indicator that shows where explosion will land
+	target_indicator = ExplosionTargetIndicatorClass.new()
+	target_indicator.name = "TargetIndicator"
+	target_indicator.setup(explosion_radius, explosion_color)
+	# Position at max range ahead
+	target_indicator.position = direction * max_range
+	add_child(target_indicator)
 
 
 func _setup_collision() -> void:
@@ -133,6 +105,14 @@ func _physics_process(delta: float) -> void:
 	travel_distance += movement.length()
 	global_position += movement
 
+	# Update target indicator position (relative to projectile, at remaining distance)
+	if target_indicator:
+		var remaining := max_range - travel_distance
+		target_indicator.position = direction * remaining
+
+	# Redraw projectile
+	queue_redraw()
+
 	# Check if reached max range
 	if travel_distance >= max_range:
 		_explode()
@@ -149,6 +129,10 @@ func launch(from: Vector2, dir: Vector2, speed_multiplier: float = 1.0) -> void:
 	current_speed = base_speed * speed_multiplier
 	travel_distance = 0.0
 	is_flying = true
+
+	# Update target indicator to show explosion location
+	if target_indicator:
+		target_indicator.position = direction * max_range
 
 	Debug.log("Combat", "Magic projectile launched", {
 		"from": from,
