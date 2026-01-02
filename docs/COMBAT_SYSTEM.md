@@ -661,15 +661,27 @@ func get_status_effects() -> Node:
 | Base range | `base_range` | 150px | Per-talent in talents.json |
 | Lunge duration | `lunge_duration` | 0.1s | Per-talent in talents.json |
 | Explosion falloff | `explosion_falloff` | 30% | Per-talent AND per-enemy-ability |
+| Armor constant | `armor_constant` | 50.0 | gameplay_settings.json |
+| Effect colors | `icon_color` | (fallback) | Per-effect in status_effects.json |
+
+### gameplay_settings.json Keys
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `armor_constant` | 50.0 | The "k" value in armor formula: `armor / (armor + k * level)` |
+| `default_crit_multiplier` | 150.0 | Base crit damage multiplier % |
+| `player_move_speed` | 150.0 | Default player movement speed |
+| `player_dodge_speed` | 300.0 | Dodge roll speed |
+| `player_dodge_duration` | 0.3 | Dodge roll duration in seconds |
+| `player_dodge_stamina_cost` | 25.0 | Stamina cost for dodge |
+| `player_attack_lunge_force` | 80.0 | Default attack lunge force |
+| `player_attack_lunge_duration` | 0.1 | Default attack lunge duration |
 
 ### Still Hardcoded (Requires Code Changes)
 
 | Category | Values | Location |
 |----------|--------|----------|
-| Armor formula | `armor / (armor + 50 * level)` | damage_calculator.gd |
-| Crit multiplier | 150% base | damage_calculator.gd |
 | Enemy phases defaults | windup=0.2s, recovery=0.3s | ability_executor.gd |
-| Effect colors | Icon colors by type | status_effect_icon.gd |
 
 ---
 
