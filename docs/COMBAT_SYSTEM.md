@@ -1,0 +1,718 @@
+# Combat System Architecture
+
+This document provides a comprehensive overview of the combat system, its building blocks, and recommendations for future development.
+
+---
+
+## Table of Contents
+
+1. [System Overview](#system-overview)
+2. [The Four Skill Templates](#the-four-skill-templates)
+3. [Building Blocks Reference](#building-blocks-reference)
+4. [Attack Execution Phases](#attack-execution-phases)
+5. [Status Effects System](#status-effects-system)
+6. [Projectile System](#projectile-system)
+7. [Enemy AI and Abilities](#enemy-ai-and-abilities)
+8. [Shared vs Duplicated Systems](#shared-vs-duplicated-systems)
+9. [Refactoring Recommendations](#refactoring-recommendations)
+10. [Database-Driven vs Hardcoded](#database-driven-vs-hardcoded)
+11. [Adding New Content Guide](#adding-new-content-guide)
+
+---
+
+## System Overview
+
+The combat system is built on **two parallel architectures**:
+
+```
+PLAYER COMBAT                          ENEMY COMBAT
+─────────────────                      ─────────────────
+TalentData (database)                  AbilityData (database)
+     ↓                                      ↓
+TalentManager (skill bindings)         EnemyAbilityController (AI selection)
+     ↓                                      ↓
+CombatHUD (input routing)              AbilityExecutor (execution)
+     ↓                                      ↓
+DamageCalculator (math)                Direct damage calculation
+     ↓                                      ↓
+  ┌──┴──────────────────────────────────────┴──┐
+  │           SHARED SYSTEMS                    │
+  │  • HitboxSpawner (collision detection)     │
+  │  • Projectile / MagicProjectile            │
+  │  • Status Effect Application               │
+  │  • Visual Effects (HitboxVisual, etc.)     │
+  └─────────────────────────────────────────────┘
+```
+
+---
+
+## The Four Skill Templates
+
+### 1. MELEE Skills
+
+**Player Flow:**
+```
+Button Press → CombatHUD._on_ability_activated()
+  → Validate weapon, resources
+  → Apply lunge force (talent.lunge_force)
+  → Play attack animation
+  → On attack frame: _apply_skill_damage()
+    → NPCManager.get_enemies_in_radius(hit_range)
+    → Filter by hit_arc (cone check)
+    → DamageCalculator.calculate_final_damage()
+    → enemy.take_damage()
+  → Apply recovery lockout (talent.recovery_time)
+  → Start cooldown
+```
+
+**Key Properties (TalentData):**
+- `effect_type`: DAMAGE (default melee)
+- `hit_range`: Distance in pixels
+- `hit_arc`: Cone angle in degrees (360 = all around)
+- `lunge_force`: Forward momentum applied
+- `recovery_time`: Input lock after attack
+- `weapon_damage_percent`: Scales with equipped weapon
+- `flat_damage_bonus`: Added to final damage
+
+**Files:**
+- `scripts/ui/combat/combat_hud.gd` - Input handling
+- `scripts/player/player_controller.gd` - Lunge execution
+- `autoloads/damage_calculator.gd` - Damage math
+
+---
+
+### 2. RANGED Skills (Hold-to-Charge)
+
+**Player Flow:**
+```
+Button Hold → CombatHUD._on_ability_hold_started()
+  → Create AimIndicator (visual trajectory)
+  → Track hold duration
+
+During Hold → _update_aiming()
+  → Update direction from input/facing
+  → Calculate charge_progress: (hold_time - min_charge) / (MAX_CHARGE - min_charge)
+  → Update range: lerp(BASE_RANGE, MAX_RANGE, charge_progress)
+
+Button Release → _on_ability_released()
+  → If hold_time < min_charge_time:
+      → Fire weak shot (weak_shot_damage_percent, weak_shot_range_percent)
+  → Else:
+      → Fire full shot with calculated range/damage
+  → _fire_projectile() creates Projectile instance
+  → Projectile travels, hits enemy or reaches max range
+  → Start cooldown
+```
+
+**Key Properties (TalentData):**
+- `effect_type`: PROJECTILE
+- `min_charge_time`: Minimum hold for full power
+- `weak_shot_damage_percent`: Damage % if released early
+- `weak_shot_range_percent`: Range % if released early
+- `projectile_speed`: Travel speed
+- `hit_range`: Maximum range at full charge
+
+**Hardcoded Constants:**
+- `MAX_CHARGE_TIME`: 2.0 seconds
+- `BASE_RANGE`: 150 pixels (weak shot minimum)
+- `MAX_RANGE`: 300 pixels (full charge maximum)
+
+**Files:**
+- `scripts/ui/combat/combat_hud.gd:402-588` - Aiming logic
+- `scripts/combat/projectile.gd` - Arrow projectile
+- `scripts/ui/combat/aim_indicator.gd` - Visual feedback
+
+---
+
+### 3. MAGIC Skills (Cast Time + Projectile)
+
+**Player Flow:**
+```
+Button Press → CombatHUD._on_ability_activated()
+  → Check effect_type == MAGIC_PROJECTILE
+  → Consume mana immediately
+
+  If cast_time > 0:
+    → _start_casting() - Begin cast bar
+    → During _update_casting(): Track elapsed time
+    → When elapsed >= cast_time: _fire_magic_projectile()
+  Else:
+    → _fire_magic_projectile_instant()
+
+_fire_magic_projectile():
+  → Create MagicProjectile instance
+  → Set explosion_radius, damage, contact_status_effect
+  → Projectile travels toward target position
+  → On enemy contact: Apply status effect, continue flying
+  → At max range OR wall hit: Explode
+    → AOE damage with 30% falloff at edge
+    → Apply status effect to all in radius
+  → Start cooldown
+```
+
+**Key Properties (TalentData):**
+- `effect_type`: MAGIC_PROJECTILE
+- `cast_time`: Seconds to channel before firing
+- `explosion_radius`: AOE size at destination
+- `contact_status_effect`: Effect applied on touch/explosion
+- `projectile_speed`: Travel speed
+- `base_damage`: Spell damage (not weapon-based)
+- `damage_type`: fire, cold, lightning, etc.
+
+**Files:**
+- `scripts/ui/combat/combat_hud.gd:589-750` - Casting logic
+- `scripts/combat/magic_projectile.gd` - Fireball projectile
+- `scripts/effects/burning_effect.gd` - DoT visual
+
+---
+
+### 4. SELF-BUFF Skills (Cast Time + Status Effect)
+
+**Player Flow:**
+```
+Button Press → CombatHUD._on_ability_activated()
+  → Check effect_type == SELF_BUFF
+
+  If cast_time > 0:
+    → _start_casting_self_buff()
+    → During _update_self_buff_casting(): Track elapsed time
+    → When elapsed >= cast_time: _apply_self_buff()
+  Else:
+    → _apply_self_buff_instant()
+
+_apply_self_buff():
+  → Game.player.status_effect_manager.apply_status_effect(contact_status_effect)
+  → StatusEffectManager looks up effect in database
+  → Creates HoT/buff based on effect type
+  → HUD icon appears with duration timer
+  → Start cooldown
+```
+
+**Key Properties (TalentData):**
+- `effect_type`: SELF_BUFF
+- `cast_time`: Channel duration
+- `contact_status_effect`: Status effect ID to apply (e.g., "status_bandage")
+- `cooldown`: Prevent spam
+
+**Files:**
+- `scripts/ui/combat/combat_hud.gd:751-850` - Self-buff logic
+- `scripts/player/status_effect_manager.gd` - Effect application
+- `scripts/ui/status_effect_display.gd` - HUD icons
+
+---
+
+## Building Blocks Reference
+
+### Already Shared (Use These!)
+
+| Component | Location | Used By | Purpose |
+|-----------|----------|---------|---------|
+| `HitboxSpawner` | `scripts/npc/hitbox_spawner.gd` | Player & Enemy | Creates Area2D hitboxes for melee attacks |
+| `Projectile` | `scripts/combat/projectile.gd` | Player (arrows) | Physical projectile with arc |
+| `MagicProjectile` | `scripts/combat/magic_projectile.gd` | Player (spells) | Pass-through + AOE explosion |
+| `HitboxVisual` | `scripts/ui/combat/hitbox_visual.gd` | Player & Enemy | Debug/feedback visualization |
+| `AimIndicator` | `scripts/ui/combat/aim_indicator.gd` | Player (ranged) | Trajectory preview |
+| `DamageCalculator` | `autoloads/damage_calculator.gd` | Player attacks | Damage formulas with crit |
+
+### Hitbox Shapes (HitboxSpawner)
+
+```gdscript
+enum HitboxShape { CIRCLE, CONE, LINE, CROSS, RING }
+
+# Usage:
+HitboxSpawner.spawn_hitbox(ability, caster, direction)
+
+# Shapes:
+CIRCLE - Radius around caster (AOE)
+CONE   - Arc in facing direction (melee swipe)
+LINE   - Narrow rectangle (thrust/stab)
+CROSS  - Four directional lines (cross attack)
+RING   - Expanding circle (shockwave)
+```
+
+### Projectile Types
+
+```gdscript
+# Physical Projectile (arrows)
+var arrow = Projectile.create_arrow()
+arrow.damage = calculated_damage
+arrow.max_range = effective_range
+arrow.piercing = true  # Pass through enemies
+arrow.launch(spawn_pos, direction, speed_mult)
+
+# Magic Projectile (fireballs)
+var fireball = MagicProjectile.new()
+fireball.explosion_damage = base_damage
+fireball.explosion_radius = 60
+fireball.contact_status_effect = "status_burning"
+fireball.pass_through_enemies = true
+fireball.launch(spawn_pos, direction, 1.0)
+```
+
+### Status Effect Application
+
+```gdscript
+# Player (via StatusEffectManager)
+Game.player.status_effect_manager.apply_status_effect("status_bandage")
+Game.player.status_effect_manager.apply_dot("burn", 5.0, 3.0, 1.0)
+Game.player.status_effect_manager.apply_hot("regen", 10.0, 5.0, 1.0)
+
+# Enemy (direct method)
+enemy.apply_status_effect("status_burning", source_node)
+```
+
+---
+
+## Attack Execution Phases
+
+Both player and enemy attacks follow the same **three-phase pattern**:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  WINDUP PHASE          EXECUTE PHASE         RECOVERY PHASE │
+│  ─────────────         ─────────────         ────────────── │
+│  • Warning visual      • Hitbox active       • Vulnerable   │
+│  • Can be interrupted  • Damage applied      • Input locked │
+│  • Movement locked     • Effects triggered   • Cooldown set │
+│                                                              │
+│  Player: animation     Player: attack frame  Player: recovery_time │
+│  Enemy: ability.windup Enemy: hitbox spawn   Enemy: ability.recovery │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Timing Values:**
+
+| Actor | Windup | Execute | Recovery |
+|-------|--------|---------|----------|
+| Player Melee | Animation frames | ~0.1s (attack frame) | talent.recovery_time |
+| Player Ranged | Charge time | Instant (projectile spawns) | 0 |
+| Player Magic | cast_time | Instant (projectile spawns) | 0 |
+| Enemy Default | 0.2s | Varies | 0.3s |
+| Enemy Dash | 0.2s | Dash duration | 0.3s |
+
+---
+
+## Status Effects System
+
+### Effect Types
+
+| Type | Code | Ticks | Example |
+|------|------|-------|---------|
+| `debuff_dot` | Damage over time | Yes | Burning, Poison, Rot |
+| `buff_hot` | Heal over time | Yes | Bandage, Regeneration |
+| `buff` | Stat modifier | No | Strength buff, Speed buff |
+| `debuff` | Negative modifier | No | Slow, Weakness |
+
+### Database Structure (status_effects.json)
+
+```json
+{
+  "id": "status_bandage",
+  "name": "Bandage",
+  "type": "buff_hot",
+  "stat_affected": "health",
+  "value": 10,
+  "duration": 30,
+  "tick_interval": 2,
+  "show_in_hud": true
+}
+```
+
+### Player vs Enemy Implementation
+
+| Feature | Player | Enemy |
+|---------|--------|-------|
+| Manager | `StatusEffectManager` class | Dictionary in `_status_effects` |
+| Persistence | Yes (saved/loaded) | No |
+| Supported | DoT, HoT, Buff, Permanent | DoT only |
+| Signals | Yes (for UI updates) | No |
+| Visual | HUD icons + effects | Burning particles only |
+
+---
+
+## Projectile System
+
+### Collision Layers
+
+| Layer | Bit | Purpose |
+|-------|-----|---------|
+| 1 | `0b00000001` | Walls/Obstacles |
+| 2 | `0b00000010` | Player |
+| 3 | `0b00000100` | Enemies |
+| 4 | `0b00001000` | Player Hitboxes |
+| 5 | `0b00010000` | Enemy Hurtboxes |
+
+### Projectile Configuration
+
+```gdscript
+# Regular Projectile (Projectile.gd)
+collision_layer = 0        # Doesn't block anything
+collision_mask = 0b00000011  # Detects walls + enemies
+raycast.mask = 0b00000001   # Wall detection only
+
+# Magic Projectile (MagicProjectile.gd)
+collision_layer = 0
+collision_mask = 0b00000011
+raycast.mask = 0b00000001
+pass_through_enemies = true
+```
+
+### Wall Detection
+
+Projectiles use **RayCast2D** for wall detection (not Area2D collision) because:
+1. Fast projectiles might clip through thin walls
+2. RayCast looks ahead by velocity * delta
+3. Immediate response on wall hit
+
+```gdscript
+func _physics_process(delta):
+    raycast.target_position = velocity.normalized() * 20  # Look ahead
+    if raycast.is_colliding():
+        var collider = raycast.get_collider()
+        if collider.is_in_group("walls") or collider is TileMap:
+            _hit_wall()
+```
+
+---
+
+## Enemy AI and Abilities
+
+### AI Decision Flow
+
+```
+EnemyBehavior._update_behavior()
+  ↓
+Has target in detection_radius?
+  ├─ NO → _do_idle() (roam or stand)
+  └─ YES → Check distance to target
+              ├─ > attack_radius → _do_chase()
+              └─ <= attack_radius → _do_attack()
+                    ↓
+              EnemyAbilityController._select_ability()
+                ├─ Filter by: cooldown, range, conditions
+                └─ Select by: priority mode (HIGHEST/CONDITIONAL/RANDOM)
+                    ↓
+              AbilityExecutor.execute_ability()
+                ├─ WINDUP phase (0.2s)
+                ├─ EXECUTE phase (spawn hitbox / dash / projectile)
+                └─ RECOVERY phase (0.3s)
+```
+
+### Ability Selection Modes
+
+| Mode | Behavior |
+|------|----------|
+| `HIGHEST` | Always pick highest priority ability |
+| `CONDITIONAL` | Prefer abilities with matching conditions |
+| `RANDOM_WEIGHTED` | Random selection weighted by priority |
+
+### Ability Types (AbilityData)
+
+```gdscript
+enum AbilityType {
+    MELEE,           # Instant hitbox at position
+    DASH_ATTACK,     # Move to target, then hitbox (Ghoul!)
+    AOE,             # Circular area damage
+    PROJECTILE,      # Launch traveling projectile
+    TELEPORT_ATTACK, # Teleport behind target, attack
+    PATTERN,         # Multi-directional (cross, etc.)
+    BEAM             # Sweeping line attack
+}
+```
+
+---
+
+## Shared vs Duplicated Systems
+
+### Currently Shared (Good!)
+
+| System | Files | Notes |
+|--------|-------|-------|
+| Hitbox Spawning | `hitbox_spawner.gd` | Both use same shapes |
+| Projectiles | `projectile.gd`, `magic_projectile.gd` | Could add enemy projectiles |
+| Collision Layers | `COLLISION_LAYERS.md` | Documented standard |
+| Visual Effects | `hitbox_visual.gd` | Debug visualization |
+
+### Currently Duplicated (Needs Unification)
+
+| System | Player | Enemy | Recommendation |
+|--------|--------|-------|----------------|
+| **Lunge/Dash** | `PlayerController.apply_skill_lunge()` | `AbilityExecutor._update_dash()` | Create shared `MovementAction` class |
+| **Status Effects** | `StatusEffectManager` class | Dictionary in `enemy_npc.gd` | Use `StatusEffectManager` for both |
+| **Damage Calc** | `DamageCalculator` autoload | `base_damage * mult` inline | Route enemy damage through `DamageCalculator` |
+| **Ability Data** | `TalentData` | `AbilityData` | Consider unified `SkillData` base class |
+| **Attack Phases** | Implicit in animation | Explicit state machine | Document or unify |
+
+---
+
+## Refactoring Recommendations
+
+### Priority 1: Unify Status Effects
+
+**Current State:**
+- Player: Full `StatusEffectManager` with persistence, signals, multiple effect types
+- Enemy: Simple dictionary with only DoT support
+
+**Recommendation:**
+```gdscript
+# Create base StatusEffectComponent
+class_name StatusEffectComponent extends Node
+
+# Use for both:
+# - PlayerController adds StatusEffectManager (full features)
+# - EnemyNPC adds StatusEffectComponent (subset)
+```
+
+**Benefits:**
+- Enemies could receive buffs/debuffs from player abilities
+- Consistent tick logic
+- Easier to add new effect types
+
+---
+
+### Priority 2: Unify Movement Actions
+
+**Current State:**
+- Player lunge: `_lunge_velocity` applied in `_physics_process`
+- Enemy dash: `AbilityExecutor._update_dash()` with lerp
+
+**Recommendation:**
+```gdscript
+# Create MovementAction resource
+class_name MovementAction extends Resource
+
+enum Type { LUNGE, DASH, KNOCKBACK, TELEPORT }
+
+var type: Type
+var force: float
+var duration: float
+var direction: Vector2
+
+# Both PlayerController and EnemyNPC use same system
+func apply_movement_action(action: MovementAction):
+    match action.type:
+        Type.LUNGE: _apply_lunge(action)
+        Type.DASH: _apply_dash(action)
+        # ...
+```
+
+**Benefits:**
+- Knockback works identically for player and enemies
+- Easy to add new movement types (charge, leap, etc.)
+- Consistent timing and feel
+
+---
+
+### Priority 3: Unified Damage Pipeline
+
+**Current State:**
+- Player: `DamageCalculator.calculate_final_damage()` with weapon scaling, crit, elemental bonuses
+- Enemy: `base_damage * ability.damage_mult` inline
+
+**Recommendation:**
+```gdscript
+# Extend DamageCalculator for enemies
+static func calculate_enemy_damage(ability: AbilityData, enemy_stats: Dictionary) -> Dictionary:
+    var base = enemy_stats.base_damage * ability.damage_mult
+    # Apply enemy-specific modifiers (enrage, buffs, etc.)
+    return { "final_damage": base, "damage_type": ability.damage_type }
+```
+
+**Benefits:**
+- Single place for all damage formulas
+- Easier to add enemy crits, elemental bonuses
+- Consistent damage preview/tooltips
+
+---
+
+### Priority 4: Consider Unified Skill Data
+
+**Current State:**
+- `TalentData`: Player skills with tree structure, investment points
+- `AbilityData`: Enemy abilities with conditions, priorities
+
+**Analysis:**
+These serve different purposes and may not need full unification, but could share a base:
+
+```gdscript
+# Shared base
+class_name SkillBase extends Resource
+var id: String
+var damage_type: String
+var hit_range: float
+var effect_type: int
+var status_effect: String
+
+# Player extension
+class_name TalentData extends SkillBase
+var tree: String
+var max_points: int
+var weapon_damage_percent: float
+
+# Enemy extension
+class_name AbilityData extends SkillBase
+var priority: int
+var conditions: Array
+var windup: float
+```
+
+---
+
+## Database-Driven vs Hardcoded
+
+### Database-Driven (Flexible, No Code Changes)
+
+| Category | Examples |
+|----------|----------|
+| Skill definitions | name, damage, costs, cooldowns, ranges |
+| Status effects | duration, tick interval, value |
+| Enemy abilities | type, damage mult, hitbox shape |
+| Behavior profiles | detection range, ability selection mode |
+
+### Hardcoded (Requires Code Changes)
+
+| Category | Values | Location |
+|----------|--------|----------|
+| Charge timing | MAX_CHARGE_TIME = 2.0s | combat_hud.gd |
+| Base ranges | BASE_RANGE = 150, MAX_RANGE = 300 | combat_hud.gd |
+| Lunge duration | 0.1s | player_controller.gd |
+| Armor formula | `armor / (armor + 50 * level)` | damage_calculator.gd |
+| Crit multiplier | 150% base | damage_calculator.gd |
+| Explosion falloff | 30% at edge | magic_projectile.gd |
+| Enemy phases | windup=0.2s, recovery=0.3s | ability_executor.gd |
+| Effect colors | Icon colors by type | status_effect_icon.gd |
+
+---
+
+## Adding New Content Guide
+
+### Adding a New Melee Skill
+
+1. **Database**: Add to `talents.json` via Excel export
+   ```
+   effect_type: damage (or empty for melee default)
+   skill_category: melee
+   hit_range: 50-80
+   hit_arc: 90-180
+   lunge_force: 40-80
+   ```
+
+2. **No code changes needed** - CombatHUD routes automatically
+
+### Adding a New Ranged Skill
+
+1. **Database**: Add to `talents.json`
+   ```
+   effect_type: projectile
+   skill_category: ranged
+   min_charge_time: 0.5
+   weak_shot_damage_percent: 30
+   projectile_speed: 400
+   ```
+
+2. **No code changes needed** - Uses existing Projectile system
+
+### Adding a New Magic Skill
+
+1. **Database**: Add to `talents.json`
+   ```
+   effect_type: magic_projectile
+   skill_category: magic
+   cast_time: 0.5
+   explosion_radius: 60
+   contact_status_effect: status_burning
+   projectile_speed: 350
+   ```
+
+2. **If new status effect**: Add to `status_effects.json`
+   ```json
+   {
+     "id": "status_freeze",
+     "type": "debuff",
+     "duration": 3,
+     "value": -50,
+     "stat_affected": "movement_speed"
+   }
+   ```
+
+3. **If new visual effect**: Create script in `scripts/effects/`
+
+### Adding a New Self-Buff Skill
+
+1. **Database**: Add to `talents.json`
+   ```
+   effect_type: self_buff
+   cast_time: 2
+   contact_status_effect: status_newbuff
+   cooldown: 60
+   ```
+
+2. **Database**: Add status effect to `status_effects.json`
+   ```json
+   {
+     "id": "status_newbuff",
+     "type": "buff_hot",
+     "value": 10,
+     "duration": 30,
+     "tick_interval": 2
+   }
+   ```
+
+### Adding a New Enemy Ability
+
+1. **Database**: Add to enemy's ability list
+   ```json
+   {
+     "id": "ghoul_dash_strike",
+     "type": "dash_attack",
+     "damage_mult": 1.5,
+     "range_max": 150,
+     "hitbox_shape": "cone",
+     "effects": ["knockback:100"]
+   }
+   ```
+
+2. **If new ability type**: Extend `AbilityExecutor._complete_windup()` switch
+
+### Adding a New Status Effect Type
+
+1. **Database**: Define in `status_effects.json`
+
+2. **Code**: Add handling in `StatusEffectManager.apply_status_effect()`:
+   ```gdscript
+   match effect_type:
+       "buff_speed":
+           apply_speed_buff(effect_name, duration, value)
+   ```
+
+3. **Code**: Add visual in `StatusEffectIcon._get_effect_color()`:
+   ```gdscript
+   "speed":
+       return Color(0.3, 0.7, 1.0)  # Light blue
+   ```
+
+---
+
+## Quick Reference: File Locations
+
+| System | Key Files |
+|--------|-----------|
+| **Player Combat** | `scripts/ui/combat/combat_hud.gd` |
+| **Player Movement** | `scripts/player/player_controller.gd` |
+| **Damage Math** | `autoloads/damage_calculator.gd` |
+| **Skill Data** | `scripts/data/talent_data.gd` |
+| **Enemy AI** | `scripts/npc/enemy_behavior.gd` |
+| **Enemy Abilities** | `scripts/npc/enemy_ability_controller.gd`, `ability_executor.gd` |
+| **Ability Data** | `scripts/data/ability_data.gd` |
+| **Projectiles** | `scripts/combat/projectile.gd`, `magic_projectile.gd` |
+| **Hitboxes** | `scripts/npc/hitbox_spawner.gd` |
+| **Status Effects** | `scripts/player/status_effect_manager.gd` |
+| **Visual Effects** | `scripts/effects/`, `scripts/ui/combat/hitbox_visual.gd` |
+
+---
+
+## Version History
+
+| Date | Changes |
+|------|---------|
+| 2026-01-02 | Initial documentation |
