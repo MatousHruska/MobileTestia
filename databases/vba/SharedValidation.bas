@@ -82,12 +82,38 @@ End Function
 
 '-------------------------------------------------------------------------------
 ' GetDefaultNumeric - Returns default value for empty numeric cells
+' Handles both period and comma as decimal separators (locale-safe)
 '-------------------------------------------------------------------------------
 Public Function GetDefaultNumeric(ByVal cell As Range, Optional ByVal defaultVal As Double = 0) As Double
-    If IsEmpty(cell.value) Or Trim(cell.value) = "" Then
+    If IsEmpty(cell.Value) Or Trim(cell.Value) = "" Then
         GetDefaultNumeric = defaultVal
-    ElseIf IsNumeric(cell.value) Then
-        GetDefaultNumeric = CDbl(cell.value)
+        Exit Function
+    End If
+
+    ' If it's already a number, use it directly
+    If IsNumeric(cell.Value) Then
+        GetDefaultNumeric = CDbl(cell.Value)
+        Exit Function
+    End If
+
+    ' Try to parse as string with period decimal (for locales using comma)
+    Dim strVal As String
+    strVal = Trim(CStr(cell.Value))
+
+    ' Replace period with locale decimal separator and try again
+    Dim localeSep As String
+    localeSep = Mid(CStr(1.5), 2, 1)  ' Get locale decimal separator
+
+    If localeSep = "," Then
+        ' Locale uses comma - replace period with comma
+        strVal = Replace(strVal, ".", ",")
+    Else
+        ' Locale uses period - replace comma with period
+        strVal = Replace(strVal, ",", ".")
+    End If
+
+    If IsNumeric(strVal) Then
+        GetDefaultNumeric = CDbl(strVal)
     Else
         GetDefaultNumeric = defaultVal
     End If
