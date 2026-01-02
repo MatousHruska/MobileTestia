@@ -21,6 +21,19 @@ var interact_button: Button
 ## Player reference for dodge stamina check
 var player: PlayerController = null
 
+## Ranged aiming
+var aim_indicator: AimIndicator = null
+var is_aiming: bool = false
+var aiming_slot_index: int = -1
+var aiming_talent: TalentData = null
+var aim_start_time: float = 0.0
+
+## Charge constants
+const MIN_CHARGE_TIME: float = 0.5      ## Minimum time to hold before shooting
+const MAX_CHARGE_TIME: float = 2.0      ## Maximum charge time for full range
+const BASE_RANGE: float = 150.0         ## Range at minimum charge
+const MAX_RANGE: float = 300.0          ## Range at maximum charge
+
 ## Constants
 const DEFAULT_CONFIG_PATH := "res://resources/combat_hud_config.tres"
 
@@ -46,6 +59,12 @@ func _ready() -> void:
 	_connect_talent_manager()
 
 	Debug.info("Combat", "CombatHUD initialized", {"abilities": config.ability_count})
+
+
+func _process(_delta: float) -> void:
+	# Update aim indicator during aiming
+	if is_aiming and aim_indicator and player:
+		_update_aiming()
 
 
 func _connect_talent_manager() -> void:
@@ -175,6 +194,8 @@ func _create_buttons() -> void:
 		slot.border_width = config.button_border_width
 		slot.border_color = config.button_border_color
 		slot.ability_activated.connect(_on_ability_activated)
+		slot.ability_hold_started.connect(_on_ability_hold_started)
+		slot.ability_released.connect(_on_ability_released)
 		slot.ability_ready.connect(_on_ability_ready)
 		add_child(slot)
 		ability_slots.append(slot)
@@ -336,6 +357,177 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 		"range": talent.hit_range,
 		"arc": talent.hit_arc,
 	})
+
+
+func _on_ability_hold_started(slot_index: int, ability_id: String) -> void:
+	## Handle hold-to-release skill start (projectile skills)
+	Debug.log("Combat", "Ability hold started", {"slot": slot_index, "ability": ability_id})
+
+	var talent := TalentManager.get_talent(ability_id)
+	if not talent:
+		Debug.warn("Combat", "Talent not found: %s" % ability_id)
+		return
+
+	# Check if player can act
+	if player and player.is_locked:
+		Debug.log("Combat", "Player is locked, cannot aim")
+		return
+
+	# Check weapon requirement
+	if talent.has_weapon_requirement():
+		var weapon_cat: String = Inventory.get_equipped_weapon_category()
+		if not talent.matches_weapon_category(weapon_cat):
+			Debug.log("Combat", "Wrong weapon for %s" % talent.talent_name)
+			return
+
+	# Check stamina (ranged skills use stamina)
+	if talent.stamina_cost > 0 and PlayerStats.current_stamina < talent.stamina_cost:
+		Debug.log("Combat", "Not enough stamina for %s" % talent.talent_name)
+		return
+
+	# Start aiming
+	is_aiming = true
+	aiming_slot_index = slot_index
+	aiming_talent = talent
+	aim_start_time = Time.get_ticks_msec() / 1000.0
+
+	# Create aim indicator if needed
+	_ensure_aim_indicator()
+
+	# Get aim direction from player facing
+	var aim_dir := _get_player_facing_vector()
+
+	# Activate aim indicator
+	aim_indicator.activate(aim_dir, MAX_RANGE)
+	aim_indicator.global_position = player.global_position
+
+	Debug.log("Combat", "Started aiming %s" % talent.talent_name)
+
+
+func _on_ability_released(slot_index: int, ability_id: String, hold_duration: float) -> void:
+	## Handle hold-to-release skill release (fire projectile)
+	Debug.log("Combat", "Ability released", {"slot": slot_index, "ability": ability_id, "duration": hold_duration})
+
+	if not is_aiming or slot_index != aiming_slot_index:
+		return
+
+	# Check minimum charge time
+	if hold_duration < MIN_CHARGE_TIME:
+		Debug.log("Combat", "Charge too short, cancelled")
+		_cancel_aiming()
+		return
+
+	# Calculate charge progress (0-1)
+	var charge_progress := clampf((hold_duration - MIN_CHARGE_TIME) / (MAX_CHARGE_TIME - MIN_CHARGE_TIME), 0.0, 1.0)
+
+	# Calculate range based on charge
+	var effective_range := lerpf(BASE_RANGE, MAX_RANGE, charge_progress)
+
+	# Fire the projectile
+	_fire_projectile(aiming_talent, aim_indicator.get_aim_direction(), effective_range, charge_progress)
+
+	# Start cooldown
+	if aiming_talent.cooldown > 0 and slot_index >= 0 and slot_index < ability_slots.size():
+		ability_slots[slot_index].start_cooldown(aiming_talent.cooldown)
+
+	# End aiming
+	_end_aiming()
+
+
+func _ensure_aim_indicator() -> void:
+	## Create aim indicator if it doesn't exist
+	if aim_indicator:
+		return
+
+	aim_indicator = AimIndicator.new()
+	aim_indicator.name = "AimIndicator"
+
+	# Add to world (not UI) so it moves with the player
+	if player and player.get_parent():
+		player.get_parent().add_child(aim_indicator)
+
+
+func _update_aiming() -> void:
+	## Update aim indicator position and direction during aiming
+	if not aim_indicator or not player:
+		return
+
+	# Update position to follow player
+	aim_indicator.global_position = player.global_position
+
+	# Update direction based on player input or facing
+	var aim_dir := Vector2.ZERO
+	if player.input_direction.length_squared() > 0.01:
+		aim_dir = player.input_direction.normalized()
+	else:
+		aim_dir = _get_player_facing_vector()
+
+	aim_indicator.update_direction(aim_dir)
+
+	# Update charge progress
+	var current_time := Time.get_ticks_msec() / 1000.0
+	var hold_duration := current_time - aim_start_time
+	var charge_progress := clampf((hold_duration - MIN_CHARGE_TIME) / (MAX_CHARGE_TIME - MIN_CHARGE_TIME), 0.0, 1.0)
+	aim_indicator.update_charge(charge_progress)
+
+
+func _fire_projectile(talent: TalentData, direction: Vector2, range_dist: float, charge_progress: float) -> void:
+	## Fire a projectile in the given direction
+	if not player:
+		return
+
+	# Consume stamina
+	if talent.stamina_cost > 0:
+		PlayerStats.use_stamina(talent.stamina_cost)
+
+	# Calculate damage
+	var invested := TalentManager.get_invested_points(talent.id)
+	var damage_result := DamageCalculator.calculate_final_damage(talent, invested)
+
+	# Create projectile
+	var projectile := Projectile.create_arrow()
+	projectile.max_range = range_dist
+	projectile.damage = damage_result.final_damage
+	projectile.damage_type = _get_damage_type_string(talent.damage_type_id)
+	projectile.source = player
+
+	# Speed multiplier based on charge
+	var speed_mult := lerpf(0.8, 1.2, charge_progress)
+
+	# Add to world
+	if player.get_parent():
+		player.get_parent().add_child(projectile)
+
+	# Launch projectile
+	var spawn_pos := player.global_position
+	projectile.launch(spawn_pos, direction, speed_mult)
+
+	# Apply recovery lockout
+	if talent.recovery_time > 0:
+		player.apply_recovery_lockout(talent.recovery_time)
+
+	Debug.log("Combat", "Fired projectile: %s" % talent.talent_name, {
+		"direction": direction,
+		"range": range_dist,
+		"damage": int(damage_result.final_damage),
+		"crit": damage_result.is_critical
+	})
+
+
+func _cancel_aiming() -> void:
+	## Cancel aiming without firing
+	_end_aiming()
+	Debug.log("Combat", "Aiming cancelled")
+
+
+func _end_aiming() -> void:
+	## Clean up after aiming (success or cancel)
+	is_aiming = false
+	aiming_slot_index = -1
+	aiming_talent = null
+
+	if aim_indicator:
+		aim_indicator.deactivate()
 
 
 func _apply_skill_mechanics(talent: TalentData) -> void:

@@ -4,6 +4,8 @@ class_name AbilitySlot
 ## Handles cooldown tracking, mana checking, and visual feedback
 
 signal ability_activated(slot_index: int, ability_id: String)
+signal ability_hold_started(slot_index: int, ability_id: String)
+signal ability_released(slot_index: int, ability_id: String, hold_duration: float)
 signal ability_ready(slot_index: int)
 
 enum SlotType { ABILITY, ATTACK, DODGE, QUICK_SLOT }
@@ -42,6 +44,11 @@ var has_enough_resource: bool = true
 var has_valid_weapon: bool = true  ## False if skill requires a weapon type not equipped
 var is_empty: bool = true
 var touch_index: int = -1
+
+## Hold tracking (for ranged skills)
+var is_hold_skill: bool = false      ## True if this skill uses hold-to-release
+var hold_start_time: float = 0.0     ## Time when hold started
+var is_holding: bool = false         ## Currently holding
 
 ## Animation
 var current_scale: float = 1.0
@@ -219,12 +226,37 @@ func _on_press() -> void:
 
 	Debug.log("Combat", "Slot pressed", {"slot": slot_index, "type": SlotType.keys()[slot_type]})
 
-	# Emit activation signal
-	ability_activated.emit(slot_index, bound_ability_id)
+	# Check if this is a hold skill (projectile type)
+	# effect_type can be either a string or an enum value
+	var effect_type = ability_data.get("effect_type", "")
+	if effect_type is int:
+		is_hold_skill = effect_type == TalentData.EffectType.PROJECTILE
+	elif effect_type is String:
+		is_hold_skill = effect_type.to_lower() == "projectile"
+	else:
+		is_hold_skill = false
+
+	if is_hold_skill:
+		# Start hold tracking
+		hold_start_time = Time.get_ticks_msec() / 1000.0
+		is_holding = true
+		ability_hold_started.emit(slot_index, bound_ability_id)
+		Debug.log("Combat", "Hold skill started", {"slot": slot_index})
+	else:
+		# Emit immediate activation signal for non-hold skills
+		ability_activated.emit(slot_index, bound_ability_id)
 
 
 func _on_release() -> void:
+	# Calculate hold duration if this was a hold skill
+	if is_holding and is_hold_skill:
+		var current_time := Time.get_ticks_msec() / 1000.0
+		var hold_duration := current_time - hold_start_time
+		ability_released.emit(slot_index, bound_ability_id, hold_duration)
+		Debug.log("Combat", "Hold skill released", {"slot": slot_index, "duration": hold_duration})
+
 	is_pressed_state = false
+	is_holding = false
 	touch_index = -1
 	_animate_press(false)
 	queue_redraw()
@@ -310,6 +342,19 @@ func set_radius(radius: float) -> void:
 	custom_minimum_size = Vector2(radius * 2, radius * 2)
 	pivot_offset = custom_minimum_size / 2.0
 	queue_redraw()
+
+
+func get_hold_duration() -> float:
+	## Get the current hold duration (while holding)
+	if not is_holding:
+		return 0.0
+	var current_time := Time.get_ticks_msec() / 1000.0
+	return current_time - hold_start_time
+
+
+func is_currently_holding() -> bool:
+	## Check if this slot is currently being held
+	return is_holding
 
 
 ## Update weapon validity based on equipped weapon category
