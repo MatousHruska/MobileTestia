@@ -38,9 +38,8 @@ const EQUIPMENT_SLOTS: Array[ItemData.EquipSlot] = [
 const BACKPACK_MIN_COLUMNS: int = 5
 const BACKPACK_H_SEPARATION: int = 4
 
-## Margin percentages (relative to panel width/height)
+## Margin percentages for equipment (relative to panel width/height)
 const MARGIN_SIDE_PCT := 0.02      # 2% side margins
-const MARGIN_RIGHT_PCT := 0.03    # 3% right margin for backpack
 const MARGIN_TOP_PCT := 0.02      # 2% top margin
 const MARGIN_BOTTOM_PCT := 0.03   # 3% bottom margin
 const HEADER_GAP_PCT := 0.04      # 4% gap after header
@@ -264,21 +263,28 @@ func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer,
 	var panel_width := panel.size.x
 	var panel_height := panel.size.y
 
-	# Calculate proportional margins (minimum 8px for readability)
-	var side_margin := maxi(8, int(panel_width * MARGIN_SIDE_PCT))
-	var right_margin := maxi(12, int(panel_width * (MARGIN_RIGHT_PCT if is_backpack else MARGIN_SIDE_PCT)))
-	var top_margin := maxi(6, int(panel_height * MARGIN_TOP_PCT))
-	var bottom_margin := maxi(8, int(panel_height * MARGIN_BOTTOM_PCT))
-	var header_gap := maxi(12, int(panel_height * HEADER_GAP_PCT))
+	if is_backpack:
+		# No margins/padding on backpack for now
+		margin_container.add_theme_constant_override("margin_left", 0)
+		margin_container.add_theme_constant_override("margin_right", 0)
+		margin_container.add_theme_constant_override("margin_top", 0)
+		margin_container.add_theme_constant_override("margin_bottom", 0)
+		vbox.add_theme_constant_override("separation", 0)
+	else:
+		# Calculate proportional margins for equipment (minimum 8px for readability)
+		var side_margin := maxi(8, int(panel_width * MARGIN_SIDE_PCT))
+		var top_margin := maxi(6, int(panel_height * MARGIN_TOP_PCT))
+		var bottom_margin := maxi(8, int(panel_height * MARGIN_BOTTOM_PCT))
+		var header_gap := maxi(12, int(panel_height * HEADER_GAP_PCT))
 
-	# Apply margins
-	margin_container.add_theme_constant_override("margin_left", side_margin)
-	margin_container.add_theme_constant_override("margin_right", right_margin)
-	margin_container.add_theme_constant_override("margin_top", top_margin)
-	margin_container.add_theme_constant_override("margin_bottom", bottom_margin)
+		# Apply margins
+		margin_container.add_theme_constant_override("margin_left", side_margin)
+		margin_container.add_theme_constant_override("margin_right", side_margin)
+		margin_container.add_theme_constant_override("margin_top", top_margin)
+		margin_container.add_theme_constant_override("margin_bottom", bottom_margin)
 
-	# Apply header gap
-	vbox.add_theme_constant_override("separation", header_gap)
+		# Apply header gap
+		vbox.add_theme_constant_override("separation", header_gap)
 
 
 func _build_item_popup() -> void:
