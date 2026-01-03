@@ -53,7 +53,6 @@ const SLOT_SIZE_LARGE := 56.0   # For screens > 900px
 ## UI References (set up in _ready)
 var equipment_container: VBoxContainer
 var backpack_container: GridContainer
-var gold_label: Label
 var item_popup: Control  # ItemDetailPopup instance
 var equip_margin: MarginContainer
 var equip_vbox: VBoxContainer
@@ -121,13 +120,6 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	# Update margins when panel resizes
 	equip_panel.resized.connect(_on_panel_resized.bind(equip_panel, equip_margin, equip_vbox, false))
 
-	# Header
-	var header := Label.new()
-	header.text = "Equipment"
-	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.add_theme_font_size_override("font_size", 14)
-	equip_vbox.add_child(header)
-
 	# Two-column layout: Armor | Combat
 	var columns_hbox := HBoxContainer.new()
 	columns_hbox.name = "EquipmentColumns"
@@ -191,24 +183,6 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 
 	# Update margins when panel resizes
 	backpack_panel.resized.connect(_on_panel_resized.bind(backpack_panel, backpack_margin, backpack_vbox, true))
-
-	# Header with gold
-	var header_row := HBoxContainer.new()
-	header_row.name = "HeaderRow"
-	backpack_vbox.add_child(header_row)
-
-	var header := Label.new()
-	header.text = "Backpack"
-	header.size_flags_horizontal = SIZE_EXPAND_FILL
-	header.add_theme_font_size_override("font_size", 14)
-	header_row.add_child(header)
-
-	gold_label = Label.new()
-	gold_label.name = "GoldLabel"
-	gold_label.text = "Gold: 0"
-	gold_label.add_theme_font_size_override("font_size", 12)
-	gold_label.modulate = Color(1.0, 0.85, 0.0)
-	header_row.add_child(gold_label)
 
 	# Grid container - center-aligned
 	var grid_row := HBoxContainer.new()
@@ -303,14 +277,12 @@ func _connect_signals() -> void:
 	Inventory.equipment_changed.connect(_on_equipment_changed)
 	Inventory.item_selected.connect(_on_item_selected)
 	Inventory.item_deselected.connect(_on_item_deselected)
-	Inventory.gold_changed.connect(_on_gold_changed)
 	Inventory.swap_mode_changed.connect(_on_swap_mode_changed)
 
 
 func _refresh_all() -> void:
 	_refresh_equipment()
 	_refresh_backpack()
-	_refresh_gold()
 
 
 func _refresh_equipment() -> void:
@@ -352,9 +324,6 @@ func _refresh_backpack() -> void:
 		)
 
 
-func _refresh_gold() -> void:
-	if gold_label:
-		gold_label.text = "Gold: %d" % Inventory.gold
 
 
 ## Public method to force refresh all UI (called when panel becomes visible)
@@ -412,8 +381,6 @@ func _on_item_deselected() -> void:
 	item_popup.hide_popup()
 
 
-func _on_gold_changed(_new_amount: int) -> void:
-	_refresh_gold()
 
 
 func _on_swap_mode_changed(active: bool) -> void:
