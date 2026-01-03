@@ -245,12 +245,14 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	split_button.pressed.connect(_on_split_pressed)
 	header_row.add_child(split_button)
 
-	# Use item button
+	# Use item button (also accepts drops)
 	use_button = Button.new()
 	use_button.name = "UseButton"
 	use_button.text = "Use"
-	use_button.tooltip_text = "Use selected item"
+	use_button.tooltip_text = "Use selected item (or drag potion here)"
 	use_button.custom_minimum_size = Vector2(36, 28)
+	use_button.set_script(preload("res://scripts/ui/inventory/use_drop_zone.gd"))
+	use_button.panel_ref = self
 	use_button.pressed.connect(_on_use_pressed)
 	header_row.add_child(use_button)
 
@@ -358,6 +360,26 @@ func handle_trash_drop(slot: InventorySlot) -> void:
 		_show_destroy_confirmation(result.item)
 	elif result.get("success", false):
 		Debug.info("UI", "Item destroyed")
+
+
+func handle_use_drop(slot: InventorySlot) -> void:
+	## Called when a consumable is dropped on the Use button
+	var source: String
+	var index: int
+
+	if slot.slot_type == InventorySlot.SlotType.BACKPACK:
+		source = "backpack"
+		index = slot.backpack_index
+	else:
+		source = "equipment"
+		index = slot.equipment_slot
+
+	var result := Inventory.use_item(source, index)
+
+	if result.get("success", false):
+		Debug.info("UI", "Used item via drag", result.get("message", ""))
+	else:
+		Debug.info("UI", "Use failed", result.get("message", ""))
 
 
 func _show_destroy_confirmation(item: ItemData) -> void:
