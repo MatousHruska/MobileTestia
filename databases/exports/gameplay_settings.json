@@ -6,7 +6,7 @@
   "base_dexterity": 10,
   "base_luck": 5,
   "health_per_vitality": 2,
-  "mana_per_energy": 0,
+  "mana_per_energy": 2,
   "crit_damage_per_luck": 1,
   "health_base_flat": 80,
   "mana_base_flat": 30,
