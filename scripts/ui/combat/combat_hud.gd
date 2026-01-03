@@ -1,7 +1,16 @@
 extends Control
 class_name CombatHUD
 ## CombatHUD - Layout manager for combat action buttons
-## Positions attack, abilities, dodge, and quick slot based on config
+##
+## Structure:
+##   Combat HUD
+##   ├── Primary Controls (Attack button + Ability Wheel)
+##   │   ├── Attack Button - Main attack, can have skill bound
+##   │   └── Ability Slots [1-5] - Skills bound in arc around attack
+##   ├── Secondary Controls
+##   │   ├── Dodge Button - Evasion/roll
+##   │   └── Quick Slot Button - Consumable items
+##   └── Interact Button - Context-sensitive (Talk, Loot, Open)
 
 ## Preload combat classes (needed until Godot generates .uid files)
 const AimIndicatorClass = preload("res://scripts/combat/aim_indicator.gd")
@@ -16,12 +25,18 @@ signal quick_slot_pressed
 ## Configuration
 @export var config: CombatHUDConfig
 
-## Button references (created dynamically)
+#region Button References
+## Primary Controls - Attack + Ability Wheel
 var attack_button: AbilitySlot
 var ability_slots: Array[AbilitySlot] = []
+
+## Secondary Controls - Dodge + Quick Slot
 var dodge_button: AbilitySlot
 var quick_slot_button: AbilitySlot
+
+## Interact Button - Context-sensitive action
 var interact_button: Button
+#endregion
 
 ## Player reference for dodge stamina check
 var player: PlayerController = null

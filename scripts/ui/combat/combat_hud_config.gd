@@ -1,17 +1,25 @@
 extends Resource
 class_name CombatHUDConfig
 ## CombatHUDConfig - Configuration resource for combat HUD layout
+##
+## Structure:
+##   Combat HUD
+##   ├── Primary Controls (Attack button + Ability Wheel)
+##   ├── Secondary Controls (Dodge + Quick Slot)
+##   └── Interact Button
+##
 ## Uses percentage-based positioning for multi-device support
 ## All offset values are percentages (0.0 to 1.0) of screen dimensions
 
-@export_group("Attack Button")
+#region Primary Controls - Attack + Ability Wheel
+@export_group("Primary Controls: Attack Button")
 @export var attack_radius: float = 81.0
 @export var attack_color: Color = Color(0.98, 0.6, 0.6, 0.85)
 @export var attack_pressed_color: Color = Color(1.0, 0.8, 0.8, 0.95)
 ## Offset from bottom-right corner as percentage of screen (x=width%, y=height%)
 @export var attack_offset_pct: Vector2 = Vector2(0.12, 0.18)
 
-@export_group("Ability Arc")
+@export_group("Primary Controls: Ability Wheel")
 @export var ability_count: int = 5
 @export var ability_radius: float = 32.0
 @export var ability_color: Color = Color(0.55, 1.0, 0.98, 0.85)
@@ -23,8 +31,10 @@ class_name CombatHUDConfig
 ## Arc angles in degrees (0 = right, 90 = down, 180 = left, 270 = up)
 @export var arc_start_angle: float = 155.0
 @export var arc_end_angle: float = 295.0
+#endregion
 
-@export_group("Dodge Button")
+#region Secondary Controls - Dodge + Quick Slot
+@export_group("Secondary Controls: Dodge Button")
 @export var dodge_radius: float = 42.0
 @export var dodge_color: Color = Color(0.38, 0.27, 1.0, 0.85)
 @export var dodge_pressed_color: Color = Color(0.55, 0.45, 1.0, 0.95)
@@ -32,18 +42,21 @@ class_name CombatHUDConfig
 ## Offset from bottom-right corner as percentage
 @export var dodge_offset_pct: Vector2 = Vector2(0.35, 0.12)
 
-@export_group("Quick Slot")
+@export_group("Secondary Controls: Quick Slot")
 @export var quick_slot_radius: float = 42.0
 @export var quick_slot_color: Color = Color(0.51, 1.0, 0.37, 0.85)
 @export var quick_slot_pressed_color: Color = Color(0.7, 1.0, 0.6, 0.95)
 @export var quick_slot_empty_color: Color = Color(0.3, 0.4, 0.3, 0.5)
 ## Offset from bottom-right corner as percentage
 @export var quick_slot_offset_pct: Vector2 = Vector2(0.47, 0.12)
+#endregion
 
+#region Interact Button
 @export_group("Interact Button")
 ## Offset from bottom-right corner as percentage
 @export var interact_offset_pct: Vector2 = Vector2(0.18, 0.45)
 @export var interact_size: Vector2 = Vector2(84, 35)
+#endregion
 
 @export_group("Visual Feedback")
 ## Scale multiplier when button is pressed
