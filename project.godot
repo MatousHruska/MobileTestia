@@ -33,6 +33,7 @@ LocationManager="*res://autoloads/location_manager.gd"
 PopupMessage="*res://autoloads/popup_message_manager.gd"
 TalentManager="*res://autoloads/talent_manager.gd"
 DamageCalculator="*res://autoloads/damage_calculator.gd"
+ResponsiveUI="*res://autoloads/responsive_ui.gd"
 
 [display]
 
