@@ -82,21 +82,63 @@ On 424px screens, content gets cut off at the bottom.
 When an item is selected (tap), show a popup overlay:
 
 ```
-┌─────────────────────────────────┐
-│  [Icon]  Iron Sword             │
-│          One-Handed Weapon      │
-│          Common                 │
-├─────────────────────────────────┤
-│  8 Damage (1 Physical, 5 Cold)  │
-│  1.0 Attacks/sec                │
-├─────────────────────────────────┤
-│  [Equip]  [Destroy]  [Close]    │
-└─────────────────────────────────┘
+┌───────────────────────────────────┐
+│  [Icon]  Iron Sword           [X] │
+│          One-Handed Weapon        │
+│          Common                   │
+├───────────────────────────────────┤
+│  8 Damage (1 Physical, 5 Cold)    │
+│  1.0 Attacks/sec                  │
+├───────────────────────────────────┤
+│  "Drag items to move, equip,      │
+│   or destroy"                     │
+└───────────────────────────────────┘
 ```
 
-- Appears centered over inventory
-- Tap outside or [Close] to dismiss
-- Action buttons context-sensitive (Equip/Unequip/Use/Destroy)
+- **Positioned near tapped item** (not centered) - popup appears over the slot
+- Clamped to screen bounds with 8px margin
+- Tap outside or [X] to dismiss
+- **Info only** - no action buttons, all actions via drag & drop
+
+### Drag & Drop System ✅ COMPLETE
+
+Replaces the old button-based system (Equip, Destroy, Swap, Quick Slot):
+
+```
+┌────────────────────────────┬─────────────────────────────────────┐
+│  Equipped Items:           │  Backpack | Gold: 100  [½][Use][🗑] │
+├────────────────────────────┼─────────────────────────────────────┤
+│                            │                                     │
+│    [H] [Amulet]            │   [■][■][■][■][■][■][■]            │
+│  [Gloves][Body][Ring]      │   [■][■][■][■][■][■][■]            │
+│    [Boots]                 │   [■][■][■][■][■][■][■]            │
+│                            │   ... (scrollable)                  │
+│  [Weapon]   [QuickSlot]    │                                     │
+│                            │                                     │
+└────────────────────────────┴─────────────────────────────────────┘
+```
+
+**Header icons:**
+- `[½]` - Split stack (always splits in half)
+- `[Use]` - Use selected consumable (or drag consumable onto it)
+- `[🗑]` - Trash zone (drag items here to destroy)
+
+**Drag behaviors:**
+| Action | How to perform |
+|--------|----------------|
+| Move/Swap items | Drag between backpack slots |
+| Equip item | Drag to equipment slot (or drop anywhere on equipment panel) |
+| Use consumable | Drag to Use button (or click Use with item selected) |
+| Destroy item | Drag to trash icon (confirms for Rare+ items) |
+| Split stack | Click ½ button, then click a stack |
+
+**Visual feedback during drag:**
+- Source slot dims (50% opacity)
+- Valid target equipment slot highlights green
+- Use button highlights green for consumables
+- Trash zone highlights when valid item hovers
+
+**Auto-equip:** Dropping an item anywhere on the equipment panel (not on a specific slot) automatically equips it to the correct slot.
 
 ---
 
@@ -205,7 +247,15 @@ When an item is selected (tap), show a popup overlay:
 3. [x] Reduce slot sizes for mobile (44/48/56px responsive)
 4. [x] Connect item selection to popup
 5. [x] Remove slot labels (ghost icons sufficient)
-6. [ ] Test on 424px and 720px heights
+6. [x] Implement drag & drop system (replaces button actions)
+7. [x] Add trash zone for item destruction
+8. [x] Add split stack button
+9. [x] Add Use button (click or drag consumables)
+10. [x] Equipment slot highlighting during drag
+11. [x] Auto-equip when dropping on equipment panel
+12. [x] Popup positions near tapped item (not centered)
+13. [x] Move inventory_slots to database (gameplay_settings.json)
+14. [ ] Test on 424px and 720px heights
 
 ### Session 2: Stats Tab Optimization
 1. [ ] Compact player info header
@@ -292,7 +342,11 @@ func _ready():
 ### Core Changes
 | File | Status | Changes |
 |------|--------|---------|
-| `scripts/ui/inventory/inventory_panel.gd` | ✅ Done | 2-column layout + popup integration |
+| `scripts/ui/inventory/inventory_panel.gd` | ✅ Done | 2-column layout, drag & drop, header icons |
+| `scripts/ui/inventory/inventory_slot.gd` | ✅ Done | Drag & drop support, highlight signals |
+| `scripts/inventory/inventory_manager.gd` | ✅ Done | drag_drop_swap, split_stack, destroy_item, use_item, auto_equip |
+| `scripts/ui/menu/character_menu.gd` | ✅ Done | Removed old destroy confirmation flow |
+| `databases/exports/gameplay_settings.json` | ✅ Done | Added inventory_slots setting |
 | `scripts/ui/menu/stats_panel.gd` | Pending | Compact layout |
 | `scripts/ui/menu/skills_panel.gd` | Pending | Smaller buttons, scrollable |
 | `scripts/ui/quest/quest_log_panel.gd` | Pending | Accordion layout |
@@ -300,7 +354,10 @@ func _ready():
 ### New Files
 | File | Status | Purpose |
 |------|--------|---------|
-| `scripts/ui/inventory/item_detail_popup.gd` | ✅ Done | Modal popup for item details |
+| `scripts/ui/inventory/item_detail_popup.gd` | ✅ Done | Modal popup for item details (info only) |
+| `scripts/ui/inventory/trash_drop_zone.gd` | ✅ Done | Drop zone for destroying items |
+| `scripts/ui/inventory/use_drop_zone.gd` | ✅ Done | Drop zone for using consumables |
+| `scripts/ui/inventory/equipment_drop_zone.gd` | ✅ Done | Auto-equip drop zone overlay |
 
 ### Scene Changes
 | File | Status | Changes |
