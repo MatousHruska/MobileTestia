@@ -100,31 +100,31 @@
       "id": "stat_fire_spell_damage",
       "name": "Fire Spell Damage",
       "category": "offensive",
-      "description": "Percentage bonus to Fire spell damage from equipment."
+      "description": "Flat bonus to Fire spell damage from equipment"
     },
     {
       "id": "stat_cold_spell_damage",
       "name": "Cold Spell Damage",
       "category": "offensive",
-      "description": "Percentage bonus to Cold/Frost spell damage from equipment."
+      "description": "Flat bonus to Cold/Frost spell damage from equipment."
     },
     {
       "id": "stat_lightning_spell_damage",
       "name": "Lightning Spell Damage",
       "category": "offensive",
-      "description": "Percentage bonus to Lightning spell damage from equipment."
+      "description": "Flat bonus to Lightning spell damage from equipment."
     },
     {
       "id": "stat_poison_spell_damage",
       "name": "Poison Spell Damage",
       "category": "offensive",
-      "description": "Percentage bonus to Poison spell damage from equipment."
+      "description": "Flat bonus to Poison spell damage from equipment."
     },
     {
       "id": "stat_arcane_spell_damage",
       "name": "Arcane Spell Damage",
       "category": "offensive",
-      "description": "Percentage bonus to Arcane spell damage from equipment."
+      "description": "Flat bonus to Arcane spell damage from equipment"
     },
     {
       "id": "stat_armor",
