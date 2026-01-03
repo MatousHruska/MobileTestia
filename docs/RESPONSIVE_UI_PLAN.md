@@ -4,6 +4,29 @@ This document outlines how screen responsiveness works in our project and what (
 
 ---
 
+## Combat HUD Terminology
+
+The right-side combat controls use the following structure:
+
+```
+Combat HUD
+├── Primary Controls (Attack button + Ability Wheel)
+│   ├── Attack Button - Main attack, can have skill bound
+│   └── Ability Wheel - Skills bound in arc around attack [1-5 slots]
+├── Secondary Controls
+│   ├── Dodge Button - Evasion/roll
+│   └── Quick Slot Button - Consumable items
+└── Interact Button - Context-sensitive (Talk, Loot, Open)
+```
+
+**Use these terms when referencing Combat HUD components:**
+- **Primary Controls**: Attack button + the arc of ability slots around it
+- **Ability Wheel**: The arc of skill slots surrounding the attack button
+- **Secondary Controls**: Dodge button + Quick Slot button
+- **Interact Button**: Context-sensitive action button (appears when near NPCs, chests, etc.)
+
+---
+
 ## Current Setup: How Godot Viewport Stretch Works
 
 ### Your project.godot settings:
