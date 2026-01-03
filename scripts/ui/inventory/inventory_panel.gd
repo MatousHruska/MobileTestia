@@ -214,19 +214,13 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	# Update margins when panel resizes
 	backpack_panel.resized.connect(_on_panel_resized.bind(backpack_panel, backpack_margin, backpack_vbox, true))
 
-	# Grid container - center-aligned using HBoxContainer
-	var grid_row := HBoxContainer.new()
-	grid_row.name = "GridRow"
-	grid_row.size_flags_horizontal = SIZE_EXPAND_FILL
-	grid_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	scroll_container.add_child(grid_row)
-
+	# Grid container - fills full width with dynamic slot sizes
 	backpack_container = GridContainer.new()
 	backpack_container.name = "BackpackGrid"
-	backpack_container.columns = BACKPACK_MIN_COLUMNS  # Will be recalculated
+	backpack_container.columns = BACKPACK_MAX_COLUMNS
 	backpack_container.add_theme_constant_override("h_separation", BACKPACK_H_SEPARATION)
 	backpack_container.add_theme_constant_override("v_separation", 4)
-	grid_row.add_child(backpack_container)
+	scroll_container.add_child(backpack_container)
 
 	# Create backpack slots
 	for i in Inventory.BACKPACK_SIZE:
@@ -246,18 +240,24 @@ func _on_backpack_resized(container: Control) -> void:
 	if backpack_slots.is_empty():
 		return
 
-	# Get actual available width (container width minus margins already applied)
+	# Get available width
 	var available_width := container.size.x
+	if available_width <= 0:
+		return
 
-	# Calculate how many columns fit
-	var slot_with_sep := current_slot_size + BACKPACK_H_SEPARATION
-	var max_columns := floori((available_width + BACKPACK_H_SEPARATION) / slot_with_sep)
+	# Fixed number of columns
+	var columns := BACKPACK_MAX_COLUMNS
+	backpack_container.columns = columns
 
-	# Clamp to reasonable bounds (min 5, max 7)
-	var columns := clampi(max_columns, BACKPACK_MIN_COLUMNS, BACKPACK_MAX_COLUMNS)
+	# Calculate slot size to fill the entire width
+	# available_width = (columns * slot_size) + ((columns - 1) * separation)
+	# slot_size = (available_width - ((columns - 1) * separation)) / columns
+	var total_separation := (columns - 1) * BACKPACK_H_SEPARATION
+	var slot_size := floorf((available_width - total_separation) / columns)
 
-	if backpack_container.columns != columns:
-		backpack_container.columns = columns
+	# Update all slot sizes
+	for slot in backpack_slots:
+		slot.custom_minimum_size = Vector2(slot_size, slot_size)
 
 
 func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer, content: Control, is_backpack: bool) -> void:
