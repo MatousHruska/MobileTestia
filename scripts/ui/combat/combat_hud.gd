@@ -409,8 +409,15 @@ func _layout_buttons() -> void:
 	dodge_button.set_radius(scaled_dodge_radius)
 	quick_slot_button.set_radius(scaled_quick_slot_radius)
 
-	# Calculate attack button position using percentage-based offset
-	var attack_pos := config.get_position_from_pct(config.attack_offset_pct, screen_size)
+	# Calculate attack button position
+	# Use FIXED pixel offset from right edge (scaled), percentage for vertical
+	# This keeps buttons aligned to right edge on wide screens
+	var base_x_offset := 154.0  # Base offset from right at 1280px design width
+	var scaled_x_offset := base_x_offset * scale_factor
+	var attack_pos := Vector2(
+		screen_size.x - scaled_x_offset,
+		screen_size.y - (config.attack_offset_pct.y * screen_size.y)
+	)
 	attack_button.position = attack_pos - Vector2(scaled_attack_radius, scaled_attack_radius)
 
 	# Calculate attack button center for arc positioning
@@ -451,13 +458,22 @@ func _layout_buttons() -> void:
 			pos.y = min(pos.y, screen_size.y - radius - min_gap)
 		return pos
 
+	# Helper to convert percentage offset to fixed pixel position (keeps right-aligned)
+	# X uses fixed scaled pixels from right, Y uses percentage of height
+	var _get_fixed_pos = func(offset_pct: Vector2, base_width: float = 1280.0) -> Vector2:
+		var base_x_px := offset_pct.x * base_width  # Convert % to base pixels
+		return Vector2(
+			screen_size.x - (base_x_px * scale_factor),
+			screen_size.y - (offset_pct.y * screen_size.y)
+		)
+
 	# Position dodge button
-	var dodge_pos := config.get_position_from_pct(config.dodge_offset_pct, screen_size)
+	var dodge_pos := _get_fixed_pos.call(config.dodge_offset_pct)
 	dodge_pos = _adjust_secondary_pos.call(dodge_pos, scaled_dodge_radius)
 	dodge_button.position = dodge_pos - Vector2(scaled_dodge_radius, scaled_dodge_radius)
 
 	# Position quick slot button
-	var quick_slot_pos := config.get_position_from_pct(config.quick_slot_offset_pct, screen_size)
+	var quick_slot_pos := _get_fixed_pos.call(config.quick_slot_offset_pct)
 	quick_slot_pos = _adjust_secondary_pos.call(quick_slot_pos, scaled_quick_slot_radius)
 	# Also ensure quick slot doesn't overlap with dodge
 	var dodge_distance := quick_slot_pos.distance_to(dodge_pos)
@@ -467,7 +483,7 @@ func _layout_buttons() -> void:
 	quick_slot_button.position = quick_slot_pos - Vector2(scaled_quick_slot_radius, scaled_quick_slot_radius)
 
 	# Position interact button (scale its size too)
-	var interact_pos := config.get_position_from_pct(config.interact_offset_pct, screen_size)
+	var interact_pos := _get_fixed_pos.call(config.interact_offset_pct)
 	interact_button.position = interact_pos
 	interact_button.custom_minimum_size = config.interact_size * scale_factor
 
