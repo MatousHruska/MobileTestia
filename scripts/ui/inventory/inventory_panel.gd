@@ -621,8 +621,20 @@ func _on_equipment_changed(_slot: ItemData.EquipSlot) -> void:
 func _on_item_selected(item: ItemData, source: String, index: int) -> void:
 	_refresh_equipment()
 	_refresh_backpack()
-	# Show popup with item details
-	item_popup.show_item(item, source, index)
+
+	# Find the slot's position for popup placement
+	var slot_center := Vector2.ZERO
+	if source == "backpack" and index >= 0 and index < backpack_slots.size():
+		var slot: InventorySlot = backpack_slots[index]
+		slot_center = slot.global_position + slot.size / 2
+	elif source == "equipment":
+		var equip_slot := index as ItemData.EquipSlot
+		if equipment_slots.has(equip_slot):
+			var slot: InventorySlot = equipment_slots[equip_slot]
+			slot_center = slot.global_position + slot.size / 2
+
+	# Show popup with item details at slot position
+	item_popup.show_item(item, source, index, slot_center)
 
 
 func _on_item_deselected() -> void:
