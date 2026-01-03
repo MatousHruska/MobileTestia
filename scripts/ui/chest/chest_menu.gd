@@ -82,8 +82,9 @@ func _apply_responsive_size() -> void:
 	if not menu_panel:
 		return
 
-	if ResponsiveUI:
-		ResponsiveUI.constrain_centered_panel(menu_panel, DESIGN_WIDTH, DESIGN_HEIGHT, 0.02)
+	var responsive_ui := get_node_or_null("/root/ResponsiveUI")
+	if responsive_ui:
+		responsive_ui.constrain_centered_panel(menu_panel, DESIGN_WIDTH, DESIGN_HEIGHT, 0.02)
 	else:
 		# Fallback if ResponsiveUI not loaded yet
 		var vp_size := get_viewport().get_visible_rect().size
