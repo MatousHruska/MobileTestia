@@ -409,15 +409,8 @@ func _layout_buttons() -> void:
 	dodge_button.set_radius(scaled_dodge_radius)
 	quick_slot_button.set_radius(scaled_quick_slot_radius)
 
-	# Calculate attack button position
-	# Use FIXED pixel offset from right edge (scaled), percentage for vertical
-	# This keeps buttons aligned to right edge on wide screens
-	var base_x_offset := 154.0  # Base offset from right at 1280px design width
-	var scaled_x_offset := base_x_offset * scale_factor
-	var attack_pos := Vector2(
-		screen_size.x - scaled_x_offset,
-		screen_size.y - (config.attack_offset_pct.y * screen_size.y)
-	)
+	# Calculate attack button position using percentage-based offset
+	var attack_pos := config.get_position_from_pct(config.attack_offset_pct, screen_size)
 	attack_button.position = attack_pos - Vector2(scaled_attack_radius, scaled_attack_radius)
 
 	# Calculate attack button center for arc positioning
@@ -429,61 +422,64 @@ func _layout_buttons() -> void:
 	var config_arc_distance := config.get_arc_distance(screen_size.y)
 	var actual_arc_distance := maxf(min_arc_distance, config_arc_distance)
 
-	# Get ability positions with adjusted arc distance
-	var ability_positions := _get_ability_positions_with_distance(attack_center, actual_arc_distance)
-	for i in ability_slots.size():
-		if i < ability_positions.size():
-			var pos := ability_positions[i]
-			ability_slots[i].position = pos - Vector2(scaled_ability_radius, scaled_ability_radius)
-
-	# Position dodge and quick slot buttons
-	# These need minimum spacing from attack button to prevent overlap on small screens
+	# Position dodge and quick slot FIRST so we can check ability collisions against them
 	var min_gap := 8.0 * scale_factor  # Minimum gap between buttons
 
 	# Calculate attack button boundaries
 	var attack_left := attack_pos.x - scaled_attack_radius
-	var attack_bottom := attack_pos.y + scaled_attack_radius
 
 	# Helper function to ensure button doesn't overlap with attack button
-	# Pushes button left if there's not enough vertical space below attack
 	var _adjust_secondary_pos = func(pos: Vector2, radius: float) -> Vector2:
-		# Check if this button would overlap with attack button
 		var distance := pos.distance_to(attack_pos)
 		var min_distance := scaled_attack_radius + radius + min_gap
-
 		if distance < min_distance:
-			# Overlap detected - push button to the left of attack button
 			pos.x = attack_left - min_gap - radius
-			# Keep Y at screen bottom with some padding
 			pos.y = min(pos.y, screen_size.y - radius - min_gap)
 		return pos
 
-	# Helper to convert percentage offset to fixed pixel position (keeps right-aligned)
-	# X uses fixed scaled pixels from right, Y uses percentage of height
-	var _get_fixed_pos = func(offset_pct: Vector2, base_width: float = 1280.0) -> Vector2:
-		var base_x_px := offset_pct.x * base_width  # Convert % to base pixels
-		return Vector2(
-			screen_size.x - (base_x_px * scale_factor),
-			screen_size.y - (offset_pct.y * screen_size.y)
-		)
-
 	# Position dodge button
-	var dodge_pos: Vector2 = _get_fixed_pos.call(config.dodge_offset_pct)
+	var dodge_pos := config.get_position_from_pct(config.dodge_offset_pct, screen_size)
 	dodge_pos = _adjust_secondary_pos.call(dodge_pos, scaled_dodge_radius)
-	dodge_button.position = dodge_pos - Vector2(scaled_dodge_radius, scaled_dodge_radius)
 
 	# Position quick slot button
-	var quick_slot_pos: Vector2 = _get_fixed_pos.call(config.quick_slot_offset_pct)
+	var quick_slot_pos := config.get_position_from_pct(config.quick_slot_offset_pct, screen_size)
 	quick_slot_pos = _adjust_secondary_pos.call(quick_slot_pos, scaled_quick_slot_radius)
-	# Also ensure quick slot doesn't overlap with dodge
-	var dodge_distance: float = quick_slot_pos.distance_to(dodge_pos)
+	# Ensure quick slot doesn't overlap with dodge
+	var dodge_distance := quick_slot_pos.distance_to(dodge_pos)
 	var min_dodge_distance := scaled_dodge_radius + scaled_quick_slot_radius + min_gap
 	if dodge_distance < min_dodge_distance:
 		quick_slot_pos.x = dodge_pos.x - scaled_dodge_radius - min_gap - scaled_quick_slot_radius
+
+	# Get ability positions with adjusted arc distance
+	var ability_positions := _get_ability_positions_with_distance(attack_center, actual_arc_distance)
+
+	# Position ability slots, checking for collision with dodge/quick slot
+	for i in ability_slots.size():
+		if i < ability_positions.size():
+			var pos := ability_positions[i]
+
+			# Check collision with dodge button
+			var dist_to_dodge := pos.distance_to(dodge_pos)
+			var min_dist_dodge := scaled_ability_radius + scaled_dodge_radius + min_gap
+			if dist_to_dodge < min_dist_dodge:
+				# Push ability away from dodge
+				pos = dodge_pos + (pos - dodge_pos).normalized() * min_dist_dodge
+
+			# Check collision with quick slot button
+			var dist_to_quick := pos.distance_to(quick_slot_pos)
+			var min_dist_quick := scaled_ability_radius + scaled_quick_slot_radius + min_gap
+			if dist_to_quick < min_dist_quick:
+				# Push ability away from quick slot
+				pos = quick_slot_pos + (pos - quick_slot_pos).normalized() * min_dist_quick
+
+			ability_slots[i].position = pos - Vector2(scaled_ability_radius, scaled_ability_radius)
+
+	# Apply dodge and quick slot positions
+	dodge_button.position = dodge_pos - Vector2(scaled_dodge_radius, scaled_dodge_radius)
 	quick_slot_button.position = quick_slot_pos - Vector2(scaled_quick_slot_radius, scaled_quick_slot_radius)
 
 	# Position interact button (scale its size too)
-	var interact_pos: Vector2 = _get_fixed_pos.call(config.interact_offset_pct)
+	var interact_pos := config.get_position_from_pct(config.interact_offset_pct, screen_size)
 	interact_button.position = interact_pos
 	interact_button.custom_minimum_size = config.interact_size * scale_factor
 
