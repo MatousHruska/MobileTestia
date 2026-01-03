@@ -763,11 +763,11 @@ func _update_derived_stats() -> void:
 
 	# Offensive - Spell stats
 	_set_stat_value("spell_power", "%.0f" % PlayerStats.spell_power)
-	_set_stat_value("fire_spell_damage", "+%.0f%%" % PlayerStats.get_equipment_bonus("fire_spell_damage"))
-	_set_stat_value("cold_spell_damage", "+%.0f%%" % PlayerStats.get_equipment_bonus("cold_spell_damage"))
-	_set_stat_value("lightning_spell_damage", "+%.0f%%" % PlayerStats.get_equipment_bonus("lightning_spell_damage"))
-	_set_stat_value("poison_spell_damage", "+%.0f%%" % PlayerStats.get_equipment_bonus("poison_spell_damage"))
-	_set_stat_value("arcane_spell_damage", "+%.0f%%" % PlayerStats.get_equipment_bonus("arcane_spell_damage"))
+	_set_stat_value("fire_spell_damage", "%.0f" % PlayerStats.get_equipment_bonus("fire_spell_damage"))
+	_set_stat_value("cold_spell_damage", "%.0f" % PlayerStats.get_equipment_bonus("cold_spell_damage"))
+	_set_stat_value("lightning_spell_damage", "%.0f" % PlayerStats.get_equipment_bonus("lightning_spell_damage"))
+	_set_stat_value("poison_spell_damage", "%.0f" % PlayerStats.get_equipment_bonus("poison_spell_damage"))
+	_set_stat_value("arcane_spell_damage", "%.0f" % PlayerStats.get_equipment_bonus("arcane_spell_damage"))
 
 	# Defensive
 	_set_stat_value("armor", "%.0f" % PlayerStats.armor)

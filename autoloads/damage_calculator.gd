@@ -76,7 +76,7 @@ func _calculate_weapon_damage(talent: TalentData, skill_rank: int) -> Dictionary
 
 
 ## Calculate magic damage (spells)
-## Formula: (base_damage + (damage_per_rank * (rank - 1)) + Spell Power) * (1 + elemental_bonus%)
+## Formula: base_damage + (damage_per_rank * (rank - 1)) + Spell Power + Elemental Bonus
 func _calculate_magic_damage(talent: TalentData, skill_rank: int) -> Dictionary:
 	var spell_power := PlayerStats.spell_power
 
@@ -85,9 +85,9 @@ func _calculate_magic_damage(talent: TalentData, skill_rank: int) -> Dictionary:
 	var rank_bonus := per_rank * (skill_rank - 1)
 	var pre_bonus_damage := base + rank_bonus + spell_power
 
-	# Apply elemental damage bonus
+	# Apply elemental damage bonus (flat, not percentage)
 	var elemental_bonus := _get_elemental_bonus(talent.damage_type_id)
-	var total_damage := pre_bonus_damage * (1.0 + elemental_bonus / 100.0)
+	var total_damage := pre_bonus_damage + elemental_bonus
 
 	return {
 		"base_damage": total_damage,
