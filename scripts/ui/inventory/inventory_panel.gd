@@ -55,6 +55,7 @@ var backpack_container: GridContainer
 var item_popup: Control  # ItemDetailPopup instance
 var equip_margin: MarginContainer
 var backpack_margin: MarginContainer
+var gold_label: Label
 
 ## Slot tracking
 var equipment_slots: Dictionary = {}  # EquipSlot -> InventorySlot
@@ -177,6 +178,30 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	backpack_margin.name = "BackpackMargin"
 	backpack_panel.add_child(backpack_margin)
 
+	# Main VBox for header + scrollable content
+	var backpack_vbox := VBoxContainer.new()
+	backpack_vbox.name = "BackpackVBox"
+	backpack_vbox.add_theme_constant_override("separation", 8)  # Gap between header and inventory
+	backpack_margin.add_child(backpack_vbox)
+
+	# Header row: "Inventory" left, Gold right
+	var header_row := HBoxContainer.new()
+	header_row.name = "HeaderRow"
+	backpack_vbox.add_child(header_row)
+
+	var inventory_label := Label.new()
+	inventory_label.text = "Inventory"
+	inventory_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	inventory_label.add_theme_font_size_override("font_size", 14)
+	header_row.add_child(inventory_label)
+
+	gold_label = Label.new()
+	gold_label.name = "GoldLabel"
+	gold_label.text = "Gold: 0"
+	gold_label.add_theme_font_size_override("font_size", 12)
+	gold_label.modulate = Color(1.0, 0.85, 0.0)
+	header_row.add_child(gold_label)
+
 	# Scroll container for vertical scrolling when content overflows
 	var scroll_container := ScrollContainer.new()
 	scroll_container.name = "BackpackScroll"
@@ -184,10 +209,10 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	scroll_container.size_flags_vertical = SIZE_EXPAND_FILL
 	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	backpack_margin.add_child(scroll_container)
+	backpack_vbox.add_child(scroll_container)
 
 	# Update margins when panel resizes
-	backpack_panel.resized.connect(_on_panel_resized.bind(backpack_panel, backpack_margin, scroll_container, true))
+	backpack_panel.resized.connect(_on_panel_resized.bind(backpack_panel, backpack_margin, backpack_vbox, true))
 
 	# Grid container - center-aligned using HBoxContainer
 	var grid_row := HBoxContainer.new()
@@ -278,12 +303,14 @@ func _connect_signals() -> void:
 	Inventory.equipment_changed.connect(_on_equipment_changed)
 	Inventory.item_selected.connect(_on_item_selected)
 	Inventory.item_deselected.connect(_on_item_deselected)
+	Inventory.gold_changed.connect(_on_gold_changed)
 	Inventory.swap_mode_changed.connect(_on_swap_mode_changed)
 
 
 func _refresh_all() -> void:
 	_refresh_equipment()
 	_refresh_backpack()
+	_refresh_gold()
 
 
 func _refresh_equipment() -> void:
@@ -325,6 +352,9 @@ func _refresh_backpack() -> void:
 		)
 
 
+func _refresh_gold() -> void:
+	if gold_label:
+		gold_label.text = "Gold: %d" % Inventory.gold
 
 
 ## Public method to force refresh all UI (called when panel becomes visible)
@@ -382,6 +412,8 @@ func _on_item_deselected() -> void:
 	item_popup.hide_popup()
 
 
+func _on_gold_changed(_new_amount: int) -> void:
+	_refresh_gold()
 
 
 func _on_swap_mode_changed(active: bool) -> void:
