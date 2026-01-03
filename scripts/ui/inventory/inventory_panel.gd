@@ -34,8 +34,9 @@ const EQUIPMENT_SLOTS: Array[ItemData.EquipSlot] = [
 	ItemData.EquipSlot.QUICK_SLOT
 ]
 
-## Backpack settings
-const BACKPACK_COLUMNS: int = 5
+## Backpack settings (columns calculated dynamically based on width)
+const BACKPACK_MIN_COLUMNS: int = 5
+const BACKPACK_H_SEPARATION: int = 4
 
 ## Slot sizing (responsive)
 const SLOT_SIZE_SMALL := 44.0   # For screens < 500px height
@@ -202,7 +203,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	gold_label.modulate = Color(1.0, 0.85, 0.0)
 	header_row.add_child(gold_label)
 
-	# Grid area - align to right, fill vertical space
+	# Grid area - fills available space
 	var grid_area := Control.new()
 	grid_area.name = "GridArea"
 	grid_area.size_flags_vertical = SIZE_EXPAND_FILL
@@ -211,15 +212,15 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 
 	backpack_container = GridContainer.new()
 	backpack_container.name = "BackpackGrid"
-	backpack_container.columns = BACKPACK_COLUMNS
-	backpack_container.add_theme_constant_override("h_separation", 4)
+	backpack_container.columns = BACKPACK_MIN_COLUMNS  # Will be recalculated
+	backpack_container.add_theme_constant_override("h_separation", BACKPACK_H_SEPARATION)
 	backpack_container.add_theme_constant_override("v_separation", 4)
 	# Anchor to top-right
 	backpack_container.set_anchors_preset(PRESET_TOP_RIGHT)
 	backpack_container.grow_horizontal = GROW_DIRECTION_BEGIN
 	grid_area.add_child(backpack_container)
 
-	# Create backpack slots (size will be adjusted after layout)
+	# Create backpack slots
 	for i in Inventory.BACKPACK_SIZE:
 		var slot := InventorySlot.new()
 		slot.slot_type = InventorySlot.SlotType.BACKPACK
@@ -229,7 +230,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 		backpack_container.add_child(slot)
 		backpack_slots.append(slot)
 
-	# Resize slots to fill available space after layout
+	# Adjust columns to fill width after layout
 	grid_area.resized.connect(_on_grid_area_resized.bind(grid_area))
 
 
@@ -237,19 +238,15 @@ func _on_grid_area_resized(grid_area: Control) -> void:
 	if backpack_slots.is_empty():
 		return
 
-	var available_height := grid_area.size.y
-	var num_rows := ceili(float(Inventory.BACKPACK_SIZE) / BACKPACK_COLUMNS)
-	var v_separation := 4
-	var total_separation := (num_rows - 1) * v_separation
-
-	# Calculate slot size to fill height
-	var slot_height := floorf((available_height - total_separation) / num_rows)
+	var available_width := grid_area.size.x
+	# Calculate how many columns fit: (width + separation) / (slot_size + separation)
+	var slot_with_sep := current_slot_size + BACKPACK_H_SEPARATION
+	var max_columns := floori((available_width + BACKPACK_H_SEPARATION) / slot_with_sep)
 	# Clamp to reasonable bounds
-	slot_height = clampf(slot_height, SLOT_SIZE_SMALL, 80.0)
+	var columns := maxi(BACKPACK_MIN_COLUMNS, max_columns)
 
-	# Update all backpack slots
-	for slot in backpack_slots:
-		slot.custom_minimum_size = Vector2(slot_height, slot_height)
+	if backpack_container.columns != columns:
+		backpack_container.columns = columns
 
 
 func _build_item_popup() -> void:
