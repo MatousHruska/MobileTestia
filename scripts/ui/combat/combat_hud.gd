@@ -424,8 +424,14 @@ func _layout_buttons() -> void:
 	dodge_button.set_radius(scaled_dodge_radius)
 	quick_slot_button.set_radius(scaled_quick_slot_radius)
 
-	# Calculate attack button position using percentage-based offset
-	var attack_pos := config.get_position_from_pct(config.attack_offset_pct, screen_size)
+	# Calculate attack button position
+	# X: Fixed pixel offset from right edge (aligned with menu button at 8px margin)
+	# Y: Percentage-based for vertical positioning
+	var right_margin := 8.0 * scale_factor  # Match menu button margin
+	var attack_pos := Vector2(
+		screen_size.x - right_margin - scaled_attack_radius,
+		screen_size.y - (config.attack_offset_pct.y * screen_size.y)
+	)
 	attack_button.position = attack_pos - Vector2(scaled_attack_radius, scaled_attack_radius)
 
 	# Calculate attack button center for arc positioning
@@ -452,12 +458,17 @@ func _layout_buttons() -> void:
 			pos.y = min(pos.y, screen_size.y - radius - min_gap)
 		return pos
 
-	# Position dodge button
-	var dodge_pos := config.get_position_from_pct(config.dodge_offset_pct, screen_size)
+	# Position dodge button - relative to attack button, left and below
+	# Base offset from attack center (in base 720p pixels, then scaled)
+	var dodge_offset := Vector2(-180.0, 40.0) * scale_factor  # Left and slightly below attack
+	var dodge_pos := attack_pos + dodge_offset
+	# Keep on screen
+	dodge_pos.y = min(dodge_pos.y, screen_size.y - scaled_dodge_radius - min_gap)
 	dodge_pos = _adjust_secondary_pos.call(dodge_pos, scaled_dodge_radius)
 
-	# Position quick slot button
-	var quick_slot_pos := config.get_position_from_pct(config.quick_slot_offset_pct, screen_size)
+	# Position quick slot button - left of dodge
+	var quick_slot_offset := Vector2(-100.0, 0.0) * scale_factor  # Left of dodge
+	var quick_slot_pos := dodge_pos + quick_slot_offset
 	quick_slot_pos = _adjust_secondary_pos.call(quick_slot_pos, scaled_quick_slot_radius)
 	# Ensure quick slot doesn't overlap with dodge
 	var dodge_distance := quick_slot_pos.distance_to(dodge_pos)
@@ -493,10 +504,14 @@ func _layout_buttons() -> void:
 	dodge_button.position = dodge_pos - Vector2(scaled_dodge_radius, scaled_dodge_radius)
 	quick_slot_button.position = quick_slot_pos - Vector2(scaled_quick_slot_radius, scaled_quick_slot_radius)
 
-	# Position interact button (scale its size too)
-	var interact_pos := config.get_position_from_pct(config.interact_offset_pct, screen_size)
+	# Position interact button - above attack button, right-aligned
+	var scaled_interact_size := config.interact_size * scale_factor
+	var interact_pos := Vector2(
+		attack_pos.x + scaled_attack_radius - scaled_interact_size.x,  # Right edge aligned with attack
+		attack_pos.y - scaled_attack_radius - min_gap - scaled_interact_size.y - 60.0 * scale_factor  # Above attack
+	)
 	interact_button.position = interact_pos
-	interact_button.custom_minimum_size = config.interact_size * scale_factor
+	interact_button.custom_minimum_size = scaled_interact_size
 
 
 func _notification(what: int) -> void:
