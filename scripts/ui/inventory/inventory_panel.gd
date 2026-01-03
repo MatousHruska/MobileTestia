@@ -210,16 +210,12 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	gold_label.modulate = Color(1.0, 0.85, 0.0)
 	header_row.add_child(gold_label)
 
-	# Grid container - right-aligned using HBoxContainer with spacer
+	# Grid container - center-aligned
 	var grid_row := HBoxContainer.new()
 	grid_row.name = "GridRow"
 	grid_row.size_flags_vertical = SIZE_EXPAND_FILL
+	grid_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	backpack_vbox.add_child(grid_row)
-
-	# Spacer to push grid to right
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = SIZE_EXPAND_FILL
-	grid_row.add_child(spacer)
 
 	backpack_container = GridContainer.new()
 	backpack_container.name = "BackpackGrid"
