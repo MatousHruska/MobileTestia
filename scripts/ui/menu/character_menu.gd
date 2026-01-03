@@ -12,7 +12,7 @@ enum Tab { INVENTORY, STATS, SKILLS, QUESTS, MENU }
 @onready var panel_container: Control = $MenuPanel
 @onready var tab_bar: HBoxContainer = $MenuPanel/VBox/TabBar
 @onready var content_area: Control = $MenuPanel/VBox/ContentArea
-@onready var close_button: Button = $MenuPanel/VBox/Header/CloseButton
+@onready var close_button: Button = $MenuPanel/VBox/TabBar/CloseButton
 
 ## Tab buttons
 @onready var stats_tab: Button = $MenuPanel/VBox/TabBar/StatsTab
@@ -61,9 +61,9 @@ var _quest_log_instance = null  # QuestLogPanel
 ## Skills panel instance (created dynamically)
 var _skills_panel_instance: SkillsPanel = null
 
-## Design size for responsive scaling (840x600 from .tscn)
+## Design size for responsive scaling (840x550 from .tscn)
 const DESIGN_WIDTH := 840.0
-const DESIGN_HEIGHT := 600.0
+const DESIGN_HEIGHT := 550.0
 
 
 func _ready() -> void:
