@@ -203,22 +203,23 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	gold_label.modulate = Color(1.0, 0.85, 0.0)
 	header_row.add_child(gold_label)
 
-	# Grid area - fills available space
-	var grid_area := Control.new()
-	grid_area.name = "GridArea"
-	grid_area.size_flags_vertical = SIZE_EXPAND_FILL
-	grid_area.size_flags_horizontal = SIZE_EXPAND_FILL
-	backpack_vbox.add_child(grid_area)
+	# Grid container - right-aligned using HBoxContainer with spacer
+	var grid_row := HBoxContainer.new()
+	grid_row.name = "GridRow"
+	grid_row.size_flags_vertical = SIZE_EXPAND_FILL
+	backpack_vbox.add_child(grid_row)
+
+	# Spacer to push grid to right
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = SIZE_EXPAND_FILL
+	grid_row.add_child(spacer)
 
 	backpack_container = GridContainer.new()
 	backpack_container.name = "BackpackGrid"
 	backpack_container.columns = BACKPACK_MIN_COLUMNS  # Will be recalculated
 	backpack_container.add_theme_constant_override("h_separation", BACKPACK_H_SEPARATION)
 	backpack_container.add_theme_constant_override("v_separation", 4)
-	# Anchor to top-right
-	backpack_container.set_anchors_preset(PRESET_TOP_RIGHT)
-	backpack_container.grow_horizontal = GROW_DIRECTION_BEGIN
-	grid_area.add_child(backpack_container)
+	grid_row.add_child(backpack_container)
 
 	# Create backpack slots
 	for i in Inventory.BACKPACK_SIZE:
@@ -231,19 +232,22 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 		backpack_slots.append(slot)
 
 	# Adjust columns to fill width after layout
-	grid_area.resized.connect(_on_grid_area_resized.bind(grid_area))
+	backpack_vbox.resized.connect(_on_backpack_resized.bind(backpack_vbox))
 
 
-func _on_grid_area_resized(grid_area: Control) -> void:
+func _on_backpack_resized(container: VBoxContainer) -> void:
 	if backpack_slots.is_empty():
 		return
 
-	var available_width := grid_area.size.x
-	# Calculate how many columns fit: (width + separation) / (slot_size + separation)
+	# Get actual available width (container width minus margins already applied)
+	var available_width := container.size.x
+
+	# Calculate how many columns fit
 	var slot_with_sep := current_slot_size + BACKPACK_H_SEPARATION
 	var max_columns := floori((available_width + BACKPACK_H_SEPARATION) / slot_with_sep)
-	# Clamp to reasonable bounds
-	var columns := maxi(BACKPACK_MIN_COLUMNS, max_columns)
+
+	# Clamp to reasonable bounds (min 5, max based on backpack size)
+	var columns := clampi(max_columns, BACKPACK_MIN_COLUMNS, Inventory.BACKPACK_SIZE)
 
 	if backpack_container.columns != columns:
 		backpack_container.columns = columns
