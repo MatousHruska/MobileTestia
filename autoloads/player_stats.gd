@@ -445,15 +445,15 @@ static func get_stat_description(stat_name: String) -> String:
 			return "Damage multiplier on critical hits. Base: 150%, scales with Luck."
 		# Elemental Spell Damage
 		"fire_spell_damage":
-			return "Percentage bonus to Fire spell damage from equipment."
+			return "Flat bonus to Fire spell damage from equipment."
 		"cold_spell_damage":
-			return "Percentage bonus to Cold/Frost spell damage from equipment."
+			return "Flat bonus to Cold/Frost spell damage from equipment."
 		"lightning_spell_damage":
-			return "Percentage bonus to Lightning spell damage from equipment."
+			return "Flat bonus to Lightning spell damage from equipment."
 		"poison_spell_damage":
-			return "Percentage bonus to Poison spell damage from equipment."
+			return "Flat bonus to Poison spell damage from equipment."
 		"arcane_spell_damage":
-			return "Percentage bonus to Arcane spell damage from equipment."
+			return "Flat bonus to Arcane spell damage from equipment."
 		# Defensive
 		"armor":
 			return "Reduces incoming physical damage from attacks."
