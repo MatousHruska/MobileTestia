@@ -26,6 +26,9 @@ var interact_button: Button
 ## Player reference for dodge stamina check
 var player: PlayerController = null
 
+## Main slot skill binding (slot 0 binds to attack button)
+var attack_button_talent: TalentData = null
+
 ## Ranged aiming
 var aim_indicator: Node2D = null  ## AimIndicator instance
 var is_aiming: bool = false
@@ -144,8 +147,15 @@ func _connect_talent_manager() -> void:
 
 func _sync_talent_bindings() -> void:
 	## Sync all bound talents from TalentManager to ability slots
+	# Sync main slot (slot 0) to attack button
+	var main_talent := TalentManager.get_bound_talent(0)
+	if main_talent:
+		_bind_talent_to_attack_button(main_talent)
+	else:
+		_clear_attack_button_binding()
+
+	# Sync secondary slots (1-5) to ability slots (0-4)
 	for i in range(ability_slots.size()):
-		# TalentManager slot 1-5 maps to ability slots 0-4 (main slot 0 is special)
 		var talent := TalentManager.get_bound_talent(i + 1)
 		if talent:
 			_bind_talent_to_slot(i, talent)
@@ -182,24 +192,69 @@ func _bind_talent_to_slot(slot_index: int, talent: TalentData) -> void:
 	Debug.log("Combat", "Bound talent to HUD slot", {"slot": slot_index, "talent": talent.talent_name})
 
 
+func _bind_talent_to_attack_button(talent: TalentData) -> void:
+	## Bind a talent to the attack button (main slot 0)
+	attack_button_talent = talent
+
+	var invested := TalentManager.get_invested_points(talent.id)
+	var data := {
+		"name": talent.talent_name,
+		"icon": talent.talent_name.substr(0, 2).to_upper(),
+		"mana_cost": talent.mana_cost,
+		"stamina_cost": talent.stamina_cost,
+		"cooldown": talent.cooldown,
+		"damage": talent.get_damage_at_points(invested),
+		"effect_type": talent.effect_type,
+		"effect_value": talent.get_effect_at_points(invested),
+		"duration": talent.duration,
+		"talent_id": talent.id,
+		"required_weapon_category": talent.required_weapon_category,
+	}
+
+	attack_button.bind_ability(talent.id, data)
+
+	# Update weapon validity for attack button
+	var weapon_cat: String = Inventory.get_equipped_weapon_category()
+	attack_button.update_weapon_validity(weapon_cat)
+
+	Debug.log("Combat", "Bound talent to attack button", {"talent": talent.talent_name})
+
+
+func _clear_attack_button_binding() -> void:
+	## Clear the attack button's skill binding (revert to basic attack)
+	attack_button_talent = null
+	attack_button.clear_ability()
+	attack_button.set_icon("⚔")
+	Debug.log("Combat", "Cleared attack button binding")
+
+
 func _on_talent_skill_bound(slot_index: int, talent_id: String) -> void:
 	## Handle skill bound event from TalentManager
-	# TalentManager uses slot 0 as main, 1-5 as secondary
-	# CombatHUD ability slots are 0-based
-	var hud_slot := slot_index - 1  # Convert to HUD slot index
-	if hud_slot < 0 or hud_slot >= ability_slots.size():
+	# TalentManager uses slot 0 as main (attack button), 1-5 as secondary (ability slots)
+	var talent := TalentManager.get_talent(talent_id)
+	if not talent:
 		return
 
-	var talent := TalentManager.get_talent(talent_id)
-	if talent:
-		_bind_talent_to_slot(hud_slot, talent)
+	if slot_index == 0:
+		# Main slot binds to attack button
+		_bind_talent_to_attack_button(talent)
+	else:
+		# Secondary slots bind to ability slots (slot 1 -> ability_slots[0], etc.)
+		var hud_slot := slot_index - 1
+		if hud_slot >= 0 and hud_slot < ability_slots.size():
+			_bind_talent_to_slot(hud_slot, talent)
 
 
 func _on_talent_skill_unbound(slot_index: int) -> void:
 	## Handle skill unbound event from TalentManager
-	var hud_slot := slot_index - 1
-	if hud_slot >= 0 and hud_slot < ability_slots.size():
-		clear_ability_slot(hud_slot)
+	if slot_index == 0:
+		# Main slot unbinds from attack button
+		_clear_attack_button_binding()
+	else:
+		# Secondary slots unbind from ability slots
+		var hud_slot := slot_index - 1
+		if hud_slot >= 0 and hud_slot < ability_slots.size():
+			clear_ability_slot(hud_slot)
 
 
 func _on_equipment_changed(slot: ItemData.EquipSlot) -> void:
@@ -209,8 +264,14 @@ func _on_equipment_changed(slot: ItemData.EquipSlot) -> void:
 
 
 func _update_all_weapon_validity() -> void:
-	## Update weapon validity state for all ability slots
+	## Update weapon validity state for all ability slots (including attack button)
 	var weapon_cat: String = Inventory.get_equipped_weapon_category()
+
+	# Update attack button if it has a skill bound
+	if attack_button_talent:
+		attack_button.update_weapon_validity(weapon_cat)
+
+	# Update all ability slots
 	for slot in ability_slots:
 		slot.update_weapon_validity(weapon_cat)
 
@@ -348,6 +409,12 @@ func _on_attack_activated(_slot_index: int, _ability_id: String) -> void:
 	Debug.log("Combat", "Attack activated")
 	attack_pressed.emit()
 
+	# If a skill is bound to the attack button, execute it
+	if attack_button_talent:
+		# Use slot index -1 for the attack button (special handling in _on_ability_activated)
+		_on_ability_activated(-1, attack_button_talent.id)
+		return
+
 	# Basic attack uses the player's request_attack which triggers animation
 	if player:
 		player.request_attack()
@@ -431,10 +498,13 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 	_apply_skill_damage(talent, damage_result)
 
 	# Start cooldown
-	if slot_index >= 0 and slot_index < ability_slots.size():
-		var slot := ability_slots[slot_index]
-		if talent.cooldown > 0:
-			slot.start_cooldown(talent.cooldown)
+	if talent.cooldown > 0:
+		if slot_index == -1:
+			# Attack button (main slot)
+			attack_button.start_cooldown(talent.cooldown)
+		elif slot_index >= 0 and slot_index < ability_slots.size():
+			# Regular ability slots
+			ability_slots[slot_index].start_cooldown(talent.cooldown)
 
 	ability_pressed.emit(slot_index, ability_id)
 	Debug.log("Combat", "Skill executed: %s" % talent.talent_name, {
@@ -691,8 +761,11 @@ func _update_casting() -> void:
 		_fire_magic_projectile(casting_talent, cast_direction)
 
 		# Start cooldown
-		if casting_talent.cooldown > 0 and casting_slot_index >= 0 and casting_slot_index < ability_slots.size():
-			ability_slots[casting_slot_index].start_cooldown(casting_talent.cooldown)
+		if casting_talent.cooldown > 0:
+			if casting_slot_index == -1:
+				attack_button.start_cooldown(casting_talent.cooldown)
+			elif casting_slot_index >= 0 and casting_slot_index < ability_slots.size():
+				ability_slots[casting_slot_index].start_cooldown(casting_talent.cooldown)
 
 		# End casting
 		_end_casting()
@@ -789,8 +862,10 @@ func _fire_magic_projectile_instant(slot_index: int, talent: TalentData) -> void
 	_fire_magic_projectile(talent, direction)
 
 	# Start cooldown
-	if slot_index >= 0 and slot_index < ability_slots.size():
-		if talent.cooldown > 0:
+	if talent.cooldown > 0:
+		if slot_index == -1:
+			attack_button.start_cooldown(talent.cooldown)
+		elif slot_index >= 0 and slot_index < ability_slots.size():
 			ability_slots[slot_index].start_cooldown(talent.cooldown)
 
 
@@ -838,8 +913,11 @@ func _update_self_buff_casting() -> void:
 		_apply_self_buff(casting_talent)
 
 		# Start cooldown
-		if casting_talent.cooldown > 0 and casting_slot_index >= 0 and casting_slot_index < ability_slots.size():
-			ability_slots[casting_slot_index].start_cooldown(casting_talent.cooldown)
+		if casting_talent.cooldown > 0:
+			if casting_slot_index == -1:
+				attack_button.start_cooldown(casting_talent.cooldown)
+			elif casting_slot_index >= 0 and casting_slot_index < ability_slots.size():
+				ability_slots[casting_slot_index].start_cooldown(casting_talent.cooldown)
 
 		# End casting
 		_end_casting()
@@ -859,8 +937,10 @@ func _apply_self_buff_instant(slot_index: int, talent: TalentData) -> void:
 	_apply_self_buff(talent)
 
 	# Start cooldown
-	if slot_index >= 0 and slot_index < ability_slots.size():
-		if talent.cooldown > 0:
+	if talent.cooldown > 0:
+		if slot_index == -1:
+			attack_button.start_cooldown(talent.cooldown)
+		elif slot_index >= 0 and slot_index < ability_slots.size():
 			ability_slots[slot_index].start_cooldown(talent.cooldown)
 
 
