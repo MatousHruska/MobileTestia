@@ -425,12 +425,11 @@ func _layout_buttons() -> void:
 	quick_slot_button.set_radius(scaled_quick_slot_radius)
 
 	# Calculate attack button position
-	# X: Fixed pixel offset from right edge (with comfortable margin)
-	# Y: Percentage-based for vertical positioning
-	var right_margin := 24.0 * scale_factor  # Comfortable margin from right edge
+	# Use fixed pixel margins from edges (same margin on right and bottom)
+	var edge_margin := 24.0 * scale_factor  # Consistent margin from edges
 	var attack_pos := Vector2(
-		screen_size.x - right_margin - scaled_attack_radius,
-		screen_size.y - (config.attack_offset_pct.y * screen_size.y)
+		screen_size.x - edge_margin - scaled_attack_radius,
+		screen_size.y - edge_margin - scaled_attack_radius
 	)
 	attack_button.position = attack_pos - Vector2(scaled_attack_radius, scaled_attack_radius)
 
@@ -460,7 +459,7 @@ func _layout_buttons() -> void:
 
 	# Position dodge button - relative to attack button, left and below
 	# Base offset from attack center (in base 720p pixels, then scaled)
-	var dodge_offset := Vector2(-260.0, 50.0) * scale_factor  # Further left, clear of Primary Controls
+	var dodge_offset := Vector2(-210.0, 45.0) * scale_factor  # Left of Primary Controls
 	var dodge_pos := attack_pos + dodge_offset
 	# Keep on screen
 	dodge_pos.y = min(dodge_pos.y, screen_size.y - scaled_dodge_radius - min_gap)
