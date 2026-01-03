@@ -43,7 +43,6 @@ const BACKPACK_H_SEPARATION: int = 4
 const MARGIN_SIDE_PCT := 0.02      # 2% side margins
 const MARGIN_TOP_PCT := 0.02      # 2% top margin
 const MARGIN_BOTTOM_PCT := 0.03   # 3% bottom margin
-const HEADER_GAP_PCT := 0.04      # 4% gap after header
 
 ## Slot sizing (responsive)
 const SLOT_SIZE_SMALL := 44.0   # For screens < 500px height
@@ -55,7 +54,6 @@ var equipment_container: VBoxContainer
 var backpack_container: GridContainer
 var item_popup: Control  # ItemDetailPopup instance
 var equip_margin: MarginContainer
-var equip_vbox: VBoxContainer
 var backpack_margin: MarginContainer
 var backpack_vbox: VBoxContainer
 
@@ -113,18 +111,21 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	equip_margin.name = "EquipmentMargin"
 	equip_panel.add_child(equip_margin)
 
-	equip_vbox = VBoxContainer.new()
-	equip_vbox.name = "EquipmentVBox"
-	equip_margin.add_child(equip_vbox)
+	# Center container for both horizontal and vertical centering
+	var equip_center := CenterContainer.new()
+	equip_center.name = "EquipmentCenter"
+	equip_center.size_flags_horizontal = SIZE_EXPAND_FILL
+	equip_center.size_flags_vertical = SIZE_EXPAND_FILL
+	equip_margin.add_child(equip_center)
 
 	# Update margins when panel resizes
-	equip_panel.resized.connect(_on_panel_resized.bind(equip_panel, equip_margin, equip_vbox, false))
+	equip_panel.resized.connect(_on_panel_resized.bind(equip_panel, equip_margin, equip_center, false))
 
 	# Two-column layout: Armor | Combat
 	var columns_hbox := HBoxContainer.new()
 	columns_hbox.name = "EquipmentColumns"
 	columns_hbox.add_theme_constant_override("separation", 12)
-	equip_vbox.add_child(columns_hbox)
+	equip_center.add_child(columns_hbox)
 
 	# Column 1: Armor slots
 	var armor_column := VBoxContainer.new()
@@ -230,7 +231,7 @@ func _on_backpack_resized(container: VBoxContainer) -> void:
 		backpack_container.columns = columns
 
 
-func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer, vbox: VBoxContainer, is_backpack: bool) -> void:
+func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer, content: Control, is_backpack: bool) -> void:
 	var panel_width := panel.size.x
 	var panel_height := panel.size.y
 
@@ -240,22 +241,18 @@ func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer,
 		margin_container.add_theme_constant_override("margin_right", 0)
 		margin_container.add_theme_constant_override("margin_top", 0)
 		margin_container.add_theme_constant_override("margin_bottom", 0)
-		vbox.add_theme_constant_override("separation", 0)
+		content.add_theme_constant_override("separation", 0)
 	else:
 		# Calculate proportional margins for equipment (minimum 8px for readability)
 		var side_margin := maxi(8, int(panel_width * MARGIN_SIDE_PCT))
 		var top_margin := maxi(6, int(panel_height * MARGIN_TOP_PCT))
 		var bottom_margin := maxi(8, int(panel_height * MARGIN_BOTTOM_PCT))
-		var header_gap := maxi(12, int(panel_height * HEADER_GAP_PCT))
 
 		# Apply margins
 		margin_container.add_theme_constant_override("margin_left", side_margin)
 		margin_container.add_theme_constant_override("margin_right", side_margin)
 		margin_container.add_theme_constant_override("margin_top", top_margin)
 		margin_container.add_theme_constant_override("margin_bottom", bottom_margin)
-
-		# Apply header gap
-		vbox.add_theme_constant_override("separation", header_gap)
 
 
 func _build_item_popup() -> void:
