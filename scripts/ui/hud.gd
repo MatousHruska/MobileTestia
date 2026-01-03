@@ -8,9 +8,19 @@ signal menu_button_pressed
 
 ## References (set in scene or found automatically)
 @onready var joystick: VirtualJoystick = $Controls/JoystickArea/VirtualJoystick
+@onready var joystick_area: Control = $Controls/JoystickArea
 @onready var combat_hud: CombatHUD = $Controls/CombatHUD
 @onready var player_frame: Control = $PlayerFrame
 @onready var menu_button: Button = $MenuButton/Button
+
+## Base sizes (designed for 720p)
+const BASE_SCREEN_HEIGHT := 720.0
+const BASE_PLAYER_FRAME_SIZE := Vector2(200, 130)
+const BASE_JOYSTICK_AREA_SIZE := Vector2(200, 184)
+const BASE_JOYSTICK_RADIUS := 80.0
+const BASE_KNOB_RADIUS := 40.0
+const MIN_SCALE := 0.7
+const MAX_SCALE := 1.4
 
 ## Resource bars (created dynamically)
 var health_bar: ProgressBar
@@ -39,6 +49,49 @@ func _ready() -> void:
 	_connect_to_game_manager()
 	_connect_to_player_stats()
 	_setup_controls()
+	# Apply initial scaling
+	call_deferred("_apply_hud_scaling")
+	# Connect to viewport resize
+	get_viewport().size_changed.connect(_on_viewport_resized)
+
+
+func _on_viewport_resized() -> void:
+	_apply_hud_scaling()
+
+
+func _apply_hud_scaling() -> void:
+	## Scale HUD elements based on screen size
+	var viewport_size := get_viewport().get_visible_rect().size
+	var scale_factor := viewport_size.y / BASE_SCREEN_HEIGHT
+	scale_factor = clampf(scale_factor, MIN_SCALE, MAX_SCALE)
+
+	# Scale PlayerFrame
+	if player_frame:
+		var scaled_size := BASE_PLAYER_FRAME_SIZE * scale_factor
+		player_frame.custom_minimum_size = scaled_size
+		player_frame.size = scaled_size
+		# The contents use anchors/margins so they'll adapt
+
+	# Scale JoystickArea
+	if joystick_area:
+		var scaled_joystick_size := BASE_JOYSTICK_AREA_SIZE * scale_factor
+		# Keep anchored to bottom-left, adjust offsets
+		joystick_area.offset_left = 16 * scale_factor
+		joystick_area.offset_top = -scaled_joystick_size.y - (16 * scale_factor)
+		joystick_area.offset_right = 16 * scale_factor + scaled_joystick_size.x
+		joystick_area.offset_bottom = -16 * scale_factor
+
+	# Scale VirtualJoystick radii and update center
+	if joystick:
+		joystick.joystick_radius = BASE_JOYSTICK_RADIUS * scale_factor
+		joystick.knob_radius = BASE_KNOB_RADIUS * scale_factor
+		# Update center based on new control size (after layout settles)
+		await get_tree().process_frame
+		if joystick:
+			joystick.joystick_center = joystick.size / 2.0
+			if not joystick.is_active:
+				joystick.knob_position = joystick.joystick_center
+			joystick.queue_redraw()
 
 
 func _process(_delta: float) -> void:

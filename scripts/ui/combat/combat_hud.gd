@@ -276,6 +276,27 @@ func _update_all_weapon_validity() -> void:
 		slot.update_weapon_validity(weapon_cat)
 
 
+func _get_ability_positions_with_distance(attack_center: Vector2, arc_distance: float) -> Array[Vector2]:
+	## Calculate ability positions with a specific arc distance (for responsive scaling)
+	var positions: Array[Vector2] = []
+
+	if config.ability_count <= 1:
+		var angle_rad := deg_to_rad((config.arc_start_angle + config.arc_end_angle) / 2.0)
+		var offset := Vector2(cos(angle_rad), sin(angle_rad)) * arc_distance
+		positions.append(attack_center + offset)
+		return positions
+
+	var angle_step := (config.arc_end_angle - config.arc_start_angle) / float(config.ability_count - 1)
+
+	for i in config.ability_count:
+		var angle_deg := config.arc_start_angle + (angle_step * float(i))
+		var angle_rad := deg_to_rad(angle_deg)
+		var offset := Vector2(cos(angle_rad), sin(angle_rad)) * arc_distance
+		positions.append(attack_center + offset)
+
+	return positions
+
+
 func _load_or_create_config() -> void:
 	if ResourceLoader.exists(DEFAULT_CONFIG_PATH):
 		config = load(DEFAULT_CONFIG_PATH) as CombatHUDConfig
@@ -396,7 +417,13 @@ func _layout_buttons() -> void:
 	var attack_center := attack_pos
 
 	# Position ability slots in arc around attack button
-	var ability_positions := config.get_ability_positions(attack_center, screen_size.y)
+	# Ensure minimum arc distance to prevent overlap with attack button
+	var min_arc_distance := scaled_attack_radius + scaled_ability_radius + (8.0 * scale_factor)
+	var config_arc_distance := config.get_arc_distance(screen_size.y)
+	var actual_arc_distance := maxf(min_arc_distance, config_arc_distance)
+
+	# Get ability positions with adjusted arc distance
+	var ability_positions := _get_ability_positions_with_distance(attack_center, actual_arc_distance)
 	for i in ability_slots.size():
 		if i < ability_positions.size():
 			var pos := ability_positions[i]
