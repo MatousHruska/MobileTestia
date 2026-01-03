@@ -59,6 +59,7 @@ var gold_label: Label
 var main_hbox: HBoxContainer
 var trash_button: Button
 var split_button: Button
+var use_button: Button
 
 ## Drag & drop state
 var pending_destroy_source: String = ""
@@ -243,6 +244,15 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	split_button.custom_minimum_size = Vector2(28, 28)
 	split_button.pressed.connect(_on_split_pressed)
 	header_row.add_child(split_button)
+
+	# Use item button
+	use_button = Button.new()
+	use_button.name = "UseButton"
+	use_button.text = "Use"
+	use_button.tooltip_text = "Use selected item"
+	use_button.custom_minimum_size = Vector2(36, 28)
+	use_button.pressed.connect(_on_use_pressed)
+	header_row.add_child(use_button)
 
 	# Trash drop zone (accepts item drops to destroy)
 	var trash_zone := _create_trash_drop_zone()
@@ -523,6 +533,23 @@ func _on_split_pressed() -> void:
 		Debug.info("UI", "Split: Select a backpack item first")
 
 
+func _on_use_pressed() -> void:
+	## Handle use button - use the selected item (consume charge for potions)
+	if not Inventory.has_selection():
+		Debug.info("UI", "Use: Select an item first")
+		return
+
+	var result := Inventory.use_item(Inventory.selected_source, Inventory.selected_index)
+
+	if result.get("success", false):
+		Debug.info("UI", "Used item", result.get("message", ""))
+		# Update popup if visible
+		if item_popup.visible and Inventory.has_selection():
+			item_popup.show_item(Inventory.selected_item, Inventory.selected_source, Inventory.selected_index)
+	else:
+		Debug.info("UI", "Use failed", result.get("message", "Cannot use this item"))
+
+
 func _on_drag_started(slot: InventorySlot) -> void:
 	## Highlight the target equipment slot when dragging an equippable item
 	if slot.current_item == null:
@@ -536,15 +563,8 @@ func _on_drag_started(slot: InventorySlot) -> void:
 		target_slot = ItemData.EquipSlot.QUICK_SLOT
 	elif item is EquipmentData:
 		var equip: EquipmentData = item as EquipmentData
-		if equip.equipment_type == ItemData.EquipmentType.RING:
-			# Highlight both accessory slots for rings
-			if equipment_slots.has(ItemData.EquipSlot.ACCESSORY_1):
-				equipment_slots[ItemData.EquipSlot.ACCESSORY_1].set_drag_highlight(true)
-			if equipment_slots.has(ItemData.EquipSlot.ACCESSORY_2):
-				equipment_slots[ItemData.EquipSlot.ACCESSORY_2].set_drag_highlight(true)
-			return
-		else:
-			target_slot = equip.get_target_slot()
+		# Ring -> ACCESSORY_1 (finger), Amulet -> ACCESSORY_2 (neck)
+		target_slot = equip.get_target_slot()
 
 	# Highlight the target slot
 	if target_slot != ItemData.EquipSlot.NONE and equipment_slots.has(target_slot):
