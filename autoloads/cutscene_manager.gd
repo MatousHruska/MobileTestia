@@ -427,7 +427,7 @@ func _get_target_node(target_id: String) -> Node2D:
 
 		# Also try by display name for convenience
 		for e in NPCManager.all_enemies:
-			if is_instance_valid(e) and e.npc_name == target_id:
+			if is_instance_valid(e) and e.enemy_name == target_id:
 				Debug.info("Cutscene", "Found enemy by name", e.name)
 				return e
 
