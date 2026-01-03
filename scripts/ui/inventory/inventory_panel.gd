@@ -236,14 +236,7 @@ func _on_backpack_ready(panel: PanelContainer, margin: MarginContainer, scroll: 
 	# Wait one frame for layout to settle
 	await get_tree().process_frame
 
-	# Apply 20% side margins
-	var panel_width := panel.size.x
-	var side_margin := int(panel_width * 0.20)
-	margin.add_theme_constant_override("margin_left", side_margin)
-	margin.add_theme_constant_override("margin_right", side_margin)
-
-	# Wait another frame for margins to apply
-	await get_tree().process_frame
+	# No side margins for now (can be adjusted in Godot Inspector on BackpackMargin node)
 
 	# Calculate slot size to fill width with 7 columns
 	var available_width := scroll.size.x
