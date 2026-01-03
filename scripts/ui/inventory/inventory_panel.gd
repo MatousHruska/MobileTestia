@@ -109,7 +109,7 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 
 	var equip_vbox := VBoxContainer.new()
 	equip_vbox.name = "EquipmentVBox"
-	equip_vbox.add_theme_constant_override("separation", 4)
+	equip_vbox.add_theme_constant_override("separation", 8)  # Space after header
 	margin.add_child(equip_vbox)
 
 	# Header
@@ -171,18 +171,18 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	backpack_panel.size_flags_vertical = SIZE_EXPAND_FILL
 	parent.add_child(backpack_panel)
 
-	# Inner margin for padding
+	# Inner margin for padding (larger right margin for visual balance)
 	var margin := MarginContainer.new()
 	margin.name = "BackpackMargin"
 	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_right", 16)
 	margin.add_theme_constant_override("margin_top", 4)
 	margin.add_theme_constant_override("margin_bottom", 8)
 	backpack_panel.add_child(margin)
 
 	var backpack_vbox := VBoxContainer.new()
 	backpack_vbox.name = "BackpackVBox"
-	backpack_vbox.add_theme_constant_override("separation", 4)
+	backpack_vbox.add_theme_constant_override("separation", 8)  # Space after header
 	margin.add_child(backpack_vbox)
 
 	# Header with gold
