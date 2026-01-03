@@ -272,6 +272,7 @@ func _build_right_panel(parent: Control) -> void:
 	_right_panel = VBoxContainer.new()
 	_right_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_right_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_right_panel.clip_contents = true  # Prevent content from stretching window
 	parent.add_child(_right_panel)
 
 	# Skillbook header (centered)
@@ -358,11 +359,13 @@ func _build_description_panel() -> void:
 	margin.add_theme_constant_override("margin_top", 8)
 	margin.add_theme_constant_override("margin_bottom", 8)
 	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.clip_contents = true  # Ensure content doesn't overflow
 	scroll.add_child(margin)
 
 	var content_vbox := VBoxContainer.new()
 	content_vbox.add_theme_constant_override("separation", 6)
 	content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	content_vbox.clip_contents = true  # Prevent children from expanding container
 	margin.add_child(content_vbox)
 
 	# Top row: Icon + Name/Rank
@@ -380,31 +383,37 @@ func _build_description_panel() -> void:
 	# Name and rank
 	var name_vbox := VBoxContainer.new()
 	name_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	name_vbox.clip_contents = true
 	top_hbox.add_child(name_vbox)
 
 	_desc_name = Label.new()
 	_desc_name.add_theme_font_size_override("font_size", 13)
+	_desc_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_vbox.add_child(_desc_name)
 
 	_desc_rank = Label.new()
 	_desc_rank.add_theme_font_size_override("font_size", 10)
 	_desc_rank.add_theme_color_override("font_color", COLOR_AVAILABLE)
+	_desc_rank.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_vbox.add_child(_desc_rank)
 
 	# Two-column stats layout
 	var columns_hbox := HBoxContainer.new()
 	columns_hbox.add_theme_constant_override("separation", 16)
 	columns_hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	columns_hbox.clip_contents = true
 	content_vbox.add_child(columns_hbox)
 
 	# Left column
 	_desc_col_left = VBoxContainer.new()
 	_desc_col_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_desc_col_left.clip_contents = true
 	columns_hbox.add_child(_desc_col_left)
 
 	# Right column
 	_desc_col_right = VBoxContainer.new()
 	_desc_col_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_desc_col_right.clip_contents = true
 	columns_hbox.add_child(_desc_col_right)
 
 	# Description text (full width below columns)
@@ -413,6 +422,7 @@ func _build_description_panel() -> void:
 	_desc_text.fit_content = true
 	_desc_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_desc_text.add_theme_font_size_override("normal_font_size", 10)
+	_desc_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	content_vbox.add_child(_desc_text)
 
 
@@ -1020,6 +1030,7 @@ func _update_description_panel() -> void:
 func _add_stat_row(column: VBoxContainer, label_text: String, value_text: String, value_color: Color) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 4)
+	row.clip_contents = true
 	column.add_child(row)
 
 	var label := Label.new()
@@ -1032,6 +1043,8 @@ func _add_stat_row(column: VBoxContainer, label_text: String, value_text: String
 	value.text = value_text
 	value.add_theme_font_size_override("font_size", 10)
 	value.add_theme_color_override("font_color", value_color)
+	value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	value.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	row.add_child(value)
 
 
