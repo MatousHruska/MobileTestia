@@ -64,9 +64,6 @@ var backpack_slots: Array[InventorySlot] = []
 ## Current slot size (set based on screen)
 var current_slot_size: float = SLOT_SIZE_NORMAL
 
-## Guard to prevent infinite resize loop
-var _resizing_backpack: bool = false
-
 
 func _ready() -> void:
 	_calculate_slot_size()
@@ -169,105 +166,17 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 
 
 func _build_backpack_column(parent: HBoxContainer) -> void:
-	# Outer container with outline (PanelContainer provides the outline)
+	# Simple panel that expands to fill
 	var backpack_panel := PanelContainer.new()
 	backpack_panel.name = "BackpackPanel"
 	backpack_panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	backpack_panel.size_flags_vertical = SIZE_EXPAND_FILL
 	parent.add_child(backpack_panel)
 
-	# Inner margin for padding (will be updated dynamically)
-	backpack_margin = MarginContainer.new()
-	backpack_margin.name = "BackpackMargin"
-	backpack_panel.add_child(backpack_margin)
-
-	# Main VBox for header + scrollable content
-	var backpack_vbox := VBoxContainer.new()
-	backpack_vbox.name = "BackpackVBox"
-	backpack_vbox.add_theme_constant_override("separation", 8)  # Gap between header and inventory
-	backpack_margin.add_child(backpack_vbox)
-
-	# Header row: "Inventory" left, Gold right
-	var header_row := HBoxContainer.new()
-	header_row.name = "HeaderRow"
-	backpack_vbox.add_child(header_row)
-
-	var inventory_label := Label.new()
-	inventory_label.text = "Inventory"
-	inventory_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	inventory_label.add_theme_font_size_override("font_size", 14)
-	header_row.add_child(inventory_label)
-
-	gold_label = Label.new()
-	gold_label.name = "GoldLabel"
-	gold_label.text = "Gold: 0"
-	gold_label.add_theme_font_size_override("font_size", 12)
-	gold_label.modulate = Color(1.0, 0.85, 0.0)
-	header_row.add_child(gold_label)
-
-	# Scroll container for vertical scrolling when content overflows
-	var scroll_container := ScrollContainer.new()
-	scroll_container.name = "BackpackScroll"
-	scroll_container.size_flags_horizontal = SIZE_EXPAND_FILL
-	scroll_container.size_flags_vertical = SIZE_EXPAND_FILL
-	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	backpack_vbox.add_child(scroll_container)
-
-	# Update margins when panel resizes
-	backpack_panel.resized.connect(_on_panel_resized.bind(backpack_panel, backpack_margin, backpack_vbox, true))
-
-	# Grid container - fills full width with dynamic slot sizes
-	backpack_container = GridContainer.new()
-	backpack_container.name = "BackpackGrid"
-	backpack_container.columns = BACKPACK_MAX_COLUMNS
-	backpack_container.add_theme_constant_override("h_separation", BACKPACK_H_SEPARATION)
-	backpack_container.add_theme_constant_override("v_separation", 4)
-	scroll_container.add_child(backpack_container)
-
-	# Create backpack slots
-	for i in Inventory.BACKPACK_SIZE:
-		var slot := InventorySlot.new()
-		slot.slot_type = InventorySlot.SlotType.BACKPACK
-		slot.backpack_index = i
-		slot.custom_minimum_size = Vector2(current_slot_size, current_slot_size)
-		slot.slot_pressed.connect(_on_slot_pressed)
-		backpack_container.add_child(slot)
-		backpack_slots.append(slot)
-
-	# Adjust columns to fill width after layout
-	scroll_container.resized.connect(_on_backpack_resized.bind(scroll_container))
-
-
-func _on_backpack_resized(container: Control) -> void:
-	# Guard against infinite resize loop
-	if _resizing_backpack or backpack_slots.is_empty():
-		return
-
-	# Get available width
-	var available_width := container.size.x
-	if available_width <= 0:
-		return
-
-	# Fixed number of columns
-	var columns := BACKPACK_MAX_COLUMNS
-	backpack_container.columns = columns
-
-	# Calculate slot size to fill the entire width
-	# available_width = (columns * slot_size) + ((columns - 1) * separation)
-	# slot_size = (available_width - ((columns - 1) * separation)) / columns
-	var total_separation := (columns - 1) * BACKPACK_H_SEPARATION
-	var slot_size := floorf((available_width - total_separation) / columns)
-
-	# Check if size actually changed
-	if backpack_slots[0].custom_minimum_size.x == slot_size:
-		return
-
-	# Update all slot sizes with guard
-	_resizing_backpack = true
-	for slot in backpack_slots:
-		slot.custom_minimum_size = Vector2(slot_size, slot_size)
-	_resizing_backpack = false
+	# Just a label for now
+	var placeholder := Label.new()
+	placeholder.text = "Backpack placeholder"
+	backpack_panel.add_child(placeholder)
 
 
 func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer, content: Control, is_backpack: bool) -> void:
