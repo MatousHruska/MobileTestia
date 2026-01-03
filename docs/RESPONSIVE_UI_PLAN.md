@@ -1,6 +1,6 @@
 # Responsive UI Implementation Plan
 
-This document outlines how screen responsiveness works in our project and what (minimal) changes are needed to support various mobile devices.
+This document outlines the mobile-first UI redesign for character menu and related panels.
 
 ---
 
@@ -19,256 +19,320 @@ Combat HUD
 └── Interact Button - Context-sensitive (Talk, Loot, Open)
 ```
 
-**Use these terms when referencing Combat HUD components:**
-- **Primary Controls**: Attack button + the arc of ability slots around it
-- **Ability Wheel**: The arc of skill slots surrounding the attack button
-- **Secondary Controls**: Dodge button + Quick Slot button
-- **Interact Button**: Context-sensitive action button (appears when near NPCs, chests, etc.)
+---
+
+## Mobile-First Character Menu Redesign
+
+### Target Specifications
+
+| Screen Category | Resolution Example | Min Height | Status |
+|-----------------|-------------------|------------|--------|
+| **Small Mobile** | 918x424, 854x480 | 424px | Primary Target |
+| **Standard Mobile** | 1280x720 | 720px | Must look good |
+| **Tablet** | 1920x1080+ | 1080px+ | Scale up nicely |
+
+### Current Problem
+
+The current 3-column Inventory layout (Equipment | Item Details | Backpack) requires ~550px height minimum:
+- Tab bar: 40px
+- Margins: 16px
+- Equipment column needs: ~300px (4 slot rows + labels)
+- **Total minimum: ~360px content + 56px chrome = 416px**
+
+On 424px screens, content gets cut off at the bottom.
 
 ---
 
-## Current Setup: How Godot Viewport Stretch Works
+## Phase 1: Inventory Tab Redesign
 
-### Your project.godot settings:
-```ini
-window/size/viewport_width=1280
-window/size/viewport_height=720
-window/stretch/mode="viewport"
-window/stretch/aspect="expand"
-```
-
-### What this means:
-
-**Viewport Mode**: The game renders internally at 1280x720, then that image is scaled to fit the screen. ALL your pixel values (positions, sizes, fonts) are in this 1280x720 coordinate space.
-
-**Expand Aspect**: When the screen aspect ratio differs from 16:9, extra viewport space is added (not cropped). This means:
-- On a wider screen (21:9 phone): You see more horizontal area
-- On a taller screen (4:3 tablet): You see more vertical area
-- The original 1280x720 area is always visible and centered
-
-### Your existing designs DO scale!
+### New Layout: Two-Panel with Popup Details
 
 ```
-Design Target: 1280x720 (your testing window)
+┌─────────────────────────────────────────────────────────┐
+│ [Inventory] [Stats(+10)] [Skills] [Quests] [Menu] [X]   │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  ┌─────────────┐    ┌────────────────────────────────┐  │
+│  │  EQUIPMENT  │    │          BACKPACK              │  │
+│  │             │    │  ┌───┬───┬───┬───┬───┐        │  │
+│  │   [H] [A]   │    │  │   │   │   │   │   │ Gold:  │  │
+│  │             │    │  ├───┼───┼───┼───┼───┤  100   │  │
+│  │     [B]     │    │  │   │   │   │   │   │        │  │
+│  │             │    │  ├───┼───┼───┼───┼───┤        │  │
+│  │   [G] [R]   │    │  │   │   │   │   │   │        │  │
+│  │             │    │  ├───┼───┼───┼───┼───┤        │  │
+│  │     [F]     │    │  │   │   │   │   │   │        │  │
+│  │             │    │  └───┴───┴───┴───┴───┘        │  │
+│  └─────────────┘    └────────────────────────────────┘  │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
 
-On 640x360 phone:    Everything scales to 50% size → Still looks the same proportionally
-On 1920x1080 phone:  Everything scales to 150% size → Still looks the same proportionally
-On 1920x1200 tablet: Scales + extra vertical space added at top/bottom
+[Item Details appear as popup/overlay when item selected]
 ```
 
-The character_menu.tscn panel (840x600) scales with the viewport. On a 640x360 screen, it becomes 420x300 pixels - same proportion, smaller physical size.
+### Key Changes
+
+1. **Remove Item Details column** - Replace with popup overlay
+2. **Two columns only**: Equipment (left) + Backpack (right)
+3. **Smaller slot sizes**: 48px instead of 56px for mobile
+4. **Scrollable backpack**: If needed, backpack scrolls vertically
+
+### Item Details Popup
+
+When an item is selected (tap), show a popup overlay:
+
+```
+┌─────────────────────────────────┐
+│  [Icon]  Iron Sword             │
+│          One-Handed Weapon      │
+│          Common                 │
+├─────────────────────────────────┤
+│  8 Damage (1 Physical, 5 Cold)  │
+│  1.0 Attacks/sec                │
+├─────────────────────────────────┤
+│  [Equip]  [Destroy]  [Close]    │
+└─────────────────────────────────┘
+```
+
+- Appears centered over inventory
+- Tap outside or [Close] to dismiss
+- Action buttons context-sensitive (Equip/Unequip/Use/Destroy)
 
 ---
 
-## What's Actually Flexible vs What Needs Work
+## Phase 2: Stats Tab Optimization
 
-### Already Flexible (No Changes Needed)
+### Current Issues
+- Player info section takes vertical space
+- Stats grid may overflow on small screens
 
-| Component | Why It Works |
-|-----------|--------------|
-| **Character Menu** | Centered anchors + viewport scaling = scales with screen |
-| **Tab buttons** | `size_flags_horizontal = 3` (SIZE_EXPAND_FILL) = share available width |
-| **Content panels** | `anchors_preset = 15` (FULL_RECT) = fill parent container |
-| **Combat HUD buttons** | Percentage-based positioning in CombatHUDConfig |
-| **Joystick** | Scales with its control area size |
-| **VBox/HBox containers** | Auto-arrange children |
-| **Stats Grid** | GridContainer handles child layout |
+### Mobile Layout
 
-### The Real Edge Case Concerns
+```
+┌─────────────────────────────────────────────────────────┐
+│ [Inventory] [Stats(+10)] [Skills] [Quests] [Menu] [X]   │
+├─────────────────────────────────────────────────────────┤
+│  Hero Name              Lv. 5    Points: 10             │
+│  ████████████░░░░  350/1000 XP                          │
+├─────────────────────────────────────────────────────────┤
+│  STR: 12 [+]  Phys Dmg +6                               │
+│  DEX: 10 [+]  Atk Spd +2%, Crit +1%                     │
+│  INT: 10 [+]  Magic Dmg +5, Mana +10                    │
+│  END: 14 [+]  Health +28, Regen +1.4                    │
+│  LUK:  8 [+]  Drop +1.6%, Crit Dmg +2.4%                │
+├─────────────────────────────────────────────────────────┤
+│  [Derived Stats ▼]  (collapsible section)               │
+│  Health: 280/280  |  Mana: 100/100  |  Stamina: 50/50   │
+└─────────────────────────────────────────────────────────┘
+```
 
-| Concern | When It Happens | Impact |
-|---------|-----------------|--------|
-| **Physical readability** | Very small phones (5" at 720p) | 14px font might be physically tiny |
-| **Touch targets** | Small high-DPI screens | 40px button might be physically 4mm |
-| **Aspect ratio gaps** | Ultra-wide (21:9) or tablet (4:3) | UI clumps in center, edges empty |
-| **Expand overflow** | Very wide screens | Corner-anchored UI far from center UI |
+### Changes
+- Compact single-line player info
+- Inline stat layout (name + value + button + effect on same row)
+- Collapsible derived stats section
 
 ---
 
-## The Minimal-Impact Solution
+## Phase 3: Skills Tab Optimization
 
-Instead of rebuilding your UI, we add a **thin scaling layer** that only activates on extreme screen sizes.
-
-### Phase 1: Create ResponsiveUI Autoload
-
-A lightweight singleton that provides:
-1. Screen size category detection (small/normal/large)
-2. Optional font size adjustment for readability
-3. Safe area detection (notches, status bars)
+### Mobile Layout
 
 ```
-This does NOT change your existing designs.
-It provides utilities for edge cases only.
+┌─────────────────────────────────────────────────────────┐
+│ [Inventory] [Stats(+10)] [Skills] [Quests] [Menu] [X]   │
+├─────────────────────────────────────────────────────────┤
+│  Talent Points: 3                                       │
+├─────────────────────────────────────────────────────────┤
+│  ┌─────────────────────────────────────────────────┐    │
+│  │  [Skill1]  [Skill2]  [Skill3]    <- Tier 1      │    │
+│  │      ↓         ↓         ↓                      │    │
+│  │  [Skill4]  [Skill5]  [Skill6]    <- Tier 2      │    │
+│  │      ↓         ↓         ↓                      │    │
+│  │  [Skill7]  [Skill8]  [Skill9]    <- Tier 3      │    │
+│  └─────────────────────────────────────────────────┘    │
+│  (scrollable if more tiers)                             │
+├─────────────────────────────────────────────────────────┤
+│  Power Strike (1/5)                                     │
+│  Deal 150% weapon damage.  [Learn] [Bind]               │
+└─────────────────────────────────────────────────────────┘
 ```
 
-### Phase 2: Add Optional Size Constraints to Modal Dialogs
+### Changes
+- Skill tree takes most of vertical space (scrollable)
+- Selected skill info at bottom (fixed height)
+- Smaller skill buttons (64x64 instead of 80x80)
 
-For character_menu and chest_menu, add constraints that only kick in on unusual screens:
+---
+
+## Phase 4: Quests Tab Optimization
+
+### Mobile Layout
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ [Inventory] [Stats(+10)] [Skills] [Quests] [Menu] [X]   │
+├─────────────────────────────────────────────────────────┤
+│  Active Quests (3)                                      │
+├─────────────────────────────────────────────────────────┤
+│  ▶ Kill 10 Goblins          [████████░░] 8/10          │
+│  ▶ Find the Lost Sword      [░░░░░░░░░░] 0/1           │
+│  ▶ Talk to the Blacksmith   [██████████] Complete!     │
+├─────────────────────────────────────────────────────────┤
+│  (tap quest to expand details)                          │
+│                                                         │
+│  ┌─ Find the Lost Sword ─────────────────────────────┐  │
+│  │  The blacksmith has lost his prized sword...      │  │
+│  │  Objectives:                                      │  │
+│  │  • Search the goblin cave                         │  │
+│  │  Rewards: 500 XP, 100 Gold                        │  │
+│  │                               [Track] [Abandon]   │  │
+│  └───────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Changes
+- Compact quest list with progress bars
+- Expandable quest details (accordion style)
+- No separate details panel
+
+---
+
+## Implementation Order
+
+### Session 1: Inventory Tab Redesign
+1. [ ] Create ItemDetailPopup component
+2. [ ] Redesign InventoryPanel to 2-column layout
+3. [ ] Reduce slot sizes for mobile (48px)
+4. [ ] Connect item selection to popup
+5. [ ] Test on 424px and 720px heights
+
+### Session 2: Stats Tab Optimization
+1. [ ] Compact player info header
+2. [ ] Inline stat rows
+3. [ ] Collapsible derived stats
+4. [ ] Test on small screens
+
+### Session 3: Skills Tab Optimization
+1. [ ] Smaller skill buttons
+2. [ ] Scrollable skill tree
+3. [ ] Fixed skill info footer
+4. [ ] Test on small screens
+
+### Session 4: Quests Tab Optimization
+1. [ ] Accordion-style quest list
+2. [ ] Inline progress bars
+3. [ ] Expandable details
+4. [ ] Test on small screens
+
+### Session 5: Final Polish
+1. [ ] Test all tabs at 424px, 720px, 1080px
+2. [ ] Adjust spacing/fonts as needed
+3. [ ] Update chest_menu with same principles
+4. [ ] Document final responsive behavior
+
+---
+
+## Design Constants (Mobile-First)
 
 ```gdscript
-# Only affects very small or very large screens
+# Target minimum viewport height
+const MIN_VIEWPORT_HEIGHT := 424.0
+
+# Panel sizing
+const MENU_PANEL_WIDTH := 840.0
+const MENU_PANEL_HEIGHT := 400.0  # Reduced from 550
+
+# Slot sizes
+const SLOT_SIZE_MOBILE := 48.0    # For phones
+const SLOT_SIZE_TABLET := 56.0    # For tablets (scale up)
+
+# Font sizes (base, scaled on tablets)
+const FONT_SMALL := 12
+const FONT_NORMAL := 14
+const FONT_LARGE := 16
+const FONT_HEADER := 18
+
+# Touch targets (minimum)
+const MIN_TOUCH_TARGET := 40.0
+```
+
+---
+
+## Scaling Strategy
+
+### On Load
+```gdscript
 func _ready():
-    var vp_size = get_viewport_rect().size
+    var viewport_height = get_viewport().get_visible_rect().size.y
 
-    # On normal screens (around 1280x720), do nothing different
-    # On very small screens, ensure minimum readable size
-    # On very large screens, cap maximum size
-
-    var panel_width = 840  # Your current design
-    var panel_height = 600
-
-    # Constrain to 95% of viewport if panel would be too big
-    panel_width = min(panel_width, vp_size.x * 0.95)
-    panel_height = min(panel_height, vp_size.y * 0.9)
-
-    # Apply only if different from design
-    if panel_width < 840 or panel_height < 600:
-        # Adjust panel size
+    if viewport_height <= 480:
+        # Small mobile - use compact layout
+        _apply_compact_mode()
+    elif viewport_height <= 800:
+        # Standard mobile - normal layout
+        _apply_normal_mode()
+    else:
+        # Tablet - scale up with extra polish
+        _apply_tablet_mode()
 ```
 
-**This preserves your 840x600 design on normal screens** - constraints only activate when the viewport is unusually small.
-
-### Phase 3: Font Scaling for Extreme Screens (Optional)
-
-If physical readability is an issue on real devices, add per-device font scaling:
-
-```gdscript
-# Only if testing reveals readability issues
-func get_font_scale() -> float:
-    var physical_height = DisplayServer.screen_get_size().y
-    var dpi = DisplayServer.screen_get_dpi()
-
-    # Calculate approximate physical size
-    var physical_inches = physical_height / dpi
-
-    # Scale fonts up on very small physical screens
-    if physical_inches < 3.5:  # Very small phone
-        return 1.3
-    elif physical_inches > 8.0:  # Large tablet
-        return 0.9
-    return 1.0  # Normal devices - no change
-```
+### Scaling Factors
+| Viewport Height | Scale | Slot Size | Font Scale |
+|-----------------|-------|-----------|------------|
+| ≤480px | 0.85 | 44px | 0.9 |
+| 481-800px | 1.0 | 48px | 1.0 |
+| 801-1080px | 1.15 | 56px | 1.1 |
+| >1080px | 1.3 | 64px | 1.2 |
 
 ---
 
-## What Stays The Same
+## Files to Modify
 
-| Element | Current Value | After Implementation |
-|---------|--------------|----------------------|
-| Character menu panel | 840x600 centered | 840x600 centered (unchanged) |
-| Tab buttons | 80-100px minimum, expand fill | Same (unchanged) |
-| Font sizes | 12px, 14px, 16px, 20px, 24px | Same (scaled only on extreme devices) |
-| Inventory slots | 56x56 | Same (unchanged) |
-| Combat HUD | % positioning | Same (unchanged) |
-| Joystick area | Bottom-left anchored | Same (unchanged) |
-
----
-
-## Testing Strategy
-
-### Method 1: Project Settings Override (Recommended for Quick Tests)
-
-In `Project → Project Settings → Display → Window`:
-
-| Test Case | Override Settings |
-|-----------|-------------------|
-| Small phone | 640x360 |
-| Normal phone | 1280x720 (your default) |
-| Large phone | 1920x1080 |
-| Tall phone (19.5:9) | 720x1560 |
-| Tablet landscape | 1920x1200 |
-| Tablet portrait | 1200x1920 |
-| Ultra-wide | 2560x720 |
-
-### Method 2: Command Line Testing
-
-```bash
-# Test different resolutions
-godot --resolution 640x360
-godot --resolution 1920x1080
-godot --resolution 1920x1200
-```
-
-### Method 3: In-Game Debug Panel
-
-Add a simple debug tool to cycle through test resolutions while playing:
-
-```
-[Debug Menu]
-Screen Size: 1280x720 ▼
-├── 640x360 (Small Phone)
-├── 1280x720 (Normal Phone) ✓
-├── 1920x1080 (Large Phone)
-├── 1920x1200 (Tablet Landscape)
-└── 1200x1920 (Tablet Portrait)
-```
-
----
-
-## Implementation Priority
-
-### Must Have (Before Testing on Devices)
-
-1. **Create ResponsiveUI autoload** with screen size detection
-2. **Add safe area margins** for notched phones
-3. **Test at common resolutions** to verify viewport scaling works
-
-### Nice to Have (If Testing Reveals Issues)
-
-4. **Font scaling** for physical readability on extremes
-5. **Panel size constraints** for unusually small viewports
-6. **Dynamic grid columns** for tablets with lots of space
-
-### Future Considerations
-
-7. **Left-handed mode** (already stubbed in CombatHUDConfig)
-8. **User-adjustable UI scale** (already stubbed)
-9. **Layout presets** for different playstyles
-
----
-
-## Files To Be Created/Modified
+### Core Changes
+| File | Changes |
+|------|---------|
+| `scripts/ui/menu/inventory_panel.gd` | Complete redesign - 2 columns + popup |
+| `scripts/ui/menu/stats_panel.gd` | Compact layout |
+| `scripts/ui/menu/skills_panel.gd` | Smaller buttons, scrollable |
+| `scripts/ui/quest/quest_log_panel.gd` | Accordion layout |
 
 ### New Files
-
 | File | Purpose |
 |------|---------|
-| `autoloads/responsive_ui.gd` | Screen detection, scaling utilities, safe areas |
+| `scripts/ui/menu/item_detail_popup.gd` | Item info popup overlay |
 
-### Modified Files (Minimal Changes)
+### Scene Changes
+| File | Changes |
+|------|---------|
+| `scenes/ui/menu/character_menu.tscn` | Reduced panel height |
 
-| File | Change |
-|------|--------|
-| `project.godot` | Add ResponsiveUI to autoloads |
-| `scripts/ui/menu/character_menu.gd` | Optional: Add panel size constraints for small screens |
-| `scripts/ui/chest/chest_menu.gd` | Optional: Add panel size constraints for small screens |
+---
 
-### Files That Stay Unchanged
+## Testing Checklist
 
-| File | Reason |
-|------|--------|
-| `character_menu.tscn` | Design preserved - viewport scaling handles it |
-| `game_hud.tscn` | Anchor-based positioning works with expand aspect |
-| `combat_hud_config.gd` | Already uses percentages |
-| All container-based layouts | Containers adapt automatically |
+### Resolution Tests
+- [ ] 918x424 (user's small test window)
+- [ ] 854x480 (small phone landscape)
+- [ ] 1280x720 (standard mobile)
+- [ ] 1920x1080 (large phone/tablet)
+- [ ] 2560x1440 (tablet)
+
+### Functional Tests
+- [ ] All tabs accessible and readable
+- [ ] Item selection shows popup
+- [ ] Equipment drag/drop works
+- [ ] Stats can be increased
+- [ ] Skills can be learned/bound
+- [ ] Quests expand/collapse
+- [ ] Close button works
+- [ ] ESC/back closes menu
 
 ---
 
 ## Summary
 
-**The good news**: Your viewport stretch mode (`mode=viewport`, `aspect=expand`) already handles most scaling. The 840x600 character menu stays 840x600 in viewport coordinates and scales proportionally to different screens.
+**Approach**: Design for 424px height first, scale UP for larger screens.
 
-**What we're adding**: A thin utility layer for edge cases (very small/large screens, safe areas) that doesn't touch your existing designs.
+**Key insight**: The 3-column inventory layout doesn't fit on small screens. Replace with 2-column + popup overlay.
 
-**What we're NOT doing**: Rebuilding UI layouts, changing container structures, or converting fixed sizes to percentages throughout the codebase.
-
----
-
-## Next Steps
-
-1. Review this plan - any concerns or questions?
-2. Create ResponsiveUI autoload
-3. Test on multiple resolutions to verify current behavior
-4. Add constraints/adjustments only where testing shows problems
-
-The goal is to **validate that viewport scaling works** before adding complexity. Your designs may already work on most devices!
+**Goal**: Full functionality on 424px screens, enhanced experience on tablets.
