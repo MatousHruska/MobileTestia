@@ -55,7 +55,6 @@ var backpack_container: GridContainer
 var item_popup: Control  # ItemDetailPopup instance
 var equip_margin: MarginContainer
 var backpack_margin: MarginContainer
-var backpack_vbox: VBoxContainer
 
 ## Slot tracking
 var equipment_slots: Dictionary = {}  # EquipSlot -> InventorySlot
@@ -178,19 +177,24 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	backpack_margin.name = "BackpackMargin"
 	backpack_panel.add_child(backpack_margin)
 
-	backpack_vbox = VBoxContainer.new()
-	backpack_vbox.name = "BackpackVBox"
-	backpack_margin.add_child(backpack_vbox)
+	# Scroll container for vertical scrolling when content overflows
+	var scroll_container := ScrollContainer.new()
+	scroll_container.name = "BackpackScroll"
+	scroll_container.size_flags_horizontal = SIZE_EXPAND_FILL
+	scroll_container.size_flags_vertical = SIZE_EXPAND_FILL
+	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	backpack_margin.add_child(scroll_container)
 
 	# Update margins when panel resizes
-	backpack_panel.resized.connect(_on_panel_resized.bind(backpack_panel, backpack_margin, backpack_vbox, true))
+	backpack_panel.resized.connect(_on_panel_resized.bind(backpack_panel, backpack_margin, scroll_container, true))
 
-	# Grid container - center-aligned
+	# Grid container - center-aligned using HBoxContainer
 	var grid_row := HBoxContainer.new()
 	grid_row.name = "GridRow"
-	grid_row.size_flags_vertical = SIZE_EXPAND_FILL
+	grid_row.size_flags_horizontal = SIZE_EXPAND_FILL
 	grid_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	backpack_vbox.add_child(grid_row)
+	scroll_container.add_child(grid_row)
 
 	backpack_container = GridContainer.new()
 	backpack_container.name = "BackpackGrid"
@@ -210,10 +214,10 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 		backpack_slots.append(slot)
 
 	# Adjust columns to fill width after layout
-	backpack_vbox.resized.connect(_on_backpack_resized.bind(backpack_vbox))
+	scroll_container.resized.connect(_on_backpack_resized.bind(scroll_container))
 
 
-func _on_backpack_resized(container: VBoxContainer) -> void:
+func _on_backpack_resized(container: Control) -> void:
 	if backpack_slots.is_empty():
 		return
 
