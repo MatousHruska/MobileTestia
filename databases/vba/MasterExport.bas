@@ -62,6 +62,9 @@ Public Sub ExportAll()
     ' Popup Messages
     ExportPopupMessages
 
+    ' Stat Descriptions
+    ExportStatDescriptions
+
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -148,6 +151,7 @@ Public Sub SetupWorkbook()
     currentSheet = "Cutscenes": SetupCutscenesSheet
     currentSheet = "FloatingDialogues": SetupFloatingDialoguesSheet
     currentSheet = "PopupMessages": SetupPopupMessagesSheet
+    currentSheet = "StatDescriptions": SetupStatDescriptionsSheet
     currentSheet = "StatModifiers": SetupStatModifiersSheet
     currentSheet = "Rarities": SetupRaritiesSheet
 

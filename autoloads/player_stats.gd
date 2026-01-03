@@ -398,72 +398,78 @@ func _recalculate_derived() -> void:
 	stats_changed.emit()
 
 
-## Stat descriptions for UI
+## Stat descriptions for UI - loads from database with hardcoded fallback
 static func get_stat_description(stat_name: String) -> String:
+	# Try database first
+	var db_desc := DatabaseLoader.get_stat_description(stat_name)
+	if not db_desc.is_empty():
+		return db_desc
+
+	# Fallback to hardcoded descriptions if database not available
 	match stat_name:
 		# Primary Attributes
 		"strength":
-			return "Physical Mastery\nRequired to equip heavy Armor, Swords, Axes, and Maces.\nDoes not increase damage directly."
+			return "Physical Mastery. Required for heavy armor, swords, axes, and maces. Does not directly increase damage."
 		"dexterity":
-			return "Agility Mastery\nRequired to equip light Armor, Bows, Daggers, and precision gear.\nDoes not increase damage directly."
+			return "Agility Mastery. Required for light armor, bows, daggers, and precision gear. Does not directly increase damage."
 		"intelligence":
-			return "Arcane Mastery\nRequired to equip Robes, Staves, Wands, and magical accessories.\nDoes not increase damage directly."
+			return "Arcane Mastery. Required for robes, staves, wands, and magical items. Does not directly increase damage."
 		"vitality":
-			return "Life Force\nDirectly increases Maximum Health.\nScaling defined in database."
+			return "Life Force. Each point increases Maximum Health by 2."
 		"energy":
-			return "Magical Capacity\nDirectly increases Maximum Mana.\nScaling defined in database."
+			return "Magical Capacity. Each point increases Maximum Mana (scaling from database)."
 		"luck":
-			return "Fortune\nIncreases Critical Damage.\nScaling defined in database."
+			return "Fortune. Each point increases Critical Damage by 1%."
 		# Resources
 		"life":
-			return "Health Points\nThe character's survival gauge.\nDeath occurs at 0."
+			return "Health Points. You die when this reaches 0. Regenerates over time."
 		"mana":
-			return "Magic Points\nConsumed to cast Spells and use active Abilities."
+			return "Magic Points. Consumed when casting spells and using abilities."
 		"stamina":
-			return "Endurance\nConsumed by Sprinting and Dodging.\nRegenerates quickly when inactive."
+			return "Endurance. Consumed by sprinting and dodging. Regenerates quickly."
 		# Offensive - Weapon
 		"weapon_damage":
-			return "Weapon Damage\nBase damage of your equipped weapon.\nMelee and ranged skills scale from this value."
+			return "Base damage of your equipped weapon. Physical and ranged skills scale from this."
 		"weapon_dps":
-			return "Weapon DPS\nDamage per second from basic attacks.\nCalculated as Weapon Damage × Attack Speed."
+			return "Damage per second from basic attacks. Equals Weapon Damage × Attack Speed."
 		# Offensive - Player
 		"attack_power":
-			return "Attack Power\nFlat damage bonus added to weapon-based attacks.\nAffects melee and ranged skills."
+			return "Flat bonus damage added to all weapon-based attacks."
 		"spell_power":
-			return "Spell Power\nFlat damage bonus added to spell damage.\nAffects magic skills (not weapon-based)."
+			return "Flat bonus damage added to all spell damage."
 		"attack_speed":
-			return "Attack Speed\nFinal attacks per second.\nCalculated from weapon speed + bonuses."
+			return "Attacks per second. Determined by weapon speed plus any bonuses."
 		"critical_chance":
-			return "Critical Chance\nThe percentage probability of an attack dealing bonus damage."
+			return "Percentage chance for attacks to deal bonus damage. Base: 5%."
 		"critical_damage":
-			return "Critical Damage\nThe multiplier applied on a Critical Hit.\nBase 150%, scales with Luck."
+			return "Damage multiplier on critical hits. Base: 150%, scales with Luck."
 		# Elemental Spell Damage
 		"fire_spell_damage":
-			return "Fire Spell Damage\nPercentage bonus to Fire spell damage.\nFrom equipment and buffs."
+			return "Percentage bonus to Fire spell damage from equipment."
 		"cold_spell_damage":
-			return "Cold Spell Damage\nPercentage bonus to Cold/Frost spell damage.\nFrom equipment and buffs."
+			return "Percentage bonus to Cold/Frost spell damage from equipment."
 		"lightning_spell_damage":
-			return "Lightning Spell Damage\nPercentage bonus to Lightning spell damage.\nFrom equipment and buffs."
+			return "Percentage bonus to Lightning spell damage from equipment."
 		"poison_spell_damage":
-			return "Poison Spell Damage\nPercentage bonus to Poison spell damage.\nFrom equipment and buffs."
+			return "Percentage bonus to Poison spell damage from equipment."
 		"arcane_spell_damage":
-			return "Arcane Spell Damage\nPercentage bonus to Arcane spell damage.\nFrom equipment and buffs."
+			return "Percentage bonus to Arcane spell damage from equipment."
 		# Defensive
 		"armor":
-			return "Armor\nReduces incoming Physical Damage from enemy attacks."
+			return "Reduces incoming physical damage from attacks."
 		"magic_resistance":
-			return "Magic Resistance\nReduces incoming damage from Spells and Elemental sources."
+			return "Reduces incoming damage from spells and elemental sources."
 		"dodge_chance":
-			return "Dodge Chance\nThe percentage chance to completely evade an attack, negating all damage."
+			return "Percentage chance to completely evade an attack."
 		# Utility
 		"movement_speed":
-			return "Movement Speed\nIncreases the character's movement velocity."
+			return "Percentage bonus to movement velocity."
 		"life_regen":
-			return "Life Regeneration\nAmount of Health recovered per second."
+			return "Health recovered per second. Base: 1/s."
 		"mana_regen":
-			return "Mana Regeneration\nAmount of Mana recovered per second."
+			return "Mana recovered per second. Base: 0.5/s."
 		"stamina_regen":
-			return "Stamina Regeneration\nAmount of Stamina recovered per second."
+			return "Stamina recovered per second. Base: 10/s."
 		_:
 			return "Unknown stat."
 
