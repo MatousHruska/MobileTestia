@@ -166,17 +166,94 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 
 
 func _build_backpack_column(parent: HBoxContainer) -> void:
-	# Simple panel that expands to fill
+	# Panel that expands to fill available space
 	var backpack_panel := PanelContainer.new()
 	backpack_panel.name = "BackpackPanel"
 	backpack_panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	backpack_panel.size_flags_vertical = SIZE_EXPAND_FILL
 	parent.add_child(backpack_panel)
 
-	# Just a label for now
-	var placeholder := Label.new()
-	placeholder.text = "Backpack placeholder"
-	backpack_panel.add_child(placeholder)
+	# Margin container for 10% side margins
+	backpack_margin = MarginContainer.new()
+	backpack_margin.name = "BackpackMargin"
+	backpack_panel.add_child(backpack_margin)
+
+	# VBox for header + inventory
+	var vbox := VBoxContainer.new()
+	vbox.name = "BackpackVBox"
+	vbox.add_theme_constant_override("separation", 8)
+	backpack_margin.add_child(vbox)
+
+	# Header row: "Backpack" left, "Gold XY" right
+	var header_row := HBoxContainer.new()
+	header_row.name = "HeaderRow"
+	vbox.add_child(header_row)
+
+	var backpack_label := Label.new()
+	backpack_label.text = "Backpack"
+	backpack_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	backpack_label.add_theme_font_size_override("font_size", 14)
+	header_row.add_child(backpack_label)
+
+	gold_label = Label.new()
+	gold_label.name = "GoldLabel"
+	gold_label.text = "Gold: 0"
+	gold_label.add_theme_font_size_override("font_size", 12)
+	gold_label.modulate = Color(1.0, 0.85, 0.0)
+	header_row.add_child(gold_label)
+
+	# Scroll container for vertical scrolling
+	var scroll_container := ScrollContainer.new()
+	scroll_container.name = "BackpackScroll"
+	scroll_container.size_flags_horizontal = SIZE_EXPAND_FILL
+	scroll_container.size_flags_vertical = SIZE_EXPAND_FILL
+	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	vbox.add_child(scroll_container)
+
+	# Grid container - 7 columns
+	backpack_container = GridContainer.new()
+	backpack_container.name = "BackpackGrid"
+	backpack_container.columns = 7
+	backpack_container.add_theme_constant_override("h_separation", 4)
+	backpack_container.add_theme_constant_override("v_separation", 4)
+	scroll_container.add_child(backpack_container)
+
+	# Create 50 backpack slots
+	for i in 50:
+		var slot := InventorySlot.new()
+		slot.slot_type = InventorySlot.SlotType.BACKPACK
+		slot.backpack_index = i
+		slot.slot_pressed.connect(_on_slot_pressed)
+		backpack_container.add_child(slot)
+		backpack_slots.append(slot)
+
+	# Apply margins and calculate slot sizes after layout is ready
+	backpack_panel.ready.connect(_on_backpack_ready.bind(backpack_panel, backpack_margin, scroll_container))
+
+
+func _on_backpack_ready(panel: PanelContainer, margin: MarginContainer, scroll: ScrollContainer) -> void:
+	# Wait one frame for layout to settle
+	await get_tree().process_frame
+
+	# Apply 10% side margins
+	var panel_width := panel.size.x
+	var side_margin := int(panel_width * 0.10)
+	margin.add_theme_constant_override("margin_left", side_margin)
+	margin.add_theme_constant_override("margin_right", side_margin)
+
+	# Wait another frame for margins to apply
+	await get_tree().process_frame
+
+	# Calculate slot size to fill width with 7 columns
+	var available_width := scroll.size.x
+	var columns := 7
+	var total_separation := (columns - 1) * 4  # 4px separation
+	var slot_size := floori((available_width - total_separation) / columns)
+
+	# Apply size to all slots
+	for slot in backpack_slots:
+		slot.custom_minimum_size = Vector2(slot_size, slot_size)
 
 
 func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer, content: Control, is_backpack: bool) -> void:
