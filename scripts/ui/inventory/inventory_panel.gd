@@ -64,6 +64,9 @@ var backpack_slots: Array[InventorySlot] = []
 ## Current slot size (set based on screen)
 var current_slot_size: float = SLOT_SIZE_NORMAL
 
+## Guard to prevent infinite resize loop
+var _resizing_backpack: bool = false
+
 
 func _ready() -> void:
 	_calculate_slot_size()
@@ -237,7 +240,8 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 
 
 func _on_backpack_resized(container: Control) -> void:
-	if backpack_slots.is_empty():
+	# Guard against infinite resize loop
+	if _resizing_backpack or backpack_slots.is_empty():
 		return
 
 	# Get available width
@@ -255,9 +259,15 @@ func _on_backpack_resized(container: Control) -> void:
 	var total_separation := (columns - 1) * BACKPACK_H_SEPARATION
 	var slot_size := floorf((available_width - total_separation) / columns)
 
-	# Update all slot sizes
+	# Check if size actually changed
+	if backpack_slots[0].custom_minimum_size.x == slot_size:
+		return
+
+	# Update all slot sizes with guard
+	_resizing_backpack = true
 	for slot in backpack_slots:
 		slot.custom_minimum_size = Vector2(slot_size, slot_size)
+	_resizing_backpack = false
 
 
 func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer, content: Control, is_backpack: bool) -> void:
