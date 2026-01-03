@@ -253,9 +253,11 @@ func _create_popup(popup_data: Dictionary) -> void:
 	# Create a full-rect container for proper anchor calculations
 	var container := Control.new()
 	container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	container.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Don't block input
 	_canvas_layer.add_child(container)
 
 	var popup = _popup_scene.instantiate()
+	popup.mouse_filter = Control.MOUSE_FILTER_IGNORE  # Popup is informational only
 	container.add_child(popup)
 
 	# Store references
