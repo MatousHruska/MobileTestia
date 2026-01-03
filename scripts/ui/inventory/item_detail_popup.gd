@@ -40,18 +40,11 @@ func _build_ui() -> void:
 	dimmer.gui_input.connect(_on_dimmer_input)
 	add_child(dimmer)
 
-	# Center container
-	var center := CenterContainer.new()
-	center.name = "CenterContainer"
-	center.set_anchors_preset(PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(center)
-
-	# Main popup panel
+	# Main popup panel (positioned manually, not centered)
 	popup_panel = PanelContainer.new()
 	popup_panel.name = "PopupPanel"
-	popup_panel.custom_minimum_size = Vector2(POPUP_WIDTH, POPUP_HEIGHT)
-	center.add_child(popup_panel)
+	popup_panel.custom_minimum_size = Vector2(POPUP_WIDTH, 0)  # Fixed width, flexible height
+	add_child(popup_panel)
 
 	# Main content container
 	var content := VBoxContainer.new()
@@ -152,14 +145,37 @@ func _build_ui() -> void:
 	content.add_child(hint_label)
 
 
-## Show popup with item details
-func show_item(item: ItemData, source: String, index: int) -> void:
+## Show popup with item details, centered on the given position
+## If at_position is ZERO, keep current position (for updates)
+func show_item(item: ItemData, source: String, index: int, at_position: Vector2 = Vector2.ZERO) -> void:
 	current_item = item
 	current_source = source
 	current_index = index
 
 	_update_display()
 	visible = true
+
+	# Only reposition if a valid position was given
+	if at_position != Vector2.ZERO:
+		# Position popup after it's visible so we can get its actual size
+		await get_tree().process_frame
+		_position_popup(at_position)
+
+
+## Position the popup centered on target, clamped to screen bounds
+func _position_popup(target_pos: Vector2) -> void:
+	var screen_size := get_viewport_rect().size
+	var popup_size := popup_panel.size
+
+	# Center on target position
+	var pos := target_pos - popup_size / 2
+
+	# Clamp to screen bounds with small margin
+	var margin := 8.0
+	pos.x = clampf(pos.x, margin, screen_size.x - popup_size.x - margin)
+	pos.y = clampf(pos.y, margin, screen_size.y - popup_size.y - margin)
+
+	popup_panel.position = pos
 
 
 ## Hide and clear popup
