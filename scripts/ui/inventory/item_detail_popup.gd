@@ -1,13 +1,7 @@
 extends Control
 class_name ItemDetailPopup
-## Modal popup displaying item details with action buttons
-## Replaces the inline details column for mobile-friendly layout
+## Modal popup displaying item details (info only, actions via drag & drop)
 
-signal equip_pressed
-signal use_pressed
-signal quick_slot_pressed
-signal swap_pressed
-signal destroy_pressed
 signal closed
 
 ## UI References
@@ -18,12 +12,7 @@ var type_label: Label
 var rarity_label: Label
 var description_label: Label
 var stats_label: Label
-var equip_button: Button
-var use_button: Button
-var swap_button: Button
-var destroy_button: Button
 var close_button: Button
-var swap_mode_label: Label
 
 ## Current item being displayed
 var current_item: ItemData = null
@@ -31,14 +20,13 @@ var current_source: String = ""
 var current_index: int = -1
 
 ## Popup sizing
-const POPUP_WIDTH := 320.0
-const POPUP_HEIGHT := 340.0
+const POPUP_WIDTH := 280.0
+const POPUP_HEIGHT := 200.0
 const ICON_SIZE := 64.0
 
 
 func _ready() -> void:
 	_build_ui()
-	_connect_signals()
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
@@ -154,66 +142,14 @@ func _build_ui() -> void:
 	description_label.modulate = Color(0.8, 0.8, 0.8)
 	stats_vbox.add_child(description_label)
 
-	# Separator before buttons
-	var sep2 := HSeparator.new()
-	content.add_child(sep2)
-
-	# Swap mode indicator
-	swap_mode_label = Label.new()
-	swap_mode_label.name = "SwapModeLabel"
-	swap_mode_label.text = "Select target slot to swap..."
-	swap_mode_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	swap_mode_label.modulate = Color(1.0, 0.8, 0.2)
-	swap_mode_label.add_theme_font_size_override("font_size", 12)
-	swap_mode_label.visible = false
-	content.add_child(swap_mode_label)
-
-	# Action buttons - top row (main action)
-	var top_buttons := HBoxContainer.new()
-	top_buttons.name = "TopButtons"
-	top_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	top_buttons.add_theme_constant_override("separation", 8)
-	content.add_child(top_buttons)
-
-	equip_button = Button.new()
-	equip_button.name = "EquipButton"
-	equip_button.text = "Equip"
-	equip_button.custom_minimum_size = Vector2(100, 36)
-	equip_button.pressed.connect(_on_equip_pressed)
-	top_buttons.add_child(equip_button)
-
-	use_button = Button.new()
-	use_button.name = "UseButton"
-	use_button.text = "Use"
-	use_button.custom_minimum_size = Vector2(80, 36)
-	use_button.pressed.connect(_on_use_pressed)
-	use_button.visible = false
-	top_buttons.add_child(use_button)
-
-	# Action buttons - bottom row (secondary actions)
-	var bottom_buttons := HBoxContainer.new()
-	bottom_buttons.name = "BottomButtons"
-	bottom_buttons.alignment = BoxContainer.ALIGNMENT_CENTER
-	bottom_buttons.add_theme_constant_override("separation", 8)
-	content.add_child(bottom_buttons)
-
-	swap_button = Button.new()
-	swap_button.name = "SwapButton"
-	swap_button.text = "Swap"
-	swap_button.custom_minimum_size = Vector2(70, 32)
-	swap_button.pressed.connect(_on_swap_pressed)
-	bottom_buttons.add_child(swap_button)
-
-	destroy_button = Button.new()
-	destroy_button.name = "DestroyButton"
-	destroy_button.text = "Destroy"
-	destroy_button.custom_minimum_size = Vector2(70, 32)
-	destroy_button.pressed.connect(_on_destroy_pressed)
-	bottom_buttons.add_child(destroy_button)
-
-
-func _connect_signals() -> void:
-	Inventory.swap_mode_changed.connect(_on_swap_mode_changed)
+	# Hint text for drag & drop
+	var hint_label := Label.new()
+	hint_label.name = "HintLabel"
+	hint_label.text = "Drag items to move, equip, or destroy"
+	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint_label.add_theme_font_size_override("font_size", 10)
+	hint_label.modulate = Color(0.5, 0.5, 0.5)
+	content.add_child(hint_label)
 
 
 ## Show popup with item details
@@ -223,7 +159,6 @@ func show_item(item: ItemData, source: String, index: int) -> void:
 	current_index = index
 
 	_update_display()
-	_update_buttons()
 	visible = true
 
 
@@ -272,40 +207,6 @@ func _update_display() -> void:
 		description_label.visible = false
 
 
-## Update button visibility based on item type and location
-func _update_buttons() -> void:
-	if not current_item:
-		equip_button.visible = false
-		use_button.visible = false
-		swap_button.visible = false
-		destroy_button.visible = false
-		return
-
-	var is_in_backpack := current_source == "backpack"
-	var is_equipped := current_source == "equipment"
-
-	# Equipment items
-	if current_item.item_type == ItemData.ItemType.EQUIPMENT:
-		equip_button.visible = true
-		use_button.visible = false
-		if is_in_backpack:
-			equip_button.text = "Equip"
-		else:
-			equip_button.text = "Unequip"
-	else:
-		# Consumables
-		equip_button.visible = is_in_backpack  # Quick Slot option
-		use_button.visible = true
-		if is_in_backpack:
-			equip_button.text = "Quick Slot"
-
-	# Swap only for backpack items
-	swap_button.visible = is_in_backpack
-
-	# Destroy always available
-	destroy_button.visible = true
-
-
 ## Input handlers
 
 func _on_dimmer_input(event: InputEvent) -> void:
@@ -319,38 +220,3 @@ func _on_close_pressed() -> void:
 	hide_popup()
 	Inventory.deselect()
 	closed.emit()
-
-
-func _on_equip_pressed() -> void:
-	equip_pressed.emit()
-	# Keep popup open to show updated state after equip/unequip
-	_update_buttons()
-
-
-func _on_use_pressed() -> void:
-	use_pressed.emit()
-	# Close popup after use (item may be consumed)
-	hide_popup()
-
-
-func _on_swap_pressed() -> void:
-	swap_pressed.emit()
-	# Close popup - swap mode will be active, user picks target slot
-	hide_popup()
-
-
-func _on_destroy_pressed() -> void:
-	destroy_pressed.emit()
-	# Parent handles confirmation, popup stays open
-
-
-func _on_swap_mode_changed(active: bool) -> void:
-	swap_mode_label.visible = active
-	if active:
-		# Hide action buttons during swap mode
-		equip_button.visible = false
-		use_button.visible = false
-		swap_button.visible = false
-		destroy_button.visible = false
-	else:
-		_update_buttons()

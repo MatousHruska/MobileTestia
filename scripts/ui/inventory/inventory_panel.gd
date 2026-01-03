@@ -2,8 +2,7 @@ extends Control
 class_name InventoryPanel
 ## Mobile-optimized inventory panel with Equipment | Backpack layout + popup details
 ## Redesigned for small screens (424px+ height)
-
-signal destroy_requested  # Emitted when destroy button pressed, parent shows confirmation
+## Item management via drag & drop: move/swap items, equip, destroy via trash zone
 
 ## Preload ItemDetailPopup to avoid class_name load order issues
 const ItemDetailPopupScript = preload("res://scripts/ui/inventory/item_detail_popup.gd")
@@ -407,11 +406,7 @@ func _build_item_popup() -> void:
 	item_popup.set_anchors_preset(PRESET_FULL_RECT)
 	add_child(item_popup)
 
-	# Connect popup signals
-	item_popup.equip_pressed.connect(_on_equip_pressed)
-	item_popup.use_pressed.connect(_on_use_pressed)
-	item_popup.swap_pressed.connect(_on_swap_pressed)
-	item_popup.destroy_pressed.connect(_on_destroy_pressed)
+	# Connect popup closed signal
 	item_popup.closed.connect(_on_popup_closed)
 
 
@@ -421,7 +416,6 @@ func _connect_signals() -> void:
 	Inventory.item_selected.connect(_on_item_selected)
 	Inventory.item_deselected.connect(_on_item_deselected)
 	Inventory.gold_changed.connect(_on_gold_changed)
-	Inventory.swap_mode_changed.connect(_on_swap_mode_changed)
 
 
 func _refresh_all() -> void:
@@ -483,18 +477,9 @@ func refresh() -> void:
 
 func _on_slot_pressed(slot: InventorySlot) -> void:
 	var slot_idx = slot.backpack_index if slot.slot_type == InventorySlot.SlotType.BACKPACK else slot.equipment_slot
-	Debug.info("UI", "Slot pressed", "type=%s index=%d swap_mode=%s" % [slot.slot_type, slot_idx, Inventory.swap_mode])
+	Debug.info("UI", "Slot pressed", "type=%s index=%d" % [slot.slot_type, slot_idx])
 
-	# Handle swap mode
-	if Inventory.swap_mode:
-		if slot.slot_type == InventorySlot.SlotType.BACKPACK:
-			Inventory.swap_with_backpack_slot(slot.backpack_index)
-		else:
-			# Can't swap with equipment slots, exit swap mode
-			Inventory.exit_swap_mode()
-		return
-
-	# Normal selection (for viewing item info)
+	# Select item to show details popup
 	if slot.slot_type == InventorySlot.SlotType.BACKPACK:
 		Inventory.select_backpack_item(slot.backpack_index)
 	else:
@@ -566,35 +551,6 @@ func _on_item_deselected() -> void:
 
 func _on_gold_changed(_new_amount: int) -> void:
 	_refresh_gold()
-
-
-func _on_swap_mode_changed(active: bool) -> void:
-	# Popup handles its own swap mode display
-	if not active:
-		# Swap completed or cancelled - refresh display
-		_refresh_backpack()
-
-
-## Action button handlers (from popup)
-
-func _on_equip_pressed() -> void:
-	if Inventory.selected_source == "backpack":
-		Inventory.equip_selected()
-	else:
-		Inventory.unequip_selected()
-
-
-func _on_use_pressed() -> void:
-	Inventory.use_selected()
-
-
-func _on_swap_pressed() -> void:
-	Inventory.enter_swap_mode()
-
-
-func _on_destroy_pressed() -> void:
-	# Emit signal for parent (character_menu) to show confirmation
-	destroy_requested.emit()
 
 
 func _on_popup_closed() -> void:
