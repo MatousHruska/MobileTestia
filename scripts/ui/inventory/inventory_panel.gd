@@ -277,8 +277,9 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	backpack_container.add_theme_constant_override("v_separation", 4)
 	scroll_container.add_child(backpack_container)
 
-	# Create 50 backpack slots
-	for i in 50:
+	# Create backpack slots (count from database)
+	var slot_count := Database.get_setting_int("inventory_slots", 25)
+	for i in slot_count:
 		var slot := InventorySlot.new()
 		slot.slot_type = InventorySlot.SlotType.BACKPACK
 		slot.backpack_index = i

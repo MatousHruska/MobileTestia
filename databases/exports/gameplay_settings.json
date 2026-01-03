@@ -1,4 +1,5 @@
 {
+  "inventory_slots": 25,
   "base_vitality": 10,
   "base_energy": 10,
   "base_strength": 10,

@@ -10,7 +10,7 @@ signal item_deselected
 signal gold_changed(new_amount: int)
 
 ## Inventory constants
-const BACKPACK_SIZE: int = 30
+var backpack_size: int = 25  # Set from database in _ready()
 const EQUIPMENT_SLOTS: Array[ItemData.EquipSlot] = [
 	ItemData.EquipSlot.HEAD,
 	ItemData.EquipSlot.BODY,
@@ -38,10 +38,12 @@ signal swap_mode_changed(active: bool)
 
 
 func _ready() -> void:
+	# Load backpack size from database
+	backpack_size = Database.get_setting_int("inventory_slots", 25)
 	_initialize_inventory()
 	# Connect equipment changes to stats recalculation
 	equipment_changed.connect(_on_equipment_changed)
-	Debug.info("Inventory", "InventoryManager initialized", "Backpack size: %d" % BACKPACK_SIZE)
+	Debug.info("Inventory", "InventoryManager initialized", "Backpack size: %d" % backpack_size)
 
 
 func _on_equipment_changed(_slot: ItemData.EquipSlot) -> void:
@@ -117,7 +119,7 @@ func _recalculate_equipment_bonuses() -> void:
 func _initialize_inventory() -> void:
 	# Initialize empty backpack
 	backpack.clear()
-	for i in BACKPACK_SIZE:
+	for i in backpack_size:
 		backpack.append({})
 
 	# Initialize empty equipment slots
