@@ -122,6 +122,8 @@ func apply_dot(effect_type: String, duration: float, damage_per_tick: float, tic
 		# Refresh duration if already active (don't stack damage)
 		var existing: Dictionary = _active_effects[effect_type]
 		existing.remaining_duration = maxf(existing.remaining_duration, duration)
+		# Emit signal so HUD can refresh display
+		effect_applied.emit(effect_type, existing.remaining_duration, show_in_hud, true)
 		Debug.log("StatusEffect", "DoT refreshed", {
 			"type": effect_type,
 			"duration": existing.remaining_duration
@@ -154,6 +156,8 @@ func apply_hot(effect_type: String, duration: float, heal_per_tick: float, tick_
 		# Refresh duration if already active (don't stack healing)
 		var existing: Dictionary = _active_effects[effect_type]
 		existing.remaining_duration = maxf(existing.remaining_duration, duration)
+		# Emit signal so HUD can refresh display
+		effect_applied.emit(effect_type, existing.remaining_duration, show_in_hud, false)
 		Debug.log("StatusEffect", "HoT refreshed", {
 			"type": effect_type,
 			"duration": existing.remaining_duration
@@ -185,6 +189,8 @@ func apply_buff(effect_type: String, duration: float, show_in_hud: bool = true) 
 	if effect_type in _active_effects:
 		var existing: Dictionary = _active_effects[effect_type]
 		existing.remaining_duration = maxf(existing.remaining_duration, duration)
+		# Emit signal so HUD can refresh display
+		effect_applied.emit(effect_type, existing.remaining_duration, show_in_hud, false)
 	else:
 		_active_effects[effect_type] = {
 			"remaining_duration": duration,
@@ -209,6 +215,8 @@ func apply_debuff(effect_type: String, duration: float, show_in_hud: bool = true
 	if effect_type in _active_effects:
 		var existing: Dictionary = _active_effects[effect_type]
 		existing.remaining_duration = maxf(existing.remaining_duration, duration)
+		# Emit signal so HUD can refresh display
+		effect_applied.emit(effect_type, existing.remaining_duration, show_in_hud, true)
 	else:
 		_active_effects[effect_type] = {
 			"remaining_duration": duration,
