@@ -272,6 +272,8 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 		slot.backpack_index = i
 		slot.slot_pressed.connect(_on_slot_pressed)
 		slot.item_dropped.connect(_on_item_dropped)
+		slot.drag_started.connect(_on_drag_started)
+		slot.drag_ended.connect(_on_drag_ended)
 		backpack_container.add_child(slot)
 		backpack_slots.append(slot)
 
@@ -519,6 +521,40 @@ func _on_split_pressed() -> void:
 		Inventory.split_stack("backpack", Inventory.selected_index)
 	else:
 		Debug.info("UI", "Split: Select a backpack item first")
+
+
+func _on_drag_started(slot: InventorySlot) -> void:
+	## Highlight the target equipment slot when dragging an equippable item
+	if slot.current_item == null:
+		return
+
+	var item: ItemData = slot.current_item
+	var target_slot: ItemData.EquipSlot = ItemData.EquipSlot.NONE
+
+	# Find target equipment slot for this item
+	if item.item_type == ItemData.ItemType.CONSUMABLE:
+		target_slot = ItemData.EquipSlot.QUICK_SLOT
+	elif item is EquipmentData:
+		var equip: EquipmentData = item as EquipmentData
+		if equip.equipment_type == ItemData.EquipmentType.RING:
+			# Highlight both accessory slots for rings
+			if equipment_slots.has(ItemData.EquipSlot.ACCESSORY_1):
+				equipment_slots[ItemData.EquipSlot.ACCESSORY_1].set_drag_highlight(true)
+			if equipment_slots.has(ItemData.EquipSlot.ACCESSORY_2):
+				equipment_slots[ItemData.EquipSlot.ACCESSORY_2].set_drag_highlight(true)
+			return
+		else:
+			target_slot = equip.get_target_slot()
+
+	# Highlight the target slot
+	if target_slot != ItemData.EquipSlot.NONE and equipment_slots.has(target_slot):
+		equipment_slots[target_slot].set_drag_highlight(true)
+
+
+func _on_drag_ended(_slot: InventorySlot) -> void:
+	## Clear all equipment slot highlights when drag ends
+	for equip_slot in equipment_slots.values():
+		equip_slot.set_drag_highlight(false)
 
 
 func _on_inventory_changed() -> void:

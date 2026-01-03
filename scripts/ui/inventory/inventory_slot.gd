@@ -5,6 +5,8 @@ class_name InventorySlot
 
 signal slot_pressed(slot: InventorySlot)
 signal item_dropped(from_slot: InventorySlot, to_slot: InventorySlot)
+signal drag_started(slot: InventorySlot)
+signal drag_ended(slot: InventorySlot)
 
 ## Slot type
 enum SlotType { BACKPACK, EQUIPMENT }
@@ -250,6 +252,9 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	# Dim this slot while dragging
 	modulate = Color(0.5, 0.5, 0.5, 0.7)
 
+	# Notify panel that drag started (for highlighting target slots)
+	drag_started.emit(self)
+
 	# Return drag data - the slot itself
 	return self
 
@@ -320,6 +325,7 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_DRAG_END:
 		modulate = Color.WHITE if not is_blocked else Color(0.5, 0.5, 0.5, 0.5)
 		set_drag_highlight(false)
+		drag_ended.emit(self)
 
 
 func set_drag_highlight(enabled: bool) -> void:
