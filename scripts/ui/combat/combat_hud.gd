@@ -370,9 +370,27 @@ func _layout_buttons() -> void:
 	# Get screen size
 	var screen_size := get_viewport_rect().size
 
+	# Calculate scale factor for button sizes based on screen height
+	# Base design is 720p - scale buttons proportionally for other resolutions
+	var scale_factor := screen_size.y / config.base_screen_height
+	scale_factor = clampf(scale_factor * config.user_scale, config.min_scale, config.max_scale)
+
+	# Apply scaled radii to buttons
+	var scaled_attack_radius := config.attack_radius * scale_factor
+	var scaled_ability_radius := config.ability_radius * scale_factor
+	var scaled_dodge_radius := config.dodge_radius * scale_factor
+	var scaled_quick_slot_radius := config.quick_slot_radius * scale_factor
+
+	# Update button radii (using set_radius to update size and pivot)
+	attack_button.set_radius(scaled_attack_radius)
+	for slot in ability_slots:
+		slot.set_radius(scaled_ability_radius)
+	dodge_button.set_radius(scaled_dodge_radius)
+	quick_slot_button.set_radius(scaled_quick_slot_radius)
+
 	# Calculate attack button position using percentage-based offset
 	var attack_pos := config.get_position_from_pct(config.attack_offset_pct, screen_size)
-	attack_button.position = attack_pos - Vector2(config.attack_radius, config.attack_radius)
+	attack_button.position = attack_pos - Vector2(scaled_attack_radius, scaled_attack_radius)
 
 	# Calculate attack button center for arc positioning
 	var attack_center := attack_pos
@@ -382,19 +400,20 @@ func _layout_buttons() -> void:
 	for i in ability_slots.size():
 		if i < ability_positions.size():
 			var pos := ability_positions[i]
-			ability_slots[i].position = pos - Vector2(config.ability_radius, config.ability_radius)
+			ability_slots[i].position = pos - Vector2(scaled_ability_radius, scaled_ability_radius)
 
 	# Position dodge button
 	var dodge_pos := config.get_position_from_pct(config.dodge_offset_pct, screen_size)
-	dodge_button.position = dodge_pos - Vector2(config.dodge_radius, config.dodge_radius)
+	dodge_button.position = dodge_pos - Vector2(scaled_dodge_radius, scaled_dodge_radius)
 
 	# Position quick slot button
 	var quick_slot_pos := config.get_position_from_pct(config.quick_slot_offset_pct, screen_size)
-	quick_slot_button.position = quick_slot_pos - Vector2(config.quick_slot_radius, config.quick_slot_radius)
+	quick_slot_button.position = quick_slot_pos - Vector2(scaled_quick_slot_radius, scaled_quick_slot_radius)
 
-	# Position interact button
+	# Position interact button (scale its size too)
 	var interact_pos := config.get_position_from_pct(config.interact_offset_pct, screen_size)
 	interact_button.position = interact_pos
+	interact_button.custom_minimum_size = config.interact_size * scale_factor
 
 
 func _notification(what: int) -> void:
