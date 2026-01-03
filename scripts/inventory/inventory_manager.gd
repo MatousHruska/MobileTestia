@@ -730,6 +730,50 @@ func destroy_item(source: String, index: int, force: bool = false) -> Dictionary
 	return {success = true, needs_confirm = false, item = item}
 
 
+func use_item(source: String, index: int) -> Dictionary:
+	## Use an item - for consumables, this consumes one charge
+	## Returns {success: bool, message: String}
+	var slot_data: Dictionary
+	var item: ItemData
+
+	if source == "backpack":
+		if index < 0 or index >= backpack.size():
+			return {success = false, message = "Invalid slot"}
+		slot_data = backpack[index]
+	elif source == "equipment":
+		var slot := index as ItemData.EquipSlot
+		if not equipped.has(slot):
+			return {success = false, message = "Invalid slot"}
+		slot_data = equipped[slot]
+	else:
+		return {success = false, message = "Invalid source"}
+
+	if slot_data.is_empty():
+		return {success = false, message = "Empty slot"}
+
+	item = slot_data.item
+
+	# Handle consumables (potions, etc.)
+	if item is ConsumableData:
+		var charges: int = slot_data.get("charges", 0)
+		if charges <= 0:
+			return {success = false, message = "No charges left", item = item}
+
+		# Consume one charge
+		slot_data.charges = charges - 1
+		Debug.info("Inventory", "Used consumable", "%s (%d charges left)" % [item.item_name, slot_data.charges])
+
+		# Emit change signal to update UI
+		if source == "backpack":
+			inventory_changed.emit()
+		else:
+			equipment_changed.emit(index as ItemData.EquipSlot)
+
+		return {success = true, message = "Used %s" % item.item_name, item = item, charges_left = slot_data.charges}
+
+	return {success = false, message = "Cannot use this item", item = item}
+
+
 ## LEGACY SWAP OPERATIONS (kept for compatibility)
 
 func enter_swap_mode() -> void:
