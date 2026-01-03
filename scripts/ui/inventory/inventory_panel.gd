@@ -53,11 +53,17 @@ const SLOT_SIZE_LARGE := 56.0   # For screens > 900px
 ## UI References (set up in _ready)
 var equipment_container: VBoxContainer
 var backpack_container: GridContainer
-var item_popup: Control  # ItemDetailPopup instance
+var item_popup: Control  # ItemDetailPopup instance (legacy, will be removed)
 var equip_margin: MarginContainer
 var backpack_margin: MarginContainer
 var gold_label: Label
 var main_hbox: HBoxContainer
+var trash_button: Button
+var split_button: Button
+
+## Drag & drop state
+var pending_destroy_source: String = ""
+var pending_destroy_index: int = -1
 
 ## Slot tracking
 var equipment_slots: Dictionary = {}  # EquipSlot -> InventorySlot
@@ -161,6 +167,7 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 			slot_btn.equipment_slot = slot
 			slot_btn.custom_minimum_size = Vector2(current_slot_size, current_slot_size)
 			slot_btn.slot_pressed.connect(_on_slot_pressed)
+			slot_btn.item_dropped.connect(_on_item_dropped)
 			row.add_child(slot_btn)
 			equipment_slots[slot] = slot_btn
 
@@ -177,6 +184,7 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 		slot_btn.equipment_slot = slot
 		slot_btn.custom_minimum_size = Vector2(current_slot_size, current_slot_size)
 		slot_btn.slot_pressed.connect(_on_slot_pressed)
+		slot_btn.item_dropped.connect(_on_item_dropped)
 		combat_column.add_child(slot_btn)
 		equipment_slots[slot] = slot_btn
 
@@ -200,9 +208,10 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	vbox.add_theme_constant_override("separation", 8)
 	backpack_margin.add_child(vbox)
 
-	# Header row: "Backpack | Gold: XY"
+	# Header row: "Backpack | Gold: XY" + trash/split icons
 	var header_row := HBoxContainer.new()
 	header_row.name = "HeaderRow"
+	header_row.add_theme_constant_override("separation", 4)
 	vbox.add_child(header_row)
 
 	var backpack_label := Label.new()
@@ -221,6 +230,24 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	gold_label.add_theme_font_size_override("font_size", 14)
 	gold_label.modulate = Color(1.0, 0.85, 0.0)
 	header_row.add_child(gold_label)
+
+	# Spacer to push icons to the right
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = SIZE_EXPAND_FILL
+	header_row.add_child(spacer)
+
+	# Split stack button
+	split_button = Button.new()
+	split_button.name = "SplitButton"
+	split_button.text = "½"
+	split_button.tooltip_text = "Split Stack (tap, then tap a stack)"
+	split_button.custom_minimum_size = Vector2(28, 28)
+	split_button.pressed.connect(_on_split_pressed)
+	header_row.add_child(split_button)
+
+	# Trash drop zone (accepts item drops to destroy)
+	var trash_zone := _create_trash_drop_zone()
+	header_row.add_child(trash_zone)
 
 	# Scroll container for vertical scrolling
 	var scroll_container := ScrollContainer.new()
@@ -245,6 +272,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 		slot.slot_type = InventorySlot.SlotType.BACKPACK
 		slot.backpack_index = i
 		slot.slot_pressed.connect(_on_slot_pressed)
+		slot.item_dropped.connect(_on_item_dropped)
 		backpack_container.add_child(slot)
 		backpack_slots.append(slot)
 
@@ -272,6 +300,81 @@ func _on_backpack_ready(panel: PanelContainer, margin: MarginContainer, scroll: 
 func _on_main_hbox_resized() -> void:
 	var gap := maxi(16, int(main_hbox.size.x * COLUMN_GAP_PCT))
 	main_hbox.add_theme_constant_override("separation", gap)
+
+
+func _create_trash_drop_zone() -> Control:
+	## Create a trash drop zone that accepts dragged items
+	var zone := Panel.new()
+	zone.name = "TrashZone"
+	zone.custom_minimum_size = Vector2(32, 28)
+	zone.tooltip_text = "Drag item here to destroy"
+
+	# Add trash icon label
+	var label := Label.new()
+	label.text = "🗑"
+	label.set_anchors_preset(Control.PRESET_CENTER)
+	label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	label.grow_vertical = Control.GROW_DIRECTION_BOTH
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	zone.add_child(label)
+
+	# Override drag methods using callables
+	zone.set_script(preload("res://scripts/ui/inventory/trash_drop_zone.gd"))
+	zone.set_meta("panel_ref", self)
+
+	return zone
+
+
+func handle_trash_drop(slot: InventorySlot) -> void:
+	## Called when an item is dropped on the trash zone
+	var source: String
+	var index: int
+
+	if slot.slot_type == InventorySlot.SlotType.BACKPACK:
+		source = "backpack"
+		index = slot.backpack_index
+	else:
+		source = "equipment"
+		index = slot.equipment_slot
+
+	var result := Inventory.destroy_item(source, index)
+
+	if result.get("needs_confirm", false):
+		# Show confirmation dialog for rare+ items
+		pending_destroy_source = source
+		pending_destroy_index = index
+		_show_destroy_confirmation(result.item)
+	elif result.get("success", false):
+		Debug.info("UI", "Item destroyed")
+
+
+func _show_destroy_confirmation(item: ItemData) -> void:
+	## Show confirmation dialog for destroying rare+ items
+	# Create simple confirmation popup
+	var dialog := AcceptDialog.new()
+	dialog.title = "Destroy Item?"
+	dialog.dialog_text = "Are you sure you want to destroy %s?\nThis item is %s quality!" % [item.item_name, ItemData.get_rarity_name(item.rarity)]
+	dialog.ok_button_text = "Destroy"
+	dialog.add_cancel_button("Cancel")
+	dialog.confirmed.connect(_on_destroy_confirmed)
+	dialog.canceled.connect(_on_destroy_cancelled)
+	add_child(dialog)
+	dialog.popup_centered()
+
+
+func _on_destroy_confirmed() -> void:
+	## Confirmed destruction of rare+ item
+	if pending_destroy_source != "":
+		Inventory.destroy_item(pending_destroy_source, pending_destroy_index, true)
+	pending_destroy_source = ""
+	pending_destroy_index = -1
+
+
+func _on_destroy_cancelled() -> void:
+	## Cancelled destruction
+	pending_destroy_source = ""
+	pending_destroy_index = -1
 
 
 func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer, content: Control, is_backpack: bool) -> void:
@@ -391,11 +494,46 @@ func _on_slot_pressed(slot: InventorySlot) -> void:
 			Inventory.exit_swap_mode()
 		return
 
-	# Normal selection
+	# Normal selection (for viewing item info)
 	if slot.slot_type == InventorySlot.SlotType.BACKPACK:
 		Inventory.select_backpack_item(slot.backpack_index)
 	else:
 		Inventory.select_equipment_item(slot.equipment_slot)
+
+
+func _on_item_dropped(from_slot: InventorySlot, to_slot: InventorySlot) -> void:
+	## Handle drag & drop between slots
+	var from_source: String
+	var from_index: int
+	var to_source: String
+	var to_index: int
+
+	# Determine source info
+	if from_slot.slot_type == InventorySlot.SlotType.BACKPACK:
+		from_source = "backpack"
+		from_index = from_slot.backpack_index
+	else:
+		from_source = "equipment"
+		from_index = from_slot.equipment_slot
+
+	# Determine target info
+	if to_slot.slot_type == InventorySlot.SlotType.BACKPACK:
+		to_source = "backpack"
+		to_index = to_slot.backpack_index
+	else:
+		to_source = "equipment"
+		to_index = to_slot.equipment_slot
+
+	# Perform the swap via inventory manager
+	Inventory.drag_drop_swap(from_source, from_index, to_source, to_index)
+
+
+func _on_split_pressed() -> void:
+	## Handle split button - if item selected, split it
+	if Inventory.has_selection() and Inventory.selected_source == "backpack":
+		Inventory.split_stack("backpack", Inventory.selected_index)
+	else:
+		Debug.info("UI", "Split: Select a backpack item first")
 
 
 func _on_inventory_changed() -> void:

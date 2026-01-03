@@ -513,7 +513,224 @@ func destroy_selected() -> bool:
 	return true
 
 
-## SWAP OPERATIONS
+## DRAG & DROP OPERATIONS
+
+func drag_drop_swap(from_source: String, from_index: int, to_source: String, to_index: int) -> bool:
+	## Handle drag & drop swap between any two slots
+	Debug.info("Inventory", "Drag drop swap", "%s[%d] -> %s[%d]" % [from_source, from_index, to_source, to_index])
+
+	# Backpack to Backpack
+	if from_source == "backpack" and to_source == "backpack":
+		return _swap_backpack_slots(from_index, to_index)
+
+	# Backpack to Equipment (equip item)
+	if from_source == "backpack" and to_source == "equipment":
+		return _drag_equip_item(from_index, to_index as ItemData.EquipSlot)
+
+	# Equipment to Backpack (unequip item)
+	if from_source == "equipment" and to_source == "backpack":
+		return _drag_unequip_item(from_index as ItemData.EquipSlot, to_index)
+
+	# Equipment to Equipment (swap equipment)
+	if from_source == "equipment" and to_source == "equipment":
+		return _swap_equipment_slots(from_index as ItemData.EquipSlot, to_index as ItemData.EquipSlot)
+
+	return false
+
+
+func _swap_backpack_slots(index_a: int, index_b: int) -> bool:
+	## Swap two backpack slots
+	if index_a < 0 or index_a >= backpack.size():
+		return false
+	if index_b < 0 or index_b >= backpack.size():
+		return false
+
+	var temp: Dictionary = backpack[index_a]
+	backpack[index_a] = backpack[index_b]
+	backpack[index_b] = temp
+
+	inventory_changed.emit()
+	return true
+
+
+func _drag_equip_item(backpack_idx: int, equip_slot: ItemData.EquipSlot) -> bool:
+	## Equip item from backpack via drag, swap if slot occupied
+	if backpack_idx < 0 or backpack_idx >= backpack.size():
+		return false
+
+	var backpack_data: Dictionary = backpack[backpack_idx]
+	if backpack_data.is_empty():
+		return false
+
+	var item: ItemData = backpack_data.item
+	var charges: int = backpack_data.get("charges", 0)
+
+	# Get currently equipped item
+	var equipped_data: Dictionary = equipped[equip_slot]
+
+	# Clear backpack slot
+	backpack[backpack_idx] = {}
+
+	# If there was an equipped item, move it to the backpack slot
+	if not equipped_data.is_empty():
+		backpack[backpack_idx] = equipped_data
+
+	# Equip the new item
+	equipped[equip_slot] = {item = item, quantity = 1, charges = charges}
+
+	equipment_changed.emit(equip_slot)
+	inventory_changed.emit()
+	return true
+
+
+func _drag_unequip_item(equip_slot: ItemData.EquipSlot, backpack_idx: int) -> bool:
+	## Unequip item to backpack via drag, swap if slot occupied
+	var equipped_data: Dictionary = equipped[equip_slot]
+	if equipped_data.is_empty():
+		return false
+
+	if backpack_idx < 0 or backpack_idx >= backpack.size():
+		return false
+
+	var backpack_data: Dictionary = backpack[backpack_idx]
+
+	# If backpack slot has item, check if it can be equipped to this slot
+	if not backpack_data.is_empty():
+		var bp_item: ItemData = backpack_data.item
+		# Verify the backpack item can go to this equipment slot
+		if not _can_item_equip_to_slot(bp_item, equip_slot):
+			return false
+
+	# Swap the items
+	backpack[backpack_idx] = equipped_data
+	if backpack_data.is_empty():
+		equipped[equip_slot] = {}
+	else:
+		equipped[equip_slot] = backpack_data
+
+	equipment_changed.emit(equip_slot)
+	inventory_changed.emit()
+	return true
+
+
+func _swap_equipment_slots(slot_a: ItemData.EquipSlot, slot_b: ItemData.EquipSlot) -> bool:
+	## Swap two equipment slots (only works for same-type slots like rings)
+	var data_a: Dictionary = equipped[slot_a]
+	var data_b: Dictionary = equipped[slot_b]
+
+	# Check if swap is valid
+	if not data_a.is_empty() and not _can_item_equip_to_slot(data_a.item, slot_b):
+		return false
+	if not data_b.is_empty() and not _can_item_equip_to_slot(data_b.item, slot_a):
+		return false
+
+	equipped[slot_a] = data_b
+	equipped[slot_b] = data_a
+
+	equipment_changed.emit(slot_a)
+	equipment_changed.emit(slot_b)
+	return true
+
+
+func _can_item_equip_to_slot(item: ItemData, slot: ItemData.EquipSlot) -> bool:
+	## Check if an item can be equipped to a specific slot
+	if item == null:
+		return true  # Empty can go anywhere
+
+	if item.item_type == ItemData.ItemType.CONSUMABLE:
+		return slot == ItemData.EquipSlot.QUICK_SLOT
+
+	if item is EquipmentData:
+		var equip: EquipmentData = item as EquipmentData
+		var target := equip.get_target_slot()
+
+		# Rings can go to either accessory slot
+		if equip.equipment_type == ItemData.EquipmentType.RING:
+			return slot == ItemData.EquipSlot.ACCESSORY_1 or slot == ItemData.EquipSlot.ACCESSORY_2
+
+		return target == slot
+
+	return false
+
+
+func split_stack(source: String, index: int) -> bool:
+	## Split a stack in half, putting half in the first empty slot
+	var slot_data: Dictionary
+	if source == "backpack":
+		if index < 0 or index >= backpack.size():
+			return false
+		slot_data = backpack[index]
+	else:
+		return false  # Can only split backpack items
+
+	if slot_data.is_empty():
+		return false
+
+	var item: ItemData = slot_data.item
+	var quantity: int = slot_data.quantity
+
+	# Can't split single items or non-stackables
+	if quantity <= 1 or item.max_stack <= 1:
+		Debug.warn("Inventory", "Cannot split", "Not a splittable stack")
+		return false
+
+	# Find empty slot
+	var empty_idx := _find_empty_backpack_slot()
+	if empty_idx == -1:
+		Debug.warn("Inventory", "Cannot split", "No empty slot")
+		return false
+
+	# Split in half
+	var split_amount := quantity / 2
+	slot_data.quantity = quantity - split_amount
+	backpack[empty_idx] = {item = item, quantity = split_amount, charges = 0}
+
+	Debug.info("Inventory", "Split stack", "%s: %d -> %d + %d" % [item.item_name, quantity, slot_data.quantity, split_amount])
+	inventory_changed.emit()
+	return true
+
+
+func destroy_item(source: String, index: int, force: bool = false) -> Dictionary:
+	## Destroy an item, returns {success: bool, needs_confirm: bool, item: ItemData}
+	var slot_data: Dictionary
+	var item: ItemData
+
+	if source == "backpack":
+		if index < 0 or index >= backpack.size():
+			return {success = false}
+		slot_data = backpack[index]
+	elif source == "equipment":
+		var slot := index as ItemData.EquipSlot
+		if not equipped.has(slot):
+			return {success = false}
+		slot_data = equipped[slot]
+	else:
+		return {success = false}
+
+	if slot_data.is_empty():
+		return {success = false}
+
+	item = slot_data.item
+
+	# Check if confirmation needed (rare or better)
+	if not force and item.rarity >= ItemData.Rarity.RARE:
+		return {success = false, needs_confirm = true, item = item}
+
+	# Destroy the item
+	Debug.info("Inventory", "Destroying item", item.item_name)
+	if source == "backpack":
+		backpack[index] = {}
+		inventory_changed.emit()
+	else:
+		var slot := index as ItemData.EquipSlot
+		equipped[slot] = {}
+		equipment_changed.emit(slot)
+
+	deselect()
+	return {success = true, needs_confirm = false, item = item}
+
+
+## LEGACY SWAP OPERATIONS (kept for compatibility)
 
 func enter_swap_mode() -> void:
 	if not has_selection():
