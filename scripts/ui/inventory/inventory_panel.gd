@@ -124,18 +124,18 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	# Two-column layout: Armor | Combat
 	var columns_hbox := HBoxContainer.new()
 	columns_hbox.name = "EquipmentColumns"
-	columns_hbox.add_theme_constant_override("separation", 12)
+	columns_hbox.add_theme_constant_override("separation", 20)
 	equip_center.add_child(columns_hbox)
 
 	# Column 1: Armor slots
 	var armor_column := VBoxContainer.new()
 	armor_column.name = "ArmorColumn"
-	armor_column.add_theme_constant_override("separation", 4)
+	armor_column.add_theme_constant_override("separation", 8)
 	columns_hbox.add_child(armor_column)
 
 	for row_slots in ARMOR_LAYOUT:
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 4)
+		row.add_theme_constant_override("separation", 8)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		armor_column.add_child(row)
 
@@ -151,7 +151,7 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	# Column 2: Combat slots (Weapon + Quick Slot)
 	var combat_column := VBoxContainer.new()
 	combat_column.name = "CombatColumn"
-	combat_column.add_theme_constant_override("separation", 4)
+	combat_column.add_theme_constant_override("separation", 8)
 	combat_column.alignment = BoxContainer.ALIGNMENT_CENTER
 	columns_hbox.add_child(combat_column)
 
