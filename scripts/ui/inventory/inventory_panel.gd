@@ -43,6 +43,7 @@ const BACKPACK_H_SEPARATION: int = 4
 const MARGIN_SIDE_PCT := 0.02      # 2% side margins
 const MARGIN_TOP_PCT := 0.02      # 2% top margin
 const MARGIN_BOTTOM_PCT := 0.03   # 3% bottom margin
+const COLUMN_GAP_PCT := 0.04      # 4% gap between main columns (~32px)
 
 ## Slot sizing (responsive)
 const SLOT_SIZE_SMALL := 44.0   # For screens < 500px height
@@ -56,6 +57,7 @@ var item_popup: Control  # ItemDetailPopup instance
 var equip_margin: MarginContainer
 var backpack_margin: MarginContainer
 var gold_label: Label
+var main_hbox: HBoxContainer
 
 ## Slot tracking
 var equipment_slots: Dictionary = {}  # EquipSlot -> InventorySlot
@@ -84,11 +86,13 @@ func _calculate_slot_size() -> void:
 
 func _build_ui() -> void:
 	# Main horizontal container (2 columns: Equipment | Backpack)
-	var main_hbox := HBoxContainer.new()
+	main_hbox = HBoxContainer.new()
 	main_hbox.name = "MainHBox"
 	main_hbox.set_anchors_preset(PRESET_FULL_RECT)
-	main_hbox.add_theme_constant_override("separation", 24)
 	add_child(main_hbox)
+
+	# Update column gap when panel resizes
+	main_hbox.resized.connect(_on_main_hbox_resized)
 
 	# Left column - Equipment
 	_build_equipment_column(main_hbox)
@@ -247,6 +251,11 @@ func _on_backpack_ready(panel: PanelContainer, margin: MarginContainer, scroll: 
 	# Apply size to all slots
 	for slot in backpack_slots:
 		slot.custom_minimum_size = Vector2(slot_size, slot_size)
+
+
+func _on_main_hbox_resized() -> void:
+	var gap := maxi(16, int(main_hbox.size.x * COLUMN_GAP_PCT))
+	main_hbox.add_theme_constant_override("separation", gap)
 
 
 func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer, content: Control, is_backpack: bool) -> void:
