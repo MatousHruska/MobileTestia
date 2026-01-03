@@ -34,6 +34,7 @@ var spawn_points: Dictionary = {}
 var cutscenes: Dictionary = {}
 var floating_dialogues: Dictionary = {}
 var popup_messages: Dictionary = {}
+var stat_descriptions: Dictionary = {}  ## Stat name/description for UI display
 var gameplay_settings: Dictionary = {}  ## Key-value pairs for global game settings
 
 ## Lists for iteration
@@ -119,6 +120,9 @@ func load_all_databases() -> void:
 
 	# Popup Messages
 	success = _load_database("popup_messages.json", "popup_messages", popup_messages, popup_messages_list) and success
+
+	# Stat Descriptions
+	success = _load_database("stat_descriptions.json", "stat_descriptions", stat_descriptions) and success
 
 	if success:
 		Debug.info("Database", "All databases loaded successfully")
@@ -213,6 +217,16 @@ func get_setting(key: String, default_value: float = 0.0) -> float:
 ## Get a gameplay setting as int
 func get_setting_int(key: String, default_value: int = 0) -> int:
 	return int(gameplay_settings.get(key, default_value))
+
+
+## Get stat description from database
+## stat_name: The stat name (e.g., "strength", "attack_power")
+## Returns description string or empty if not found
+func get_stat_description(stat_name: String) -> String:
+	var stat_id := "stat_" + stat_name
+	if stat_descriptions.has(stat_id):
+		return stat_descriptions[stat_id].get("description", "")
+	return ""
 
 
 #===============================================================================
