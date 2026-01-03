@@ -1007,3 +1007,9 @@ This creates items like "Extended Iron Sword" with "+10-25% Hit Range".
 | 2026-01-02 | Major refactor: Database-driven stats system with 3-layer precedence (Talent > GameplaySettings > Code) |
 | 2026-01-02 | Added Equipment Modifier System for skill properties (hit_range, explosion_radius, cast_speed, etc.) |
 | 2026-01-02 | Clarified skill categories are examples, not rigid templates |
+| 2026-01-03 | Fixed skill bind to leftmost slot (slot 0) now binds to Attack button on combat HUD |
+| 2026-01-03 | Fixed popup message container blocking clicks on hamburger menu (mouse_filter = IGNORE) |
+| 2026-01-03 | Fixed crash when entering crypt (enemy_name vs npc_name property) |
+| 2026-01-03 | Fixed status effect HUD not refreshing duration on reapplication (emit signal on refresh) |
+| 2026-01-03 | Added database-driven stat descriptions for Stats panel (StatDescriptions sheet) |
+| 2026-01-03 | Changed elemental spell damage from percentage to flat bonus (Fire, Cold, Lightning, Poison, Arcane) |

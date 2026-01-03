@@ -29,6 +29,7 @@ This guide explains how to set up and use the Excel database system for MobileTe
    - `NPCDatabase.bas` (NEW)
    - `GameplayDatabase.bas` (NEW - for Consumables, StatusEffects, Zones)
    - `CutsceneDatabase.bas` (NEW - for Cutscenes)
+   - `StatDescriptionDatabase.bas` (NEW - for stat descriptions shown in Stats panel)
    - `MasterExport.bas`
 5. Save workbook as `.xlsm` (macro-enabled)
 
@@ -83,6 +84,8 @@ This guide explains how to set up and use the Excel database system for MobileTe
 - **StatusEffects** - Buffs, debuffs, DoTs
 - **Zones** - Game areas and their properties
 - **Cutscenes** - Scripted cutscene sequences
+- **GameplaySettings** - Global numeric constants (base stats, regen rates)
+- **StatDescriptions** - Stat names and descriptions for UI tooltips
 
 ---
 
@@ -592,6 +595,40 @@ The GameplaySettings sheet stores all global numeric constants that define base 
 
 ---
 
+### StatDescriptions (NEW)
+
+The StatDescriptions sheet stores descriptions for all stats displayed in the Stats panel. These are shown when the player taps on a stat to learn what it does.
+
+| Column | Type | Required | Example |
+|--------|------|----------|---------|
+| id | string | Yes | `stat_strength` |
+| name | string | Yes | `Strength` |
+| category | dropdown | Yes | `primary`, `resource`, `offensive`, `defensive`, `utility` |
+| description | string | Yes | `Physical Mastery. Required for heavy armor...` |
+
+**ID Prefix:** `stat_`
+
+**Valid Categories:**
+- `primary` - Primary attributes (Strength, Dexterity, Intelligence, Vitality, Energy, Luck)
+- `resource` - Resource pools (Life, Mana, Stamina)
+- `offensive` - Damage stats (Attack Power, Spell Power, Critical Chance, elemental damages)
+- `defensive` - Defense stats (Armor, Magic Resistance, Dodge Chance)
+- `utility` - Utility stats (Movement Speed, Regeneration rates)
+
+**Elemental Spell Damage Stats:**
+Fire, Cold, Lightning, Poison, and Arcane spell damage are **flat bonuses** (not percentages). They add directly to spell damage of that element.
+
+**Example Entries:**
+```
+stat_strength    Strength       primary    Physical Mastery. Required for heavy armor, swords, axes, and maces. Does not directly increase damage.
+stat_vitality    Vitality       primary    Life Force. Each point increases Maximum Health by 2.
+stat_fire_spell_damage    Fire Spell Damage    offensive    Flat bonus to Fire spell damage from equipment.
+stat_armor       Armor          defensive  Reduces incoming physical damage from attacks.
+stat_life_regen  Life Regen     utility    Health recovered per second. Base: 1/s.
+```
+
+---
+
 ## Data Validation (Dropdowns)
 
 To prevent typos, add Data Validation to these columns:
@@ -626,6 +663,7 @@ To prevent typos, add Data Validation to these columns:
 | QuestObjectives | type | `kill,collect,talk,explore,escort,defend,craft,use` |
 | Cutscenes | trigger | `zone_enter,quest_complete,quest_start,interact,manual` |
 | Cutscenes | once_only | `true,false` |
+| StatDescriptions | category | `primary,resource,offensive,defensive,utility` |
 
 ### Valid Stat Modifiers (for Affixes):
 `melee_damage,ranged_damage,magic_damage,fire_damage,cold_damage,lightning_damage,poison_damage,strength,dexterity,intelligence,vitality,energy,luck,armor,magic_resistance,dodge_chance,attack_speed,critical_chance,critical_damage,life,mana,life_regen,mana_regen,movement_speed,hit_range,hit_arc,lunge_force,lunge_duration,explosion_radius,projectile_speed,cast_speed,cooldown_reduction`
@@ -659,6 +697,7 @@ To prevent typos, add Data Validation to these columns:
 | `qst_` | Quests | `qst_main_intro`, `qst_side_bones` |
 | `obj_` | Quest Objectives | `obj_kill_zombies_5`, `obj_collect_bones` |
 | `cut_` | Cutscenes | `cut_crypt_vampire`, `cut_intro_tutorial` |
+| `stat_` | Stat Descriptions | `stat_strength`, `stat_fire_spell_damage` |
 | `debug_` | Debug Items | `debug_god_sword`, `debug_all_stats` |
 
 ### Examples:
@@ -774,6 +813,8 @@ After running `ExportAll`, you should have these files:
 - `status_effects.json`
 - `zones.json`
 - `cutscenes.json`
+- `stat_descriptions.json`
+- `gameplay_settings.json`
 
 ---
 
