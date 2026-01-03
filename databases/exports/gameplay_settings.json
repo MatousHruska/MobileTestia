@@ -1,5 +1,4 @@
 {
-  "inventory_slots": 25,
   "base_vitality": 10,
   "base_energy": 10,
   "base_strength": 10,
@@ -26,5 +25,6 @@
   "armor_constant": 50,
   "points_per_level": 5,
   "skill_points_per_level": 1,
-  "xp_per_level": 100
+  "xp_per_level": 100,
+  "inventory_slots": 25
 }
