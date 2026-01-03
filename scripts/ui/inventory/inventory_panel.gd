@@ -115,15 +115,27 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	equip_margin.name = "EquipmentMargin"
 	equip_panel.add_child(equip_margin)
 
+	# VBox for header + equipment slots
+	var equip_vbox := VBoxContainer.new()
+	equip_vbox.name = "EquipmentVBox"
+	equip_vbox.add_theme_constant_override("separation", 8)
+	equip_margin.add_child(equip_vbox)
+
+	# Header row: "Equipped Items:"
+	var header_label := Label.new()
+	header_label.text = "Equipped Items:"
+	header_label.add_theme_font_size_override("font_size", 14)
+	equip_vbox.add_child(header_label)
+
 	# Center container for both horizontal and vertical centering
 	var equip_center := CenterContainer.new()
 	equip_center.name = "EquipmentCenter"
 	equip_center.size_flags_horizontal = SIZE_EXPAND_FILL
 	equip_center.size_flags_vertical = SIZE_EXPAND_FILL
-	equip_margin.add_child(equip_center)
+	equip_vbox.add_child(equip_center)
 
 	# Update margins when panel resizes
-	equip_panel.resized.connect(_on_panel_resized.bind(equip_panel, equip_margin, equip_center, false))
+	equip_panel.resized.connect(_on_panel_resized.bind(equip_panel, equip_margin, equip_vbox, false))
 
 	# Two-column layout: Armor | Combat
 	var columns_hbox := HBoxContainer.new()
