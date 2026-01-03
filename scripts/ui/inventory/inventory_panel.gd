@@ -584,6 +584,8 @@ func _on_drag_started(slot: InventorySlot) -> void:
 	# Find target equipment slot for this item
 	if item.item_type == ItemData.ItemType.CONSUMABLE:
 		target_slot = ItemData.EquipSlot.QUICK_SLOT
+		# Also highlight Use button for consumables
+		use_button.modulate = Color(0.5, 1.0, 0.5)
 	elif item is EquipmentData:
 		var equip: EquipmentData = item as EquipmentData
 		# Ring -> ACCESSORY_1 (finger), Amulet -> ACCESSORY_2 (neck)
@@ -598,6 +600,8 @@ func _on_drag_ended(_slot: InventorySlot) -> void:
 	## Clear all equipment slot highlights when drag ends
 	for equip_slot in equipment_slots.values():
 		equip_slot.set_drag_highlight(false)
+	# Reset Use button highlight
+	use_button.modulate = Color.WHITE
 
 
 func _on_inventory_changed() -> void:
