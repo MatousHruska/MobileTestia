@@ -188,21 +188,25 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	vbox.add_theme_constant_override("separation", 8)
 	backpack_margin.add_child(vbox)
 
-	# Header row: "Backpack" left, "Gold XY" right
+	# Header row: "Backpack | Gold: XY"
 	var header_row := HBoxContainer.new()
 	header_row.name = "HeaderRow"
 	vbox.add_child(header_row)
 
 	var backpack_label := Label.new()
 	backpack_label.text = "Backpack"
-	backpack_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	backpack_label.add_theme_font_size_override("font_size", 14)
 	header_row.add_child(backpack_label)
+
+	var separator := Label.new()
+	separator.text = " | "
+	separator.add_theme_font_size_override("font_size", 14)
+	header_row.add_child(separator)
 
 	gold_label = Label.new()
 	gold_label.name = "GoldLabel"
 	gold_label.text = "Gold: 0"
-	gold_label.add_theme_font_size_override("font_size", 12)
+	gold_label.add_theme_font_size_override("font_size", 14)
 	gold_label.modulate = Color(1.0, 0.85, 0.0)
 	header_row.add_child(gold_label)
 
