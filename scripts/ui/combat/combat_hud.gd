@@ -468,22 +468,22 @@ func _layout_buttons() -> void:
 		)
 
 	# Position dodge button
-	var dodge_pos := _get_fixed_pos.call(config.dodge_offset_pct)
+	var dodge_pos: Vector2 = _get_fixed_pos.call(config.dodge_offset_pct)
 	dodge_pos = _adjust_secondary_pos.call(dodge_pos, scaled_dodge_radius)
 	dodge_button.position = dodge_pos - Vector2(scaled_dodge_radius, scaled_dodge_radius)
 
 	# Position quick slot button
-	var quick_slot_pos := _get_fixed_pos.call(config.quick_slot_offset_pct)
+	var quick_slot_pos: Vector2 = _get_fixed_pos.call(config.quick_slot_offset_pct)
 	quick_slot_pos = _adjust_secondary_pos.call(quick_slot_pos, scaled_quick_slot_radius)
 	# Also ensure quick slot doesn't overlap with dodge
-	var dodge_distance := quick_slot_pos.distance_to(dodge_pos)
+	var dodge_distance: float = quick_slot_pos.distance_to(dodge_pos)
 	var min_dodge_distance := scaled_dodge_radius + scaled_quick_slot_radius + min_gap
 	if dodge_distance < min_dodge_distance:
 		quick_slot_pos.x = dodge_pos.x - scaled_dodge_radius - min_gap - scaled_quick_slot_radius
 	quick_slot_button.position = quick_slot_pos - Vector2(scaled_quick_slot_radius, scaled_quick_slot_radius)
 
 	# Position interact button (scale its size too)
-	var interact_pos := _get_fixed_pos.call(config.interact_offset_pct)
+	var interact_pos: Vector2 = _get_fixed_pos.call(config.interact_offset_pct)
 	interact_button.position = interact_pos
 	interact_button.custom_minimum_size = config.interact_size * scale_factor
 
