@@ -87,7 +87,7 @@ func _build_ui() -> void:
 	var main_hbox := HBoxContainer.new()
 	main_hbox.name = "MainHBox"
 	main_hbox.set_anchors_preset(PRESET_FULL_RECT)
-	main_hbox.add_theme_constant_override("separation", 8)
+	main_hbox.add_theme_constant_override("separation", 24)
 	add_child(main_hbox)
 
 	# Left column - Equipment
