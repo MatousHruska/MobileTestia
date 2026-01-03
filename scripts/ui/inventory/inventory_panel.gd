@@ -36,6 +36,7 @@ const EQUIPMENT_SLOTS: Array[ItemData.EquipSlot] = [
 
 ## Backpack settings (columns calculated dynamically based on width)
 const BACKPACK_MIN_COLUMNS: int = 5
+const BACKPACK_MAX_COLUMNS: int = 7
 const BACKPACK_H_SEPARATION: int = 4
 
 ## Margin percentages for equipment (relative to panel width/height)
@@ -252,8 +253,8 @@ func _on_backpack_resized(container: VBoxContainer) -> void:
 	var slot_with_sep := current_slot_size + BACKPACK_H_SEPARATION
 	var max_columns := floori((available_width + BACKPACK_H_SEPARATION) / slot_with_sep)
 
-	# Clamp to reasonable bounds (min 5, max based on backpack size)
-	var columns := clampi(max_columns, BACKPACK_MIN_COLUMNS, Inventory.BACKPACK_SIZE)
+	# Clamp to reasonable bounds (min 5, max 7)
+	var columns := clampi(max_columns, BACKPACK_MIN_COLUMNS, BACKPACK_MAX_COLUMNS)
 
 	if backpack_container.columns != columns:
 		backpack_container.columns = columns
