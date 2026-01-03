@@ -199,7 +199,6 @@ func _setup_inventory_panel() -> void:
 	_inventory_panel_instance = InventoryPanel.new()
 	_inventory_panel_instance.name = "UnifiedInventory"
 	_inventory_panel_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_inventory_panel_instance.destroy_requested.connect(_on_destroy_requested)
 	inventory_panel.add_child(_inventory_panel_instance)
 
 	Debug.info("UI", "Unified InventoryPanel created")
@@ -387,27 +386,6 @@ func _refresh_quests_panel() -> void:
 
 func _refresh_menu_panel() -> void:
 	Debug.log("UI", "Refreshing menu panel")
-
-
-## Destroy confirmation
-func _on_destroy_requested() -> void:
-	if not Inventory.has_selection():
-		return
-
-	confirm_popup.title = "Destroy Item"
-	confirm_popup.dialog_text = "Are you sure you want to destroy\n%s?" % Inventory.selected_item.item_name
-
-	# Disconnect any previous connections
-	if confirm_popup.confirmed.is_connected(_on_destroy_confirmed):
-		confirm_popup.confirmed.disconnect(_on_destroy_confirmed)
-
-	confirm_popup.confirmed.connect(_on_destroy_confirmed)
-	confirm_popup.popup_centered()
-
-
-func _on_destroy_confirmed() -> void:
-	Inventory.destroy_selected()
-	Debug.info("UI", "Item destroyed via confirmation")
 
 
 ## Menu button handlers
