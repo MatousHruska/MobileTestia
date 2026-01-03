@@ -45,7 +45,6 @@ const SLOT_SIZE_LARGE := 56.0   # For screens > 900px
 ## UI References (set up in _ready)
 var equipment_container: VBoxContainer
 var backpack_container: GridContainer
-var backpack_scroll: ScrollContainer
 var gold_label: Label
 var item_popup: Control  # ItemDetailPopup instance
 
@@ -168,6 +167,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	var backpack_panel := PanelContainer.new()
 	backpack_panel.name = "BackpackPanel"
 	backpack_panel.size_flags_horizontal = SIZE_EXPAND_FILL
+	backpack_panel.size_flags_vertical = SIZE_EXPAND_FILL
 	parent.add_child(backpack_panel)
 
 	# Inner margin for padding
@@ -202,33 +202,24 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	gold_label.modulate = Color(1.0, 0.85, 0.0)
 	header_row.add_child(gold_label)
 
-	# Scrollable backpack grid - align to right
-	backpack_scroll = ScrollContainer.new()
-	backpack_scroll.name = "BackpackScroll"
-	backpack_scroll.size_flags_vertical = SIZE_EXPAND_FILL
-	backpack_scroll.size_flags_horizontal = SIZE_EXPAND_FILL
-	backpack_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	backpack_vbox.add_child(backpack_scroll)
-
-	# Container to align grid to right
-	var grid_align := HBoxContainer.new()
-	grid_align.name = "GridAlign"
-	grid_align.size_flags_horizontal = SIZE_EXPAND_FILL
-	backpack_scroll.add_child(grid_align)
-
-	# Spacer pushes grid to right
-	var spacer := Control.new()
-	spacer.size_flags_horizontal = SIZE_EXPAND_FILL
-	grid_align.add_child(spacer)
+	# Grid area - align to right, fill vertical space
+	var grid_area := Control.new()
+	grid_area.name = "GridArea"
+	grid_area.size_flags_vertical = SIZE_EXPAND_FILL
+	grid_area.size_flags_horizontal = SIZE_EXPAND_FILL
+	backpack_vbox.add_child(grid_area)
 
 	backpack_container = GridContainer.new()
 	backpack_container.name = "BackpackGrid"
 	backpack_container.columns = BACKPACK_COLUMNS
 	backpack_container.add_theme_constant_override("h_separation", 4)
 	backpack_container.add_theme_constant_override("v_separation", 4)
-	grid_align.add_child(backpack_container)
+	# Anchor to top-right
+	backpack_container.set_anchors_preset(PRESET_TOP_RIGHT)
+	backpack_container.grow_horizontal = GROW_DIRECTION_BEGIN
+	grid_area.add_child(backpack_container)
 
-	# Create backpack slots
+	# Create backpack slots (size will be adjusted after layout)
 	for i in Inventory.BACKPACK_SIZE:
 		var slot := InventorySlot.new()
 		slot.slot_type = InventorySlot.SlotType.BACKPACK
@@ -237,6 +228,28 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 		slot.slot_pressed.connect(_on_slot_pressed)
 		backpack_container.add_child(slot)
 		backpack_slots.append(slot)
+
+	# Resize slots to fill available space after layout
+	grid_area.resized.connect(_on_grid_area_resized.bind(grid_area))
+
+
+func _on_grid_area_resized(grid_area: Control) -> void:
+	if backpack_slots.is_empty():
+		return
+
+	var available_height := grid_area.size.y
+	var num_rows := ceili(float(Inventory.BACKPACK_SIZE) / BACKPACK_COLUMNS)
+	var v_separation := 4
+	var total_separation := (num_rows - 1) * v_separation
+
+	# Calculate slot size to fill height
+	var slot_height := floorf((available_height - total_separation) / num_rows)
+	# Clamp to reasonable bounds
+	slot_height = clampf(slot_height, SLOT_SIZE_SMALL, 80.0)
+
+	# Update all backpack slots
+	for slot in backpack_slots:
+		slot.custom_minimum_size = Vector2(slot_height, slot_height)
 
 
 func _build_item_popup() -> void:
