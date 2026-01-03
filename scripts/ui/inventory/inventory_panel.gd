@@ -5,6 +5,9 @@ class_name InventoryPanel
 
 signal destroy_requested  # Emitted when destroy button pressed, parent shows confirmation
 
+## Preload ItemDetailPopup to avoid class_name load order issues
+const ItemDetailPopupScript = preload("res://scripts/ui/inventory/item_detail_popup.gd")
+
 ## Equipment slot layout (2-column grid)
 ## Format: Array of rows, each row is an array of slots
 const EQUIPMENT_LAYOUT: Array = [
@@ -40,7 +43,7 @@ var equipment_container: VBoxContainer
 var backpack_container: GridContainer
 var backpack_scroll: ScrollContainer
 var gold_label: Label
-var item_popup: ItemDetailPopup
+var item_popup: Control  # ItemDetailPopup instance
 
 ## Slot tracking
 var equipment_slots: Dictionary = {}  # EquipSlot -> InventorySlot
@@ -184,7 +187,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 
 
 func _build_item_popup() -> void:
-	item_popup = ItemDetailPopup.new()
+	item_popup = ItemDetailPopupScript.new()
 	item_popup.name = "ItemDetailPopup"
 	item_popup.set_anchors_preset(PRESET_FULL_RECT)
 	add_child(item_popup)
