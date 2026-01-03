@@ -51,12 +51,50 @@ var selected_source: String = ""  # "chest" or "backpack"
 ## Swap mode
 var swap_mode: bool = false
 
+## Main panel reference for responsive sizing
+var menu_panel: Panel = null
+
+## Design size for responsive scaling (800x560 from _build_ui)
+const DESIGN_WIDTH := 800.0
+const DESIGN_HEIGHT := 560.0
+
 
 func _ready() -> void:
 	layer = 25
 	visible = false
 	_build_ui()
+
+	# Apply responsive sizing
+	call_deferred("_apply_responsive_size")
+
+	# Connect to viewport resize
+	get_viewport().size_changed.connect(_on_viewport_resized)
+
 	Debug.info("UI", "ChestMenu initialized")
+
+
+func _on_viewport_resized() -> void:
+	_apply_responsive_size()
+
+
+func _apply_responsive_size() -> void:
+	## Constrain panel size to fit viewport on small screens
+	if not menu_panel:
+		return
+
+	if ResponsiveUI:
+		ResponsiveUI.constrain_centered_panel(menu_panel, DESIGN_WIDTH, DESIGN_HEIGHT, 0.02)
+	else:
+		# Fallback if ResponsiveUI not loaded yet
+		var vp_size := get_viewport().get_visible_rect().size
+		var max_width := vp_size.x * 0.96
+		var max_height := vp_size.y * 0.96
+		var width := minf(DESIGN_WIDTH, max_width)
+		var height := minf(DESIGN_HEIGHT, max_height)
+		menu_panel.offset_left = -width / 2.0
+		menu_panel.offset_right = width / 2.0
+		menu_panel.offset_top = -height / 2.0
+		menu_panel.offset_bottom = height / 2.0
 
 
 func _process(delta: float) -> void:
@@ -76,14 +114,14 @@ func _build_ui() -> void:
 	add_child(dimmer)
 
 	# Main panel
-	var panel := Panel.new()
-	panel.name = "MenuPanel"
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -400
-	panel.offset_top = -280
-	panel.offset_right = 400
-	panel.offset_bottom = 280
-	add_child(panel)
+	menu_panel = Panel.new()
+	menu_panel.name = "MenuPanel"
+	menu_panel.set_anchors_preset(Control.PRESET_CENTER)
+	menu_panel.offset_left = -400
+	menu_panel.offset_top = -280
+	menu_panel.offset_right = 400
+	menu_panel.offset_bottom = 280
+	add_child(menu_panel)
 
 	# Main VBox
 	var vbox := VBoxContainer.new()
@@ -94,7 +132,7 @@ func _build_ui() -> void:
 	vbox.offset_right = -8
 	vbox.offset_bottom = -8
 	vbox.add_theme_constant_override("separation", 8)
-	panel.add_child(vbox)
+	menu_panel.add_child(vbox)
 
 	# Header
 	_build_header(vbox)

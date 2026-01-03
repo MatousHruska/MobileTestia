@@ -61,6 +61,10 @@ var _quest_log_instance = null  # QuestLogPanel
 ## Skills panel instance (created dynamically)
 var _skills_panel_instance: SkillsPanel = null
 
+## Design size for responsive scaling (840x600 from .tscn)
+const DESIGN_WIDTH := 840.0
+const DESIGN_HEIGHT := 600.0
+
 
 func _ready() -> void:
 	Debug.info("UI", "CharacterMenu ready")
@@ -77,6 +81,36 @@ func _ready() -> void:
 
 	# Setup tab arrays after @onready
 	call_deferred("_setup_tabs")
+
+	# Apply responsive sizing
+	call_deferred("_apply_responsive_size")
+
+	# Connect to viewport resize
+	get_viewport().size_changed.connect(_on_viewport_resized)
+
+
+func _on_viewport_resized() -> void:
+	_apply_responsive_size()
+
+
+func _apply_responsive_size() -> void:
+	## Constrain panel size to fit viewport on small screens
+	if not panel_container:
+		return
+
+	if ResponsiveUI:
+		ResponsiveUI.constrain_centered_panel(panel_container, DESIGN_WIDTH, DESIGN_HEIGHT, 0.02)
+	else:
+		# Fallback if ResponsiveUI not loaded yet
+		var vp_size := get_viewport().get_visible_rect().size
+		var max_width := vp_size.x * 0.96
+		var max_height := vp_size.y * 0.96
+		var width := minf(DESIGN_WIDTH, max_width)
+		var height := minf(DESIGN_HEIGHT, max_height)
+		panel_container.offset_left = -width / 2.0
+		panel_container.offset_right = width / 2.0
+		panel_container.offset_top = -height / 2.0
+		panel_container.offset_bottom = height / 2.0
 
 
 func _setup_confirm_popup() -> void:
