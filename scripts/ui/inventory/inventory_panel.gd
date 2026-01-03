@@ -278,7 +278,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	scroll_container.add_child(backpack_container)
 
 	# Create backpack slots (count from database)
-	var slot_count := Database.get_setting_int("inventory_slots", 25)
+	var slot_count := DatabaseLoader.get_setting_int("inventory_slots", 25)
 	for i in slot_count:
 		var slot := InventorySlot.new()
 		slot.slot_type = InventorySlot.SlotType.BACKPACK

@@ -39,7 +39,7 @@ signal swap_mode_changed(active: bool)
 
 func _ready() -> void:
 	# Load backpack size from database
-	backpack_size = Database.get_setting_int("inventory_slots", 25)
+	backpack_size = DatabaseLoader.get_setting_int("inventory_slots", 25)
 	_initialize_inventory()
 	# Connect equipment changes to stats recalculation
 	equipment_changed.connect(_on_equipment_changed)
