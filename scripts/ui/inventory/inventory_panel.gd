@@ -8,14 +8,18 @@ signal destroy_requested  # Emitted when destroy button pressed, parent shows co
 ## Preload ItemDetailPopup to avoid class_name load order issues
 const ItemDetailPopupScript = preload("res://scripts/ui/inventory/item_detail_popup.gd")
 
-## Equipment slot layout (2-column grid)
-## Format: Array of rows, each row is an array of slots
-const EQUIPMENT_LAYOUT: Array = [
-	[ItemData.EquipSlot.HEAD, ItemData.EquipSlot.ACCESSORY_2],      # H  A (Amulet)
-	[ItemData.EquipSlot.BODY],                                       # B
-	[ItemData.EquipSlot.HANDS, ItemData.EquipSlot.ACCESSORY_1],     # G  R (Ring)
-	[ItemData.EquipSlot.BOOTS],                                      # F
-	[ItemData.EquipSlot.MAIN_HAND, ItemData.EquipSlot.QUICK_SLOT]   # W  Q
+## Equipment slot layout - Two columns:
+## Column 1 (Armor): HEAD+AMULET, HAND+BODY+RING, LEGS
+## Column 2 (Combat): WEAPON, QUICK_SLOT
+const ARMOR_LAYOUT: Array = [
+	[ItemData.EquipSlot.HEAD, ItemData.EquipSlot.ACCESSORY_2],           # Head, Amulet
+	[ItemData.EquipSlot.HANDS, ItemData.EquipSlot.BODY, ItemData.EquipSlot.ACCESSORY_1],  # Hand, Body, Ring
+	[ItemData.EquipSlot.BOOTS]                                           # Legs/Feet
+]
+
+const COMBAT_LAYOUT: Array = [
+	ItemData.EquipSlot.MAIN_HAND,   # Weapon
+	ItemData.EquipSlot.QUICK_SLOT   # Quick Slot
 ]
 
 ## All equipment slots for iteration
@@ -89,17 +93,24 @@ func _build_ui() -> void:
 
 
 func _build_equipment_column(parent: HBoxContainer) -> void:
+	# Outer container with outline (PanelContainer provides the outline)
 	var equip_panel := PanelContainer.new()
 	equip_panel.name = "EquipmentPanel"
-	# Width based on 2 slots + spacing
-	var panel_width := current_slot_size * 2 + 24  # 2 slots + padding
-	equip_panel.custom_minimum_size.x = panel_width
 	parent.add_child(equip_panel)
+
+	# Inner margin for padding
+	var margin := MarginContainer.new()
+	margin.name = "EquipmentMargin"
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	equip_panel.add_child(margin)
 
 	var equip_vbox := VBoxContainer.new()
 	equip_vbox.name = "EquipmentVBox"
 	equip_vbox.add_theme_constant_override("separation", 4)
-	equip_panel.add_child(equip_vbox)
+	margin.add_child(equip_vbox)
 
 	# Header
 	var header := Label.new()
@@ -108,18 +119,23 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	header.add_theme_font_size_override("font_size", 14)
 	equip_vbox.add_child(header)
 
-	# Equipment slots container
-	equipment_container = VBoxContainer.new()
-	equipment_container.name = "EquipmentSlots"
-	equipment_container.add_theme_constant_override("separation", 2)
-	equip_vbox.add_child(equipment_container)
+	# Two-column layout: Armor | Combat
+	var columns_hbox := HBoxContainer.new()
+	columns_hbox.name = "EquipmentColumns"
+	columns_hbox.add_theme_constant_override("separation", 12)
+	equip_vbox.add_child(columns_hbox)
 
-	# Create equipment slots using the 2-column layout (no labels - ghost icons are enough)
-	for row_slots in EQUIPMENT_LAYOUT:
+	# Column 1: Armor slots
+	var armor_column := VBoxContainer.new()
+	armor_column.name = "ArmorColumn"
+	armor_column.add_theme_constant_override("separation", 4)
+	columns_hbox.add_child(armor_column)
+
+	for row_slots in ARMOR_LAYOUT:
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override("separation", 4)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		equipment_container.add_child(row)
+		armor_column.add_child(row)
 
 		for slot in row_slots:
 			var slot_btn := InventorySlot.new()
@@ -130,17 +146,43 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 			row.add_child(slot_btn)
 			equipment_slots[slot] = slot_btn
 
+	# Column 2: Combat slots (Weapon + Quick Slot)
+	var combat_column := VBoxContainer.new()
+	combat_column.name = "CombatColumn"
+	combat_column.add_theme_constant_override("separation", 4)
+	combat_column.alignment = BoxContainer.ALIGNMENT_CENTER
+	columns_hbox.add_child(combat_column)
+
+	for slot in COMBAT_LAYOUT:
+		var slot_btn := InventorySlot.new()
+		slot_btn.slot_type = InventorySlot.SlotType.EQUIPMENT
+		slot_btn.equipment_slot = slot
+		slot_btn.custom_minimum_size = Vector2(current_slot_size, current_slot_size)
+		slot_btn.slot_pressed.connect(_on_slot_pressed)
+		combat_column.add_child(slot_btn)
+		equipment_slots[slot] = slot_btn
+
 
 func _build_backpack_column(parent: HBoxContainer) -> void:
+	# Outer container with outline (PanelContainer provides the outline)
 	var backpack_panel := PanelContainer.new()
 	backpack_panel.name = "BackpackPanel"
 	backpack_panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	parent.add_child(backpack_panel)
 
+	# Inner margin for padding
+	var margin := MarginContainer.new()
+	margin.name = "BackpackMargin"
+	margin.add_theme_constant_override("margin_left", 8)
+	margin.add_theme_constant_override("margin_right", 8)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	backpack_panel.add_child(margin)
+
 	var backpack_vbox := VBoxContainer.new()
 	backpack_vbox.name = "BackpackVBox"
 	backpack_vbox.add_theme_constant_override("separation", 4)
-	backpack_panel.add_child(backpack_vbox)
+	margin.add_child(backpack_vbox)
 
 	# Header with gold
 	var header_row := HBoxContainer.new()
@@ -160,7 +202,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	gold_label.modulate = Color(1.0, 0.85, 0.0)
 	header_row.add_child(gold_label)
 
-	# Scrollable backpack grid
+	# Scrollable backpack grid - align to right
 	backpack_scroll = ScrollContainer.new()
 	backpack_scroll.name = "BackpackScroll"
 	backpack_scroll.size_flags_vertical = SIZE_EXPAND_FILL
@@ -168,12 +210,23 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	backpack_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	backpack_vbox.add_child(backpack_scroll)
 
+	# Container to align grid to right
+	var grid_align := HBoxContainer.new()
+	grid_align.name = "GridAlign"
+	grid_align.size_flags_horizontal = SIZE_EXPAND_FILL
+	backpack_scroll.add_child(grid_align)
+
+	# Spacer pushes grid to right
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = SIZE_EXPAND_FILL
+	grid_align.add_child(spacer)
+
 	backpack_container = GridContainer.new()
 	backpack_container.name = "BackpackGrid"
 	backpack_container.columns = BACKPACK_COLUMNS
 	backpack_container.add_theme_constant_override("h_separation", 4)
 	backpack_container.add_theme_constant_override("v_separation", 4)
-	backpack_scroll.add_child(backpack_container)
+	grid_align.add_child(backpack_container)
 
 	# Create backpack slots
 	for i in Inventory.BACKPACK_SIZE:
