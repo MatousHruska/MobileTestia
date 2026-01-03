@@ -199,12 +199,13 @@ When an item is selected (tap), show a popup overlay:
 
 ## Implementation Order
 
-### Session 1: Inventory Tab Redesign
-1. [ ] Create ItemDetailPopup component
-2. [ ] Redesign InventoryPanel to 2-column layout
-3. [ ] Reduce slot sizes for mobile (48px)
-4. [ ] Connect item selection to popup
-5. [ ] Test on 424px and 720px heights
+### Session 1: Inventory Tab Redesign ✅ COMPLETE
+1. [x] Create ItemDetailPopup component (`scripts/ui/inventory/item_detail_popup.gd`)
+2. [x] Redesign InventoryPanel to 2-column layout
+3. [x] Reduce slot sizes for mobile (44/48/56px responsive)
+4. [x] Connect item selection to popup
+5. [x] Remove slot labels (ghost icons sufficient)
+6. [ ] Test on 424px and 720px heights
 
 ### Session 2: Stats Tab Optimization
 1. [ ] Compact player info header
@@ -289,22 +290,22 @@ func _ready():
 ## Files to Modify
 
 ### Core Changes
-| File | Changes |
-|------|---------|
-| `scripts/ui/menu/inventory_panel.gd` | Complete redesign - 2 columns + popup |
-| `scripts/ui/menu/stats_panel.gd` | Compact layout |
-| `scripts/ui/menu/skills_panel.gd` | Smaller buttons, scrollable |
-| `scripts/ui/quest/quest_log_panel.gd` | Accordion layout |
+| File | Status | Changes |
+|------|--------|---------|
+| `scripts/ui/inventory/inventory_panel.gd` | ✅ Done | 2-column layout + popup integration |
+| `scripts/ui/menu/stats_panel.gd` | Pending | Compact layout |
+| `scripts/ui/menu/skills_panel.gd` | Pending | Smaller buttons, scrollable |
+| `scripts/ui/quest/quest_log_panel.gd` | Pending | Accordion layout |
 
 ### New Files
-| File | Purpose |
-|------|---------|
-| `scripts/ui/menu/item_detail_popup.gd` | Item info popup overlay |
+| File | Status | Purpose |
+|------|--------|---------|
+| `scripts/ui/inventory/item_detail_popup.gd` | ✅ Done | Modal popup for item details |
 
 ### Scene Changes
-| File | Changes |
-|------|---------|
-| `scenes/ui/menu/character_menu.tscn` | Reduced panel height |
+| File | Status | Changes |
+|------|--------|---------|
+| `scenes/ui/menu/character_menu.tscn` | Pending | May need reduced panel height |
 
 ---
 
