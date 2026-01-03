@@ -1,6 +1,7 @@
 extends Control
 class_name InventoryPanel
-## Unified inventory panel with Equipment | Details | Backpack layout
+## Mobile-optimized inventory panel with Equipment | Backpack layout + popup details
+## Redesigned for small screens (424px+ height)
 
 signal destroy_requested  # Emitted when destroy button pressed, parent shows confirmation
 
@@ -29,40 +30,45 @@ const EQUIPMENT_SLOTS: Array[ItemData.EquipSlot] = [
 ## Backpack settings
 const BACKPACK_COLUMNS: int = 5
 
+## Slot sizing (responsive)
+const SLOT_SIZE_SMALL := 44.0   # For screens < 500px height
+const SLOT_SIZE_NORMAL := 48.0  # For screens 500-900px
+const SLOT_SIZE_LARGE := 56.0   # For screens > 900px
+
 ## UI References (set up in _ready)
 var equipment_container: VBoxContainer
-var details_container: VBoxContainer
 var backpack_container: GridContainer
 var backpack_scroll: ScrollContainer
-
-## Details panel elements
-var details_icon: TextureRect
-var details_name: Label
-var details_type: Label
-var details_rarity: Label
-var details_description: Label
-var details_stats: Label
-var action_equip_button: Button
-var action_use_button: Button
-var action_swap_button: Button
-var action_destroy_button: Button
-var details_placeholder: Label
-var swap_mode_label: Label
+var gold_label: Label
+var item_popup: ItemDetailPopup
 
 ## Slot tracking
 var equipment_slots: Dictionary = {}  # EquipSlot -> InventorySlot
 var backpack_slots: Array[InventorySlot] = []
 
+## Current slot size (set based on screen)
+var current_slot_size: float = SLOT_SIZE_NORMAL
+
 
 func _ready() -> void:
+	_calculate_slot_size()
 	_build_ui()
 	_connect_signals()
 	_refresh_all()
-	Debug.info("UI", "InventoryPanel initialized")
+	Debug.info("UI", "InventoryPanel initialized (2-column mobile layout)")
+
+
+func _calculate_slot_size() -> void:
+	if ResponsiveUI and ResponsiveUI.is_small_screen():
+		current_slot_size = SLOT_SIZE_SMALL
+	elif ResponsiveUI and ResponsiveUI.is_large_screen():
+		current_slot_size = SLOT_SIZE_LARGE
+	else:
+		current_slot_size = SLOT_SIZE_NORMAL
 
 
 func _build_ui() -> void:
-	# Main horizontal container
+	# Main horizontal container (2 columns: Equipment | Backpack)
 	var main_hbox := HBoxContainer.new()
 	main_hbox.name = "MainHBox"
 	main_hbox.set_anchors_preset(PRESET_FULL_RECT)
@@ -72,17 +78,19 @@ func _build_ui() -> void:
 	# Left column - Equipment
 	_build_equipment_column(main_hbox)
 
-	# Center column - Details
-	_build_details_column(main_hbox)
-
-	# Right column - Backpack
+	# Right column - Backpack (fills remaining space)
 	_build_backpack_column(main_hbox)
+
+	# Item detail popup (overlays everything)
+	_build_item_popup()
 
 
 func _build_equipment_column(parent: HBoxContainer) -> void:
 	var equip_panel := PanelContainer.new()
 	equip_panel.name = "EquipmentPanel"
-	equip_panel.custom_minimum_size.x = 160
+	# Width based on 2 slots + spacing
+	var panel_width := current_slot_size * 2 + 24  # 2 slots + padding
+	equip_panel.custom_minimum_size.x = panel_width
 	parent.add_child(equip_panel)
 
 	var equip_vbox := VBoxContainer.new()
@@ -94,210 +102,36 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	var header := Label.new()
 	header.text = "Equipment"
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.add_theme_font_size_override("font_size", 16)
+	header.add_theme_font_size_override("font_size", 14)
 	equip_vbox.add_child(header)
 
 	# Equipment slots container
 	equipment_container = VBoxContainer.new()
 	equipment_container.name = "EquipmentSlots"
-	equipment_container.add_theme_constant_override("separation", 4)
+	equipment_container.add_theme_constant_override("separation", 2)
 	equip_vbox.add_child(equipment_container)
 
-	# Create equipment slots using the 2-column layout
+	# Create equipment slots using the 2-column layout (no labels - ghost icons are enough)
 	for row_slots in EQUIPMENT_LAYOUT:
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
+		row.add_theme_constant_override("separation", 4)
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		equipment_container.add_child(row)
 
 		for slot in row_slots:
-			var slot_container := VBoxContainer.new()
-			slot_container.add_theme_constant_override("separation", 2)
-			row.add_child(slot_container)
-
-			# Slot button
 			var slot_btn := InventorySlot.new()
 			slot_btn.slot_type = InventorySlot.SlotType.EQUIPMENT
 			slot_btn.equipment_slot = slot
-			slot_btn.custom_minimum_size = Vector2(56, 56)
+			slot_btn.custom_minimum_size = Vector2(current_slot_size, current_slot_size)
 			slot_btn.slot_pressed.connect(_on_slot_pressed)
-			slot_container.add_child(slot_btn)
-
-			# Slot label below
-			var label := Label.new()
-			label.text = ItemData.get_slot_name(slot)
-			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			label.add_theme_font_size_override("font_size", 10)
-			label.modulate = Color(0.7, 0.7, 0.7)
-			slot_container.add_child(label)
-
+			row.add_child(slot_btn)
 			equipment_slots[slot] = slot_btn
-
-
-func _build_details_column(parent: HBoxContainer) -> void:
-	var details_panel := PanelContainer.new()
-	details_panel.name = "DetailsPanel"
-	details_panel.size_flags_horizontal = SIZE_EXPAND_FILL
-	parent.add_child(details_panel)
-
-	details_container = VBoxContainer.new()
-	details_container.name = "DetailsVBox"
-	details_container.add_theme_constant_override("separation", 8)
-	details_panel.add_child(details_container)
-
-	# Header
-	var header := Label.new()
-	header.text = "Item Details"
-	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.add_theme_font_size_override("font_size", 16)
-	details_container.add_child(header)
-
-	# Placeholder text (shown when nothing selected)
-	details_placeholder = Label.new()
-	details_placeholder.name = "Placeholder"
-	details_placeholder.text = "Select an item to view details"
-	details_placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	details_placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	details_placeholder.size_flags_vertical = SIZE_EXPAND_FILL
-	details_placeholder.modulate = Color(0.6, 0.6, 0.6)
-	details_container.add_child(details_placeholder)
-
-	# Item info container (hidden until item selected)
-	var info_container := VBoxContainer.new()
-	info_container.name = "InfoContainer"
-	info_container.size_flags_vertical = SIZE_EXPAND_FILL
-	info_container.add_theme_constant_override("separation", 4)
-	info_container.visible = false
-	details_container.add_child(info_container)
-
-	# Icon and name row
-	var top_row := HBoxContainer.new()
-	top_row.add_theme_constant_override("separation", 12)
-	info_container.add_child(top_row)
-
-	# Large icon
-	var icon_bg := ColorRect.new()
-	icon_bg.custom_minimum_size = Vector2(80, 80)
-	icon_bg.color = Color(0.2, 0.2, 0.25, 1)
-	top_row.add_child(icon_bg)
-
-	details_icon = TextureRect.new()
-	details_icon.set_anchors_preset(PRESET_FULL_RECT)
-	details_icon.offset_left = 4
-	details_icon.offset_top = 4
-	details_icon.offset_right = -4
-	details_icon.offset_bottom = -4
-	details_icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-	details_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon_bg.add_child(details_icon)
-
-	# Name and type
-	var name_vbox := VBoxContainer.new()
-	name_vbox.size_flags_horizontal = SIZE_EXPAND_FILL
-	top_row.add_child(name_vbox)
-
-	details_name = Label.new()
-	details_name.add_theme_font_size_override("font_size", 18)
-	name_vbox.add_child(details_name)
-
-	details_type = Label.new()
-	details_type.add_theme_font_size_override("font_size", 12)
-	details_type.modulate = Color(0.7, 0.7, 0.7)
-	name_vbox.add_child(details_type)
-
-	details_rarity = Label.new()
-	details_rarity.add_theme_font_size_override("font_size", 12)
-	name_vbox.add_child(details_rarity)
-
-	# Description
-	var desc_label := Label.new()
-	desc_label.text = "Description:"
-	desc_label.add_theme_font_size_override("font_size", 12)
-	desc_label.modulate = Color(0.7, 0.7, 0.7)
-	info_container.add_child(desc_label)
-
-	details_description = Label.new()
-	details_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	info_container.add_child(details_description)
-
-	# Stats
-	var stats_label := Label.new()
-	stats_label.text = "Stats:"
-	stats_label.add_theme_font_size_override("font_size", 12)
-	stats_label.modulate = Color(0.7, 0.7, 0.7)
-	info_container.add_child(stats_label)
-
-	details_stats = Label.new()
-	details_stats.size_flags_vertical = SIZE_EXPAND_FILL
-	info_container.add_child(details_stats)
-
-	# Spacer
-	var spacer := Control.new()
-	spacer.size_flags_vertical = SIZE_EXPAND_FILL
-	info_container.add_child(spacer)
-
-	# Action buttons container (two rows)
-	var buttons_container := VBoxContainer.new()
-	buttons_container.name = "ButtonsContainer"
-	buttons_container.add_theme_constant_override("separation", 4)
-	info_container.add_child(buttons_container)
-
-	# Top row - Equip/Quick Slot button (separate to avoid dynamic stretching)
-	var top_button_row := HBoxContainer.new()
-	top_button_row.name = "TopButtonRow"
-	top_button_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	buttons_container.add_child(top_button_row)
-
-	action_equip_button = Button.new()
-	action_equip_button.name = "EquipButton"
-	action_equip_button.text = "Equip"
-	action_equip_button.custom_minimum_size = Vector2(120, 40)
-	action_equip_button.pressed.connect(_on_equip_pressed)
-	top_button_row.add_child(action_equip_button)
-
-	# Bottom row - Use, Swap, Destroy buttons
-	var button_row := HBoxContainer.new()
-	button_row.name = "ActionButtons"
-	button_row.add_theme_constant_override("separation", 8)
-	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	buttons_container.add_child(button_row)
-
-	action_use_button = Button.new()
-	action_use_button.name = "UseButton"
-	action_use_button.text = "Use"
-	action_use_button.custom_minimum_size = Vector2(70, 40)
-	action_use_button.pressed.connect(_on_use_pressed)
-	action_use_button.visible = false
-	button_row.add_child(action_use_button)
-
-	action_swap_button = Button.new()
-	action_swap_button.name = "SwapButton"
-	action_swap_button.text = "Swap"
-	action_swap_button.custom_minimum_size = Vector2(70, 40)
-	action_swap_button.pressed.connect(_on_swap_pressed)
-	button_row.add_child(action_swap_button)
-
-	action_destroy_button = Button.new()
-	action_destroy_button.name = "DestroyButton"
-	action_destroy_button.text = "Destroy"
-	action_destroy_button.custom_minimum_size = Vector2(70, 40)
-	action_destroy_button.pressed.connect(_on_destroy_pressed)
-	button_row.add_child(action_destroy_button)
-
-	# Swap mode indicator label
-	swap_mode_label = Label.new()
-	swap_mode_label.name = "SwapModeLabel"
-	swap_mode_label.text = "Select target slot to swap..."
-	swap_mode_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	swap_mode_label.modulate = Color(1.0, 0.8, 0.2)
-	swap_mode_label.visible = false
-	info_container.add_child(swap_mode_label)
 
 
 func _build_backpack_column(parent: HBoxContainer) -> void:
 	var backpack_panel := PanelContainer.new()
 	backpack_panel.name = "BackpackPanel"
-	backpack_panel.custom_minimum_size.x = 340
+	backpack_panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	parent.add_child(backpack_panel)
 
 	var backpack_vbox := VBoxContainer.new()
@@ -307,19 +141,19 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 
 	# Header with gold
 	var header_row := HBoxContainer.new()
-	header_row.name = "HBoxContainer"
+	header_row.name = "HeaderRow"
 	backpack_vbox.add_child(header_row)
 
 	var header := Label.new()
 	header.text = "Backpack"
 	header.size_flags_horizontal = SIZE_EXPAND_FILL
-	header.add_theme_font_size_override("font_size", 16)
+	header.add_theme_font_size_override("font_size", 14)
 	header_row.add_child(header)
 
-	var gold_label := Label.new()
+	gold_label = Label.new()
 	gold_label.name = "GoldLabel"
 	gold_label.text = "Gold: 0"
-	gold_label.add_theme_font_size_override("font_size", 14)
+	gold_label.add_theme_font_size_override("font_size", 12)
 	gold_label.modulate = Color(1.0, 0.85, 0.0)
 	header_row.add_child(gold_label)
 
@@ -327,6 +161,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	backpack_scroll = ScrollContainer.new()
 	backpack_scroll.name = "BackpackScroll"
 	backpack_scroll.size_flags_vertical = SIZE_EXPAND_FILL
+	backpack_scroll.size_flags_horizontal = SIZE_EXPAND_FILL
 	backpack_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	backpack_vbox.add_child(backpack_scroll)
 
@@ -342,10 +177,24 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 		var slot := InventorySlot.new()
 		slot.slot_type = InventorySlot.SlotType.BACKPACK
 		slot.backpack_index = i
-		slot.custom_minimum_size = Vector2(56, 56)
+		slot.custom_minimum_size = Vector2(current_slot_size, current_slot_size)
 		slot.slot_pressed.connect(_on_slot_pressed)
 		backpack_container.add_child(slot)
 		backpack_slots.append(slot)
+
+
+func _build_item_popup() -> void:
+	item_popup = ItemDetailPopup.new()
+	item_popup.name = "ItemDetailPopup"
+	item_popup.set_anchors_preset(PRESET_FULL_RECT)
+	add_child(item_popup)
+
+	# Connect popup signals
+	item_popup.equip_pressed.connect(_on_equip_pressed)
+	item_popup.use_pressed.connect(_on_use_pressed)
+	item_popup.swap_pressed.connect(_on_swap_pressed)
+	item_popup.destroy_pressed.connect(_on_destroy_pressed)
+	item_popup.closed.connect(_on_popup_closed)
 
 
 func _connect_signals() -> void:
@@ -360,7 +209,6 @@ func _connect_signals() -> void:
 func _refresh_all() -> void:
 	_refresh_equipment()
 	_refresh_backpack()
-	_refresh_details()
 	_refresh_gold()
 
 
@@ -403,88 +251,9 @@ func _refresh_backpack() -> void:
 		)
 
 
-func _refresh_details() -> void:
-	var info_container := details_container.get_node_or_null("InfoContainer")
-	if not info_container:
-		return
-
-	if not Inventory.has_selection():
-		details_placeholder.visible = true
-		info_container.visible = false
-		return
-
-	details_placeholder.visible = false
-	info_container.visible = true
-
-	var item: ItemData = Inventory.selected_item
-
-	# Update details
-	details_name.text = item.item_name
-	details_name.modulate = ItemData.get_rarity_color(item.rarity)
-
-	details_rarity.text = ItemData.get_rarity_name(item.rarity)
-	details_rarity.modulate = ItemData.get_rarity_color(item.rarity)
-
-	details_description.text = item.description if item.description else "No description"
-
-	# Icon (or placeholder)
-	details_icon.texture = item.icon
-
-	# Type and stats based on item type
-	if item is EquipmentData:
-		var equip: EquipmentData = item as EquipmentData
-		details_type.text = equip.get_type_name()
-		details_stats.text = equip.get_stat_text()
-	elif item is ConsumableData:
-		var consumable: ConsumableData = item as ConsumableData
-		details_type.text = "Consumable"
-		details_stats.text = consumable.get_effect_text()
-	else:
-		details_type.text = "Item"
-		details_stats.text = "No stats"
-
-	# Update action buttons
-	_update_action_buttons()
-
-
-func _update_action_buttons() -> void:
-	if not Inventory.has_selection():
-		action_equip_button.visible = false
-		action_use_button.visible = false
-		action_destroy_button.visible = false
-		return
-
-	var item: ItemData = Inventory.selected_item
-	var is_in_backpack := Inventory.selected_source == "backpack"
-	var is_equipped := Inventory.selected_source == "equipment"
-
-	# Equip/Unequip button
-	if item.item_type == ItemData.ItemType.EQUIPMENT:
-		action_equip_button.visible = true
-		action_use_button.visible = false
-		if is_in_backpack:
-			action_equip_button.text = "Equip"
-		else:
-			action_equip_button.text = "Unequip"
-	else:
-		# Consumable
-		action_equip_button.visible = is_in_backpack
-		action_use_button.visible = true
-		if is_in_backpack:
-			action_equip_button.text = "Quick Slot"
-
-	# Swap is only available for backpack items
-	action_swap_button.visible = is_in_backpack
-
-	# Destroy is always available
-	action_destroy_button.visible = true
-
-
 func _refresh_gold() -> void:
-	var gold_label := get_node_or_null("MainHBox/BackpackPanel/BackpackVBox/HBoxContainer/GoldLabel")
 	if gold_label:
 		gold_label.text = "Gold: %d" % Inventory.gold
-		Debug.log("UI", "Gold label updated to: %d" % Inventory.gold)
 
 
 ## Public method to force refresh all UI (called when panel becomes visible)
@@ -496,19 +265,18 @@ func refresh() -> void:
 
 func _on_slot_pressed(slot: InventorySlot) -> void:
 	var slot_idx = slot.backpack_index if slot.slot_type == InventorySlot.SlotType.BACKPACK else slot.equipment_slot
-	Debug.info("UI", "Slot pressed", "type=%s index=%d swap_mode=%s has_selection=%s" % [slot.slot_type, slot_idx, Inventory.swap_mode, Inventory.has_selection()])
+	Debug.info("UI", "Slot pressed", "type=%s index=%d swap_mode=%s" % [slot.slot_type, slot_idx, Inventory.swap_mode])
 
 	# Handle swap mode
 	if Inventory.swap_mode:
-		Debug.info("UI", "In swap mode", "slot_type=%s target_index=%d" % [slot.slot_type, slot.backpack_index])
 		if slot.slot_type == InventorySlot.SlotType.BACKPACK:
-			var result = Inventory.swap_with_backpack_slot(slot.backpack_index)
-			Debug.info("UI", "Swap result", str(result))
+			Inventory.swap_with_backpack_slot(slot.backpack_index)
 		else:
 			# Can't swap with equipment slots, exit swap mode
 			Inventory.exit_swap_mode()
 		return
 
+	# Normal selection
 	if slot.slot_type == InventorySlot.SlotType.BACKPACK:
 		Inventory.select_backpack_item(slot.backpack_index)
 	else:
@@ -517,31 +285,44 @@ func _on_slot_pressed(slot: InventorySlot) -> void:
 
 func _on_inventory_changed() -> void:
 	_refresh_backpack()
-	_refresh_details()
+	# Update popup if visible
+	if item_popup.visible and Inventory.has_selection():
+		item_popup.show_item(Inventory.selected_item, Inventory.selected_source, Inventory.selected_index)
 
 
 func _on_equipment_changed(_slot: ItemData.EquipSlot) -> void:
 	_refresh_equipment()
-	_refresh_details()
+	# Update popup if visible
+	if item_popup.visible and Inventory.has_selection():
+		item_popup.show_item(Inventory.selected_item, Inventory.selected_source, Inventory.selected_index)
 
 
-func _on_item_selected(_item: ItemData, _source: String, _index: int) -> void:
+func _on_item_selected(item: ItemData, source: String, index: int) -> void:
 	_refresh_equipment()
 	_refresh_backpack()
-	_refresh_details()
+	# Show popup with item details
+	item_popup.show_item(item, source, index)
 
 
 func _on_item_deselected() -> void:
 	_refresh_equipment()
 	_refresh_backpack()
-	_refresh_details()
+	# Hide popup
+	item_popup.hide_popup()
 
 
-func _on_gold_changed(new_amount: int) -> void:
+func _on_gold_changed(_new_amount: int) -> void:
 	_refresh_gold()
 
 
-## Action button handlers
+func _on_swap_mode_changed(active: bool) -> void:
+	# Popup handles its own swap mode display
+	if not active:
+		# Swap completed or cancelled - refresh display
+		_refresh_backpack()
+
+
+## Action button handlers (from popup)
 
 func _on_equip_pressed() -> void:
 	if Inventory.selected_source == "backpack":
@@ -559,17 +340,10 @@ func _on_swap_pressed() -> void:
 
 
 func _on_destroy_pressed() -> void:
-	# Emit signal for parent to show confirmation
+	# Emit signal for parent (character_menu) to show confirmation
 	destroy_requested.emit()
 
 
-func _on_swap_mode_changed(active: bool) -> void:
-	swap_mode_label.visible = active
-	# Hide action buttons when in swap mode
-	if active:
-		action_equip_button.visible = false
-		action_use_button.visible = false
-		action_swap_button.visible = false
-		action_destroy_button.visible = false
-	else:
-		_update_action_buttons()
+func _on_popup_closed() -> void:
+	# Popup was closed - deselection already handled by popup
+	pass
