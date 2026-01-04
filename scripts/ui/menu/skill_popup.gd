@@ -57,10 +57,25 @@ var _scroll: ScrollContainer
 
 
 func _ready() -> void:
+	# Make this control cover the full viewport for input capture
+	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_build_ui()
 	visible = false
 	# Process input even when game is paused
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Update size when viewport changes
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	_update_size()
+
+
+func _on_viewport_size_changed() -> void:
+	_update_size()
+
+
+func _update_size() -> void:
+	# Ensure we cover the full viewport (important when inside CanvasLayer)
+	var viewport_size := get_viewport().get_visible_rect().size
+	size = viewport_size
 
 
 #===============================================================================
@@ -199,6 +214,9 @@ func show_talent(talent_id: String, screen_pos: Vector2) -> void:
 
 	current_talent_id = talent_id
 	_is_closing = false
+
+	# Ensure full viewport coverage
+	_update_size()
 
 	# Update content
 	_update_content(talent)
@@ -371,7 +389,8 @@ func _on_background_input(event: InputEvent) -> void:
 		if event.pressed:
 			# Check if tap is outside the panel
 			var panel_rect := _panel.get_global_rect()
-			var tap_pos: Vector2 = event.position
+			# Convert local position to global
+			var tap_pos: Vector2 = _background.get_global_position() + event.position
 			if not panel_rect.has_point(tap_pos):
 				close()
 
