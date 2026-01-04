@@ -139,23 +139,23 @@ func _create_left_panel() -> Control:
 	return container
 
 
-## Wraps a section with 4% top and bottom padding
+## Wraps a section with minimal vertical padding (2% of panel height)
 func _create_section_with_padding(content: Control) -> Control:
 	var wrapper := VBoxContainer.new()
 	wrapper.add_theme_constant_override("separation", 0)
 
-	# 4% top padding spacer
+	# Small top padding (2% equivalent, ~6px on small screens)
 	var top_spacer := Control.new()
-	top_spacer.custom_minimum_size = Vector2(0, 16)  # ~4% of 400px
+	top_spacer.custom_minimum_size = Vector2(0, 6)
 	top_spacer.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	wrapper.add_child(top_spacer)
 
 	content.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	wrapper.add_child(content)
 
-	# 4% bottom padding spacer
+	# Small bottom padding
 	var bottom_spacer := Control.new()
-	bottom_spacer.custom_minimum_size = Vector2(0, 16)  # ~4% of 400px
+	bottom_spacer.custom_minimum_size = Vector2(0, 6)
 	bottom_spacer.size_flags_vertical = Control.SIZE_SHRINK_END
 	wrapper.add_child(bottom_spacer)
 
