@@ -477,8 +477,11 @@ func _get_effect_color(effect_type: String) -> Color:
 
 
 func _create_offensive_panel() -> Control:
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
 	var grid := GridContainer.new()
-	grid.set_anchors_preset(Control.PRESET_FULL_RECT)
 	grid.columns = 2
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 8)
@@ -504,12 +507,16 @@ func _create_offensive_panel() -> Control:
 		for child in row:
 			grid.add_child(child)
 
-	return grid
+	scroll.add_child(grid)
+	return scroll
 
 
 func _create_defensive_panel() -> Control:
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
 	var grid := GridContainer.new()
-	grid.set_anchors_preset(Control.PRESET_FULL_RECT)
 	grid.columns = 2
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 8)
@@ -526,12 +533,16 @@ func _create_defensive_panel() -> Control:
 		for child in row:
 			grid.add_child(child)
 
-	return grid
+	scroll.add_child(grid)
+	return scroll
 
 
 func _create_utility_panel() -> Control:
+	var scroll := ScrollContainer.new()
+	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
 	var grid := GridContainer.new()
-	grid.set_anchors_preset(Control.PRESET_FULL_RECT)
 	grid.columns = 2
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	grid.add_theme_constant_override("h_separation", 8)
@@ -549,7 +560,8 @@ func _create_utility_panel() -> Control:
 		for child in row:
 			grid.add_child(child)
 
-	return grid
+	scroll.add_child(grid)
+	return scroll
 
 
 func _create_derived_stat_row(stat_name: String, display_name: String) -> Array:

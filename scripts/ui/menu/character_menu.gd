@@ -216,6 +216,8 @@ func _setup_stats_panel() -> void:
 	_stats_panel_instance = StatsPanel.new()
 	_stats_panel_instance.name = "DynamicStatsPanel"
 	_stats_panel_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_stats_panel_instance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_stats_panel_instance.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	stats_panel.add_child(_stats_panel_instance)
 
 	Debug.info("UI", "StatsPanel created")
