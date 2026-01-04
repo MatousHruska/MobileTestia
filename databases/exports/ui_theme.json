@@ -35,5 +35,10 @@
   "corner_radius_popup": 6,
   "separation_normal": 8,
   "separation_small": 4,
-  "separation_grid": 4
+  "separation_grid": 4,
+  "font_size_title": 18,
+  "font_size_large": 16,
+  "color_xp_bar": "0.3,0.6,0.9,1.0",
+  "color_debuff": "0.6,0.1,0.1,0.9",
+  "color_drag_highlight": "0.5,1.0,0.5,1.0"
 }
