@@ -45,9 +45,9 @@ var is_open: bool = false
 var _tab_buttons: Array[Button] = []
 var _panels: Array[Control] = []
 
-## Tab notification colors
-const BADGE_COLOR := Color(1.0, 0.85, 0.3)  ## Golden yellow for notification text
-const NORMAL_COLOR := Color(1.0, 1.0, 1.0)  ## Normal button color
+## Tab notification colors - using UITheme for consistency
+## BADGE_COLOR uses COLOR_AVAILABLE (golden yellow)
+## NORMAL_COLOR uses COLOR_SELECTED (white)
 
 ## Inventory panel instance (created dynamically)
 var _inventory_panel_instance: InventoryPanel = null
@@ -277,8 +277,8 @@ func _update_stats_badge() -> void:
 	var points := PlayerStats.attribute_points
 	if points > 0:
 		stats_tab.text = "Stats (+%d)" % points
-		stats_tab.add_theme_color_override("font_color", BADGE_COLOR)
-		stats_tab.add_theme_color_override("font_hover_color", BADGE_COLOR)
+		stats_tab.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
+		stats_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	else:
 		stats_tab.text = "Stats"
 		stats_tab.remove_theme_color_override("font_color")
@@ -293,8 +293,8 @@ func _update_skills_badge() -> void:
 	var available := TalentManager.get_available_points()
 	if available > 0:
 		skills_tab.text = "Skills (+%d)" % available
-		skills_tab.add_theme_color_override("font_color", BADGE_COLOR)
-		skills_tab.add_theme_color_override("font_hover_color", BADGE_COLOR)
+		skills_tab.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
+		skills_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	else:
 		skills_tab.text = "Skills"
 		skills_tab.remove_theme_color_override("font_color")

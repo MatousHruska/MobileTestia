@@ -58,7 +58,7 @@ func _setup_visuals() -> void:
 	rarity_border = ColorRect.new()
 	rarity_border.name = "RarityBorder"
 	rarity_border.set_anchors_preset(PRESET_FULL_RECT)
-	rarity_border.color = Color(0.3, 0.3, 0.3, 0.5)
+	rarity_border.color = UITheme.COLOR_EMPTY_SLOT_BORDER
 	rarity_border.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(rarity_border)
 
@@ -70,7 +70,7 @@ func _setup_visuals() -> void:
 	bg.offset_top = 2
 	bg.offset_right = -2
 	bg.offset_bottom = -2
-	bg.color = Color(0.15, 0.15, 0.2, 1.0)
+	bg.color = UITheme.COLOR_EMPTY_SLOT_BG
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
 
@@ -95,8 +95,8 @@ func _setup_visuals() -> void:
 	ghost_label.grow_vertical = GROW_DIRECTION_BOTH
 	ghost_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ghost_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	ghost_label.add_theme_font_size_override("font_size", 16)
-	ghost_label.modulate = Color(0.4, 0.4, 0.4, 0.6)
+	ghost_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LARGE)
+	ghost_label.modulate = UITheme.COLOR_LOCKED
 	ghost_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(ghost_label)
 
@@ -109,7 +109,7 @@ func _setup_visuals() -> void:
 	quantity_label.offset_right = -2
 	quantity_label.offset_bottom = -2
 	quantity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	quantity_label.add_theme_font_size_override("font_size", 12)
+	quantity_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	quantity_label.visible = false
 	quantity_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(quantity_label)
@@ -118,7 +118,7 @@ func _setup_visuals() -> void:
 	highlight_rect = ColorRect.new()
 	highlight_rect.name = "HighlightRect"
 	highlight_rect.set_anchors_preset(PRESET_FULL_RECT)
-	highlight_rect.color = Color(0.3, 0.8, 0.3, 0.3)  # Green tint for valid drop
+	highlight_rect.color = UITheme.COLOR_DRAG_HIGHLIGHT
 	highlight_rect.visible = false
 	highlight_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(highlight_rect)
@@ -163,12 +163,12 @@ func refresh_display() -> void:
 			quantity_label.visible = true
 			# Dim if no charges
 			if current_charges <= 0:
-				quantity_label.modulate = Color(1.0, 0.3, 0.3)
+				quantity_label.modulate = UITheme.COLOR_DEBUFF
 			else:
-				quantity_label.modulate = Color.WHITE
+				quantity_label.modulate = UITheme.COLOR_SELECTED
 		elif current_quantity > 1:
 			quantity_label.text = str(current_quantity)
-			quantity_label.modulate = Color.WHITE
+			quantity_label.modulate = UITheme.COLOR_SELECTED
 			quantity_label.visible = true
 		else:
 			quantity_label.visible = false
@@ -186,11 +186,11 @@ func refresh_display() -> void:
 		icon_rect.texture = null
 		icon_rect.visible = false
 		quantity_label.visible = false
-		rarity_border.color = Color(0.3, 0.3, 0.3, 0.5)
+		rarity_border.color = UITheme.COLOR_EMPTY_SLOT_BORDER
 
 		# Show ghost icon for equipment slots
 		if slot_type == SlotType.EQUIPMENT:
-			ghost_label.modulate = Color(0.4, 0.4, 0.4, 0.6)
+			ghost_label.modulate = UITheme.COLOR_LOCKED
 			ghost_label.visible = true
 			_update_ghost_icon()
 		else:
@@ -198,16 +198,16 @@ func refresh_display() -> void:
 
 	# Handle blocked state
 	if is_blocked:
-		modulate = Color(0.5, 0.5, 0.5, 0.5)
+		modulate = UITheme.COLOR_LOCKED
 		disabled = true
 	else:
-		modulate = Color.WHITE
+		modulate = UITheme.COLOR_SELECTED
 		disabled = false
 
 	# Selection visual
 	if is_selected:
-		rarity_border.color = Color.WHITE
-		modulate = Color(1.2, 1.2, 1.2, 1.0)
+		rarity_border.color = UITheme.COLOR_SELECTED
+		modulate = UITheme.COLOR_HIGHLIGHT
 
 
 func set_selected(selected: bool) -> void:
@@ -244,13 +244,13 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	if not current_item.icon:
 		var label := Label.new()
 		label.text = current_item.item_name.left(6)
-		label.add_theme_font_size_override("font_size", 12)
+		label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 		set_drag_preview(label)
 	else:
 		set_drag_preview(preview)
 
 	# Dim this slot while dragging
-	modulate = Color(0.5, 0.5, 0.5, 0.7)
+	modulate = UITheme.COLOR_LOCKED
 
 	# Notify panel that drag started (for highlighting target slots)
 	drag_started.emit(self)
@@ -323,7 +323,7 @@ func _drop_data(_at_position: Vector2, data: Variant) -> void:
 func _notification(what: int) -> void:
 	## Handle drag end to restore visuals
 	if what == NOTIFICATION_DRAG_END:
-		modulate = Color.WHITE if not is_blocked else Color(0.5, 0.5, 0.5, 0.5)
+		modulate = UITheme.COLOR_SELECTED if not is_blocked else UITheme.COLOR_LOCKED
 		set_drag_highlight(false)
 		drag_ended.emit(self)
 
