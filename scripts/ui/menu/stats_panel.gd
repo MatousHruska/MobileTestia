@@ -88,6 +88,7 @@ func _build_ui() -> void:
 func _create_left_panel() -> Control:
 	var container := VBoxContainer.new()
 	container.add_theme_constant_override("separation", 8)
+	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	# === HEADER: Level and XP ===
 	var header := _create_header()
@@ -101,8 +102,9 @@ func _create_left_panel() -> Control:
 	var resources_section := _create_resources_section()
 	container.add_child(resources_section)
 
-	# === ACTIVE EFFECTS ===
+	# === ACTIVE EFFECTS (expands to fill remaining space) ===
 	var effects_section := _create_effects_section()
+	effects_section.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	container.add_child(effects_section)
 
 	return container
@@ -111,12 +113,13 @@ func _create_left_panel() -> Control:
 func _create_right_panel() -> Control:
 	var container := VBoxContainer.new()
 	container.add_theme_constant_override("separation", 8)
+	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	# === SUBTAB BAR ===
 	var subtab_bar := _create_subtab_bar()
 	container.add_child(subtab_bar)
 
-	# === SUBTAB CONTENT ===
+	# === SUBTAB CONTENT (expands to fill remaining space) ===
 	var subtab_content := _create_subtab_content()
 	subtab_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	container.add_child(subtab_content)
@@ -330,7 +333,6 @@ func _create_subtab_content() -> Control:
 
 func _create_effects_section() -> Control:
 	var container := PanelContainer.new()
-	container.custom_minimum_size = Vector2(0, 50)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 8)
