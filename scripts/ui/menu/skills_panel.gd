@@ -189,18 +189,20 @@ func _build_ui() -> void:
 	main_hbox.add_theme_constant_override("separation", 8)
 	add_child(main_hbox)
 
-	# Left margin wrapper for talent tree
+	# Left margin wrapper for talent tree (50% width)
 	var left_margin := _create_percentage_margin()
-	left_margin.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	left_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_margin.size_flags_stretch_ratio = TREE_WIDTH_PCT
 	main_hbox.add_child(left_margin)
 
 	# Build left panel (Talent Tree)
 	_build_talent_tree_panel(left_margin)
 
-	# Right margin wrapper for skillbook/description
+	# Right margin wrapper for skillbook/description (50% width)
 	var right_margin := _create_percentage_margin()
 	right_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right_margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	right_margin.size_flags_stretch_ratio = 1.0 - TREE_WIDTH_PCT
 	main_hbox.add_child(right_margin)
 
 	# Build right panel (Skillbook + Description + Bind UI)
