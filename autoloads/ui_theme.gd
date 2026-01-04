@@ -1,6 +1,8 @@
 extends Node
+class_name UITheme
 ## Global UI theme loaded from database
 ## Use this singleton to maintain consistent styling across the entire game UI
+## Access via the 'UITheme' autoload singleton
 
 const DATABASE_PATH := "res://databases/exports/ui_theme.json"
 
