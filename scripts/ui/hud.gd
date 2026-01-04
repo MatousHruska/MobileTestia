@@ -115,22 +115,22 @@ func _setup_resource_bars() -> void:
 	var bg := ColorRect.new()
 	bg.name = "Background"
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.offset_left = 8
-	bg.offset_top = 8
-	bg.offset_right = -8
-	bg.offset_bottom = -8
-	bg.color = Color(0.1, 0.1, 0.15, 0.85)
+	bg.offset_left = UITheme.MARGIN_STANDARD
+	bg.offset_top = UITheme.MARGIN_STANDARD
+	bg.offset_right = -UITheme.MARGIN_STANDARD
+	bg.offset_bottom = -UITheme.MARGIN_STANDARD
+	bg.color = UITheme.COLOR_PANEL_BG
 	player_frame.add_child(bg)
 
 	# Bars container
 	var bars_container := VBoxContainer.new()
 	bars_container.name = "BarsContainer"
 	bars_container.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bars_container.offset_left = 12
-	bars_container.offset_top = 12
-	bars_container.offset_right = -12
-	bars_container.offset_bottom = -12
-	bars_container.add_theme_constant_override("separation", 4)
+	bars_container.offset_left = UITheme.MARGIN_STANDARD + 4
+	bars_container.offset_top = UITheme.MARGIN_STANDARD + 4
+	bars_container.offset_right = -(UITheme.MARGIN_STANDARD + 4)
+	bars_container.offset_bottom = -(UITheme.MARGIN_STANDARD + 4)
+	bars_container.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 	player_frame.add_child(bars_container)
 
 	# Health bar
@@ -152,8 +152,8 @@ func _setup_resource_bars() -> void:
 	level_label = Label.new()
 	level_label.name = "LevelLabel"
 	level_label.text = "Lv. 1"
-	level_label.add_theme_font_size_override("font_size", 14)
-	level_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.5))
+	level_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	level_label.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
 	bars_container.add_child(level_label)
 
 	# Status effect display (DoTs, buffs, debuffs)
@@ -174,18 +174,12 @@ func _create_resource_bar(bar_name: String, fill_color: Color, bg_color: Color) 
 	# Style the bar
 	var fill_style := StyleBoxFlat.new()
 	fill_style.bg_color = fill_color
-	fill_style.corner_radius_top_left = 2
-	fill_style.corner_radius_top_right = 2
-	fill_style.corner_radius_bottom_left = 2
-	fill_style.corner_radius_bottom_right = 2
+	fill_style.set_corner_radius_all(UITheme.CORNER_RADIUS_SMALL)
 	bar.add_theme_stylebox_override("fill", fill_style)
 
 	var bg_style := StyleBoxFlat.new()
 	bg_style.bg_color = bg_color
-	bg_style.corner_radius_top_left = 2
-	bg_style.corner_radius_top_right = 2
-	bg_style.corner_radius_bottom_left = 2
-	bg_style.corner_radius_bottom_right = 2
+	bg_style.set_corner_radius_all(UITheme.CORNER_RADIUS_SMALL)
 	bar.add_theme_stylebox_override("background", bg_style)
 
 	# Add value label on top of bar
@@ -194,9 +188,9 @@ func _create_resource_bar(bar_name: String, fill_color: Color, bg_color: Color) 
 	label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 11)
-	label.add_theme_color_override("font_color", Color.WHITE)
-	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
+	label.add_theme_color_override("font_color", UITheme.COLOR_SELECTED)
+	label.add_theme_color_override("font_shadow_color", UITheme.COLOR_PANEL_DARK_BG)
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
 	label.text = "100 / 100"

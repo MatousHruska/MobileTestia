@@ -177,7 +177,7 @@ func _setup_buttons() -> void:
 		var qm = get_node("/root/QuestManager")
 		if qm.has_quest_to_turn_in(current_npc_id):
 			quest_button.text = "Complete Quest"
-			quest_button.add_theme_color_override("font_color", Color.GOLD)
+			quest_button.add_theme_color_override("font_color", UITheme.COLOR_GOLD)
 		else:
 			quest_button.text = "Quest"
 			quest_button.remove_theme_color_override("font_color")
@@ -229,12 +229,13 @@ func _build_ui() -> void:
 	panel.set_anchor_and_offset(SIDE_RIGHT, 0.9, 0)
 	panel.set_anchor_and_offset(SIDE_TOP, 0.6, 0)
 	panel.set_anchor_and_offset(SIDE_BOTTOM, 0.95, 0)
+	panel.add_theme_stylebox_override("panel", UITheme.create_popup_style())
 	add_child(panel)
 
 	# Main HBox for three sections
 	var hbox := HBoxContainer.new()
 	hbox.name = "MainLayout"
-	hbox.add_theme_constant_override("separation", 16)
+	hbox.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL * 2)
 	panel.add_child(hbox)
 
 	# LEFT: Portrait section
@@ -255,12 +256,13 @@ func _build_portrait_section() -> Control:
 	var container := PanelContainer.new()
 	container.name = "PortraitSection"
 	container.custom_minimum_size = Vector2(120, 120)
+	container.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_left", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_right", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_top", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_bottom", UITheme.MARGIN_STANDARD)
 	container.add_child(margin)
 
 	# Stack portrait texture and placeholder
@@ -290,12 +292,13 @@ func _build_portrait_section() -> Control:
 func _build_dialogue_section() -> Control:
 	var container := PanelContainer.new()
 	container.name = "DialogueSection"
+	container.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 12)
-	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_theme_constant_override("margin_left", UITheme.MARGIN_STANDARD * 2)
+	margin.add_theme_constant_override("margin_right", UITheme.MARGIN_STANDARD * 2)
+	margin.add_theme_constant_override("margin_top", UITheme.MARGIN_STANDARD + 4)
+	margin.add_theme_constant_override("margin_bottom", UITheme.MARGIN_STANDARD + 4)
 	container.add_child(margin)
 
 	dialogue_label = RichTextLabel.new()
@@ -303,7 +306,7 @@ func _build_dialogue_section() -> Control:
 	dialogue_label.bbcode_enabled = true
 	dialogue_label.fit_content = false
 	dialogue_label.scroll_active = true
-	dialogue_label.add_theme_font_size_override("normal_font_size", 18)
+	dialogue_label.add_theme_font_size_override("normal_font_size", UITheme.FONT_SIZE_TITLE)
 	margin.add_child(dialogue_label)
 
 	return container
@@ -313,17 +316,18 @@ func _build_buttons_section() -> Control:
 	var container := PanelContainer.new()
 	container.name = "ButtonsSection"
 	container.custom_minimum_size = Vector2(140, 0)
+	container.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_left", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_right", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_top", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_bottom", UITheme.MARGIN_STANDARD)
 	container.add_child(margin)
 
 	buttons_container = VBoxContainer.new()
 	buttons_container.name = "ButtonsContainer"
-	buttons_container.add_theme_constant_override("separation", 8)
+	buttons_container.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	margin.add_child(buttons_container)
 
 	# Talk button
@@ -331,6 +335,7 @@ func _build_buttons_section() -> Control:
 	talk_button.name = "TalkButton"
 	talk_button.text = "Talk"
 	talk_button.custom_minimum_size.y = 36
+	talk_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	buttons_container.add_child(talk_button)
 
 	# Quest button
@@ -338,6 +343,7 @@ func _build_buttons_section() -> Control:
 	quest_button.name = "QuestButton"
 	quest_button.text = "Quest"
 	quest_button.custom_minimum_size.y = 36
+	quest_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	buttons_container.add_child(quest_button)
 
 	# Trade button
@@ -345,6 +351,7 @@ func _build_buttons_section() -> Control:
 	trade_button.name = "TradeButton"
 	trade_button.text = "Trade"
 	trade_button.custom_minimum_size.y = 36
+	trade_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	buttons_container.add_child(trade_button)
 
 	# Spacer
@@ -357,6 +364,7 @@ func _build_buttons_section() -> Control:
 	exit_button.name = "ExitButton"
 	exit_button.text = "Exit"
 	exit_button.custom_minimum_size.y = 36
+	exit_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	buttons_container.add_child(exit_button)
 
 	# Quest Accept/Decline buttons (hidden by default)
@@ -364,7 +372,8 @@ func _build_buttons_section() -> Control:
 	_quest_accept_button.name = "AcceptQuestButton"
 	_quest_accept_button.text = "Accept"
 	_quest_accept_button.custom_minimum_size.y = 36
-	_quest_accept_button.add_theme_color_override("font_color", Color.LIGHT_GREEN)
+	_quest_accept_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	_quest_accept_button.add_theme_color_override("font_color", UITheme.COLOR_LEARNED)
 	_quest_accept_button.hide()
 	buttons_container.add_child(_quest_accept_button)
 
@@ -372,7 +381,8 @@ func _build_buttons_section() -> Control:
 	_quest_decline_button.name = "DeclineQuestButton"
 	_quest_decline_button.text = "Decline"
 	_quest_decline_button.custom_minimum_size.y = 36
-	_quest_decline_button.add_theme_color_override("font_color", Color.INDIAN_RED)
+	_quest_decline_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	_quest_decline_button.add_theme_color_override("font_color", UITheme.COLOR_DEBUFF)
 	_quest_decline_button.hide()
 	buttons_container.add_child(_quest_decline_button)
 

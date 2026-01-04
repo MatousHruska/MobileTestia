@@ -64,7 +64,7 @@ func _build_ui() -> void:
 	# Main horizontal split - use anchors to fill parent Control
 	var hbox := HBoxContainer.new()
 	hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
-	hbox.add_theme_constant_override("separation", 8)
+	hbox.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	add_child(hbox)
 
 	# LEFT: Quest list
@@ -81,15 +81,16 @@ func _build_ui() -> void:
 func _build_quest_list_panel() -> Control:
 	var panel := PanelContainer.new()
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", 4)
+	vbox.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 	panel.add_child(vbox)
 
 	# Filter tabs
 	var filter_hbox := HBoxContainer.new()
-	filter_hbox.add_theme_constant_override("separation", 4)
+	filter_hbox.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 	vbox.add_child(filter_hbox)
 
 	_active_filter = Button.new()
@@ -97,6 +98,9 @@ func _build_quest_list_panel() -> Control:
 	_active_filter.toggle_mode = true
 	_active_filter.button_pressed = true
 	_active_filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_active_filter.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	_active_filter.add_theme_stylebox_override("normal", UITheme.create_tab_style(false))
+	_active_filter.add_theme_stylebox_override("pressed", UITheme.create_tab_style(true))
 	_active_filter.pressed.connect(_on_active_filter_pressed)
 	filter_hbox.add_child(_active_filter)
 
@@ -104,6 +108,9 @@ func _build_quest_list_panel() -> Control:
 	_completed_filter.text = "Completed"
 	_completed_filter.toggle_mode = true
 	_completed_filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_completed_filter.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	_completed_filter.add_theme_stylebox_override("normal", UITheme.create_tab_style(false))
+	_completed_filter.add_theme_stylebox_override("pressed", UITheme.create_tab_style(true))
 	_completed_filter.pressed.connect(_on_completed_filter_pressed)
 	filter_hbox.add_child(_completed_filter)
 
@@ -115,7 +122,7 @@ func _build_quest_list_panel() -> Control:
 
 	_quest_list = VBoxContainer.new()
 	_quest_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_quest_list.add_theme_constant_override("separation", 2)
+	_quest_list.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 	_quest_scroll.add_child(_quest_list)
 
 	# DEBUG: Add visible test label
@@ -130,13 +137,14 @@ func _build_quest_list_panel() -> Control:
 func _build_details_panel() -> Control:
 	var panel := PanelContainer.new()
 	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 
 	var margin := MarginContainer.new()
 	margin.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_left", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_right", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_top", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_bottom", UITheme.MARGIN_STANDARD)
 	panel.add_child(margin)
 
 	_details_scroll = ScrollContainer.new()
@@ -146,7 +154,7 @@ func _build_details_panel() -> Control:
 
 	_details_panel = VBoxContainer.new()
 	_details_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_details_panel.add_theme_constant_override("separation", 8)
+	_details_panel.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	_details_scroll.add_child(_details_panel)
 
 	# Placeholder text
@@ -154,7 +162,8 @@ func _build_details_panel() -> Control:
 	placeholder.name = "Placeholder"
 	placeholder.text = "Select a quest to view details"
 	placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	placeholder.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	placeholder.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	placeholder.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	_details_panel.add_child(placeholder)
 
 	return panel
@@ -256,7 +265,8 @@ func _populate_active_quests(qm) -> void:
 		var label := Label.new()
 		label.text = "No active quests"
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+		label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 		_quest_list.add_child(label)
 
 
@@ -267,7 +277,8 @@ func _populate_completed_quests(qm) -> void:
 		var label := Label.new()
 		label.text = "No completed quests"
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+		label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 		_quest_list.add_child(label)
 		return
 
@@ -279,8 +290,8 @@ func _populate_completed_quests(qm) -> void:
 func _create_section_header(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", 12)
-	label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.6))
+	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	label.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
 	return label
 
 
@@ -295,11 +306,12 @@ func _create_quest_item(quest_id: String, is_tracked: bool, is_completed: bool =
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.custom_minimum_size.y = 32
+	button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 
 	# Styling
 	if is_tracked:
 		button.text = "> " + quest_name
-		button.add_theme_color_override("font_color", Color.YELLOW)
+		button.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
 	elif is_completed:
 		button.modulate.a = 0.6
 
@@ -326,7 +338,8 @@ func _clear_details() -> void:
 	placeholder.name = "Placeholder"
 	placeholder.text = "Select a quest to view details"
 	placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	placeholder.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	placeholder.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	placeholder.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	_details_panel.add_child(placeholder)
 
 
@@ -344,16 +357,15 @@ func _show_quest_details(quest_id: String) -> void:
 	# Quest name
 	var name_label := Label.new()
 	name_label.text = quest_data.get("name", quest_id)
-	name_label.add_theme_font_size_override("font_size", 20)
-	name_label.add_theme_color_override("font_color", Color.WHITE)
+	name_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE)
 	_details_panel.add_child(name_label)
 
 	# Quest type badge
 	var type_label := Label.new()
 	var quest_type: String = quest_data.get("type", "side")
 	type_label.text = "[%s]" % quest_type.to_upper()
-	type_label.add_theme_font_size_override("font_size", 12)
-	type_label.add_theme_color_override("font_color", Color.GOLD if quest_type == "story" else Color.LIGHT_BLUE)
+	type_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	type_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD if quest_type == "story" else UITheme.COLOR_HIGHLIGHT)
 	_details_panel.add_child(type_label)
 
 	# Separator
@@ -375,8 +387,8 @@ func _show_quest_details(quest_id: String) -> void:
 	# Objectives header
 	var obj_header := Label.new()
 	obj_header.text = "Objectives:"
-	obj_header.add_theme_font_size_override("font_size", 14)
-	obj_header.add_theme_color_override("font_color", Color.LIGHT_GREEN)
+	obj_header.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	obj_header.add_theme_color_override("font_color", UITheme.COLOR_LEARNED)
 	_details_panel.add_child(obj_header)
 
 	# Objectives list
@@ -411,12 +423,12 @@ func _show_quest_details(quest_id: String) -> void:
 
 		var obj_label := Label.new()
 		obj_label.text = obj_text
-		obj_label.add_theme_font_size_override("font_size", 12)
+		obj_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 
 		if obj_complete:
-			obj_label.add_theme_color_override("font_color", Color(0.5, 0.8, 0.5))
+			obj_label.add_theme_color_override("font_color", UITheme.COLOR_LEARNED)
 		elif obj_optional:
-			obj_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+			obj_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 
 		_details_panel.add_child(obj_label)
 
@@ -429,44 +441,46 @@ func _show_quest_details(quest_id: String) -> void:
 	if not rewards.is_empty():
 		var reward_header := Label.new()
 		reward_header.text = "Rewards:"
-		reward_header.add_theme_font_size_override("font_size", 14)
-		reward_header.add_theme_color_override("font_color", Color.GOLD)
+		reward_header.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+		reward_header.add_theme_color_override("font_color", UITheme.COLOR_GOLD)
 		_details_panel.add_child(reward_header)
 
 		if rewards.get("experience", 0) > 0:
 			var xp_label := Label.new()
 			xp_label.text = "  + %d Experience" % rewards.experience
-			xp_label.add_theme_font_size_override("font_size", 12)
+			xp_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 			_details_panel.add_child(xp_label)
 
 		if rewards.get("gold", 0) > 0:
 			var gold_label := Label.new()
 			gold_label.text = "  + %d Gold" % rewards.gold
-			gold_label.add_theme_font_size_override("font_size", 12)
+			gold_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 			_details_panel.add_child(gold_label)
 
 		var items: Array = rewards.get("items", [])
 		for item_id in items:
 			var item_label := Label.new()
 			item_label.text = "  + %s" % item_id
-			item_label.add_theme_font_size_override("font_size", 12)
+			item_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 			_details_panel.add_child(item_label)
 
 	# Action buttons (only for active quests)
 	if _current_filter == Filter.ACTIVE and qm:
 		var button_hbox := HBoxContainer.new()
-		button_hbox.add_theme_constant_override("separation", 8)
+		button_hbox.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 		_details_panel.add_child(button_hbox)
 
 		_track_button = Button.new()
 		_track_button.text = "Untrack" if qm.tracked_quest_id == quest_id else "Track"
+		_track_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 		_track_button.pressed.connect(_on_track_pressed.bind(quest_id))
 		button_hbox.add_child(_track_button)
 
 		if quest_data.get("can_abandon", true):
 			_abandon_button = Button.new()
 			_abandon_button.text = "Abandon"
-			_abandon_button.add_theme_color_override("font_color", Color.INDIAN_RED)
+			_abandon_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+			_abandon_button.add_theme_color_override("font_color", UITheme.COLOR_DEBUFF)
 			_abandon_button.pressed.connect(_on_abandon_pressed.bind(quest_id))
 			button_hbox.add_child(_abandon_button)
 
