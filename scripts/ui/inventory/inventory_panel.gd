@@ -649,7 +649,7 @@ func _on_drag_started(slot: InventorySlot) -> void:
 	if item.item_type == ItemData.ItemType.CONSUMABLE:
 		target_slot = ItemData.EquipSlot.QUICK_SLOT
 		# Also highlight Use button for consumables
-		use_button.modulate = Color(0.5, 1.0, 0.5)
+		use_button.modulate = UITheme.COLOR_DRAG_HIGHLIGHT
 	elif item is EquipmentData:
 		var equip: EquipmentData = item as EquipmentData
 		# Ring -> ACCESSORY_1 (finger), Amulet -> ACCESSORY_2 (neck)

@@ -306,14 +306,14 @@ func _build_points_section(parent: Control) -> void:
 	margin.add_child(hbox)
 
 	_points_label = Label.new()
-	_points_label.add_theme_font_size_override("font_size", 10)
+	_points_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 	_points_label.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
 	_points_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(_points_label)
 
 	_points_tree_label = Label.new()
-	_points_tree_label.add_theme_font_size_override("font_size", 10)
-	_points_tree_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	_points_tree_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
+	_points_tree_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	_points_tree_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	hbox.add_child(_points_tree_label)
 
@@ -431,7 +431,7 @@ func _create_bind_slot(index: int, is_main: bool) -> Button:
 	slot.custom_minimum_size = Vector2(slot_size, slot_size)
 	# Prevent HBoxContainer from stretching the button vertically
 	slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	slot.add_theme_font_size_override("font_size", 10)
+	slot.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 	slot.set_meta("slot_index", index)
 	slot.set_meta("is_main", is_main)
 
@@ -440,10 +440,10 @@ func _create_bind_slot(index: int, is_main: bool) -> Button:
 
 	# Style - square corners
 	var stylebox := StyleBoxFlat.new()
-	stylebox.bg_color = Color(0.2, 0.2, 0.25, 0.8)
-	stylebox.border_color = UITheme.COLOR_HIGHLIGHT if is_main else Color(0.55, 1.0, 0.98, 0.7)
-	stylebox.set_border_width_all(2 if is_main else 1)
-	stylebox.set_corner_radius_all(4)
+	stylebox.bg_color = UITheme.COLOR_BUTTON_BG
+	stylebox.border_color = UITheme.COLOR_HIGHLIGHT
+	stylebox.set_border_width_all(UITheme.BORDER_WIDTH_THICK if is_main else UITheme.BORDER_WIDTH_NORMAL)
+	stylebox.set_corner_radius_all(UITheme.CORNER_RADIUS_NORMAL)
 	slot.add_theme_stylebox_override("normal", stylebox)
 
 	return slot
@@ -498,22 +498,22 @@ func _build_tree_tabs() -> void:
 		tab.size_flags_vertical = Control.SIZE_EXPAND_FILL
 		tab.custom_minimum_size = Vector2(0, 36)  # Taller for two-line text
 		tab.clip_text = false
-		tab.add_theme_font_size_override("font_size", 10)
+		tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 		tab.pressed.connect(_on_tree_tab_pressed.bind(tree_data.get("id", "")))
 
 		# Style with outline
 		var style := StyleBoxFlat.new()
-		style.bg_color = Color(0.15, 0.15, 0.18) if not tab.button_pressed else Color(0.25, 0.25, 0.3)
-		style.border_color = Color(0.4, 0.4, 0.45) if not tab.button_pressed else UITheme.COLOR_AVAILABLE
-		style.set_border_width_all(1)
-		style.set_corner_radius_all(3)
+		style.bg_color = UITheme.COLOR_TAB_BG if not tab.button_pressed else UITheme.COLOR_TAB_BG_ACTIVE
+		style.border_color = UITheme.COLOR_TAB_BORDER if not tab.button_pressed else UITheme.COLOR_AVAILABLE
+		style.set_border_width_all(UITheme.BORDER_WIDTH_NORMAL)
+		style.set_corner_radius_all(UITheme.CORNER_RADIUS_SMALL)
 		tab.add_theme_stylebox_override("normal", style)
 
 		var pressed_style := StyleBoxFlat.new()
-		pressed_style.bg_color = Color(0.25, 0.25, 0.3)
+		pressed_style.bg_color = UITheme.COLOR_TAB_BG_ACTIVE
 		pressed_style.border_color = UITheme.COLOR_AVAILABLE
-		pressed_style.set_border_width_all(1)
-		pressed_style.set_corner_radius_all(3)
+		pressed_style.set_border_width_all(UITheme.BORDER_WIDTH_NORMAL)
+		pressed_style.set_corner_radius_all(UITheme.CORNER_RADIUS_SMALL)
 		tab.add_theme_stylebox_override("pressed", pressed_style)
 
 		_tree_tabs.add_child(tab)
@@ -594,7 +594,7 @@ func _create_talent_node(talent: TalentData) -> Control:
 	points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	points_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	points_label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	points_label.add_theme_font_size_override("font_size", 9)
+	points_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TINY)
 	points_label.set_meta("points_label", true)
 	container.add_child(points_label)
 
@@ -603,7 +603,7 @@ func _create_talent_node(talent: TalentData) -> Control:
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	name_label.add_theme_font_size_override("font_size", 10)
+	name_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 	name_label.set_meta("name_label", true)
 	container.add_child(name_label)
 
@@ -760,7 +760,7 @@ func _create_skillbook_slot(talent: TalentData) -> Button:
 	slot.custom_minimum_size = Vector2(cell_size, cell_size)
 	slot.toggle_mode = true
 	slot.text = talent.talent_name.substr(0, 2).to_upper()
-	slot.add_theme_font_size_override("font_size", 12)
+	slot.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 
 	# Check weapon requirement
 	var weapon_met := _is_weapon_requirement_met(talent)
@@ -1174,15 +1174,15 @@ func _create_drag_preview(talent: TalentData) -> void:
 	_drag_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var stylebox := StyleBoxFlat.new()
-	stylebox.bg_color = Color(0.3, 0.4, 0.5, 0.9)
+	stylebox.bg_color = UITheme.COLOR_BUTTON_BG_ACTIVE
 	stylebox.border_color = UITheme.COLOR_HIGHLIGHT
-	stylebox.set_border_width_all(2)
-	stylebox.set_corner_radius_all(6)
+	stylebox.set_border_width_all(UITheme.BORDER_WIDTH_THICK)
+	stylebox.set_corner_radius_all(UITheme.CORNER_RADIUS_POPUP)
 	_drag_preview.add_theme_stylebox_override("panel", stylebox)
 
 	var label := Label.new()
 	label.text = talent.talent_name.substr(0, 3).to_upper()
-	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	label.custom_minimum_size = Vector2(48, 48)

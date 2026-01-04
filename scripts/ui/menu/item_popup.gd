@@ -73,16 +73,16 @@ func _build_header_content() -> VBoxContainer:
 	name_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	_name_label = Label.new()
-	_name_label.add_theme_font_size_override("font_size", 14)
+	_name_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	name_col.add_child(_name_label)
 
 	_type_label = Label.new()
-	_type_label.add_theme_font_size_override("font_size", 11)
+	_type_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 	_type_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	name_col.add_child(_type_label)
 
 	_rarity_label = Label.new()
-	_rarity_label.add_theme_font_size_override("font_size", 11)
+	_rarity_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 	name_col.add_child(_rarity_label)
 
 	return name_col
@@ -97,7 +97,7 @@ func _build_content(content: VBoxContainer) -> void:
 	# Description
 	_description_label = Label.new()
 	_description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_description_label.add_theme_font_size_override("font_size", 11)
+	_description_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 	_description_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	content.add_child(_description_label)
 
@@ -105,7 +105,7 @@ func _build_content(content: VBoxContainer) -> void:
 	_hint_label = Label.new()
 	_hint_label.text = "Drag items to move, equip, or destroy"
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hint_label.add_theme_font_size_override("font_size", 10)
+	_hint_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 	_hint_label.add_theme_color_override("font_color", UITheme.COLOR_LOCKED)
 	content.add_child(_hint_label)
 
@@ -205,7 +205,7 @@ func _add_equipment_stats(equip: EquipmentData) -> void:
 			continue
 		var stat_label := Label.new()
 		stat_label.text = line
-		stat_label.add_theme_font_size_override("font_size", 11)
+		stat_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 		stat_label.add_theme_color_override("font_color", UITheme.COLOR_LEARNED)
 		_stats_container.add_child(stat_label)
 
@@ -217,7 +217,7 @@ func _add_consumable_stats(consumable: ConsumableData) -> void:
 
 	var effect_label := Label.new()
 	effect_label.text = effect_text
-	effect_label.add_theme_font_size_override("font_size", 11)
+	effect_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 	effect_label.add_theme_color_override("font_color", UITheme.COLOR_LEARNED)
 	effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_stats_container.add_child(effect_label)

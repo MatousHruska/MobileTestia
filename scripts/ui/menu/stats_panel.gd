@@ -221,20 +221,20 @@ func _create_header() -> Control:
 
 	var level_label := Label.new()
 	level_label.name = "LevelLabel"
-	level_label.add_theme_font_size_override("font_size", 18)
+	level_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE)
 	level_label.text = "Level 1"
 	level_row.add_child(level_label)
 
 	var points_label := Label.new()
 	points_label.name = "PointsLabel"
-	points_label.add_theme_font_size_override("font_size", 14)
+	points_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	points_label.text = "Attr: 0"
 	points_label.modulate = UITheme.COLOR_AVAILABLE
 	level_row.add_child(points_label)
 
 	var skill_points_label := Label.new()
 	skill_points_label.name = "SkillPointsLabel"
-	skill_points_label.add_theme_font_size_override("font_size", 14)
+	skill_points_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	skill_points_label.text = "Skill: 0"
 	skill_points_label.modulate = UITheme.COLOR_HIGHLIGHT
 	level_row.add_child(skill_points_label)
@@ -256,7 +256,7 @@ func _create_header() -> Control:
 	xp_bar.add_theme_stylebox_override("background", bg_style)
 
 	var fill_style := StyleBoxFlat.new()
-	fill_style.bg_color = Color(0.3, 0.6, 0.9)
+	fill_style.bg_color = UITheme.COLOR_XP_BAR
 	xp_bar.add_theme_stylebox_override("fill", fill_style)
 
 	container.add_child(xp_bar)
@@ -428,19 +428,19 @@ func _create_effects_section() -> Control:
 	# Title row (hidden when effects are active)
 	_effects_title_label = Label.new()
 	_effects_title_label.text = "Active Effects"
-	_effects_title_label.add_theme_font_size_override("font_size", 13)
+	_effects_title_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	_effects_title_label.modulate = UITheme.COLOR_TEXT_DIM
 	vbox.add_child(_effects_title_label)
 
 	# Effects icons container (horizontal row)
 	_effects_container = HBoxContainer.new()
-	_effects_container.add_theme_constant_override("separation", 6)
+	_effects_container.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 	vbox.add_child(_effects_container)
 
 	# "No active effects" placeholder label
 	_no_effects_label = Label.new()
 	_no_effects_label.text = "No active effects"
-	_no_effects_label.add_theme_font_size_override("font_size", 11)
+	_no_effects_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 	_no_effects_label.modulate = UITheme.COLOR_LOCKED
 	_effects_container.add_child(_no_effects_label)
 
@@ -465,7 +465,7 @@ func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button
 	var is_debuff: bool = effect_data.get("is_debuff", true)
 	var background := ColorRect.new()
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
-	background.color = Color(0.6, 0.1, 0.1, 0.9) if is_debuff else UITheme.COLOR_LEARNED
+	background.color = UITheme.COLOR_DEBUFF if is_debuff else UITheme.COLOR_LEARNED
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon_container.add_child(background)
 
@@ -517,9 +517,9 @@ func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button
 	timer_label.offset_top = -4  # Adjust for duration bar
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	timer_label.add_theme_font_size_override("font_size", 11)
-	timer_label.add_theme_color_override("font_color", Color.WHITE)
-	timer_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1.0))
+	timer_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
+	timer_label.add_theme_color_override("font_color", UITheme.COLOR_SELECTED)
+	timer_label.add_theme_color_override("font_shadow_color", UITheme.COLOR_PANEL_DARK_BG)
 	timer_label.add_theme_constant_override("shadow_offset_x", 1)
 	timer_label.add_theme_constant_override("shadow_offset_y", 1)
 	timer_label.mouse_filter = Control.MOUSE_FILTER_IGNORE

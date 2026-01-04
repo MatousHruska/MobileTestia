@@ -45,7 +45,13 @@ const DEFAULTS := {
 	# Text colors
 	"color_gold": "1.0,0.85,0.0,1.0",
 	"color_text_dim": "0.7,0.7,0.7,1.0",
+	# Progress/resource bar colors
+	"color_xp_bar": "0.3,0.6,0.9,1.0",
+	"color_debuff": "0.6,0.1,0.1,0.9",
+	"color_drag_highlight": "0.5,1.0,0.5,1.0",
 	# Font sizes
+	"font_size_title": 18,
+	"font_size_large": 16,
 	"font_size_header": 14,
 	"font_size_label": 12,
 	"font_size_small": 10,
@@ -200,9 +206,24 @@ var COLOR_GOLD: Color:
 var COLOR_TEXT_DIM: Color:
 	get: return get_color("color_text_dim")
 
+var COLOR_XP_BAR: Color:
+	get: return get_color("color_xp_bar")
+
+var COLOR_DEBUFF: Color:
+	get: return get_color("color_debuff")
+
+var COLOR_DRAG_HIGHLIGHT: Color:
+	get: return get_color("color_drag_highlight")
+
 #===============================================================================
 # SIZE PROPERTIES
 #===============================================================================
+
+var FONT_SIZE_TITLE: int:
+	get: return get_int("font_size_title")
+
+var FONT_SIZE_LARGE: int:
+	get: return get_int("font_size_large")
 
 var FONT_SIZE_HEADER: int:
 	get: return get_int("font_size_header")

@@ -53,12 +53,12 @@ func _build_header_content() -> VBoxContainer:
 	name_col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	_name_label = Label.new()
-	_name_label.add_theme_font_size_override("font_size", 14)
+	_name_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_col.add_child(_name_label)
 
 	_rank_label = Label.new()
-	_rank_label.add_theme_font_size_override("font_size", 11)
+	_rank_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 	_rank_label.add_theme_color_override("font_color", UITheme.COLOR_LEARNED)
 	name_col.add_child(_rank_label)
 
@@ -93,7 +93,7 @@ func _build_content(content: VBoxContainer) -> void:
 	_description_label.fit_content = true
 	_description_label.scroll_active = false
 	_description_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_description_label.add_theme_font_size_override("normal_font_size", 11)
+	_description_label.add_theme_font_size_override("normal_font_size", UITheme.FONT_SIZE_SMALL)
 	_description_label.add_theme_color_override("default_color", UITheme.COLOR_TEXT_DIM)
 	content.add_child(_description_label)
 
