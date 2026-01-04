@@ -76,13 +76,13 @@ func _get_bind_panel_height() -> float:
 	return maxf(MIN_BIND_PANEL_HEIGHT, size.y * BIND_PANEL_HEIGHT_PCT)
 
 
-## Colors
-const COLOR_LOCKED := Color(0.4, 0.4, 0.4)
-const COLOR_AVAILABLE := Color(1.0, 0.85, 0.3)
-const COLOR_LEARNED := Color(0.5, 1.0, 0.5)
-const COLOR_MAXED := Color(0.3, 0.8, 1.0)
-const COLOR_SELECTED := Color(1.0, 1.0, 1.0)
-const COLOR_BINDING_AVAILABLE := Color(0.55, 1.0, 0.98)  ## Cyan for binding slots
+## Colors - use CharacterMenuTheme for shared colors
+const COLOR_LOCKED := CharacterMenuTheme.COLOR_LOCKED
+const COLOR_AVAILABLE := CharacterMenuTheme.COLOR_AVAILABLE
+const COLOR_LEARNED := CharacterMenuTheme.COLOR_LEARNED
+const COLOR_MAXED := CharacterMenuTheme.COLOR_MAXED
+const COLOR_SELECTED := CharacterMenuTheme.COLOR_SELECTED
+const COLOR_BINDING_AVAILABLE := CharacterMenuTheme.COLOR_HIGHLIGHT
 
 #===============================================================================
 # STATE
@@ -226,27 +226,18 @@ func _create_percentage_margin() -> MarginContainer:
 
 
 func _create_section_header(text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", 14)
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	return label
+	return CharacterMenuTheme.create_section_header(text)
 
 
 func _build_talent_tree_panel(parent: Control) -> void:
 	var outer_vbox := VBoxContainer.new()
 	outer_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	outer_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	outer_vbox.add_theme_constant_override("separation", 4)
+	CharacterMenuTheme.setup_vbox(outer_vbox, CharacterMenuTheme.SEPARATION_SMALL)
 	parent.add_child(outer_vbox)
 
 	# Talents header (outside the panel, like Skillbook)
-	var header := Label.new()
-	header.text = "Talents"
-	header.add_theme_font_size_override("font_size", 14)
-	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var header := CharacterMenuTheme.create_section_header("Talents")
 	outer_vbox.add_child(header)
 
 	# Main panel with border
@@ -257,27 +248,18 @@ func _build_talent_tree_panel(parent: Control) -> void:
 	outer_vbox.add_child(_left_panel)
 
 	# Style with border
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.12, 0.12, 0.14, 0.9)
-	panel_style.border_color = Color(0.3, 0.3, 0.35)
-	panel_style.set_border_width_all(1)
-	panel_style.set_corner_radius_all(4)
-	_left_panel.add_theme_stylebox_override("panel", panel_style)
+	_left_panel.add_theme_stylebox_override("panel", CharacterMenuTheme.create_panel_style())
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	var margin := CharacterMenuTheme.create_margin_container()
 	_left_panel.add_child(margin)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 10)
+	CharacterMenuTheme.setup_vbox(vbox, 10)
 	margin.add_child(vbox)
 
 	# Tree tabs container (horizontal row, names can wrap)
 	_tree_tabs = HBoxContainer.new()
-	_tree_tabs.add_theme_constant_override("separation", 4)
+	CharacterMenuTheme.setup_hbox(_tree_tabs, CharacterMenuTheme.SEPARATION_SMALL)
 	_tree_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_child(_tree_tabs)
 
@@ -314,19 +296,15 @@ func _build_points_section(parent: Control) -> void:
 	var panel := PanelContainer.new()
 	parent.add_child(panel)
 
-	# Style with border
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.1, 0.12, 0.9)
-	style.border_color = Color(0.3, 0.3, 0.35)
-	style.set_border_width_all(1)
-	style.set_corner_radius_all(3)
-	panel.add_theme_stylebox_override("panel", style)
+	# Style with border (darker variant)
+	panel.add_theme_stylebox_override("panel", CharacterMenuTheme.create_panel_dark_style())
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 6)
-	margin.add_theme_constant_override("margin_right", 6)
-	margin.add_theme_constant_override("margin_top", 4)
-	margin.add_theme_constant_override("margin_bottom", 4)
+	var margin := CharacterMenuTheme.create_margin_container(
+		CharacterMenuTheme.MARGIN_SMALL,
+		CharacterMenuTheme.MARGIN_SMALL,
+		CharacterMenuTheme.MARGIN_TINY,
+		CharacterMenuTheme.MARGIN_TINY
+	)
 	panel.add_child(margin)
 
 	# Horizontal layout: Available on left, Invested on right
@@ -366,18 +344,9 @@ func _build_right_panel(parent: Control) -> void:
 	_right_panel.add_child(skillbook_panel)
 
 	# Style with border
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.12, 0.12, 0.14, 0.9)
-	panel_style.border_color = Color(0.3, 0.3, 0.35)
-	panel_style.set_border_width_all(1)
-	panel_style.set_corner_radius_all(4)
-	skillbook_panel.add_theme_stylebox_override("panel", panel_style)
+	skillbook_panel.add_theme_stylebox_override("panel", CharacterMenuTheme.create_panel_style())
 
-	var skillbook_margin := MarginContainer.new()
-	skillbook_margin.add_theme_constant_override("margin_left", 8)
-	skillbook_margin.add_theme_constant_override("margin_right", 8)
-	skillbook_margin.add_theme_constant_override("margin_top", 8)
-	skillbook_margin.add_theme_constant_override("margin_bottom", 8)
+	var skillbook_margin := CharacterMenuTheme.create_margin_container()
 	skillbook_panel.add_child(skillbook_margin)
 
 	var skillbook_scroll := ScrollContainer.new()
@@ -393,8 +362,7 @@ func _build_right_panel(parent: Control) -> void:
 
 	_skillbook_grid = GridContainer.new()
 	_skillbook_grid.columns = SKILLBOOK_COLS
-	_skillbook_grid.add_theme_constant_override("h_separation", 4)
-	_skillbook_grid.add_theme_constant_override("v_separation", 4)
+	CharacterMenuTheme.setup_grid(_skillbook_grid)
 	center.add_child(_skillbook_grid)
 
 	# Build skill bind UI (below skillbook)
@@ -436,23 +404,19 @@ func _build_skill_bind_ui() -> void:
 	_right_panel.add_child(_bind_panel)
 
 	# Style with border
-	var bind_style := StyleBoxFlat.new()
-	bind_style.bg_color = Color(0.12, 0.12, 0.14, 0.9)
-	bind_style.border_color = Color(0.3, 0.3, 0.35)
-	bind_style.set_border_width_all(1)
-	bind_style.set_corner_radius_all(4)
-	_bind_panel.add_theme_stylebox_override("panel", bind_style)
+	_bind_panel.add_theme_stylebox_override("panel", CharacterMenuTheme.create_panel_style())
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 6)
-	margin.add_theme_constant_override("margin_bottom", 6)
+	var margin := CharacterMenuTheme.create_margin_container(
+		CharacterMenuTheme.MARGIN_STANDARD,
+		CharacterMenuTheme.MARGIN_STANDARD,
+		CharacterMenuTheme.MARGIN_SMALL,
+		CharacterMenuTheme.MARGIN_SMALL
+	)
 	_bind_panel.add_child(margin)
 
 	# Simple horizontal row
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
+	CharacterMenuTheme.setup_hbox(row, CharacterMenuTheme.MARGIN_SMALL)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	margin.add_child(row)
 
@@ -847,15 +811,9 @@ func _create_empty_skillbook_slot() -> Control:
 	var cell_size := _get_skillbook_cell_size()
 	slot.custom_minimum_size = Vector2(cell_size, cell_size)
 
-	var stylebox := StyleBoxFlat.new()
-	stylebox.bg_color = Color(0.1, 0.1, 0.12, 0.5)
-	stylebox.border_color = Color(0.3, 0.3, 0.35, 0.5)
-	stylebox.set_border_width_all(1)
-	stylebox.set_corner_radius_all(4)
-
 	var panel := Panel.new()
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.add_theme_stylebox_override("panel", stylebox)
+	panel.add_theme_stylebox_override("panel", CharacterMenuTheme.create_empty_slot_style())
 	slot.add_child(panel)
 
 	return slot
