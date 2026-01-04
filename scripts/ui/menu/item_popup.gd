@@ -118,7 +118,8 @@ func _build_content(content: VBoxContainer) -> void:
 #===============================================================================
 
 ## Show popup for an item at the given screen position
-func show_item(item: ItemData, source: String, index: int, screen_pos: Vector2) -> void:
+## If screen_pos is ZERO, keeps current position (for content updates)
+func show_item(item: ItemData, source: String, index: int, screen_pos: Vector2 = Vector2.ZERO) -> void:
 	if not item:
 		return
 
@@ -127,7 +128,17 @@ func show_item(item: ItemData, source: String, index: int, screen_pos: Vector2) 
 	current_index = index
 
 	_update_display()
-	show_at(screen_pos)
+
+	# Only reposition if a valid position was given
+	if screen_pos != Vector2.ZERO:
+		show_at(screen_pos)
+	elif not visible:
+		# If not visible and no position given, show at center
+		var center := get_viewport().get_visible_rect().size / 2
+		show_at(center)
+	else:
+		# Already visible, just update content (keep position)
+		visible = true
 
 
 ## Override close to clear state and deselect inventory
