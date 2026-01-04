@@ -142,36 +142,88 @@ Replaces the old button-based system (Equip, Destroy, Swap, Quick Slot):
 
 ---
 
-## Phase 2: Stats Tab Optimization
+## Phase 2: Stats Tab Optimization ✅ COMPLETE
 
-### Current Issues
-- Player info section takes vertical space
-- Stats grid may overflow on small screens
+### New Layout: Two-Panel with Popup Details
 
-### Mobile Layout
+Similar to Inventory, the Stats tab now uses a popup system for stat descriptions.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ [Inventory] [Stats(+10)] [Skills] [Quests] [Menu] [X]   │
 ├─────────────────────────────────────────────────────────┤
-│  Hero Name              Lv. 5    Points: 10             │
-│  ████████████░░░░  350/1000 XP                          │
-├─────────────────────────────────────────────────────────┤
-│  STR: 12 [+]  Phys Dmg +6                               │
-│  DEX: 10 [+]  Atk Spd +2%, Crit +1%                     │
-│  INT: 10 [+]  Magic Dmg +5, Mana +10                    │
-│  END: 14 [+]  Health +28, Regen +1.4                    │
-│  LUK:  8 [+]  Drop +1.6%, Crit Dmg +2.4%                │
-├─────────────────────────────────────────────────────────┤
-│  [Derived Stats ▼]  (collapsible section)               │
-│  Health: 280/280  |  Mana: 100/100  |  Stamina: 50/50   │
+│  ┌─────────────────────┐  ┌──────────────────────────┐  │
+│  │ Hero Name    Lv. 5  │  │  Attack Power: 50        │  │
+│  │ Points: 10          │  │  Defense: 25             │  │
+│  │ ███████░░░ XP       │  │  Critical: 5%            │  │
+│  ├─────────────────────┤  │  ... (scrollable)        │  │
+│  │ STR:10+ DEX:10+ INT │  │                          │  │
+│  │ VIT:10+ ENE:10+ LUK │  │                          │  │
+│  ├─────────────────────┤  │                          │  │
+│  │ Life | Mana | Stam  │  │                          │  │
+│  │  100    50     25   │  │                          │  │
+│  ├─────────────────────┤  │                          │  │
+│  │ [buff] [debuff]     │  │                          │  │
+│  └─────────────────────┘  └──────────────────────────┘  │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Changes
-- Compact single-line player info
-- Inline stat layout (name + value + button + effect on same row)
-- Collapsible derived stats section
+### Stat Detail Popup
+
+Tapping any stat row shows a popup with detailed description:
+
+```
+┌───────────────────────────────────┐
+│  Attack Power                  [X] │
+│  50                                │
+├───────────────────────────────────┤
+│  Total physical damage dealt by   │
+│  your attacks. Increased by STR   │
+│  and weapon damage.               │
+└───────────────────────────────────┘
+```
+
+**Popup behavior:**
+- **Tap**: Popup stays open until dismissed (X or tap outside)
+- **Hold**: Popup visible while holding, closes on release
+- **Positioning**: Appears at tap position, stretches upward
+- **Safe zones**: 25% bottom safe zone, 8px margin from edges
+- **Tap outside**: Closes popup (uses `_input` to detect clicks outside popup rect)
+
+### Key Changes Implemented
+
+1. **StatDetailPopup** (`scripts/ui/menu/stat_detail_popup.gd`)
+   - Similar to ItemDetailPopup but for stats
+   - Tap/hold behavior with close on release for hold mode
+   - Hardcoded 25% bottom safe zone to avoid scroll overflow issues
+   - Uses `_input()` for tap-outside-to-close detection
+
+2. **Primary Attributes Reorganized**
+   - Changed from vertical list to compact 3x2 grid (9 columns total)
+   - Row 1: STR | DEX | INT (each with value and + button)
+   - Row 2: VIT | ENE | LUK
+   - Removed section title and hint descriptions
+   - Tap any attribute to see full description in popup
+
+3. **Resources Section Redesigned**
+   - Changed from vertical list to horizontal layout
+   - Format: `Life | Mana | Stamina` with values centered below
+   - Removed section title to save space
+
+4. **Active Effects Section**
+   - Moved from bottom to left panel
+   - Shows buff/debuff icons horizontally
+   - When effects are present: title and "No active effects" text hidden, only icons show
+   - When no effects: shows "Active Effects - No active effects"
+
+5. **Section Styling**
+   - 4% top and bottom padding for all sections
+   - Separators between sections
+   - XP bar has outline so visible when empty (no numerical counter)
+
+6. **Vertical Stretch**
+   - All panels use SIZE_EXPAND_FILL to fill menu area
+   - ScrollContainer properly wraps scrollable content
 
 ---
 
@@ -257,11 +309,18 @@ Replaces the old button-based system (Equip, Destroy, Swap, Quick Slot):
 13. [x] Move inventory_slots to database (gameplay_settings.json)
 14. [ ] Test on 424px and 720px heights
 
-### Session 2: Stats Tab Optimization
-1. [ ] Compact player info header
-2. [ ] Inline stat rows
-3. [ ] Collapsible derived stats
-4. [ ] Test on small screens
+### Session 2: Stats Tab Optimization ✅ COMPLETE
+1. [x] Create StatDetailPopup component (`scripts/ui/menu/stat_detail_popup.gd`)
+2. [x] Implement tap/hold behavior for stat descriptions
+3. [x] Redesign Primary Attributes to 3x2 grid layout
+4. [x] Redesign Resources section to horizontal layout
+5. [x] Move Active Effects to left panel
+6. [x] Add separators and 4% padding between sections
+7. [x] Popup positioning with 25% bottom safe zone
+8. [x] Tap-outside-to-close for popup
+9. [x] Hide Active Effects title when effects present
+10. [x] XP bar outline visible when empty
+11. [ ] Test on 424px and 720px heights
 
 ### Session 3: Skills Tab Optimization
 1. [ ] Smaller skill buttons
@@ -347,7 +406,7 @@ func _ready():
 | `scripts/inventory/inventory_manager.gd` | ✅ Done | drag_drop_swap, split_stack, destroy_item, use_item, auto_equip |
 | `scripts/ui/menu/character_menu.gd` | ✅ Done | Removed old destroy confirmation flow |
 | `databases/exports/gameplay_settings.json` | ✅ Done | Added inventory_slots setting |
-| `scripts/ui/menu/stats_panel.gd` | Pending | Compact layout |
+| `scripts/ui/menu/stats_panel.gd` | ✅ Done | 2-panel layout, 3x2 attributes grid, horizontal resources, popup descriptions |
 | `scripts/ui/menu/skills_panel.gd` | Pending | Smaller buttons, scrollable |
 | `scripts/ui/quest/quest_log_panel.gd` | Pending | Accordion layout |
 
@@ -358,6 +417,7 @@ func _ready():
 | `scripts/ui/inventory/trash_drop_zone.gd` | ✅ Done | Drop zone for destroying items |
 | `scripts/ui/inventory/use_drop_zone.gd` | ✅ Done | Drop zone for using consumables |
 | `scripts/ui/inventory/equipment_drop_zone.gd` | ✅ Done | Auto-equip drop zone overlay |
+| `scripts/ui/menu/stat_detail_popup.gd` | ✅ Done | Modal popup for stat descriptions (tap/hold) |
 
 ### Scene Changes
 | File | Status | Changes |
