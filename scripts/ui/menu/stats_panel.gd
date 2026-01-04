@@ -191,35 +191,38 @@ func _create_attributes_section() -> Control:
 	container.add_child(title)
 
 	var grid := GridContainer.new()
-	grid.columns = 4
+	grid.columns = 6  # Label, Value, Plus | Label, Value, Plus
 	grid.add_theme_constant_override("h_separation", 4)
 	grid.add_theme_constant_override("v_separation", 2)
 
-	var attributes := [
-		["STR", "strength", "Physical Mastery"],
-		["DEX", "dexterity", "Agility Mastery"],
-		["INT", "intelligence", "Arcane Mastery"],
-		["VIT", "vitality", "+2 HP per point"],
-		["ENE", "energy", "+1.5 MP per point"],
-		["LUK", "luck", "+1% Crit Dmg"],
+	# Two columns: left (STR, DEX, INT) | right (VIT, ENE, LUK)
+	var attribute_pairs := [
+		[["STR", "strength"], ["VIT", "vitality"]],
+		[["DEX", "dexterity"], ["ENE", "energy"]],
+		[["INT", "intelligence"], ["LUK", "luck"]],
 	]
 
-	for attr in attributes:
-		var row := _create_attribute_row(attr[0], attr[1], attr[2])
-		for child in row:
+	for pair in attribute_pairs:
+		# Left column attribute
+		var left := _create_attribute_row(pair[0][0], pair[0][1])
+		for child in left:
+			grid.add_child(child)
+		# Right column attribute
+		var right := _create_attribute_row(pair[1][0], pair[1][1])
+		for child in right:
 			grid.add_child(child)
 
 	container.add_child(grid)
 	return container
 
 
-func _create_attribute_row(abbrev: String, stat_name: String, hint: String) -> Array:
+func _create_attribute_row(abbrev: String, stat_name: String) -> Array:
 	# Label (tap/hold for description popup)
 	var label := Button.new()
 	label.name = abbrev + "Label"
 	label.flat = true
 	label.text = abbrev + ":"
-	label.custom_minimum_size = Vector2(45, 0)
+	label.custom_minimum_size = Vector2(40, 0)
 	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
 
 	# Value
@@ -235,22 +238,13 @@ func _create_attribute_row(abbrev: String, stat_name: String, hint: String) -> A
 	plus_btn.custom_minimum_size = Vector2(28, 28)
 	plus_btn.pressed.connect(_on_allocate_pressed.bind(stat_name))
 
-	# Info text
-	var info := Label.new()
-	info.name = abbrev + "Info"
-	info.text = hint
-	info.add_theme_font_size_override("font_size", 10)
-	info.modulate = Color(0.5, 0.5, 0.5)
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-
 	_attribute_rows[stat_name] = {
 		"label": label,
 		"value": value,
 		"plus": plus_btn,
-		"info": info
 	}
 
-	return [label, value, plus_btn, info]
+	return [label, value, plus_btn]
 
 
 func _create_resources_section() -> Control:
