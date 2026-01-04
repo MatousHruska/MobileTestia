@@ -127,15 +127,15 @@ func _build_ui() -> void:
 	add_child(_panel)
 
 	# Panel style
-	_panel.add_theme_stylebox_override("panel", CharacterMenuTheme.create_popup_style())
+	_panel.add_theme_stylebox_override("panel", UITheme.create_popup_style())
 
 	# Margin container
-	var margin := CharacterMenuTheme.create_margin_container()
+	var margin := UITheme.create_margin_container()
 	_panel.add_child(margin)
 
 	# Main VBox
 	var vbox := VBoxContainer.new()
-	CharacterMenuTheme.setup_vbox(vbox, CharacterMenuTheme.MARGIN_SMALL)
+	UITheme.setup_vbox(vbox, UITheme.MARGIN_SMALL)
 	margin.add_child(vbox)
 
 	# Build header
@@ -154,7 +154,7 @@ func _build_ui() -> void:
 
 	_content_container = VBoxContainer.new()
 	_content_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	CharacterMenuTheme.setup_vbox(_content_container, CharacterMenuTheme.SEPARATION_SMALL)
+	UITheme.setup_vbox(_content_container, UITheme.SEPARATION_SMALL)
 	_scroll.add_child(_content_container)
 
 	# Let subclass build content
@@ -206,7 +206,7 @@ func _create_icon_container() -> Control:
 	# Icon placeholder background
 	var icon_bg := ColorRect.new()
 	icon_bg.custom_minimum_size = Vector2(40, 40)
-	icon_bg.color = CharacterMenuTheme.COLOR_BUTTON_BG
+	icon_bg.color = UITheme.COLOR_BUTTON_BG
 	icon.add_child(icon_bg)
 	icon_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	icon_bg.z_index = -1

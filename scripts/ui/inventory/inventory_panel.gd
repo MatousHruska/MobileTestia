@@ -161,7 +161,7 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	equip_margin.add_child(equip_vbox)
 
 	# Header row: "Equipped Items:"
-	var header_label := CharacterMenuTheme.create_label("Equipped Items:", CharacterMenuTheme.FONT_SIZE_HEADER)
+	var header_label := UITheme.create_label("Equipped Items:", UITheme.FONT_SIZE_HEADER)
 	equip_vbox.add_child(header_label)
 
 	# Center container for both horizontal and vertical centering
@@ -245,15 +245,15 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	header_row.add_theme_constant_override("separation", _get_grid_separation())
 	backpack_vbox.add_child(header_row)
 
-	var backpack_label := CharacterMenuTheme.create_label("Backpack", CharacterMenuTheme.FONT_SIZE_HEADER)
+	var backpack_label := UITheme.create_label("Backpack", UITheme.FONT_SIZE_HEADER)
 	header_row.add_child(backpack_label)
 
-	var separator := CharacterMenuTheme.create_label(" | ", CharacterMenuTheme.FONT_SIZE_HEADER)
+	var separator := UITheme.create_label(" | ", UITheme.FONT_SIZE_HEADER)
 	header_row.add_child(separator)
 
-	gold_label = CharacterMenuTheme.create_label("Gold: 0", CharacterMenuTheme.FONT_SIZE_HEADER)
+	gold_label = UITheme.create_label("Gold: 0", UITheme.FONT_SIZE_HEADER)
 	gold_label.name = "GoldLabel"
-	gold_label.modulate = CharacterMenuTheme.COLOR_GOLD
+	gold_label.modulate = UITheme.COLOR_GOLD
 	header_row.add_child(gold_label)
 
 	# Spacer to push icons to the right
