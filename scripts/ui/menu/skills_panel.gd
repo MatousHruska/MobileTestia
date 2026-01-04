@@ -22,7 +22,7 @@ signal binding_mode_exited
 #===============================================================================
 
 ## Sizing percentages (relative to panel width/height)
-const TREE_WIDTH_PCT := 0.42           ## Tree panel takes ~42% of width
+const TREE_WIDTH_PCT := 0.50           ## Tree panel takes ~50% of width
 const TALENT_NODE_SIZE_PCT := 0.065    ## Node size ~6.5% of panel width
 const TALENT_SPACING_X_PCT := 0.02     ## Horizontal spacing ~2%
 const TALENT_SPACING_Y_PCT := 0.05     ## Vertical spacing ~5%
