@@ -141,12 +141,15 @@ func show_item(item: ItemData, source: String, index: int, screen_pos: Vector2 =
 		visible = true
 
 
-## Override close to clear state and deselect inventory
+## Override close to clear state
 func close() -> void:
+	if _is_closing:
+		return
 	current_item = null
 	current_source = ""
 	current_index = -1
-	Inventory.deselect()
+	# Note: Don't call Inventory.deselect() here - the panel handles that
+	# through its _on_popup_closed callback to avoid recursive loops
 	super.close()
 
 
