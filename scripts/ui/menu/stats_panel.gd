@@ -834,14 +834,14 @@ func _on_allocate_pressed(stat_name: String) -> void:
 
 
 ## Stat button input handling (tap vs hold)
-func _on_stat_button_input(event: InputEvent, stat_name: String, button: Button) -> void:
+func _on_stat_button_input(event: InputEvent, stat_name: String, _button: Button) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				# Start hold detection
 				_pending_stat = stat_name
-				_pending_position = button.get_global_rect().get_center()
+				_pending_position = mb.global_position
 				_is_holding = false
 				_hold_timer.start()
 			else:
@@ -1034,14 +1034,14 @@ func _on_effect_removed(_effect_type: String) -> void:
 
 
 ## Effect button input handling (tap vs hold)
-func _on_effect_button_input(event: InputEvent, effect_type: String, button: Button) -> void:
+func _on_effect_button_input(event: InputEvent, effect_type: String, _button: Button) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				# Start hold detection (reusing the same timer)
 				_pending_stat = "effect:" + effect_type
-				_pending_position = button.get_global_rect().get_center()
+				_pending_position = mb.global_position
 				_is_holding = false
 				_hold_timer.start()
 			else:
