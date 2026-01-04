@@ -141,60 +141,38 @@ func _format_stat_name(stat_name: String) -> String:
 	return stat_name.capitalize().replace("_", " ")
 
 
-## Find the nearest ScrollContainer ancestor to get visible bounds
-func _find_scroll_container() -> ScrollContainer:
-	var node := get_parent()
-	while node:
-		if node is ScrollContainer:
-			return node as ScrollContainer
-		node = node.get_parent()
-	return null
+## Hardcoded bottom safe zone percentage (adjustable)
+const BOTTOM_SAFE_ZONE_PERCENT := 0.50  # 50% from bottom
 
-
-## Position the popup at tap spot, always staying within visible scroll viewport
+## Position the popup at tap spot with hardcoded safe zones
 func _position_popup(target_pos: Vector2) -> void:
 	var popup_size := popup_panel.size
 	var margin := 8.0
+	var viewport_size := get_viewport_rect().size
 
-	# Find ScrollContainer ancestor to get visible viewport bounds
-	var scroll := _find_scroll_container()
-	var bounds_rect: Rect2
-	if scroll:
-		# Use ScrollContainer's visible rect (not its content size)
-		bounds_rect = scroll.get_global_rect()
-	else:
-		# Fallback to viewport if no scroll container
-		bounds_rect = Rect2(Vector2.ZERO, get_viewport_rect().size)
-
-	# Calculate safe zone within parent bounds
-	var safe_min := bounds_rect.position + Vector2(margin, margin)
-	var safe_max := bounds_rect.end - Vector2(margin, margin)
+	# Hardcoded safe zone: full screen but cut off bottom 50%
+	var safe_min := Vector2(margin, margin)
+	var safe_max := Vector2(viewport_size.x - margin, viewport_size.y * (1.0 - BOTTOM_SAFE_ZONE_PERCENT))
 
 	var pos := Vector2.ZERO
 
 	# Horizontal positioning: prefer right of tap, flip to left if needed
 	if target_pos.x + popup_size.x <= safe_max.x:
-		# Fits to the right
 		pos.x = target_pos.x
 	elif target_pos.x - popup_size.x >= safe_min.x:
-		# Fits to the left
 		pos.x = target_pos.x - popup_size.x
 	else:
-		# Doesn't fit either way, center horizontally within bounds
-		pos.x = bounds_rect.position.x + (bounds_rect.size.x - popup_size.x) / 2.0
+		pos.x = (viewport_size.x - popup_size.x) / 2.0
 
-	# Vertical positioning: prefer above tap (stretch upward), flip to below if needed
+	# Vertical positioning: prefer above tap, flip to below if needed
 	if target_pos.y - popup_size.y >= safe_min.y:
-		# Fits above
 		pos.y = target_pos.y - popup_size.y
 	elif target_pos.y + popup_size.y <= safe_max.y:
-		# Fits below
 		pos.y = target_pos.y
 	else:
-		# Doesn't fit either way, center vertically within bounds
-		pos.y = bounds_rect.position.y + (bounds_rect.size.y - popup_size.y) / 2.0
+		pos.y = (safe_max.y - popup_size.y)
 
-	# Final safety clamp to ensure popup stays fully within safe zone
+	# Final safety clamp
 	pos.x = clampf(pos.x, safe_min.x, safe_max.x - popup_size.x)
 	pos.y = clampf(pos.y, safe_min.y, safe_max.y - popup_size.y)
 
