@@ -2,48 +2,37 @@
   "color_panel_bg": "0.12,0.12,0.14,0.9",
   "color_panel_dark_bg": "0.1,0.1,0.12,0.9",
   "color_panel_border": "0.3,0.3,0.35,1.0",
-
   "color_popup_bg": "0.1,0.1,0.12,0.95",
   "color_popup_border": "0.4,0.4,0.45,1.0",
-
   "color_button_bg": "0.2,0.2,0.25,0.8",
   "color_button_bg_active": "0.25,0.3,0.4,0.9",
   "color_button_bg_dark": "0.15,0.15,0.2,1.0",
-
   "color_empty_slot_bg": "0.1,0.1,0.12,0.5",
   "color_empty_slot_border": "0.3,0.3,0.35,0.5",
-
   "color_tab_bg": "0.15,0.15,0.18,1.0",
   "color_tab_bg_active": "0.25,0.25,0.3,1.0",
   "color_tab_border": "0.4,0.4,0.45,1.0",
-
   "color_locked": "0.4,0.4,0.4,1.0",
   "color_available": "1.0,0.85,0.3,1.0",
   "color_learned": "0.5,1.0,0.5,1.0",
   "color_maxed": "0.3,0.8,1.0,1.0",
   "color_selected": "1.0,1.0,1.0,1.0",
   "color_highlight": "0.55,1.0,0.98,1.0",
-
   "color_gold": "1.0,0.85,0.0,1.0",
   "color_text_dim": "0.7,0.7,0.7,1.0",
-
   "font_size_header": 14,
   "font_size_label": 12,
   "font_size_small": 10,
   "font_size_tiny": 9,
-
   "margin_standard": 8,
   "margin_small": 6,
   "margin_tiny": 4,
-
   "border_width_normal": 1,
   "border_width_thick": 2,
   "border_width_selected": 3,
-
   "corner_radius_normal": 4,
   "corner_radius_small": 3,
   "corner_radius_popup": 6,
-
   "separation_normal": 8,
   "separation_small": 4,
   "separation_grid": 4
