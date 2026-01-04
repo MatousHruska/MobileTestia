@@ -142,7 +142,7 @@ func _format_stat_name(stat_name: String) -> String:
 
 
 ## Hardcoded bottom safe zone percentage (adjustable)
-const BOTTOM_SAFE_ZONE_PERCENT := 0.50  # 50% from bottom
+const BOTTOM_SAFE_ZONE_PERCENT := 0.15  # 15% from bottom
 
 ## Position the popup at tap spot with hardcoded safe zones
 func _position_popup(target_pos: Vector2) -> void:
