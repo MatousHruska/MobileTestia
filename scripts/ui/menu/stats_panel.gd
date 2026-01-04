@@ -303,7 +303,7 @@ func _create_subtab_bar() -> Control:
 func _create_subtab_content() -> Control:
 	var container := Control.new()
 	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	container.custom_minimum_size = Vector2(0, 140)
+	container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	# Offensive panel
 	var offensive := _create_offensive_panel()
