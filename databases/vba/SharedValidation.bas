@@ -436,6 +436,7 @@ Private Sub CreateIdNamedRanges()
     CreateNamedRange "FloatingDialogues", 1, "ID_FloatingDialogues"
     CreateNamedRange "Locations", 1, "ID_Locations"
     CreateNamedRange "PopupMessages", 1, "ID_PopupMessages"
+    CreateNamedRange "UITheme", 1, "ID_UITheme"
 End Sub
 
 '-------------------------------------------------------------------------------

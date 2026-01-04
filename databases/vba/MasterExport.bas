@@ -65,6 +65,9 @@ Public Sub ExportAll()
     ' Stat Descriptions
     ExportStatDescriptions
 
+    ' UI Theme
+    ExportUITheme
+
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -102,6 +105,7 @@ Public Sub ValidateAll()
     ValidateCutscenes
     ValidateFloatingDialogues
     ValidatePopupMessages
+    ValidateUITheme
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -154,6 +158,7 @@ Public Sub SetupWorkbook()
     currentSheet = "StatDescriptions": SetupStatDescriptionsSheet
     currentSheet = "StatModifiers": SetupStatModifiersSheet
     currentSheet = "Rarities": SetupRaritiesSheet
+    currentSheet = "UITheme": SetupUIThemeSheet
 
     MsgBox "Workbook setup complete!" & vbCrLf & vbCrLf & _
            "All sheets have been created with proper headers." & vbCrLf & _
