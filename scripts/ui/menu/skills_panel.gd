@@ -663,7 +663,7 @@ func _update_talent_node_visual(container: Control, talent: TalentData) -> void:
 	# Update name label (abbreviated to 2-3 chars)
 	if name_label:
 		name_label.text = talent.talent_name.substr(0, 3).to_upper()
-		name_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
+		name_label.add_theme_color_override("font_color", UITheme.COLOR_SELECTED)
 
 	# Tooltip
 	node.tooltip_text = "%s\n%s" % [talent.talent_name, talent.description]

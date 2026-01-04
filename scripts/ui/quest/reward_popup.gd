@@ -48,18 +48,19 @@ func _build_ui() -> void:
 	_panel = PanelContainer.new()
 	_panel.name = "RewardPanel"
 	_panel.custom_minimum_size = Vector2(300, 200)
+	_panel.add_theme_stylebox_override("panel", UITheme.create_popup_style())
 	center_container.add_child(_panel)
 
 	# Content margin
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 16)
-	margin.add_theme_constant_override("margin_right", 16)
-	margin.add_theme_constant_override("margin_top", 16)
-	margin.add_theme_constant_override("margin_bottom", 16)
+	margin.add_theme_constant_override("margin_left", UITheme.MARGIN_STANDARD * 2)
+	margin.add_theme_constant_override("margin_right", UITheme.MARGIN_STANDARD * 2)
+	margin.add_theme_constant_override("margin_top", UITheme.MARGIN_STANDARD * 2)
+	margin.add_theme_constant_override("margin_bottom", UITheme.MARGIN_STANDARD * 2)
 	_panel.add_child(margin)
 
 	_content = VBoxContainer.new()
-	_content.add_theme_constant_override("separation", 12)
+	_content.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL + 4)
 	margin.add_child(_content)
 
 
@@ -78,15 +79,15 @@ func show_rewards(quest_id: String, rewards: Dictionary) -> void:
 	var header := Label.new()
 	header.text = "Quest Complete!"
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.add_theme_font_size_override("font_size", 24)
-	header.add_theme_color_override("font_color", Color.GOLD)
+	header.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE + 6)
+	header.add_theme_color_override("font_color", UITheme.COLOR_GOLD)
 	_content.add_child(header)
 
 	# Quest name
 	var name_label := Label.new()
 	name_label.text = quest_data.get("name", quest_id)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_label.add_theme_font_size_override("font_size", 16)
+	name_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LARGE)
 	_content.add_child(name_label)
 
 	# Separator
@@ -96,25 +97,25 @@ func show_rewards(quest_id: String, rewards: Dictionary) -> void:
 	# Rewards header
 	var rewards_header := Label.new()
 	rewards_header.text = "Rewards:"
-	rewards_header.add_theme_font_size_override("font_size", 14)
-	rewards_header.add_theme_color_override("font_color", Color.LIGHT_GREEN)
+	rewards_header.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	rewards_header.add_theme_color_override("font_color", UITheme.COLOR_LEARNED)
 	_content.add_child(rewards_header)
 
 	# Rewards list
 	var rewards_vbox := VBoxContainer.new()
-	rewards_vbox.add_theme_constant_override("separation", 4)
+	rewards_vbox.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 	_content.add_child(rewards_vbox)
 
 	# XP
 	var xp: int = rewards.get("experience", 0)
 	if xp > 0:
-		var xp_hbox := _create_reward_row("Experience", "+%d XP" % xp, Color(0.6, 0.8, 1.0))
+		var xp_hbox := _create_reward_row("Experience", "+%d XP" % xp, UITheme.COLOR_XP_BAR)
 		rewards_vbox.add_child(xp_hbox)
 
 	# Gold
 	var gold: int = rewards.get("gold", 0)
 	if gold > 0:
-		var gold_hbox := _create_reward_row("Gold", "+%d" % gold, Color.GOLD)
+		var gold_hbox := _create_reward_row("Gold", "+%d" % gold, UITheme.COLOR_GOLD)
 		rewards_vbox.add_child(gold_hbox)
 
 	# Items
@@ -122,7 +123,7 @@ func show_rewards(quest_id: String, rewards: Dictionary) -> void:
 	for item_id in items:
 		var item_data := DatabaseLoader.get_item_base(item_id)
 		var item_name: String = item_data.get("name", item_id) if not item_data.is_empty() else item_id
-		var item_hbox := _create_reward_row("Item", item_name, Color.LIGHT_CORAL)
+		var item_hbox := _create_reward_row("Item", item_name, UITheme.COLOR_AVAILABLE)
 		rewards_vbox.add_child(item_hbox)
 
 	# No rewards case
@@ -130,13 +131,15 @@ func show_rewards(quest_id: String, rewards: Dictionary) -> void:
 		var no_rewards := Label.new()
 		no_rewards.text = "(No additional rewards)"
 		no_rewards.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		no_rewards.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+		no_rewards.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+		no_rewards.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 		rewards_vbox.add_child(no_rewards)
 
 	# Continue button
 	_continue_button = Button.new()
 	_continue_button.text = "Continue"
 	_continue_button.custom_minimum_size.y = 40
+	_continue_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	_continue_button.pressed.connect(_on_continue_pressed)
 	_content.add_child(_continue_button)
 
@@ -158,12 +161,12 @@ func _create_reward_row(label_text: String, value_text: String, color: Color) ->
 	var label := Label.new()
 	label.text = label_text + ":"
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	hbox.add_child(label)
 
 	var value := Label.new()
 	value.text = value_text
-	value.add_theme_font_size_override("font_size", 14)
+	value.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	value.add_theme_color_override("font_color", color)
 	hbox.add_child(value)
 

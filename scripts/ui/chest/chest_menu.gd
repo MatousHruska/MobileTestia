@@ -128,11 +128,11 @@ func _build_ui() -> void:
 	var vbox := VBoxContainer.new()
 	vbox.name = "VBox"
 	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
-	vbox.offset_left = 8
-	vbox.offset_top = 8
-	vbox.offset_right = -8
-	vbox.offset_bottom = -8
-	vbox.add_theme_constant_override("separation", 8)
+	vbox.offset_left = UITheme.MARGIN_STANDARD
+	vbox.offset_top = UITheme.MARGIN_STANDARD
+	vbox.offset_right = -UITheme.MARGIN_STANDARD
+	vbox.offset_bottom = -UITheme.MARGIN_STANDARD
+	vbox.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	menu_panel.add_child(vbox)
 
 	# Header
@@ -146,7 +146,7 @@ func _build_ui() -> void:
 	var content := HBoxContainer.new()
 	content.name = "ContentArea"
 	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content.add_theme_constant_override("separation", 8)
+	content.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	vbox.add_child(content)
 
 	# Build columns
@@ -157,13 +157,13 @@ func _build_ui() -> void:
 
 func _build_header(parent: VBoxContainer) -> void:
 	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 8)
+	header.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	parent.add_child(header)
 
 	var title := Label.new()
 	title.name = "Title"
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE + 2)
 	title.text = "Chest"
 	header.add_child(title)
 
@@ -171,6 +171,7 @@ func _build_header(parent: VBoxContainer) -> void:
 	close_btn.name = "CloseButton"
 	close_btn.custom_minimum_size = Vector2(40, 40)
 	close_btn.text = "X"
+	close_btn.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	close_btn.pressed.connect(_on_close_pressed)
 	header.add_child(close_btn)
 
@@ -179,10 +180,11 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 	var chest_panel := PanelContainer.new()
 	chest_panel.name = "ChestPanel"
 	chest_panel.custom_minimum_size.x = 200
+	chest_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 	parent.add_child(chest_panel)
 
 	var chest_vbox := VBoxContainer.new()
-	chest_vbox.add_theme_constant_override("separation", 8)
+	chest_vbox.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	chest_panel.add_child(chest_vbox)
 
 	# Chest name header
@@ -190,15 +192,15 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 	chest_header.name = "ChestHeader"
 	chest_header.text = "Chest Contents"
 	chest_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	chest_header.add_theme_font_size_override("font_size", 16)
+	chest_header.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LARGE)
 	chest_vbox.add_child(chest_header)
 
 	# 3x2 Grid for chest items
 	chest_container = GridContainer.new()
 	chest_container.name = "ChestGrid"
 	chest_container.columns = CHEST_COLUMNS
-	chest_container.add_theme_constant_override("h_separation", 4)
-	chest_container.add_theme_constant_override("v_separation", 4)
+	chest_container.add_theme_constant_override("h_separation", UITheme.SEPARATION_SMALL)
+	chest_container.add_theme_constant_override("v_separation", UITheme.SEPARATION_SMALL)
 	chest_vbox.add_child(chest_container)
 
 	# Create chest slots
@@ -221,8 +223,8 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 	gold_label.name = "GoldLabel"
 	gold_label.text = "Gold: 0"
 	gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	gold_label.add_theme_font_size_override("font_size", 14)
-	gold_label.modulate = Color(1.0, 0.85, 0.0)
+	gold_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	gold_label.modulate = UITheme.COLOR_GOLD
 	chest_vbox.add_child(gold_label)
 
 	# Loot All button
@@ -230,6 +232,7 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 	loot_all_button.name = "LootAllButton"
 	loot_all_button.text = "Loot All"
 	loot_all_button.custom_minimum_size = Vector2(0, 40)
+	loot_all_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	loot_all_button.pressed.connect(_on_loot_all_pressed)
 	chest_vbox.add_child(loot_all_button)
 
@@ -238,17 +241,18 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	var details_panel := PanelContainer.new()
 	details_panel.name = "DetailsPanel"
 	details_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 	parent.add_child(details_panel)
 
 	details_container = VBoxContainer.new()
-	details_container.add_theme_constant_override("separation", 8)
+	details_container.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	details_panel.add_child(details_container)
 
 	# Header
 	var header := Label.new()
 	header.text = "Item Details"
 	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.add_theme_font_size_override("font_size", 16)
+	header.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LARGE)
 	details_container.add_child(header)
 
 	# Placeholder
@@ -258,25 +262,26 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	details_placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	details_placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	details_placeholder.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	details_placeholder.modulate = Color(0.6, 0.6, 0.6)
+	details_placeholder.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	details_placeholder.modulate = UITheme.COLOR_TEXT_DIM
 	details_container.add_child(details_placeholder)
 
 	# Info container (hidden until item selected)
 	var info_container := VBoxContainer.new()
 	info_container.name = "InfoContainer"
 	info_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	info_container.add_theme_constant_override("separation", 4)
+	info_container.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 	info_container.visible = false
 	details_container.add_child(info_container)
 
 	# Icon and name row
 	var top_row := HBoxContainer.new()
-	top_row.add_theme_constant_override("separation", 12)
+	top_row.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL + 4)
 	info_container.add_child(top_row)
 
 	var icon_bg := ColorRect.new()
 	icon_bg.custom_minimum_size = Vector2(80, 80)
-	icon_bg.color = Color(0.2, 0.2, 0.25, 1)
+	icon_bg.color = UITheme.COLOR_PANEL_DARK_BG
 	top_row.add_child(icon_bg)
 
 	details_icon = TextureRect.new()
@@ -294,38 +299,40 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	top_row.add_child(name_vbox)
 
 	details_name = Label.new()
-	details_name.add_theme_font_size_override("font_size", 18)
+	details_name.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE)
 	name_vbox.add_child(details_name)
 
 	details_type = Label.new()
-	details_type.add_theme_font_size_override("font_size", 12)
-	details_type.modulate = Color(0.7, 0.7, 0.7)
+	details_type.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	details_type.modulate = UITheme.COLOR_TEXT_DIM
 	name_vbox.add_child(details_type)
 
 	details_rarity = Label.new()
-	details_rarity.add_theme_font_size_override("font_size", 12)
+	details_rarity.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	name_vbox.add_child(details_rarity)
 
 	# Description
 	var desc_label := Label.new()
 	desc_label.text = "Description:"
-	desc_label.add_theme_font_size_override("font_size", 12)
-	desc_label.modulate = Color(0.7, 0.7, 0.7)
+	desc_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	desc_label.modulate = UITheme.COLOR_TEXT_DIM
 	info_container.add_child(desc_label)
 
 	details_description = Label.new()
 	details_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	details_description.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	info_container.add_child(details_description)
 
 	# Stats
 	var stats_label := Label.new()
 	stats_label.text = "Stats:"
-	stats_label.add_theme_font_size_override("font_size", 12)
-	stats_label.modulate = Color(0.7, 0.7, 0.7)
+	stats_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	stats_label.modulate = UITheme.COLOR_TEXT_DIM
 	info_container.add_child(stats_label)
 
 	details_stats = Label.new()
 	details_stats.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	details_stats.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	info_container.add_child(details_stats)
 
 	# Spacer
@@ -335,7 +342,7 @@ func _build_details_column(parent: HBoxContainer) -> void:
 
 	# Action buttons
 	var button_row := HBoxContainer.new()
-	button_row.add_theme_constant_override("separation", 8)
+	button_row.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	info_container.add_child(button_row)
 
@@ -343,6 +350,7 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	loot_button.name = "LootButton"
 	loot_button.text = "Loot"
 	loot_button.custom_minimum_size = Vector2(80, 40)
+	loot_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	loot_button.pressed.connect(_on_loot_pressed)
 	button_row.add_child(loot_button)
 
@@ -350,6 +358,7 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	swap_button.name = "SwapButton"
 	swap_button.text = "Swap"
 	swap_button.custom_minimum_size = Vector2(80, 40)
+	swap_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	swap_button.pressed.connect(_on_swap_pressed)
 	button_row.add_child(swap_button)
 
@@ -357,7 +366,8 @@ func _build_details_column(parent: HBoxContainer) -> void:
 	feedback_label = Label.new()
 	feedback_label.name = "FeedbackLabel"
 	feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	feedback_label.modulate = Color(1.0, 0.5, 0.3)
+	feedback_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	feedback_label.modulate = UITheme.COLOR_DEBUFF
 	feedback_label.visible = false
 	info_container.add_child(feedback_label)
 
@@ -366,10 +376,11 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	var backpack_panel := PanelContainer.new()
 	backpack_panel.name = "BackpackPanel"
 	backpack_panel.custom_minimum_size.x = 280
+	backpack_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 	parent.add_child(backpack_panel)
 
 	var backpack_vbox := VBoxContainer.new()
-	backpack_vbox.add_theme_constant_override("separation", 4)
+	backpack_vbox.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 	backpack_panel.add_child(backpack_vbox)
 
 	# Header with inventory space
@@ -379,13 +390,13 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	var header := Label.new()
 	header.text = "Inventory"
 	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_theme_font_size_override("font_size", 16)
+	header.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LARGE)
 	header_row.add_child(header)
 
 	var space_label := Label.new()
 	space_label.name = "SpaceLabel"
-	space_label.add_theme_font_size_override("font_size", 12)
-	space_label.modulate = Color(0.7, 0.7, 0.7)
+	space_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	space_label.modulate = UITheme.COLOR_TEXT_DIM
 	header_row.add_child(space_label)
 
 	# Scrollable backpack grid
@@ -396,8 +407,8 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 
 	backpack_container = GridContainer.new()
 	backpack_container.columns = 5
-	backpack_container.add_theme_constant_override("h_separation", 4)
-	backpack_container.add_theme_constant_override("v_separation", 4)
+	backpack_container.add_theme_constant_override("h_separation", UITheme.SEPARATION_SMALL)
+	backpack_container.add_theme_constant_override("v_separation", UITheme.SEPARATION_SMALL)
 	backpack_scroll.add_child(backpack_container)
 
 	# Create backpack slots

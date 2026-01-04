@@ -92,9 +92,9 @@ func _setup_visuals() -> void:
 	_timer_label.set_anchors_preset(Control.PRESET_CENTER)
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_timer_label.add_theme_font_size_override("font_size", 10)
-	_timer_label.add_theme_color_override("font_color", Color.WHITE)
-	_timer_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1.0))
+	_timer_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
+	_timer_label.add_theme_color_override("font_color", UITheme.COLOR_SELECTED)
+	_timer_label.add_theme_color_override("font_shadow_color", UITheme.COLOR_PANEL_DARK_BG)
 	_timer_label.add_theme_constant_override("shadow_offset_x", 1)
 	_timer_label.add_theme_constant_override("shadow_offset_y", 1)
 	add_child(_timer_label)

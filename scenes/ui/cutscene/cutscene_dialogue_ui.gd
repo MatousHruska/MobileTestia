@@ -164,12 +164,13 @@ func _build_ui() -> void:
 	_panel.set_anchor_and_offset(SIDE_RIGHT, 0.95, 0)
 	_panel.set_anchor_and_offset(SIDE_TOP, 0.7, 0)
 	_panel.set_anchor_and_offset(SIDE_BOTTOM, 0.95, 0)
+	_panel.add_theme_stylebox_override("panel", UITheme.create_popup_style())
 	add_child(_panel)
 
 	# Main HBox: Portrait | Dialogue
 	var hbox := HBoxContainer.new()
 	hbox.name = "MainLayout"
-	hbox.add_theme_constant_override("separation", 16)
+	hbox.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL * 2)
 	_panel.add_child(hbox)
 
 	# LEFT: Portrait section
@@ -186,12 +187,13 @@ func _build_portrait_section() -> Control:
 	var container := PanelContainer.new()
 	container.name = "PortraitSection"
 	container.custom_minimum_size = Vector2(100, 100)
+	container.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 
 	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
+	margin.add_theme_constant_override("margin_left", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_right", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_top", UITheme.MARGIN_STANDARD)
+	margin.add_theme_constant_override("margin_bottom", UITheme.MARGIN_STANDARD)
 	container.add_child(margin)
 
 	var stack := Control.new()
@@ -201,7 +203,7 @@ func _build_portrait_section() -> Control:
 	# Placeholder
 	_portrait_placeholder = ColorRect.new()
 	_portrait_placeholder.name = "PortraitPlaceholder"
-	_portrait_placeholder.color = Color(0.3, 0.3, 0.5)
+	_portrait_placeholder.color = UITheme.COLOR_PANEL_DARK_BG
 	_portrait_placeholder.set_anchors_preset(Control.PRESET_FULL_RECT)
 	stack.add_child(_portrait_placeholder)
 
@@ -220,24 +222,25 @@ func _build_portrait_section() -> Control:
 func _build_dialogue_section() -> Control:
 	var container := VBoxContainer.new()
 	container.name = "DialogueSection"
-	container.add_theme_constant_override("separation", 8)
+	container.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 
 	# Speaker name
 	_speaker_label = Label.new()
 	_speaker_label.name = "SpeakerName"
-	_speaker_label.add_theme_font_size_override("font_size", 20)
-	_speaker_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.5))
+	_speaker_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE)
+	_speaker_label.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
 	container.add_child(_speaker_label)
 
 	# Dialogue text panel
 	var text_panel := PanelContainer.new()
 	text_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	text_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 
 	var text_margin := MarginContainer.new()
-	text_margin.add_theme_constant_override("margin_left", 12)
-	text_margin.add_theme_constant_override("margin_right", 12)
-	text_margin.add_theme_constant_override("margin_top", 8)
-	text_margin.add_theme_constant_override("margin_bottom", 8)
+	text_margin.add_theme_constant_override("margin_left", UITheme.MARGIN_STANDARD + 4)
+	text_margin.add_theme_constant_override("margin_right", UITheme.MARGIN_STANDARD + 4)
+	text_margin.add_theme_constant_override("margin_top", UITheme.MARGIN_STANDARD)
+	text_margin.add_theme_constant_override("margin_bottom", UITheme.MARGIN_STANDARD)
 	text_panel.add_child(text_margin)
 
 	_dialogue_label = RichTextLabel.new()
@@ -245,7 +248,7 @@ func _build_dialogue_section() -> Control:
 	_dialogue_label.bbcode_enabled = true
 	_dialogue_label.fit_content = false
 	_dialogue_label.scroll_active = false
-	_dialogue_label.add_theme_font_size_override("normal_font_size", 18)
+	_dialogue_label.add_theme_font_size_override("normal_font_size", UITheme.FONT_SIZE_TITLE)
 	text_margin.add_child(_dialogue_label)
 
 	container.add_child(text_panel)
@@ -254,8 +257,8 @@ func _build_dialogue_section() -> Control:
 	_advance_hint = Label.new()
 	_advance_hint.name = "AdvanceHint"
 	_advance_hint.text = "Tap to continue..."
-	_advance_hint.add_theme_font_size_override("font_size", 12)
-	_advance_hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	_advance_hint.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	_advance_hint.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	_advance_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_advance_hint.hide()
 	container.add_child(_advance_hint)

@@ -891,9 +891,9 @@ func _show_floating_quest_text(message: String = "Quest Complete", color: Color 
 	label.z_as_relative = false  # Use absolute z-index
 
 	# Make text more visible
-	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LARGE)
 	label.add_theme_color_override("font_color", color)
-	label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 1.0))
+	label.add_theme_color_override("font_shadow_color", UITheme.COLOR_PANEL_DARK_BG)
 	label.add_theme_constant_override("shadow_offset_x", 2)
 	label.add_theme_constant_override("shadow_offset_y", 2)
 

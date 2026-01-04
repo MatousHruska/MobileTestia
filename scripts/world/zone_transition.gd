@@ -55,7 +55,7 @@ func _create_visual() -> void:
 	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_label.size = size
 	_label.position = -size / 2
-	_label.add_theme_font_size_override("font_size", 12)
+	_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	add_child(_label)
 
 

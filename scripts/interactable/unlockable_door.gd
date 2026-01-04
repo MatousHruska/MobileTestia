@@ -73,9 +73,9 @@ func _setup_floating_text() -> void:
 	_floating_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_floating_text.position = Vector2(-60, -40)
 	_floating_text.custom_minimum_size = Vector2(120, 20)
-	_floating_text.add_theme_font_size_override("font_size", 12)
-	_floating_text.add_theme_color_override("font_color", Color(1.0, 0.8, 0.3))
-	_floating_text.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+	_floating_text.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	_floating_text.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
+	_floating_text.add_theme_color_override("font_shadow_color", UITheme.COLOR_PANEL_DARK_BG)
 	_floating_text.add_theme_constant_override("shadow_offset_x", 1)
 	_floating_text.add_theme_constant_override("shadow_offset_y", 1)
 	_floating_text.visible = false
