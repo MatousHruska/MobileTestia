@@ -150,11 +150,11 @@ func _ready() -> void:
 	# Load base values from database
 	_load_base_values_from_database()
 
-	# Set starting level for testing
+	# Set starting level for testing (adds to starting skill points from database)
 	if DEBUG_STARTING_LEVEL > 1:
 		level = DEBUG_STARTING_LEVEL
 		attribute_points = (DEBUG_STARTING_LEVEL - 1) * POINTS_PER_LEVEL
-		skill_points = (DEBUG_STARTING_LEVEL - 1) * SKILL_POINTS_PER_LEVEL
+		skill_points += (DEBUG_STARTING_LEVEL - 1) * SKILL_POINTS_PER_LEVEL
 		Debug.info("Stats", "Debug starting level: %d (%d attr pts, %d skill pts)" % [
 			level, attribute_points, skill_points
 		])
@@ -182,6 +182,10 @@ func _load_base_values_from_database() -> void:
 	POINTS_PER_LEVEL = int(DatabaseLoader.get_setting("points_per_level", POINTS_PER_LEVEL))
 	SKILL_POINTS_PER_LEVEL = int(DatabaseLoader.get_setting("skill_points_per_level", SKILL_POINTS_PER_LEVEL))
 	XP_PER_LEVEL = int(DatabaseLoader.get_setting("xp_per_level", XP_PER_LEVEL))
+
+	# Starting skill points (talent points)
+	var starting_skill_pts := int(DatabaseLoader.get_setting("starting_skill_points", 0))
+	skill_points = starting_skill_pts
 
 	# Flat base values
 	_health_base_flat = DatabaseLoader.get_setting("health_base_flat", _health_base_flat)
