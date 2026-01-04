@@ -167,6 +167,21 @@ func _create_header() -> Control:
 	xp_bar.custom_minimum_size = Vector2(120, 14)
 	xp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	xp_bar.show_percentage = false
+
+	# Style the bar with outline
+	var bg_style := StyleBoxFlat.new()
+	bg_style.bg_color = Color(0.1, 0.1, 0.1, 0.8)
+	bg_style.border_width_left = 1
+	bg_style.border_width_right = 1
+	bg_style.border_width_top = 1
+	bg_style.border_width_bottom = 1
+	bg_style.border_color = Color(0.4, 0.4, 0.4)
+	xp_bar.add_theme_stylebox_override("background", bg_style)
+
+	var fill_style := StyleBoxFlat.new()
+	fill_style.bg_color = Color(0.3, 0.6, 0.9)
+	xp_bar.add_theme_stylebox_override("fill", fill_style)
+
 	xp_row.add_child(xp_bar)
 
 	var xp_label := Label.new()
