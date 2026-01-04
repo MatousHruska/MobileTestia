@@ -199,6 +199,8 @@ func _setup_inventory_panel() -> void:
 	_inventory_panel_instance = InventoryPanel.new()
 	_inventory_panel_instance.name = "UnifiedInventory"
 	_inventory_panel_instance.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_inventory_panel_instance.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_inventory_panel_instance.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	inventory_panel.add_child(_inventory_panel_instance)
 
 	Debug.info("UI", "Unified InventoryPanel created")
