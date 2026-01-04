@@ -34,8 +34,8 @@ enum Tab { INVENTORY, STATS, SKILLS, QUESTS, MENU }
 @onready var exit_to_menu_button: Button = $MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox/ExitToMenuButton
 @onready var exit_game_button: Button = $MenuPanel/VBox/ContentArea/MenuPanel/ButtonsVBox/ExitGameButton
 
-## Confirmation popup
-@onready var confirm_popup: ConfirmationDialog = $ConfirmPopup
+## Confirmation popup (created dynamically in _setup_confirm_popup)
+var confirm_popup: ConfirmationDialog = null
 
 ## State
 var current_tab: Tab = Tab.INVENTORY
