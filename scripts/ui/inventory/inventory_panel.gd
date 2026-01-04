@@ -4,8 +4,6 @@ class_name InventoryPanel
 ## Redesigned for small screens (424px+ height)
 ## Item management via drag & drop: move/swap items, equip, destroy via trash zone
 
-## Preload ItemDetailPopup to avoid class_name load order issues
-const ItemDetailPopupScript = preload("res://scripts/ui/inventory/item_detail_popup.gd")
 
 ## Equipment slot layout - Two columns:
 ## Column 1 (Armor): HEAD+AMULET, HAND+BODY+RING, LEGS
@@ -52,7 +50,8 @@ const SLOT_SIZE_LARGE := 56.0   # For screens > 900px
 ## UI References (set up in _ready)
 var equipment_container: VBoxContainer
 var backpack_container: GridContainer
-var item_popup: Control  # ItemDetailPopup instance (legacy, will be removed)
+var item_popup: ItemPopup = null
+var _popup_layer: CanvasLayer = null
 var equip_margin: MarginContainer
 var backpack_margin: MarginContainer
 var gold_label: Label
@@ -436,13 +435,31 @@ func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer,
 
 
 func _build_item_popup() -> void:
-	item_popup = ItemDetailPopupScript.new()
-	item_popup.name = "ItemDetailPopup"
-	item_popup.set_anchors_preset(PRESET_FULL_RECT)
-	add_child(item_popup)
+	# Create a CanvasLayer above CharacterMenu (layer 20) for the popup
+	_popup_layer = CanvasLayer.new()
+	_popup_layer.name = "ItemPopupLayer"
+	_popup_layer.layer = 30
+
+	item_popup = ItemPopup.new()
+	item_popup.name = "ItemPopup"
+	_popup_layer.add_child(item_popup)
 
 	# Connect popup closed signal
 	item_popup.closed.connect(_on_popup_closed)
+
+	call_deferred("_add_popup_to_root")
+
+
+func _add_popup_to_root() -> void:
+	if _popup_layer and is_inside_tree():
+		get_tree().root.add_child(_popup_layer)
+
+
+func _exit_tree() -> void:
+	if _popup_layer and is_instance_valid(_popup_layer):
+		_popup_layer.queue_free()
+		_popup_layer = null
+		item_popup = null
 
 
 func _connect_signals() -> void:
@@ -566,8 +583,8 @@ func _on_use_pressed() -> void:
 
 	if result.get("success", false):
 		Debug.info("UI", "Used item", result.get("message", ""))
-		# Update popup if visible
-		if item_popup.visible and Inventory.has_selection():
+		# Update popup if open
+		if item_popup.is_open() and Inventory.has_selection():
 			item_popup.show_item(Inventory.selected_item, Inventory.selected_source, Inventory.selected_index)
 	else:
 		Debug.info("UI", "Use failed", result.get("message", "Cannot use this item"))
@@ -606,15 +623,15 @@ func _on_drag_ended(_slot: InventorySlot) -> void:
 
 func _on_inventory_changed() -> void:
 	_refresh_backpack()
-	# Update popup if visible
-	if item_popup.visible and Inventory.has_selection():
+	# Update popup if open
+	if item_popup.is_open() and Inventory.has_selection():
 		item_popup.show_item(Inventory.selected_item, Inventory.selected_source, Inventory.selected_index)
 
 
 func _on_equipment_changed(_slot: ItemData.EquipSlot) -> void:
 	_refresh_equipment()
-	# Update popup if visible
-	if item_popup.visible and Inventory.has_selection():
+	# Update popup if open
+	if item_popup.is_open() and Inventory.has_selection():
 		item_popup.show_item(Inventory.selected_item, Inventory.selected_source, Inventory.selected_index)
 
 
@@ -640,8 +657,8 @@ func _on_item_selected(item: ItemData, source: String, index: int) -> void:
 func _on_item_deselected() -> void:
 	_refresh_equipment()
 	_refresh_backpack()
-	# Hide popup
-	item_popup.hide_popup()
+	# Close popup
+	item_popup.close()
 
 
 func _on_gold_changed(_new_amount: int) -> void:
