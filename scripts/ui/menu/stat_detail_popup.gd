@@ -142,7 +142,7 @@ func _format_stat_name(stat_name: String) -> String:
 
 
 ## Hardcoded bottom safe zone percentage (adjustable)
-const BOTTOM_SAFE_ZONE_PERCENT := 0.15  # 15% from bottom
+const BOTTOM_SAFE_ZONE_PERCENT := 0.25  # 25% from bottom
 
 ## Position the popup at tap spot with hardcoded safe zones
 func _position_popup(target_pos: Vector2) -> void:
@@ -150,7 +150,7 @@ func _position_popup(target_pos: Vector2) -> void:
 	var margin := 8.0
 	var viewport_size := get_viewport_rect().size
 
-	# Hardcoded safe zone: full screen but cut off bottom 50%
+	# Hardcoded safe zone
 	var safe_min := Vector2(margin, margin)
 	var safe_max := Vector2(viewport_size.x - margin, viewport_size.y * (1.0 - BOTTOM_SAFE_ZONE_PERCENT))
 
@@ -164,13 +164,8 @@ func _position_popup(target_pos: Vector2) -> void:
 	else:
 		pos.x = (viewport_size.x - popup_size.x) / 2.0
 
-	# Vertical positioning: prefer above tap, flip to below if needed
-	if target_pos.y - popup_size.y >= safe_min.y:
-		pos.y = target_pos.y - popup_size.y
-	elif target_pos.y + popup_size.y <= safe_max.y:
-		pos.y = target_pos.y
-	else:
-		pos.y = (safe_max.y - popup_size.y)
+	# Vertical positioning: always stretch upward (above tap point)
+	pos.y = target_pos.y - popup_size.y
 
 	# Final safety clamp
 	pos.x = clampf(pos.x, safe_min.x, safe_max.x - popup_size.x)
