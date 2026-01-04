@@ -307,6 +307,7 @@ func _build_dialogue_section() -> Control:
 	dialogue_label.fit_content = false
 	dialogue_label.scroll_active = true
 	dialogue_label.add_theme_font_size_override("normal_font_size", UITheme.FONT_SIZE_TITLE)
+	dialogue_label.add_theme_color_override("default_color", UITheme.COLOR_SECTION_HEADER)
 	margin.add_child(dialogue_label)
 
 	return container
