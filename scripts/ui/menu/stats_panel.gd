@@ -6,6 +6,16 @@ class_name StatsPanel
 
 enum SubTab { OFFENSIVE, DEFENSIVE, UTILITY }
 
+#===============================================================================
+# RESPONSIVE CONSTANTS (percentages of panel dimensions)
+#===============================================================================
+
+const MAIN_GAP_PCT := 0.03          # 3% gap between left/right panels
+const SECTION_PADDING_PCT := 0.015  # 1.5% vertical padding per section
+const RIGHT_PANEL_GAP_PCT := 0.02   # 2% gap in right panel
+const SUBTAB_BTN_WIDTH_PCT := 0.12  # 12% width for subtab buttons
+const EFFECTS_MARGIN_PCT := 0.02    # 2% margin for effects container
+
 ## Subtab state
 var current_subtab: SubTab = SubTab.OFFENSIVE
 
@@ -82,30 +92,48 @@ func _process(_delta: float) -> void:
 	_update_effect_timers()
 
 
+## Reference to main hbox for responsive updates
+var _main_hbox: HBoxContainer = null
+
+
 func _build_ui() -> void:
 	# Main horizontal layout: Left panel | Right panel
-	var main_hbox := HBoxContainer.new()
-	main_hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
-	main_hbox.add_theme_constant_override("separation", 16)
-	add_child(main_hbox)
+	_main_hbox = HBoxContainer.new()
+	_main_hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_main_hbox)
+
+	# Update spacing when panel resizes
+	resized.connect(_update_responsive_spacing)
+	call_deferred("_update_responsive_spacing")
 
 	# === LEFT SIDE: Primary Attributes + Resources + Effects ===
 	var left_panel := _create_left_panel()
 	left_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	left_panel.size_flags_stretch_ratio = 0.45
-	main_hbox.add_child(left_panel)
+	_main_hbox.add_child(left_panel)
 
 	# === VERTICAL SEPARATOR ===
 	var vsep := VSeparator.new()
-	main_hbox.add_child(vsep)
+	_main_hbox.add_child(vsep)
 
 	# === RIGHT SIDE: Secondary Stats with Subtabs ===
 	var right_panel := _create_right_panel()
 	right_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	right_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right_panel.size_flags_stretch_ratio = 0.55
-	main_hbox.add_child(right_panel)
+	_main_hbox.add_child(right_panel)
+
+
+func _update_responsive_spacing() -> void:
+	if not _main_hbox:
+		return
+	var panel_width := size.x
+	var panel_height := size.y
+
+	# Update main gap between left/right panels
+	var main_gap := maxi(8, int(panel_width * MAIN_GAP_PCT))
+	_main_hbox.add_theme_constant_override("separation", main_gap)
 
 
 func _create_left_panel() -> Control:
@@ -139,23 +167,27 @@ func _create_left_panel() -> Control:
 	return container
 
 
-## Wraps a section with minimal vertical padding (2% of panel height)
+## Wraps a section with percentage-based vertical padding
 func _create_section_with_padding(content: Control) -> Control:
 	var wrapper := VBoxContainer.new()
 	wrapper.add_theme_constant_override("separation", 0)
 
-	# Small top padding (2% equivalent, ~6px on small screens)
+	# Calculate padding based on expected panel height (~400-500px typical)
+	var viewport_height := get_viewport().get_visible_rect().size.y
+	var padding := maxi(4, int(viewport_height * SECTION_PADDING_PCT))
+
+	# Top padding spacer
 	var top_spacer := Control.new()
-	top_spacer.custom_minimum_size = Vector2(0, 6)
+	top_spacer.custom_minimum_size = Vector2(0, padding)
 	top_spacer.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	wrapper.add_child(top_spacer)
 
 	content.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	wrapper.add_child(content)
 
-	# Small bottom padding
+	# Bottom padding spacer
 	var bottom_spacer := Control.new()
-	bottom_spacer.custom_minimum_size = Vector2(0, 6)
+	bottom_spacer.custom_minimum_size = Vector2(0, padding)
 	bottom_spacer.size_flags_vertical = Control.SIZE_SHRINK_END
 	wrapper.add_child(bottom_spacer)
 
