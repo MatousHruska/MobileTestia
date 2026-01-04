@@ -141,15 +141,23 @@ func _format_stat_name(stat_name: String) -> String:
 	return stat_name.capitalize().replace("_", " ")
 
 
-## Position the popup at tap spot, always staying within visible screen
+## Position the popup at tap spot, always staying within parent container bounds
 func _position_popup(target_pos: Vector2) -> void:
-	var screen_size := get_viewport_rect().size
 	var popup_size := popup_panel.size
-	var margin := 12.0
+	var margin := 8.0
 
-	# Calculate safe zone (screen minus margins)
-	var safe_min := Vector2(margin, margin)
-	var safe_max := Vector2(screen_size.x - margin, screen_size.y - margin)
+	# Get parent container's global rect as boundary
+	var parent_ctrl := get_parent() as Control
+	var bounds_rect: Rect2
+	if parent_ctrl:
+		bounds_rect = parent_ctrl.get_global_rect()
+	else:
+		# Fallback to viewport if no parent
+		bounds_rect = Rect2(Vector2.ZERO, get_viewport_rect().size)
+
+	# Calculate safe zone within parent bounds
+	var safe_min := bounds_rect.position + Vector2(margin, margin)
+	var safe_max := bounds_rect.end - Vector2(margin, margin)
 
 	var pos := Vector2.ZERO
 
@@ -161,8 +169,8 @@ func _position_popup(target_pos: Vector2) -> void:
 		# Fits to the left
 		pos.x = target_pos.x - popup_size.x
 	else:
-		# Doesn't fit either way, center horizontally and clamp
-		pos.x = (screen_size.x - popup_size.x) / 2.0
+		# Doesn't fit either way, center horizontally within bounds
+		pos.x = bounds_rect.position.x + (bounds_rect.size.x - popup_size.x) / 2.0
 
 	# Vertical positioning: prefer above tap (stretch upward), flip to below if needed
 	if target_pos.y - popup_size.y >= safe_min.y:
@@ -172,8 +180,8 @@ func _position_popup(target_pos: Vector2) -> void:
 		# Fits below
 		pos.y = target_pos.y
 	else:
-		# Doesn't fit either way, center vertically and clamp
-		pos.y = (screen_size.y - popup_size.y) / 2.0
+		# Doesn't fit either way, center vertically within bounds
+		pos.y = bounds_rect.position.y + (bounds_rect.size.y - popup_size.y) / 2.0
 
 	# Final safety clamp to ensure popup stays fully within safe zone
 	pos.x = clampf(pos.x, safe_min.x, safe_max.x - popup_size.x)
