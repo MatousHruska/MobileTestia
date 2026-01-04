@@ -87,27 +87,54 @@ func _build_ui() -> void:
 
 func _create_left_panel() -> Control:
 	var container := VBoxContainer.new()
-	container.add_theme_constant_override("separation", 8)
+	container.add_theme_constant_override("separation", 0)
 	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	# === HEADER: Level and XP ===
-	var header := _create_header()
+	var header := _create_section_with_padding(_create_header())
 	container.add_child(header)
 
+	container.add_child(HSeparator.new())
+
 	# === PRIMARY ATTRIBUTES ===
-	var attributes_section := _create_attributes_section()
+	var attributes_section := _create_section_with_padding(_create_attributes_section())
 	container.add_child(attributes_section)
 
+	container.add_child(HSeparator.new())
+
 	# === RESOURCES ===
-	var resources_section := _create_resources_section()
+	var resources_section := _create_section_with_padding(_create_resources_section())
 	container.add_child(resources_section)
 
+	container.add_child(HSeparator.new())
+
 	# === ACTIVE EFFECTS (expands to fill remaining space) ===
-	var effects_section := _create_effects_section()
+	var effects_section := _create_section_with_padding(_create_effects_section())
 	effects_section.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	container.add_child(effects_section)
 
 	return container
+
+
+## Wraps a section with 2% top padding using stretch ratio
+func _create_section_with_padding(content: Control) -> Control:
+	var wrapper := VBoxContainer.new()
+	wrapper.add_theme_constant_override("separation", 0)
+
+	# 2% top padding spacer
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 0)
+	spacer.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	# Use stretch ratio for percentage-based sizing (2% of available space)
+	wrapper.add_child(spacer)
+
+	# Calculate 2% of typical panel height as minimum
+	spacer.custom_minimum_size.y = 8  # ~2% of 400px
+
+	content.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	wrapper.add_child(content)
+
+	return wrapper
 
 
 func _create_right_panel() -> Control:
