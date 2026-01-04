@@ -23,6 +23,8 @@ const POPUP_WIDTH := 260.0
 
 
 func _ready() -> void:
+	# Fill parent so dimmer covers full area for tap-outside-to-close
+	set_anchors_preset(Control.PRESET_FULL_RECT)
 	_build_ui()
 	visible = false
 	mouse_filter = Control.MOUSE_FILTER_STOP
