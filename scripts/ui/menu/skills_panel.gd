@@ -41,6 +41,8 @@ const MIN_CELL_SIZE := 40              ## Minimum touch target
 const BIND_MAIN_SLOT_PCT := 0.08       ## Main bind slot ~8% of panel width
 const BIND_SLOT_PCT := 0.065           ## Secondary bind slot ~6.5% of panel width
 const MIN_BIND_SIZE := 36              ## Minimum bind slot size
+const BIND_PANEL_HEIGHT_PCT := 0.18    ## Active Skills panel ~18% of panel height
+const MIN_BIND_PANEL_HEIGHT := 70      ## Minimum height for Active Skills panel
 
 #===============================================================================
 # COMPUTED SIZES (call these functions to get actual pixel values)
@@ -69,6 +71,9 @@ func _get_bind_main_slot_size() -> float:
 
 func _get_bind_slot_size() -> float:
 	return maxf(MIN_BIND_SIZE, size.x * BIND_SLOT_PCT)
+
+func _get_bind_panel_height() -> float:
+	return maxf(MIN_BIND_PANEL_HEIGHT, size.y * BIND_PANEL_HEIGHT_PCT)
 
 
 ## Colors
@@ -427,7 +432,7 @@ func _build_skill_bind_ui() -> void:
 	_right_panel.add_child(label)
 
 	_bind_panel = PanelContainer.new()
-	_bind_panel.custom_minimum_size = Vector2(0, 58)
+	_bind_panel.custom_minimum_size = Vector2(0, _get_bind_panel_height())
 	_right_panel.add_child(_bind_panel)
 
 	# Style with border
