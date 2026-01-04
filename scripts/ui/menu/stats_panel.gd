@@ -152,13 +152,10 @@ func _create_header() -> Control:
 
 	container.add_child(level_row)
 
-	# XP row
-	var xp_row := HBoxContainer.new()
-	xp_row.add_theme_constant_override("separation", 8)
-
+	# XP bar
 	var xp_bar := ProgressBar.new()
 	xp_bar.name = "XPBar"
-	xp_bar.custom_minimum_size = Vector2(120, 14)
+	xp_bar.custom_minimum_size = Vector2(0, 14)
 	xp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	xp_bar.show_percentage = false
 
@@ -176,15 +173,7 @@ func _create_header() -> Control:
 	fill_style.bg_color = Color(0.3, 0.6, 0.9)
 	xp_bar.add_theme_stylebox_override("fill", fill_style)
 
-	xp_row.add_child(xp_bar)
-
-	var xp_label := Label.new()
-	xp_label.name = "XPLabel"
-	xp_label.add_theme_font_size_override("font_size", 11)
-	xp_label.text = "0 / 100"
-	xp_row.add_child(xp_label)
-
-	container.add_child(xp_row)
+	container.add_child(xp_bar)
 
 	return container
 
@@ -682,9 +671,6 @@ func _update_level_display() -> void:
 	_find_and_update_node("XPBar", func(n: ProgressBar):
 		n.max_value = PlayerStats.experience_for_next_level
 		n.value = PlayerStats.experience
-	)
-	_find_and_update_node("XPLabel", func(n: Label):
-		n.text = "%d / %d" % [PlayerStats.experience, PlayerStats.experience_for_next_level]
 	)
 
 
