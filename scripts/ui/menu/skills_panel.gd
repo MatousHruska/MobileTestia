@@ -76,13 +76,7 @@ func _get_bind_panel_height() -> float:
 	return maxf(MIN_BIND_PANEL_HEIGHT, size.y * BIND_PANEL_HEIGHT_PCT)
 
 
-## Colors - use CharacterMenuTheme for shared colors
-const COLOR_LOCKED := CharacterMenuTheme.COLOR_LOCKED
-const COLOR_AVAILABLE := CharacterMenuTheme.COLOR_AVAILABLE
-const COLOR_LEARNED := CharacterMenuTheme.COLOR_LEARNED
-const COLOR_MAXED := CharacterMenuTheme.COLOR_MAXED
-const COLOR_SELECTED := CharacterMenuTheme.COLOR_SELECTED
-const COLOR_BINDING_AVAILABLE := CharacterMenuTheme.COLOR_HIGHLIGHT
+## Colors - use UITheme global singleton for shared colors
 
 #===============================================================================
 # STATE
@@ -226,18 +220,18 @@ func _create_percentage_margin() -> MarginContainer:
 
 
 func _create_section_header(text: String) -> Label:
-	return CharacterMenuTheme.create_section_header(text)
+	return UITheme.create_section_header(text)
 
 
 func _build_talent_tree_panel(parent: Control) -> void:
 	var outer_vbox := VBoxContainer.new()
 	outer_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	outer_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	CharacterMenuTheme.setup_vbox(outer_vbox, CharacterMenuTheme.SEPARATION_SMALL)
+	UITheme.setup_vbox(outer_vbox, UITheme.SEPARATION_SMALL)
 	parent.add_child(outer_vbox)
 
 	# Talents header (outside the panel, like Skillbook)
-	var header := CharacterMenuTheme.create_section_header("Talents")
+	var header := UITheme.create_section_header("Talents")
 	outer_vbox.add_child(header)
 
 	# Main panel with border
@@ -248,18 +242,18 @@ func _build_talent_tree_panel(parent: Control) -> void:
 	outer_vbox.add_child(_left_panel)
 
 	# Style with border
-	_left_panel.add_theme_stylebox_override("panel", CharacterMenuTheme.create_panel_style())
+	_left_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 
-	var margin := CharacterMenuTheme.create_margin_container()
+	var margin := UITheme.create_margin_container()
 	_left_panel.add_child(margin)
 
 	var vbox := VBoxContainer.new()
-	CharacterMenuTheme.setup_vbox(vbox, 10)
+	UITheme.setup_vbox(vbox, 10)
 	margin.add_child(vbox)
 
 	# Tree tabs container (horizontal row, names can wrap)
 	_tree_tabs = HBoxContainer.new()
-	CharacterMenuTheme.setup_hbox(_tree_tabs, CharacterMenuTheme.SEPARATION_SMALL)
+	UITheme.setup_hbox(_tree_tabs, UITheme.SEPARATION_SMALL)
 	_tree_tabs.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vbox.add_child(_tree_tabs)
 
@@ -297,13 +291,13 @@ func _build_points_section(parent: Control) -> void:
 	parent.add_child(panel)
 
 	# Style with border (darker variant)
-	panel.add_theme_stylebox_override("panel", CharacterMenuTheme.create_panel_dark_style())
+	panel.add_theme_stylebox_override("panel", UITheme.create_panel_dark_style())
 
-	var margin := CharacterMenuTheme.create_margin_container(
-		CharacterMenuTheme.MARGIN_SMALL,
-		CharacterMenuTheme.MARGIN_SMALL,
-		CharacterMenuTheme.MARGIN_TINY,
-		CharacterMenuTheme.MARGIN_TINY
+	var margin := UITheme.create_margin_container(
+		UITheme.MARGIN_SMALL,
+		UITheme.MARGIN_SMALL,
+		UITheme.MARGIN_TINY,
+		UITheme.MARGIN_TINY
 	)
 	panel.add_child(margin)
 
@@ -313,7 +307,7 @@ func _build_points_section(parent: Control) -> void:
 
 	_points_label = Label.new()
 	_points_label.add_theme_font_size_override("font_size", 10)
-	_points_label.add_theme_color_override("font_color", COLOR_AVAILABLE)
+	_points_label.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
 	_points_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hbox.add_child(_points_label)
 
@@ -344,9 +338,9 @@ func _build_right_panel(parent: Control) -> void:
 	_right_panel.add_child(skillbook_panel)
 
 	# Style with border
-	skillbook_panel.add_theme_stylebox_override("panel", CharacterMenuTheme.create_panel_style())
+	skillbook_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 
-	var skillbook_margin := CharacterMenuTheme.create_margin_container()
+	var skillbook_margin := UITheme.create_margin_container()
 	skillbook_panel.add_child(skillbook_margin)
 
 	var skillbook_scroll := ScrollContainer.new()
@@ -362,7 +356,7 @@ func _build_right_panel(parent: Control) -> void:
 
 	_skillbook_grid = GridContainer.new()
 	_skillbook_grid.columns = SKILLBOOK_COLS
-	CharacterMenuTheme.setup_grid(_skillbook_grid)
+	UITheme.setup_grid(_skillbook_grid)
 	center.add_child(_skillbook_grid)
 
 	# Build skill bind UI (below skillbook)
@@ -404,19 +398,19 @@ func _build_skill_bind_ui() -> void:
 	_right_panel.add_child(_bind_panel)
 
 	# Style with border
-	_bind_panel.add_theme_stylebox_override("panel", CharacterMenuTheme.create_panel_style())
+	_bind_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 
-	var margin := CharacterMenuTheme.create_margin_container(
-		CharacterMenuTheme.MARGIN_STANDARD,
-		CharacterMenuTheme.MARGIN_STANDARD,
-		CharacterMenuTheme.MARGIN_SMALL,
-		CharacterMenuTheme.MARGIN_SMALL
+	var margin := UITheme.create_margin_container(
+		UITheme.MARGIN_STANDARD,
+		UITheme.MARGIN_STANDARD,
+		UITheme.MARGIN_SMALL,
+		UITheme.MARGIN_SMALL
 	)
 	_bind_panel.add_child(margin)
 
 	# Simple horizontal row
 	var row := HBoxContainer.new()
-	CharacterMenuTheme.setup_hbox(row, CharacterMenuTheme.MARGIN_SMALL)
+	UITheme.setup_hbox(row, UITheme.MARGIN_SMALL)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	margin.add_child(row)
 
@@ -447,7 +441,7 @@ func _create_bind_slot(index: int, is_main: bool) -> Button:
 	# Style - square corners
 	var stylebox := StyleBoxFlat.new()
 	stylebox.bg_color = Color(0.2, 0.2, 0.25, 0.8)
-	stylebox.border_color = COLOR_BINDING_AVAILABLE if is_main else Color(0.55, 1.0, 0.98, 0.7)
+	stylebox.border_color = UITheme.COLOR_HIGHLIGHT if is_main else Color(0.55, 1.0, 0.98, 0.7)
 	stylebox.set_border_width_all(2 if is_main else 1)
 	stylebox.set_corner_radius_all(4)
 	slot.add_theme_stylebox_override("normal", stylebox)
@@ -510,14 +504,14 @@ func _build_tree_tabs() -> void:
 		# Style with outline
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color(0.15, 0.15, 0.18) if not tab.button_pressed else Color(0.25, 0.25, 0.3)
-		style.border_color = Color(0.4, 0.4, 0.45) if not tab.button_pressed else COLOR_AVAILABLE
+		style.border_color = Color(0.4, 0.4, 0.45) if not tab.button_pressed else UITheme.COLOR_AVAILABLE
 		style.set_border_width_all(1)
 		style.set_corner_radius_all(3)
 		tab.add_theme_stylebox_override("normal", style)
 
 		var pressed_style := StyleBoxFlat.new()
 		pressed_style.bg_color = Color(0.25, 0.25, 0.3)
-		pressed_style.border_color = COLOR_AVAILABLE
+		pressed_style.border_color = UITheme.COLOR_AVAILABLE
 		pressed_style.set_border_width_all(1)
 		pressed_style.set_corner_radius_all(3)
 		tab.add_theme_stylebox_override("pressed", pressed_style)
@@ -627,15 +621,15 @@ func _update_talent_node_visual(container: Control, talent: TalentData) -> void:
 	# Determine color
 	var color: Color
 	if is_selected:
-		color = COLOR_SELECTED
+		color = UITheme.COLOR_SELECTED
 	elif invested >= talent.max_points:
-		color = COLOR_MAXED
+		color = UITheme.COLOR_MAXED
 	elif invested > 0:
-		color = COLOR_LEARNED
+		color = UITheme.COLOR_LEARNED
 	elif can_learn:
-		color = COLOR_AVAILABLE
+		color = UITheme.COLOR_AVAILABLE
 	else:
-		color = COLOR_LOCKED
+		color = UITheme.COLOR_LOCKED
 
 	# Find the button child
 	var node: Button = null
@@ -788,11 +782,11 @@ func _create_skillbook_slot(talent: TalentData) -> Button:
 	# Gray out if weapon requirement not met
 	if not weapon_met:
 		stylebox.bg_color = Color(0.15, 0.15, 0.15, 0.6)
-		stylebox.border_color = COLOR_LOCKED
+		stylebox.border_color = UITheme.COLOR_LOCKED
 		slot.modulate = Color(0.6, 0.6, 0.6, 0.8)
 	else:
 		stylebox.bg_color = Color(0.2, 0.25, 0.35) if is_bound else Color(0.15, 0.15, 0.2)
-		stylebox.border_color = COLOR_SELECTED if is_selected else (COLOR_BINDING_AVAILABLE if is_bound else COLOR_LEARNED)
+		stylebox.border_color = UITheme.COLOR_SELECTED if is_selected else (UITheme.COLOR_HIGHLIGHT if is_bound else UITheme.COLOR_LEARNED)
 
 	stylebox.set_border_width_all(2)
 	stylebox.set_corner_radius_all(4)
@@ -813,7 +807,7 @@ func _create_empty_skillbook_slot() -> Control:
 
 	var panel := Panel.new()
 	panel.set_anchors_preset(Control.PRESET_FULL_RECT)
-	panel.add_theme_stylebox_override("panel", CharacterMenuTheme.create_empty_slot_style())
+	panel.add_theme_stylebox_override("panel", UITheme.create_empty_slot_style())
 	slot.add_child(panel)
 
 	return slot
@@ -878,7 +872,7 @@ func _update_bind_slot_visual(slot: Button, index: int) -> void:
 	# Gray out if weapon requirement not met
 	if talent and not weapon_met:
 		stylebox.bg_color = Color(0.15, 0.15, 0.15, 0.6)
-		stylebox.border_color = COLOR_LOCKED
+		stylebox.border_color = UITheme.COLOR_LOCKED
 		stylebox.set_border_width_all(2)
 		slot.modulate = Color(0.6, 0.6, 0.6, 0.8)
 	else:
@@ -886,10 +880,10 @@ func _update_bind_slot_visual(slot: Button, index: int) -> void:
 		slot.modulate = Color(1.0, 1.0, 1.0, 1.0)
 
 		if binding_mode:
-			stylebox.border_color = COLOR_BINDING_AVAILABLE
+			stylebox.border_color = UITheme.COLOR_HIGHLIGHT
 			stylebox.set_border_width_all(3)
 		else:
-			stylebox.border_color = COLOR_BINDING_AVAILABLE if is_main else Color(0.55, 1.0, 0.98, 0.5)
+			stylebox.border_color = UITheme.COLOR_HIGHLIGHT if is_main else Color(0.55, 1.0, 0.98, 0.5)
 			stylebox.set_border_width_all(2)
 
 	stylebox.set_corner_radius_all(4)
@@ -1181,7 +1175,7 @@ func _create_drag_preview(talent: TalentData) -> void:
 
 	var stylebox := StyleBoxFlat.new()
 	stylebox.bg_color = Color(0.3, 0.4, 0.5, 0.9)
-	stylebox.border_color = COLOR_BINDING_AVAILABLE
+	stylebox.border_color = UITheme.COLOR_HIGHLIGHT
 	stylebox.set_border_width_all(2)
 	stylebox.set_corner_radius_all(6)
 	_drag_preview.add_theme_stylebox_override("panel", stylebox)
