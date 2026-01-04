@@ -34,6 +34,8 @@ var _effects_title_label: Label = null
 
 
 func _ready() -> void:
+	# Clip content to prevent overflow beyond panel bounds
+	clip_contents = true
 	_build_ui()
 	_setup_popup()
 	_setup_hold_timer()
