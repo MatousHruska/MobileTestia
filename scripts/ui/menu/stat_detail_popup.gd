@@ -141,18 +141,29 @@ func _format_stat_name(stat_name: String) -> String:
 	return stat_name.capitalize().replace("_", " ")
 
 
-## Position the popup at tap spot, always staying within parent container bounds
+## Find the nearest ScrollContainer ancestor to get visible bounds
+func _find_scroll_container() -> ScrollContainer:
+	var node := get_parent()
+	while node:
+		if node is ScrollContainer:
+			return node as ScrollContainer
+		node = node.get_parent()
+	return null
+
+
+## Position the popup at tap spot, always staying within visible scroll viewport
 func _position_popup(target_pos: Vector2) -> void:
 	var popup_size := popup_panel.size
 	var margin := 8.0
 
-	# Get parent container's global rect as boundary
-	var parent_ctrl := get_parent() as Control
+	# Find ScrollContainer ancestor to get visible viewport bounds
+	var scroll := _find_scroll_container()
 	var bounds_rect: Rect2
-	if parent_ctrl:
-		bounds_rect = parent_ctrl.get_global_rect()
+	if scroll:
+		# Use ScrollContainer's visible rect (not its content size)
+		bounds_rect = scroll.get_global_rect()
 	else:
-		# Fallback to viewport if no parent
+		# Fallback to viewport if no scroll container
 		bounds_rect = Rect2(Vector2.ZERO, get_viewport_rect().size)
 
 	# Calculate safe zone within parent bounds
