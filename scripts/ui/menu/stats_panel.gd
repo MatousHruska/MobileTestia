@@ -60,19 +60,13 @@ func _process(_delta: float) -> void:
 
 
 func _build_ui() -> void:
-	# Main vertical layout: Top (stats panels) | Bottom (effects section)
-	var main_vbox := VBoxContainer.new()
-	main_vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
-	main_vbox.add_theme_constant_override("separation", 8)
-	add_child(main_vbox)
-
-	# === TOP: Horizontal split for stats ===
+	# Main horizontal layout: Left panel | Right panel
 	var main_hbox := HBoxContainer.new()
-	main_hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
 	main_hbox.add_theme_constant_override("separation", 16)
-	main_vbox.add_child(main_hbox)
+	add_child(main_hbox)
 
-	# === LEFT SIDE: Primary Attributes + Resources ===
+	# === LEFT SIDE: Primary Attributes + Resources + Effects ===
 	var left_panel := _create_left_panel()
 	left_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	left_panel.size_flags_stretch_ratio = 0.45
@@ -88,10 +82,6 @@ func _build_ui() -> void:
 	right_panel.size_flags_stretch_ratio = 0.55
 	main_hbox.add_child(right_panel)
 
-	# === BOTTOM: Active Effects Section ===
-	var effects_section := _create_effects_section()
-	main_vbox.add_child(effects_section)
-
 
 func _create_left_panel() -> Control:
 	var container := VBoxContainer.new()
@@ -105,9 +95,13 @@ func _create_left_panel() -> Control:
 	var attributes_section := _create_attributes_section()
 	container.add_child(attributes_section)
 
-	# === RESOURCES (simple text, no bars) ===
+	# === RESOURCES ===
 	var resources_section := _create_resources_section()
 	container.add_child(resources_section)
+
+	# === ACTIVE EFFECTS ===
+	var effects_section := _create_effects_section()
+	container.add_child(effects_section)
 
 	return container
 
