@@ -196,7 +196,7 @@ func _create_section_with_padding(content: Control) -> Control:
 
 func _create_right_panel() -> Control:
 	var container := VBoxContainer.new()
-	container.add_theme_constant_override("separation", 8)
+	container.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	container.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 	# === SUBTAB BAR ===
@@ -213,11 +213,11 @@ func _create_right_panel() -> Control:
 
 func _create_header() -> Control:
 	var container := VBoxContainer.new()
-	container.add_theme_constant_override("separation", 4)
+	container.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 
 	# Level row
 	var level_row := HBoxContainer.new()
-	level_row.add_theme_constant_override("separation", 12)
+	level_row.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 
 	var level_label := Label.new()
 	level_label.name = "LevelLabel"
@@ -266,12 +266,12 @@ func _create_header() -> Control:
 
 func _create_attributes_section() -> Control:
 	var container := VBoxContainer.new()
-	container.add_theme_constant_override("separation", 2)
+	container.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 
 	var grid := GridContainer.new()
 	grid.columns = 9  # 3 attributes per row: (Label, Value, Plus) x 3
-	grid.add_theme_constant_override("h_separation", 4)
-	grid.add_theme_constant_override("v_separation", 2)
+	grid.add_theme_constant_override("h_separation", UITheme.SEPARATION_SMALL)
+	grid.add_theme_constant_override("v_separation", UITheme.SEPARATION_SMALL)
 
 	# Row 1: STR, DEX, INT
 	# Row 2: VIT, ENE, LUK
@@ -324,7 +324,7 @@ func _create_attribute_row(abbrev: String, stat_name: String) -> Array:
 func _create_resources_section() -> Control:
 	# Horizontal layout: Life | Mana | Stamina
 	var hbox := HBoxContainer.new()
-	hbox.add_theme_constant_override("separation", 8)
+	hbox.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 	var resources := [
@@ -367,7 +367,7 @@ func _create_resource_column(stat_name: String, display_name: String) -> Control
 
 func _create_subtab_bar() -> Control:
 	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", 4)
+	bar.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 
 	var tabs := ["Offensive", "Defensive", "Utility"]
 	for i in range(tabs.size()):
@@ -377,7 +377,24 @@ func _create_subtab_bar() -> Control:
 		btn.button_pressed = (i == 0)
 		btn.custom_minimum_size = Vector2(80, 28)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 		btn.pressed.connect(_on_subtab_pressed.bind(i))
+
+		# Style tab buttons
+		var style := StyleBoxFlat.new()
+		style.bg_color = UITheme.COLOR_TAB_BG if not btn.button_pressed else UITheme.COLOR_TAB_BG_ACTIVE
+		style.border_color = UITheme.COLOR_TAB_BORDER if not btn.button_pressed else UITheme.COLOR_AVAILABLE
+		style.set_border_width_all(UITheme.BORDER_WIDTH_NORMAL)
+		style.set_corner_radius_all(UITheme.CORNER_RADIUS_SMALL)
+		btn.add_theme_stylebox_override("normal", style)
+
+		var pressed_style := StyleBoxFlat.new()
+		pressed_style.bg_color = UITheme.COLOR_TAB_BG_ACTIVE
+		pressed_style.border_color = UITheme.COLOR_AVAILABLE
+		pressed_style.set_border_width_all(UITheme.BORDER_WIDTH_NORMAL)
+		pressed_style.set_corner_radius_all(UITheme.CORNER_RADIUS_SMALL)
+		btn.add_theme_stylebox_override("pressed", pressed_style)
+
 		bar.add_child(btn)
 		_subtab_buttons.append(btn)
 
@@ -497,15 +514,15 @@ func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button
 	duration_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	var bar_style := StyleBoxFlat.new()
-	bar_style.bg_color = Color(1.0, 1.0, 1.0, 0.8)
-	bar_style.corner_radius_bottom_left = 1
-	bar_style.corner_radius_bottom_right = 1
+	bar_style.bg_color = UITheme.COLOR_SELECTED
+	bar_style.corner_radius_bottom_left = UITheme.CORNER_RADIUS_SMALL
+	bar_style.corner_radius_bottom_right = UITheme.CORNER_RADIUS_SMALL
 	duration_bar.add_theme_stylebox_override("fill", bar_style)
 
 	var bar_bg := StyleBoxFlat.new()
 	bar_bg.bg_color = UITheme.COLOR_BUTTON_BG
-	bar_bg.corner_radius_bottom_left = 1
-	bar_bg.corner_radius_bottom_right = 1
+	bar_bg.corner_radius_bottom_left = UITheme.CORNER_RADIUS_SMALL
+	bar_bg.corner_radius_bottom_right = UITheme.CORNER_RADIUS_SMALL
 	duration_bar.add_theme_stylebox_override("background", bar_bg)
 
 	icon_container.add_child(duration_bar)
@@ -566,8 +583,8 @@ func _create_offensive_panel() -> Control:
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 4)
+	grid.add_theme_constant_override("h_separation", UITheme.SEPARATION_NORMAL)
+	grid.add_theme_constant_override("v_separation", UITheme.SEPARATION_SMALL)
 
 	var stats := [
 		["weapon_damage", "Weapon Damage"],
@@ -601,8 +618,8 @@ func _create_defensive_panel() -> Control:
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 4)
+	grid.add_theme_constant_override("h_separation", UITheme.SEPARATION_NORMAL)
+	grid.add_theme_constant_override("v_separation", UITheme.SEPARATION_SMALL)
 
 	var stats := [
 		["armor", "Armor"],
@@ -627,8 +644,8 @@ func _create_utility_panel() -> Control:
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 4)
+	grid.add_theme_constant_override("h_separation", UITheme.SEPARATION_NORMAL)
+	grid.add_theme_constant_override("v_separation", UITheme.SEPARATION_SMALL)
 
 	var stats := [
 		["movement_speed", "Move Speed"],
