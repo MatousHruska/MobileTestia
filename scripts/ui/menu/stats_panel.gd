@@ -69,6 +69,7 @@ func _build_ui() -> void:
 	# === LEFT SIDE: Primary Attributes + Resources + Effects ===
 	var left_panel := _create_left_panel()
 	left_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	left_panel.size_flags_stretch_ratio = 0.45
 	main_hbox.add_child(left_panel)
 
@@ -79,6 +80,7 @@ func _build_ui() -> void:
 	# === RIGHT SIDE: Secondary Stats with Subtabs ===
 	var right_panel := _create_right_panel()
 	right_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	right_panel.size_flags_stretch_ratio = 0.55
 	main_hbox.add_child(right_panel)
 
