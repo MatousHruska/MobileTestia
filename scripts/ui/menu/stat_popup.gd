@@ -7,8 +7,8 @@ class_name StatPopup
 #===============================================================================
 
 const POPUP_WIDTH := 260
-const POPUP_MIN_HEIGHT_PCT := 0.15  # 15% of viewport
-const POPUP_MAX_HEIGHT_PCT := 0.50  # 50% of viewport
+const POPUP_MIN_HEIGHT_PCT := 0.30  # 30% of viewport - ensures decent size
+const POPUP_MAX_HEIGHT_PCT := 0.55  # 55% of viewport
 
 ## Colors
 const COLOR_TITLE := Color(1.0, 0.9, 0.6)

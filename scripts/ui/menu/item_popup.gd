@@ -7,8 +7,8 @@ class_name ItemPopup
 #===============================================================================
 
 const POPUP_WIDTH := 280
-const POPUP_MIN_HEIGHT_PCT := 0.18  # 18% of viewport
-const POPUP_MAX_HEIGHT_PCT := 0.70  # 70% of viewport
+const POPUP_MIN_HEIGHT_PCT := 0.40  # 40% of viewport - ensures decent size
+const POPUP_MAX_HEIGHT_PCT := 0.75  # 75% of viewport
 const ICON_SIZE := 48
 
 ## Colors

@@ -26,8 +26,8 @@ signal closed
 #===============================================================================
 
 const DEFAULT_POPUP_WIDTH := 280
-const DEFAULT_POPUP_MIN_HEIGHT_PCT := 0.15  # 15% of viewport height
-const DEFAULT_POPUP_MAX_HEIGHT_PCT := 0.70  # 70% of viewport height
+const DEFAULT_POPUP_MIN_HEIGHT_PCT := 0.35  # 35% of viewport height
+const DEFAULT_POPUP_MAX_HEIGHT_PCT := 0.75  # 75% of viewport height
 const MARGIN := 8
 const SCREEN_PADDING := 10
 const DIMMER_ALPHA := 0.3
