@@ -182,33 +182,23 @@ func _create_attributes_section() -> Control:
 	var container := VBoxContainer.new()
 	container.add_theme_constant_override("separation", 2)
 
-	var title := Label.new()
-	title.text = "Primary Attributes"
-	title.add_theme_font_size_override("font_size", 13)
-	title.modulate = Color(0.7, 0.7, 0.7)
-	container.add_child(title)
-
 	var grid := GridContainer.new()
-	grid.columns = 6  # Label, Value, Plus | Label, Value, Plus
+	grid.columns = 9  # 3 attributes per row: (Label, Value, Plus) x 3
 	grid.add_theme_constant_override("h_separation", 4)
 	grid.add_theme_constant_override("v_separation", 2)
 
-	# Two columns: left (STR, DEX, INT) | right (VIT, ENE, LUK)
-	var attribute_pairs := [
-		[["STR", "strength"], ["VIT", "vitality"]],
-		[["DEX", "dexterity"], ["ENE", "energy"]],
-		[["INT", "intelligence"], ["LUK", "luck"]],
+	# Row 1: STR, DEX, INT
+	# Row 2: VIT, ENE, LUK
+	var rows := [
+		[["STR", "strength"], ["DEX", "dexterity"], ["INT", "intelligence"]],
+		[["VIT", "vitality"], ["ENE", "energy"], ["LUK", "luck"]],
 	]
 
-	for pair in attribute_pairs:
-		# Left column attribute
-		var left := _create_attribute_row(pair[0][0], pair[0][1])
-		for child in left:
-			grid.add_child(child)
-		# Right column attribute
-		var right := _create_attribute_row(pair[1][0], pair[1][1])
-		for child in right:
-			grid.add_child(child)
+	for row in rows:
+		for attr in row:
+			var attr_row := _create_attribute_row(attr[0], attr[1])
+			for child in attr_row:
+				grid.add_child(child)
 
 	container.add_child(grid)
 	return container
@@ -246,15 +236,6 @@ func _create_attribute_row(abbrev: String, stat_name: String) -> Array:
 
 
 func _create_resources_section() -> Control:
-	var container := VBoxContainer.new()
-	container.add_theme_constant_override("separation", 2)
-
-	var title := Label.new()
-	title.text = "Resources"
-	title.add_theme_font_size_override("font_size", 13)
-	title.modulate = Color(0.7, 0.7, 0.7)
-	container.add_child(title)
-
 	# Horizontal layout: Life | Mana | Stamina
 	var hbox := HBoxContainer.new()
 	hbox.add_theme_constant_override("separation", 8)
@@ -270,8 +251,7 @@ func _create_resources_section() -> Control:
 		var resource_col := _create_resource_column(res[0], res[1])
 		hbox.add_child(resource_col)
 
-	container.add_child(hbox)
-	return container
+	return hbox
 
 
 func _create_resource_column(stat_name: String, display_name: String) -> Control:
