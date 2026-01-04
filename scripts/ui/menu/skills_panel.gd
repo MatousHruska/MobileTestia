@@ -93,6 +93,9 @@ var _skillbook_slots: Array[Button] = []
 ## Skill popup for showing talent/skill details
 var _skill_popup: SkillPopup = null
 
+## Canvas layer for popup (above CharacterMenu's layer 20)
+var _popup_layer: CanvasLayer = null
+
 ## Store last tap position for popup positioning
 var _last_tap_pos: Vector2 = Vector2.ZERO
 
@@ -105,22 +108,30 @@ func _ready() -> void:
 
 
 func _setup_popup() -> void:
-	# Create the skill popup (added to root so it's not clipped)
+	# Create a CanvasLayer above CharacterMenu (layer 20) for the popup
+	_popup_layer = CanvasLayer.new()
+	_popup_layer.name = "SkillPopupLayer"
+	_popup_layer.layer = 30  # Above CharacterMenu's layer 20
+
+	# Create the skill popup
 	_skill_popup = SkillPopup.new()
 	_skill_popup.name = "SkillPopup"
-	# Add to root for proper z-ordering
+	_popup_layer.add_child(_skill_popup)
+
+	# Add layer to root
 	call_deferred("_add_popup_to_root")
 
 
 func _add_popup_to_root() -> void:
-	if _skill_popup and is_inside_tree():
-		get_tree().root.add_child(_skill_popup)
+	if _popup_layer and is_inside_tree():
+		get_tree().root.add_child(_popup_layer)
 
 
 func _exit_tree() -> void:
-	# Clean up popup when panel is removed
-	if _skill_popup and is_instance_valid(_skill_popup):
-		_skill_popup.queue_free()
+	# Clean up popup layer when panel is removed
+	if _popup_layer and is_instance_valid(_popup_layer):
+		_popup_layer.queue_free()
+		_popup_layer = null
 		_skill_popup = null
 
 
