@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://charmenu001"]
 
-[ext_resource type="Script" path="res://scripts/ui/menu/character_menu.gd" id="1_menu"]
+[ext_resource type="Script" uid="uid://c13qntvsvf3pk" path="res://scripts/ui/menu/character_menu.gd" id="1_menu"]
 
 [node name="CharacterMenu" type="CanvasLayer"]
 layer = 20
@@ -156,11 +156,11 @@ layout_mode = 2
 text = "+"
 
 [node name="STRInfo" type="Label" parent="MenuPanel/VBox/ContentArea/StatsPanel/StatsGrid"]
+modulate = Color(0.7, 0.7, 0.7, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 12
 text = "Phys Dmg +5"
-modulate = Color(0.7, 0.7, 0.7, 1)
 
 [node name="DEXLabel" type="Label" parent="MenuPanel/VBox/ContentArea/StatsPanel/StatsGrid"]
 layout_mode = 2
@@ -177,11 +177,11 @@ layout_mode = 2
 text = "+"
 
 [node name="DEXInfo" type="Label" parent="MenuPanel/VBox/ContentArea/StatsPanel/StatsGrid"]
+modulate = Color(0.7, 0.7, 0.7, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 12
 text = "Atk Spd +2%, Crit +1%"
-modulate = Color(0.7, 0.7, 0.7, 1)
 
 [node name="INTLabel" type="Label" parent="MenuPanel/VBox/ContentArea/StatsPanel/StatsGrid"]
 layout_mode = 2
@@ -198,11 +198,11 @@ layout_mode = 2
 text = "+"
 
 [node name="INTInfo" type="Label" parent="MenuPanel/VBox/ContentArea/StatsPanel/StatsGrid"]
+modulate = Color(0.7, 0.7, 0.7, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 12
 text = "Magic Dmg +5, Mana +10"
-modulate = Color(0.7, 0.7, 0.7, 1)
 
 [node name="ENDLabel" type="Label" parent="MenuPanel/VBox/ContentArea/StatsPanel/StatsGrid"]
 layout_mode = 2
@@ -219,11 +219,11 @@ layout_mode = 2
 text = "+"
 
 [node name="ENDInfo" type="Label" parent="MenuPanel/VBox/ContentArea/StatsPanel/StatsGrid"]
+modulate = Color(0.7, 0.7, 0.7, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 12
 text = "Health +20, Regen +1"
-modulate = Color(0.7, 0.7, 0.7, 1)
 
 [node name="LUKLabel" type="Label" parent="MenuPanel/VBox/ContentArea/StatsPanel/StatsGrid"]
 layout_mode = 2
@@ -240,11 +240,11 @@ layout_mode = 2
 text = "+"
 
 [node name="LUKInfo" type="Label" parent="MenuPanel/VBox/ContentArea/StatsPanel/StatsGrid"]
+modulate = Color(0.7, 0.7, 0.7, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 12
 text = "Drop +2%, Crit Dmg +3%"
-modulate = Color(0.7, 0.7, 0.7, 1)
 
 [node name="PointsLabel" type="Label" parent="MenuPanel/VBox/ContentArea/StatsPanel"]
 layout_mode = 2
@@ -265,7 +265,6 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
-grow_vertical = 1
 theme_override_constants/separation = 8
 
 [node name="PointsLabel" type="Label" parent="MenuPanel/VBox/ContentArea/SkillsPanel"]
@@ -360,9 +359,9 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="Placeholder" type="Label" parent="MenuPanel/VBox/ContentArea/QuestsPanel/QuestScroll/QuestList"]
+modulate = Color(0.6, 0.6, 0.6, 1)
 layout_mode = 2
 text = "No active quests"
-modulate = Color(0.6, 0.6, 0.6, 1)
 
 [node name="QuestInfo" type="Label" parent="MenuPanel/VBox/ContentArea/QuestsPanel"]
 custom_minimum_size = Vector2(0, 80)
