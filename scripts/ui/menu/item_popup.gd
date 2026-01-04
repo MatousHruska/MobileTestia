@@ -11,10 +11,7 @@ const POPUP_MIN_HEIGHT_PCT := 0.40  # 40% of viewport - ensures decent size
 const POPUP_MAX_HEIGHT_PCT := 0.75  # 75% of viewport
 const ICON_SIZE := 48
 
-## Colors
-const COLOR_DESCRIPTION := Color(0.8, 0.8, 0.8)
-const COLOR_HINT := Color(0.5, 0.5, 0.5)
-const COLOR_STAT := Color(0.7, 1.0, 0.7)
+## Colors - use UITheme for consistency
 
 #===============================================================================
 # STATE
@@ -56,7 +53,7 @@ func _get_popup_max_height_pct() -> float:
 func _create_icon_container() -> Control:
 	var icon_bg := ColorRect.new()
 	icon_bg.custom_minimum_size = Vector2(ICON_SIZE, ICON_SIZE)
-	icon_bg.color = Color(0.2, 0.2, 0.25, 1)
+	icon_bg.color = UITheme.COLOR_BUTTON_BG
 
 	_icon = TextureRect.new()
 	_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -81,7 +78,7 @@ func _build_header_content() -> VBoxContainer:
 
 	_type_label = Label.new()
 	_type_label.add_theme_font_size_override("font_size", 11)
-	_type_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	_type_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	name_col.add_child(_type_label)
 
 	_rarity_label = Label.new()
@@ -101,7 +98,7 @@ func _build_content(content: VBoxContainer) -> void:
 	_description_label = Label.new()
 	_description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_description_label.add_theme_font_size_override("font_size", 11)
-	_description_label.add_theme_color_override("font_color", COLOR_DESCRIPTION)
+	_description_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	content.add_child(_description_label)
 
 	# Hint text
@@ -109,7 +106,7 @@ func _build_content(content: VBoxContainer) -> void:
 	_hint_label.text = "Drag items to move, equip, or destroy"
 	_hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hint_label.add_theme_font_size_override("font_size", 10)
-	_hint_label.add_theme_color_override("font_color", COLOR_HINT)
+	_hint_label.add_theme_color_override("font_color", UITheme.COLOR_LOCKED)
 	content.add_child(_hint_label)
 
 
@@ -209,7 +206,7 @@ func _add_equipment_stats(equip: EquipmentData) -> void:
 		var stat_label := Label.new()
 		stat_label.text = line
 		stat_label.add_theme_font_size_override("font_size", 11)
-		stat_label.add_theme_color_override("font_color", COLOR_STAT)
+		stat_label.add_theme_color_override("font_color", UITheme.COLOR_LEARNED)
 		_stats_container.add_child(stat_label)
 
 
@@ -221,6 +218,6 @@ func _add_consumable_stats(consumable: ConsumableData) -> void:
 	var effect_label := Label.new()
 	effect_label.text = effect_text
 	effect_label.add_theme_font_size_override("font_size", 11)
-	effect_label.add_theme_color_override("font_color", COLOR_STAT)
+	effect_label.add_theme_color_override("font_color", UITheme.COLOR_LEARNED)
 	effect_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_stats_container.add_child(effect_label)
