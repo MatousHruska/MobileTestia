@@ -192,6 +192,20 @@ func is_hold_mode() -> bool:
 
 ## Input handlers
 
+func _input(event: InputEvent) -> void:
+	if not visible or _is_hold_mode:
+		return
+
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+			# Check if click is outside the popup panel
+			var popup_rect := Rect2(popup_panel.global_position, popup_panel.size)
+			if not popup_rect.has_point(mb.global_position):
+				hide_popup()
+				get_viewport().set_input_as_handled()
+
+
 func _on_dimmer_input(event: InputEvent) -> void:
 	# In hold mode, don't close on dimmer click (will close on release)
 	if _is_hold_mode:
