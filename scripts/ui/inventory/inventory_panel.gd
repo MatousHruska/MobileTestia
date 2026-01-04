@@ -666,5 +666,5 @@ func _on_gold_changed(_new_amount: int) -> void:
 
 
 func _on_popup_closed() -> void:
-	# Popup was closed - deselection already handled by popup
-	pass
+	# Popup was closed via X button or tap outside - deselect inventory
+	Inventory.deselect()
