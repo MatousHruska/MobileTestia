@@ -193,22 +193,15 @@ func is_hold_mode() -> bool:
 ## Input handlers
 
 func _input(event: InputEvent) -> void:
-	print("[StatDetailPopup] _input called, visible=", visible, " hold_mode=", _is_hold_mode)
-
 	if not visible or _is_hold_mode:
-		print("[StatDetailPopup] Skipping - not visible or hold mode")
 		return
 
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		print("[StatDetailPopup] MouseButton event: pressed=", mb.pressed, " button=", mb.button_index)
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
 			# Check if click is outside the popup panel
 			var popup_rect := Rect2(popup_panel.global_position, popup_panel.size)
-			print("[StatDetailPopup] popup_rect=", popup_rect, " click_pos=", mb.global_position)
-			print("[StatDetailPopup] has_point=", popup_rect.has_point(mb.global_position))
 			if not popup_rect.has_point(mb.global_position):
-				print("[StatDetailPopup] Closing - click outside popup")
 				hide_popup()
 				get_viewport().set_input_as_handled()
 
