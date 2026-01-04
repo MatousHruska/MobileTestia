@@ -7,8 +7,8 @@ class_name StatPopup
 #===============================================================================
 
 const POPUP_WIDTH := 260
-const POPUP_MIN_HEIGHT := 80
-const POPUP_MAX_HEIGHT := 250
+const POPUP_MIN_HEIGHT_PCT := 0.15  # 15% of viewport
+const POPUP_MAX_HEIGHT_PCT := 0.50  # 50% of viewport
 
 ## Colors
 const COLOR_TITLE := Color(1.0, 0.9, 0.6)
@@ -40,12 +40,12 @@ func _get_popup_width() -> int:
 	return POPUP_WIDTH
 
 
-func _get_popup_min_height() -> int:
-	return POPUP_MIN_HEIGHT
+func _get_popup_min_height_pct() -> float:
+	return POPUP_MIN_HEIGHT_PCT
 
 
-func _get_popup_max_height() -> int:
-	return POPUP_MAX_HEIGHT
+func _get_popup_max_height_pct() -> float:
+	return POPUP_MAX_HEIGHT_PCT
 
 
 func _has_icon() -> bool:

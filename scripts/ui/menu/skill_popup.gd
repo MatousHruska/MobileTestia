@@ -7,8 +7,8 @@ class_name SkillPopup
 #===============================================================================
 
 const POPUP_WIDTH := 280
-const POPUP_MIN_HEIGHT := 120
-const POPUP_MAX_HEIGHT := 300
+const POPUP_MIN_HEIGHT_PCT := 0.20  # 20% of viewport
+const POPUP_MAX_HEIGHT_PCT := 0.70  # 70% of viewport
 
 ## Colors
 const COLOR_ACTIVE := Color(0.4, 0.9, 1.0)
@@ -45,12 +45,12 @@ func _get_popup_width() -> int:
 	return POPUP_WIDTH
 
 
-func _get_popup_min_height() -> int:
-	return POPUP_MIN_HEIGHT
+func _get_popup_min_height_pct() -> float:
+	return POPUP_MIN_HEIGHT_PCT
 
 
-func _get_popup_max_height() -> int:
-	return POPUP_MAX_HEIGHT
+func _get_popup_max_height_pct() -> float:
+	return POPUP_MAX_HEIGHT_PCT
 
 
 func _build_header_content() -> VBoxContainer:

@@ -7,8 +7,8 @@ class_name ItemPopup
 #===============================================================================
 
 const POPUP_WIDTH := 280
-const POPUP_MIN_HEIGHT := 100
-const POPUP_MAX_HEIGHT := 320
+const POPUP_MIN_HEIGHT_PCT := 0.18  # 18% of viewport
+const POPUP_MAX_HEIGHT_PCT := 0.70  # 70% of viewport
 const ICON_SIZE := 48
 
 ## Colors
@@ -45,12 +45,12 @@ func _get_popup_width() -> int:
 	return POPUP_WIDTH
 
 
-func _get_popup_min_height() -> int:
-	return POPUP_MIN_HEIGHT
+func _get_popup_min_height_pct() -> float:
+	return POPUP_MIN_HEIGHT_PCT
 
 
-func _get_popup_max_height() -> int:
-	return POPUP_MAX_HEIGHT
+func _get_popup_max_height_pct() -> float:
+	return POPUP_MAX_HEIGHT_PCT
 
 
 func _create_icon_container() -> Control:
