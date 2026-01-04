@@ -16,7 +16,8 @@ var _subtab_buttons: Array[Button] = []
 var _subtab_panels: Array[Control] = []
 
 ## Stat detail popup
-var _stat_popup: StatDetailPopup = null
+var _stat_popup: StatPopup = null
+var _popup_layer: CanvasLayer = null
 
 ## Hold detection
 const HOLD_THRESHOLD := 0.25  # seconds before hold is triggered
@@ -42,9 +43,28 @@ func _ready() -> void:
 
 
 func _setup_popup() -> void:
-	_stat_popup = StatDetailPopup.new()
-	_stat_popup.name = "StatDetailPopup"
-	add_child(_stat_popup)
+	# Create a CanvasLayer above CharacterMenu (layer 20) for the popup
+	_popup_layer = CanvasLayer.new()
+	_popup_layer.name = "StatPopupLayer"
+	_popup_layer.layer = 30
+
+	_stat_popup = StatPopup.new()
+	_stat_popup.name = "StatPopup"
+	_popup_layer.add_child(_stat_popup)
+
+	call_deferred("_add_popup_to_root")
+
+
+func _add_popup_to_root() -> void:
+	if _popup_layer and is_inside_tree():
+		get_tree().root.add_child(_popup_layer)
+
+
+func _exit_tree() -> void:
+	if _popup_layer and is_instance_valid(_popup_layer):
+		_popup_layer.queue_free()
+		_popup_layer = null
+		_stat_popup = null
 
 
 func _setup_hold_timer() -> void:
