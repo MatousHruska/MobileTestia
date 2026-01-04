@@ -190,12 +190,24 @@ func _setup_tabs() -> void:
 func _setup_menu_buttons() -> void:
 	if save_button:
 		save_button.pressed.connect(_on_save_pressed)
+		save_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+		save_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		save_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	if load_button:
 		load_button.pressed.connect(_on_load_pressed)
+		load_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+		load_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		load_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	if exit_to_menu_button:
 		exit_to_menu_button.pressed.connect(_on_exit_to_menu_pressed)
+		exit_to_menu_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+		exit_to_menu_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		exit_to_menu_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	if exit_game_button:
 		exit_game_button.pressed.connect(_on_exit_game_pressed)
+		exit_game_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+		exit_game_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		exit_game_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 
 
 func _setup_inventory_panel() -> void:

@@ -222,21 +222,22 @@ func _create_header() -> Control:
 	var level_label := Label.new()
 	level_label.name = "LevelLabel"
 	level_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE)
+	level_label.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
 	level_label.text = "Level 1"
 	level_row.add_child(level_label)
 
 	var points_label := Label.new()
 	points_label.name = "PointsLabel"
 	points_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	points_label.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
 	points_label.text = "Attr: 0"
-	points_label.modulate = UITheme.COLOR_AVAILABLE
 	level_row.add_child(points_label)
 
 	var skill_points_label := Label.new()
 	skill_points_label.name = "SkillPointsLabel"
 	skill_points_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	skill_points_label.add_theme_color_override("font_color", UITheme.COLOR_HIGHLIGHT)
 	skill_points_label.text = "Skill: 0"
-	skill_points_label.modulate = UITheme.COLOR_HIGHLIGHT
 	level_row.add_child(skill_points_label)
 
 	container.add_child(level_row)
@@ -297,6 +298,9 @@ func _create_attribute_row(abbrev: String, stat_name: String) -> Array:
 	label.flat = true
 	label.text = abbrev + ":"
 	label.custom_minimum_size = Vector2(40, 0)
+	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	label.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+	label.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
 
 	# Value
@@ -304,12 +308,16 @@ func _create_attribute_row(abbrev: String, stat_name: String) -> Array:
 	value.name = abbrev + "Value"
 	value.text = "10"
 	value.custom_minimum_size = Vector2(30, 0)
+	value.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	value.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
 
 	# Plus button
 	var plus_btn := Button.new()
 	plus_btn.name = abbrev + "Plus"
 	plus_btn.text = "+"
 	plus_btn.custom_minimum_size = Vector2(28, 28)
+	plus_btn.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	plus_btn.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
 	plus_btn.pressed.connect(_on_allocate_pressed.bind(stat_name))
 
 	_attribute_rows[stat_name] = {
@@ -350,6 +358,9 @@ func _create_resource_column(stat_name: String, display_name: String) -> Control
 	label.flat = true
 	label.text = display_name
 	label.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	label.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+	label.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
 	col.add_child(label)
 
@@ -358,6 +369,8 @@ func _create_resource_column(stat_name: String, display_name: String) -> Control
 	value.name = stat_name + "Value"
 	value.text = "100 / 100"
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	value.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	value.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
 	col.add_child(value)
 
 	_resource_labels[stat_name] = value
@@ -378,6 +391,9 @@ func _create_subtab_bar() -> Control:
 		btn.custom_minimum_size = Vector2(80, 28)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+		btn.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		btn.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
+		btn.add_theme_color_override("font_pressed_color", UITheme.COLOR_AVAILABLE)
 		btn.pressed.connect(_on_subtab_pressed.bind(i))
 
 		# Style tab buttons
@@ -446,7 +462,7 @@ func _create_effects_section() -> Control:
 	_effects_title_label = Label.new()
 	_effects_title_label.text = "Active Effects"
 	_effects_title_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-	_effects_title_label.modulate = UITheme.COLOR_TEXT_DIM
+	_effects_title_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	vbox.add_child(_effects_title_label)
 
 	# Effects icons container (horizontal row)
@@ -458,7 +474,7 @@ func _create_effects_section() -> Control:
 	_no_effects_label = Label.new()
 	_no_effects_label.text = "No active effects"
 	_no_effects_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
-	_no_effects_label.modulate = UITheme.COLOR_LOCKED
+	_no_effects_label.add_theme_color_override("font_color", UITheme.COLOR_LOCKED)
 	_effects_container.add_child(_no_effects_label)
 
 	margin.add_child(vbox)
@@ -670,6 +686,9 @@ func _create_derived_stat_row(stat_name: String, display_name: String) -> Array:
 	label.text = display_name + ":"
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	label.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+	label.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
 
 	var value := Label.new()
@@ -677,6 +696,8 @@ func _create_derived_stat_row(stat_name: String, display_name: String) -> Array:
 	value.text = "0"
 	value.custom_minimum_size = Vector2(60, 0)
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	value.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	value.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
 
 	_attribute_rows[stat_name] = {"value": value, "label": label}
 
