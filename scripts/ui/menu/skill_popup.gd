@@ -54,6 +54,7 @@ func _build_header_content() -> VBoxContainer:
 
 	_name_label = Label.new()
 	_name_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	_name_label.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
 	_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	name_col.add_child(_name_label)
 

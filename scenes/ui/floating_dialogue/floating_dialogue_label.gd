@@ -23,6 +23,11 @@ func _ready() -> void:
 	modulate.a = 0.0
 	visible = false
 
+	# Apply UITheme styling
+	if label:
+		label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+		label.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+
 
 func _process(delta: float) -> void:
 	if not _is_active:
