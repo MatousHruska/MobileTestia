@@ -257,48 +257,48 @@ func _create_resources_section() -> Control:
 	title.modulate = Color(0.7, 0.7, 0.7)
 	container.add_child(title)
 
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 2)
+	# Horizontal layout: Life | Mana | Stamina
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 8)
+	hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-	# Life
-	var life_row := _create_resource_row("life", "Life")
-	for child in life_row:
-		grid.add_child(child)
+	var resources := [
+		["life", "Life"],
+		["mana", "Mana"],
+		["stamina", "Stamina"],
+	]
 
-	# Mana
-	var mana_row := _create_resource_row("mana", "Mana")
-	for child in mana_row:
-		grid.add_child(child)
+	for res in resources:
+		var resource_col := _create_resource_column(res[0], res[1])
+		hbox.add_child(resource_col)
 
-	# Stamina
-	var stamina_row := _create_resource_row("stamina", "Stamina")
-	for child in stamina_row:
-		grid.add_child(child)
-
-	container.add_child(grid)
+	container.add_child(hbox)
 	return container
 
 
-func _create_resource_row(stat_name: String, display_name: String) -> Array:
+func _create_resource_column(stat_name: String, display_name: String) -> Control:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 0)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
 	# Label (tap/hold for description popup)
 	var label := Button.new()
 	label.flat = true
-	label.text = display_name + ":"
-	label.custom_minimum_size = Vector2(70, 0)
-	label.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	label.text = display_name
+	label.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
+	col.add_child(label)
 
 	# Value
 	var value := Label.new()
 	value.name = stat_name + "Value"
 	value.text = "100 / 100"
-	value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	col.add_child(value)
 
 	_resource_labels[stat_name] = value
 
-	return [label, value]
+	return col
 
 
 func _create_subtab_bar() -> Control:
