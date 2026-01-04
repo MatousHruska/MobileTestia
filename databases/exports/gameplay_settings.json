@@ -26,5 +26,6 @@
   "points_per_level": 5,
   "skill_points_per_level": 1,
   "xp_per_level": 100,
-  "inventory_slots": 25
+  "inventory_slots": 25,
+  "starting_skill_points": 0
 }
