@@ -90,11 +90,38 @@ var _talent_nodes: Dictionary = {}
 ## Skillbook slots (index -> Button)
 var _skillbook_slots: Array[Button] = []
 
+## Skill popup for showing talent/skill details
+var _skill_popup: SkillPopup = null
+
+## Store last tap position for popup positioning
+var _last_tap_pos: Vector2 = Vector2.ZERO
+
 
 func _ready() -> void:
 	_build_ui()
 	_connect_signals()
+	_setup_popup()
 	refresh()
+
+
+func _setup_popup() -> void:
+	# Create the skill popup (added to root so it's not clipped)
+	_skill_popup = SkillPopup.new()
+	_skill_popup.name = "SkillPopup"
+	# Add to root for proper z-ordering
+	call_deferred("_add_popup_to_root")
+
+
+func _add_popup_to_root() -> void:
+	if _skill_popup and is_inside_tree():
+		get_tree().root.add_child(_skill_popup)
+
+
+func _exit_tree() -> void:
+	# Clean up popup when panel is removed
+	if _skill_popup and is_instance_valid(_skill_popup):
+		_skill_popup.queue_free()
+		_skill_popup = null
 
 
 #===============================================================================
@@ -535,8 +562,10 @@ func _create_talent_node(talent: TalentData) -> Control:
 	var node := Button.new()
 	node.set_anchors_preset(Control.PRESET_FULL_RECT)
 	node.toggle_mode = true
-	node.pressed.connect(_on_talent_node_pressed.bind(talent.id))
+	# Use gui_input instead of pressed to capture tap position
+	node.gui_input.connect(_on_talent_node_input.bind(talent.id, node))
 	node.set_meta("talent_id", talent.id)
+	node.set_meta("is_pressed", false)
 	container.add_child(node)
 
 	# Points label in bottom right corner
@@ -774,6 +803,8 @@ func _on_skillbook_slot_input(event: InputEvent, talent_id: String, slot: Button
 			# Start potential drag
 			slot.set_meta("press_pos", event.position)
 			slot.set_meta("is_pressed", true)
+			# Store global tap position for popup
+			_last_tap_pos = slot.get_global_position() + event.position
 		else:
 			# Release - if we didn't drag, treat as click
 			if slot.get_meta("is_pressed", false) and not _is_dragging:
@@ -888,6 +919,20 @@ func _on_tree_tab_pressed(tree_id: String) -> void:
 	_update_buttons()
 
 
+## Handle input on talent nodes for tap position tracking
+func _on_talent_node_input(event: InputEvent, talent_id: String, node: Button) -> void:
+	if event is InputEventMouseButton or event is InputEventScreenTouch:
+		if event.pressed:
+			node.set_meta("is_pressed", true)
+			# Store global tap position for popup
+			_last_tap_pos = node.get_global_position() + event.position
+		else:
+			# Release - treat as click
+			if node.get_meta("is_pressed", false):
+				_on_talent_node_pressed(talent_id)
+			node.set_meta("is_pressed", false)
+
+
 func _on_talent_node_pressed(talent_id: String) -> void:
 	selected_talent_id = talent_id
 	selected_from_skillbook = false
@@ -901,6 +946,10 @@ func _on_talent_node_pressed(talent_id: String) -> void:
 
 	_update_buttons()
 	talent_selected.emit(talent_id)
+
+	# Show the popup at tap position
+	if _skill_popup:
+		_skill_popup.show_talent(talent_id, _last_tap_pos)
 
 
 func _on_skillbook_slot_pressed(talent_id: String) -> void:
@@ -917,6 +966,10 @@ func _on_skillbook_slot_pressed(talent_id: String) -> void:
 	_update_buttons()
 	skill_selected.emit(talent_id)
 
+	# Show the popup at tap position
+	if _skill_popup:
+		_skill_popup.show_talent(talent_id, _last_tap_pos)
+
 
 func _on_bind_slot_input(event: InputEvent, slot_index: int, slot: Button) -> void:
 	var talent := TalentManager.get_bound_talent(slot_index)
@@ -926,6 +979,8 @@ func _on_bind_slot_input(event: InputEvent, slot_index: int, slot: Button) -> vo
 			# Start potential drag
 			slot.set_meta("press_pos", event.position)
 			slot.set_meta("is_pressed", true)
+			# Store global tap position for popup
+			_last_tap_pos = slot.get_global_position() + event.position
 		else:
 			# Release - if we didn't drag, treat as click
 			if slot.get_meta("is_pressed", false) and not _is_dragging:
@@ -956,13 +1011,16 @@ func _on_bind_slot_pressed(slot_index: int) -> void:
 		_refresh_bind_slots()
 		_update_buttons()
 	else:
-		# Select the bound skill
+		# Select the bound skill and show popup
 		var talent := TalentManager.get_bound_talent(slot_index)
 		if talent:
 			selected_talent_id = talent.id
 			selected_from_skillbook = true
 			_refresh_skillbook()
 			_update_buttons()
+			# Show the popup
+			if _skill_popup:
+				_skill_popup.show_talent(talent.id, _last_tap_pos)
 
 
 func _on_button1_pressed() -> void:
