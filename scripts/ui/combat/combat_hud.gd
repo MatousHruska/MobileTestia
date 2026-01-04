@@ -399,6 +399,9 @@ func _create_buttons() -> void:
 	interact_button.text = "Interact"
 	interact_button.visible = false
 	interact_button.custom_minimum_size = config.interact_size
+	interact_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	interact_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+	interact_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	add_child(interact_button)
 
 

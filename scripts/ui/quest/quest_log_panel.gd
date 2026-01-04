@@ -99,6 +99,9 @@ func _build_quest_list_panel() -> Control:
 	_active_filter.button_pressed = true
 	_active_filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_active_filter.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	_active_filter.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+	_active_filter.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
+	_active_filter.add_theme_color_override("font_pressed_color", UITheme.COLOR_AVAILABLE)
 	_active_filter.add_theme_stylebox_override("normal", UITheme.create_tab_style(false))
 	_active_filter.add_theme_stylebox_override("pressed", UITheme.create_tab_style(true))
 	_active_filter.pressed.connect(_on_active_filter_pressed)
@@ -109,6 +112,9 @@ func _build_quest_list_panel() -> Control:
 	_completed_filter.toggle_mode = true
 	_completed_filter.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_completed_filter.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	_completed_filter.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+	_completed_filter.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
+	_completed_filter.add_theme_color_override("font_pressed_color", UITheme.COLOR_AVAILABLE)
 	_completed_filter.add_theme_stylebox_override("normal", UITheme.create_tab_style(false))
 	_completed_filter.add_theme_stylebox_override("pressed", UITheme.create_tab_style(true))
 	_completed_filter.pressed.connect(_on_completed_filter_pressed)

@@ -336,6 +336,8 @@ func _build_buttons_section() -> Control:
 	talk_button.text = "Talk"
 	talk_button.custom_minimum_size.y = 36
 	talk_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	talk_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+	talk_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	buttons_container.add_child(talk_button)
 
 	# Quest button
@@ -344,6 +346,8 @@ func _build_buttons_section() -> Control:
 	quest_button.text = "Quest"
 	quest_button.custom_minimum_size.y = 36
 	quest_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	quest_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+	quest_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	buttons_container.add_child(quest_button)
 
 	# Trade button
@@ -352,6 +356,8 @@ func _build_buttons_section() -> Control:
 	trade_button.text = "Trade"
 	trade_button.custom_minimum_size.y = 36
 	trade_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	trade_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+	trade_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	buttons_container.add_child(trade_button)
 
 	# Spacer
@@ -365,6 +371,8 @@ func _build_buttons_section() -> Control:
 	exit_button.text = "Exit"
 	exit_button.custom_minimum_size.y = 36
 	exit_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	exit_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+	exit_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	buttons_container.add_child(exit_button)
 
 	# Quest Accept/Decline buttons (hidden by default)
