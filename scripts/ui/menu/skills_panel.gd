@@ -75,15 +75,6 @@ var _points_tree_label: Label
 var _skillbook_header: Label
 var _skillbook_grid: GridContainer
 
-## Description panel
-var _desc_panel: PanelContainer
-var _desc_icon: TextureRect
-var _desc_name: Label
-var _desc_text: RichTextLabel
-var _desc_rank: Label
-var _desc_col_left: VBoxContainer
-var _desc_col_right: VBoxContainer
-
 ## Action buttons
 var _button1: Button
 var _button2: Button
@@ -321,109 +312,8 @@ func _build_right_panel(parent: Control) -> void:
 	# Build skill bind UI (below skillbook)
 	_build_skill_bind_ui()
 
-	# Build description panel
-	_build_description_panel()
-
 	# Build action buttons
 	_build_action_buttons()
-
-
-func _build_description_panel() -> void:
-	# Skill Description header
-	var header := _create_section_header("Skill Description")
-	_right_panel.add_child(header)
-
-	_desc_panel = PanelContainer.new()
-	_desc_panel.custom_minimum_size = Vector2(0, 100)
-	_desc_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_right_panel.add_child(_desc_panel)
-
-	# Style with border
-	var desc_style := StyleBoxFlat.new()
-	desc_style.bg_color = Color(0.12, 0.12, 0.14, 0.9)
-	desc_style.border_color = Color(0.3, 0.3, 0.35)
-	desc_style.set_border_width_all(1)
-	desc_style.set_corner_radius_all(4)
-	_desc_panel.add_theme_stylebox_override("panel", desc_style)
-
-	# Scrollable container
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	_desc_panel.add_child(scroll)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 8)
-	margin.add_theme_constant_override("margin_bottom", 8)
-	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	margin.clip_contents = true  # Ensure content doesn't overflow
-	scroll.add_child(margin)
-
-	var content_vbox := VBoxContainer.new()
-	content_vbox.add_theme_constant_override("separation", 6)
-	content_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	content_vbox.clip_contents = true  # Prevent children from expanding container
-	margin.add_child(content_vbox)
-
-	# Top row: Icon + Name/Rank
-	var top_hbox := HBoxContainer.new()
-	top_hbox.add_theme_constant_override("separation", 10)
-	content_vbox.add_child(top_hbox)
-
-	# Icon
-	_desc_icon = TextureRect.new()
-	_desc_icon.custom_minimum_size = Vector2(40, 40)
-	_desc_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_desc_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	top_hbox.add_child(_desc_icon)
-
-	# Name and rank
-	var name_vbox := VBoxContainer.new()
-	name_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_vbox.clip_contents = true
-	top_hbox.add_child(name_vbox)
-
-	_desc_name = Label.new()
-	_desc_name.add_theme_font_size_override("font_size", 13)
-	_desc_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	name_vbox.add_child(_desc_name)
-
-	_desc_rank = Label.new()
-	_desc_rank.add_theme_font_size_override("font_size", 10)
-	_desc_rank.add_theme_color_override("font_color", COLOR_AVAILABLE)
-	_desc_rank.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	name_vbox.add_child(_desc_rank)
-
-	# Two-column stats layout
-	var columns_hbox := HBoxContainer.new()
-	columns_hbox.add_theme_constant_override("separation", 16)
-	columns_hbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	columns_hbox.clip_contents = true
-	content_vbox.add_child(columns_hbox)
-
-	# Left column
-	_desc_col_left = VBoxContainer.new()
-	_desc_col_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_desc_col_left.clip_contents = true
-	columns_hbox.add_child(_desc_col_left)
-
-	# Right column
-	_desc_col_right = VBoxContainer.new()
-	_desc_col_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_desc_col_right.clip_contents = true
-	columns_hbox.add_child(_desc_col_right)
-
-	# Description text (full width below columns)
-	_desc_text = RichTextLabel.new()
-	_desc_text.bbcode_enabled = true
-	_desc_text.fit_content = true
-	_desc_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_desc_text.add_theme_font_size_override("normal_font_size", 10)
-	_desc_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	content_vbox.add_child(_desc_text)
 
 
 func _build_action_buttons() -> void:
@@ -537,7 +427,6 @@ func refresh() -> void:
 	_refresh_skillbook()
 	_refresh_bind_slots()
 	_update_points_label()
-	_update_description_panel()
 	_update_buttons()
 
 
@@ -960,94 +849,6 @@ func _update_points_label() -> void:
 	_points_tree_label.text = "Invested in tree: %d" % tree_invested
 
 
-func _update_description_panel() -> void:
-	# Clear columns
-	for child in _desc_col_left.get_children():
-		child.queue_free()
-	for child in _desc_col_right.get_children():
-		child.queue_free()
-
-	if selected_talent_id.is_empty():
-		_desc_name.text = "Select a talent or skill"
-		_desc_rank.text = ""
-		_desc_text.text = "Click on a talent in the tree or a skill in the skillbook to view its details."
-		return
-
-	var talent := TalentManager.get_talent(selected_talent_id)
-	if not talent:
-		return
-
-	var invested := TalentManager.get_invested_points(selected_talent_id)
-
-	_desc_name.text = talent.talent_name
-
-	# Different display for active vs passive talents
-	if talent.is_active():
-		# Active skills: show skill rank (1-20, leveled at trainers)
-		var skill_rank := TalentManager.get_skill_rank(selected_talent_id)
-		if invested > 0:
-			_desc_rank.text = "Skill Rank: %d / %d" % [skill_rank, TalentManager.MAX_SKILL_RANK]
-		else:
-			_desc_rank.text = "Not Learned"
-
-		# Left column: Type and costs
-		_add_stat_row(_desc_col_left, "Type", "Active", Color(0.4, 0.9, 1.0))
-		if talent.mana_cost > 0:
-			_add_stat_row(_desc_col_left, "Mana", str(int(talent.mana_cost)), Color(0.4, 0.6, 1.0))
-		if talent.stamina_cost > 0:
-			_add_stat_row(_desc_col_left, "Stamina", str(int(talent.stamina_cost)), Color(0.4, 1.0, 0.6))
-		if talent.cooldown > 0:
-			_add_stat_row(_desc_col_left, "Cooldown", "%.1fs" % talent.cooldown, Color(0.9, 0.9, 0.9))
-
-		# Weapon requirement (show in red if not met)
-		if talent.has_weapon_requirement():
-			var weapon_cat := Inventory.get_equipped_weapon_category()
-			var is_met := talent.matches_weapon_category(weapon_cat)
-			var req_text := _get_weapon_category_display_name(talent.required_weapon_category)
-			var req_color := Color(0.5, 1.0, 0.5) if is_met else Color(1.0, 0.4, 0.4)
-			_add_stat_row(_desc_col_left, "Requires", req_text, req_color)
-
-		# Right column: Rank info for active skills
-		if invested > 0 and skill_rank > 0 and skill_rank <= talent.rank_descriptions.size():
-			_add_stat_row(_desc_col_right, "Effect", talent.rank_descriptions[skill_rank - 1], Color(0.7, 1.0, 0.7))
-	else:
-		# Passive talents: show invested points / max
-		_desc_rank.text = "Points: %d / %d" % [invested, talent.max_points]
-
-		# Left column: Type
-		_add_stat_row(_desc_col_left, "Type", "Passive", Color(1.0, 0.9, 0.3))
-
-		# Right column: Rank effects for passive talents
-		if invested > 0 and invested <= talent.rank_descriptions.size():
-			_add_stat_row(_desc_col_right, "Current", talent.rank_descriptions[invested - 1], Color(0.7, 1.0, 0.7))
-		if invested < talent.max_points and invested < talent.rank_descriptions.size():
-			_add_stat_row(_desc_col_right, "Next", talent.rank_descriptions[invested], Color(0.6, 0.6, 0.6))
-
-	# Description text
-	_desc_text.text = talent.description
-
-
-func _add_stat_row(column: VBoxContainer, label_text: String, value_text: String, value_color: Color) -> void:
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 4)
-	row.clip_contents = true
-	column.add_child(row)
-
-	var label := Label.new()
-	label.text = label_text + ":"
-	label.add_theme_font_size_override("font_size", 10)
-	label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	row.add_child(label)
-
-	var value := Label.new()
-	value.text = value_text
-	value.add_theme_font_size_override("font_size", 10)
-	value.add_theme_color_override("font_color", value_color)
-	value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	value.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	row.add_child(value)
-
-
 func _update_buttons() -> void:
 	# Hide buttons if nothing selected or selected from skillbook
 	# (skillbook uses drag-and-drop for binding)
@@ -1084,7 +885,6 @@ func _on_tree_tab_pressed(tree_id: String) -> void:
 
 	_refresh_talent_tree()
 	_update_points_label()
-	_update_description_panel()
 	_update_buttons()
 
 
@@ -1099,7 +899,6 @@ func _on_talent_node_pressed(talent_id: String) -> void:
 		if talent:
 			_update_talent_node_visual(_talent_nodes[id], talent)
 
-	_update_description_panel()
 	_update_buttons()
 	talent_selected.emit(talent_id)
 
@@ -1115,7 +914,6 @@ func _on_skillbook_slot_pressed(talent_id: String) -> void:
 
 	_refresh_skillbook()
 	_refresh_bind_slots()
-	_update_description_panel()
 	_update_buttons()
 	skill_selected.emit(talent_id)
 
@@ -1164,7 +962,6 @@ func _on_bind_slot_pressed(slot_index: int) -> void:
 			selected_talent_id = talent.id
 			selected_from_skillbook = true
 			_refresh_skillbook()
-			_update_description_panel()
 			_update_buttons()
 
 
@@ -1199,7 +996,6 @@ func _on_talent_learned(talent_id: String, _new_points: int) -> void:
 	if _arrow_layer:
 		_arrow_layer.queue_redraw()
 
-	_update_description_panel()
 	_update_buttons()
 
 
@@ -1235,7 +1031,6 @@ func _on_equipment_changed(slot: ItemData.EquipSlot) -> void:
 	if slot == ItemData.EquipSlot.MAIN_HAND:
 		_refresh_skillbook()
 		_refresh_bind_slots()
-		_update_description_panel()
 
 
 ## Convert weapon category ID to display name
