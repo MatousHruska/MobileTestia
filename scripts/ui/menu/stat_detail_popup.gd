@@ -140,18 +140,36 @@ func _format_stat_name(stat_name: String) -> String:
 	return stat_name.capitalize().replace("_", " ")
 
 
-## Position the popup centered on target, clamped to screen bounds
+## Position the popup near target, ensuring it stays fully on screen
 func _position_popup(target_pos: Vector2) -> void:
 	var screen_size := get_viewport_rect().size
 	var popup_size := popup_panel.size
-
-	# Center on target position
-	var pos := target_pos - popup_size / 2
-
-	# Clamp to screen bounds with small margin
 	var margin := 8.0
+	var offset := 10.0  # Gap between target and popup
+
+	var pos := Vector2.ZERO
+
+	# Horizontal: center on target, then clamp to screen
+	pos.x = target_pos.x - popup_size.x / 2
 	pos.x = clampf(pos.x, margin, screen_size.x - popup_size.x - margin)
-	pos.y = clampf(pos.y, margin, screen_size.y - popup_size.y - margin)
+
+	# Vertical: prefer below target, but go above if not enough space
+	var space_below := screen_size.y - target_pos.y - offset - margin
+	var space_above := target_pos.y - offset - margin
+
+	if space_below >= popup_size.y:
+		# Enough space below - position below target
+		pos.y = target_pos.y + offset
+	elif space_above >= popup_size.y:
+		# Enough space above - position above target
+		pos.y = target_pos.y - popup_size.y - offset
+	else:
+		# Not enough space either way - clamp to screen
+		# Prefer the side with more space
+		if space_below >= space_above:
+			pos.y = screen_size.y - popup_size.y - margin
+		else:
+			pos.y = margin
 
 	popup_panel.position = pos
 
