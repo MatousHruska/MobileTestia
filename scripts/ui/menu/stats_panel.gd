@@ -15,9 +15,15 @@ var _resource_labels: Dictionary = {}
 var _subtab_buttons: Array[Button] = []
 var _subtab_panels: Array[Control] = []
 
-## Description box
-var _description_title: Label = null
-var _description_text: Label = null
+## Stat detail popup
+var _stat_popup: StatDetailPopup = null
+
+## Hold detection
+const HOLD_THRESHOLD := 0.25  # seconds before hold is triggered
+var _hold_timer: Timer = null
+var _pending_stat: String = ""
+var _pending_position: Vector2 = Vector2.ZERO
+var _is_holding: bool = false
 
 ## Effects section
 var _effects_container: HBoxContainer = null
@@ -27,9 +33,25 @@ var _no_effects_label: Label = null
 
 func _ready() -> void:
 	_build_ui()
+	_setup_popup()
+	_setup_hold_timer()
 	_connect_signals()
 	refresh_display()
 	Debug.info("UI", "StatsPanel ready")
+
+
+func _setup_popup() -> void:
+	_stat_popup = StatDetailPopup.new()
+	_stat_popup.name = "StatDetailPopup"
+	add_child(_stat_popup)
+
+
+func _setup_hold_timer() -> void:
+	_hold_timer = Timer.new()
+	_hold_timer.one_shot = true
+	_hold_timer.wait_time = HOLD_THRESHOLD
+	_hold_timer.timeout.connect(_on_hold_timer_timeout)
+	add_child(_hold_timer)
 
 
 func _process(_delta: float) -> void:
@@ -100,11 +122,8 @@ func _create_right_panel() -> Control:
 
 	# === SUBTAB CONTENT ===
 	var subtab_content := _create_subtab_content()
+	subtab_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	container.add_child(subtab_content)
-
-	# === DESCRIPTION BOX (aligned with Resources on left) ===
-	var description_box := _create_description_box()
-	container.add_child(description_box)
 
 	return container
 
@@ -195,13 +214,13 @@ func _create_attributes_section() -> Control:
 
 
 func _create_attribute_row(abbrev: String, stat_name: String, hint: String) -> Array:
-	# Label (tap for description)
+	# Label (tap/hold for description popup)
 	var label := Button.new()
 	label.name = abbrev + "Label"
 	label.flat = true
 	label.text = abbrev + ":"
 	label.custom_minimum_size = Vector2(45, 0)
-	label.pressed.connect(_on_stat_tapped.bind(stat_name))
+	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
 
 	# Value
 	var value := Label.new()
@@ -269,13 +288,13 @@ func _create_resources_section() -> Control:
 
 
 func _create_resource_row(stat_name: String, display_name: String) -> Array:
-	# Label (tap for description)
+	# Label (tap/hold for description popup)
 	var label := Button.new()
 	label.flat = true
 	label.text = display_name + ":"
 	label.custom_minimum_size = Vector2(70, 0)
 	label.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	label.pressed.connect(_on_stat_tapped.bind(stat_name))
+	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
 
 	# Value
 	var value := Label.new()
@@ -335,40 +354,6 @@ func _create_subtab_content() -> Control:
 	return container
 
 
-func _create_description_box() -> Control:
-	var container := PanelContainer.new()
-	container.custom_minimum_size = Vector2(0, 90)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 6)
-	margin.add_theme_constant_override("margin_bottom", 6)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 4)
-
-	_description_title = Label.new()
-	_description_title.name = "DescTitle"
-	_description_title.add_theme_font_size_override("font_size", 14)
-	_description_title.text = "Tap a stat for details"
-	_description_title.modulate = Color(1.0, 0.9, 0.6)
-	vbox.add_child(_description_title)
-
-	_description_text = Label.new()
-	_description_text.name = "DescText"
-	_description_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_description_text.add_theme_font_size_override("font_size", 12)
-	_description_text.text = ""
-	_description_text.modulate = Color(0.8, 0.8, 0.8)
-	_description_text.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_child(_description_text)
-
-	margin.add_child(vbox)
-	container.add_child(margin)
-	return container
-
-
 func _create_effects_section() -> Control:
 	var container := PanelContainer.new()
 	container.custom_minimum_size = Vector2(0, 50)
@@ -410,7 +395,7 @@ func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(40, 40)
 	btn.flat = true
-	btn.pressed.connect(_on_effect_tapped.bind(effect_type))
+	btn.gui_input.connect(_on_effect_button_input.bind(effect_type, btn))
 
 	# Container for icon visuals
 	var icon_container := Control.new()
@@ -610,7 +595,7 @@ func _create_derived_stat_row(stat_name: String, display_name: String) -> Array:
 	label.text = display_name + ":"
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	label.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	label.pressed.connect(_on_stat_tapped.bind(stat_name))
+	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
 
 	var value := Label.new()
 	value.name = stat_name + "_value"
@@ -848,10 +833,120 @@ func _on_allocate_pressed(stat_name: String) -> void:
 			PlayerStats.allocate_luck()
 
 
-func _on_stat_tapped(stat_name: String) -> void:
-	if _description_title and _description_text:
-		_description_title.text = stat_name.capitalize().replace("_", " ")
-		_description_text.text = PlayerStats.get_stat_description(stat_name)
+## Stat button input handling (tap vs hold)
+func _on_stat_button_input(event: InputEvent, stat_name: String, button: Button) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT:
+			if mb.pressed:
+				# Start hold detection
+				_pending_stat = stat_name
+				_pending_position = button.get_global_rect().get_center()
+				_is_holding = false
+				_hold_timer.start()
+			else:
+				# Button released
+				_hold_timer.stop()
+				if _is_holding:
+					# Was holding - release the popup
+					if _stat_popup:
+						_stat_popup.release_hold()
+					_is_holding = false
+				elif not _pending_stat.is_empty():
+					# Quick tap - show popup (tap mode)
+					_show_stat_popup(stat_name, _pending_position, false)
+				_pending_stat = ""
+
+
+func _on_hold_timer_timeout() -> void:
+	if not _pending_stat.is_empty():
+		_is_holding = true
+		# Check if this is an effect or a stat
+		if _pending_stat.begins_with("effect:"):
+			var effect_type := _pending_stat.substr(7)  # Remove "effect:" prefix
+			_show_effect_popup(effect_type, _pending_position, true)
+		else:
+			_show_stat_popup(_pending_stat, _pending_position, true)
+
+
+func _show_stat_popup(stat_name: String, position: Vector2, hold_mode: bool) -> void:
+	if not _stat_popup:
+		return
+
+	# Get stat value
+	var stat_value := _get_stat_value_text(stat_name)
+
+	# Get description from PlayerStats
+	var description := PlayerStats.get_stat_description(stat_name)
+
+	if hold_mode:
+		_stat_popup.show_stat_hold(stat_name, stat_value, description, position)
+	else:
+		_stat_popup.show_stat(stat_name, stat_value, description, position)
+
+
+func _get_stat_value_text(stat_name: String) -> String:
+	match stat_name:
+		# Primary attributes
+		"strength":
+			return str(PlayerStats.strength + int(PlayerStats.get_equipment_bonus("strength")))
+		"dexterity":
+			return str(PlayerStats.dexterity + int(PlayerStats.get_equipment_bonus("dexterity")))
+		"intelligence":
+			return str(PlayerStats.intelligence + int(PlayerStats.get_equipment_bonus("intelligence")))
+		"vitality":
+			return str(PlayerStats.vitality + int(PlayerStats.get_equipment_bonus("vitality")))
+		"energy":
+			return str(PlayerStats.energy + int(PlayerStats.get_equipment_bonus("energy")))
+		"luck":
+			return str(PlayerStats.luck + int(PlayerStats.get_equipment_bonus("luck")))
+		# Resources
+		"life":
+			return "%d / %d" % [int(PlayerStats.current_life), int(PlayerStats.max_life)]
+		"mana":
+			return "%d / %d" % [int(PlayerStats.current_mana), int(PlayerStats.max_mana)]
+		"stamina":
+			return "%d / %d" % [int(PlayerStats.current_stamina), int(PlayerStats.max_stamina)]
+		# Offensive
+		"weapon_damage":
+			return "%.0f" % Inventory.get_equipped_weapon_damage()
+		"attack_speed":
+			var weapon_speed := Inventory.get_equipped_weapon_attack_speed()
+			var bonus := PlayerStats.attack_speed
+			return "%.2f/s" % (weapon_speed * (1.0 + bonus / 100.0))
+		"weapon_dps":
+			var weapon_damage := Inventory.get_equipped_weapon_damage()
+			var weapon_speed := Inventory.get_equipped_weapon_attack_speed()
+			var bonus := PlayerStats.attack_speed
+			return "%.1f" % (weapon_damage * weapon_speed * (1.0 + bonus / 100.0))
+		"attack_power":
+			return "%.0f" % PlayerStats.attack_power
+		"critical_chance":
+			return "%.1f%%" % PlayerStats.critical_chance
+		"critical_damage":
+			return "%.0f%%" % PlayerStats.critical_damage
+		"spell_power":
+			return "%.0f" % PlayerStats.spell_power
+		"fire_spell_damage", "cold_spell_damage", "lightning_spell_damage", "poison_spell_damage", "arcane_spell_damage":
+			return "%.0f" % PlayerStats.get_equipment_bonus(stat_name)
+		# Defensive
+		"armor":
+			return "%.0f" % PlayerStats.armor
+		"magic_resistance":
+			return "%.0f" % PlayerStats.magic_resistance
+		"dodge_chance":
+			return "%.1f%%" % PlayerStats.dodge_chance
+		# Utility
+		"movement_speed":
+			return "+%.0f%%" % PlayerStats.movement_speed
+		"life_regen":
+			return "%.1f/s" % PlayerStats.life_regen
+		"mana_regen":
+			return "%.1f/s" % PlayerStats.mana_regen
+		"stamina_regen":
+			return "%.1f/s" % PlayerStats.stamina_regen
+		_:
+			return ""
 
 
 #===============================================================================
@@ -938,8 +1033,33 @@ func _on_effect_removed(_effect_type: String) -> void:
 	_update_effects()
 
 
-func _on_effect_tapped(effect_type: String) -> void:
-	if not _description_title or not _description_text:
+## Effect button input handling (tap vs hold)
+func _on_effect_button_input(event: InputEvent, effect_type: String, button: Button) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT:
+			if mb.pressed:
+				# Start hold detection (reusing the same timer)
+				_pending_stat = "effect:" + effect_type
+				_pending_position = button.get_global_rect().get_center()
+				_is_holding = false
+				_hold_timer.start()
+			else:
+				# Button released
+				_hold_timer.stop()
+				if _is_holding:
+					# Was holding - release the popup
+					if _stat_popup:
+						_stat_popup.release_hold()
+					_is_holding = false
+				elif _pending_stat == "effect:" + effect_type:
+					# Quick tap - show popup (tap mode)
+					_show_effect_popup(effect_type, _pending_position, false)
+				_pending_stat = ""
+
+
+func _show_effect_popup(effect_type: String, position: Vector2, hold_mode: bool) -> void:
+	if not _stat_popup:
 		return
 
 	# Get effect data for details
@@ -947,11 +1067,21 @@ func _on_effect_tapped(effect_type: String) -> void:
 	var effect_data: Dictionary = effects.get(effect_type, {})
 
 	# Build description
-	var title := effect_type.capitalize()
 	var description := _get_effect_description(effect_type, effect_data)
 
-	_description_title.text = title
-	_description_text.text = description
+	# Get remaining duration as value text
+	var remaining: float = effect_data.get("remaining_duration", 0.0)
+	var max_dur: float = effect_data.get("max_duration", 0.0)
+	var value_text := ""
+	if max_dur > 0:
+		value_text = "%.1fs remaining" % remaining
+	elif max_dur == 0 and remaining > 0:
+		value_text = "Permanent"
+
+	if hold_mode:
+		_stat_popup.show_stat_hold(effect_type, value_text, description, position)
+	else:
+		_stat_popup.show_stat(effect_type, value_text, description, position)
 
 
 func _get_effect_description(effect_type: String, effect_data: Dictionary) -> String:
