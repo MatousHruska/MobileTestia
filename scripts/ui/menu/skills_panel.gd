@@ -236,7 +236,7 @@ func _create_section_header(text: String) -> Label:
 
 func _build_talent_tree_panel(parent: Control) -> void:
 	var outer_vbox := VBoxContainer.new()
-	outer_vbox.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	outer_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	outer_vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	outer_vbox.add_theme_constant_override("separation", 4)
 	parent.add_child(outer_vbox)
