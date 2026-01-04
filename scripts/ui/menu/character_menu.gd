@@ -129,17 +129,28 @@ func _setup_tabs() -> void:
 	_tab_buttons = [inventory_tab, stats_tab, skills_tab, quests_tab, menu_tab]
 	_panels = [inventory_panel, stats_panel, skills_panel, quests_panel, menu_panel]
 
-	# Connect tab buttons
+	# Connect tab buttons and apply default colors
 	if stats_tab:
 		stats_tab.pressed.connect(_on_tab_pressed.bind(Tab.STATS))
+		stats_tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	if inventory_tab:
 		inventory_tab.pressed.connect(_on_tab_pressed.bind(Tab.INVENTORY))
+		inventory_tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+		inventory_tab.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		inventory_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
 	if skills_tab:
 		skills_tab.pressed.connect(_on_tab_pressed.bind(Tab.SKILLS))
+		skills_tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	if quests_tab:
 		quests_tab.pressed.connect(_on_tab_pressed.bind(Tab.QUESTS))
+		quests_tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+		quests_tab.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		quests_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
 	if menu_tab:
 		menu_tab.pressed.connect(_on_tab_pressed.bind(Tab.MENU))
+		menu_tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+		menu_tab.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		menu_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
 
 	# Connect close button
 	if close_button:
@@ -281,8 +292,8 @@ func _update_stats_badge() -> void:
 		stats_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	else:
 		stats_tab.text = "Stats"
-		stats_tab.remove_theme_color_override("font_color")
-		stats_tab.remove_theme_color_override("font_hover_color")
+		stats_tab.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		stats_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
 
 
 func _update_skills_badge() -> void:
@@ -297,8 +308,8 @@ func _update_skills_badge() -> void:
 		skills_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	else:
 		skills_tab.text = "Skills"
-		skills_tab.remove_theme_color_override("font_color")
-		skills_tab.remove_theme_color_override("font_hover_color")
+		skills_tab.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		skills_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
 
 
 func _on_attribute_points_changed(_points: int) -> void:
