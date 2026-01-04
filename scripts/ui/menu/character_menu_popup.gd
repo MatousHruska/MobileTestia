@@ -26,8 +26,8 @@ signal closed
 #===============================================================================
 
 const DEFAULT_POPUP_WIDTH := 280
-const DEFAULT_POPUP_MIN_HEIGHT := 80
-const DEFAULT_POPUP_MAX_HEIGHT := 300
+const DEFAULT_POPUP_MIN_HEIGHT_PCT := 0.15  # 15% of viewport height
+const DEFAULT_POPUP_MAX_HEIGHT_PCT := 0.70  # 70% of viewport height
 const MARGIN := 8
 const SCREEN_PADDING := 10
 const DIMMER_ALPHA := 0.3
@@ -73,19 +73,19 @@ func _update_size() -> void:
 # VIRTUAL METHODS FOR SUBCLASSES
 #===============================================================================
 
-## Override to set custom popup width
+## Override to set custom popup width (in pixels)
 func _get_popup_width() -> int:
 	return DEFAULT_POPUP_WIDTH
 
 
-## Override to set custom minimum height
-func _get_popup_min_height() -> int:
-	return DEFAULT_POPUP_MIN_HEIGHT
+## Override to set custom minimum height (as percentage of viewport, 0.0-1.0)
+func _get_popup_min_height_pct() -> float:
+	return DEFAULT_POPUP_MIN_HEIGHT_PCT
 
 
-## Override to set custom maximum height
-func _get_popup_max_height() -> int:
-	return DEFAULT_POPUP_MAX_HEIGHT
+## Override to set custom maximum height (as percentage of viewport, 0.0-1.0)
+func _get_popup_max_height_pct() -> float:
+	return DEFAULT_POPUP_MAX_HEIGHT_PCT
 
 
 ## Override to build popup-specific content
@@ -121,7 +121,9 @@ func _build_ui() -> void:
 
 	# Main popup panel
 	_panel = PanelContainer.new()
-	_panel.custom_minimum_size = Vector2(_get_popup_width(), _get_popup_min_height())
+	var viewport_height := get_viewport().get_visible_rect().size.y
+	var min_height := int(viewport_height * _get_popup_min_height_pct())
+	_panel.custom_minimum_size = Vector2(_get_popup_width(), min_height)
 	add_child(_panel)
 
 	# Panel style
@@ -258,8 +260,8 @@ func _position_popup(tap_pos: Vector2) -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
 	var panel_size := _panel.size
 
-	# Limit panel height
-	var max_height := _get_popup_max_height()
+	# Limit panel height (percentage of viewport)
+	var max_height := int(viewport_size.y * _get_popup_max_height_pct())
 	if panel_size.y > max_height:
 		_panel.custom_minimum_size.y = max_height
 		_scroll.custom_minimum_size.y = max_height - 80
