@@ -140,26 +140,17 @@ func _format_stat_name(stat_name: String) -> String:
 	return stat_name.capitalize().replace("_", " ")
 
 
-## Position the popup to the right of target, stretching upward
+## Position the popup at tap spot, stretching upward and to the right
 func _position_popup(target_pos: Vector2) -> void:
 	var screen_size := get_viewport_rect().size
 	var popup_size := popup_panel.size
 	var margin := 8.0
-	var offset := 10.0  # Gap between target and popup
 
-	var pos := Vector2.ZERO
+	# Bottom-left corner at tap position
+	var pos := Vector2(target_pos.x, target_pos.y - popup_size.y)
 
-	# Horizontal: to the right of target
-	pos.x = target_pos.x + offset
-	# If goes off right edge, flip to left side
-	if pos.x + popup_size.x > screen_size.x - margin:
-		pos.x = target_pos.x - popup_size.x - offset
-	# Final clamp
+	# Clamp to screen bounds
 	pos.x = clampf(pos.x, margin, screen_size.x - popup_size.x - margin)
-
-	# Vertical: bottom of popup aligns with target, stretches upward
-	pos.y = target_pos.y - popup_size.y
-	# Clamp to screen
 	pos.y = clampf(pos.y, margin, screen_size.y - popup_size.y - margin)
 
 	popup_panel.position = pos
