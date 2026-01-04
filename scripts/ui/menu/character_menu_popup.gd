@@ -185,13 +185,13 @@ func _build_header(parent: VBoxContainer) -> void:
 
 	# Style close button
 	var close_style := StyleBoxFlat.new()
-	close_style.bg_color = Color(0.4, 0.15, 0.15, 0.8)
-	close_style.set_corner_radius_all(4)
+	close_style.bg_color = UITheme.COLOR_DEBUFF
+	close_style.set_corner_radius_all(UITheme.CORNER_RADIUS_NORMAL)
 	_close_button.add_theme_stylebox_override("normal", close_style)
 
 	var close_hover := StyleBoxFlat.new()
-	close_hover.bg_color = Color(0.6, 0.2, 0.2, 0.9)
-	close_hover.set_corner_radius_all(4)
+	close_hover.bg_color = UITheme.COLOR_DEBUFF.lightened(0.2)
+	close_hover.set_corner_radius_all(UITheme.CORNER_RADIUS_NORMAL)
 	_close_button.add_theme_stylebox_override("hover", close_hover)
 
 
@@ -299,21 +299,21 @@ func _input(event: InputEvent) -> void:
 #===============================================================================
 
 ## Add a labeled stat row to a container
-func add_stat_row(container: VBoxContainer, label_text: String, value_text: String, value_color: Color = Color(0.9, 0.9, 0.9)) -> void:
+func add_stat_row(container: VBoxContainer, label_text: String, value_text: String, value_color: Color = Color.WHITE) -> void:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 4)
+	row.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 	container.add_child(row)
 
 	var label := Label.new()
 	label.text = label_text + ":"
-	label.add_theme_font_size_override("font_size", 10)
-	label.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
+	label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	row.add_child(label)
 
 	var value := Label.new()
 	value.text = value_text
-	value.add_theme_font_size_override("font_size", 10)
-	value.add_theme_color_override("font_color", value_color)
+	value.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
+	value.add_theme_color_override("font_color", value_color if value_color != Color.WHITE else UITheme.COLOR_SELECTED)
 	value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	value.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	row.add_child(value)
