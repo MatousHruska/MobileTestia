@@ -229,14 +229,14 @@ func _create_header() -> Control:
 	points_label.name = "PointsLabel"
 	points_label.add_theme_font_size_override("font_size", 14)
 	points_label.text = "Attr: 0"
-	points_label.modulate = Color(1.0, 0.9, 0.3)
+	points_label.modulate = UITheme.COLOR_AVAILABLE
 	level_row.add_child(points_label)
 
 	var skill_points_label := Label.new()
 	skill_points_label.name = "SkillPointsLabel"
 	skill_points_label.add_theme_font_size_override("font_size", 14)
 	skill_points_label.text = "Skill: 0"
-	skill_points_label.modulate = Color(0.3, 0.9, 1.0)
+	skill_points_label.modulate = UITheme.COLOR_HIGHLIGHT
 	level_row.add_child(skill_points_label)
 
 	container.add_child(level_row)
@@ -250,12 +250,9 @@ func _create_header() -> Control:
 
 	# Style the bar with outline
 	var bg_style := StyleBoxFlat.new()
-	bg_style.bg_color = Color(0.1, 0.1, 0.1, 0.8)
-	bg_style.border_width_left = 1
-	bg_style.border_width_right = 1
-	bg_style.border_width_top = 1
-	bg_style.border_width_bottom = 1
-	bg_style.border_color = Color(0.4, 0.4, 0.4)
+	bg_style.bg_color = UITheme.COLOR_PANEL_DARK_BG
+	bg_style.set_border_width_all(UITheme.BORDER_WIDTH_NORMAL)
+	bg_style.border_color = UITheme.COLOR_PANEL_BORDER
 	xp_bar.add_theme_stylebox_override("background", bg_style)
 
 	var fill_style := StyleBoxFlat.new()
@@ -418,20 +415,21 @@ func _create_subtab_content() -> Control:
 func _create_effects_section() -> Control:
 	var container := PanelContainer.new()
 
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 8)
-	margin.add_theme_constant_override("margin_right", 8)
-	margin.add_theme_constant_override("margin_top", 4)
-	margin.add_theme_constant_override("margin_bottom", 4)
+	var margin := UITheme.create_margin_container(
+		UITheme.MARGIN_STANDARD,
+		UITheme.MARGIN_STANDARD,
+		UITheme.MARGIN_TINY,
+		UITheme.MARGIN_TINY
+	)
 
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 4)
+	UITheme.setup_vbox(vbox, UITheme.SEPARATION_SMALL)
 
 	# Title row (hidden when effects are active)
 	_effects_title_label = Label.new()
 	_effects_title_label.text = "Active Effects"
 	_effects_title_label.add_theme_font_size_override("font_size", 13)
-	_effects_title_label.modulate = Color(0.7, 0.7, 0.7)
+	_effects_title_label.modulate = UITheme.COLOR_TEXT_DIM
 	vbox.add_child(_effects_title_label)
 
 	# Effects icons container (horizontal row)
@@ -443,7 +441,7 @@ func _create_effects_section() -> Control:
 	_no_effects_label = Label.new()
 	_no_effects_label.text = "No active effects"
 	_no_effects_label.add_theme_font_size_override("font_size", 11)
-	_no_effects_label.modulate = Color(0.5, 0.5, 0.5)
+	_no_effects_label.modulate = UITheme.COLOR_LOCKED
 	_effects_container.add_child(_no_effects_label)
 
 	margin.add_child(vbox)
@@ -467,7 +465,7 @@ func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button
 	var is_debuff: bool = effect_data.get("is_debuff", true)
 	var background := ColorRect.new()
 	background.set_anchors_preset(Control.PRESET_FULL_RECT)
-	background.color = Color(0.6, 0.1, 0.1, 0.9) if is_debuff else Color(0.1, 0.5, 0.1, 0.9)
+	background.color = Color(0.6, 0.1, 0.1, 0.9) if is_debuff else UITheme.COLOR_LEARNED
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon_container.add_child(background)
 
@@ -505,7 +503,7 @@ func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button
 	duration_bar.add_theme_stylebox_override("fill", bar_style)
 
 	var bar_bg := StyleBoxFlat.new()
-	bar_bg.bg_color = Color(0.2, 0.2, 0.2, 0.8)
+	bar_bg.bg_color = UITheme.COLOR_BUTTON_BG
 	bar_bg.corner_radius_bottom_left = 1
 	bar_bg.corner_radius_bottom_right = 1
 	duration_bar.add_theme_stylebox_override("background", bar_bg)

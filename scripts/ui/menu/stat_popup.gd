@@ -10,10 +10,7 @@ const POPUP_WIDTH := 260
 const POPUP_MIN_HEIGHT_PCT := 0.30  # 30% of viewport - ensures decent size
 const POPUP_MAX_HEIGHT_PCT := 0.55  # 55% of viewport
 
-## Colors
-const COLOR_TITLE := Color(1.0, 0.9, 0.6)
-const COLOR_VALUE := Color(0.9, 0.9, 0.9)
-const COLOR_DESCRIPTION := Color(0.8, 0.8, 0.8)
+## Colors - use UITheme for consistency
 
 #===============================================================================
 # STATE
@@ -58,12 +55,12 @@ func _build_header_content() -> VBoxContainer:
 
 	_title_label = Label.new()
 	_title_label.add_theme_font_size_override("font_size", 16)
-	_title_label.add_theme_color_override("font_color", COLOR_TITLE)
+	_title_label.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
 	name_col.add_child(_title_label)
 
 	_value_label = Label.new()
 	_value_label.add_theme_font_size_override("font_size", 13)
-	_value_label.add_theme_color_override("font_color", COLOR_VALUE)
+	_value_label.add_theme_color_override("font_color", UITheme.COLOR_SELECTED)
 	name_col.add_child(_value_label)
 
 	return name_col
@@ -73,7 +70,7 @@ func _build_content(content: VBoxContainer) -> void:
 	_description_label = Label.new()
 	_description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_description_label.add_theme_font_size_override("font_size", 12)
-	_description_label.add_theme_color_override("font_color", COLOR_DESCRIPTION)
+	_description_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	content.add_child(_description_label)
 
 
