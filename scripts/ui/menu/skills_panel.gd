@@ -18,16 +18,58 @@ signal binding_mode_entered
 signal binding_mode_exited
 
 #===============================================================================
-# CONSTANTS
+# CONSTANTS - Responsive (percentages of panel dimensions)
 #===============================================================================
 
-const TALENT_NODE_SIZE := Vector2(52, 52)  ## Size of talent node buttons (square)
-const TALENT_SPACING := Vector2(16, 24)  ## Spacing between talent nodes
-const ROW_HEIGHT := 56  ## Height per talent row (slightly larger than node)
-const TREE_WIDTH := 340  ## Width of talent tree panel
-const SKILLBOOK_COLS := 6  ## Columns in skillbook grid
-const SKILLBOOK_CELL_SIZE := 52  ## Size of skillbook cells
-const SKILLBOOK_MIN_SLOTS := 30  ## Total slots (5 rows x 6 columns)
+## Sizing percentages (relative to panel width/height)
+const TREE_WIDTH_PCT := 0.42           ## Tree panel takes ~42% of width
+const TALENT_NODE_SIZE_PCT := 0.065    ## Node size ~6.5% of panel width
+const TALENT_SPACING_X_PCT := 0.02     ## Horizontal spacing ~2%
+const TALENT_SPACING_Y_PCT := 0.05     ## Vertical spacing ~5%
+const ROW_HEIGHT_PCT := 0.12           ## Row height ~12% of panel height
+const SKILLBOOK_CELL_PCT := 0.065      ## Skillbook cell ~6.5% of panel width
+
+## Fixed values (counts, not sizes)
+const SKILLBOOK_COLS := 6              ## Columns in skillbook grid
+const SKILLBOOK_MIN_SLOTS := 30        ## Total slots (5 rows x 6 columns)
+
+## Minimum pixel sizes (for accessibility)
+const MIN_TALENT_SIZE := 40            ## Minimum touch target
+const MIN_CELL_SIZE := 40              ## Minimum touch target
+
+## Bind slot sizing
+const BIND_MAIN_SLOT_PCT := 0.08       ## Main bind slot ~8% of panel width
+const BIND_SLOT_PCT := 0.065           ## Secondary bind slot ~6.5% of panel width
+const MIN_BIND_SIZE := 36              ## Minimum bind slot size
+
+#===============================================================================
+# COMPUTED SIZES (call these functions to get actual pixel values)
+#===============================================================================
+
+func _get_tree_width() -> float:
+	return maxf(200, size.x * TREE_WIDTH_PCT)
+
+func _get_talent_node_size() -> float:
+	return maxf(MIN_TALENT_SIZE, size.x * TALENT_NODE_SIZE_PCT)
+
+func _get_talent_spacing() -> Vector2:
+	return Vector2(
+		maxf(8, size.x * TALENT_SPACING_X_PCT),
+		maxf(12, size.y * TALENT_SPACING_Y_PCT)
+	)
+
+func _get_row_height() -> float:
+	return maxf(48, size.y * ROW_HEIGHT_PCT)
+
+func _get_skillbook_cell_size() -> float:
+	return maxf(MIN_CELL_SIZE, size.x * SKILLBOOK_CELL_PCT)
+
+func _get_bind_main_slot_size() -> float:
+	return maxf(MIN_BIND_SIZE + 8, size.x * BIND_MAIN_SLOT_PCT)
+
+func _get_bind_slot_size() -> float:
+	return maxf(MIN_BIND_SIZE, size.x * BIND_SLOT_PCT)
+
 
 ## Colors
 const COLOR_LOCKED := Color(0.4, 0.4, 0.4)
@@ -202,7 +244,7 @@ func _build_talent_tree_panel(parent: Control) -> void:
 
 	# Main panel with border
 	_left_panel = PanelContainer.new()
-	_left_panel.custom_minimum_size.x = TREE_WIDTH
+	_left_panel.custom_minimum_size.x = _get_tree_width()
 	_left_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_left_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	outer_vbox.add_child(_left_panel)
@@ -311,7 +353,8 @@ func _build_right_panel(parent: Control) -> void:
 	# Skillbook container with border
 	var skillbook_panel := PanelContainer.new()
 	# Height shows ~2.5 rows to imply scrolling
-	var visible_height := int(2.5 * (SKILLBOOK_CELL_SIZE + 4)) + 16
+	var cell_size := _get_skillbook_cell_size()
+	var visible_height := int(2.5 * (cell_size + 4)) + 16
 	skillbook_panel.custom_minimum_size = Vector2(0, visible_height)
 	_right_panel.add_child(skillbook_panel)
 
@@ -418,9 +461,9 @@ func _build_skill_bind_ui() -> void:
 
 
 func _create_bind_slot(index: int, is_main: bool) -> Button:
-	var size := 44 if is_main else 36
+	var slot_size := _get_bind_main_slot_size() if is_main else _get_bind_slot_size()
 	var slot := Button.new()
-	slot.custom_minimum_size = Vector2(size, size)
+	slot.custom_minimum_size = Vector2(slot_size, slot_size)
 	# Prevent HBoxContainer from stretching the button vertically
 	slot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	slot.add_theme_font_size_override("font_size", 10)
@@ -538,7 +581,7 @@ func _on_tree_rows_resized() -> void:
 
 func _build_talent_row(row: int) -> void:
 	var row_container := HBoxContainer.new()
-	row_container.custom_minimum_size.y = ROW_HEIGHT
+	row_container.custom_minimum_size.y = _get_row_height()
 	row_container.add_theme_constant_override("separation", 8)
 	row_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	_tree_rows.add_child(row_container)
@@ -560,14 +603,16 @@ func _build_talent_row(row: int) -> void:
 		if not found:
 			# Empty spacer
 			var spacer := Control.new()
-			spacer.custom_minimum_size = TALENT_NODE_SIZE
+			var node_size := _get_talent_node_size()
+			spacer.custom_minimum_size = Vector2(node_size, node_size)
 			row_container.add_child(spacer)
 
 
 func _create_talent_node(talent: TalentData) -> Control:
 	# Container for square node
 	var container := Control.new()
-	container.custom_minimum_size = TALENT_NODE_SIZE
+	var node_size := _get_talent_node_size()
+	container.custom_minimum_size = Vector2(node_size, node_size)
 
 	# Main button (square)
 	var node := Button.new()
@@ -746,7 +791,8 @@ func _refresh_skillbook() -> void:
 
 func _create_skillbook_slot(talent: TalentData) -> Button:
 	var slot := Button.new()
-	slot.custom_minimum_size = Vector2(SKILLBOOK_CELL_SIZE, SKILLBOOK_CELL_SIZE)
+	var cell_size := _get_skillbook_cell_size()
+	slot.custom_minimum_size = Vector2(cell_size, cell_size)
 	slot.toggle_mode = true
 	slot.text = talent.talent_name.substr(0, 2).to_upper()
 	slot.add_theme_font_size_override("font_size", 12)
@@ -791,7 +837,8 @@ func _create_skillbook_slot(talent: TalentData) -> Button:
 
 func _create_empty_skillbook_slot() -> Control:
 	var slot := Control.new()
-	slot.custom_minimum_size = Vector2(SKILLBOOK_CELL_SIZE, SKILLBOOK_CELL_SIZE)
+	var cell_size := _get_skillbook_cell_size()
+	slot.custom_minimum_size = Vector2(cell_size, cell_size)
 
 	var stylebox := StyleBoxFlat.new()
 	stylebox.bg_color = Color(0.1, 0.1, 0.12, 0.5)

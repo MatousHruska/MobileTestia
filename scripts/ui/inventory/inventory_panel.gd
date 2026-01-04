@@ -47,6 +47,17 @@ const SLOT_SIZE_SMALL := 44.0   # For screens < 500px height
 const SLOT_SIZE_NORMAL := 48.0  # For screens 500-900px
 const SLOT_SIZE_LARGE := 56.0   # For screens > 900px
 
+## Responsive spacing (percentages)
+const VBOX_SEPARATION_PCT := 0.015      # 1.5% of panel height
+const EQUIPMENT_COL_GAP_PCT := 0.04     # 4% gap between armor/combat columns
+const SLOT_SEPARATION_PCT := 0.015      # 1.5% slot separation
+const GRID_SEPARATION_PCT := 0.008      # 0.8% grid separation
+const BUTTON_SIZE_PCT := 0.05           # 5% button size
+
+## Minimum pixel values
+const MIN_SEPARATION := 4
+const MIN_BUTTON_SIZE := 28
+
 ## UI References (set up in _ready)
 var equipment_container: VBoxContainer
 var backpack_container: GridContainer
@@ -59,6 +70,11 @@ var main_hbox: HBoxContainer
 var trash_button: Button
 var split_button: Button
 var use_button: Button
+var equip_columns_hbox: HBoxContainer
+var armor_column: VBoxContainer
+var combat_column: VBoxContainer
+var equip_vbox: VBoxContainer
+var backpack_vbox: VBoxContainer
 
 ## Drag & drop state
 var pending_destroy_source: String = ""
@@ -77,6 +93,7 @@ func _ready() -> void:
 	_build_ui()
 	_connect_signals()
 	_refresh_all()
+	resized.connect(_on_panel_size_changed)
 	Debug.info("UI", "InventoryPanel initialized (2-column mobile layout)")
 
 
@@ -87,6 +104,23 @@ func _calculate_slot_size() -> void:
 		current_slot_size = SLOT_SIZE_LARGE
 	else:
 		current_slot_size = SLOT_SIZE_NORMAL
+
+
+## Computed responsive sizes
+func _get_vbox_separation() -> int:
+	return maxi(MIN_SEPARATION, int(size.y * VBOX_SEPARATION_PCT))
+
+func _get_slot_separation() -> int:
+	return maxi(MIN_SEPARATION, int(size.x * SLOT_SEPARATION_PCT))
+
+func _get_equipment_col_gap() -> int:
+	return maxi(12, int(size.x * EQUIPMENT_COL_GAP_PCT))
+
+func _get_grid_separation() -> int:
+	return maxi(2, int(size.x * GRID_SEPARATION_PCT))
+
+func _get_button_size() -> int:
+	return maxi(MIN_BUTTON_SIZE, int(size.x * BUTTON_SIZE_PCT))
 
 
 func _build_ui() -> void:
@@ -121,9 +155,9 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	equip_panel.add_child(equip_margin)
 
 	# VBox for header + equipment slots
-	var equip_vbox := VBoxContainer.new()
+	equip_vbox = VBoxContainer.new()
 	equip_vbox.name = "EquipmentVBox"
-	equip_vbox.add_theme_constant_override("separation", 8)
+	equip_vbox.add_theme_constant_override("separation", _get_vbox_separation())
 	equip_margin.add_child(equip_vbox)
 
 	# Header row: "Equipped Items:"
@@ -143,20 +177,20 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	equip_panel.resized.connect(_on_panel_resized.bind(equip_panel, equip_margin, equip_vbox, false))
 
 	# Two-column layout: Armor | Combat
-	var columns_hbox := HBoxContainer.new()
-	columns_hbox.name = "EquipmentColumns"
-	columns_hbox.add_theme_constant_override("separation", 20)
-	equip_center.add_child(columns_hbox)
+	equip_columns_hbox = HBoxContainer.new()
+	equip_columns_hbox.name = "EquipmentColumns"
+	equip_columns_hbox.add_theme_constant_override("separation", _get_equipment_col_gap())
+	equip_center.add_child(equip_columns_hbox)
 
 	# Column 1: Armor slots
-	var armor_column := VBoxContainer.new()
+	armor_column = VBoxContainer.new()
 	armor_column.name = "ArmorColumn"
-	armor_column.add_theme_constant_override("separation", 8)
-	columns_hbox.add_child(armor_column)
+	armor_column.add_theme_constant_override("separation", _get_slot_separation())
+	equip_columns_hbox.add_child(armor_column)
 
 	for row_slots in ARMOR_LAYOUT:
 		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 8)
+		row.add_theme_constant_override("separation", _get_slot_separation())
 		row.alignment = BoxContainer.ALIGNMENT_CENTER
 		armor_column.add_child(row)
 
@@ -171,11 +205,11 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 			equipment_slots[slot] = slot_btn
 
 	# Column 2: Combat slots (Weapon + Quick Slot)
-	var combat_column := VBoxContainer.new()
+	combat_column = VBoxContainer.new()
 	combat_column.name = "CombatColumn"
-	combat_column.add_theme_constant_override("separation", 8)
+	combat_column.add_theme_constant_override("separation", _get_slot_separation())
 	combat_column.alignment = BoxContainer.ALIGNMENT_CENTER
-	columns_hbox.add_child(combat_column)
+	equip_columns_hbox.add_child(combat_column)
 
 	for slot in COMBAT_LAYOUT:
 		var slot_btn := InventorySlot.new()
@@ -202,16 +236,16 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	backpack_panel.add_child(backpack_margin)
 
 	# VBox for header + inventory
-	var vbox := VBoxContainer.new()
-	vbox.name = "BackpackVBox"
-	vbox.add_theme_constant_override("separation", 8)
-	backpack_margin.add_child(vbox)
+	backpack_vbox = VBoxContainer.new()
+	backpack_vbox.name = "BackpackVBox"
+	backpack_vbox.add_theme_constant_override("separation", _get_vbox_separation())
+	backpack_margin.add_child(backpack_vbox)
 
 	# Header row: "Backpack | Gold: XY" + trash/split icons
 	var header_row := HBoxContainer.new()
 	header_row.name = "HeaderRow"
-	header_row.add_theme_constant_override("separation", 4)
-	vbox.add_child(header_row)
+	header_row.add_theme_constant_override("separation", _get_grid_separation())
+	backpack_vbox.add_child(header_row)
 
 	var backpack_label := Label.new()
 	backpack_label.text = "Backpack"
@@ -236,11 +270,12 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	header_row.add_child(spacer)
 
 	# Split stack button
+	var btn_size := _get_button_size()
 	split_button = Button.new()
 	split_button.name = "SplitButton"
 	split_button.text = "½"
 	split_button.tooltip_text = "Split Stack (tap, then tap a stack)"
-	split_button.custom_minimum_size = Vector2(28, 28)
+	split_button.custom_minimum_size = Vector2(btn_size, btn_size)
 	split_button.pressed.connect(_on_split_pressed)
 	header_row.add_child(split_button)
 
@@ -249,7 +284,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	use_button.name = "UseButton"
 	use_button.text = "Use"
 	use_button.tooltip_text = "Use selected item (or drag potion here)"
-	use_button.custom_minimum_size = Vector2(36, 28)
+	use_button.custom_minimum_size = Vector2(btn_size + 8, btn_size)
 	use_button.set_script(preload("res://scripts/ui/inventory/use_drop_zone.gd"))
 	use_button.panel_ref = self
 	use_button.pressed.connect(_on_use_pressed)
@@ -266,14 +301,15 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	scroll_container.size_flags_vertical = SIZE_EXPAND_FILL
 	scroll_container.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	scroll_container.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	vbox.add_child(scroll_container)
+	backpack_vbox.add_child(scroll_container)
 
 	# Grid container - 7 columns
+	var grid_sep := _get_grid_separation()
 	backpack_container = GridContainer.new()
 	backpack_container.name = "BackpackGrid"
 	backpack_container.columns = 7
-	backpack_container.add_theme_constant_override("h_separation", 4)
-	backpack_container.add_theme_constant_override("v_separation", 4)
+	backpack_container.add_theme_constant_override("h_separation", grid_sep)
+	backpack_container.add_theme_constant_override("v_separation", grid_sep)
 	scroll_container.add_child(backpack_container)
 
 	# Create backpack slots (count from database)
@@ -315,11 +351,30 @@ func _on_main_hbox_resized() -> void:
 	main_hbox.add_theme_constant_override("separation", gap)
 
 
+func _on_panel_size_changed() -> void:
+	## Update all responsive spacing when panel resizes
+	if equip_vbox:
+		equip_vbox.add_theme_constant_override("separation", _get_vbox_separation())
+	if backpack_vbox:
+		backpack_vbox.add_theme_constant_override("separation", _get_vbox_separation())
+	if equip_columns_hbox:
+		equip_columns_hbox.add_theme_constant_override("separation", _get_equipment_col_gap())
+	if armor_column:
+		armor_column.add_theme_constant_override("separation", _get_slot_separation())
+	if combat_column:
+		combat_column.add_theme_constant_override("separation", _get_slot_separation())
+	if backpack_container:
+		var grid_sep := _get_grid_separation()
+		backpack_container.add_theme_constant_override("h_separation", grid_sep)
+		backpack_container.add_theme_constant_override("v_separation", grid_sep)
+
+
 func _create_trash_drop_zone() -> Control:
 	## Create a trash drop zone that accepts dragged items
+	var btn_size := _get_button_size()
 	var zone := Panel.new()
 	zone.name = "TrashZone"
-	zone.custom_minimum_size = Vector2(32, 28)
+	zone.custom_minimum_size = Vector2(btn_size + 4, btn_size)
 	zone.tooltip_text = "Drag item here to destroy"
 
 	# Add trash icon label
