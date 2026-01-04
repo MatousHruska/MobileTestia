@@ -29,6 +29,7 @@ var _is_holding: bool = false
 var _effects_container: HBoxContainer = null
 var _effect_icons: Dictionary = {}  # effect_type -> icon button
 var _no_effects_label: Label = null
+var _effects_title_label: Label = null
 
 
 func _ready() -> void:
@@ -372,12 +373,12 @@ func _create_effects_section() -> Control:
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 4)
 
-	# Title row
-	var title := Label.new()
-	title.text = "Active Effects"
-	title.add_theme_font_size_override("font_size", 13)
-	title.modulate = Color(0.7, 0.7, 0.7)
-	vbox.add_child(title)
+	# Title row (hidden when effects are active)
+	_effects_title_label = Label.new()
+	_effects_title_label.text = "Active Effects"
+	_effects_title_label.add_theme_font_size_override("font_size", 13)
+	_effects_title_label.modulate = Color(0.7, 0.7, 0.7)
+	vbox.add_child(_effects_title_label)
 
 	# Effects icons container (horizontal row)
 	_effects_container = HBoxContainer.new()
@@ -968,9 +969,12 @@ func _update_effects() -> void:
 			_effect_icons[effect_type].queue_free()
 	_effect_icons.clear()
 
-	# Show/hide "No active effects" label
+	# Show/hide title and "No active effects" label based on whether effects exist
+	var has_effects := not effects.is_empty()
+	if _effects_title_label:
+		_effects_title_label.visible = not has_effects
 	if _no_effects_label:
-		_no_effects_label.visible = effects.is_empty()
+		_no_effects_label.visible = not has_effects
 
 	# Create icons for each active effect
 	for effect_type in effects:
