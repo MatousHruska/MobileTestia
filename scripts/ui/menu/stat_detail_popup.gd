@@ -124,7 +124,8 @@ func _show_internal(stat_name: String, stat_value: String, description: String, 
 
 	visible = true
 
-	# Position popup after it's visible so we can get its actual size
+	# Position popup after layout settles (need 2 frames for size to be accurate)
+	await get_tree().process_frame
 	await get_tree().process_frame
 	_position_popup(at_position)
 
@@ -140,18 +141,43 @@ func _format_stat_name(stat_name: String) -> String:
 	return stat_name.capitalize().replace("_", " ")
 
 
-## Position the popup at tap spot, stretching upward and to the right
+## Position the popup at tap spot, always staying within visible screen
 func _position_popup(target_pos: Vector2) -> void:
 	var screen_size := get_viewport_rect().size
 	var popup_size := popup_panel.size
-	var margin := 8.0
+	var margin := 12.0
 
-	# Bottom-left corner at tap position
-	var pos := Vector2(target_pos.x, target_pos.y - popup_size.y)
+	# Calculate safe zone (screen minus margins)
+	var safe_min := Vector2(margin, margin)
+	var safe_max := Vector2(screen_size.x - margin, screen_size.y - margin)
 
-	# Clamp to screen bounds
-	pos.x = clampf(pos.x, margin, screen_size.x - popup_size.x - margin)
-	pos.y = clampf(pos.y, margin, screen_size.y - popup_size.y - margin)
+	var pos := Vector2.ZERO
+
+	# Horizontal positioning: prefer right of tap, flip to left if needed
+	if target_pos.x + popup_size.x <= safe_max.x:
+		# Fits to the right
+		pos.x = target_pos.x
+	elif target_pos.x - popup_size.x >= safe_min.x:
+		# Fits to the left
+		pos.x = target_pos.x - popup_size.x
+	else:
+		# Doesn't fit either way, center horizontally and clamp
+		pos.x = (screen_size.x - popup_size.x) / 2.0
+
+	# Vertical positioning: prefer above tap (stretch upward), flip to below if needed
+	if target_pos.y - popup_size.y >= safe_min.y:
+		# Fits above
+		pos.y = target_pos.y - popup_size.y
+	elif target_pos.y + popup_size.y <= safe_max.y:
+		# Fits below
+		pos.y = target_pos.y
+	else:
+		# Doesn't fit either way, center vertically and clamp
+		pos.y = (screen_size.y - popup_size.y) / 2.0
+
+	# Final safety clamp to ensure popup stays fully within safe zone
+	pos.x = clampf(pos.x, safe_min.x, safe_max.x - popup_size.x)
+	pos.y = clampf(pos.y, safe_min.y, safe_max.y - popup_size.y)
 
 	popup_panel.position = pos
 
