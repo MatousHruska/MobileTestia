@@ -17,12 +17,8 @@ enum DamageType {
 	LIGHTNING,   # 3 - Electric damage
 	POISON,      # 4 - Poison/toxic damage
 	ARCANE,      # 5 - Pure magical damage
-	HOLY,        # 6 - Divine/light damage
-	SHADOW,      # 7 - Dark/necrotic damage
-	BLEED,       # 8 - Physical bleeding (uses physical color)
-	NATURE,      # 9 - Nature/druid damage (uses poison color)
-	CHAOS,       # 10 - Chaotic/void damage
-	PURE         # 11 - Ignores all resistances
+	BLEED,       # 6 - Physical bleeding (uses physical color)
+	PURE         # 7 - Ignores all resistances
 }
 
 #===============================================================================
@@ -37,11 +33,7 @@ static func damage_type_from_string(s: String) -> DamageType:
 		"lightning": return DamageType.LIGHTNING
 		"poison": return DamageType.POISON
 		"arcane": return DamageType.ARCANE
-		"holy": return DamageType.HOLY
-		"shadow": return DamageType.SHADOW
 		"bleed": return DamageType.BLEED
-		"nature": return DamageType.NATURE
-		"chaos": return DamageType.CHAOS
 		"pure": return DamageType.PURE
 		_: return DamageType.PHYSICAL
 
@@ -54,11 +46,7 @@ static func damage_type_to_string(d: DamageType) -> String:
 		DamageType.LIGHTNING: return "lightning"
 		DamageType.POISON: return "poison"
 		DamageType.ARCANE: return "arcane"
-		DamageType.HOLY: return "holy"
-		DamageType.SHADOW: return "shadow"
 		DamageType.BLEED: return "bleed"
-		DamageType.NATURE: return "nature"
-		DamageType.CHAOS: return "chaos"
 		DamageType.PURE: return "pure"
 		_: return "physical"
 
@@ -72,6 +60,4 @@ static func damage_type_to_string(d: DamageType) -> String:
 static func get_visual_type(d: DamageType) -> String:
 	match d:
 		DamageType.BLEED: return "physical"  # Bleed uses physical color
-		DamageType.NATURE: return "poison"   # Nature uses poison color
-		DamageType.CHAOS: return "shadow"    # Chaos uses shadow color
 		_: return damage_type_to_string(d)

@@ -588,7 +588,7 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "Talents", 7, "active,passive" ' type
     ApplyListValidation "Talents", 8, "melee,ranged,magic" ' skill_category
     ApplyListValidation "Talents", 9, "true,false" ' auto_learn
-    ApplyListValidation "Talents", 12, "physical,fire,cold,lightning,poison,arcane,holy,shadow" ' damage_type
+    ApplyListValidation "Talents", 12, "physical,fire,cold,lightning,poison,arcane,bleed,pure" ' damage_type
     ApplyListValidation "Talents", 23, "damage,heal,buff,debuff,projectile,magic_projectile,magic_projectile_aoe,summon,teleport,aoe,self_buff"  ' effect_type
     ApplyListValidation "Talents", 31, "melee,melee_1h,melee_2h,ranged,magic"  ' required_weapon_category
 
@@ -627,7 +627,7 @@ Private Sub ApplyEnumValidation()
 
     ' EnemyAbilities
     ApplyListValidation "EnemyAbilities", 4, "melee,dash_attack,aoe,projectile,pattern,teleport_attack,beam"  ' type
-    ApplyListValidation "EnemyAbilities", 6, "physical,fire,cold,lightning,poison,chaos,pure"  ' damage_type
+    ApplyListValidation "EnemyAbilities", 6, "physical,fire,cold,lightning,poison,arcane,bleed,pure"  ' damage_type
     ApplyListValidation "EnemyAbilities", 10, "circle,cone,line,cross,ring"  ' shape
 
     ' Chests
