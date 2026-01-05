@@ -24,6 +24,9 @@ const MAX_SKILL_RANK: int = 20  ## Maximum rank for active skills (trained at tr
 ## Invested points per talent (talent_id -> points)
 var invested_talents: Dictionary = {}
 
+## Talents that were auto-learned (free, don't consume skill points)
+var auto_learned_talents: Dictionary = {}
+
 ## Skill ranks for active abilities (talent_id -> rank 1-20)
 ## Ranks are leveled at trainers, not in the talent tree
 var skill_ranks: Dictionary = {}
@@ -71,6 +74,7 @@ func _on_databases_loaded() -> void:
 
 func _auto_learn_starting_skills() -> void:
 	## Automatically learn and bind skills marked with auto_learn
+	## Auto-learned skills are FREE and don't consume skill points
 	var next_slot := 1  # Start at slot 1 (slot 0 is reserved for main skill later)
 
 	for talent_id in _talent_cache:
@@ -80,8 +84,9 @@ func _auto_learn_starting_skills() -> void:
 			# Force-learn the skill (bypass prerequisites and point requirements)
 			if not is_talent_learned(talent_id):
 				invested_talents[talent_id] = 1
+				auto_learned_talents[talent_id] = true  # Mark as free (doesn't consume points)
 				skill_ranks[talent_id] = 1
-				Debug.info("Talents", "Auto-learned starting skill: %s" % talent.talent_name)
+				Debug.info("Talents", "Auto-learned starting skill (free): %s" % talent.talent_name)
 
 			# Auto-bind to next available slot
 			if next_slot < MAX_SLOTS and not is_talent_bound(talent_id):
@@ -106,9 +111,13 @@ func get_invested_points(talent_id: String) -> int:
 
 ## Get total invested points across all talents
 func get_total_invested_points() -> int:
+	## Returns total invested points, excluding auto-learned talents (which are free)
 	var total: int = 0
-	for points in invested_talents.values():
-		total += points
+	for talent_id in invested_talents:
+		# Skip auto-learned talents - they don't consume skill points
+		if auto_learned_talents.has(talent_id):
+			continue
+		total += invested_talents[talent_id]
 	return total
 
 
