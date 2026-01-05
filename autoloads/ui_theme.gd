@@ -46,6 +46,11 @@ const DEFAULTS := {
 	"color_gold": "1.0,0.85,0.0,1.0",
 	"color_text_dim": "0.7,0.7,0.7,1.0",
 	"color_section_header": "1.0,0.85,0.3,1.0",
+	# Text hierarchy colors
+	"color_text_nav": "1.0,1.0,1.0,1.0",
+	"color_text_header": "0.85,0.85,0.85,1.0",
+	"color_text_label": "0.65,0.65,0.65,1.0",
+	"color_text_value": "0.9,0.9,0.9,1.0",
 	# Progress/resource bar colors
 	"color_xp_bar": "0.3,0.6,0.9,1.0",
 	"color_debuff": "0.6,0.1,0.1,0.9",
@@ -215,6 +220,18 @@ var COLOR_TEXT_DIM: Color:
 var COLOR_SECTION_HEADER: Color:
 	get: return get_color("color_section_header")
 
+var COLOR_TEXT_NAV: Color:
+	get: return get_color("color_text_nav")
+
+var COLOR_TEXT_HEADER: Color:
+	get: return get_color("color_text_header")
+
+var COLOR_TEXT_LABEL: Color:
+	get: return get_color("color_text_label")
+
+var COLOR_TEXT_VALUE: Color:
+	get: return get_color("color_text_value")
+
 var COLOR_XP_BAR: Color:
 	get: return get_color("color_xp_bar")
 
@@ -368,18 +385,27 @@ func create_section_header(text: String) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", FONT_SIZE_HEADER)
-	label.add_theme_color_override("font_color", COLOR_SECTION_HEADER)
+	label.add_theme_color_override("font_color", COLOR_TEXT_HEADER)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	return label
 
 
-## Create a standard label (uses section header color by default)
+## Create a standard label (uses text_label color by default)
 func create_label(text: String, font_size: int = -1) -> Label:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", font_size if font_size > 0 else FONT_SIZE_LABEL)
-	label.add_theme_color_override("font_color", COLOR_SECTION_HEADER)
+	label.add_theme_color_override("font_color", COLOR_TEXT_LABEL)
+	return label
+
+
+## Create a value label (for displaying stat values, numbers, item names)
+func create_value_label(text: String, font_size: int = -1) -> Label:
+	var label := Label.new()
+	label.text = text
+	label.add_theme_font_size_override("font_size", font_size if font_size > 0 else FONT_SIZE_LABEL)
+	label.add_theme_color_override("font_color", COLOR_TEXT_VALUE)
 	return label
 
 

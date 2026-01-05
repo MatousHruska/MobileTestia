@@ -23,10 +23,10 @@ func _ready() -> void:
 	modulate.a = 0.0
 	visible = false
 
-	# Apply UITheme styling
+	# Apply UITheme styling - dialogue text is Level 4 value
 	if label:
 		label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-		label.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_VALUE)
 
 
 func _process(delta: float) -> void:

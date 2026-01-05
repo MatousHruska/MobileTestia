@@ -28,13 +28,13 @@ func _ready() -> void:
 	# Set pivot for scale animation
 	pivot_offset = size / 2
 
-	# Apply UITheme styling
+	# Apply UITheme styling - popup title/subtitle are Level 4 values (zone names)
 	if title_label:
 		title_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LARGE)
 		title_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	if subtitle_label:
 		subtitle_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE)
-		subtitle_label.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+		subtitle_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_VALUE)
 
 
 func _process(delta: float) -> void:
