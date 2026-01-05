@@ -173,9 +173,67 @@ Public Function EscapeJsonString(ByVal str As String) As String
 End Function
 
 '-------------------------------------------------------------------------------
+' SanitizeJsonDecimals - Fixes decimal separators in JSON output
+' Replaces commas in numeric contexts with periods (e.g., "0,5" -> "0.5")
+' Call this on the final JSON string before writing to file
+'-------------------------------------------------------------------------------
+Public Function SanitizeJsonDecimals(ByVal json As String) As String
+    Dim result As String
+    Dim i As Long
+    Dim ch As String
+    Dim inString As Boolean
+    Dim prevChar As String
+    Dim nextChar As String
+
+    result = json
+    inString = False
+
+    ' Pattern: digit,digit outside of strings should become digit.digit
+    ' This handles cases like "value": 0,5 which should be "value": 0.5
+
+    i = 1
+    Do While i <= Len(result)
+        ch = Mid(result, i, 1)
+
+        ' Track if we're inside a string
+        If ch = """" Then
+            ' Check if escaped
+            If i > 1 Then
+                If Mid(result, i - 1, 1) <> "\" Then
+                    inString = Not inString
+                End If
+            Else
+                inString = Not inString
+            End If
+        End If
+
+        ' If not in string and we have a comma between digits, replace with period
+        If Not inString And ch = "," Then
+            prevChar = ""
+            nextChar = ""
+            If i > 1 Then prevChar = Mid(result, i - 1, 1)
+            If i < Len(result) Then nextChar = Mid(result, i + 1, 1)
+
+            ' Check if comma is between digits (decimal separator mistake)
+            If IsNumeric(prevChar) And IsNumeric(nextChar) Then
+                result = Left(result, i - 1) & "." & Mid(result, i + 1)
+            End If
+        End If
+
+        i = i + 1
+    Loop
+
+    SanitizeJsonDecimals = result
+End Function
+
+'-------------------------------------------------------------------------------
 ' WriteJsonFile - Writes string content to a JSON file (UTF-8 without BOM)
+' Automatically sanitizes decimal separators (comma -> period) before writing
 '-------------------------------------------------------------------------------
 Public Sub WriteJsonFile(ByVal filePath As String, ByVal content As String)
+    ' Sanitize decimal separators before writing (safety net for locale issues)
+    content = SanitizeJsonDecimals(content)
+
     ' Use ADODB.Stream for proper UTF-8 encoding without BOM
     Dim stream As Object
     Set stream = CreateObject("ADODB.Stream")
@@ -531,7 +589,7 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "Talents", 8, "melee,ranged,magic" ' skill_category
     ApplyListValidation "Talents", 9, "true,false" ' auto_learn
     ApplyListValidation "Talents", 12, "physical,fire,cold,lightning,poison,arcane,holy,shadow" ' damage_type
-    ApplyListValidation "Talents", 23, "damage,heal,buff,debuff,projectile,magic_projectile,summon,teleport,aoe"  ' effect_type
+    ApplyListValidation "Talents", 23, "damage,heal,buff,debuff,projectile,magic_projectile,magic_projectile_aoe,summon,teleport,aoe,self_buff"  ' effect_type
     ApplyListValidation "Talents", 31, "melee,melee_1h,melee_2h,ranged,magic"  ' required_weapon_category
 
     ' NPCs

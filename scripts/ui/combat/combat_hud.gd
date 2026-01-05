@@ -585,12 +585,16 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 		Debug.log("Combat", "Not enough stamina for %s" % talent.talent_name)
 		return
 
-	# Check if this is a magic projectile
-	print("[ABILITY] Checking magic projectile: effect_type=%s (MAGIC_PROJECTILE=%s), cast_time=%s" % [
-		talent.effect_type, TalentData.EffectType.MAGIC_PROJECTILE, talent.cast_time
+	# Check if this is a magic projectile (AOE or single-target)
+	var is_magic_projectile := talent.effect_type in [
+		TalentData.EffectType.MAGIC_PROJECTILE,
+		TalentData.EffectType.MAGIC_PROJECTILE_AOE
+	]
+	print("[ABILITY] Checking magic projectile: effect_type=%s, is_magic=%s, cast_time=%s" % [
+		talent.effect_type, is_magic_projectile, talent.cast_time
 	])
-	if talent.effect_type == TalentData.EffectType.MAGIC_PROJECTILE:
-		print("[ABILITY] Detected magic projectile!")
+	if is_magic_projectile:
+		print("[ABILITY] Detected magic projectile (AOE=%s)!" % (talent.effect_type == TalentData.EffectType.MAGIC_PROJECTILE_AOE))
 		if talent.cast_time > 0:
 			# Has cast time - start casting sequence
 			_start_casting(slot_index, talent)
@@ -906,17 +910,20 @@ func _update_casting() -> void:
 
 
 func _fire_magic_projectile(talent: TalentData, direction: Vector2) -> void:
-	## Fire a magic projectile (fireball etc)
+	## Fire a magic projectile (AOE or single-target)
 	print("[CAST] _fire_magic_projectile called for %s, dir=%s" % [talent.talent_name, direction])
 
 	if not player:
 		print("[CAST] ERROR: No player!")
 		return
 
+	# Check if this is an AOE projectile or single-target
+	var is_aoe := talent.effect_type == TalentData.EffectType.MAGIC_PROJECTILE_AOE
+
 	# Calculate damage
 	var invested := TalentManager.get_invested_points(talent.id)
 	var damage_result := DamageCalculator.calculate_final_damage(talent, invested)
-	print("[CAST] Damage calculated: %s (crit=%s)" % [damage_result.final_damage, damage_result.is_critical])
+	print("[CAST] Damage calculated: %s (crit=%s), AOE=%s" % [damage_result.final_damage, damage_result.is_critical, is_aoe])
 
 	# Create magic projectile
 	var projectile: Area2D = MagicProjectileClass.new()
@@ -926,23 +933,36 @@ func _fire_magic_projectile(talent: TalentData, direction: Vector2) -> void:
 	# Set projectile properties from talent (with equipment bonuses applied)
 	var final_speed := get_projectile_speed(talent) if talent.projectile_speed > 0 else 350.0
 	var final_range := get_hit_range(talent)
-	var final_radius := get_explosion_radius(talent)
 
 	projectile.base_speed = final_speed
 	projectile.max_range = final_range
-	projectile.explosion_radius = final_radius
-	projectile.explosion_falloff = talent.explosion_falloff  # Damage falloff stays as-is (percentage)
-	projectile.set_explosion_damage(damage_result.final_damage)
 	projectile.damage_type = _get_damage_type_string(talent.damage_type_id)
 	projectile.source = player
 
-	print("[CAST] Projectile config: speed=%s, range=%s, radius=%s, damage=%s, falloff=%s%%" % [
-		final_speed, final_range, final_radius, damage_result.final_damage, talent.explosion_falloff
-	])
+	if is_aoe:
+		# AOE projectile: passes through enemies, explodes at destination
+		var final_radius := get_explosion_radius(talent)
+		projectile.explosion_radius = final_radius
+		projectile.explosion_falloff = talent.explosion_falloff
+		projectile.set_explosion_damage(damage_result.final_damage)
+		projectile.pass_through_enemies = true
+		print("[CAST] AOE config: radius=%s, damage=%s, falloff=%s%%" % [
+			final_radius, damage_result.final_damage, talent.explosion_falloff
+		])
+	else:
+		# Single-target projectile: stops on first hit, no explosion
+		projectile.explosion_radius = 0.0
+		projectile.explosion_falloff = 0.0
+		projectile.set_explosion_damage(0.0)
+		projectile.pass_through_enemies = false
+		projectile.contact_damage = damage_result.final_damage
+		print("[CAST] Single-target config: contact_damage=%s" % damage_result.final_damage)
+
+	print("[CAST] Projectile config: speed=%s, range=%s" % [final_speed, final_range])
 
 	# Set contact status effect
 	if not talent.contact_status_effect.is_empty():
-		projectile.set_contact_effect(talent.contact_status_effect, 0.0)
+		projectile.set_contact_effect(talent.contact_status_effect, 0.0 if is_aoe else damage_result.final_damage)
 		print("[CAST] Contact effect set: %s" % talent.contact_status_effect)
 
 	# Add to world
@@ -965,7 +985,8 @@ func _fire_magic_projectile(talent: TalentData, direction: Vector2) -> void:
 	Debug.log("Combat", "Fired magic projectile: %s" % talent.talent_name, {
 		"direction": direction,
 		"range": talent.hit_range,
-		"explosion_radius": talent.explosion_radius,
+		"is_aoe": is_aoe,
+		"explosion_radius": talent.explosion_radius if is_aoe else 0,
 		"damage": int(damage_result.final_damage),
 		"crit": damage_result.is_critical,
 		"status_effect": talent.contact_status_effect
