@@ -9,20 +9,8 @@ extends Node
 ## Skill categories for damage calculation
 enum SkillCategory { MELEE, RANGED, MAGIC }
 
-## Damage type enumeration (matches database values)
-enum DamageType {
-	PHYSICAL = 0,
-	FIRE = 1,
-	COLD = 2,
-	LIGHTNING = 3,
-	POISON = 4,
-	ARCANE = 5,
-	HOLY = 6,
-	SHADOW = 7,
-	BLEED = 8,  # Physical DoT
-	NATURE = 9,
-	TRUE = 10,  # Ignores armor/resistance
-}
+## DamageType alias - uses shared CombatTypes enum
+const DamageType = CombatTypes.DamageType
 
 
 func _ready() -> void:
@@ -70,7 +58,7 @@ func _calculate_weapon_damage(talent: TalentData, skill_rank: int) -> Dictionary
 		"flat_bonus": flat_bonus,
 		"rank_bonus": rank_bonus,
 		"attack_power": attack_power,
-		"damage_type": talent.damage_type_id,
+		"damage_type": talent.damage_type,
 		"category": SkillCategory.MELEE if _get_skill_category(talent) == SkillCategory.MELEE else SkillCategory.RANGED,
 	}
 
@@ -86,7 +74,7 @@ func _calculate_magic_damage(talent: TalentData, skill_rank: int) -> Dictionary:
 	var pre_bonus_damage := base + rank_bonus + spell_power
 
 	# Apply elemental damage bonus (flat, not percentage)
-	var elemental_bonus := _get_elemental_bonus(talent.damage_type_id)
+	var elemental_bonus := _get_elemental_bonus(talent.damage_type)
 	var total_damage := pre_bonus_damage + elemental_bonus
 
 	return {
@@ -95,7 +83,7 @@ func _calculate_magic_damage(talent: TalentData, skill_rank: int) -> Dictionary:
 		"rank_bonus": rank_bonus,
 		"spell_power": spell_power,
 		"elemental_bonus": elemental_bonus,
-		"damage_type": talent.damage_type_id,
+		"damage_type": talent.damage_type,
 		"category": SkillCategory.MAGIC,
 	}
 
@@ -227,7 +215,7 @@ func apply_damage_reduction(incoming_damage: float, damage_type: int, attacker_l
 #===============================================================================
 
 ## Get elemental damage bonus from equipment based on damage type
-func _get_elemental_bonus(damage_type: int) -> float:
+func _get_elemental_bonus(damage_type: CombatTypes.DamageType) -> float:
 	match damage_type:
 		DamageType.FIRE:
 			return PlayerStats.get_equipment_bonus("fire_spell_damage")

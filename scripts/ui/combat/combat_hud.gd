@@ -803,7 +803,7 @@ func _fire_projectile(talent: TalentData, direction: Vector2, range_dist: float,
 	var projectile: Area2D = ProjectileClass.create_arrow()
 	projectile.max_range = range_dist
 	projectile.damage = final_damage
-	projectile.damage_type = _get_damage_type_string(talent.damage_type_id)
+	projectile.damage_type = _get_damage_type_string(talent.damage_type)
 	projectile.source = player
 
 	# Speed multiplier based on damage (weak shots are slower)
@@ -936,7 +936,7 @@ func _fire_magic_projectile(talent: TalentData, direction: Vector2) -> void:
 
 	projectile.base_speed = final_speed
 	projectile.max_range = final_range
-	projectile.damage_type = _get_damage_type_string(talent.damage_type_id)
+	projectile.damage_type = _get_damage_type_string(talent.damage_type)
 	projectile.source = player
 
 	if is_aoe:
@@ -1168,7 +1168,7 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 			enemy.take_damage(final_damage, player)
 
 			# Spawn hit effect on enemy
-			_spawn_hit_effect(enemy.global_position, _get_damage_type_string(talent.damage_type_id))
+			_spawn_hit_effect(enemy.global_position, _get_damage_type_string(talent.damage_type))
 
 			# Log crit hits
 			if damage_result.is_critical:
@@ -1194,7 +1194,7 @@ func _spawn_skill_visual(talent: TalentData, _damage_result: Dictionary) -> void
 		visual.points = _generate_cone_points(final_range, final_arc)
 
 	# Set damage type for color (convert from int id to string)
-	visual.damage_type = _get_damage_type_string(talent.damage_type_id)
+	visual.damage_type = _get_damage_type_string(talent.damage_type)
 
 	# Position at player, rotated to facing direction
 	visual.global_position = player.global_position
@@ -1236,20 +1236,9 @@ func _spawn_hit_effect(pos: Vector2, damage_type: String) -> void:
 		HitboxVisual.spawn_hit_effect(player.get_parent(), pos, damage_type)
 
 
-func _get_damage_type_string(damage_type_id: int) -> String:
-	## Convert damage type ID to string for visuals
-	match damage_type_id:
-		0: return "physical"
-		1: return "fire"
-		2: return "cold"
-		3: return "lightning"
-		4: return "poison"
-		5: return "arcane"
-		6: return "holy"
-		7: return "shadow"
-		8: return "physical"  # Bleed = physical color
-		9: return "poison"    # Nature = poison color
-		_: return "physical"
+func _get_damage_type_string(damage_type: CombatTypes.DamageType) -> String:
+	## Convert damage type enum to visual string (uses CombatTypes)
+	return CombatTypes.get_visual_type(damage_type)
 
 
 func _get_player_facing_vector() -> Vector2:
