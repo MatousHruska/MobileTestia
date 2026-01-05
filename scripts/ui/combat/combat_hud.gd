@@ -399,7 +399,7 @@ func _create_buttons() -> void:
 	interact_button.name = "InteractButton"
 	interact_button.text = "Interact"
 	interact_button.visible = false
-	interact_button.alignment = HORIZONTAL_ALIGNMENT_LEFT  # Text stretches to the left
+	interact_button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	interact_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN  # Grow left
 	interact_button.grow_vertical = Control.GROW_DIRECTION_BOTH  # Grow both directions
 	interact_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
