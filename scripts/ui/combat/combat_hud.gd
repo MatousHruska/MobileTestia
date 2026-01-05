@@ -399,6 +399,7 @@ func _create_buttons() -> void:
 	interact_button.text = "Interact"
 	interact_button.visible = false
 	interact_button.custom_minimum_size = config.interact_size
+	interact_button.alignment = HORIZONTAL_ALIGNMENT_LEFT  # Text stretches to the left
 	interact_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	interact_button.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
 	interact_button.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
@@ -506,11 +507,11 @@ func _layout_buttons() -> void:
 	dodge_button.position = dodge_pos - Vector2(scaled_dodge_radius, scaled_dodge_radius)
 	quick_slot_button.position = quick_slot_pos - Vector2(scaled_quick_slot_radius, scaled_quick_slot_radius)
 
-	# Position interact button - above attack button, right-aligned
+	# Position interact button - above primary controls, right-aligned to attack button edge
 	var scaled_interact_size := config.interact_size * scale_factor
 	var interact_pos := Vector2(
 		attack_pos.x + scaled_attack_radius - scaled_interact_size.x,  # Right edge aligned with attack
-		attack_pos.y - scaled_attack_radius - min_gap - scaled_interact_size.y - 60.0 * scale_factor  # Above attack
+		attack_pos.y - scaled_attack_radius - min_gap - scaled_interact_size.y - 100.0 * scale_factor  # Higher above primary controls
 	)
 	interact_button.position = interact_pos
 	interact_button.custom_minimum_size = scaled_interact_size
