@@ -10,7 +10,7 @@ class_name TalentData
 enum TalentType { PASSIVE, ACTIVE }
 
 ## Effect type for active talents
-enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, MAGIC_PROJECTILE, SUMMON, TELEPORT, AOE, SELF_BUFF }
+enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, MAGIC_PROJECTILE, MAGIC_PROJECTILE_AOE, SUMMON, TELEPORT, AOE, SELF_BUFF }
 
 #===============================================================================
 # IDENTIFICATION
@@ -270,6 +270,7 @@ static func _effect_type_from_string(type_str: String) -> EffectType:
 		"debuff": return EffectType.DEBUFF
 		"projectile": return EffectType.PROJECTILE
 		"magic_projectile": return EffectType.MAGIC_PROJECTILE
+		"magic_projectile_aoe": return EffectType.MAGIC_PROJECTILE_AOE
 		"summon": return EffectType.SUMMON
 		"teleport": return EffectType.TELEPORT
 		"aoe": return EffectType.AOE
