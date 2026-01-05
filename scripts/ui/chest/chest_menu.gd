@@ -1,11 +1,28 @@
 extends CanvasLayer
 class_name ChestMenu
 ## ChestMenu - UI for interacting with chest contents
-## Similar layout to inventory but with 3x2 chest grid and loot actions
+## Two-column layout: Chest Contents | Backpack
+## Uses ItemPopup for item details (no details column)
+## Supports drag & drop for moving items between chest and inventory
 
 ## Number of slots in a chest
 const CHEST_SLOT_COUNT: int = 6
 const CHEST_COLUMNS: int = 3
+const BACKPACK_COLUMNS: int = 5
+
+## Responsive sizing (percentages)
+const MARGIN_PCT := 0.02          # 2% margins
+const COLUMN_GAP_PCT := 0.03      # 3% gap between chest/backpack columns
+const SLOT_SEPARATION_PCT := 0.01 # 1% slot separation
+const BUTTON_HEIGHT_PCT := 0.08   # 8% button height
+
+## Design size for responsive scaling
+const DESIGN_WIDTH := 700.0
+const DESIGN_HEIGHT := 480.0
+
+## Minimum pixel values
+const MIN_SEPARATION := 4
+const MIN_BUTTON_HEIGHT := 36
 
 ## Signals
 signal item_looted(item: ItemData)
@@ -16,53 +33,34 @@ var current_chest: ChestBase = null
 var chest_contents: Array[Dictionary] = []  # {item: ItemData, quantity: int}
 
 ## UI References
+var menu_panel: Panel = null
+var main_hbox: HBoxContainer
 var chest_container: GridContainer
-var details_container: VBoxContainer
 var backpack_container: GridContainer
 var backpack_scroll: ScrollContainer
+var gold_label: Label
+var loot_all_button: Button
+var close_button: Button
+var title_label: Label
 
 ## Chest grid slots
 var chest_slots: Array[InventorySlot] = []
 var backpack_slots: Array[InventorySlot] = []
 
-## Details panel elements
-var details_icon: TextureRect
-var details_name: Label
-var details_type: Label
-var details_rarity: Label
-var details_description: Label
-var details_stats: Label
-var details_placeholder: Label
-
-## Action buttons
-var loot_button: Button
-var loot_all_button: Button
-var swap_button: Button
-
-## Feedback label
-var feedback_label: Label
-var feedback_timer: float = 0.0
+## Item popup for details (shared across inventory)
+var item_popup: ItemPopup = null
+var _popup_layer: CanvasLayer = null
 
 ## Selection state
-var selected_chest_index: int = -1
-var selected_backpack_index: int = -1
 var selected_source: String = ""  # "chest" or "backpack"
-
-## Swap mode
-var swap_mode: bool = false
-
-## Main panel reference for responsive sizing
-var menu_panel: Panel = null
-
-## Design size for responsive scaling (800x560 from _build_ui)
-const DESIGN_WIDTH := 800.0
-const DESIGN_HEIGHT := 560.0
+var selected_index: int = -1
 
 
 func _ready() -> void:
 	layer = 25
 	visible = false
 	_build_ui()
+	_build_item_popup()
 
 	# Apply responsive sizing
 	call_deferred("_apply_responsive_size")
@@ -70,7 +68,7 @@ func _ready() -> void:
 	# Connect to viewport resize
 	get_viewport().size_changed.connect(_on_viewport_resized)
 
-	Debug.info("UI", "ChestMenu initialized")
+	Debug.info("UI", "ChestMenu initialized (popup-based)")
 
 
 func _on_viewport_resized() -> void:
@@ -98,11 +96,15 @@ func _apply_responsive_size() -> void:
 		menu_panel.offset_bottom = height / 2.0
 
 
-func _process(delta: float) -> void:
-	if feedback_timer > 0:
-		feedback_timer -= delta
-		if feedback_timer <= 0:
-			feedback_label.visible = false
+## Computed responsive sizes
+func _get_slot_separation() -> int:
+	return maxi(MIN_SEPARATION, int(DESIGN_WIDTH * SLOT_SEPARATION_PCT))
+
+func _get_column_gap() -> int:
+	return maxi(12, int(DESIGN_WIDTH * COLUMN_GAP_PCT))
+
+func _get_button_height() -> int:
+	return maxi(MIN_BUTTON_HEIGHT, int(DESIGN_HEIGHT * BUTTON_HEIGHT_PCT))
 
 
 func _build_ui() -> void:
@@ -118,22 +120,22 @@ func _build_ui() -> void:
 	menu_panel = Panel.new()
 	menu_panel.name = "MenuPanel"
 	menu_panel.set_anchors_preset(Control.PRESET_CENTER)
-	menu_panel.offset_left = -400
-	menu_panel.offset_top = -280
-	menu_panel.offset_right = 400
-	menu_panel.offset_bottom = 280
+	menu_panel.offset_left = -DESIGN_WIDTH / 2.0
+	menu_panel.offset_top = -DESIGN_HEIGHT / 2.0
+	menu_panel.offset_right = DESIGN_WIDTH / 2.0
+	menu_panel.offset_bottom = DESIGN_HEIGHT / 2.0
 	add_child(menu_panel)
+
+	# Main margin container
+	var margin := UITheme.create_margin_container()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	menu_panel.add_child(margin)
 
 	# Main VBox
 	var vbox := VBoxContainer.new()
-	vbox.name = "VBox"
-	vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
-	vbox.offset_left = UITheme.MARGIN_STANDARD
-	vbox.offset_top = UITheme.MARGIN_STANDARD
-	vbox.offset_right = -UITheme.MARGIN_STANDARD
-	vbox.offset_bottom = -UITheme.MARGIN_STANDARD
-	vbox.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
-	menu_panel.add_child(vbox)
+	vbox.name = "MainVBox"
+	UITheme.setup_vbox(vbox, UITheme.SEPARATION_NORMAL)
+	margin.add_child(vbox)
 
 	# Header
 	_build_header(vbox)
@@ -142,66 +144,84 @@ func _build_ui() -> void:
 	var sep := HSeparator.new()
 	vbox.add_child(sep)
 
-	# Content area (3 columns: Chest | Details | Backpack)
-	var content := HBoxContainer.new()
-	content.name = "ContentArea"
-	content.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	content.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
-	vbox.add_child(content)
+	# Content area (2 columns: Chest | Backpack)
+	main_hbox = HBoxContainer.new()
+	main_hbox.name = "ContentArea"
+	main_hbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_hbox.add_theme_constant_override("separation", _get_column_gap())
+	vbox.add_child(main_hbox)
 
 	# Build columns
-	_build_chest_column(content)
-	_build_details_column(content)
-	_build_backpack_column(content)
+	_build_chest_column(main_hbox)
+	_build_backpack_column(main_hbox)
 
 
 func _build_header(parent: VBoxContainer) -> void:
 	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
+	header.name = "Header"
+	UITheme.setup_hbox(header, UITheme.SEPARATION_NORMAL)
 	parent.add_child(header)
 
-	var title := Label.new()
-	title.name = "Title"
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE + 2)
-	title.text = "Chest"
-	header.add_child(title)
+	title_label = Label.new()
+	title_label.name = "Title"
+	title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	title_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE)
+	title_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_NAV)
+	title_label.text = "Chest"
+	header.add_child(title_label)
 
-	var close_btn := Button.new()
-	close_btn.name = "CloseButton"
-	close_btn.custom_minimum_size = Vector2(40, 40)
-	close_btn.text = "X"
-	close_btn.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-	close_btn.pressed.connect(_on_close_pressed)
-	header.add_child(close_btn)
+	close_button = Button.new()
+	close_button.name = "CloseButton"
+	close_button.custom_minimum_size = Vector2(36, 36)
+	close_button.text = "X"
+	close_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	close_button.pressed.connect(_on_close_pressed)
+	header.add_child(close_button)
+
+	# Style close button
+	var close_style := StyleBoxFlat.new()
+	close_style.bg_color = UITheme.COLOR_DEBUFF
+	close_style.set_corner_radius_all(UITheme.CORNER_RADIUS_NORMAL)
+	close_button.add_theme_stylebox_override("normal", close_style)
+
+	var close_hover := StyleBoxFlat.new()
+	close_hover.bg_color = UITheme.COLOR_DEBUFF.lightened(0.2)
+	close_hover.set_corner_radius_all(UITheme.CORNER_RADIUS_NORMAL)
+	close_button.add_theme_stylebox_override("hover", close_hover)
 
 
 func _build_chest_column(parent: HBoxContainer) -> void:
 	var chest_panel := PanelContainer.new()
 	chest_panel.name = "ChestPanel"
-	chest_panel.custom_minimum_size.x = 200
 	chest_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 	parent.add_child(chest_panel)
 
-	var chest_vbox := VBoxContainer.new()
-	chest_vbox.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
-	chest_panel.add_child(chest_vbox)
+	var chest_margin := UITheme.create_margin_container()
+	chest_panel.add_child(chest_margin)
 
-	# Chest name header
-	var chest_header := Label.new()
-	chest_header.name = "ChestHeader"
-	chest_header.text = "Chest Contents"
+	var chest_vbox := VBoxContainer.new()
+	chest_vbox.name = "ChestVBox"
+	UITheme.setup_vbox(chest_vbox, UITheme.SEPARATION_NORMAL)
+	chest_margin.add_child(chest_vbox)
+
+	# Chest header
+	var chest_header := UITheme.create_label("Contents", UITheme.FONT_SIZE_HEADER)
+	chest_header.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
 	chest_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	chest_header.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LARGE)
 	chest_vbox.add_child(chest_header)
+
+	# Center container for chest grid
+	var center := CenterContainer.new()
+	center.name = "ChestCenter"
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	chest_vbox.add_child(center)
 
 	# 3x2 Grid for chest items
 	chest_container = GridContainer.new()
 	chest_container.name = "ChestGrid"
 	chest_container.columns = CHEST_COLUMNS
-	chest_container.add_theme_constant_override("h_separation", UITheme.SEPARATION_SMALL)
-	chest_container.add_theme_constant_override("v_separation", UITheme.SEPARATION_SMALL)
-	chest_vbox.add_child(chest_container)
+	UITheme.setup_grid(chest_container, _get_slot_separation(), _get_slot_separation())
+	center.add_child(chest_container)
 
 	# Create chest slots
 	for i in CHEST_SLOT_COUNT:
@@ -210,216 +230,121 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 		slot.backpack_index = i
 		slot.custom_minimum_size = Vector2(56, 56)
 		slot.slot_pressed.connect(_on_chest_slot_pressed)
+		slot.item_dropped.connect(_on_item_dropped_to_chest)
+		slot.drag_started.connect(_on_drag_started)
+		slot.drag_ended.connect(_on_drag_ended)
 		chest_container.add_child(slot)
 		chest_slots.append(slot)
 
-	# Spacer
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	chest_vbox.add_child(spacer)
-
 	# Gold display
-	var gold_label := Label.new()
+	gold_label = Label.new()
 	gold_label.name = "GoldLabel"
 	gold_label.text = "Gold: 0"
 	gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	gold_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-	gold_label.modulate = UITheme.COLOR_GOLD
+	gold_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD)
 	chest_vbox.add_child(gold_label)
 
 	# Loot All button
 	loot_all_button = Button.new()
 	loot_all_button.name = "LootAllButton"
 	loot_all_button.text = "Loot All"
-	loot_all_button.custom_minimum_size = Vector2(0, 40)
+	loot_all_button.custom_minimum_size = Vector2(0, _get_button_height())
 	loot_all_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	loot_all_button.pressed.connect(_on_loot_all_pressed)
 	chest_vbox.add_child(loot_all_button)
 
 
-func _build_details_column(parent: HBoxContainer) -> void:
-	var details_panel := PanelContainer.new()
-	details_panel.name = "DetailsPanel"
-	details_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	details_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
-	parent.add_child(details_panel)
-
-	details_container = VBoxContainer.new()
-	details_container.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
-	details_panel.add_child(details_container)
-
-	# Header
-	var header := Label.new()
-	header.text = "Item Details"
-	header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	header.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LARGE)
-	details_container.add_child(header)
-
-	# Placeholder
-	details_placeholder = Label.new()
-	details_placeholder.name = "Placeholder"
-	details_placeholder.text = "Select an item to view details"
-	details_placeholder.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	details_placeholder.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	details_placeholder.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	details_placeholder.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-	details_placeholder.modulate = UITheme.COLOR_TEXT_DIM
-	details_container.add_child(details_placeholder)
-
-	# Info container (hidden until item selected)
-	var info_container := VBoxContainer.new()
-	info_container.name = "InfoContainer"
-	info_container.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	info_container.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
-	info_container.visible = false
-	details_container.add_child(info_container)
-
-	# Icon and name row
-	var top_row := HBoxContainer.new()
-	top_row.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL + 4)
-	info_container.add_child(top_row)
-
-	var icon_bg := ColorRect.new()
-	icon_bg.custom_minimum_size = Vector2(80, 80)
-	icon_bg.color = UITheme.COLOR_PANEL_DARK_BG
-	top_row.add_child(icon_bg)
-
-	details_icon = TextureRect.new()
-	details_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-	details_icon.offset_left = 4
-	details_icon.offset_top = 4
-	details_icon.offset_right = -4
-	details_icon.offset_bottom = -4
-	details_icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-	details_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon_bg.add_child(details_icon)
-
-	var name_vbox := VBoxContainer.new()
-	name_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top_row.add_child(name_vbox)
-
-	details_name = Label.new()
-	details_name.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE)
-	name_vbox.add_child(details_name)
-
-	details_type = Label.new()
-	details_type.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-	details_type.modulate = UITheme.COLOR_TEXT_DIM
-	name_vbox.add_child(details_type)
-
-	details_rarity = Label.new()
-	details_rarity.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-	name_vbox.add_child(details_rarity)
-
-	# Description
-	var desc_label := Label.new()
-	desc_label.text = "Description:"
-	desc_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-	desc_label.modulate = UITheme.COLOR_TEXT_DIM
-	info_container.add_child(desc_label)
-
-	details_description = Label.new()
-	details_description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	details_description.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-	info_container.add_child(details_description)
-
-	# Stats
-	var stats_label := Label.new()
-	stats_label.text = "Stats:"
-	stats_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-	stats_label.modulate = UITheme.COLOR_TEXT_DIM
-	info_container.add_child(stats_label)
-
-	details_stats = Label.new()
-	details_stats.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	details_stats.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-	info_container.add_child(details_stats)
-
-	# Spacer
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	info_container.add_child(spacer)
-
-	# Action buttons
-	var button_row := HBoxContainer.new()
-	button_row.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
-	button_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	info_container.add_child(button_row)
-
-	loot_button = Button.new()
-	loot_button.name = "LootButton"
-	loot_button.text = "Loot"
-	loot_button.custom_minimum_size = Vector2(80, 40)
-	loot_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-	loot_button.pressed.connect(_on_loot_pressed)
-	button_row.add_child(loot_button)
-
-	swap_button = Button.new()
-	swap_button.name = "SwapButton"
-	swap_button.text = "Swap"
-	swap_button.custom_minimum_size = Vector2(80, 40)
-	swap_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-	swap_button.pressed.connect(_on_swap_pressed)
-	button_row.add_child(swap_button)
-
-	# Feedback label
-	feedback_label = Label.new()
-	feedback_label.name = "FeedbackLabel"
-	feedback_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	feedback_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-	feedback_label.modulate = UITheme.COLOR_DEBUFF
-	feedback_label.visible = false
-	info_container.add_child(feedback_label)
-
-
 func _build_backpack_column(parent: HBoxContainer) -> void:
 	var backpack_panel := PanelContainer.new()
 	backpack_panel.name = "BackpackPanel"
-	backpack_panel.custom_minimum_size.x = 280
+	backpack_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	backpack_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	backpack_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 	parent.add_child(backpack_panel)
 
-	var backpack_vbox := VBoxContainer.new()
-	backpack_vbox.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
-	backpack_panel.add_child(backpack_vbox)
+	var backpack_margin := UITheme.create_margin_container()
+	backpack_panel.add_child(backpack_margin)
 
-	# Header with inventory space
+	var backpack_vbox := VBoxContainer.new()
+	backpack_vbox.name = "BackpackVBox"
+	UITheme.setup_vbox(backpack_vbox, UITheme.SEPARATION_SMALL)
+	backpack_margin.add_child(backpack_vbox)
+
+	# Header row
 	var header_row := HBoxContainer.new()
+	header_row.name = "HeaderRow"
+	UITheme.setup_hbox(header_row, UITheme.SEPARATION_SMALL)
 	backpack_vbox.add_child(header_row)
 
-	var header := Label.new()
-	header.text = "Inventory"
-	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LARGE)
+	var header := UITheme.create_label("Backpack", UITheme.FONT_SIZE_HEADER)
+	header.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
 	header_row.add_child(header)
+
+	# Spacer
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_row.add_child(spacer)
 
 	var space_label := Label.new()
 	space_label.name = "SpaceLabel"
 	space_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-	space_label.modulate = UITheme.COLOR_TEXT_DIM
+	space_label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
 	header_row.add_child(space_label)
 
 	# Scrollable backpack grid
 	backpack_scroll = ScrollContainer.new()
+	backpack_scroll.name = "BackpackScroll"
 	backpack_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	backpack_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	backpack_vbox.add_child(backpack_scroll)
 
 	backpack_container = GridContainer.new()
-	backpack_container.columns = 5
-	backpack_container.add_theme_constant_override("h_separation", UITheme.SEPARATION_SMALL)
-	backpack_container.add_theme_constant_override("v_separation", UITheme.SEPARATION_SMALL)
+	backpack_container.name = "BackpackGrid"
+	backpack_container.columns = BACKPACK_COLUMNS
+	UITheme.setup_grid(backpack_container, _get_slot_separation(), _get_slot_separation())
 	backpack_scroll.add_child(backpack_container)
 
 	# Create backpack slots
-	for i in Inventory.BACKPACK_SIZE:
+	for i in Inventory.backpack_size:
 		var slot := InventorySlot.new()
 		slot.slot_type = InventorySlot.SlotType.BACKPACK
 		slot.backpack_index = i
 		slot.custom_minimum_size = Vector2(48, 48)
 		slot.slot_pressed.connect(_on_backpack_slot_pressed)
+		slot.item_dropped.connect(_on_item_dropped_to_backpack)
+		slot.drag_started.connect(_on_drag_started)
+		slot.drag_ended.connect(_on_drag_ended)
 		backpack_container.add_child(slot)
 		backpack_slots.append(slot)
+
+
+func _build_item_popup() -> void:
+	# Create a CanvasLayer above ChestMenu for the popup
+	_popup_layer = CanvasLayer.new()
+	_popup_layer.name = "ChestItemPopupLayer"
+	_popup_layer.layer = 30
+
+	item_popup = ItemPopup.new()
+	item_popup.name = "ChestItemPopup"
+	_popup_layer.add_child(item_popup)
+
+	# Connect popup closed signal
+	item_popup.closed.connect(_on_popup_closed)
+
+	call_deferred("_add_popup_to_root")
+
+
+func _add_popup_to_root() -> void:
+	if _popup_layer and is_inside_tree():
+		get_tree().root.add_child(_popup_layer)
+
+
+func _exit_tree() -> void:
+	if _popup_layer and is_instance_valid(_popup_layer):
+		_popup_layer.queue_free()
+		_popup_layer = null
+		item_popup = null
 
 
 ## Open the chest menu with specified chest and contents
@@ -438,20 +363,11 @@ func open_chest(chest: ChestBase, contents: Dictionary) -> void:
 			chest_contents[i] = {item = items[i], quantity = 1}
 
 	# Set chest title
-	var title: Label = get_node_or_null("MenuPanel/VBox/HBoxContainer/Title")
-	if not title:
-		title = get_node_or_null("MenuPanel/VBox/Header/Title")
-	if title:
-		title.text = "%s Chest" % ChestBase.TIER_NAMES[chest.chest_tier]
-
-	# Update chest header in chest panel
-	var chest_header: Label = get_node_or_null("MenuPanel/VBox/ContentArea/ChestPanel/VBoxContainer/ChestHeader")
-	if chest_header:
-		chest_header.text = "%s Chest" % ChestBase.TIER_NAMES[chest.chest_tier]
+	if title_label:
+		title_label.text = "%s Chest" % ChestBase.TIER_NAMES[chest.chest_tier]
 
 	# Update gold display
 	var gold_amount: int = contents.get("gold", 0)
-	var gold_label: Label = get_node_or_null("MenuPanel/VBox/ContentArea/ChestPanel/VBoxContainer/GoldLabel")
 	if gold_label:
 		gold_label.text = "Gold: %d" % gold_amount
 		gold_label.visible = gold_amount > 0
@@ -462,7 +378,6 @@ func open_chest(chest: ChestBase, contents: Dictionary) -> void:
 	# Refresh displays
 	_refresh_chest_slots()
 	_refresh_backpack()
-	_refresh_details()
 	_update_space_label()
 
 	visible = true
@@ -470,6 +385,10 @@ func open_chest(chest: ChestBase, contents: Dictionary) -> void:
 
 
 func close_menu() -> void:
+	# Close popup if open
+	if item_popup and item_popup.is_open():
+		item_popup.close()
+
 	# Store remaining items back in chest for respawn
 	if current_chest:
 		var remaining_items: Array[ItemData] = []
@@ -500,7 +419,7 @@ func _refresh_chest_slots() -> void:
 			slot_ui.clear_item()
 
 		# Update selection state
-		slot_ui.set_selected(selected_source == "chest" and selected_chest_index == i)
+		slot_ui.set_selected(selected_source == "chest" and selected_index == i)
 
 
 func _refresh_backpack() -> void:
@@ -515,96 +434,24 @@ func _refresh_backpack() -> void:
 			slot_ui.set_item(item_data.item, item_data.quantity, charges)
 
 		# Update selection state
-		slot_ui.set_selected(selected_source == "backpack" and selected_backpack_index == i)
-
-
-func _refresh_details() -> void:
-	var info_container := details_container.get_node_or_null("InfoContainer")
-	if not info_container:
-		return
-
-	var item: ItemData = null
-	if selected_source == "chest" and selected_chest_index >= 0:
-		var slot: Dictionary = chest_contents[selected_chest_index]
-		if not slot.is_empty():
-			item = slot.item
-	elif selected_source == "backpack" and selected_backpack_index >= 0:
-		var slot: Dictionary = Inventory.get_backpack_item(selected_backpack_index)
-		if not slot.is_empty():
-			item = slot.item
-
-	if item == null:
-		details_placeholder.visible = true
-		info_container.visible = false
-		return
-
-	details_placeholder.visible = false
-	info_container.visible = true
-
-	# Update details
-	details_name.text = item.item_name
-	details_name.modulate = ItemData.get_rarity_color(item.rarity)
-
-	details_rarity.text = ItemData.get_rarity_name(item.rarity)
-	details_rarity.modulate = ItemData.get_rarity_color(item.rarity)
-
-	details_description.text = item.description if item.description else "No description"
-	details_icon.texture = item.icon
-
-	# Type and stats
-	if item is EquipmentData:
-		var equip: EquipmentData = item as EquipmentData
-		details_type.text = equip.get_type_name()
-		details_stats.text = equip.get_stat_text()
-	elif item is ConsumableData:
-		var consumable: ConsumableData = item as ConsumableData
-		details_type.text = "Consumable"
-		details_stats.text = consumable.get_effect_text()
-	else:
-		details_type.text = "Item"
-		details_stats.text = "No stats"
-
-	# Update action buttons
-	_update_action_buttons()
-
-
-func _update_action_buttons() -> void:
-	if selected_source == "chest" and selected_chest_index >= 0:
-		loot_button.visible = true
-		loot_button.text = "Loot"
-		swap_button.visible = true
-		swap_button.text = "Swap" if not swap_mode else "Cancel"
-	elif selected_source == "backpack" and selected_backpack_index >= 0:
-		loot_button.visible = false
-		swap_button.visible = swap_mode
-		swap_button.text = "Cancel" if swap_mode else "Swap"
-	else:
-		loot_button.visible = false
-		swap_button.visible = false
+		slot_ui.set_selected(selected_source == "backpack" and selected_index == i)
 
 
 func _update_space_label() -> void:
-	var space_label: Label = get_node_or_null("MenuPanel/VBox/ContentArea/BackpackPanel/VBoxContainer/HBoxContainer/SpaceLabel")
+	var space_label: Label = backpack_container.get_parent().get_parent().get_node_or_null("HeaderRow/SpaceLabel")
 	if space_label:
 		var used := 0
 		for slot in Inventory.backpack:
 			if not slot.is_empty():
 				used += 1
-		space_label.text = "%d/%d" % [used, Inventory.BACKPACK_SIZE]
+		space_label.text = "%d/%d" % [used, Inventory.backpack_size]
 
 
 func _deselect_all() -> void:
 	selected_source = ""
-	selected_chest_index = -1
-	selected_backpack_index = -1
-	swap_mode = false
-	feedback_label.visible = false
-
-
-func _show_feedback(text: String, duration: float = 2.0) -> void:
-	feedback_label.text = text
-	feedback_label.visible = true
-	feedback_timer = duration
+	selected_index = -1
+	if item_popup and item_popup.is_open():
+		item_popup.close()
 
 
 func _has_inventory_space() -> bool:
@@ -614,96 +461,193 @@ func _has_inventory_space() -> bool:
 	return false
 
 
-## Slot press handlers
+#===============================================================================
+# SLOT PRESS HANDLERS (for showing popup)
+#===============================================================================
 
 func _on_chest_slot_pressed(slot: InventorySlot) -> void:
 	var index := slot.backpack_index
 
-	if swap_mode:
-		# In swap mode - swap with backpack selection
-		if selected_source == "backpack" and selected_backpack_index >= 0:
-			_swap_items(index, selected_backpack_index)
-		swap_mode = false
-		_deselect_all()
-		_refresh_chest_slots()
-		_refresh_backpack()
-		_refresh_details()
-		return
-
-	# Select chest item
+	# Select chest item and show popup
 	if index < chest_contents.size() and not chest_contents[index].is_empty():
 		selected_source = "chest"
-		selected_chest_index = index
-		selected_backpack_index = -1
+		selected_index = index
+		_show_item_popup(slot)
 	else:
 		_deselect_all()
 
 	_refresh_chest_slots()
 	_refresh_backpack()
-	_refresh_details()
 
 
 func _on_backpack_slot_pressed(slot: InventorySlot) -> void:
 	var index := slot.backpack_index
 
-	if swap_mode:
-		# In swap mode - swap with chest selection
-		if selected_source == "chest" and selected_chest_index >= 0:
-			_swap_items(selected_chest_index, index)
-		swap_mode = false
-		_deselect_all()
-		_refresh_chest_slots()
-		_refresh_backpack()
-		_refresh_details()
-		return
-
-	# Select backpack item (for potential swap)
+	# Select backpack item and show popup
 	var item_data: Dictionary = Inventory.get_backpack_item(index)
 	if not item_data.is_empty():
 		selected_source = "backpack"
-		selected_backpack_index = index
-		selected_chest_index = -1
+		selected_index = index
+		_show_item_popup(slot)
 	else:
 		_deselect_all()
 
 	_refresh_chest_slots()
 	_refresh_backpack()
-	_refresh_details()
 
 
-## Action handlers
+func _show_item_popup(slot: InventorySlot) -> void:
+	var item: ItemData = null
+	if selected_source == "chest" and selected_index >= 0:
+		var chest_slot: Dictionary = chest_contents[selected_index]
+		if not chest_slot.is_empty():
+			item = chest_slot.item
+	elif selected_source == "backpack" and selected_index >= 0:
+		var bp_slot: Dictionary = Inventory.get_backpack_item(selected_index)
+		if not bp_slot.is_empty():
+			item = bp_slot.item
 
-func _on_loot_pressed() -> void:
-	if selected_source != "chest" or selected_chest_index < 0:
-		return
+	if item and item_popup:
+		var slot_center := slot.global_position + slot.size / 2
+		item_popup.show_item(item, selected_source, selected_index, slot_center)
 
-	var slot: Dictionary = chest_contents[selected_chest_index]
-	if slot.is_empty():
-		return
 
-	if not _has_inventory_space():
-		_show_feedback("Inventory full!")
-		return
+func _on_popup_closed() -> void:
+	# Popup was closed via X button or tap outside - deselect
+	_deselect_all()
+	_refresh_chest_slots()
+	_refresh_backpack()
 
-	# Add item to inventory
-	var item: ItemData = slot.item
-	if Inventory.add_item(item, slot.quantity):
-		chest_contents[selected_chest_index] = {}
-		item_looted.emit(item)
-		Debug.info("Chest", "Looted item: %s" % item.item_name)
-		_deselect_all()
+
+#===============================================================================
+# DRAG & DROP HANDLERS
+#===============================================================================
+
+func _on_item_dropped_to_chest(from_slot: InventorySlot, to_slot: InventorySlot) -> void:
+	## Handle drop onto a chest slot
+	var to_index := to_slot.backpack_index
+
+	# Determine source
+	if from_slot in chest_slots:
+		# Chest to Chest swap
+		var from_index := from_slot.backpack_index
+		_swap_chest_slots(from_index, to_index)
 	else:
-		_show_feedback("Inventory full!")
+		# Backpack to Chest
+		var from_index := from_slot.backpack_index
+		_move_backpack_to_chest(from_index, to_index)
 
 	_refresh_chest_slots()
 	_refresh_backpack()
-	_refresh_details()
 	_update_space_label()
 
 
+func _on_item_dropped_to_backpack(from_slot: InventorySlot, to_slot: InventorySlot) -> void:
+	## Handle drop onto a backpack slot
+	var to_index := to_slot.backpack_index
+
+	# Determine source
+	if from_slot in chest_slots:
+		# Chest to Backpack (loot)
+		var from_index := from_slot.backpack_index
+		_move_chest_to_backpack(from_index, to_index)
+	else:
+		# Backpack to Backpack swap
+		var from_index := from_slot.backpack_index
+		Inventory.drag_drop_swap("backpack", from_index, "backpack", to_index)
+
+	_refresh_chest_slots()
+	_refresh_backpack()
+	_update_space_label()
+
+
+func _swap_chest_slots(from_index: int, to_index: int) -> void:
+	## Swap two chest slots
+	if from_index < 0 or from_index >= chest_contents.size():
+		return
+	if to_index < 0 or to_index >= chest_contents.size():
+		return
+
+	var temp: Dictionary = chest_contents[from_index]
+	chest_contents[from_index] = chest_contents[to_index]
+	chest_contents[to_index] = temp
+
+
+func _move_chest_to_backpack(chest_index: int, backpack_index: int) -> void:
+	## Move item from chest to backpack (swap if backpack has item)
+	if chest_index < 0 or chest_index >= chest_contents.size():
+		return
+	if backpack_index < 0 or backpack_index >= Inventory.backpack_size:
+		return
+
+	var chest_slot: Dictionary = chest_contents[chest_index]
+	var backpack_slot: Dictionary = Inventory.get_backpack_item(backpack_index)
+
+	if backpack_slot.is_empty():
+		# Just move chest item to backpack
+		if not chest_slot.is_empty():
+			# Add to specific backpack slot by clearing and setting
+			Inventory.backpack[backpack_index] = {item = chest_slot.item, quantity = chest_slot.quantity, charges = 0}
+			chest_contents[chest_index] = {}
+			Inventory.inventory_changed.emit()
+			item_looted.emit(chest_slot.item)
+	else:
+		# Swap: backpack item goes to chest, chest item goes to backpack
+		chest_contents[chest_index] = {item = backpack_slot.item, quantity = backpack_slot.quantity}
+		if chest_slot.is_empty():
+			Inventory.backpack[backpack_index] = {}
+		else:
+			Inventory.backpack[backpack_index] = {item = chest_slot.item, quantity = chest_slot.quantity, charges = 0}
+			item_looted.emit(chest_slot.item)
+		Inventory.inventory_changed.emit()
+
+
+func _move_backpack_to_chest(backpack_index: int, chest_index: int) -> void:
+	## Move item from backpack to chest (swap if chest has item)
+	if chest_index < 0 or chest_index >= chest_contents.size():
+		return
+	if backpack_index < 0 or backpack_index >= Inventory.backpack_size:
+		return
+
+	var backpack_slot: Dictionary = Inventory.get_backpack_item(backpack_index)
+	var chest_slot: Dictionary = chest_contents[chest_index]
+
+	if chest_slot.is_empty():
+		# Just move backpack item to chest
+		if not backpack_slot.is_empty():
+			chest_contents[chest_index] = {item = backpack_slot.item, quantity = backpack_slot.quantity}
+			Inventory.backpack[backpack_index] = {}
+			Inventory.inventory_changed.emit()
+	else:
+		# Swap: chest item goes to backpack, backpack item goes to chest
+		if backpack_slot.is_empty():
+			Inventory.backpack[backpack_index] = {item = chest_slot.item, quantity = chest_slot.quantity, charges = 0}
+			chest_contents[chest_index] = {}
+			item_looted.emit(chest_slot.item)
+		else:
+			Inventory.backpack[backpack_index] = {item = chest_slot.item, quantity = chest_slot.quantity, charges = 0}
+			chest_contents[chest_index] = {item = backpack_slot.item, quantity = backpack_slot.quantity}
+			item_looted.emit(chest_slot.item)
+		Inventory.inventory_changed.emit()
+
+
+func _on_drag_started(_slot: InventorySlot) -> void:
+	## Close popup during drag
+	if item_popup and item_popup.is_open():
+		item_popup.close()
+
+
+func _on_drag_ended(_slot: InventorySlot) -> void:
+	## Drag ended - refresh displays
+	pass
+
+
+#===============================================================================
+# ACTION HANDLERS
+#===============================================================================
+
 func _on_loot_all_pressed() -> void:
 	# Loot gold first
-	var gold_label: Label = get_node_or_null("MenuPanel/VBox/ContentArea/ChestPanel/VBoxContainer/GoldLabel")
 	if gold_label and gold_label.visible:
 		var gold_text: String = gold_label.text
 		var gold_match := gold_text.get_slice(":", 1).strip_edges()
@@ -734,14 +678,13 @@ func _on_loot_all_pressed() -> void:
 			failed_count += 1
 
 	if failed_count > 0:
-		_show_feedback("Inventory full! %d items left" % failed_count)
+		Debug.warn("Chest", "Inventory full! %d items left" % failed_count)
 	elif looted_count > 0:
 		Debug.info("Chest", "Looted all %d items" % looted_count)
 
 	_deselect_all()
 	_refresh_chest_slots()
 	_refresh_backpack()
-	_refresh_details()
 	_update_space_label()
 
 	# Close menu if chest is empty
@@ -757,46 +700,6 @@ func _on_loot_all_pressed() -> void:
 			current_chest.current_state = ChestBase.ChestState.LOOTED
 			current_chest._on_chest_looted()
 		close_menu()
-
-
-func _on_swap_pressed() -> void:
-	if swap_mode:
-		swap_mode = false
-		_update_action_buttons()
-		return
-
-	if selected_source == "chest" and selected_chest_index >= 0:
-		swap_mode = true
-		_show_feedback("Select inventory slot to swap")
-		_update_action_buttons()
-
-
-func _swap_items(chest_index: int, backpack_index: int) -> void:
-	var chest_slot: Dictionary = chest_contents[chest_index]
-	var backpack_slot: Dictionary = Inventory.get_backpack_item(backpack_index)
-
-	# Swap items
-	if backpack_slot.is_empty():
-		# Just move chest item to backpack
-		if not chest_slot.is_empty():
-			Inventory.add_item(chest_slot.item, chest_slot.quantity)
-			chest_contents[chest_index] = {}
-	else:
-		# Actual swap
-		chest_contents[chest_index] = {
-			item = backpack_slot.item,
-			quantity = backpack_slot.quantity
-		}
-
-		if chest_slot.is_empty():
-			Inventory.remove_item_at(backpack_index, backpack_slot.quantity)
-		else:
-			# Remove old backpack item and add chest item
-			Inventory.remove_item_at(backpack_index, backpack_slot.quantity)
-			Inventory.add_item(chest_slot.item, chest_slot.quantity)
-
-	Debug.info("Chest", "Swapped items between chest and inventory")
-	_update_space_label()
 
 
 func _on_close_pressed() -> void:
