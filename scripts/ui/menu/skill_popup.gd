@@ -7,7 +7,7 @@ class_name SkillPopup
 #===============================================================================
 
 const POPUP_WIDTH := 280
-const POPUP_MIN_HEIGHT_PCT := 0.45  # 45% of viewport - ensures decent size
+const POPUP_MIN_HEIGHT_PCT := 0.55  # 55% of viewport (increased from 45%)
 const POPUP_MAX_HEIGHT_PCT := 0.90  # 90% of viewport (increased from 75%)
 
 #===============================================================================
