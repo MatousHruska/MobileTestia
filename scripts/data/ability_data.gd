@@ -40,15 +40,8 @@ enum HitboxShape {
 	RING
 }
 
-enum DamageType {
-	PHYSICAL,
-	FIRE,
-	COLD,
-	LIGHTNING,
-	POISON,
-	CHAOS,
-	PURE
-}
+## DamageType moved to CombatTypes (shared with TalentData)
+const DamageType = CombatTypes.DamageType
 
 #===============================================================================
 # CORE PROPERTIES
@@ -174,16 +167,8 @@ static func shape_from_string(s: String) -> HitboxShape:
 		_: return HitboxShape.CIRCLE
 
 
-static func damage_type_from_string(s: String) -> DamageType:
-	match s.to_lower():
-		"physical": return DamageType.PHYSICAL
-		"fire": return DamageType.FIRE
-		"cold": return DamageType.COLD
-		"lightning": return DamageType.LIGHTNING
-		"poison": return DamageType.POISON
-		"chaos": return DamageType.CHAOS
-		"pure": return DamageType.PURE
-		_: return DamageType.PHYSICAL
+static func damage_type_from_string(s: String) -> CombatTypes.DamageType:
+	return CombatTypes.damage_type_from_string(s)
 
 
 static func type_to_string(t: AbilityType) -> String:
@@ -208,16 +193,8 @@ static func shape_to_string(s: HitboxShape) -> String:
 		_: return "circle"
 
 
-static func damage_type_to_string(d: DamageType) -> String:
-	match d:
-		DamageType.PHYSICAL: return "physical"
-		DamageType.FIRE: return "fire"
-		DamageType.COLD: return "cold"
-		DamageType.LIGHTNING: return "lightning"
-		DamageType.POISON: return "poison"
-		DamageType.CHAOS: return "chaos"
-		DamageType.PURE: return "pure"
-		_: return "physical"
+static func damage_type_to_string(d: CombatTypes.DamageType) -> String:
+	return CombatTypes.damage_type_to_string(d)
 
 
 static func snap_to_cardinal(direction: Vector2) -> Vector2:

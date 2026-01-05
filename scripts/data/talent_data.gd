@@ -66,8 +66,8 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, MAGIC_PROJECTILE
 @export var base_damage: float = 0.0            # Base spell damage
 @export var damage_per_rank: float = 0.0        # Damage increase per skill rank
 
-## Damage type (physical, fire, cold, etc.)
-@export var damage_type_id: int = 0
+## Damage type (physical, fire, cold, etc.) - uses shared CombatTypes enum
+@export var damage_type: CombatTypes.DamageType = CombatTypes.DamageType.PHYSICAL
 
 ## Combat mechanics
 @export var lunge_force: float = 0.0            # Lunge force when using skill
@@ -169,8 +169,9 @@ static func from_dict(data: Dictionary) -> TalentData:
 	talent.base_damage = float(data.get("base_damage", 0))
 	talent.damage_per_rank = float(data.get("damage_per_rank", 0))
 
-	# Damage type
-	talent.damage_type_id = int(data.get("damage_type", 0))
+	# Damage type (string from database -> enum)
+	var damage_type_str: String = str(data.get("damage_type", "physical"))
+	talent.damage_type = CombatTypes.damage_type_from_string(damage_type_str)
 
 	# Combat mechanics
 	talent.lunge_force = float(data.get("lunge_force", 0))
