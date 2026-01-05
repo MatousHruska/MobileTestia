@@ -367,25 +367,8 @@ func _build_right_panel(parent: Control) -> void:
 
 
 func _build_action_buttons() -> void:
-	var btn_hbox := HBoxContainer.new()
-	btn_hbox.add_theme_constant_override("separation", 8)
-	_right_panel.add_child(btn_hbox)
-
-	_button1 = Button.new()
-	_button1.text = "Learn"
-	_button1.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_button1.pressed.connect(_on_button1_pressed)
-	btn_hbox.add_child(_button1)
-
-	_button2 = Button.new()
-	_button2.text = "Cancel"
-	_button2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_button2.pressed.connect(_on_button2_pressed)
-	btn_hbox.add_child(_button2)
-
-	# Initially hide buttons
-	_button1.visible = false
-	_button2.visible = false
+	# Action buttons removed - Learn button is now in the skill popup
+	pass
 
 
 func _build_skill_bind_ui() -> void:
@@ -898,23 +881,8 @@ func _update_points_label() -> void:
 
 
 func _update_buttons() -> void:
-	# Hide buttons if nothing selected or selected from skillbook
-	# (skillbook uses drag-and-drop for binding)
-	if selected_talent_id.is_empty() or selected_from_skillbook:
-		_button1.visible = false
-		_button2.visible = false
-		return
-
-	# Selected from talent tree - show Learn button
-	var can_learn := TalentManager.can_learn_talent(selected_talent_id)
-	_button1.visible = true
-	_button1.text = "Learn"
-	_button1.disabled = not can_learn
-	_button2.visible = false
-
-	if not can_learn:
-		var reason := TalentManager.get_learn_block_reason(selected_talent_id)
-		_button1.tooltip_text = reason
+	# Action buttons removed - Learn button is now in the skill popup
+	pass
 
 
 #===============================================================================
@@ -964,9 +932,9 @@ func _on_talent_node_pressed(talent_id: String) -> void:
 	_update_buttons()
 	talent_selected.emit(talent_id)
 
-	# Show the popup at tap position
+	# Show the popup at tap position (from talent tree = show Learn button)
 	if _skill_popup:
-		_skill_popup.show_talent(talent_id, _last_tap_pos)
+		_skill_popup.show_talent(talent_id, _last_tap_pos, true)
 
 
 func _on_skillbook_slot_pressed(talent_id: String) -> void:
@@ -983,9 +951,9 @@ func _on_skillbook_slot_pressed(talent_id: String) -> void:
 	_update_buttons()
 	skill_selected.emit(talent_id)
 
-	# Show the popup at tap position
+	# Show the popup at tap position (from skillbook = no Learn button)
 	if _skill_popup:
-		_skill_popup.show_talent(talent_id, _last_tap_pos)
+		_skill_popup.show_talent(talent_id, _last_tap_pos, false)
 
 
 func _on_bind_slot_input(event: InputEvent, slot_index: int, slot: Button) -> void:
@@ -1035,22 +1003,18 @@ func _on_bind_slot_pressed(slot_index: int) -> void:
 			selected_from_skillbook = true
 			_refresh_skillbook()
 			_update_buttons()
-			# Show the popup
+			# Show the popup (from active skills = no Learn button)
 			if _skill_popup:
-				_skill_popup.show_talent(talent.id, _last_tap_pos)
+				_skill_popup.show_talent(talent.id, _last_tap_pos, false)
 
 
 func _on_button1_pressed() -> void:
-	# Only handles "Learn" from talent tree (skillbook uses drag-and-drop)
-	if selected_talent_id.is_empty() or selected_from_skillbook:
-		return
-
-	if TalentManager.can_learn_talent(selected_talent_id):
-		TalentManager.learn_talent(selected_talent_id)
+	# Action buttons removed - Learn button is now in the skill popup
+	pass
 
 
 func _on_button2_pressed() -> void:
-	# No longer used - kept for signal connection
+	# Action buttons removed
 	pass
 
 

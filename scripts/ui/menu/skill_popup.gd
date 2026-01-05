@@ -15,6 +15,7 @@ const POPUP_MAX_HEIGHT_PCT := 0.75  # 75% of viewport
 #===============================================================================
 
 var current_talent_id: String = ""
+var _from_talent_tree: bool = false  # Whether showing from talent tree (vs skillbook/active skills)
 
 #===============================================================================
 # UI REFERENCES
@@ -25,6 +26,7 @@ var _name_label: Label
 var _rank_label: Label
 var _stats_container: VBoxContainer
 var _description_label: RichTextLabel
+var _learn_button: Button
 
 
 #===============================================================================
@@ -93,19 +95,34 @@ func _build_content(content: VBoxContainer) -> void:
 	_description_label.add_theme_color_override("default_color", UITheme.COLOR_TEXT_DIM)
 	content.add_child(_description_label)
 
+	# Learn button (only visible for talent tree selections that aren't maxed)
+	_learn_button = Button.new()
+	_learn_button.text = "Learn"
+	_learn_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_learn_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	_learn_button.pressed.connect(_on_learn_pressed)
+	_learn_button.visible = false
+	content.add_child(_learn_button)
+
+	# Connect to talent manager to update button when talent is learned
+	TalentManager.talent_learned.connect(_on_talent_learned)
+
 
 #===============================================================================
 # PUBLIC API
 #===============================================================================
 
 ## Show popup for a talent at the given screen position
-func show_talent(talent_id: String, screen_pos: Vector2) -> void:
+## from_talent_tree: if true, shows Learn button for talents that can be learned
+func show_talent(talent_id: String, screen_pos: Vector2, from_talent_tree: bool = false) -> void:
 	var talent := TalentManager.get_talent(talent_id)
 	if not talent:
 		return
 
 	current_talent_id = talent_id
+	_from_talent_tree = from_talent_tree
 	_update_content(talent)
+	_update_learn_button(talent)
 	show_at(screen_pos)
 
 
@@ -209,3 +226,59 @@ func _get_weapon_category_display_name(category: String) -> String:
 		"ranged": return "Ranged Weapon"
 		"magic": return "Magic Weapon"
 		_: return category.capitalize()
+
+
+#===============================================================================
+# LEARN BUTTON
+#===============================================================================
+
+## Update learn button visibility and text
+func _update_learn_button(talent: TalentData) -> void:
+	if not _learn_button:
+		return
+
+	var invested := TalentManager.get_invested_points(talent.id)
+	var is_maxed := invested >= talent.max_points
+
+	# Only show Learn button if:
+	# - From talent tree (not skillbook or active skills)
+	# - Talent is not fully learned/maxed
+	if not _from_talent_tree or is_maxed:
+		_learn_button.visible = false
+		return
+
+	_learn_button.visible = true
+
+	# Update button text: "Learn" when 0/X, "Learn 1/X" when 1+/X
+	if invested == 0:
+		_learn_button.text = "Learn"
+	else:
+		_learn_button.text = "Learn %d/%d" % [invested, talent.max_points]
+
+	# Enable/disable based on whether we can learn
+	var can_learn := TalentManager.can_learn_talent(talent.id)
+	_learn_button.disabled = not can_learn
+
+	if not can_learn:
+		var reason := TalentManager.get_learn_block_reason(talent.id)
+		_learn_button.tooltip_text = reason
+	else:
+		_learn_button.tooltip_text = ""
+
+
+## Handle Learn button press
+func _on_learn_pressed() -> void:
+	if current_talent_id.is_empty():
+		return
+
+	if TalentManager.can_learn_talent(current_talent_id):
+		TalentManager.learn_talent(current_talent_id)
+
+
+## Handle talent learned event - refresh the popup content
+func _on_talent_learned(talent_id: String, _new_points: int) -> void:
+	if talent_id == current_talent_id and visible:
+		var talent := TalentManager.get_talent(talent_id)
+		if talent:
+			_update_content(talent)
+			_update_learn_button(talent)
