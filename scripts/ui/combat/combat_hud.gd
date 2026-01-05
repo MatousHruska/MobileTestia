@@ -393,15 +393,15 @@ func _create_buttons() -> void:
 	quick_slot_button.ability_activated.connect(_on_quick_slot_activated)
 	add_child(quick_slot_button)
 
-	# Interact button (standard Button, hidden by default)
+	# Interact button (standard Button, hidden by default) - Level 2 Header
 	interact_button = Button.new()
 	interact_button.name = "InteractButton"
 	interact_button.text = "Interact"
 	interact_button.visible = false
 	interact_button.custom_minimum_size = config.interact_size
 	interact_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-	interact_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
-	interact_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
+	interact_button.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
+	interact_button.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
 	add_child(interact_button)
 
 

@@ -129,28 +129,28 @@ func _setup_tabs() -> void:
 	_tab_buttons = [inventory_tab, stats_tab, skills_tab, quests_tab, menu_tab]
 	_panels = [inventory_panel, stats_panel, skills_panel, quests_panel, menu_panel]
 
-	# Connect tab buttons and apply default colors
+	# Connect tab buttons and apply nav colors (Level 1 - Navigation)
 	if stats_tab:
 		stats_tab.pressed.connect(_on_tab_pressed.bind(Tab.STATS))
 		stats_tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	if inventory_tab:
 		inventory_tab.pressed.connect(_on_tab_pressed.bind(Tab.INVENTORY))
 		inventory_tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-		inventory_tab.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
-		inventory_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
+		inventory_tab.add_theme_color_override("font_color", UITheme.COLOR_TEXT_NAV)
+		inventory_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
 	if skills_tab:
 		skills_tab.pressed.connect(_on_tab_pressed.bind(Tab.SKILLS))
 		skills_tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	if quests_tab:
 		quests_tab.pressed.connect(_on_tab_pressed.bind(Tab.QUESTS))
 		quests_tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-		quests_tab.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
-		quests_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
+		quests_tab.add_theme_color_override("font_color", UITheme.COLOR_TEXT_NAV)
+		quests_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
 	if menu_tab:
 		menu_tab.pressed.connect(_on_tab_pressed.bind(Tab.MENU))
 		menu_tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-		menu_tab.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
-		menu_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
+		menu_tab.add_theme_color_override("font_color", UITheme.COLOR_TEXT_NAV)
+		menu_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
 
 	# Connect close button
 	if close_button:
@@ -188,26 +188,27 @@ func _setup_tabs() -> void:
 
 
 func _setup_menu_buttons() -> void:
+	# Menu buttons use Level 2 - Header colors
 	if save_button:
 		save_button.pressed.connect(_on_save_pressed)
 		save_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-		save_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
-		save_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
+		save_button.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
+		save_button.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
 	if load_button:
 		load_button.pressed.connect(_on_load_pressed)
 		load_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-		load_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
-		load_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
+		load_button.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
+		load_button.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
 	if exit_to_menu_button:
 		exit_to_menu_button.pressed.connect(_on_exit_to_menu_pressed)
 		exit_to_menu_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-		exit_to_menu_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
-		exit_to_menu_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
+		exit_to_menu_button.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
+		exit_to_menu_button.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
 	if exit_game_button:
 		exit_game_button.pressed.connect(_on_exit_game_pressed)
 		exit_game_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-		exit_game_button.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
-		exit_game_button.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
+		exit_game_button.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
+		exit_game_button.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
 
 
 func _setup_inventory_panel() -> void:
@@ -304,8 +305,8 @@ func _update_stats_badge() -> void:
 		stats_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	else:
 		stats_tab.text = "Stats"
-		stats_tab.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
-		stats_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
+		stats_tab.add_theme_color_override("font_color", UITheme.COLOR_TEXT_NAV)
+		stats_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
 
 
 func _update_skills_badge() -> void:
@@ -320,8 +321,8 @@ func _update_skills_badge() -> void:
 		skills_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_AVAILABLE)
 	else:
 		skills_tab.text = "Skills"
-		skills_tab.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
-		skills_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_SECTION_HEADER)
+		skills_tab.add_theme_color_override("font_color", UITheme.COLOR_TEXT_NAV)
+		skills_tab.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
 
 
 func _on_attribute_points_changed(_points: int) -> void:
