@@ -236,7 +236,7 @@ func _handle_collision(target: Node2D) -> void:
 
 
 func _contact_enemy(enemy: Node2D) -> void:
-	## Pass through enemy, apply debuff
+	## Contact enemy - either pass through or stop based on pass_through_enemies setting
 	contacted_targets.append(enemy)
 
 	# Apply contact damage if any
@@ -253,7 +253,13 @@ func _contact_enemy(enemy: Node2D) -> void:
 	# Spawn small hit effect
 	_spawn_contact_effect(enemy.global_position)
 
-	# Continue flying (pass-through)
+	# If not pass-through mode, stop and destroy (single-target projectile)
+	if not pass_through_enemies:
+		Debug.log("Combat", "Single-target projectile hit %s, destroying" % enemy.name)
+		_destroy()
+		return
+
+	# Continue flying (pass-through mode)
 
 
 func _explode() -> void:
