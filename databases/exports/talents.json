@@ -111,7 +111,7 @@
       "cooldown": 0,
       "base_damage": 25,
       "damage_per_rank": 5,
-      "effect_type": "magic_projectile",
+      "effect_type": "magic_projectile_aoe",
       "effect_value": 0,
       "effect_per_point": 0,
       "duration": 0,
