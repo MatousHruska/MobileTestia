@@ -4,6 +4,7 @@ class_name ChestMenu
 ## Two-column layout: Chest Contents | Backpack
 ## Uses ItemPopup for item details (no details column)
 ## Supports drag & drop for moving items between chest and inventory
+## Gold appears as a draggable slot that adds to player gold when dropped on backpack
 
 ## Number of slots in a chest
 const CHEST_SLOT_COUNT: int = 6
@@ -26,11 +27,13 @@ const MIN_BUTTON_HEIGHT := 36
 
 ## Signals
 signal item_looted(item: ItemData)
+signal gold_looted(amount: int)
 signal chest_closed
 
 ## References to the chest being viewed
 var current_chest: ChestBase = null
 var chest_contents: Array[Dictionary] = []  # {item: ItemData, quantity: int}
+var chest_gold_amount: int = 0  # Gold in the chest
 
 ## UI References
 var menu_panel: Panel = null
@@ -38,7 +41,8 @@ var main_hbox: HBoxContainer
 var chest_container: GridContainer
 var backpack_container: GridContainer
 var backpack_scroll: ScrollContainer
-var gold_label: Label
+var gold_slot: ChestGoldSlot = null  # Draggable gold slot
+var player_gold_label: Label = null  # Player's current gold in backpack header
 var loot_all_button: Button
 var close_button: Button
 var title_label: Label
@@ -67,6 +71,9 @@ func _ready() -> void:
 
 	# Connect to viewport resize
 	get_viewport().size_changed.connect(_on_viewport_resized)
+
+	# Connect to inventory gold changes
+	Inventory.gold_changed.connect(_on_player_gold_changed)
 
 	Debug.info("UI", "ChestMenu initialized (popup-based)")
 
@@ -210,18 +217,24 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 	chest_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	chest_vbox.add_child(chest_header)
 
-	# Center container for chest grid
+	# Center container for chest grid + gold
 	var center := CenterContainer.new()
 	center.name = "ChestCenter"
 	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	chest_vbox.add_child(center)
+
+	# VBox for grid + gold slot
+	var grid_vbox := VBoxContainer.new()
+	grid_vbox.name = "GridVBox"
+	UITheme.setup_vbox(grid_vbox, UITheme.SEPARATION_NORMAL)
+	center.add_child(grid_vbox)
 
 	# 3x2 Grid for chest items
 	chest_container = GridContainer.new()
 	chest_container.name = "ChestGrid"
 	chest_container.columns = CHEST_COLUMNS
 	UITheme.setup_grid(chest_container, _get_slot_separation(), _get_slot_separation())
-	center.add_child(chest_container)
+	grid_vbox.add_child(chest_container)
 
 	# Create chest slots
 	for i in CHEST_SLOT_COUNT:
@@ -236,14 +249,15 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 		chest_container.add_child(slot)
 		chest_slots.append(slot)
 
-	# Gold display
-	gold_label = Label.new()
-	gold_label.name = "GoldLabel"
-	gold_label.text = "Gold: 0"
-	gold_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	gold_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-	gold_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD)
-	chest_vbox.add_child(gold_label)
+	# Gold slot (draggable) - centered
+	var gold_center := CenterContainer.new()
+	gold_center.name = "GoldCenter"
+	grid_vbox.add_child(gold_center)
+
+	gold_slot = ChestGoldSlot.new()
+	gold_slot.name = "GoldSlot"
+	gold_slot.visible = false
+	gold_center.add_child(gold_slot)
 
 	# Loot All button
 	loot_all_button = Button.new()
@@ -263,6 +277,10 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	backpack_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 	parent.add_child(backpack_panel)
 
+	# Make backpack panel accept gold drops
+	backpack_panel.set_script(preload("res://scripts/ui/chest/backpack_drop_zone.gd"))
+	backpack_panel.set_meta("chest_menu", self)
+
 	var backpack_margin := UITheme.create_margin_container()
 	backpack_panel.add_child(backpack_margin)
 
@@ -271,7 +289,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	UITheme.setup_vbox(backpack_vbox, UITheme.SEPARATION_SMALL)
 	backpack_margin.add_child(backpack_vbox)
 
-	# Header row
+	# Header row: Backpack | Gold: X | Slots: X/Y
 	var header_row := HBoxContainer.new()
 	header_row.name = "HeaderRow"
 	UITheme.setup_hbox(header_row, UITheme.SEPARATION_SMALL)
@@ -280,6 +298,19 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	var header := UITheme.create_label("Backpack", UITheme.FONT_SIZE_HEADER)
 	header.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
 	header_row.add_child(header)
+
+	# Separator
+	var sep := UITheme.create_label(" | ", UITheme.FONT_SIZE_HEADER)
+	sep.add_theme_color_override("font_color", UITheme.COLOR_TEXT_DIM)
+	header_row.add_child(sep)
+
+	# Player's gold display
+	player_gold_label = Label.new()
+	player_gold_label.name = "PlayerGoldLabel"
+	player_gold_label.text = "Gold: %d" % Inventory.gold
+	player_gold_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+	player_gold_label.add_theme_color_override("font_color", UITheme.COLOR_GOLD)
+	header_row.add_child(player_gold_label)
 
 	# Spacer
 	var spacer := Control.new()
@@ -366,11 +397,10 @@ func open_chest(chest: ChestBase, contents: Dictionary) -> void:
 	if title_label:
 		title_label.text = "%s Chest" % ChestBase.TIER_NAMES[chest.chest_tier]
 
-	# Update gold display
-	var gold_amount: int = contents.get("gold", 0)
-	if gold_label:
-		gold_label.text = "Gold: %d" % gold_amount
-		gold_label.visible = gold_amount > 0
+	# Set chest gold
+	chest_gold_amount = contents.get("gold", 0)
+	if gold_slot:
+		gold_slot.set_gold(chest_gold_amount)
 
 	# Reset selection
 	_deselect_all()
@@ -378,7 +408,7 @@ func open_chest(chest: ChestBase, contents: Dictionary) -> void:
 	# Refresh displays
 	_refresh_chest_slots()
 	_refresh_backpack()
-	_update_space_label()
+	_update_labels()
 
 	visible = true
 	Debug.info("UI", "Chest menu opened: %s" % chest.display_name)
@@ -397,10 +427,12 @@ func close_menu() -> void:
 				remaining_items.append(slot.item)
 		# Store for persistence if needed
 		current_chest.set_meta("remaining_items", remaining_items)
+		current_chest.set_meta("remaining_gold", chest_gold_amount)
 
 	visible = false
 	current_chest = null
 	chest_contents.clear()
+	chest_gold_amount = 0
 	_deselect_all()
 	chest_closed.emit()
 	Debug.info("UI", "Chest menu closed")
@@ -437,7 +469,8 @@ func _refresh_backpack() -> void:
 		slot_ui.set_selected(selected_source == "backpack" and selected_index == i)
 
 
-func _update_space_label() -> void:
+func _update_labels() -> void:
+	# Update space label
 	var space_label: Label = backpack_container.get_parent().get_parent().get_node_or_null("HeaderRow/SpaceLabel")
 	if space_label:
 		var used := 0
@@ -445,6 +478,15 @@ func _update_space_label() -> void:
 			if not slot.is_empty():
 				used += 1
 		space_label.text = "%d/%d" % [used, Inventory.backpack_size]
+
+	# Update player gold label
+	if player_gold_label:
+		player_gold_label.text = "Gold: %d" % Inventory.gold
+
+
+func _on_player_gold_changed(_amount: int) -> void:
+	if player_gold_label:
+		player_gold_label.text = "Gold: %d" % Inventory.gold
 
 
 func _deselect_all() -> void:
@@ -459,6 +501,22 @@ func _has_inventory_space() -> bool:
 		if slot.is_empty():
 			return true
 	return false
+
+
+#===============================================================================
+# GOLD HANDLING
+#===============================================================================
+
+## Called when gold is dropped on the backpack area
+func collect_gold() -> void:
+	if chest_gold_amount > 0:
+		Inventory.add_gold(chest_gold_amount)
+		gold_looted.emit(chest_gold_amount)
+		Debug.info("Chest", "Collected %d gold" % chest_gold_amount)
+		chest_gold_amount = 0
+		if gold_slot:
+			gold_slot.clear_gold()
+		_update_labels()
 
 
 #===============================================================================
@@ -539,7 +597,7 @@ func _on_item_dropped_to_chest(from_slot: InventorySlot, to_slot: InventorySlot)
 
 	_refresh_chest_slots()
 	_refresh_backpack()
-	_update_space_label()
+	_update_labels()
 
 
 func _on_item_dropped_to_backpack(from_slot: InventorySlot, to_slot: InventorySlot) -> void:
@@ -558,7 +616,7 @@ func _on_item_dropped_to_backpack(from_slot: InventorySlot, to_slot: InventorySl
 
 	_refresh_chest_slots()
 	_refresh_backpack()
-	_update_space_label()
+	_update_labels()
 
 
 func _swap_chest_slots(from_index: int, to_index: int) -> void:
@@ -648,14 +706,13 @@ func _on_drag_ended(_slot: InventorySlot) -> void:
 
 func _on_loot_all_pressed() -> void:
 	# Loot gold first
-	if gold_label and gold_label.visible:
-		var gold_text: String = gold_label.text
-		var gold_match := gold_text.get_slice(":", 1).strip_edges()
-		var gold_amount := gold_match.to_int()
-		if gold_amount > 0:
-			Inventory.add_gold(gold_amount)
-			gold_label.text = "Gold: 0"
-			gold_label.visible = false
+	if chest_gold_amount > 0:
+		Inventory.add_gold(chest_gold_amount)
+		gold_looted.emit(chest_gold_amount)
+		Debug.info("Chest", "Looted %d gold" % chest_gold_amount)
+		chest_gold_amount = 0
+		if gold_slot:
+			gold_slot.clear_gold()
 
 	# Loot all items
 	var looted_count := 0
@@ -685,21 +742,19 @@ func _on_loot_all_pressed() -> void:
 	_deselect_all()
 	_refresh_chest_slots()
 	_refresh_backpack()
-	_update_space_label()
+	_update_labels()
 
-	# Close menu if chest is empty
+	# Mark chest as looted if completely empty (but don't close menu)
 	var has_items := false
 	for slot in chest_contents:
 		if not slot.is_empty():
 			has_items = true
 			break
 
-	if not has_items:
-		# Mark chest as looted
+	if not has_items and chest_gold_amount <= 0:
 		if current_chest:
 			current_chest.current_state = ChestBase.ChestState.LOOTED
 			current_chest._on_chest_looted()
-		close_menu()
 
 
 func _on_close_pressed() -> void:
