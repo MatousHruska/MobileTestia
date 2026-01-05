@@ -227,12 +227,6 @@ func _get_elemental_bonus(damage_type: CombatTypes.DamageType) -> float:
 			return PlayerStats.get_equipment_bonus("poison_spell_damage")
 		DamageType.ARCANE:
 			return PlayerStats.get_equipment_bonus("arcane_spell_damage")
-		DamageType.HOLY:
-			return PlayerStats.get_equipment_bonus("holy_spell_damage")
-		DamageType.SHADOW:
-			return PlayerStats.get_equipment_bonus("shadow_spell_damage")
-		DamageType.NATURE:
-			return PlayerStats.get_equipment_bonus("nature_spell_damage")
 		_:
 			return 0.0
 
@@ -261,10 +255,7 @@ static func get_damage_type_name(damage_type: int) -> String:
 		DamageType.LIGHTNING: return "Lightning"
 		DamageType.POISON: return "Poison"
 		DamageType.ARCANE: return "Arcane"
-		DamageType.HOLY: return "Holy"
-		DamageType.SHADOW: return "Shadow"
 		DamageType.BLEED: return "Bleed"
-		DamageType.NATURE: return "Nature"
 		DamageType.PURE: return "Pure"
 		_: return "Unknown"
 
@@ -278,10 +269,7 @@ static func get_damage_type_color(damage_type: int) -> Color:
 		DamageType.LIGHTNING: return Color(1.0, 1.0, 0.3)  # Yellow
 		DamageType.POISON: return Color(0.3, 0.8, 0.2)  # Green
 		DamageType.ARCANE: return Color(0.7, 0.3, 1.0)  # Purple
-		DamageType.HOLY: return Color(1.0, 1.0, 0.8)  # Light yellow
-		DamageType.SHADOW: return Color(0.5, 0.2, 0.6)  # Dark purple
 		DamageType.BLEED: return Color(0.8, 0.1, 0.1)  # Dark red
-		DamageType.NATURE: return Color(0.4, 0.7, 0.3)  # Forest green
 		DamageType.PURE: return Color(1.0, 1.0, 1.0)  # Pure white (ignores armor/resist)
 		_: return Color.WHITE
 

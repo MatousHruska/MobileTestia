@@ -24,7 +24,8 @@ const DAMAGE_COLORS := {
 	"cold": Color(0.4, 0.8, 1.0),        # Ice blue
 	"lightning": Color(1.0, 1.0, 0.3),   # Bright yellow
 	"poison": Color(0.4, 1.0, 0.3),      # Green
-	"chaos": Color(0.8, 0.2, 1.0),       # Purple
+	"arcane": Color(0.7, 0.3, 1.0),      # Purple
+	"bleed": Color(0.8, 0.1, 0.1),       # Dark red
 	"pure": Color(1.0, 1.0, 1.0),        # White
 }
 

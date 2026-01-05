@@ -10,14 +10,16 @@ class_name SkillBase
 #===============================================================================
 
 ## Damage types used by both player and enemy attacks
+## Note: Should match CombatTypes.DamageType for consistency
 enum DamageType {
 	PHYSICAL = 0,
 	FIRE = 1,
 	COLD = 2,
 	LIGHTNING = 3,
 	POISON = 4,
-	CHAOS = 5,
-	PURE = 6
+	ARCANE = 5,
+	BLEED = 6,
+	PURE = 7
 }
 
 ## Hitbox shapes for melee attacks
@@ -65,7 +67,8 @@ static func damage_type_from_string(s: String) -> DamageType:
 		"cold": return DamageType.COLD
 		"lightning": return DamageType.LIGHTNING
 		"poison": return DamageType.POISON
-		"chaos": return DamageType.CHAOS
+		"arcane": return DamageType.ARCANE
+		"bleed": return DamageType.BLEED
 		"pure": return DamageType.PURE
 		_: return DamageType.PHYSICAL
 
@@ -77,7 +80,8 @@ static func damage_type_to_string(d: DamageType) -> String:
 		DamageType.COLD: return "cold"
 		DamageType.LIGHTNING: return "lightning"
 		DamageType.POISON: return "poison"
-		DamageType.CHAOS: return "chaos"
+		DamageType.ARCANE: return "arcane"
+		DamageType.BLEED: return "bleed"
 		DamageType.PURE: return "pure"
 		_: return "physical"
 
@@ -110,7 +114,8 @@ static func get_damage_type_color(damage_type: DamageType) -> Color:
 		DamageType.COLD: return Color(0.4, 0.7, 1.0)       # Ice blue
 		DamageType.LIGHTNING: return Color(1.0, 1.0, 0.3)  # Bright yellow
 		DamageType.POISON: return Color(0.3, 0.8, 0.2)     # Green
-		DamageType.CHAOS: return Color(0.7, 0.2, 0.9)      # Purple
+		DamageType.ARCANE: return Color(0.7, 0.3, 1.0)     # Purple
+		DamageType.BLEED: return Color(0.8, 0.1, 0.1)      # Dark red
 		DamageType.PURE: return Color(1.0, 1.0, 1.0)       # White
 		_: return Color(0.8, 0.8, 0.8)
 
