@@ -10,11 +10,6 @@ const POPUP_WIDTH := 280
 const POPUP_MIN_HEIGHT_PCT := 0.45  # 45% of viewport - ensures decent size
 const POPUP_MAX_HEIGHT_PCT := 0.75  # 75% of viewport
 
-## Colors - use UITheme for consistency + additional skill-specific colors
-const COLOR_MANA := Color(0.4, 0.6, 1.0)
-const COLOR_STAMINA := Color(0.4, 1.0, 0.6)
-const COLOR_REQUIREMENT_UNMET := Color(1.0, 0.4, 0.4)
-
 #===============================================================================
 # STATE
 #===============================================================================
@@ -157,9 +152,9 @@ func _update_content(talent: TalentData) -> void:
 
 		# Costs
 		if talent.mana_cost > 0:
-			add_stat_row(_stats_container, "Mana Cost", str(int(talent.mana_cost)), COLOR_MANA)
+			add_stat_row(_stats_container, "Mana Cost", str(int(talent.mana_cost)), UITheme.COLOR_MANA)
 		if talent.stamina_cost > 0:
-			add_stat_row(_stats_container, "Stamina Cost", str(int(talent.stamina_cost)), COLOR_STAMINA)
+			add_stat_row(_stats_container, "Stamina Cost", str(int(talent.stamina_cost)), UITheme.COLOR_STAMINA)
 		if talent.cooldown > 0:
 			add_stat_row(_stats_container, "Cooldown", "%.1fs" % talent.cooldown, UITheme.COLOR_SELECTED)
 
@@ -176,7 +171,7 @@ func _update_content(talent: TalentData) -> void:
 			var weapon_cat := Inventory.get_equipped_weapon_category()
 			var is_met := talent.matches_weapon_category(weapon_cat)
 			var req_text := _get_weapon_category_display_name(talent.required_weapon_category)
-			var req_color := UITheme.COLOR_LEARNED if is_met else COLOR_REQUIREMENT_UNMET
+			var req_color := UITheme.COLOR_LEARNED if is_met else UITheme.COLOR_REQUIREMENT_UNMET
 			add_stat_row(_stats_container, "Requires", req_text, req_color)
 
 		# Rank effect
