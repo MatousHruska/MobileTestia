@@ -4,7 +4,7 @@ class_name ChestMenu
 ## Two-column layout: Chest Contents | Backpack
 ## Uses ItemPopup for item details (no details column)
 ## Supports drag & drop for moving items between chest and inventory
-## Gold appears as a draggable slot that adds to player gold when dropped on backpack
+## Gold appears as a regular slot item that converts to currency when looted
 
 ## Number of slots in a chest
 const CHEST_SLOT_COUNT: int = 6
@@ -32,8 +32,7 @@ signal chest_closed
 
 ## References to the chest being viewed
 var current_chest: ChestBase = null
-var chest_contents: Array[Dictionary] = []  # {item: ItemData, quantity: int}
-var chest_gold_amount: int = 0  # Gold in the chest
+var chest_contents: Array[Dictionary] = []  # {item: ItemData, quantity: int} or {is_gold: true, amount: int}
 
 ## UI References
 var menu_panel: Panel = null
@@ -41,7 +40,6 @@ var main_hbox: HBoxContainer
 var chest_container: GridContainer
 var backpack_container: GridContainer
 var backpack_scroll: ScrollContainer
-var gold_slot: ChestGoldSlot = null  # Draggable gold slot
 var player_gold_label: Label = null  # Player's current gold in backpack header
 var loot_all_button: Button
 var close_button: Button
@@ -58,6 +56,9 @@ var _popup_layer: CanvasLayer = null
 ## Selection state
 var selected_source: String = ""  # "chest" or "backpack"
 var selected_index: int = -1
+
+## Gold animation
+var _gold_popup_label: Label = null
 
 
 func _ready() -> void:
@@ -217,24 +218,18 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 	chest_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	chest_vbox.add_child(chest_header)
 
-	# Center container for chest grid + gold
+	# Center container for chest grid
 	var center := CenterContainer.new()
 	center.name = "ChestCenter"
 	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	chest_vbox.add_child(center)
 
-	# VBox for grid + gold slot
-	var grid_vbox := VBoxContainer.new()
-	grid_vbox.name = "GridVBox"
-	UITheme.setup_vbox(grid_vbox, UITheme.SEPARATION_NORMAL)
-	center.add_child(grid_vbox)
-
-	# 3x2 Grid for chest items
+	# 3x2 Grid for chest items (including gold as a slot)
 	chest_container = GridContainer.new()
 	chest_container.name = "ChestGrid"
 	chest_container.columns = CHEST_COLUMNS
 	UITheme.setup_grid(chest_container, _get_slot_separation(), _get_slot_separation())
-	grid_vbox.add_child(chest_container)
+	center.add_child(chest_container)
 
 	# Create chest slots
 	for i in CHEST_SLOT_COUNT:
@@ -248,16 +243,6 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 		slot.drag_ended.connect(_on_drag_ended)
 		chest_container.add_child(slot)
 		chest_slots.append(slot)
-
-	# Gold slot (draggable) - centered
-	var gold_center := CenterContainer.new()
-	gold_center.name = "GoldCenter"
-	grid_vbox.add_child(gold_center)
-
-	gold_slot = ChestGoldSlot.new()
-	gold_slot.name = "GoldSlot"
-	gold_slot.visible = false
-	gold_center.add_child(gold_slot)
 
 	# Loot All button
 	loot_all_button = Button.new()
@@ -276,10 +261,6 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	backpack_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	backpack_panel.add_theme_stylebox_override("panel", UITheme.create_panel_style())
 	parent.add_child(backpack_panel)
-
-	# Make backpack panel accept gold drops
-	backpack_panel.set_script(preload("res://scripts/ui/chest/backpack_drop_zone.gd"))
-	backpack_panel.set_meta("chest_menu", self)
 
 	var backpack_margin := UITheme.create_margin_container()
 	backpack_panel.add_child(backpack_margin)
@@ -389,18 +370,20 @@ func open_chest(chest: ChestBase, contents: Dictionary) -> void:
 
 	# Populate with generated items
 	var items: Array = contents.get("items", [])
+	var slot_index := 0
 	for i in mini(items.size(), CHEST_SLOT_COUNT):
 		if items[i] is ItemData:
-			chest_contents[i] = {item = items[i], quantity = 1}
+			chest_contents[slot_index] = {item = items[i], quantity = 1}
+			slot_index += 1
+
+	# Add gold as a slot item (if any) in the next available slot
+	var gold_amount: int = contents.get("gold", 0)
+	if gold_amount > 0 and slot_index < CHEST_SLOT_COUNT:
+		chest_contents[slot_index] = {is_gold = true, amount = gold_amount}
 
 	# Set chest title
 	if title_label:
 		title_label.text = "%s Chest" % ChestBase.TIER_NAMES[chest.chest_tier]
-
-	# Set chest gold
-	chest_gold_amount = contents.get("gold", 0)
-	if gold_slot:
-		gold_slot.set_gold(chest_gold_amount)
 
 	# Reset selection
 	_deselect_all()
@@ -422,17 +405,18 @@ func close_menu() -> void:
 	# Store remaining items back in chest for respawn
 	if current_chest:
 		var remaining_items: Array[ItemData] = []
+		var remaining_gold: int = 0
 		for slot in chest_contents:
-			if not slot.is_empty():
+			if slot.get("is_gold", false):
+				remaining_gold = slot.get("amount", 0)
+			elif not slot.is_empty() and slot.has("item"):
 				remaining_items.append(slot.item)
-		# Store for persistence if needed
 		current_chest.set_meta("remaining_items", remaining_items)
-		current_chest.set_meta("remaining_gold", chest_gold_amount)
+		current_chest.set_meta("remaining_gold", remaining_gold)
 
 	visible = false
 	current_chest = null
 	chest_contents.clear()
-	chest_gold_amount = 0
 	_deselect_all()
 	chest_closed.emit()
 	Debug.info("UI", "Chest menu closed")
@@ -442,11 +426,15 @@ func _refresh_chest_slots() -> void:
 	for i in chest_slots.size():
 		var slot_ui: InventorySlot = chest_slots[i]
 		if i < chest_contents.size():
-			var item_data: Dictionary = chest_contents[i]
-			if item_data.is_empty():
+			var slot_data: Dictionary = chest_contents[i]
+			if slot_data.is_empty():
 				slot_ui.clear_item()
+			elif slot_data.get("is_gold", false):
+				# Gold slot
+				slot_ui.set_gold(slot_data.get("amount", 0))
 			else:
-				slot_ui.set_item(item_data.item, item_data.quantity)
+				# Regular item
+				slot_ui.set_item(slot_data.item, slot_data.quantity)
 		else:
 			slot_ui.clear_item()
 
@@ -504,19 +492,54 @@ func _has_inventory_space() -> bool:
 
 
 #===============================================================================
-# GOLD HANDLING
+# GOLD ANIMATION
 #===============================================================================
 
-## Called when gold is dropped on the backpack area
-func collect_gold() -> void:
-	if chest_gold_amount > 0:
-		Inventory.add_gold(chest_gold_amount)
-		gold_looted.emit(chest_gold_amount)
-		Debug.info("Chest", "Collected %d gold" % chest_gold_amount)
-		chest_gold_amount = 0
-		if gold_slot:
-			gold_slot.clear_gold()
-		_update_labels()
+func _show_gold_collected_animation(amount: int, from_pos: Vector2) -> void:
+	## Show floating "+X Gold" text that rises and fades
+	var label := Label.new()
+	label.text = "+%d" % amount
+	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_TITLE)
+	label.add_theme_color_override("font_color", UITheme.COLOR_GOLD)
+	label.position = from_pos - Vector2(20, 10)
+	label.z_index = 100
+	add_child(label)
+
+	# Animate: rise up and fade out
+	var tween := create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "position:y", label.position.y - 40, 0.8).set_ease(Tween.EASE_OUT)
+	tween.tween_property(label, "modulate:a", 0.0, 0.8).set_delay(0.3)
+	tween.chain().tween_callback(label.queue_free)
+
+
+func _collect_gold_from_slot(chest_index: int, trigger_pos: Vector2 = Vector2.ZERO) -> void:
+	## Collect gold from a chest slot and add to player inventory
+	if chest_index < 0 or chest_index >= chest_contents.size():
+		return
+
+	var slot_data: Dictionary = chest_contents[chest_index]
+	if not slot_data.get("is_gold", false):
+		return
+
+	var amount: int = slot_data.get("amount", 0)
+	if amount <= 0:
+		return
+
+	# Add gold to player
+	Inventory.add_gold(amount)
+	gold_looted.emit(amount)
+
+	# Clear the chest slot
+	chest_contents[chest_index] = {}
+
+	# Show animation
+	var anim_pos := trigger_pos
+	if anim_pos == Vector2.ZERO and player_gold_label:
+		anim_pos = player_gold_label.global_position
+	_show_gold_collected_animation(amount, anim_pos)
+
+	Debug.info("Chest", "Collected %d gold" % amount)
 
 
 #===============================================================================
@@ -526,11 +549,24 @@ func collect_gold() -> void:
 func _on_chest_slot_pressed(slot: InventorySlot) -> void:
 	var index := slot.backpack_index
 
-	# Select chest item and show popup
-	if index < chest_contents.size() and not chest_contents[index].is_empty():
-		selected_source = "chest"
-		selected_index = index
-		_show_item_popup(slot)
+	if index < chest_contents.size():
+		var slot_data: Dictionary = chest_contents[index]
+
+		# If it's gold, collect it on tap
+		if slot_data.get("is_gold", false):
+			var slot_center := slot.global_position + slot.size / 2
+			_collect_gold_from_slot(index, slot_center)
+			_refresh_chest_slots()
+			_update_labels()
+			return
+
+		# Otherwise select item and show popup
+		if not slot_data.is_empty() and slot_data.has("item"):
+			selected_source = "chest"
+			selected_index = index
+			_show_item_popup(slot)
+		else:
+			_deselect_all()
 	else:
 		_deselect_all()
 
@@ -558,7 +594,7 @@ func _show_item_popup(slot: InventorySlot) -> void:
 	var item: ItemData = null
 	if selected_source == "chest" and selected_index >= 0:
 		var chest_slot: Dictionary = chest_contents[selected_index]
-		if not chest_slot.is_empty():
+		if not chest_slot.is_empty() and chest_slot.has("item"):
 			item = chest_slot.item
 	elif selected_source == "backpack" and selected_index >= 0:
 		var bp_slot: Dictionary = Inventory.get_backpack_item(selected_index)
@@ -585,11 +621,20 @@ func _on_item_dropped_to_chest(from_slot: InventorySlot, to_slot: InventorySlot)
 	## Handle drop onto a chest slot
 	var to_index := to_slot.backpack_index
 
+	# Don't allow dropping onto gold slot
+	if to_index < chest_contents.size() and chest_contents[to_index].get("is_gold", false):
+		return
+
 	# Determine source
 	if from_slot in chest_slots:
-		# Chest to Chest swap
 		var from_index := from_slot.backpack_index
-		_swap_chest_slots(from_index, to_index)
+
+		# If dragging gold within chest, just swap positions
+		if from_index < chest_contents.size() and chest_contents[from_index].get("is_gold", false):
+			_swap_chest_slots(from_index, to_index)
+		else:
+			# Chest to Chest swap
+			_swap_chest_slots(from_index, to_index)
 	else:
 		# Backpack to Chest
 		var from_index := from_slot.backpack_index
@@ -606,9 +651,16 @@ func _on_item_dropped_to_backpack(from_slot: InventorySlot, to_slot: InventorySl
 
 	# Determine source
 	if from_slot in chest_slots:
-		# Chest to Backpack (loot)
 		var from_index := from_slot.backpack_index
-		_move_chest_to_backpack(from_index, to_index)
+
+		# Check if this is gold being dropped
+		if from_index < chest_contents.size() and chest_contents[from_index].get("is_gold", false):
+			# Collect gold instead of moving to inventory
+			var slot_center := to_slot.global_position + to_slot.size / 2
+			_collect_gold_from_slot(from_index, slot_center)
+		else:
+			# Chest to Backpack (loot item)
+			_move_chest_to_backpack(from_index, to_index)
 	else:
 		# Backpack to Backpack swap
 		var from_index := from_slot.backpack_index
@@ -639,12 +691,16 @@ func _move_chest_to_backpack(chest_index: int, backpack_index: int) -> void:
 		return
 
 	var chest_slot: Dictionary = chest_contents[chest_index]
+
+	# Don't move gold as an item - it should be collected
+	if chest_slot.get("is_gold", false):
+		return
+
 	var backpack_slot: Dictionary = Inventory.get_backpack_item(backpack_index)
 
 	if backpack_slot.is_empty():
 		# Just move chest item to backpack
-		if not chest_slot.is_empty():
-			# Add to specific backpack slot by clearing and setting
+		if not chest_slot.is_empty() and chest_slot.has("item"):
 			Inventory.backpack[backpack_index] = {item = chest_slot.item, quantity = chest_slot.quantity, charges = 0}
 			chest_contents[chest_index] = {}
 			Inventory.inventory_changed.emit()
@@ -652,7 +708,7 @@ func _move_chest_to_backpack(chest_index: int, backpack_index: int) -> void:
 	else:
 		# Swap: backpack item goes to chest, chest item goes to backpack
 		chest_contents[chest_index] = {item = backpack_slot.item, quantity = backpack_slot.quantity}
-		if chest_slot.is_empty():
+		if chest_slot.is_empty() or not chest_slot.has("item"):
 			Inventory.backpack[backpack_index] = {}
 		else:
 			Inventory.backpack[backpack_index] = {item = chest_slot.item, quantity = chest_slot.quantity, charges = 0}
@@ -669,6 +725,10 @@ func _move_backpack_to_chest(backpack_index: int, chest_index: int) -> void:
 
 	var backpack_slot: Dictionary = Inventory.get_backpack_item(backpack_index)
 	var chest_slot: Dictionary = chest_contents[chest_index]
+
+	# Don't allow swapping with gold
+	if chest_slot.get("is_gold", false):
+		return
 
 	if chest_slot.is_empty():
 		# Just move backpack item to chest
@@ -705,22 +765,29 @@ func _on_drag_ended(_slot: InventorySlot) -> void:
 #===============================================================================
 
 func _on_loot_all_pressed() -> void:
-	# Loot gold first
-	if chest_gold_amount > 0:
-		Inventory.add_gold(chest_gold_amount)
-		gold_looted.emit(chest_gold_amount)
-		Debug.info("Chest", "Looted %d gold" % chest_gold_amount)
-		chest_gold_amount = 0
-		if gold_slot:
-			gold_slot.clear_gold()
-
-	# Loot all items
+	# Loot all items and gold
 	var looted_count := 0
 	var failed_count := 0
 
 	for i in chest_contents.size():
 		var slot: Dictionary = chest_contents[i]
 		if slot.is_empty():
+			continue
+
+		# Handle gold
+		if slot.get("is_gold", false):
+			var amount: int = slot.get("amount", 0)
+			if amount > 0:
+				Inventory.add_gold(amount)
+				gold_looted.emit(amount)
+				if player_gold_label:
+					_show_gold_collected_animation(amount, player_gold_label.global_position)
+				chest_contents[i] = {}
+				looted_count += 1
+			continue
+
+		# Handle items
+		if not slot.has("item"):
 			continue
 
 		if not _has_inventory_space():
@@ -751,7 +818,7 @@ func _on_loot_all_pressed() -> void:
 			has_items = true
 			break
 
-	if not has_items and chest_gold_amount <= 0:
+	if not has_items:
 		if current_chest:
 			current_chest.current_state = ChestBase.ChestState.LOOTED
 			current_chest._on_chest_looted()

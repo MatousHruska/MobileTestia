@@ -31,6 +31,10 @@ var is_selected: bool = false
 var is_blocked: bool = false
 var is_drag_target: bool = false  # Currently hovered during drag
 
+## Gold display mode (for chest gold)
+var is_gold_display: bool = false
+var gold_amount: int = 0
+
 ## Ghost icon labels for empty equipment slots
 const GHOST_ICONS: Dictionary = {
 	ItemData.EquipSlot.HEAD: "H",
@@ -146,11 +150,34 @@ func clear_item() -> void:
 	current_item = null
 	current_quantity = 0
 	current_charges = 0
+	is_gold_display = false
+	gold_amount = 0
+	refresh_display()
+
+
+func set_gold(amount: int) -> void:
+	## Display gold instead of an item (for chest gold slots)
+	current_item = null
+	current_quantity = 0
+	current_charges = 0
+	is_gold_display = true
+	gold_amount = amount
 	refresh_display()
 
 
 func refresh_display() -> void:
-	if current_item:
+	if is_gold_display and gold_amount > 0:
+		# Show gold display
+		icon_rect.texture = null
+		icon_rect.visible = false
+		ghost_label.text = "G"
+		ghost_label.modulate = UITheme.COLOR_GOLD
+		ghost_label.visible = true
+		quantity_label.text = str(gold_amount)
+		quantity_label.modulate = UITheme.COLOR_GOLD
+		quantity_label.visible = true
+		rarity_border.color = UITheme.COLOR_GOLD
+	elif current_item:
 		# Show item
 		icon_rect.texture = current_item.icon
 		icon_rect.visible = true
@@ -228,7 +255,19 @@ func _on_pressed() -> void:
 ## DRAG & DROP SUPPORT
 
 func _get_drag_data(_at_position: Vector2) -> Variant:
-	## Called when drag starts - return data if this slot has an item
+	## Called when drag starts - return data if this slot has an item or gold
+
+	# Handle gold display mode
+	if is_gold_display and gold_amount > 0:
+		var label := Label.new()
+		label.text = "%d Gold" % gold_amount
+		label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
+		label.add_theme_color_override("font_color", UITheme.COLOR_GOLD)
+		set_drag_preview(label)
+		modulate = UITheme.COLOR_LOCKED
+		drag_started.emit(self)
+		return self
+
 	if current_item == null:
 		return null
 
