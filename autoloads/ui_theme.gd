@@ -50,6 +50,11 @@ const DEFAULTS := {
 	"color_xp_bar": "0.3,0.6,0.9,1.0",
 	"color_debuff": "0.6,0.1,0.1,0.9",
 	"color_drag_highlight": "0.5,1.0,0.5,1.0",
+	# Resource colors (for stats, costs, etc.)
+	"color_life": "0.9,0.3,0.3,1.0",
+	"color_mana": "0.4,0.6,1.0,1.0",
+	"color_stamina": "0.4,1.0,0.6,1.0",
+	"color_requirement_unmet": "1.0,0.4,0.4,1.0",
 	# Font sizes
 	"font_size_title": 18,
 	"font_size_large": 16,
@@ -218,6 +223,18 @@ var COLOR_DEBUFF: Color:
 
 var COLOR_DRAG_HIGHLIGHT: Color:
 	get: return get_color("color_drag_highlight")
+
+var COLOR_LIFE: Color:
+	get: return get_color("color_life")
+
+var COLOR_MANA: Color:
+	get: return get_color("color_mana")
+
+var COLOR_STAMINA: Color:
+	get: return get_color("color_stamina")
+
+var COLOR_REQUIREMENT_UNMET: Color:
+	get: return get_color("color_requirement_unmet")
 
 #===============================================================================
 # SIZE PROPERTIES
