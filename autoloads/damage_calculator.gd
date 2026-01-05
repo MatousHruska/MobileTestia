@@ -203,7 +203,7 @@ func apply_damage_reduction(incoming_damage: float, damage_type: int, attacker_l
 	match damage_type:
 		DamageType.PHYSICAL, DamageType.BLEED:
 			return calculate_armor_reduction(incoming_damage, attacker_level)
-		DamageType.TRUE:
+		DamageType.PURE:
 			return incoming_damage  # True damage ignores all reduction
 		_:
 			# All elemental damage uses magic resistance
@@ -265,7 +265,7 @@ static func get_damage_type_name(damage_type: int) -> String:
 		DamageType.SHADOW: return "Shadow"
 		DamageType.BLEED: return "Bleed"
 		DamageType.NATURE: return "Nature"
-		DamageType.TRUE: return "True"
+		DamageType.PURE: return "Pure"
 		_: return "Unknown"
 
 
@@ -282,7 +282,7 @@ static func get_damage_type_color(damage_type: int) -> Color:
 		DamageType.SHADOW: return Color(0.5, 0.2, 0.6)  # Dark purple
 		DamageType.BLEED: return Color(0.8, 0.1, 0.1)  # Dark red
 		DamageType.NATURE: return Color(0.4, 0.7, 0.3)  # Forest green
-		DamageType.TRUE: return Color(1.0, 1.0, 1.0)  # Pure white
+		DamageType.PURE: return Color(1.0, 1.0, 1.0)  # Pure white (ignores armor/resist)
 		_: return Color.WHITE
 
 
@@ -362,7 +362,7 @@ func calculate_enemy_damage_taken(incoming_damage: float, enemy_armor: float, en
 		DamageType.PHYSICAL, DamageType.BLEED:
 			var reduction := enemy_armor / (enemy_armor + k * attacker_level)
 			return maxf(incoming_damage * (1.0 - reduction), 1.0)
-		DamageType.TRUE:
+		DamageType.PURE:
 			return incoming_damage
 		_:
 			var reduction := enemy_magic_resist / (enemy_magic_resist + k * attacker_level)
