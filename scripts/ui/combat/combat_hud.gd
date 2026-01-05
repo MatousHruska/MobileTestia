@@ -394,12 +394,14 @@ func _create_buttons() -> void:
 	add_child(quick_slot_button)
 
 	# Interact button (standard Button, hidden by default) - Level 2 Header
+	# Uses anchor-based layout for dynamic scaling (Center Right preset)
 	interact_button = Button.new()
 	interact_button.name = "InteractButton"
 	interact_button.text = "Interact"
 	interact_button.visible = false
-	interact_button.custom_minimum_size = config.interact_size
 	interact_button.alignment = HORIZONTAL_ALIGNMENT_LEFT  # Text stretches to the left
+	interact_button.grow_horizontal = Control.GROW_DIRECTION_BEGIN  # Grow left
+	interact_button.grow_vertical = Control.GROW_DIRECTION_BOTH  # Grow both directions
 	interact_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	interact_button.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
 	interact_button.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
@@ -507,14 +509,26 @@ func _layout_buttons() -> void:
 	dodge_button.position = dodge_pos - Vector2(scaled_dodge_radius, scaled_dodge_radius)
 	quick_slot_button.position = quick_slot_pos - Vector2(scaled_quick_slot_radius, scaled_quick_slot_radius)
 
-	# Position interact button - above primary controls, right-aligned to attack button edge
-	var scaled_interact_size := config.interact_size * scale_factor
-	var interact_pos := Vector2(
-		attack_pos.x + scaled_attack_radius - scaled_interact_size.x,  # Right edge aligned with attack
-		attack_pos.y - scaled_attack_radius - min_gap - scaled_interact_size.y - 100.0 * scale_factor  # Higher above primary controls
-	)
-	interact_button.position = interact_pos
-	interact_button.custom_minimum_size = scaled_interact_size
+	# Position interact button using anchors (Center Right preset with dynamic offsets)
+	# Anchors: right edge of screen, vertically centered relative to primary controls
+	interact_button.anchor_left = 1.0
+	interact_button.anchor_top = 0.5
+	interact_button.anchor_right = 1.0
+	interact_button.anchor_bottom = 0.5
+
+	# Scale offsets dynamically (base values at 720p: left=-147, top=-17, right=0, bottom=18)
+	var interact_offset_left := -147.0 * scale_factor
+	var interact_offset_top := -17.0 * scale_factor
+	var interact_offset_right := 0.0
+	var interact_offset_bottom := 18.0 * scale_factor
+
+	interact_button.offset_left = interact_offset_left
+	interact_button.offset_top = interact_offset_top
+	interact_button.offset_right = interact_offset_right
+	interact_button.offset_bottom = interact_offset_bottom
+
+	# Scale minimum size
+	interact_button.custom_minimum_size = config.interact_size * scale_factor
 
 
 func _notification(what: int) -> void:
