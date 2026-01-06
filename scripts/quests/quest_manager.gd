@@ -95,6 +95,7 @@ var _debug_stats: Dictionary = {
 #===============================================================================
 
 func _ready() -> void:
+	add_to_group("saveable")  # Register for auto-discovery save system
 	Debug.info("Quest", "QuestManager initialized")
 	_connect_game_signals()
 	_load_persisted_state()
@@ -1149,8 +1150,17 @@ class QuestState:
 
 
 #===============================================================================
-# SAVE SYSTEM PERSISTENCE (for SaveManager)
+# SAVE SYSTEM PERSISTENCE (Saveable interface)
 #===============================================================================
+
+func get_save_key() -> String:
+	return "quest_data"
+
+
+func get_save_priority() -> int:
+	## Load after world state for proper objective tracking
+	return 50
+
 
 func get_save_data() -> Dictionary:
 	## Get all quest data for saving to file

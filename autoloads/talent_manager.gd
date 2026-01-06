@@ -42,6 +42,7 @@ var _talent_cache: Dictionary = {}
 
 
 func _ready() -> void:
+	add_to_group("saveable")  # Register for auto-discovery save system
 	Debug.info("Talents", "TalentManager initialized")
 
 	# Initialize skill bindings array
@@ -465,10 +466,18 @@ func get_total_stat_bonuses() -> Dictionary:
 
 
 #===============================================================================
-# PERSISTENCE
+# PERSISTENCE (Saveable interface)
 #===============================================================================
 
-## Get save data for persistence
+func get_save_key() -> String:
+	return "talent_data"
+
+
+func get_save_priority() -> int:
+	## Load after PlayerStats but before Inventory
+	return 20
+
+
 func get_save_data() -> Dictionary:
 	return {
 		"invested_talents": invested_talents.duplicate(),
