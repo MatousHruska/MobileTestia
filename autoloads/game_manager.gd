@@ -203,14 +203,26 @@ func game_over() -> void:
 
 ## Zone management
 func change_zone(zone_path: String, spawn_id: String = "default") -> void:
-	Debug.info("System", "Zone change requested", [zone_path, "spawn:", spawn_id])
+	Debug.info("System", "change_zone() called", {
+		"zone_path": zone_path,
+		"spawn_id": spawn_id,
+		"state_before": GameState.keys()[current_state],
+		"tree_paused_before": get_tree().paused
+	})
 	spawn_point_id = spawn_id
 	current_state = GameState.LOADING
+	Debug.info("System", "change_zone() set state to LOADING, scheduling _load_zone")
 
 	# Use call_deferred to allow current frame to finish
 	call_deferred("_load_zone", zone_path)
 
 func _load_zone(zone_path: String) -> void:
+	Debug.info("System", "_load_zone() executing", {
+		"zone_path": zone_path,
+		"state": GameState.keys()[current_state],
+		"tree_paused": get_tree().paused,
+		"player_valid": is_player_valid()
+	})
 	Debug.perf_start("zone_load")
 	var error := get_tree().change_scene_to_file(zone_path)
 	if error != OK:
@@ -219,6 +231,11 @@ func _load_zone(zone_path: String) -> void:
 	current_zone = zone_path.get_file().get_basename()
 	zone_changed.emit(current_zone)
 	Debug.perf_end("zone_load")
+	Debug.info("System", "_load_zone() completed", {
+		"zone": current_zone,
+		"state_after": GameState.keys()[current_state],
+		"tree_paused_after": get_tree().paused
+	})
 
 
 ## Utility
