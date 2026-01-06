@@ -85,4 +85,7 @@
   "separation_grid": 4,
   "cast_bar_height": 20,
   "cast_bar_width": 80
+  "cast_bar_height": 16,
+  "cast_bar_width": 200,
+  "cast_bar_y_percent": 0.38
 }
