@@ -316,6 +316,32 @@ var SEPARATION_GRID: int:
 
 
 #===============================================================================
+# CAST BAR PROPERTIES
+#===============================================================================
+
+var COLOR_CAST_BAR_BG: Color:
+	get: return get_color("color_cast_bar_bg")
+
+var COLOR_CAST_BAR_FILL: Color:
+	get: return get_color("color_cast_bar_fill")
+
+var COLOR_CAST_BAR_BORDER: Color:
+	get: return get_color("color_cast_bar_border")
+
+var COLOR_CAST_BAR_TEXT: Color:
+	get: return get_color("color_cast_bar_text")
+
+var COLOR_CAST_BAR_INTERRUPTED: Color:
+	get: return get_color("color_cast_bar_interrupted")
+
+var CAST_BAR_HEIGHT: int:
+	get: return get_int("cast_bar_height")
+
+var CAST_BAR_WIDTH: int:
+	get: return get_int("cast_bar_width")
+
+
+#===============================================================================
 # STYLEBOX FACTORY METHODS
 #===============================================================================
 
