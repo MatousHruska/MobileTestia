@@ -125,7 +125,7 @@
       "name": "of Regeneration",
       "type": "suffix",
       "stat_modifier": "life_regen",
-      "min_value": 0,5,
+      "min_value": 0.5,
       "max_value": 1,
       "spawn_weight": 80,
       "item_level_min": 1,
