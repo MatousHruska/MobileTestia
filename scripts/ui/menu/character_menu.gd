@@ -519,8 +519,12 @@ func close_menu() -> void:
 	Inventory.exit_swap_mode()
 	Inventory.deselect()
 
-	# Resume game
-	Game.close_character_menu()
+	# Resume game - use direct unpause in case state has changed during load
+	if Game.current_state == Game.GameState.CHARACTER_MENU:
+		Game.close_character_menu()
+	else:
+		# State already changed (e.g., during load), just ensure tree is unpaused
+		get_tree().paused = false
 
 	menu_closed.emit()
 	Debug.info("UI", "Character menu closed")
