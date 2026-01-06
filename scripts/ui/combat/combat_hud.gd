@@ -1029,10 +1029,20 @@ func _fire_magic_projectile_instant(slot_index: int, talent: TalentData) -> void
 #===============================================================================
 
 func _start_casting_self_buff(slot_index: int, talent: TalentData) -> void:
-	## Start casting a self-buff spell with cast time
+	## Start casting a self-buff spell with cast time using PlayerController's cast system
 	print("[CAST] _start_casting_self_buff called for %s" % talent.talent_name)
 
 	if not player:
+		return
+
+	# Get cast parameters from talent database
+	var can_move := talent.can_move_while_casting
+	var interrupt_on_damage := talent.interrupt_on_damage
+	var cast_time := get_cast_time(talent)
+
+	# Try to start casting via PlayerController (which emits signals for CastBar)
+	if not player.start_cast(talent.id, cast_time, can_move, interrupt_on_damage):
+		Debug.log("Combat", "Failed to start self-buff cast: %s" % talent.talent_name)
 		return
 
 	# Consume resources immediately
@@ -1041,41 +1051,59 @@ func _start_casting_self_buff(slot_index: int, talent: TalentData) -> void:
 	if talent.stamina_cost > 0:
 		PlayerStats.use_stamina(talent.stamina_cost)
 
-	# Set up casting state (reuse the same casting variables)
-	is_casting = true
+	# Store casting info for completion handling
 	casting_slot_index = slot_index
 	casting_talent = talent
-	cast_start_time = Time.get_ticks_msec() / 1000.0
-	# Self-buff doesn't need direction
-	cast_direction = Vector2.ZERO
 
-	print("[CAST] Self-buff casting started: cast_time=%s" % talent.cast_time)
+	# Connect to cast_completed signal (one-shot)
+	if not player.cast_completed.is_connected(_on_self_buff_cast_completed):
+		player.cast_completed.connect(_on_self_buff_cast_completed)
+	if not player.cast_interrupted.is_connected(_on_self_buff_cast_interrupted):
+		player.cast_interrupted.connect(_on_self_buff_cast_interrupted)
+
+	print("[CAST] Self-buff casting started via PlayerController: cast_time=%s" % cast_time)
+
+
+func _on_self_buff_cast_completed(skill_id: String) -> void:
+	## Called when PlayerController completes a cast
+	if not casting_talent or casting_talent.id != skill_id:
+		return
+
+	# Only handle self-buff completions here
+	if casting_talent.effect_type != TalentData.EffectType.SELF_BUFF:
+		return
+
+	# Apply the buff
+	_apply_self_buff(casting_talent)
+
+	# Start cooldown
+	if casting_talent.cooldown > 0:
+		if casting_slot_index == -1:
+			attack_button.start_cooldown(casting_talent.cooldown)
+		elif casting_slot_index >= 0 and casting_slot_index < ability_slots.size():
+			ability_slots[casting_slot_index].start_cooldown(casting_talent.cooldown)
+
+	# Clean up
+	_end_casting()
+
+
+func _on_self_buff_cast_interrupted(skill_id: String, _reason: String) -> void:
+	## Called when PlayerController's cast is interrupted
+	if not casting_talent or casting_talent.id != skill_id:
+		return
+
+	# Only handle self-buff interruptions here
+	if casting_talent.effect_type != TalentData.EffectType.SELF_BUFF:
+		return
+
+	# Clean up without applying buff
+	_end_casting()
 
 
 func _update_self_buff_casting() -> void:
-	## Update self-buff casting state - check completion
-	if not is_casting or not casting_talent:
-		return
-
-	# Self-buffs don't update direction
-
-	# Check if cast time has completed
-	var current_time := Time.get_ticks_msec() / 1000.0
-	var elapsed := current_time - cast_start_time
-
-	if elapsed >= casting_talent.cast_time:
-		# Cast complete, apply the buff
-		_apply_self_buff(casting_talent)
-
-		# Start cooldown
-		if casting_talent.cooldown > 0:
-			if casting_slot_index == -1:
-				attack_button.start_cooldown(casting_talent.cooldown)
-			elif casting_slot_index >= 0 and casting_slot_index < ability_slots.size():
-				ability_slots[casting_slot_index].start_cooldown(casting_talent.cooldown)
-
-		# End casting
-		_end_casting()
+	## Self-buff casting is now handled by PlayerController signals
+	## This method is kept for compatibility but does nothing
+	pass
 
 
 func _apply_self_buff_instant(slot_index: int, talent: TalentData) -> void:

@@ -661,6 +661,8 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "StatusEffects", 11, "TRUE,FALSE"     ' show_in_hud
     ApplyListValidation "EnemyAbilities", 21, "TRUE,FALSE"    ' cardinal_only
     ApplyListValidation "Cutscenes", 6, "TRUE,FALSE"          ' once_only
+    ApplyListValidation "Talents", 43, "TRUE,FALSE"           ' can_move_while_casting
+    ApplyListValidation "Talents", 44, "TRUE,FALSE"           ' interrupt_on_damage
 End Sub
 
 '-------------------------------------------------------------------------------
