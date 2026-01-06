@@ -308,6 +308,9 @@ var SEPARATION_NORMAL: int:
 var SEPARATION_SMALL: int:
 	get: return get_int("separation_small")
 
+var SEPARATION_TINY: int:
+	get: return get_int("separation_tiny")
+
 var SEPARATION_GRID: int:
 	get: return get_int("separation_grid")
 

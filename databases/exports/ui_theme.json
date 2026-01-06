@@ -35,6 +35,7 @@
   "corner_radius_popup": 6,
   "separation_normal": 8,
   "separation_small": 4,
+  "separation_tiny": 2,
   "separation_grid": 4,
   "font_size_title": 18,
   "font_size_large": 16,
