@@ -178,13 +178,13 @@ Public Sub ExportChests()
         json = json & "      ""chest_type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_CH_TYPE), "loot"))) & """," & vbCrLf
         json = json & "      ""tier"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_CH_TIER), "wooden"))) & """," & vbCrLf
         json = json & "      ""zone_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_CH_ZONE_ID))) & """," & vbCrLf
-        json = json & "      ""spawn_chance"": " & GetDefaultNumeric(ws.Cells(i, COL_CH_SPAWN_CHANCE), 1) & "," & vbCrLf
-        json = json & "      ""fixed_gold"": " & GetDefaultNumeric(ws.Cells(i, COL_CH_FIXED_GOLD), 0) & "," & vbCrLf
+        json = json & "      ""spawn_chance"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_CH_SPAWN_CHANCE), 1)) & "," & vbCrLf
+        json = json & "      ""fixed_gold"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_CH_FIXED_GOLD), 0)) & "," & vbCrLf
         json = json & "      ""fixed_items"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_CH_FIXED_ITEMS))) & """," & vbCrLf
         json = json & "      ""loot_table_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_CH_LOOT_TABLE_ID))) & """," & vbCrLf
-        json = json & "      ""min_items"": " & GetDefaultNumeric(ws.Cells(i, COL_CH_MIN_ITEMS), 0) & "," & vbCrLf
-        json = json & "      ""max_items"": " & GetDefaultNumeric(ws.Cells(i, COL_CH_MAX_ITEMS), 2) & "," & vbCrLf
-        json = json & "      ""respawn_time"": " & GetDefaultNumeric(ws.Cells(i, COL_CH_RESPAWN_TIME), 300) & "," & vbCrLf
+        json = json & "      ""min_items"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_CH_MIN_ITEMS), 0)) & "," & vbCrLf
+        json = json & "      ""max_items"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_CH_MAX_ITEMS), 2)) & "," & vbCrLf
+        json = json & "      ""respawn_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_CH_RESPAWN_TIME), 300)) & "," & vbCrLf
         json = json & "      ""quest_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_CH_QUEST_ID))) & """" & vbCrLf
         json = json & "    }"
 

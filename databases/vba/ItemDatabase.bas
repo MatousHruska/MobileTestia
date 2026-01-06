@@ -347,11 +347,11 @@ Public Sub ExportAffixes()
         json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_AX_NAME))) & """," & vbCrLf
         json = json & "      ""type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_AX_TYPE)))) & """," & vbCrLf
         json = json & "      ""stat_modifier"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_AX_STAT_MODIFIER)))) & """," & vbCrLf
-        json = json & "      ""min_value"": " & GetDefaultNumeric(ws.Cells(i, COL_AX_MIN_VALUE)) & "," & vbCrLf
-        json = json & "      ""max_value"": " & GetDefaultNumeric(ws.Cells(i, COL_AX_MAX_VALUE)) & "," & vbCrLf
-        json = json & "      ""spawn_weight"": " & GetDefaultNumeric(ws.Cells(i, COL_AX_SPAWN_WEIGHT), 100) & "," & vbCrLf
-        json = json & "      ""item_level_min"": " & GetDefaultNumeric(ws.Cells(i, COL_AX_ITEM_LEVEL_MIN), 1) & "," & vbCrLf
-        json = json & "      ""item_level_max"": " & GetDefaultNumeric(ws.Cells(i, COL_AX_ITEM_LEVEL_MAX), 100) & "," & vbCrLf
+        json = json & "      ""min_value"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_AX_MIN_VALUE))) & "," & vbCrLf
+        json = json & "      ""max_value"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_AX_MAX_VALUE))) & "," & vbCrLf
+        json = json & "      ""spawn_weight"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_AX_SPAWN_WEIGHT), 100)) & "," & vbCrLf
+        json = json & "      ""item_level_min"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_AX_ITEM_LEVEL_MIN), 1)) & "," & vbCrLf
+        json = json & "      ""item_level_max"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_AX_ITEM_LEVEL_MAX), 100)) & "," & vbCrLf
         json = json & "      ""allowed_tags"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_AX_ALLOWED_TAGS))) & """" & vbCrLf
         json = json & "    }"
 
@@ -412,8 +412,8 @@ Public Sub ExportUniqueItems()
         json = json & "      ""fixed_stats"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_UQ_FIXED_STATS))) & """," & vbCrLf
         json = json & "      ""special_ability"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_UQ_SPECIAL_ABILITY))) & """," & vbCrLf
         json = json & "      ""lore_text"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_UQ_LORE_TEXT))) & """," & vbCrLf
-        json = json & "      ""drop_weight"": " & GetDefaultNumeric(ws.Cells(i, COL_UQ_DROP_WEIGHT), 10) & "," & vbCrLf
-        json = json & "      ""min_level"": " & GetDefaultNumeric(ws.Cells(i, COL_UQ_MIN_LEVEL), 1) & vbCrLf
+        json = json & "      ""drop_weight"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_UQ_DROP_WEIGHT), 10)) & "," & vbCrLf
+        json = json & "      ""min_level"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_UQ_MIN_LEVEL), 1)) & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
