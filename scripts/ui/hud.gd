@@ -180,18 +180,18 @@ func _setup_cast_bar() -> void:
 
 
 func _position_cast_bar() -> void:
-	## Position cast bar at bottom center of screen, above controls
+	## Position cast bar above character using percentage-based positioning
 	if not cast_bar:
 		return
 
 	var viewport_size := get_viewport().get_visible_rect().size
 	var bar_width := UITheme.CAST_BAR_WIDTH
-	var bar_height := UITheme.CAST_BAR_HEIGHT
 
-	# Center horizontally, 220px from bottom (above joystick area)
+	# Use percentage-based positioning (centered horizontally, Y from theme)
+	var y_percent := UITheme.CAST_BAR_Y_PERCENT
 	cast_bar.position = Vector2(
 		(viewport_size.x - bar_width) / 2.0,
-		viewport_size.y - bar_height - 220
+		viewport_size.y * y_percent
 	)
 
 

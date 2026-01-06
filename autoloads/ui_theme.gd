@@ -92,6 +92,7 @@ const DEFAULTS := {
 	"color_cast_bar_interrupted": "0.8,0.2,0.2,1.0",
 	"cast_bar_height": 16,
 	"cast_bar_width": 200,
+	"cast_bar_y_percent": 0.38,
 }
 
 #===============================================================================
@@ -348,6 +349,9 @@ var CAST_BAR_HEIGHT: int:
 
 var CAST_BAR_WIDTH: int:
 	get: return get_int("cast_bar_width")
+
+var CAST_BAR_Y_PERCENT: float:
+	get: return get_float("cast_bar_y_percent")
 
 
 #===============================================================================
