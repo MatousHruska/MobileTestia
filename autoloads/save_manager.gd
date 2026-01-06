@@ -346,6 +346,7 @@ func _apply_ng_plus_data(ng_plus_data: Dictionary) -> void:
 
 func _collect_save_data() -> Dictionary:
 	## Collect all game data into a save dictionary
+	## Uses auto-discovery for systems in "saveable" group
 	var save_data := {
 		# Meta information
 		"save_version": SAVE_VERSION,
@@ -354,66 +355,46 @@ func _collect_save_data() -> Dictionary:
 		"timestamp_str": Time.get_datetime_string_from_system(),
 		"total_playtime": Game.game_time if Game else 0.0,
 		"ng_plus_count": 0,  # Track NG+ cycles
-
-		# Player progression
-		"player_stats": _collect_player_stats(),
-
-		# Inventory and equipment
-		"inventory_data": _collect_inventory_data(),
-
-		# Talents and skills
-		"talent_data": _collect_talent_data(),
-
-		# Quest progress
-		"quest_data": _collect_quest_data(),
-
-		# World state (doors, chests, enemies killed, etc.)
-		"world_state": _collect_world_state(),
-
-		# Current location
-		"location_data": _collect_location_data(),
 	}
+
+	# Auto-discover all saveable systems
+	var saveables := _get_saveables_sorted()
+	for saveable in saveables:
+		var key: String = saveable.get_save_key()
+		var data: Dictionary = saveable.get_save_data()
+		if not data.is_empty():
+			save_data[key] = data
+			Debug.log("Save", "Collected data from: %s" % key)
+
+	# Special cases (not autoloads)
+	save_data["world_state"] = _collect_world_state()
+	save_data["location_data"] = _collect_location_data()
 
 	return save_data
 
 
-func _collect_player_stats() -> Dictionary:
-	## Collect player stats for saving
-	if not PlayerStats:
-		return {}
+func _get_saveables_sorted() -> Array:
+	## Get all saveable nodes sorted by priority (lower = first)
+	var saveables: Array = []
 
-	return PlayerStats.get_save_data()
+	for node in get_tree().get_nodes_in_group("saveable"):
+		if node.has_method("get_save_key") and node.has_method("get_save_data"):
+			saveables.append(node)
 
+	# Sort by priority (lower number = higher priority = loads first)
+	saveables.sort_custom(func(a, b):
+		var prio_a: int = a.get_save_priority() if a.has_method("get_save_priority") else 100
+		var prio_b: int = b.get_save_priority() if b.has_method("get_save_priority") else 100
+		return prio_a < prio_b
+	)
 
-func _collect_inventory_data() -> Dictionary:
-	## Collect inventory data for saving
-	if not Inventory:
-		return {}
-
-	return Inventory.get_save_data()
-
-
-func _collect_talent_data() -> Dictionary:
-	## Collect talent data for saving
-	if not TalentManager:
-		return {}
-
-	return TalentManager.get_save_data()
-
-
-func _collect_quest_data() -> Dictionary:
-	## Collect quest data for saving
-	if not QuestManager:
-		return {}
-
-	return QuestManager.get_save_data()
+	return saveables
 
 
 func _collect_world_state() -> Dictionary:
 	## Collect world persistence state
 	if not Persistence:
 		return {}
-
 	return Persistence.get_all_states()
 
 
@@ -431,62 +412,28 @@ func _collect_location_data() -> Dictionary:
 
 func _apply_save_data(save_data: Dictionary) -> bool:
 	## Apply loaded save data to game systems
+	## Uses auto-discovery for systems in "saveable" group
 
 	# Reset game state first
 	_reset_game_state()
 
-	# Apply in order of dependencies
+	# Auto-discover and apply to all saveable systems (sorted by priority)
+	var saveables := _get_saveables_sorted()
+	for saveable in saveables:
+		var key: String = saveable.get_save_key()
+		if save_data.has(key):
+			Debug.log("Save", "Applying data to: %s" % key)
+			saveable.load_save_data(save_data[key])
 
-	# 1. Player Stats (needed before inventory for requirements)
-	if save_data.has("player_stats"):
-		if not _apply_player_stats(save_data.player_stats):
-			Debug.warn("Save", "Failed to apply player stats")
-
-	# 2. Talents (needed before inventory for skill bindings)
-	if save_data.has("talent_data"):
-		if not _apply_talent_data(save_data.talent_data):
-			Debug.warn("Save", "Failed to apply talent data")
-
-	# 3. Inventory
-	if save_data.has("inventory_data"):
-		if not _apply_inventory_data(save_data.inventory_data):
-			Debug.warn("Save", "Failed to apply inventory data")
-
-	# 4. World State
+	# Special cases (not autoloads)
 	if save_data.has("world_state"):
 		if not _apply_world_state(save_data.world_state):
 			Debug.warn("Save", "Failed to apply world state")
 
-	# 5. Quests (after world state for proper objective tracking)
-	if save_data.has("quest_data"):
-		if not _apply_quest_data(save_data.quest_data):
-			Debug.warn("Save", "Failed to apply quest data")
-
-	# 6. Load into the correct zone
+	# Load into the correct zone (always last)
 	if save_data.has("location_data"):
 		_apply_location_data(save_data.location_data)
 
-	return true
-
-
-func _apply_player_stats(data: Dictionary) -> bool:
-	if not PlayerStats:
-		return false
-	PlayerStats.load_save_data(data)
-	return true
-
-
-func _apply_talent_data(data: Dictionary) -> bool:
-	if not TalentManager:
-		return false
-	TalentManager.load_save_data(data)
-	return true
-
-
-func _apply_inventory_data(data: Dictionary) -> bool:
-	if not Inventory:
-		return false
-	Inventory.load_save_data(data)
 	return true
 
 
@@ -494,13 +441,6 @@ func _apply_world_state(data: Dictionary) -> bool:
 	if not Persistence:
 		return false
 	Persistence.set_all_states(data)
-	return true
-
-
-func _apply_quest_data(data: Dictionary) -> bool:
-	if not QuestManager:
-		return false
-	QuestManager.load_save_data(data)
 	return true
 
 
@@ -847,6 +787,16 @@ func debug_print_state() -> void:
 		"is_busy": _is_busy,
 		"slots": get_all_slots_metadata()
 	})
+
+
+func debug_list_saveables() -> void:
+	## List all registered saveable systems (for debugging)
+	Debug.info("Save", "=== REGISTERED SAVEABLES ===")
+	var saveables := _get_saveables_sorted()
+	for saveable in saveables:
+		var key: String = saveable.get_save_key()
+		var priority: int = saveable.get_save_priority() if saveable.has_method("get_save_priority") else 100
+		Debug.info("Save", "  [%d] %s (%s)" % [priority, key, saveable.name])
 
 
 func debug_force_auto_save() -> void:

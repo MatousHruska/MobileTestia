@@ -145,6 +145,7 @@ var _buff_modifiers: Dictionary = {}
 
 
 func _ready() -> void:
+	add_to_group("saveable")  # Register for auto-discovery save system
 	Debug.info("Stats", "PlayerStats initialized")
 
 	# Load base values from database
@@ -515,8 +516,18 @@ func debug_add_skill_points(amount: int = 10) -> void:
 
 
 #===============================================================================
-# PERSISTENCE
+# PERSISTENCE (Saveable interface)
 #===============================================================================
+
+func get_save_key() -> String:
+	## Unique key for save data - used by auto-discovery system
+	return "player_stats"
+
+
+func get_save_priority() -> int:
+	## Load priority (lower = earlier). PlayerStats loads first.
+	return 10
+
 
 func get_save_data() -> Dictionary:
 	## Get all player stats for saving

@@ -38,6 +38,7 @@ signal swap_mode_changed(active: bool)
 
 
 func _ready() -> void:
+	add_to_group("saveable")  # Register for auto-discovery save system
 	# Load backpack size from database
 	backpack_size = DatabaseLoader.get_setting_int("inventory_slots", 25)
 	_initialize_inventory()
@@ -917,8 +918,17 @@ func debug_add_magic_items() -> void:
 
 
 #===============================================================================
-# PERSISTENCE
+# PERSISTENCE (Saveable interface)
 #===============================================================================
+
+func get_save_key() -> String:
+	return "inventory_data"
+
+
+func get_save_priority() -> int:
+	## Load after PlayerStats and Talents
+	return 30
+
 
 func get_save_data() -> Dictionary:
 	## Get inventory data for saving
