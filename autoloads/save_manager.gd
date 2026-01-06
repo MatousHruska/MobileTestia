@@ -508,15 +508,33 @@ func _apply_location_data(data: Dictionary) -> void:
 	var zone: String = data.get("zone", "")
 	var spawn_point: String = data.get("spawn_point", "default")
 
+	Debug.info("Save", "_apply_location_data called", {
+		"zone": zone,
+		"spawn_point": spawn_point,
+		"game_state": Game.GameState.keys()[Game.current_state] if Game else "null",
+		"tree_paused": get_tree().paused
+	})
+
 	if not zone.is_empty() and Game:
 		# Queue zone change after load completes
 		var zone_path := "res://scenes/world/%s.tscn" % zone
+		Debug.info("Save", "Scheduling _deferred_zone_change", zone_path)
 		call_deferred("_deferred_zone_change", zone_path, spawn_point)
 
 
 func _deferred_zone_change(zone_path: String, spawn_point: String) -> void:
+	Debug.info("Save", "_deferred_zone_change executing", {
+		"zone_path": zone_path,
+		"spawn_point": spawn_point,
+		"game_state_before": Game.GameState.keys()[Game.current_state] if Game else "null",
+		"tree_paused_before": get_tree().paused
+	})
 	if Game:
 		Game.change_zone(zone_path, spawn_point)
+		Debug.info("Save", "_deferred_zone_change completed", {
+			"game_state_after": Game.GameState.keys()[Game.current_state],
+			"tree_paused_after": get_tree().paused
+		})
 
 
 func _reset_game_state() -> void:
