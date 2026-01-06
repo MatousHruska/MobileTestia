@@ -9,6 +9,10 @@ signal attack_started
 signal attack_ended
 signal dodge_started
 signal dodge_ended
+signal cast_started(skill_id: String, duration: float)
+signal cast_progress(progress: float)  ## 0.0 to 1.0
+signal cast_completed(skill_id: String)
+signal cast_interrupted(skill_id: String, reason: String)
 
 ## Facing directions (4-cardinal for animations)
 enum Facing { DOWN = 0, UP = 1, LEFT = 2, RIGHT = 3 }
@@ -33,6 +37,7 @@ var current_facing: Facing = Facing.DOWN
 var is_attacking: bool = false
 var is_dodging: bool = false
 var is_locked: bool = false  ## Prevents input during certain actions
+var is_casting: bool = false  ## Currently channeling a cast
 
 ## Components
 @onready var character_animator: CharacterAnimator = $CharacterAnimator
@@ -51,6 +56,13 @@ var _lunge_velocity: Vector2 = Vector2.ZERO
 var _lunge_timer: float = 0.0
 var _dodge_timer: float = 0.0
 var _dodge_direction: Vector2 = Vector2.ZERO
+
+## Casting state
+var _current_cast_skill: String = ""
+var _cast_timer: float = 0.0
+var _cast_duration: float = 0.0
+var _cast_can_move: bool = false
+var _cast_interrupt_on_damage: bool = true
 
 
 func _ready() -> void:
@@ -134,6 +146,18 @@ func _process_timers(delta: float) -> void:
 			is_locked = false
 			dodge_ended.emit()
 			Debug.log("Player", "Dodge ended")
+
+	# Cast timer
+	if is_casting:
+		_cast_timer += delta
+		var progress := clampf(_cast_timer / _cast_duration, 0.0, 1.0)
+		cast_progress.emit(progress)
+
+		# Check for movement interrupt (if not allowed to move while casting)
+		if not _cast_can_move and input_direction != Vector2.ZERO:
+			interrupt_cast("moved")
+		elif _cast_timer >= _cast_duration:
+			_complete_cast()
 
 
 func _process_movement(delta: float) -> void:
@@ -338,6 +362,10 @@ func take_damage(amount: float, _source: Node2D = null) -> void:
 	PlayerStats.damage(amount)
 	Debug.log("Combat", "Player took damage", amount)
 
+	# Interrupt casting if flagged
+	if is_casting and _cast_interrupt_on_damage:
+		interrupt_cast("damage")
+
 
 func apply_dot(effect_type: String, duration: float, damage_per_tick: float) -> void:
 	## Apply a damage-over-time effect to the player
@@ -361,6 +389,86 @@ func apply_slow(duration: float, percent: float) -> void:
 	get_tree().create_timer(duration).timeout.connect(func(): move_speed = original_speed)
 
 
+#===============================================================================
+# CASTING SYSTEM
+#===============================================================================
+
+func start_cast(skill_id: String, duration: float, can_move: bool = false, interrupt_on_damage: bool = true) -> bool:
+	## Start casting a skill. Returns false if already casting or in invalid state.
+	if is_casting or is_attacking or is_dodging:
+		Debug.log("Combat", "Cast rejected", {"skill": skill_id, "reason": "busy"})
+		return false
+
+	if duration <= 0:
+		Debug.log("Combat", "Cast rejected", {"skill": skill_id, "reason": "invalid duration"})
+		return false
+
+	is_casting = true
+	_current_cast_skill = skill_id
+	_cast_timer = 0.0
+	_cast_duration = duration
+	_cast_can_move = can_move
+	_cast_interrupt_on_damage = interrupt_on_damage
+
+	# Lock movement if can't move while casting
+	if not can_move:
+		is_locked = true
+
+	cast_started.emit(skill_id, duration)
+	Debug.log("Combat", "Cast started", {"skill": skill_id, "duration": duration, "can_move": can_move})
+	return true
+
+
+func interrupt_cast(reason: String = "interrupted") -> void:
+	## Interrupt the current cast (from damage, movement, etc.)
+	if not is_casting:
+		return
+
+	var skill_id := _current_cast_skill
+	_end_cast_state()
+
+	cast_interrupted.emit(skill_id, reason)
+	Debug.log("Combat", "Cast interrupted", {"skill": skill_id, "reason": reason})
+
+
+func cancel_cast() -> void:
+	## Player-initiated cast cancellation
+	interrupt_cast("cancelled")
+
+
+func _complete_cast() -> void:
+	## Called when cast timer reaches duration
+	var skill_id := _current_cast_skill
+	_end_cast_state()
+
+	cast_completed.emit(skill_id)
+	Debug.log("Combat", "Cast completed", {"skill": skill_id})
+
+
+func _end_cast_state() -> void:
+	## Clean up casting state
+	is_casting = false
+	_current_cast_skill = ""
+	_cast_timer = 0.0
+	_cast_duration = 0.0
+
+	# Unlock if we locked for casting
+	if not is_dodging:
+		is_locked = false
+
+
+func get_cast_progress() -> float:
+	## Returns current cast progress (0.0 to 1.0)
+	if not is_casting or _cast_duration <= 0:
+		return 0.0
+	return clampf(_cast_timer / _cast_duration, 0.0, 1.0)
+
+
+func get_current_cast_skill() -> String:
+	## Returns the skill ID currently being cast
+	return _current_cast_skill
+
+
 ## Debug
 func print_state() -> void:
 	Debug.snapshot("Player", "PlayerController State", {
@@ -371,4 +479,7 @@ func print_state() -> void:
 		"is_attacking": is_attacking,
 		"is_dodging": is_dodging,
 		"is_locked": is_locked,
+		"is_casting": is_casting,
+		"cast_skill": _current_cast_skill,
+		"cast_progress": get_cast_progress(),
 	})

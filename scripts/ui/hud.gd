@@ -34,6 +34,9 @@ var level_label: Label
 ## Status effect display
 var status_effect_display: StatusEffectDisplay
 
+## Cast bar
+var cast_bar: CastBar
+
 ## Player reference
 var player: PlayerController = null
 
@@ -46,6 +49,7 @@ var _connected_pickup: Node = null  ## Track connected LootPickup for signal cle
 func _ready() -> void:
 	Debug.info("UI", "HUD ready")
 	_setup_resource_bars()
+	_setup_cast_bar()
 	_connect_to_game_manager()
 	_connect_to_player_stats()
 	_setup_controls()
@@ -161,6 +165,30 @@ func _setup_resource_bars() -> void:
 	status_effect_display.name = "StatusEffectDisplay"
 	status_effect_display.custom_minimum_size = Vector2(0, 32)
 	bars_container.add_child(status_effect_display)
+
+
+func _setup_cast_bar() -> void:
+	## Create and position the cast bar UI
+	cast_bar = CastBar.new()
+	cast_bar.name = "CastBar"
+
+	# Position cast bar at bottom center of screen, above the controls
+	# Use anchors to keep it centered
+	cast_bar.anchor_left = 0.5
+	cast_bar.anchor_top = 1.0
+	cast_bar.anchor_right = 0.5
+	cast_bar.anchor_bottom = 1.0
+
+	# Offset to position it above bottom edge (above joystick/combat hud)
+	var bar_width := UITheme.CAST_BAR_WIDTH
+	var bar_height := UITheme.CAST_BAR_HEIGHT
+	cast_bar.offset_left = -bar_width / 2.0
+	cast_bar.offset_top = -bar_height - 220  # Above joystick area
+	cast_bar.offset_right = bar_width / 2.0
+	cast_bar.offset_bottom = -220
+
+	add_child(cast_bar)
+	Debug.log("UI", "CastBar created")
 
 
 func _create_resource_bar(bar_name: String, fill_color: Color, bg_color: Color) -> ProgressBar:
