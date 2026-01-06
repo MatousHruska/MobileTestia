@@ -56,37 +56,144 @@ func _generate_contents() -> Dictionary:
 		"items": []
 	}
 
-	# Gold
+	# Try to use database loot table first
+	if not loot_table_id.is_empty():
+		var table := DatabaseLoader.get_loot_table(loot_table_id)
+		if not table.is_empty():
+			return _generate_contents_from_table(table)
+
+	# Fallback to tier-based generation
 	if guaranteed_gold:
 		contents["gold"] = _calculate_gold()
 
-	# Items
 	var item_count := randi_range(min_items, max_items)
 	for i in range(item_count):
-		var item := _generate_random_item()
+		var item := _generate_random_item_legacy()
 		if item != null:
 			contents["items"].append(item)
 
 	return contents
 
 
-## Generate a random item based on tier and zone level
-func _generate_random_item() -> ItemData:
-	# Determine rarity based on tier
-	var rarity := _roll_rarity()
+## Generate contents using database loot table
+func _generate_contents_from_table(table: Dictionary) -> Dictionary:
+	var contents := {
+		"gold": 0,
+		"items": []
+	}
+
+	# Gold from loot table
+	var gold_min_val: int = int(table.get("gold_min", 0))
+	var gold_max_val: int = int(table.get("gold_max", 0))
+	if gold_max_val > 0:
+		contents["gold"] = randi_range(gold_min_val, gold_max_val)
+
+	# Guaranteed drops first
+	var guaranteed: String = table.get("guaranteed_drops", "")
+	if not guaranteed.is_empty():
+		var guaranteed_items := guaranteed.split(",")
+		for item_id in guaranteed_items:
+			item_id = item_id.strip_edges()
+			if not item_id.is_empty():
+				var item := _create_item_from_id(item_id, ItemData.Rarity.RARE)
+				if item != null:
+					contents["items"].append(item)
+
+	# Roll for additional items using rarity weights
+	var rarity_weights: Dictionary = table.get("rarity_weights", {})
+	var table_min_drops: int = int(table.get("min_drops", min_items))
+	var table_max_drops: int = int(table.get("max_drops", max_items))
+	var drop_count := randi_range(table_min_drops, table_max_drops)
 	var item_level := get_loot_item_level()
+	var item_pool: String = table.get("item_pool", "")
 
-	# Try to get item from loot table if specified
-	if not loot_table_id.is_empty():
-		var table := DatabaseLoader.get_loot_table(loot_table_id)
-		if not table.is_empty():
-			return _generate_from_loot_table(table, item_level, rarity)
+	for i in range(drop_count):
+		var rolled_rarity := _roll_rarity_from_weights(rarity_weights)
+		if rolled_rarity == -1:
+			# Rolled "nothing" - skip this drop
+			continue
 
-	# Fallback: generate random equipment
+		var item: ItemData = null
+		if not item_pool.is_empty():
+			# Pick from item pool
+			var items := item_pool.split(",")
+			var item_id: String = items[randi() % items.size()].strip_edges()
+			item = _create_item_from_id(item_id, rolled_rarity)
+		else:
+			# Generate random equipment
+			item = _generate_random_equipment(item_level, rolled_rarity)
+
+		if item != null:
+			contents["items"].append(item)
+
+	return contents
+
+
+## Roll rarity from weights dictionary, returns -1 for "nothing"
+func _roll_rarity_from_weights(weights: Dictionary) -> int:
+	var nothing_weight: int = int(weights.get("nothing", 0))
+	var common_weight: int = int(weights.get("common", 100))
+	var magic_weight: int = int(weights.get("magic", 0))
+	var rare_weight: int = int(weights.get("rare", 0))
+	var unique_weight: int = int(weights.get("unique", 0))
+
+	var total := nothing_weight + common_weight + magic_weight + rare_weight + unique_weight
+	if total <= 0:
+		return ItemData.Rarity.COMMON
+
+	var roll := randi() % total
+	var cumulative := 0
+
+	# Check nothing first
+	cumulative += nothing_weight
+	if roll < cumulative:
+		return -1  # Nothing drops
+
+	cumulative += common_weight
+	if roll < cumulative:
+		return ItemData.Rarity.COMMON
+
+	cumulative += magic_weight
+	if roll < cumulative:
+		return ItemData.Rarity.UNCOMMON  # "magic" = uncommon
+
+	cumulative += rare_weight
+	if roll < cumulative:
+		return ItemData.Rarity.RARE
+
+	return ItemData.Rarity.LEGENDARY  # "unique" = legendary
+
+
+## Create item from ID with specified rarity
+func _create_item_from_id(item_id: String, rarity: int) -> ItemData:
+	var item_level := get_loot_item_level()
+	var affix_count := 0
+
+	match rarity:
+		ItemData.Rarity.COMMON:
+			affix_count = 0
+		ItemData.Rarity.UNCOMMON:
+			affix_count = randi_range(1, 2)
+		ItemData.Rarity.RARE:
+			affix_count = randi_range(2, 4)
+		ItemData.Rarity.LEGENDARY:
+			affix_count = randi_range(4, 6)
+
+	if affix_count == 0:
+		return DatabaseLoader.create_equipment(item_id, rarity)
+	else:
+		return DatabaseLoader.create_magic_equipment(item_id, item_level, affix_count)
+
+
+## Legacy random item generation (fallback when no loot table)
+func _generate_random_item_legacy() -> ItemData:
+	var rarity := _roll_rarity_legacy()
+	var item_level := get_loot_item_level()
 	return _generate_random_equipment(item_level, rarity)
 
 
-func _roll_rarity() -> ItemData.Rarity:
+## Legacy rarity roll using hardcoded tier weights
+func _roll_rarity_legacy() -> ItemData.Rarity:
 	var weights := get_rarity_weights()
 	var total := 0
 	for weight in weights.values():
@@ -111,12 +218,6 @@ func _roll_rarity() -> ItemData.Rarity:
 		return ItemData.Rarity.LEGENDARY
 
 	return ItemData.Rarity.COMMON
-
-
-func _generate_from_loot_table(table: Dictionary, item_level: int, rarity: ItemData.Rarity) -> ItemData:
-	# TODO: Implement full loot table system
-	# For now, return null to fall back to random equipment
-	return null
 
 
 func _generate_random_equipment(item_level: int, rarity: ItemData.Rarity) -> ItemData:
