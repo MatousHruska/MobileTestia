@@ -18,8 +18,8 @@ class_name ZoneBase
 func _ready() -> void:
 	Debug.info("System", "Zone loaded: %s (id: %s)" % [zone_name, zone_id])
 
-	# Notify game manager
-	Game.current_zone = zone_name
+	# Notify game manager - use zone_id (matches filename) for save/load compatibility
+	Game.current_zone = zone_id
 
 	# Position player at spawn point
 	_position_player_at_spawn()
