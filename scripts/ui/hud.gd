@@ -61,6 +61,7 @@ func _ready() -> void:
 
 func _on_viewport_resized() -> void:
 	_apply_hud_scaling()
+	_position_cast_bar()
 
 
 func _apply_hud_scaling() -> void:
@@ -172,23 +173,26 @@ func _setup_cast_bar() -> void:
 	cast_bar = CastBar.new()
 	cast_bar.name = "CastBar"
 
-	# Position cast bar at bottom center of screen, above the controls
-	# Use anchors to keep it centered
-	cast_bar.anchor_left = 0.5
-	cast_bar.anchor_top = 1.0
-	cast_bar.anchor_right = 0.5
-	cast_bar.anchor_bottom = 1.0
+	# Position will be set in _position_cast_bar after viewport is ready
+	add_child(cast_bar)
+	call_deferred("_position_cast_bar")
+	Debug.log("UI", "CastBar created")
 
-	# Offset to position it above bottom edge (above joystick/combat hud)
+
+func _position_cast_bar() -> void:
+	## Position cast bar at bottom center of screen, above controls
+	if not cast_bar:
+		return
+
+	var viewport_size := get_viewport().get_visible_rect().size
 	var bar_width := UITheme.CAST_BAR_WIDTH
 	var bar_height := UITheme.CAST_BAR_HEIGHT
-	cast_bar.offset_left = -bar_width / 2.0
-	cast_bar.offset_top = -bar_height - 220  # Above joystick area
-	cast_bar.offset_right = bar_width / 2.0
-	cast_bar.offset_bottom = -220
 
-	add_child(cast_bar)
-	Debug.log("UI", "CastBar created")
+	# Center horizontally, 220px from bottom (above joystick area)
+	cast_bar.position = Vector2(
+		(viewport_size.x - bar_width) / 2.0,
+		viewport_size.y - bar_height - 220
+	)
 
 
 func _create_resource_bar(bar_name: String, fill_color: Color, bg_color: Color) -> ProgressBar:

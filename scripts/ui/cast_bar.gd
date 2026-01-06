@@ -17,12 +17,24 @@ var _current_skill: String = ""
 var _target_progress: float = 0.0
 var _current_progress: float = 0.0
 
+## Dimensions (cached from UITheme)
+var _bar_width: float = 200.0
+var _bar_height: float = 16.0
+
 ## Animation
 const LERP_SPEED := 15.0  ## How fast the bar fills
 const FADE_DURATION := 0.3  ## How long to fade out when interrupted
 
 
 func _ready() -> void:
+	# Cache dimensions
+	_bar_width = UITheme.CAST_BAR_WIDTH
+	_bar_height = UITheme.CAST_BAR_HEIGHT
+
+	# Set explicit size (don't rely on anchors for this)
+	size = Vector2(_bar_width, _bar_height)
+	custom_minimum_size = size
+
 	_create_components()
 	_apply_theme()
 	_connect_to_player()
@@ -32,32 +44,25 @@ func _ready() -> void:
 func _create_components() -> void:
 	## Build the cast bar UI structure
 
-	# Main container - centers the bar horizontally at top of screen
-	custom_minimum_size = Vector2(UITheme.CAST_BAR_WIDTH, UITheme.CAST_BAR_HEIGHT)
-
-	# Background
+	# Background - explicit size, not anchor-based
 	_background = ColorRect.new()
 	_background.name = "Background"
-	_background.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_background.size = Vector2(_bar_width, _bar_height)
+	_background.position = Vector2.ZERO
 	add_child(_background)
 
-	# Fill bar (progress)
+	# Fill bar (progress) - explicit positioning
 	_fill = ColorRect.new()
 	_fill.name = "Fill"
-	_fill.anchor_left = 0.0
-	_fill.anchor_top = 0.0
-	_fill.anchor_right = 0.0  # We'll control width manually
-	_fill.anchor_bottom = 1.0
-	_fill.offset_left = 2  # Padding inside border
-	_fill.offset_top = 2
-	_fill.offset_right = 0
-	_fill.offset_bottom = -2
+	_fill.position = Vector2(2, 2)  # Padding inside border
+	_fill.size = Vector2(0, _bar_height - 4)  # Start with 0 width
 	add_child(_fill)
 
 	# Border
 	_border = ReferenceRect.new()
 	_border.name = "Border"
-	_border.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_border.size = Vector2(_bar_width, _bar_height)
+	_border.position = Vector2.ZERO
 	_border.border_width = 2.0
 	_border.editor_only = false  # Make visible at runtime
 	add_child(_border)
@@ -65,7 +70,8 @@ func _create_components() -> void:
 	# Skill name label
 	_label = Label.new()
 	_label.name = "SkillLabel"
-	_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_label.size = Vector2(_bar_width, _bar_height)
+	_label.position = Vector2.ZERO
 	_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	add_child(_label)
@@ -109,6 +115,8 @@ func _on_player_ready() -> void:
 
 func _on_cast_started(skill_id: String, _duration: float) -> void:
 	## Show the cast bar when casting begins
+	Debug.log("UI", "CastBar: cast_started received", {"skill": skill_id})
+
 	_current_skill = skill_id
 	_current_progress = 0.0
 	_target_progress = 0.0
@@ -179,5 +187,5 @@ func _process(delta: float) -> void:
 
 func _update_fill_visual(progress: float) -> void:
 	## Update the fill bar width based on progress
-	var bar_width := size.x - 4  # Account for padding
-	_fill.offset_right = 2 + (bar_width * progress)
+	var fill_width := (_bar_width - 4) * progress  # Account for 2px padding on each side
+	_fill.size.x = fill_width
