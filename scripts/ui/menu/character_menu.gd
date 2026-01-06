@@ -458,16 +458,24 @@ func _show_save_load_panel(mode: SaveLoadPanel.Mode) -> void:
 
 func _on_save_load_slot_selected(slot: int) -> void:
 	## Handle save/load completion
-	Debug.info("UI", "Save/Load slot selected", slot)
+	Debug.info("UI", "_on_save_load_slot_selected() called", {
+		"slot": slot,
+		"game_state": Game.GameState.keys()[Game.current_state],
+		"tree_paused": get_tree().paused
+	})
 
 	# Check mode BEFORE hiding panel (which sets reference to null)
 	var was_loading := _save_load_panel and _save_load_panel.mode == SaveLoadPanel.Mode.LOAD
+	Debug.info("UI", "was_loading check", was_loading)
 
 	_hide_save_load_panel()
 
 	# If loaded, close the menu to return to gameplay
 	if was_loading:
+		Debug.info("UI", "Calling close_menu() because was_loading=true")
 		close_menu()
+	else:
+		Debug.info("UI", "NOT calling close_menu() because was_loading=false")
 
 
 func _on_save_load_cancelled() -> void:
@@ -509,7 +517,14 @@ func open_menu(start_tab: Tab = Tab.INVENTORY) -> void:
 
 
 func close_menu() -> void:
+	Debug.info("UI", "CharacterMenu.close_menu() called", {
+		"is_open": is_open,
+		"game_state": Game.GameState.keys()[Game.current_state],
+		"tree_paused": get_tree().paused
+	})
+
 	if not is_open:
+		Debug.warn("UI", "close_menu() - is_open is false, returning early")
 		return
 
 	is_open = false
@@ -521,13 +536,24 @@ func close_menu() -> void:
 
 	# Resume game - use direct unpause in case state has changed during load
 	if Game.current_state == Game.GameState.CHARACTER_MENU:
+		Debug.info("UI", "close_menu() - calling Game.close_character_menu()")
 		Game.close_character_menu()
 	else:
 		# State already changed (e.g., during load), just ensure tree is unpaused
+		Debug.warn("UI", "close_menu() - state is not CHARACTER_MENU, directly unpausing", {
+			"state": Game.GameState.keys()[Game.current_state],
+			"tree_paused_before": get_tree().paused
+		})
 		get_tree().paused = false
+		Debug.info("UI", "close_menu() - tree unpaused directly", {
+			"tree_paused_after": get_tree().paused
+		})
 
 	menu_closed.emit()
-	Debug.info("UI", "Character menu closed")
+	Debug.info("UI", "Character menu closed", {
+		"final_tree_paused": get_tree().paused,
+		"final_game_state": Game.GameState.keys()[Game.current_state]
+	})
 
 
 func toggle_menu() -> void:
