@@ -165,7 +165,7 @@ Public Sub ExportNPCs()
         json = json & "      ""dialogue_greeting"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_DIALOGUE_GREETING))) & """," & vbCrLf
         json = json & "      ""faction"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_FACTION))) & """," & vbCrLf
         json = json & "      ""sprite_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_SPRITE_ID))) & """," & vbCrLf
-        json = json & "      ""min_level"": " & GetDefaultNumeric(ws.Cells(i, COL_NPC_MIN_LEVEL), 1) & "," & vbCrLf
+        json = json & "      ""min_level"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_NPC_MIN_LEVEL), 1)) & "," & vbCrLf
         json = json & "      ""is_interactable"": " & LCase(CStr(GetDefaultBoolean(ws.Cells(i, COL_NPC_IS_INTERACTABLE), True))) & "," & vbCrLf
         json = json & "      ""portrait_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_PORTRAIT_ID))) & """," & vbCrLf
         json = json & "      ""dialogue_talk_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_DIALOGUE_TALK_ID))) & """" & vbCrLf
@@ -301,12 +301,12 @@ Public Sub ExportShopInventory()
         json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SI_NAME))) & """," & vbCrLf
         json = json & "      ""item_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SI_ITEM_ID))) & """," & vbCrLf
         json = json & "      ""item_type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_SI_ITEM_TYPE), "base"))) & """," & vbCrLf
-        json = json & "      ""stock"": " & GetDefaultNumeric(ws.Cells(i, COL_SI_STOCK), -1) & "," & vbCrLf
-        json = json & "      ""restock_hours"": " & GetDefaultNumeric(ws.Cells(i, COL_SI_RESTOCK_HOURS), 0) & "," & vbCrLf
-        json = json & "      ""price_multiplier"": " & GetDefaultNumeric(ws.Cells(i, COL_SI_PRICE_MULTIPLIER), 1.5) & "," & vbCrLf
+        json = json & "      ""stock"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_SI_STOCK), -1)) & "," & vbCrLf
+        json = json & "      ""restock_hours"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_SI_RESTOCK_HOURS), 0)) & "," & vbCrLf
+        json = json & "      ""price_multiplier"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_SI_PRICE_MULTIPLIER), 1.5)) & "," & vbCrLf
         json = json & "      ""currency_type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_SI_CURRENCY_TYPE), "gold"))) & """," & vbCrLf
-        json = json & "      ""min_player_level"": " & GetDefaultNumeric(ws.Cells(i, COL_SI_MIN_PLAYER_LEVEL), 1) & "," & vbCrLf
-        json = json & "      ""max_player_level"": " & GetDefaultNumeric(ws.Cells(i, COL_SI_MAX_PLAYER_LEVEL), 100) & vbCrLf
+        json = json & "      ""min_player_level"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_SI_MIN_PLAYER_LEVEL), 1)) & "," & vbCrLf
+        json = json & "      ""max_player_level"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_SI_MAX_PLAYER_LEVEL), 100)) & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1

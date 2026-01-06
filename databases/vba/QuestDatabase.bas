@@ -292,7 +292,7 @@ Public Sub ExportQuests()
         json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(wsQuests.Cells(i, COL_QS_NAME))) & """," & vbCrLf
         json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(wsQuests.Cells(i, COL_QS_DESCRIPTION))) & """," & vbCrLf
         json = json & "      ""type"": """ & EscapeJsonString(LCase(GetDefaultString(wsQuests.Cells(i, COL_QS_TYPE), "side"))) & """," & vbCrLf
-        json = json & "      ""min_level"": " & GetDefaultNumeric(wsQuests.Cells(i, COL_QS_MIN_LEVEL), 1) & "," & vbCrLf
+        json = json & "      ""min_level"": " & FormatJsonNumber(GetDefaultNumeric(wsQuests.Cells(i, COL_QS_MIN_LEVEL), 1)) & "," & vbCrLf
         json = json & "      ""giver_npc"": """ & EscapeJsonString(GetDefaultString(wsQuests.Cells(i, COL_QS_GIVER_NPC))) & """," & vbCrLf
         json = json & "      ""turn_in_npc"": """ & EscapeJsonString(GetDefaultString(wsQuests.Cells(i, COL_QS_TURN_IN_NPC))) & """," & vbCrLf
         json = json & "      ""prerequisite_quests"": """ & EscapeJsonString(GetDefaultString(wsQuests.Cells(i, COL_QS_PREREQUISITE_QUESTS))) & """," & vbCrLf
@@ -305,8 +305,8 @@ Public Sub ExportQuests()
 
         ' Rewards object
         json = json & "      ""rewards"": {" & vbCrLf
-        json = json & "        ""experience"": " & GetDefaultNumeric(wsQuests.Cells(i, COL_QS_XP_REWARD), 0) & "," & vbCrLf
-        json = json & "        ""gold"": " & GetDefaultNumeric(wsQuests.Cells(i, COL_QS_GOLD_REWARD), 0) & "," & vbCrLf
+        json = json & "        ""experience"": " & FormatJsonNumber(GetDefaultNumeric(wsQuests.Cells(i, COL_QS_XP_REWARD), 0)) & "," & vbCrLf
+        json = json & "        ""gold"": " & FormatJsonNumber(GetDefaultNumeric(wsQuests.Cells(i, COL_QS_GOLD_REWARD), 0)) & "," & vbCrLf
         json = json & "        ""items"": " & GetItemRewardsJson(GetDefaultString(wsQuests.Cells(i, COL_QS_ITEM_REWARDS))) & vbCrLf
         json = json & "      }," & vbCrLf
 
@@ -349,7 +349,7 @@ Private Function BuildObjectivesDictionary(wsObj As Worksheet) As Object
             objData = objData & Trim(wsObj.Cells(i, COL_QO_OBJ_ID).Value) & "|"
             objData = objData & LCase(Trim(wsObj.Cells(i, COL_QO_TYPE).Value)) & "|"
             objData = objData & Trim(wsObj.Cells(i, COL_QO_TARGET).Value) & "|"
-            objData = objData & GetDefaultNumeric(wsObj.Cells(i, COL_QO_COUNT), 1) & "|"
+            objData = objData & FormatJsonNumber(GetDefaultNumeric(wsObj.Cells(i, COL_QO_COUNT), 1)) & "|"
             objData = objData & Trim(wsObj.Cells(i, COL_QO_DESCRIPTION).Value) & "|"
             objData = objData & LCase(GetDefaultString(wsObj.Cells(i, COL_QO_OPTIONAL), "false"))
 
