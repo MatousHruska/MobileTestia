@@ -43,6 +43,11 @@ var zone_level: int = 1
 func _on_ready() -> void:
 	_update_visual_for_tier()
 	_update_interaction_prompt()
+
+	# Check persistence - restore state if chest was previously looted
+	if not chest_id.is_empty():
+		_check_persistence()
+
 	Debug.log("Chest", "Chest ready: %s (tier: %s)" % [display_name, TIER_NAMES[chest_tier]])
 
 
@@ -241,7 +246,32 @@ func _on_menu_closed() -> void:
 
 ## Override for custom behavior after looting
 func _on_chest_looted() -> void:
-	pass
+	_save_persistence()
+
+
+#===============================================================================
+# PERSISTENCE
+#===============================================================================
+
+func _check_persistence() -> void:
+	## Check if this chest was previously looted and restore state
+	if Persistence.has_state("chests", chest_id):
+		var state := Persistence.load_state("chests", chest_id)
+		if state.get("looted", false):
+			set_opened(true)
+			Debug.log("Chest", "Restored looted state for: %s" % chest_id)
+
+
+func _save_persistence() -> void:
+	## Save chest looted state to persistence
+	if chest_id.is_empty():
+		return
+
+	Persistence.save_state("chests", chest_id, {
+		"looted": true,
+		"tier": chest_tier,
+	})
+	Debug.log("Chest", "Saved looted state for: %s" % chest_id)
 
 
 ## Get tier multiplier for loot calculations

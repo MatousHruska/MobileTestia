@@ -41,9 +41,9 @@ func _on_ready() -> void:
 	if show_glow:
 		_add_glow_effect()
 
-	# Check if already looted (persistence)
-	if not chest_id.is_empty():
-		_check_persistence()
+	# Hide glow if already looted (persistence is checked by base class)
+	if current_state == ChestState.LOOTED:
+		_hide_glow()
 
 
 func _load_from_database() -> void:
@@ -65,15 +65,6 @@ func _add_glow_effect() -> void:
 	tween.set_loops()
 	tween.tween_property(_glow_node, "modulate:a", 0.3, 1.0)
 	tween.tween_property(_glow_node, "modulate:a", 1.0, 1.0)
-
-
-func _check_persistence() -> void:
-	# Check if this quest chest has been opened before
-	if Game.has_meta("opened_quest_chests"):
-		var opened: Array = Game.get_meta("opened_quest_chests")
-		if chest_id in opened:
-			set_opened(true)
-			_hide_glow()
 
 
 ## Override - quest chests never auto-loot (show contents first)
@@ -133,27 +124,13 @@ func _create_item_from_id(item_id: String) -> ItemData:
 
 ## Override looted behavior
 func _on_chest_looted() -> void:
-	# Persist that this chest was opened
-	_save_persistence()
+	super._on_chest_looted()  # Base class handles persistence
 	_hide_glow()
 
 	# Emit quest signal if applicable
 	if not quest_id.is_empty():
 		for item_id in fixed_item_ids:
 			quest_item_obtained.emit(item_id)
-
-
-func _save_persistence() -> void:
-	if chest_id.is_empty():
-		return
-
-	var opened: Array = []
-	if Game.has_meta("opened_quest_chests"):
-		opened = Game.get_meta("opened_quest_chests")
-
-	if chest_id not in opened:
-		opened.append(chest_id)
-		Game.set_meta("opened_quest_chests", opened)
 
 
 func _hide_glow() -> void:
