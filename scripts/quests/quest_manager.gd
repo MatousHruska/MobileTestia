@@ -1146,3 +1146,73 @@ class QuestState:
 			"completed_at": completed_at,
 			"objectives": objectives.duplicate(true)
 		}
+
+
+#===============================================================================
+# SAVE SYSTEM PERSISTENCE (for SaveManager)
+#===============================================================================
+
+func get_save_data() -> Dictionary:
+	## Get all quest data for saving to file
+	var active_quests_data: Dictionary = {}
+	for quest_id in _quest_states:
+		var state: QuestState = _quest_states[quest_id]
+		active_quests_data[quest_id] = state.serialize()
+
+	return {
+		"active_quests": active_quests_data,
+		"completed": _completed_quests.duplicate(),
+		"failed": _failed_quests.duplicate(),
+		"tracked": tracked_quest_id,
+		"debug_stats": _debug_stats.duplicate(),
+	}
+
+
+func load_save_data(data: Dictionary) -> void:
+	## Load quest data from save file
+
+	# Clear current state
+	_quest_states.clear()
+	_completed_quests.clear()
+	_failed_quests.clear()
+	tracked_quest_id = ""
+
+	# Load completed and failed quests
+	var completed: Array = data.get("completed", [])
+	for quest_id in completed:
+		_completed_quests.append(quest_id)
+
+	var failed: Array = data.get("failed", [])
+	for quest_id in failed:
+		_failed_quests.append(quest_id)
+
+	# Load active quests
+	var active_quests_data: Dictionary = data.get("active_quests", {})
+	for quest_id in active_quests_data:
+		var state_data: Dictionary = active_quests_data[quest_id]
+		var state := _deserialize_quest_state(state_data)
+		if state:
+			_quest_states[quest_id] = state
+
+	# Load tracked quest
+	tracked_quest_id = data.get("tracked", "")
+
+	# Validate tracked quest still exists
+	if not tracked_quest_id.is_empty() and not _quest_states.has(tracked_quest_id):
+		_auto_track_next_quest()
+
+	# Restore debug stats if available
+	var stats: Dictionary = data.get("debug_stats", {})
+	for key in stats:
+		if _debug_stats.has(key):
+			_debug_stats[key] = stats[key]
+
+	# Sync to persistence manager
+	_save_state()
+
+	Debug.info("Quest", "Loaded save data", {
+		"active": _quest_states.size(),
+		"completed": _completed_quests.size(),
+		"failed": _failed_quests.size(),
+		"tracked": tracked_quest_id
+	})
