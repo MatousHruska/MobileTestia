@@ -23,13 +23,22 @@ var current_state: GameState = GameState.LOADING:
 ## Player reference
 var player: Node2D = null:
 	set(value):
+		var old_player := player
 		player = value
+		Debug.info("Player", "Player setter called", {
+			"old": old_player.name if old_player and is_instance_valid(old_player) else "null",
+			"new": value.name if value else "null",
+			"current_state": GameState.keys()[current_state],
+			"tree_paused": get_tree().paused
+		})
 		if player:
 			player_spawned.emit(player)
-			Debug.info("Player", "Player reference set", player.name)
 			# Auto-transition to PLAYING when player is ready
 			if current_state == GameState.LOADING:
+				Debug.info("Player", "Auto-transitioning to PLAYING from LOADING")
 				set_playing()
+			else:
+				Debug.warn("Player", "NOT auto-transitioning - state is not LOADING", GameState.keys()[current_state])
 
 ## Game flags
 var is_paused: bool:
@@ -67,10 +76,23 @@ func _process(delta: float) -> void:
 		game_time += delta * game_time_scale
 
 
+func _input(event: InputEvent) -> void:
+	# Debug: Press F9 to dump game state
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F9:
+		debug_full_state()
+
+
 ## State management
 func set_playing() -> void:
+	Debug.info("System", "set_playing() called", {
+		"from_state": GameState.keys()[current_state],
+		"tree_paused_before": get_tree().paused
+	})
 	current_state = GameState.PLAYING
 	get_tree().paused = false
+	Debug.info("System", "set_playing() complete", {
+		"tree_paused_after": get_tree().paused
+	})
 
 func pause_game() -> void:
 	if current_state != GameState.PLAYING:
@@ -102,11 +124,18 @@ func open_character_menu() -> void:
 	Debug.info("UI", "Character menu opened (game paused)")
 
 func close_character_menu() -> void:
+	Debug.info("UI", "close_character_menu() called", {
+		"current_state": GameState.keys()[current_state],
+		"tree_paused": get_tree().paused
+	})
 	if current_state != GameState.CHARACTER_MENU:
+		Debug.warn("UI", "close_character_menu() - state is NOT CHARACTER_MENU, returning early")
 		return
 	current_state = GameState.PLAYING
 	get_tree().paused = false
-	Debug.info("UI", "Character menu closed (game resumed)")
+	Debug.info("UI", "Character menu closed (game resumed)", {
+		"tree_paused_after": get_tree().paused
+	})
 
 func start_dialogue() -> void:
 	if current_state != GameState.PLAYING:
@@ -210,4 +239,33 @@ func print_state() -> void:
 		"current_zone": current_zone,
 		"player_valid": is_player_valid(),
 		"game_time": game_time,
+	})
+
+
+func debug_full_state() -> void:
+	## Print comprehensive debug state - call this to diagnose issues
+	print("=" * 60)
+	print("=== GAME STATE DEBUG ===")
+	print("=" * 60)
+	print("GameManager.current_state: ", GameState.keys()[current_state])
+	print("get_tree().paused: ", get_tree().paused)
+	print("can_player_move: ", can_player_move)
+	print("can_player_attack: ", can_player_attack)
+	print("player valid: ", is_player_valid())
+	print("player ref: ", player)
+	print("current_zone: ", current_zone)
+	print("spawn_point_id: ", spawn_point_id)
+
+	# Check UIManager state
+	if UIManager:
+		print("UIManager.is_character_menu_open(): ", UIManager.is_character_menu_open())
+		print("UIManager.is_any_menu_open(): ", UIManager.is_any_menu_open())
+
+	print("=" * 60)
+
+	Debug.info("System", "DEBUG STATE DUMP", {
+		"state": GameState.keys()[current_state],
+		"tree_paused": get_tree().paused,
+		"can_move": can_player_move,
+		"player_valid": is_player_valid()
 	})
