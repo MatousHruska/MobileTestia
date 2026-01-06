@@ -1,5 +1,49 @@
 {
   "chests": [
-
+    {
+      "id": "chest_loot_meadow_01",
+      "name": "Meadow Supply Chest",
+      "chest_type": "loot",
+      "tier": "wooden",
+      "zone_id": "zone_meadow",
+      "spawn_chance": 1,
+      "fixed_gold": 0,
+      "fixed_items": "",
+      "loot_table_id": "loot_chest_wooden",
+      "min_items": 1,
+      "max_items": 2,
+      "respawn_time": 300,
+      "quest_id": ""
+    },
+    {
+      "id": "chest_loot_forest_01",
+      "name": "Forest Cache",
+      "chest_type": "loot",
+      "tier": "iron",
+      "zone_id": "zone_forest",
+      "spawn_chance": 0,8,
+      "fixed_gold": 0,
+      "fixed_items": "",
+      "loot_table_id": "loot_chest_iron",
+      "min_items": 2,
+      "max_items": 3,
+      "respawn_time": 600,
+      "quest_id": ""
+    },
+    {
+      "id": "chest_loot_crypt_01",
+      "name": "Crypt Treasure",
+      "chest_type": "loot",
+      "tier": "golden",
+      "zone_id": "zone_crypt",
+      "spawn_chance": 0,6,
+      "fixed_gold": 0,
+      "fixed_items": "",
+      "loot_table_id": "loot_chest_golden",
+      "min_items": 3,
+      "max_items": 4,
+      "respawn_time": 900,
+      "quest_id": ""
+    }
   ]
 }

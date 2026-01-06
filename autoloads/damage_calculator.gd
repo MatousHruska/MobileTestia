@@ -362,4 +362,3 @@ func get_damage_after_enemy_mitigation(incoming_damage: float, enemy: Node2D, da
 	var armor: float = enemy.armor if "armor" in enemy else 0.0
 	var magic_resist: float = enemy.magic_resistance if "magic_resistance" in enemy else 0.0
 	return calculate_enemy_damage_taken(incoming_damage, armor, magic_resist, damage_type, attacker_level)
-
