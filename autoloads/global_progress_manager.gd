@@ -24,9 +24,12 @@ signal statistic_updated(stat_id: String, value: Variant)
 ## Achievement status
 enum AchievementStatus { LOCKED, IN_PROGRESS, UNLOCKED }
 
-## Achievement data structure (loaded from database later, hardcoded for now)
-## Each achievement has: id, name, description, icon, target, hidden, category
+## Achievement data structure (loaded from database)
+## Each achievement has: id, name, description, icon, target, hidden, category, stat, reward_type, reward_value
 var _achievement_definitions: Dictionary = {}
+
+## Database path
+const ACHIEVEMENT_DATABASE := "res://databases/exports/achievements.json"
 
 #===============================================================================
 # STATE
@@ -120,140 +123,102 @@ func _connect_signals() -> void:
 
 
 func _setup_achievement_definitions() -> void:
-	## Define achievements (will be moved to database later)
+	## Load achievements from database
+	_achievement_definitions.clear()
+
+	if not FileAccess.file_exists(ACHIEVEMENT_DATABASE):
+		Debug.warn("GlobalProgress", "Achievement database not found, using fallback definitions")
+		_setup_fallback_achievements()
+		return
+
+	var file := FileAccess.open(ACHIEVEMENT_DATABASE, FileAccess.READ)
+	if file == null:
+		Debug.err("GlobalProgress", "Failed to open achievement database", FileAccess.get_open_error())
+		_setup_fallback_achievements()
+		return
+
+	var json := JSON.new()
+	var error := json.parse(file.get_as_text())
+	file.close()
+
+	if error != OK:
+		Debug.err("GlobalProgress", "Failed to parse achievement database", json.get_error_message())
+		_setup_fallback_achievements()
+		return
+
+	var data: Dictionary = json.data
+	if not data.has("achievements"):
+		Debug.err("GlobalProgress", "Achievement database missing 'achievements' key")
+		_setup_fallback_achievements()
+		return
+
+	var achievements: Array = data["achievements"]
+	for ach in achievements:
+		var id: String = ach.get("id", "")
+		if id.is_empty():
+			continue
+
+		_achievement_definitions[id] = {
+			"name": ach.get("name", "Unknown"),
+			"description": ach.get("description", ""),
+			"category": ach.get("category", "misc"),
+			"stat": ach.get("stat", "manual"),
+			"target": int(ach.get("target", 1)),
+			"hidden": ach.get("hidden", false),
+			"icon": ach.get("icon", ""),
+			"reward_type": ach.get("reward_type", "none"),
+			"reward_value": ach.get("reward_value", ""),
+			"sort_order": int(ach.get("sort_order", 0)),
+		}
+
+	Debug.info("GlobalProgress", "Loaded achievements from database", {
+		"count": _achievement_definitions.size()
+	})
+
+
+func _setup_fallback_achievements() -> void:
+	## Fallback achievements if database is not available
 	_achievement_definitions = {
-		# Combat achievements
-		"first_blood": {
+		"ach_combat_first_blood": {
 			"name": "First Blood",
 			"description": "Kill your first enemy",
 			"target": 1,
 			"stat": "enemies_killed",
 			"category": "combat",
-			"hidden": false
+			"hidden": false,
+			"icon": "",
+			"reward_type": "none",
+			"reward_value": "",
+			"sort_order": 0
 		},
-		"monster_slayer": {
-			"name": "Monster Slayer",
-			"description": "Kill 100 enemies",
-			"target": 100,
-			"stat": "enemies_killed",
-			"category": "combat",
-			"hidden": false
-		},
-		"genocide": {
-			"name": "Genocide",
-			"description": "Kill 1000 enemies",
-			"target": 1000,
-			"stat": "enemies_killed",
-			"category": "combat",
-			"hidden": false
-		},
-		"boss_hunter": {
-			"name": "Boss Hunter",
-			"description": "Defeat 5 bosses",
-			"target": 5,
-			"stat": "bosses_killed",
-			"category": "combat",
-			"hidden": false
-		},
-
-		# Progression achievements
-		"level_10": {
+		"ach_prog_level10": {
 			"name": "Getting Started",
 			"description": "Reach level 10",
 			"target": 10,
 			"stat": "highest_level_reached",
 			"category": "progression",
-			"hidden": false
+			"hidden": false,
+			"icon": "",
+			"reward_type": "none",
+			"reward_value": "",
+			"sort_order": 100
 		},
-		"level_25": {
-			"name": "Seasoned Adventurer",
-			"description": "Reach level 25",
-			"target": 25,
-			"stat": "highest_level_reached",
-			"category": "progression",
-			"hidden": false
-		},
-		"level_50": {
-			"name": "Master Adventurer",
-			"description": "Reach level 50",
-			"target": 50,
-			"stat": "highest_level_reached",
-			"category": "progression",
-			"hidden": false
-		},
-
-		# Quest achievements
-		"quest_novice": {
-			"name": "Quest Novice",
-			"description": "Complete 5 quests",
-			"target": 5,
-			"stat": "quests_completed",
-			"category": "quests",
-			"hidden": false
-		},
-		"quest_master": {
-			"name": "Quest Master",
-			"description": "Complete 25 quests",
-			"target": 25,
-			"stat": "quests_completed",
-			"category": "quests",
-			"hidden": false
-		},
-
-		# Economy achievements
-		"first_gold": {
-			"name": "First Earnings",
-			"description": "Earn 100 gold",
-			"target": 100,
-			"stat": "gold_earned",
-			"category": "economy",
-			"hidden": false
-		},
-		"wealthy": {
-			"name": "Wealthy",
-			"description": "Earn 10,000 gold",
-			"target": 10000,
-			"stat": "gold_earned",
-			"category": "economy",
-			"hidden": false
-		},
-
-		# Death achievements
-		"first_death": {
-			"name": "Learning Experience",
-			"description": "Die for the first time",
-			"target": 1,
-			"stat": "deaths",
-			"category": "misc",
-			"hidden": false
-		},
-		"persistent": {
-			"name": "Persistent",
-			"description": "Die 50 times",
-			"target": 50,
-			"stat": "deaths",
-			"category": "misc",
-			"hidden": true
-		},
-
-		# Completion achievements
-		"game_complete": {
+		"ach_story_complete": {
 			"name": "Victory!",
 			"description": "Complete the game",
 			"target": 1,
 			"stat": "games_completed",
 			"category": "story",
-			"hidden": false
-		},
-		"ng_plus": {
-			"name": "New Game+",
-			"description": "Start a New Game+ run",
-			"target": 1,
-			"stat": "ng_plus_runs",
-			"category": "story",
-			"hidden": false
+			"hidden": false,
+			"icon": "",
+			"reward_type": "none",
+			"reward_value": "",
+			"sort_order": 900
 		},
 	}
+	Debug.warn("GlobalProgress", "Using fallback achievements", {
+		"count": _achievement_definitions.size()
+	})
 
 
 #===============================================================================
@@ -321,7 +286,7 @@ func get_achievement_definition(achievement_id: String) -> Dictionary:
 
 
 func get_all_achievements() -> Array[Dictionary]:
-	## Get all achievements with their status
+	## Get all achievements with their status, sorted by sort_order
 	var result: Array[Dictionary] = []
 
 	for id in _achievement_definitions:
@@ -335,6 +300,11 @@ func get_all_achievements() -> Array[Dictionary]:
 			def["unlocked_at"] = _achievements[id].get("unlocked_at", 0)
 
 		result.append(def)
+
+	# Sort by sort_order
+	result.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return a.get("sort_order", 0) < b.get("sort_order", 0)
+	)
 
 	return result
 

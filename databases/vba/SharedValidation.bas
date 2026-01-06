@@ -495,6 +495,7 @@ Private Sub CreateIdNamedRanges()
     CreateNamedRange "Locations", 1, "ID_Locations"
     CreateNamedRange "PopupMessages", 1, "ID_PopupMessages"
     CreateNamedRange "UITheme", 1, "ID_UITheme"
+    CreateNamedRange "Achievements", 1, "ID_Achievements"
 End Sub
 
 '-------------------------------------------------------------------------------
