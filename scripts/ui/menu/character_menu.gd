@@ -37,6 +37,9 @@ enum Tab { INVENTORY, STATS, SKILLS, QUESTS, MENU }
 ## Confirmation popup (created dynamically in _setup_confirm_popup)
 var confirm_popup: ConfirmationDialog = null
 
+## Save/Load panel (created dynamically)
+var _save_load_panel: SaveLoadPanel = null
+
 ## State
 var current_tab: Tab = Tab.INVENTORY
 var is_open: bool = false
@@ -419,14 +422,59 @@ func _refresh_menu_panel() -> void:
 ## Menu button handlers
 func _on_save_pressed() -> void:
 	Debug.info("UI", "Save button pressed")
-	# TODO: Implement save functionality
-	Debug.warn("UI", "Save not yet implemented")
+	_show_save_load_panel(SaveLoadPanel.Mode.SAVE)
 
 
 func _on_load_pressed() -> void:
 	Debug.info("UI", "Load button pressed")
-	# TODO: Implement load functionality
-	Debug.warn("UI", "Load not yet implemented")
+	_show_save_load_panel(SaveLoadPanel.Mode.LOAD)
+
+
+func _show_save_load_panel(mode: SaveLoadPanel.Mode) -> void:
+	## Show the save/load panel
+	# Remove existing panel if any
+	if _save_load_panel and is_instance_valid(_save_load_panel):
+		_save_load_panel.queue_free()
+		_save_load_panel = null
+
+	# Create new panel
+	_save_load_panel = SaveLoadPanel.new()
+	_save_load_panel.name = "SaveLoadPanel"
+	_save_load_panel.set_mode(mode)
+
+	# Size and position
+	_save_load_panel.custom_minimum_size = Vector2(400, 420)
+	_save_load_panel.set_anchors_preset(Control.PRESET_CENTER)
+	_save_load_panel.size = Vector2(400, 420)
+	_save_load_panel.position = -_save_load_panel.size / 2.0
+
+	# Connect signals
+	_save_load_panel.slot_selected.connect(_on_save_load_slot_selected)
+	_save_load_panel.cancelled.connect(_on_save_load_cancelled)
+
+	add_child(_save_load_panel)
+	Debug.info("UI", "SaveLoadPanel shown", SaveLoadPanel.Mode.keys()[mode])
+
+
+func _on_save_load_slot_selected(slot: int) -> void:
+	## Handle save/load completion
+	Debug.info("UI", "Save/Load slot selected", slot)
+	_hide_save_load_panel()
+
+	# If loaded, close the menu to return to gameplay
+	if _save_load_panel and _save_load_panel.mode == SaveLoadPanel.Mode.LOAD:
+		close_menu()
+
+
+func _on_save_load_cancelled() -> void:
+	## Handle save/load cancel
+	_hide_save_load_panel()
+
+
+func _hide_save_load_panel() -> void:
+	if _save_load_panel and is_instance_valid(_save_load_panel):
+		_save_load_panel.queue_free()
+		_save_load_panel = null
 
 
 func _on_exit_to_menu_pressed() -> void:

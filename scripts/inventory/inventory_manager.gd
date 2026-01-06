@@ -914,3 +914,363 @@ func debug_add_magic_items() -> void:
 		add_item(rare_armor)
 
 	Debug.info("Inventory", "Magic test items added")
+
+
+#===============================================================================
+# PERSISTENCE
+#===============================================================================
+
+func get_save_data() -> Dictionary:
+	## Get inventory data for saving
+	var backpack_data: Array = []
+	for slot in backpack:
+		if slot.is_empty():
+			backpack_data.append({})
+		else:
+			backpack_data.append(_serialize_slot(slot))
+
+	var equipped_data: Dictionary = {}
+	for slot in EQUIPMENT_SLOTS:
+		var item_data: Dictionary = equipped[slot]
+		if item_data.is_empty():
+			equipped_data[str(slot)] = {}
+		else:
+			equipped_data[str(slot)] = _serialize_slot(item_data)
+
+	return {
+		"backpack": backpack_data,
+		"equipped": equipped_data,
+		"gold": gold,
+	}
+
+
+func load_save_data(data: Dictionary) -> void:
+	## Load inventory data from save
+	_initialize_inventory()
+
+	# Load backpack
+	var backpack_data: Array = data.get("backpack", [])
+	for i in mini(backpack_data.size(), backpack_size):
+		var slot_data: Dictionary = backpack_data[i]
+		if not slot_data.is_empty():
+			backpack[i] = _deserialize_slot(slot_data)
+
+	# Load equipped items
+	var equipped_data: Dictionary = data.get("equipped", {})
+	for slot in EQUIPMENT_SLOTS:
+		var slot_key := str(slot)
+		if equipped_data.has(slot_key):
+			var slot_data: Dictionary = equipped_data[slot_key]
+			if not slot_data.is_empty():
+				equipped[slot] = _deserialize_slot(slot_data)
+
+	# Load gold
+	gold = data.get("gold", 0)
+
+	# Recalculate equipment bonuses
+	_recalculate_equipment_bonuses()
+
+	inventory_changed.emit()
+	gold_changed.emit(gold)
+
+	Debug.info("Inventory", "Loaded save data", {
+		"backpack_items": _count_backpack_items(),
+		"equipped_items": _count_equipped_items(),
+		"gold": gold
+	})
+
+
+func _serialize_slot(slot: Dictionary) -> Dictionary:
+	## Serialize an inventory slot to saveable format
+	if slot.is_empty():
+		return {}
+
+	var item: ItemData = slot.get("item")
+	if item == null:
+		return {}
+
+	var result := {
+		"quantity": slot.get("quantity", 1),
+		"charges": slot.get("charges", 0),
+		"item": _serialize_item(item)
+	}
+
+	return result
+
+
+func _deserialize_slot(slot_data: Dictionary) -> Dictionary:
+	## Deserialize an inventory slot from save
+	if slot_data.is_empty():
+		return {}
+
+	var item_data: Dictionary = slot_data.get("item", {})
+	if item_data.is_empty():
+		return {}
+
+	var item := _deserialize_item(item_data)
+	if item == null:
+		return {}
+
+	return {
+		"item": item,
+		"quantity": slot_data.get("quantity", 1),
+		"charges": slot_data.get("charges", 0)
+	}
+
+
+func _serialize_item(item: ItemData) -> Dictionary:
+	## Serialize an item to saveable format
+	var result := {
+		"id": item.id,
+		"item_name": item.item_name,
+		"description": item.description,
+		"rarity": item.rarity,
+		"item_type": item.item_type,
+		"max_stack": item.max_stack,
+		"sell_value": item.sell_value,
+	}
+
+	# Equipment-specific data
+	if item is EquipmentData:
+		var equip: EquipmentData = item as EquipmentData
+		result["_type"] = "equipment"
+		result["equipment_type"] = equip.equipment_type
+
+		# Weapon stats
+		result["weapon_damage"] = equip.weapon_damage
+		result["physical_damage"] = equip.physical_damage
+		result["fire_damage"] = equip.fire_damage
+		result["cold_damage"] = equip.cold_damage
+		result["lightning_damage"] = equip.lightning_damage
+		result["poison_damage"] = equip.poison_damage
+		result["weapon_attack_speed"] = equip.weapon_attack_speed
+		result["weapon_category"] = equip.weapon_category
+
+		# Stat bonuses
+		result["bonus_strength"] = equip.bonus_strength
+		result["bonus_dexterity"] = equip.bonus_dexterity
+		result["bonus_intelligence"] = equip.bonus_intelligence
+		result["bonus_vitality"] = equip.bonus_vitality
+		result["bonus_energy"] = equip.bonus_energy
+		result["bonus_luck"] = equip.bonus_luck
+
+		# Offensive bonuses
+		result["bonus_attack_power"] = equip.bonus_attack_power
+		result["bonus_spell_power"] = equip.bonus_spell_power
+		result["bonus_attack_speed"] = equip.bonus_attack_speed
+		result["bonus_crit_chance"] = equip.bonus_crit_chance
+		result["bonus_crit_damage"] = equip.bonus_crit_damage
+
+		# Defensive bonuses
+		result["bonus_armor"] = equip.bonus_armor
+		result["bonus_magic_resistance"] = equip.bonus_magic_resistance
+		result["bonus_dodge_chance"] = equip.bonus_dodge_chance
+		result["bonus_health"] = equip.bonus_health
+		result["bonus_mana"] = equip.bonus_mana
+		result["bonus_stamina"] = equip.bonus_stamina
+
+		# Utility bonuses
+		result["bonus_movement_speed"] = equip.bonus_movement_speed
+		result["bonus_life_regen"] = equip.bonus_life_regen
+		result["bonus_mana_regen"] = equip.bonus_mana_regen
+		result["bonus_stamina_regen"] = equip.bonus_stamina_regen
+
+		# Requirements
+		result["required_level"] = equip.required_level
+		result["required_strength"] = equip.required_strength
+		result["required_dexterity"] = equip.required_dexterity
+		result["required_intelligence"] = equip.required_intelligence
+
+	# Consumable-specific data
+	elif item is ConsumableData:
+		var consumable: ConsumableData = item as ConsumableData
+		result["_type"] = "consumable"
+		result["effect_type"] = consumable.effect_type
+		result["effect_value"] = consumable.effect_value
+		result["effect_duration"] = consumable.effect_duration
+		result["cooldown"] = consumable.cooldown
+		result["max_charges"] = consumable.max_charges
+
+	else:
+		result["_type"] = "base"
+
+	return result
+
+
+func _deserialize_item(data: Dictionary) -> ItemData:
+	## Deserialize an item from save data
+	var item_type: String = data.get("_type", "base")
+
+	# First try to recreate from database (preferred - gets icon, etc.)
+	var item_id: String = data.get("id", "")
+	var item: ItemData = null
+
+	if item_type == "equipment" and not item_id.is_empty():
+		# Try to create from database first
+		item = DatabaseLoader.create_equipment(item_id)
+		if item:
+			# Apply saved modifications (magic item bonuses, etc.)
+			_apply_saved_equipment_stats(item as EquipmentData, data)
+			return item
+
+	if item_type == "consumable" and not item_id.is_empty():
+		# TODO: When consumable database exists, load from there
+		pass
+
+	# Fall back to creating from save data directly
+	match item_type:
+		"equipment":
+			item = _create_equipment_from_data(data)
+		"consumable":
+			item = _create_consumable_from_data(data)
+		_:
+			item = _create_base_item_from_data(data)
+
+	return item
+
+
+func _apply_saved_equipment_stats(equip: EquipmentData, data: Dictionary) -> void:
+	## Apply saved stat modifications to database equipment
+	## This handles magic/rare items that have bonus stats beyond the base
+
+	# Rarity can change (magic items)
+	equip.rarity = data.get("rarity", equip.rarity)
+	equip.item_name = data.get("item_name", equip.item_name)
+	equip.description = data.get("description", equip.description)
+
+	# Apply bonus stats (these may have been modified by affixes)
+	equip.bonus_strength = data.get("bonus_strength", equip.bonus_strength)
+	equip.bonus_dexterity = data.get("bonus_dexterity", equip.bonus_dexterity)
+	equip.bonus_intelligence = data.get("bonus_intelligence", equip.bonus_intelligence)
+	equip.bonus_vitality = data.get("bonus_vitality", equip.bonus_vitality)
+	equip.bonus_energy = data.get("bonus_energy", equip.bonus_energy)
+	equip.bonus_luck = data.get("bonus_luck", equip.bonus_luck)
+
+	equip.bonus_attack_power = data.get("bonus_attack_power", equip.bonus_attack_power)
+	equip.bonus_spell_power = data.get("bonus_spell_power", equip.bonus_spell_power)
+	equip.bonus_attack_speed = data.get("bonus_attack_speed", equip.bonus_attack_speed)
+	equip.bonus_crit_chance = data.get("bonus_crit_chance", equip.bonus_crit_chance)
+	equip.bonus_crit_damage = data.get("bonus_crit_damage", equip.bonus_crit_damage)
+
+	equip.bonus_armor = data.get("bonus_armor", equip.bonus_armor)
+	equip.bonus_magic_resistance = data.get("bonus_magic_resistance", equip.bonus_magic_resistance)
+	equip.bonus_dodge_chance = data.get("bonus_dodge_chance", equip.bonus_dodge_chance)
+	equip.bonus_health = data.get("bonus_health", equip.bonus_health)
+	equip.bonus_mana = data.get("bonus_mana", equip.bonus_mana)
+	equip.bonus_stamina = data.get("bonus_stamina", equip.bonus_stamina)
+
+	equip.bonus_movement_speed = data.get("bonus_movement_speed", equip.bonus_movement_speed)
+	equip.bonus_life_regen = data.get("bonus_life_regen", equip.bonus_life_regen)
+	equip.bonus_mana_regen = data.get("bonus_mana_regen", equip.bonus_mana_regen)
+	equip.bonus_stamina_regen = data.get("bonus_stamina_regen", equip.bonus_stamina_regen)
+
+
+func _create_equipment_from_data(data: Dictionary) -> EquipmentData:
+	## Create equipment directly from save data (fallback)
+	var equip := EquipmentData.new()
+
+	# Base properties
+	equip.id = data.get("id", "")
+	equip.item_name = data.get("item_name", "Unknown")
+	equip.description = data.get("description", "")
+	equip.rarity = data.get("rarity", ItemData.Rarity.COMMON)
+	equip.sell_value = data.get("sell_value", 0)
+
+	equip.equipment_type = data.get("equipment_type", ItemData.EquipmentType.NONE)
+
+	# Weapon stats
+	equip.weapon_damage = data.get("weapon_damage", 0)
+	equip.physical_damage = data.get("physical_damage", 0)
+	equip.fire_damage = data.get("fire_damage", 0)
+	equip.cold_damage = data.get("cold_damage", 0)
+	equip.lightning_damage = data.get("lightning_damage", 0)
+	equip.poison_damage = data.get("poison_damage", 0)
+	equip.weapon_attack_speed = data.get("weapon_attack_speed", 1.0)
+	equip.weapon_category = data.get("weapon_category", "")
+
+	# Stat bonuses
+	equip.bonus_strength = data.get("bonus_strength", 0)
+	equip.bonus_dexterity = data.get("bonus_dexterity", 0)
+	equip.bonus_intelligence = data.get("bonus_intelligence", 0)
+	equip.bonus_vitality = data.get("bonus_vitality", 0)
+	equip.bonus_energy = data.get("bonus_energy", 0)
+	equip.bonus_luck = data.get("bonus_luck", 0)
+
+	# Offensive bonuses
+	equip.bonus_attack_power = data.get("bonus_attack_power", 0)
+	equip.bonus_spell_power = data.get("bonus_spell_power", 0)
+	equip.bonus_attack_speed = data.get("bonus_attack_speed", 0.0)
+	equip.bonus_crit_chance = data.get("bonus_crit_chance", 0.0)
+	equip.bonus_crit_damage = data.get("bonus_crit_damage", 0.0)
+
+	# Defensive bonuses
+	equip.bonus_armor = data.get("bonus_armor", 0)
+	equip.bonus_magic_resistance = data.get("bonus_magic_resistance", 0)
+	equip.bonus_dodge_chance = data.get("bonus_dodge_chance", 0.0)
+	equip.bonus_health = data.get("bonus_health", 0)
+	equip.bonus_mana = data.get("bonus_mana", 0)
+	equip.bonus_stamina = data.get("bonus_stamina", 0)
+
+	# Utility bonuses
+	equip.bonus_movement_speed = data.get("bonus_movement_speed", 0.0)
+	equip.bonus_life_regen = data.get("bonus_life_regen", 0.0)
+	equip.bonus_mana_regen = data.get("bonus_mana_regen", 0.0)
+	equip.bonus_stamina_regen = data.get("bonus_stamina_regen", 0.0)
+
+	# Requirements
+	equip.required_level = data.get("required_level", 1)
+	equip.required_strength = data.get("required_strength", 0)
+	equip.required_dexterity = data.get("required_dexterity", 0)
+	equip.required_intelligence = data.get("required_intelligence", 0)
+
+	return equip
+
+
+func _create_consumable_from_data(data: Dictionary) -> ConsumableData:
+	## Create consumable directly from save data
+	var consumable := ConsumableData.new()
+
+	consumable.id = data.get("id", "")
+	consumable.item_name = data.get("item_name", "Unknown")
+	consumable.description = data.get("description", "")
+	consumable.rarity = data.get("rarity", ItemData.Rarity.COMMON)
+	consumable.sell_value = data.get("sell_value", 0)
+
+	consumable.effect_type = data.get("effect_type", ConsumableData.EffectType.HEAL_HEALTH)
+	consumable.effect_value = data.get("effect_value", 0)
+	consumable.effect_duration = data.get("effect_duration", 0.0)
+	consumable.cooldown = data.get("cooldown", 0.0)
+	consumable.max_charges = data.get("max_charges", 5)
+
+	return consumable
+
+
+func _create_base_item_from_data(data: Dictionary) -> ItemData:
+	## Create base item from save data (shouldn't normally happen)
+	var item := ItemData.new()
+
+	item.id = data.get("id", "")
+	item.item_name = data.get("item_name", "Unknown")
+	item.description = data.get("description", "")
+	item.rarity = data.get("rarity", ItemData.Rarity.COMMON)
+	item.item_type = data.get("item_type", ItemData.ItemType.EQUIPMENT)
+	item.max_stack = data.get("max_stack", 1)
+	item.sell_value = data.get("sell_value", 0)
+
+	return item
+
+
+func _count_backpack_items() -> int:
+	var count := 0
+	for slot in backpack:
+		if not slot.is_empty():
+			count += 1
+	return count
+
+
+func _count_equipped_items() -> int:
+	var count := 0
+	for slot in EQUIPMENT_SLOTS:
+		if not equipped[slot].is_empty():
+			count += 1
+	return count

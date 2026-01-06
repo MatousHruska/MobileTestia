@@ -512,3 +512,65 @@ func debug_add_skill_points(amount: int = 10) -> void:
 	skill_points += amount
 	skill_points_changed.emit(skill_points)
 	Debug.info("Stats", "Debug: Added skill points", amount)
+
+
+#===============================================================================
+# PERSISTENCE
+#===============================================================================
+
+func get_save_data() -> Dictionary:
+	## Get all player stats for saving
+	return {
+		# Level and progression
+		"level": level,
+		"experience": experience,
+		"attribute_points": attribute_points,
+		"skill_points": skill_points,
+
+		# Primary attributes
+		"strength": strength,
+		"dexterity": dexterity,
+		"intelligence": intelligence,
+		"vitality": vitality,
+		"energy": energy,
+		"luck": luck,
+
+		# Current resources (save current state)
+		"current_life": current_life,
+		"current_mana": current_mana,
+		"current_stamina": current_stamina,
+	}
+
+
+func load_save_data(data: Dictionary) -> void:
+	## Load player stats from save data
+
+	# Level and progression (set level first to establish base state)
+	level = data.get("level", 1)
+	experience = data.get("experience", 0)
+	attribute_points = data.get("attribute_points", 0)
+	skill_points = data.get("skill_points", 0)
+
+	# Primary attributes (these trigger _recalculate_derived via setters)
+	strength = data.get("strength", 10)
+	dexterity = data.get("dexterity", 10)
+	intelligence = data.get("intelligence", 10)
+	vitality = data.get("vitality", 10)
+	energy = data.get("energy", 10)
+	luck = data.get("luck", 10)
+
+	# Force recalculate derived stats
+	_recalculate_derived()
+
+	# Restore current resources (after max values are calculated)
+	current_life = data.get("current_life", max_life)
+	current_mana = data.get("current_mana", max_mana)
+	current_stamina = data.get("current_stamina", max_stamina)
+
+	Debug.info("Stats", "Loaded save data", {
+		"level": level,
+		"experience": experience,
+		"attributes": "STR:%d DEX:%d INT:%d VIT:%d ENE:%d LUK:%d" % [
+			strength, dexterity, intelligence, vitality, energy, luck
+		]
+	})
