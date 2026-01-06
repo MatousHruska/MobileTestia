@@ -42,9 +42,7 @@
       "max_charge_time": 0,
       "base_range": 0,
       "lunge_duration": 0.5,
-      "explosion_falloff": 0,
-      "can_move_while_casting": false,
-      "interrupt_on_damage": true
+      "explosion_falloff": 0
     },
     {
       "id": "tal_basic_shot",
@@ -88,9 +86,7 @@
       "max_charge_time": 2,
       "base_range": 150,
       "lunge_duration": 0,
-      "explosion_falloff": 0,
-      "can_move_while_casting": false,
-      "interrupt_on_damage": true
+      "explosion_falloff": 0
     },
     {
       "id": "tal_basic_fireball",
@@ -134,9 +130,7 @@
       "max_charge_time": 0,
       "base_range": 0,
       "lunge_duration": 0,
-      "explosion_falloff": 30,
-      "can_move_while_casting": false,
-      "interrupt_on_damage": true
+      "explosion_falloff": 30
     },
     {
       "id": "tal_basic_bandage",
@@ -158,7 +152,7 @@
       "prerequisite_ids": "",
       "mana_cost": 0,
       "stamina_cost": 0,
-      "cooldown": 60,
+      "cooldown": 5,
       "base_damage": 0,
       "damage_per_rank": 0,
       "effect_type": "self_buff",
@@ -180,9 +174,7 @@
       "max_charge_time": 0,
       "base_range": 0,
       "lunge_duration": 0,
-      "explosion_falloff": 0,
-      "can_move_while_casting": false,
-      "interrupt_on_damage": true
+      "explosion_falloff": 0
     },
     {
       "id": "tal_noble_resolve",
@@ -226,9 +218,7 @@
       "max_charge_time": 0,
       "base_range": 0,
       "lunge_duration": 0,
-      "explosion_falloff": 0,
-      "can_move_while_casting": false,
-      "interrupt_on_damage": true
+      "explosion_falloff": 0
     },
     {
       "id": "tal_noble_strike",
@@ -272,9 +262,7 @@
       "max_charge_time": 0,
       "base_range": 0,
       "lunge_duration": 0.15,
-      "explosion_falloff": 0,
-      "can_move_while_casting": false,
-      "interrupt_on_damage": true
+      "explosion_falloff": 0
     }
   ]
 }
