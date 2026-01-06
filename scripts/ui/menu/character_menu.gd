@@ -459,10 +459,14 @@ func _show_save_load_panel(mode: SaveLoadPanel.Mode) -> void:
 func _on_save_load_slot_selected(slot: int) -> void:
 	## Handle save/load completion
 	Debug.info("UI", "Save/Load slot selected", slot)
+
+	# Check mode BEFORE hiding panel (which sets reference to null)
+	var was_loading := _save_load_panel and _save_load_panel.mode == SaveLoadPanel.Mode.LOAD
+
 	_hide_save_load_panel()
 
 	# If loaded, close the menu to return to gameplay
-	if _save_load_panel and _save_load_panel.mode == SaveLoadPanel.Mode.LOAD:
+	if was_loading:
 		close_menu()
 
 
