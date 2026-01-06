@@ -127,7 +127,7 @@ allow_wooden = false
 [node name="TransitionToTest" type="Area2D" parent="."]
 position = Vector2(0, -280)
 script = ExtResource("6_transition")
-target_zone = "res://scenes/world/test_zone.tscn"
+target_zone = "res://scenes/world/zone_test_hub.tscn"
 spawn_point_id = "from_crypt"
 display_name = "To Hub"
 
