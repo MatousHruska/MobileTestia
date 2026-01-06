@@ -35,6 +35,7 @@ PopupMessage="*res://autoloads/popup_message_manager.gd"
 TalentManager="*res://autoloads/talent_manager.gd"
 DamageCalculator="*res://autoloads/damage_calculator.gd"
 ResponsiveUI="*res://autoloads/responsive_ui.gd"
+GlobalProgress="*res://autoloads/global_progress_manager.gd"
 SaveManager="*res://autoloads/save_manager.gd"
 
 [display]

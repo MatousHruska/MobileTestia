@@ -122,6 +122,9 @@ func save_game(slot: int) -> bool:
 		_update_slot_metadata(slot, save_data)
 		current_slot = slot if slot >= 0 else current_slot
 
+		# Sync playtime with GlobalProgress
+		_sync_playtime_to_global()
+
 	_is_busy = false
 	Debug.perf_end("save_game_%d" % slot)
 	save_completed.emit(slot, success)
@@ -132,6 +135,13 @@ func save_game(slot: int) -> bool:
 		save_error.emit(slot, "Failed to write save file")
 
 	return success
+
+
+func _sync_playtime_to_global() -> void:
+	## Sync current session playtime to GlobalProgress
+	if GlobalProgress and Game:
+		GlobalProgress.add_playtime(Game.game_time)
+		Debug.log("Save", "Synced playtime to global", Game.game_time)
 
 
 func load_game(slot: int) -> bool:
