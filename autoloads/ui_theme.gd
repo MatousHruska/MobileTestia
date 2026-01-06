@@ -82,7 +82,16 @@ const DEFAULTS := {
 	# Separations
 	"separation_normal": 8,
 	"separation_small": 4,
+	"separation_tiny": 2,
 	"separation_grid": 4,
+	# Cast bar
+	"color_cast_bar_bg": "0.1,0.1,0.12,0.9",
+	"color_cast_bar_fill": "0.8,0.6,0.2,1.0",
+	"color_cast_bar_border": "0.4,0.4,0.45,1.0",
+	"color_cast_bar_text": "1.0,1.0,1.0,1.0",
+	"color_cast_bar_interrupted": "0.8,0.2,0.2,1.0",
+	"cast_bar_height": 16,
+	"cast_bar_width": 200,
 }
 
 #===============================================================================
