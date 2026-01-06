@@ -15,12 +15,13 @@ var _states: Dictionary = {
 	"enemies": {},  # For boss kill tracking
 	"quests": {},
 	"npcs": {},
+	"escort_npcs": {},  # Dynamic NPC states during escort quests
 	"status_effects": {},  # Player status effects (buffs/debuffs)
 	"misc": {}  # Catch-all for anything else
 }
 
 ## Valid categories
-const CATEGORIES := ["doors", "levers", "chests", "enemies", "quests", "npcs", "status_effects", "misc"]
+const CATEGORIES := ["doors", "levers", "chests", "enemies", "quests", "npcs", "escort_npcs", "status_effects", "misc"]
 
 
 func _ready() -> void:
@@ -147,6 +148,89 @@ func load_status_effects() -> Dictionary:
 
 func clear_status_effects() -> void:
 	clear_state("status_effects", "player")
+
+
+## Escort NPC State - for saving dynamic NPC positions during escort quests
+## This allows saving mid-escort and resuming from the same position
+
+func save_escort_npc_state(npc_id: String, data: Dictionary) -> void:
+	## Save full escort NPC state
+	## data should include: position, path_index, behavior_state, health, zone, etc.
+	save_state("escort_npcs", npc_id, data)
+
+
+func load_escort_npc_state(npc_id: String) -> Dictionary:
+	## Load escort NPC state
+	return load_state("escort_npcs", npc_id)
+
+
+func has_escort_npc_state(npc_id: String) -> bool:
+	## Check if escort NPC has saved state
+	return has_state("escort_npcs", npc_id)
+
+
+func clear_escort_npc_state(npc_id: String) -> void:
+	## Clear escort NPC state (when escort quest ends)
+	clear_state("escort_npcs", npc_id)
+
+
+func save_escort_npc_full(
+	npc_id: String,
+	position: Vector2,
+	zone: String,
+	behavior_state: String = "following",
+	path_index: int = 0,
+	current_health: float = -1.0,
+	max_health: float = -1.0,
+	extra_data: Dictionary = {}
+) -> void:
+	## Convenience method to save all escort NPC data
+	var data := {
+		"position_x": position.x,
+		"position_y": position.y,
+		"zone": zone,
+		"behavior_state": behavior_state,
+		"path_index": path_index,
+		"saved_at": Time.get_unix_time_from_system()
+	}
+
+	# Health (only if NPC is damageable)
+	if current_health >= 0:
+		data["current_health"] = current_health
+		data["max_health"] = max_health
+
+	# Merge any extra data
+	data.merge(extra_data)
+
+	save_escort_npc_state(npc_id, data)
+	Debug.info("Persistence", "Saved escort NPC state", { "npc": npc_id, "pos": position, "state": behavior_state })
+
+
+func get_escort_npc_position(npc_id: String) -> Vector2:
+	## Get saved position for escort NPC
+	var data := load_escort_npc_state(npc_id)
+	if data.is_empty():
+		return Vector2.ZERO
+	return Vector2(data.get("position_x", 0), data.get("position_y", 0))
+
+
+func get_escort_npc_zone(npc_id: String) -> String:
+	## Get saved zone for escort NPC
+	var data := load_escort_npc_state(npc_id)
+	return data.get("zone", "")
+
+
+func get_all_active_escort_npcs() -> Array[String]:
+	## Get list of all NPCs with saved escort state
+	var result: Array[String] = []
+	for npc_id in _states["escort_npcs"]:
+		result.append(npc_id)
+	return result
+
+
+func clear_all_escort_states() -> void:
+	## Clear all escort NPC states (e.g., on quest abandon)
+	clear_category("escort_npcs")
 
 
 ## Debug
