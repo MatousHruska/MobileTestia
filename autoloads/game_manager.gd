@@ -261,9 +261,9 @@ func print_state() -> void:
 
 func debug_full_state() -> void:
 	## Print comprehensive debug state - call this to diagnose issues
-	print("=" * 60)
+	print("============================================================")
 	print("=== GAME STATE DEBUG ===")
-	print("=" * 60)
+	print("============================================================")
 	print("GameManager.current_state: ", GameState.keys()[current_state])
 	print("get_tree().paused: ", get_tree().paused)
 	print("can_player_move: ", can_player_move)
@@ -278,7 +278,7 @@ func debug_full_state() -> void:
 		print("UIManager.is_character_menu_open(): ", UIManager.is_character_menu_open())
 		print("UIManager.is_any_menu_open(): ", UIManager.is_any_menu_open())
 
-	print("=" * 60)
+	print("============================================================")
 
 	Debug.info("System", "DEBUG STATE DUMP", {
 		"state": GameState.keys()[current_state],
