@@ -71,9 +71,9 @@ func _update_indicator() -> void:
 	var qm = get_node("/root/QuestManager")
 
 	# Show "!" if NPC has new quest
-	var available := qm.get_quests_for_npc(npc_id)
+	var available: Array = qm.get_quests_for_npc(npc_id)
 	# Show "?" if NPC has quest to turn in
-	var turn_in := qm.has_quest_to_turn_in(npc_id)
+	var turn_in: bool = qm.has_quest_to_turn_in(npc_id)
 
 	if turn_in:
 		_indicator.visible = true

@@ -119,7 +119,7 @@ func _create_item_from_id(item_id: String) -> ItemData:
 		return item
 
 	# Try consumable
-	var consumable_data := DatabaseLoader.consumables.get(item_id, {})
+	var consumable_data: Dictionary = DatabaseLoader.consumables.get(item_id, {})
 	if not consumable_data.is_empty():
 		var consumable := ConsumableData.new()
 		consumable.id = item_id
