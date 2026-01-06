@@ -13,12 +13,15 @@ var mode: Mode = Mode.SAVE
 
 ## References
 var _title_label: Label
+var _scroll: ScrollContainer
 var _slots_container: VBoxContainer
 var _cancel_button: Button
 var _slot_buttons: Array[Control] = []
 
 ## Design constants
 const SLOT_HEIGHT := 80
+const MAX_HEIGHT_PCT := 0.85  # 85% of viewport height
+const PANEL_WIDTH := 320
 
 
 func _init() -> void:
@@ -27,6 +30,29 @@ func _init() -> void:
 
 func _ready() -> void:
 	_refresh_slots()
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	_update_size()
+
+
+func _on_viewport_size_changed() -> void:
+	_update_size()
+
+
+func _update_size() -> void:
+	## Constrain panel height to viewport
+	var viewport_size := get_viewport().get_visible_rect().size
+	var max_height := int(viewport_size.y * MAX_HEIGHT_PCT)
+
+	# Calculate content height needed
+	var content_height := SLOT_HEIGHT * 4 + 120  # 4 slots + header/footer
+	var target_height := mini(content_height, max_height)
+
+	# Update scroll container size
+	if _scroll:
+		var scroll_height := target_height - 100  # Account for title, separator, button
+		_scroll.custom_minimum_size.y = scroll_height
+
+	custom_minimum_size = Vector2(PANEL_WIDTH, 0)
 
 
 func _setup_ui() -> void:
@@ -56,17 +82,18 @@ func _setup_ui() -> void:
 	main_vbox.add_child(sep)
 
 	# Scroll container for slots
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size = Vector2(0, SLOT_HEIGHT * 4.5)
-	main_vbox.add_child(scroll)
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.custom_minimum_size = Vector2(0, SLOT_HEIGHT * 4)
+	main_vbox.add_child(_scroll)
 
 	# Slots container
 	_slots_container = VBoxContainer.new()
 	_slots_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	UITheme.setup_vbox(_slots_container, UITheme.SEPARATION_SMALL)
-	scroll.add_child(_slots_container)
+	_scroll.add_child(_slots_container)
 
 	# Bottom buttons
 	var button_hbox := HBoxContainer.new()
