@@ -1,15 +1,14 @@
-[gd_scene load_steps=11 format=3 uid="uid://test0one001"]
+[gd_scene load_steps=11 format=3 uid="uid://bdlovilij0thi"]
 
-[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
-[ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
-[ext_resource type="Script" path="res://scripts/camera/game_camera.gd" id="3_camera"]
-[ext_resource type="Script" path="res://scripts/world/reference_object.gd" id="4_ref"]
-[ext_resource type="Script" path="res://scripts/world/zone_base.gd" id="5_zone"]
-[ext_resource type="Script" path="res://scripts/npc/enemy_npc.gd" id="7_enemy"]
+[ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
+[ext_resource type="Script" uid="uid://br7g6n3ugvdis" path="res://scripts/camera/game_camera.gd" id="3_camera"]
+[ext_resource type="Script" uid="uid://vo3bhpaiw1r0" path="res://scripts/world/reference_object.gd" id="4_ref"]
+[ext_resource type="Script" uid="uid://vik7jjuuh4ix" path="res://scripts/world/zone_base.gd" id="5_zone"]
 [ext_resource type="PackedScene" path="res://scenes/prefabs/database_npc.tscn" id="8_npc_prefab"]
-[ext_resource type="Script" path="res://scripts/world/zone_transition.gd" id="9_transition"]
-[ext_resource type="Script" path="res://scripts/world/spawn_point.gd" id="10_spawn"]
-[ext_resource type="Script" path="res://scripts/interactable/chest_spawn_point.gd" id="11_chest_spawn"]
+[ext_resource type="Script" uid="uid://cayikglml6hs4" path="res://scripts/world/zone_transition.gd" id="9_transition"]
+[ext_resource type="Script" uid="uid://dc6rssr8gotxo" path="res://scripts/world/spawn_point.gd" id="10_spawn"]
+[ext_resource type="Script" uid="uid://bxs48qilberw1" path="res://scripts/interactable/chest_spawn_point.gd" id="11_chest_spawn"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
@@ -18,7 +17,6 @@ size = Vector2(80, 40)
 script = ExtResource("5_zone")
 zone_id = "zone_test_hub"
 zone_name = "Test Hub"
-spawn_enemies = false
 
 [node name="Background" type="ColorRect" parent="."]
 offset_left = -640.0
@@ -33,7 +31,6 @@ color = Color(0.15, 0.2, 0.15, 1)
 position = Vector2(-200, -350)
 script = ExtResource("9_transition")
 target_zone = "res://scenes/world/zone_meadow.tscn"
-spawn_point_id = "default"
 display_name = "Meadow"
 transition_color = Color(0.3, 0.6, 0.3, 0.7)
 
@@ -44,7 +41,6 @@ shape = SubResource("RectangleShape2D_trans")
 position = Vector2(0, -350)
 script = ExtResource("9_transition")
 target_zone = "res://scenes/world/zone_forest.tscn"
-spawn_point_id = "default"
 display_name = "Forest"
 transition_color = Color(0.15, 0.35, 0.15, 0.7)
 
@@ -55,7 +51,6 @@ shape = SubResource("RectangleShape2D_trans")
 position = Vector2(200, -350)
 script = ExtResource("9_transition")
 target_zone = "res://scenes/world/zone_crypt.tscn"
-spawn_point_id = "default"
 display_name = "Crypt"
 transition_color = Color(0.3, 0.2, 0.4, 0.7)
 
@@ -83,9 +78,7 @@ spawn_id = "from_crypt"
 marker_color = Color(0.3, 0.2, 0.4, 0.8)
 
 [node name="SpawnDefault" type="Marker2D" parent="SpawnPoints"]
-position = Vector2(0, 0)
 script = ExtResource("10_spawn")
-spawn_id = "default"
 
 [node name="TransitionLabels" type="Node2D" parent="."]
 
@@ -149,7 +142,6 @@ object_size = Vector2(35, 70)
 position = Vector2(50, 150)
 script = ExtResource("4_ref")
 object_color = Color(0.6, 0.45, 0.25, 1)
-object_size = Vector2(32, 32)
 
 [node name="Barrel" type="Node2D" parent="ReferenceObjects"]
 position = Vector2(-200, -150)
@@ -171,7 +163,6 @@ object_size = Vector2(16, 16)
 position = Vector2(-80, 50)
 script = ExtResource("11_chest_spawn")
 spawn_id = "starter_chest"
-spawn_chance = 1.0
 wooden_weight = 100
 iron_weight = 0
 golden_weight = 0
@@ -184,11 +175,9 @@ marker_color = Color(0.55, 0.35, 0.15, 0.9)
 position = Vector2(-300, 80)
 script = ExtResource("11_chest_spawn")
 spawn_id = "hub_chest_1"
-spawn_chance = 1.0
 wooden_weight = 80
 iron_weight = 18
 golden_weight = 2
-marker_color = Color(0.6, 0.4, 0.2, 0.8)
 
 [node name="ChestSpawn2" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(350, 120)
@@ -197,7 +186,6 @@ spawn_id = "hub_chest_2"
 spawn_chance = 0.75
 wooden_weight = 60
 iron_weight = 35
-golden_weight = 5
 marker_color = Color(0.5, 0.5, 0.55, 0.8)
 
 [node name="ChestSpawn3" type="Marker2D" parent="ChestSpawns"]
