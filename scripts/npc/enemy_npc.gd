@@ -501,63 +501,145 @@ func _on_death() -> void:
 
 
 func _drop_loot() -> void:
-	# Spawn gold coins with scatter effect
-	var gold_amount := randi_range(gold_min, gold_max)
-	if gold_amount > 0:
-		GoldPickup.spawn_coins(get_tree().current_scene, global_position, gold_amount)
-		Debug.log("Loot", "%s dropped gold coins" % enemy_name, gold_amount)
-
-	var dropped_item_id: String = ""
-
 	# Check for database loot table reference first
 	if has_meta("loot_table_id"):
 		var loot_table_id: String = get_meta("loot_table_id")
 		var db_loot_table: Dictionary = DatabaseLoader.get_loot_table(loot_table_id)
 
 		if not db_loot_table.is_empty():
-			# Use guaranteed_drops if available
-			var guaranteed: String = db_loot_table.get("guaranteed_drops", "")
-			if not guaranteed.is_empty():
-				dropped_item_id = guaranteed
-				Debug.log("Loot", "%s dropped guaranteed item" % enemy_name, dropped_item_id)
-			else:
-				# Fall back to item_pool
-				var item_pool: String = db_loot_table.get("item_pool", "")
-				if not item_pool.is_empty():
-					# item_pool can be comma-separated, pick one randomly
-					var items := item_pool.split(",")
-					dropped_item_id = items[randi() % items.size()].strip_edges()
-					Debug.log("Loot", "%s dropped item from pool" % enemy_name, dropped_item_id)
+			_drop_from_loot_table(db_loot_table)
+			return
 
-	# Fall back to local loot_table array if no database drop
-	if dropped_item_id.is_empty():
-		for entry in loot_table:
-			var item_id: String = entry.get("item_id", "")
-			var drop_chance: float = entry.get("drop_chance", 0.0)
-
-			if item_id.is_empty():
-				continue
-
-			if randf() <= drop_chance:
-				dropped_item_id = item_id
-				Debug.log("Loot", "%s dropped item" % enemy_name, item_id)
-				break  # Only one item can drop
-
-	# Spawn the loot pickup if we got an item
-	if not dropped_item_id.is_empty():
-		_spawn_loot_pickup(dropped_item_id)
-		loot_dropped.emit([{"type": "item", "item_id": dropped_item_id}])
+	# Fall back to legacy local loot_table array
+	_drop_legacy_loot()
 
 
-func _spawn_loot_pickup(item_id: String) -> void:
+## Drop loot using database loot table with rarity weights
+func _drop_from_loot_table(table: Dictionary) -> void:
+	# Get gold range from table
+	var table_gold_min: int = int(table.get("gold_min", gold_min))
+	var table_gold_max: int = int(table.get("gold_max", gold_max))
+	var gold_amount := randi_range(table_gold_min, table_gold_max)
+	if gold_amount > 0:
+		GoldPickup.spawn_coins(get_tree().current_scene, global_position, gold_amount)
+		Debug.log("Loot", "%s dropped %d gold" % [enemy_name, gold_amount])
+
+	# Always drop guaranteed items first
+	var guaranteed: String = table.get("guaranteed_drops", "")
+	if not guaranteed.is_empty():
+		var guaranteed_items := guaranteed.split(",")
+		for item_id in guaranteed_items:
+			item_id = item_id.strip_edges()
+			if not item_id.is_empty():
+				_spawn_loot_pickup(item_id, ItemData.Rarity.RARE)
+				Debug.log("Loot", "%s dropped guaranteed: %s" % [enemy_name, item_id])
+
+	# Roll for additional drops using rarity weights
+	var rarity_weights: Dictionary = table.get("rarity_weights", {})
+	var min_drops: int = int(table.get("min_drops", 1))
+	var max_drops: int = int(table.get("max_drops", 1))
+	var drop_count := randi_range(min_drops, max_drops)
+
+	for i in range(drop_count):
+		var rolled_rarity := _roll_rarity_from_weights(rarity_weights)
+		if rolled_rarity == -1:
+			# Rolled "nothing"
+			Debug.log("Loot", "%s drop roll: nothing" % enemy_name)
+			continue
+
+		# Get item from pool or generate random
+		var item_pool: String = table.get("item_pool", "")
+		if not item_pool.is_empty():
+			var items := item_pool.split(",")
+			var item_id: String = items[randi() % items.size()].strip_edges()
+			_spawn_loot_pickup(item_id, rolled_rarity)
+			Debug.log("Loot", "%s dropped %s (rarity: %d)" % [enemy_name, item_id, rolled_rarity])
+		else:
+			# No item pool - generate random equipment
+			_spawn_random_loot_pickup(rolled_rarity)
+
+
+## Roll rarity from weights dictionary, returns -1 for "nothing"
+func _roll_rarity_from_weights(weights: Dictionary) -> int:
+	var nothing_weight: int = int(weights.get("nothing", 0))
+	var common_weight: int = int(weights.get("common", 100))
+	var magic_weight: int = int(weights.get("magic", 0))
+	var rare_weight: int = int(weights.get("rare", 0))
+	var unique_weight: int = int(weights.get("unique", 0))
+
+	var total := nothing_weight + common_weight + magic_weight + rare_weight + unique_weight
+	if total <= 0:
+		return ItemData.Rarity.COMMON
+
+	var roll := randi() % total
+	var cumulative := 0
+
+	# Check nothing first
+	cumulative += nothing_weight
+	if roll < cumulative:
+		return -1  # Nothing drops
+
+	cumulative += common_weight
+	if roll < cumulative:
+		return ItemData.Rarity.COMMON
+
+	cumulative += magic_weight
+	if roll < cumulative:
+		return ItemData.Rarity.UNCOMMON  # "magic" = uncommon
+
+	cumulative += rare_weight
+	if roll < cumulative:
+		return ItemData.Rarity.RARE
+
+	return ItemData.Rarity.LEGENDARY  # "unique" = legendary
+
+
+## Legacy loot drop for enemies without database loot table
+func _drop_legacy_loot() -> void:
+	# Spawn gold coins with scatter effect
+	var gold_amount := randi_range(gold_min, gold_max)
+	if gold_amount > 0:
+		GoldPickup.spawn_coins(get_tree().current_scene, global_position, gold_amount)
+		Debug.log("Loot", "%s dropped gold coins" % enemy_name, gold_amount)
+
+	# Check local loot_table array
+	for entry in loot_table:
+		var item_id: String = entry.get("item_id", "")
+		var drop_chance: float = entry.get("drop_chance", 0.0)
+
+		if item_id.is_empty():
+			continue
+
+		if randf() <= drop_chance:
+			_spawn_loot_pickup(item_id, ItemData.Rarity.COMMON)
+			Debug.log("Loot", "%s dropped item" % enemy_name, item_id)
+			loot_dropped.emit([{"type": "item", "item_id": item_id}])
+			break  # Only one item can drop
+
+
+func _spawn_loot_pickup(item_id: String, rarity: int = ItemData.Rarity.COMMON) -> void:
 	var item: ItemData = null
 
 	# Check if it's a key (starts with "key_")
 	if item_id.begins_with("key_"):
 		item = _create_key_from_id(item_id)
 	else:
-		# Create equipment from database
-		item = DatabaseLoader.create_equipment(item_id)
+		# Create equipment from database with appropriate rarity/affixes
+		var affix_count := 0
+		match rarity:
+			ItemData.Rarity.COMMON:
+				affix_count = 0
+			ItemData.Rarity.UNCOMMON:
+				affix_count = randi_range(1, 2)
+			ItemData.Rarity.RARE:
+				affix_count = randi_range(2, 4)
+			ItemData.Rarity.LEGENDARY:
+				affix_count = randi_range(4, 6)
+
+		if affix_count == 0:
+			item = DatabaseLoader.create_equipment(item_id, rarity)
+		else:
+			item = DatabaseLoader.create_magic_equipment(item_id, enemy_level, affix_count)
 
 	if item == null:
 		Debug.warn("Loot", "Failed to create item: %s" % item_id)
@@ -566,7 +648,23 @@ func _spawn_loot_pickup(item_id: String) -> void:
 	# Create and spawn the pickup
 	var pickup := LootPickup.create_at(global_position, item)
 	get_tree().current_scene.add_child(pickup)
+	loot_dropped.emit([{"type": "item", "item_id": item_id}])
 	Debug.info("Loot", "Spawned loot pickup: %s at %s" % [item.item_name, global_position])
+
+
+## Spawn a random equipment piece when no item_pool specified
+func _spawn_random_loot_pickup(rarity: int) -> void:
+	if DatabaseLoader.item_bases_list.is_empty():
+		return
+
+	# Pick a random base item
+	var base: Dictionary = DatabaseLoader.item_bases_list[randi() % DatabaseLoader.item_bases_list.size()]
+	var base_id: String = base.get("id", "")
+
+	if base_id.is_empty():
+		return
+
+	_spawn_loot_pickup(base_id, rarity)
 
 
 func _create_key_from_id(key_id: String) -> KeyData:
