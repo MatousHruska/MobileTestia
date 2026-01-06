@@ -600,9 +600,9 @@ func _drop_legacy_loot() -> void:
 	var gold_amount := randi_range(gold_min, gold_max)
 	if gold_amount > 0:
 		GoldPickup.spawn_coins(get_tree().current_scene, global_position, gold_amount)
-		Debug.log("Loot", "%s dropped gold coins" % enemy_name, gold_amount)
+		Debug.log("Loot", "%s dropped %d gold (legacy)" % [enemy_name, gold_amount])
 
-	# Check local loot_table array
+	# Check local loot_table array first
 	for entry in loot_table:
 		var item_id: String = entry.get("item_id", "")
 		var drop_chance: float = entry.get("drop_chance", 0.0)
@@ -614,7 +614,19 @@ func _drop_legacy_loot() -> void:
 			_spawn_loot_pickup(item_id, ItemData.Rarity.COMMON)
 			Debug.log("Loot", "%s dropped item" % enemy_name, item_id)
 			loot_dropped.emit([{"type": "item", "item_id": item_id}])
-			break  # Only one item can drop
+			return  # Done
+
+	# No local loot table - use default ~14% drop rate with random equipment
+	if randf() < 0.14:
+		var rarity := ItemData.Rarity.COMMON
+		var rarity_roll := randf()
+		if rarity_roll < 0.02:
+			rarity = ItemData.Rarity.RARE
+		elif rarity_roll < 0.10:
+			rarity = ItemData.Rarity.UNCOMMON
+
+		_spawn_random_loot_pickup(rarity)
+		Debug.log("Loot", "%s dropped random item (legacy fallback)" % enemy_name)
 
 
 func _spawn_loot_pickup(item_id: String, rarity: int = ItemData.Rarity.COMMON) -> void:
