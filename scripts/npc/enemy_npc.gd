@@ -19,6 +19,7 @@ signal loot_dropped(items: Array)
 @export_group("Health")
 @export var max_health: float = 100.0
 @export var health_regen: float = 0.0  ## Per second
+@export var base_shield: float = 0.0  ## Shield absorbs damage before health
 
 ## Combat stats
 @export_group("Combat Stats")
@@ -80,6 +81,10 @@ var _burning_visual: Node2D = null  ## Visual effect for burning status
 const EnemyHealthBarScript = preload("res://scripts/ui/enemy_health_bar.gd")
 var _health_bar: Node2D = null  ## EnemyHealthBar instance
 
+## Shield component
+const ShieldComponentScript = preload("res://scripts/combat/shield_component.gd")
+var shield: Node = null  ## ShieldComponent instance
+
 
 func _ready() -> void:
 	super._ready()
@@ -88,6 +93,7 @@ func _ready() -> void:
 	_original_modulate = modulate
 
 	_setup_status_effects()
+	_setup_shield()
 	_setup_ai()
 	_setup_hitbox()
 	_setup_hurtbox()
@@ -116,6 +122,17 @@ func _setup_status_effects() -> void:
 	status_effects.effect_applied.connect(_on_status_effect_applied)
 	status_effects.effect_removed.connect(_on_status_effect_removed)
 	status_effects.effect_tick.connect(_on_status_effect_tick)
+
+
+func _setup_shield() -> void:
+	## Setup shield component if enemy has base_shield > 0
+	shield = ShieldComponentScript.new()
+	shield.name = "Shield"
+	add_child(shield)
+
+	if base_shield > 0:
+		shield.setup(base_shield)
+		Debug.log("Combat", "%s shield initialized" % enemy_name, {"shield": base_shield})
 
 
 ## Override placeholder color - RED for hostile
@@ -187,6 +204,12 @@ func _on_status_effect_tick(effect_type: String, _damage: float) -> void:
 	set_meta("last_damage_type", damage_type)
 	set_meta("last_hit_was_crit", false)
 	set_meta("last_damage_was_dot", true)
+
+
+func _on_shield_changed(current: float, maximum: float) -> void:
+	## Update health bar when shield changes
+	if _health_bar and maximum > 0:
+		_health_bar.set_shield_percent(current / maximum)
 
 
 func take_effect_damage(damage: float) -> void:
@@ -390,6 +413,12 @@ func _setup_health_bar() -> void:
 	add_child(_health_bar)
 	_health_bar.setup(self, is_boss)
 
+	# Initialize shield display if enemy has shield
+	if shield and shield.has_shield():
+		_health_bar.set_shield_percent(shield.get_shield_percent())
+		# Connect shield signals to update health bar
+		shield.shield_changed.connect(_on_shield_changed)
+
 
 func _on_hurtbox_area_entered(area: Area2D) -> void:
 	# Received hit from player attack
@@ -418,8 +447,17 @@ func take_damage(amount: float, attacker: Node2D = null) -> void:
 		return
 
 	# Note: Armor reduction should already be applied by caller
-	# This method receives final damage amount
-	current_health -= amount
+	# Route damage through shield first
+	var health_damage := amount
+	if shield and shield.has_shield():
+		health_damage = shield.absorb_damage(amount)
+		# Update health bar shield display
+		if _health_bar:
+			_health_bar.set_shield_percent(shield.get_shield_percent())
+
+	# Apply remaining damage to health
+	if health_damage > 0:
+		current_health -= health_damage
 
 	# Visual feedback
 	_damage_flash()
@@ -434,7 +472,9 @@ func take_damage(amount: float, attacker: Node2D = null) -> void:
 	damaged.emit(amount, attacker)
 	Debug.log("Combat", "%s took damage" % enemy_name, {
 		"damage": int(amount),
-		"health": "%d/%d" % [int(current_health), int(max_health)]
+		"shield_absorbed": int(amount - health_damage),
+		"health": "%d/%d" % [int(current_health), int(max_health)],
+		"shield": "%d/%d" % [int(shield.current_shield if shield else 0), int(shield.max_shield if shield else 0)]
 	})
 
 
@@ -442,6 +482,37 @@ func _calculate_damage_after_armor(raw_damage: float) -> float:
 	## Simple armor reduction formula: damage_reduction = armor / (armor + 100)
 	var reduction := armor / (armor + 100.0)
 	return raw_damage * (1.0 - reduction)
+
+
+#===============================================================================
+# SHIELD API - For game mechanics to check shield status
+#===============================================================================
+
+## Returns true if enemy currently has any shield
+func has_shield() -> bool:
+	return shield and shield.has_shield()
+
+
+## Returns shield as percentage (0.0 to 1.0)
+func get_shield_percent() -> float:
+	if not shield:
+		return 0.0
+	return shield.get_shield_percent()
+
+
+## Returns true if enemy is immune to knockback (shielded enemies can't be knocked back)
+func is_knockback_immune() -> bool:
+	return shield and shield.is_knockback_immune()
+
+
+## Returns true if enemy is immune to stun
+func is_stun_immune() -> bool:
+	return shield and shield.is_stun_immune()
+
+
+## Returns true if enemy is immune to crowd control effects
+func is_cc_immune() -> bool:
+	return shield and shield.is_cc_immune()
 
 
 func _get_damage_type_for_effect(effect_type: String) -> String:
