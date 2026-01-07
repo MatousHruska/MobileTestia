@@ -272,14 +272,15 @@ Private Sub SetupEnemiesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("Enemies")
     Dim headers As Variant
-    headers = Array("id", "name", "type", "base_health", "base_damage", "armor", _
+    headers = Array("id", "name", "type", "base_health", "base_damage", "armor", "base_shield", _
                     "move_speed", "attack_speed", "attack_range", "detection_range", _
                     "xp_reward", "loot_table_id", "ability_ids", "behavior_profile", "description")
     SetHeaders ws, headers
 
     ' Add column notes
-    SafeAddComment ws.Cells(1, 13), "Comma-separated ability IDs from EnemyAbilities"
-    SafeAddComment ws.Cells(1, 14), "Links to BehaviorProfiles id (e.g., bhv_basic_melee)"
+    SafeAddComment ws.Cells(1, 7), "Shield absorbs damage before health (0 = no shield)"
+    SafeAddComment ws.Cells(1, 14), "Comma-separated ability IDs from EnemyAbilities"
+    SafeAddComment ws.Cells(1, 15), "Links to BehaviorProfiles id (e.g., bhv_basic_melee)"
 End Sub
 
 Private Sub SetupEnemyAbilitiesSheet()
