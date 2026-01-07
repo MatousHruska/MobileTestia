@@ -247,7 +247,7 @@ func _get_skill_category(talent: TalentData) -> SkillCategory:
 
 
 ## Get damage type name for display
-static func get_damage_type_name(damage_type: int) -> String:
+func get_damage_type_name(damage_type: int) -> String:
 	match damage_type:
 		DamageType.PHYSICAL: return "Physical"
 		DamageType.FIRE: return "Fire"
@@ -261,7 +261,7 @@ static func get_damage_type_name(damage_type: int) -> String:
 
 
 ## Get damage type color for UI
-static func get_damage_type_color(damage_type: int) -> Color:
+func get_damage_type_color(damage_type: int) -> Color:
 	match damage_type:
 		DamageType.PHYSICAL: return Color(0.9, 0.9, 0.9)  # White/gray
 		DamageType.FIRE: return Color(1.0, 0.4, 0.1)  # Orange

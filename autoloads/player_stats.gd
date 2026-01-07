@@ -408,7 +408,7 @@ func _recalculate_derived() -> void:
 
 
 ## Stat descriptions for UI - loads from database with hardcoded fallback
-static func get_stat_description(stat_name: String) -> String:
+func get_stat_description(stat_name: String) -> String:
 	# Try database first
 	var db_desc := DatabaseLoader.get_stat_description(stat_name)
 	if not db_desc.is_empty():
