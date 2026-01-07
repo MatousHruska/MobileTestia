@@ -18,6 +18,8 @@ var discovered_locations: Array[String] = []
 
 
 func _ready() -> void:
+	add_to_group("saveable")  # Register for auto-discovery save system
+
 	# Connect to zone changes
 	if Game:
 		Game.zone_changed.connect(_on_zone_changed)
@@ -255,20 +257,37 @@ func _on_status_effect_changed(old_effect, new_effect) -> void:
 
 
 #===============================================================================
-# PERSISTENCE
+# PERSISTENCE (Saveable interface)
 #===============================================================================
 
-## Get save data for persistence
+func get_save_key() -> String:
+	## Unique key for save data
+	return "location_data"
+
+
+func get_save_priority() -> int:
+	## Load after world state but before quests
+	return 45
+
+
 func get_save_data() -> Dictionary:
+	## Get save data for persistence
 	return {
 		"discovered_locations": discovered_locations.duplicate(),
 	}
 
 
-## Load save data from persistence
 func load_save_data(data: Dictionary) -> void:
-	discovered_locations = data.get("discovered_locations", [])
-	Debug.log("Location", "Loaded %d discovered locations" % discovered_locations.size())
+	## Load save data from persistence
+	var loaded_locations: Array = data.get("discovered_locations", [])
+	discovered_locations.clear()
+	for loc in loaded_locations:
+		if loc is String:
+			discovered_locations.append(loc)
+
+	Debug.info("Location", "Loaded save data", {
+		"discovered_locations": discovered_locations.size()
+	})
 
 
 #===============================================================================
