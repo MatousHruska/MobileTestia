@@ -306,8 +306,6 @@ func _apply_explosion_damage() -> void:
 	circle.radius = explosion_radius
 	query.shape = circle
 	query.transform = Transform2D(0, global_position)
-	query.collision_mask = 0b00000010  # Enemies only
-
 	var results := space_state.intersect_shape(query, 32)
 
 	for result in results:
