@@ -10,6 +10,8 @@ signal resource_changed(resource: String, current: float, maximum: float)
 signal attribute_points_changed(points: int)
 signal skill_points_changed(points: int)
 signal leveled_up(new_level: int)  ## Emitted for level up visual effect
+signal damaged(amount: float, damage_type: String, is_crit: bool)  ## For combat text
+signal healed(amount: float)  ## For combat text
 
 ## Constants (loaded from database, these are fallback defaults)
 var POINTS_PER_LEVEL: int = 5  ## Attribute points per level
@@ -306,9 +308,10 @@ func _regenerate_resources(delta: float) -> void:
 		current_stamina += stamina_regen * delta
 
 
-func damage(amount: float) -> void:
+func damage(amount: float, damage_type: String = "physical", is_crit: bool = false) -> void:
 	current_life -= amount
-	Debug.log("Combat", "Damage taken", amount)
+	damaged.emit(amount, damage_type, is_crit)
+	Debug.log("Combat", "Damage taken", {"amount": amount, "type": damage_type, "crit": is_crit})
 	if current_life <= 0:
 		Debug.warn("Combat", "Player died!")
 		Game.game_over()
@@ -316,6 +319,7 @@ func damage(amount: float) -> void:
 
 func heal(amount: float) -> void:
 	current_life += amount
+	healed.emit(amount)
 	Debug.log("Combat", "Healed", amount)
 
 

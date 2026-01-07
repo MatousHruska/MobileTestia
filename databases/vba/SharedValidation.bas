@@ -496,6 +496,7 @@ Private Sub CreateIdNamedRanges()
     CreateNamedRange "PopupMessages", 1, "ID_PopupMessages"
     CreateNamedRange "UITheme", 1, "ID_UITheme"
     CreateNamedRange "Achievements", 1, "ID_Achievements"
+    CreateNamedRange "CombatTextCategories", 1, "ID_CombatTextCategories"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -583,6 +584,13 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "BehaviorProfiles", 16, "direct,charge,kite,phase,circle"  ' approach_behavior
     ApplyListValidation "BehaviorProfiles", 22, "clockwise,counter,random"  ' circle_direction
     ApplyListValidation "BehaviorProfiles", 28, "highest,conditional,random_weighted"  ' ability_priority_mode
+
+    ' CombatTextCategories
+    ApplyListValidation "CombatTextCategories", 2, "damage,heal,heal_tick,dot_tick,label"  ' category_type
+    ApplyListValidation "CombatTextCategories", 3, "physical,fire,cold,lightning,poison,arcane,bleed,true,critical"  ' damage_type
+    ApplyListValidation "CombatTextCategories", 6, "float_up,float_up_slow,bounce,slide_right,flash"  ' animation
+    ApplyListValidation "CombatTextCategories", 7, "TRUE,FALSE"  ' show_sign
+    ApplyListValidation "CombatTextCategories", 10, "TRUE,FALSE"  ' scale_with_damage
 
     ' Talents
     ApplyValidation "Talents", 3, "ID_TalentTrees"     ' tree reference

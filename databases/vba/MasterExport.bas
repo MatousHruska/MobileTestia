@@ -71,6 +71,9 @@ Public Sub ExportAll()
     ' Achievements
     ExportAchievements
 
+    ' Combat Text
+    ExportCombatText
+
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -110,6 +113,7 @@ Public Sub ValidateAll()
     ValidatePopupMessages
     ValidateUITheme
     ValidateAchievements
+    ValidateCombatText
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -164,6 +168,8 @@ Public Sub SetupWorkbook()
     currentSheet = "Rarities": SetupRaritiesSheet
     currentSheet = "UITheme": SetupUIThemeSheet
     currentSheet = "Achievements": SetupAchievementsSheet
+    currentSheet = "CombatTextSettings": SetupCombatTextSettingsSheet
+    currentSheet = "CombatTextCategories": SetupCombatTextCategoriesSheet
 
     MsgBox "Workbook setup complete!" & vbCrLf & vbCrLf & _
            "All sheets have been created with proper headers." & vbCrLf & _

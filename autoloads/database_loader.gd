@@ -36,6 +36,8 @@ var floating_dialogues: Dictionary = {}
 var popup_messages: Dictionary = {}
 var stat_descriptions: Dictionary = {}  ## Stat name/description for UI display
 var gameplay_settings: Dictionary = {}  ## Key-value pairs for global game settings
+var combat_text_settings: Dictionary = {}  ## Combat text global settings
+var combat_text_categories: Dictionary = {}  ## Combat text category configs (keyed by id)
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -123,6 +125,9 @@ func load_all_databases() -> void:
 
 	# Stat Descriptions
 	success = _load_database("stat_descriptions.json", "stat_descriptions", stat_descriptions) and success
+
+	# Combat Text
+	success = _load_combat_text() and success
 
 	if success:
 		Debug.info("Database", "All databases loaded successfully")
@@ -217,6 +222,46 @@ func get_setting(key: String, default_value: float = 0.0) -> float:
 ## Get a gameplay setting as int
 func get_setting_int(key: String, default_value: int = 0) -> int:
 	return int(gameplay_settings.get(key, default_value))
+
+
+## Load combat text settings and categories
+func _load_combat_text() -> bool:
+	var path := DATABASE_PATH + "combat_text.json"
+
+	if not FileAccess.file_exists(path):
+		Debug.warn("Database", "combat_text.json not found (using defaults)")
+		return true  # Not an error
+
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		Debug.warn("Database", "Failed to open combat_text.json")
+		return false
+
+	var json_text := file.get_as_text()
+	file.close()
+
+	var json := JSON.new()
+	var error := json.parse(json_text)
+	if error != OK:
+		Debug.warn("Database", "JSON parse error in combat_text.json: %s" % json.get_error_message())
+		return false
+
+	var data: Dictionary = json.data
+
+	# Load settings
+	if data.has("combat_text_settings"):
+		combat_text_settings = data["combat_text_settings"]
+		Debug.log("Database", "Loaded combat text settings")
+
+	# Load categories
+	if data.has("combat_text_categories"):
+		var categories: Array = data["combat_text_categories"]
+		for category in categories:
+			if category.has("id"):
+				combat_text_categories[category["id"]] = category
+		Debug.log("Database", "Loaded %d combat text categories" % combat_text_categories.size())
+
+	return true
 
 
 ## Get stat description from database
