@@ -13,7 +13,7 @@ class_name EnemyHealthBar
 # SIGNALS
 #===============================================================================
 
-signal visibility_changed(is_visible: bool)
+signal bar_visibility_changed(is_visible: bool)
 
 #===============================================================================
 # CONSTANTS
@@ -290,7 +290,7 @@ func _on_effect_removed(effect_type: String) -> void:
 func _on_effect_tick(effect_type: String, _damage: float) -> void:
 	# Update remaining duration from status effects
 	if _status_effects and _status_effects.has_effect(effect_type):
-		var remaining := _status_effects.get_remaining_duration(effect_type)
+		var remaining: float = _status_effects.get_remaining_duration(effect_type)
 		if effect_type in _dot_data:
 			_dot_data[effect_type].remaining_duration = remaining
 
@@ -429,7 +429,7 @@ func _set_visible(is_visible: bool) -> void:
 
 	_is_visible = is_visible
 	visible = is_visible
-	visibility_changed.emit(is_visible)
+	bar_visibility_changed.emit(is_visible)
 
 
 #===============================================================================
