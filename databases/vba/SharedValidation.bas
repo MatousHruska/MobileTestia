@@ -539,9 +539,9 @@ Private Sub ApplyForeignKeyValidation()
     ApplyValidation "Locations", 2, "ID_Zones"          ' zone_id
     ApplyValidation "Locations", 7, "ID_StatusEffects"  ' status_effect_id
 
-    ' Enemies
-    ApplyValidation "Enemies", 12, "ID_LootTables"  ' loot_table_id
-    ApplyValidation "Enemies", 14, "ID_BehaviorProfiles"  ' behavior_profile
+    ' Enemies (column 7 = base_shield added)
+    ApplyValidation "Enemies", 13, "ID_LootTables"  ' loot_table_id
+    ApplyValidation "Enemies", 15, "ID_BehaviorProfiles"  ' behavior_profile
 
     ' Chests
     ApplyValidation "Chests", 5, "ID_Zones"         ' zone_id
