@@ -171,16 +171,25 @@ func _on_status_effect_removed(effect_type: String) -> void:
 		_remove_burning_visual()
 
 
-func _on_status_effect_tick(effect_type: String, _damage: float) -> void:
+func _on_status_effect_tick(effect_type: String, damage: float) -> void:
 	## Handle visual feedback on DoT tick
 	if effect_type == "burning" or effect_type == "status_burning":
 		modulate = Color(1.0, 0.6, 0.3)
 		_damage_flash_timer = 0.1
 
+	# Store effect type for combat text (map effect name to damage type)
+	var damage_type := _get_damage_type_for_effect(effect_type)
+	set_meta("last_damage_type", damage_type)
+	set_meta("last_hit_was_crit", false)
+	set_meta("last_damage_was_dot", true)
+
 
 func take_effect_damage(damage: float) -> void:
 	## Called by StatusEffectComponent for DoT damage
 	current_health -= damage
+
+	# Emit damaged signal so combat text shows the tick
+	damaged.emit(damage, null)
 
 
 func apply_status_effect(effect_id: String, _source_node: Node2D = null) -> void:
@@ -420,6 +429,25 @@ func _calculate_damage_after_armor(raw_damage: float) -> float:
 	## Simple armor reduction formula: damage_reduction = armor / (armor + 100)
 	var reduction := armor / (armor + 100.0)
 	return raw_damage * (1.0 - reduction)
+
+
+func _get_damage_type_for_effect(effect_type: String) -> String:
+	## Map status effect type to damage type for combat text coloring
+	match effect_type.to_lower().replace("status_", ""):
+		"burning", "burn", "fire":
+			return "fire"
+		"poison", "poisoned":
+			return "poison"
+		"rot", "decay":
+			return "poison"
+		"bleed", "bleeding":
+			return "bleed"
+		"freeze", "frozen", "chill":
+			return "cold"
+		"shock", "electrified":
+			return "lightning"
+		_:
+			return "physical"
 
 
 func _damage_flash() -> void:
