@@ -93,11 +93,13 @@ const DEFAULTS := {
 	"cast_bar_height": 16,
 	"cast_bar_width": 200,
 	"cast_bar_y_percent": 0.38,
-	# Enemy health bar settings
-	"enemy_health_bar_height": 6,
+	# Enemy health bar settings (dimensions as % of enemy size, minimums in pixels)
+	"enemy_health_bar_height_percent": 0.25,
 	"enemy_health_bar_width_percent": 1.0,
-	"enemy_health_bar_y_offset": -8,
-	"enemy_health_bar_corner_radius": 2,
+	"enemy_health_bar_y_offset_percent": -0.35,
+	"enemy_health_bar_corner_radius_percent": 0.3,
+	"enemy_health_bar_min_height": 4,
+	"enemy_health_bar_min_width": 20,
 	"color_enemy_health_bg": "0.1,0.1,0.12,0.9",
 	"color_enemy_health_fill": "0.8,0.2,0.2,1.0",
 	"color_enemy_health_border": "0.3,0.3,0.35,0.8",
@@ -112,7 +114,7 @@ const DEFAULTS := {
 	"enemy_health_bar_dot_preview_alpha": 0.6,
 	"enemy_health_bar_show_on_full": false,
 	"enemy_health_bar_fade_delay": 2.0,
-	"enemy_health_bar_boss_height": 10,
+	"enemy_health_bar_boss_height_percent": 0.4,
 	"enemy_health_bar_boss_show_name": true,
 }
 
@@ -376,20 +378,26 @@ var CAST_BAR_Y_PERCENT: float:
 
 
 #===============================================================================
-# ENEMY HEALTH BAR PROPERTIES
+# ENEMY HEALTH BAR PROPERTIES (percentage-based for scaling)
 #===============================================================================
 
-var ENEMY_HEALTH_BAR_HEIGHT: int:
-	get: return get_int("enemy_health_bar_height")
+var ENEMY_HEALTH_BAR_HEIGHT_PERCENT: float:
+	get: return get_float("enemy_health_bar_height_percent")
 
 var ENEMY_HEALTH_BAR_WIDTH_PERCENT: float:
 	get: return get_float("enemy_health_bar_width_percent")
 
-var ENEMY_HEALTH_BAR_Y_OFFSET: int:
-	get: return get_int("enemy_health_bar_y_offset")
+var ENEMY_HEALTH_BAR_Y_OFFSET_PERCENT: float:
+	get: return get_float("enemy_health_bar_y_offset_percent")
 
-var ENEMY_HEALTH_BAR_CORNER_RADIUS: int:
-	get: return get_int("enemy_health_bar_corner_radius")
+var ENEMY_HEALTH_BAR_CORNER_RADIUS_PERCENT: float:
+	get: return get_float("enemy_health_bar_corner_radius_percent")
+
+var ENEMY_HEALTH_BAR_MIN_HEIGHT: int:
+	get: return get_int("enemy_health_bar_min_height")
+
+var ENEMY_HEALTH_BAR_MIN_WIDTH: int:
+	get: return get_int("enemy_health_bar_min_width")
 
 var COLOR_ENEMY_HEALTH_BG: Color:
 	get: return get_color("color_enemy_health_bg")
@@ -433,8 +441,8 @@ var ENEMY_HEALTH_BAR_SHOW_ON_FULL: bool:
 var ENEMY_HEALTH_BAR_FADE_DELAY: float:
 	get: return get_float("enemy_health_bar_fade_delay")
 
-var ENEMY_HEALTH_BAR_BOSS_HEIGHT: int:
-	get: return get_int("enemy_health_bar_boss_height")
+var ENEMY_HEALTH_BAR_BOSS_HEIGHT_PERCENT: float:
+	get: return get_float("enemy_health_bar_boss_height_percent")
 
 var ENEMY_HEALTH_BAR_BOSS_SHOW_NAME: bool:
 	get: return get_int("enemy_health_bar_boss_show_name") == 1

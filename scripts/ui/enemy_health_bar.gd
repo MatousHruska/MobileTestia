@@ -47,6 +47,7 @@ var _damage_trail_percent: float = 1.0
 var _shield_percent: float = 0.0  # Stub: shield system not yet implemented
 
 var _is_boss: bool = false
+var _enemy_size: float = 24.0  # Detected enemy size for percentage calculations
 var _bar_width: float = 32.0
 var _bar_height: float = 6.0
 
@@ -64,6 +65,9 @@ var _flash_timer: float = 0.0
 func setup(enemy: Node2D, is_boss: bool = false) -> void:
 	_owner_enemy = enemy
 	_is_boss = is_boss
+
+	# Detect enemy size from hurtbox for percentage-based scaling
+	_detect_enemy_size()
 
 	# Calculate bar dimensions based on enemy
 	_calculate_bar_dimensions()
@@ -90,31 +94,32 @@ func setup(enemy: Node2D, is_boss: bool = false) -> void:
 	Debug.log("UI", "Health bar setup for %s" % enemy.name, {"is_boss": is_boss, "width": _bar_width})
 
 
-func _calculate_bar_dimensions() -> void:
-	# Get base dimensions from theme
-	var base_height := UITheme.ENEMY_HEALTH_BAR_HEIGHT if not _is_boss else UITheme.ENEMY_HEALTH_BAR_BOSS_HEIGHT
-	var width_percent := UITheme.ENEMY_HEALTH_BAR_WIDTH_PERCENT
-
-	_bar_height = float(base_height)
-
-	# Estimate enemy width (default to 24 pixels if not determinable)
-	var enemy_width := 24.0
+func _detect_enemy_size() -> void:
+	## Detect enemy size from hurtbox for percentage-based calculations
+	_enemy_size = 24.0  # Default fallback
 	if _owner_enemy and "hurtbox" in _owner_enemy and _owner_enemy.hurtbox:
-		# Try to get size from hurtbox
 		for child in _owner_enemy.hurtbox.get_children():
 			if child is CollisionShape2D and child.shape:
 				if child.shape is CircleShape2D:
-					enemy_width = child.shape.radius * 2.0
+					_enemy_size = child.shape.radius * 2.0
 				elif child.shape is RectangleShape2D:
-					enemy_width = child.shape.size.x
+					_enemy_size = maxf(child.shape.size.x, child.shape.size.y)
 				break
 
-	_bar_width = maxf(enemy_width * width_percent, 24.0)  # Minimum 24px wide
+
+func _calculate_bar_dimensions() -> void:
+	# Get percentage-based dimensions from theme
+	var height_percent := UITheme.ENEMY_HEALTH_BAR_HEIGHT_PERCENT if not _is_boss else UITheme.ENEMY_HEALTH_BAR_BOSS_HEIGHT_PERCENT
+	var width_percent := UITheme.ENEMY_HEALTH_BAR_WIDTH_PERCENT
+
+	# Calculate actual dimensions from percentages (relative to enemy size)
+	_bar_height = maxf(_enemy_size * height_percent, float(UITheme.ENEMY_HEALTH_BAR_MIN_HEIGHT))
+	_bar_width = maxf(_enemy_size * width_percent, float(UITheme.ENEMY_HEALTH_BAR_MIN_WIDTH))
 
 
 func _build_ui() -> void:
-	# Position offset above enemy
-	var y_offset := float(UITheme.ENEMY_HEALTH_BAR_Y_OFFSET)
+	# Calculate Y offset from percentage (relative to enemy size)
+	var y_offset := _enemy_size * UITheme.ENEMY_HEALTH_BAR_Y_OFFSET_PERCENT
 	position = Vector2(-_bar_width / 2.0, y_offset - _bar_height)
 
 	# Main container
@@ -124,7 +129,8 @@ func _build_ui() -> void:
 	_bar_container.size = Vector2(_bar_width, _bar_height)
 	add_child(_bar_container)
 
-	var corner_radius := UITheme.ENEMY_HEALTH_BAR_CORNER_RADIUS
+	# Corner radius as percentage of bar height
+	var corner_radius := int(_bar_height * UITheme.ENEMY_HEALTH_BAR_CORNER_RADIUS_PERCENT)
 
 	# Background
 	_background = ColorRect.new()
