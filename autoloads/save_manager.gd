@@ -61,6 +61,10 @@ var _is_busy: bool = false
 ## Cached slot metadata for quick access
 var _slot_metadata: Dictionary = {}
 
+## Pending player position to apply after zone loads
+var _pending_player_position: Vector2 = Vector2.ZERO
+var _has_pending_position: bool = false
+
 #===============================================================================
 # LIFECYCLE
 #===============================================================================
@@ -69,6 +73,10 @@ func _ready() -> void:
 	Debug.info("Save", "SaveManager initialized")
 	_ensure_save_directory()
 	_load_all_slot_metadata()
+
+	# Connect to player spawn to apply saved position
+	if Game:
+		Game.player_spawned.connect(_on_player_spawned)
 
 
 func _process(delta: float) -> void:
@@ -399,10 +407,16 @@ func _collect_world_state() -> Dictionary:
 
 
 func _collect_location_data() -> Dictionary:
-	## Collect current location data
+	## Collect current location data including player position
+	var player_pos := Vector2.ZERO
+	if Game and Game.player and is_instance_valid(Game.player):
+		player_pos = Game.player.global_position
+
 	return {
 		"zone": Game.current_zone if Game else "",
 		"spawn_point": Game.spawn_point_id if Game else "default",
+		"player_position_x": player_pos.x,
+		"player_position_y": player_pos.y,
 	}
 
 
@@ -448,9 +462,19 @@ func _apply_location_data(data: Dictionary) -> void:
 	var zone: String = data.get("zone", "")
 	var spawn_point: String = data.get("spawn_point", "default")
 
+	# Store player position to apply after zone loads
+	var pos_x: float = data.get("player_position_x", 0.0)
+	var pos_y: float = data.get("player_position_y", 0.0)
+	if pos_x != 0.0 or pos_y != 0.0:
+		_pending_player_position = Vector2(pos_x, pos_y)
+		_has_pending_position = true
+	else:
+		_has_pending_position = false
+
 	Debug.info("Save", "_apply_location_data called", {
 		"zone": zone,
 		"spawn_point": spawn_point,
+		"saved_position": _pending_player_position if _has_pending_position else "none",
 		"game_state": Game.GameState.keys()[Game.current_state] if Game else "null",
 		"tree_paused": get_tree().paused
 	})
@@ -475,6 +499,30 @@ func _deferred_zone_change(zone_path: String, spawn_point: String) -> void:
 			"game_state_after": Game.GameState.keys()[Game.current_state],
 			"tree_paused_after": get_tree().paused
 		})
+
+
+func _on_player_spawned(player: Node2D) -> void:
+	## Apply saved player position after zone loads and spawns player
+	if not _has_pending_position:
+		return
+
+	if player and is_instance_valid(player):
+		# Use call_deferred to ensure zone positioning is complete first
+		call_deferred("_apply_pending_position", player)
+
+
+func _apply_pending_position(player: Node2D) -> void:
+	## Apply the pending position to the player
+	if not _has_pending_position:
+		return
+
+	if player and is_instance_valid(player):
+		player.global_position = _pending_player_position
+		Debug.info("Save", "Applied saved player position", _pending_player_position)
+
+	# Clear pending state
+	_has_pending_position = false
+	_pending_player_position = Vector2.ZERO
 
 
 func _reset_game_state() -> void:

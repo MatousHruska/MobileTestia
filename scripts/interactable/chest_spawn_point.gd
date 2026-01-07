@@ -63,10 +63,30 @@ func _try_spawn_chest() -> void:
 		Debug.warn("ChestSpawn", "No allowed tiers for spawn point: %s" % spawn_id)
 		return
 
-	# Create chest
+	# Check if this spawn point's chest was already looted
+	if Persistence and Persistence.is_chest_opened(spawn_id):
+		var state := Persistence.load_state("chests", spawn_id)
+		var loot_time: float = state.get("looted_at", 0.0)
+		var now: float = Time.get_unix_time_from_system()
+
+		# Check respawn conditions
+		if not can_respawn:
+			Debug.log("ChestSpawn", "Spawn point %s: chest was looted and cannot respawn" % spawn_id)
+			return
+
+		if now - loot_time < respawn_time_seconds:
+			var remaining := respawn_time_seconds - (now - loot_time)
+			Debug.log("ChestSpawn", "Spawn point %s: chest respawn in %.0f seconds" % [spawn_id, remaining])
+			return
+
+		# Respawn allowed - clear old state
+		Debug.info("ChestSpawn", "Spawn point %s: chest respawning after %.0f seconds" % [spawn_id, now - loot_time])
+		Persistence.clear_state("chests", spawn_id)
+
+	# Create chest with deterministic ID based on spawn_id
 	spawned_chest = LootChest.new()
 	spawned_chest.chest_tier = tier
-	spawned_chest.chest_id = "%s_%s" % [spawn_id, str(randi())]
+	spawned_chest.chest_id = spawn_id  # Use spawn_id directly for persistence
 	spawned_chest.display_name = "%s Chest" % ChestBase.TIER_NAMES[tier]
 
 	# Set zone level
@@ -148,9 +168,13 @@ func spawn_specific_tier(tier: ChestBase.ChestTier) -> LootChest:
 	if spawned_chest != null:
 		spawned_chest.queue_free()
 
+	# Clear any existing persistence for this spawn point
+	if Persistence:
+		Persistence.clear_state("chests", spawn_id)
+
 	spawned_chest = LootChest.new()
 	spawned_chest.chest_tier = tier
-	spawned_chest.chest_id = "%s_%s" % [spawn_id, str(randi())]
+	spawned_chest.chest_id = spawn_id  # Use spawn_id directly for persistence
 	spawned_chest.display_name = "%s Chest" % ChestBase.TIER_NAMES[tier]
 	spawned_chest.zone_level = zone_level_override if zone_level_override > 0 else _get_zone_level()
 
