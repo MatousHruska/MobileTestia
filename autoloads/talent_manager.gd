@@ -238,6 +238,7 @@ func learn_talent(talent_id: String) -> bool:
 ## Reset all talents (for Potion of Forget)
 func reset_all_talents() -> void:
 	invested_talents.clear()
+	auto_learned_talents.clear()
 	skill_ranks.clear()
 
 	# Clear all skill bindings
@@ -249,7 +250,7 @@ func reset_all_talents() -> void:
 	talent_points_changed.emit(0, get_available_points())
 	_emit_skillbook_update()
 
-	Debug.info("Talents", "All talents and skill ranks reset")
+	Debug.info("Talents", "All talents, auto-learned talents, and skill ranks reset")
 
 
 #===============================================================================
@@ -481,6 +482,7 @@ func get_save_priority() -> int:
 func get_save_data() -> Dictionary:
 	return {
 		"invested_talents": invested_talents.duplicate(),
+		"auto_learned_talents": auto_learned_talents.duplicate(),
 		"skill_bindings": skill_bindings.duplicate(),
 		"skill_ranks": skill_ranks.duplicate(),
 	}
@@ -489,6 +491,7 @@ func get_save_data() -> Dictionary:
 ## Load save data
 func load_save_data(data: Dictionary) -> void:
 	invested_talents = data.get("invested_talents", {})
+	auto_learned_talents = data.get("auto_learned_talents", {})
 	skill_ranks = data.get("skill_ranks", {})
 
 	var bindings: Array = data.get("skill_bindings", [])
@@ -503,7 +506,11 @@ func load_save_data(data: Dictionary) -> void:
 		if skill_bindings[i] != "":
 			skill_bound.emit(i, skill_bindings[i])
 
-	Debug.info("Talents", "Loaded save data: %d talents invested, %d skill ranks" % [invested_talents.size(), skill_ranks.size()])
+	Debug.info("Talents", "Loaded save data", {
+		"invested": invested_talents.size(),
+		"auto_learned": auto_learned_talents.size(),
+		"skill_ranks": skill_ranks.size()
+	})
 
 
 #===============================================================================
