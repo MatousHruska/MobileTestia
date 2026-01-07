@@ -1267,6 +1267,7 @@ func create_enemy(enemy_id: String, level: int = 1) -> EnemyNPC:
 	enemy.max_health = float(data.get("base_health", 100)) * level_mult
 	enemy.base_damage = float(data.get("base_damage", 10)) * level_mult
 	enemy.armor = float(data.get("armor", 0)) * level_mult
+	enemy.base_shield = float(data.get("base_shield", 0)) * level_mult
 	enemy.move_speed = float(data.get("move_speed", 80))
 	enemy.attack_speed = float(data.get("attack_speed", 1.0))
 
@@ -1288,7 +1289,8 @@ func create_enemy(enemy_id: String, level: int = 1) -> EnemyNPC:
 		"id": enemy_id,
 		"name": enemy.enemy_name,
 		"level": level,
-		"health": enemy.max_health
+		"health": enemy.max_health,
+		"shield": enemy.base_shield
 	})
 
 	return enemy
