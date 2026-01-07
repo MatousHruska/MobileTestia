@@ -329,10 +329,14 @@ func _play_animation_for_state(state: AnimState) -> void:
 	if sprite.sprite_frames.has_animation(anim_name):
 		sprite.play(anim_name)
 	else:
-		Debug.warn("NPC", "Animation not found: %s" % anim_name)
-		# If attack animation missing, unlock after a brief delay
-		if state == AnimState.ATTACK:
-			_unlock_after_attack()
+		# DIE state without animation is expected for many enemies - just stop sprite
+		if state == AnimState.DIE:
+			sprite.stop()
+		else:
+			Debug.warn("NPC", "Animation not found: %s" % anim_name)
+			# If attack animation missing, unlock after a brief delay
+			if state == AnimState.ATTACK:
+				_unlock_after_attack()
 
 
 func _unlock_after_attack() -> void:

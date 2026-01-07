@@ -146,18 +146,37 @@ func _on_enemy_spawned(enemy: Node2D) -> void:
 	if enemy_id in _connected_enemies:
 		return
 
-	# Connect to enemy damage signal
+	# Connect to enemy damage signal with CONNECT_REFERENCE_COUNTED to auto-disconnect on free
 	if enemy.has_signal("damaged"):
-		enemy.damaged.connect(_on_enemy_damaged.bind(enemy))
+		enemy.damaged.connect(_on_enemy_damaged.bind(enemy), CONNECT_REFERENCE_COUNTED)
 		_connected_enemies.append(enemy_id)
+
+		# Clean up tracking when enemy dies
+		if enemy.has_signal("died"):
+			enemy.died.connect(_on_enemy_died.bind(enemy_id), CONNECT_ONE_SHOT)
 
 		# Connect to enemy status effects for DoT batching
 		var status_component = enemy.get_node_or_null("StatusEffects")
 		if status_component and status_component.has_signal("effect_tick"):
-			status_component.effect_tick.connect(_on_enemy_dot_tick.bind(enemy))
+			status_component.effect_tick.connect(_on_enemy_dot_tick.bind(enemy), CONNECT_REFERENCE_COUNTED)
 			Debug.log("CombatTextManager", "Connected to enemy DoT: %s" % enemy.name)
 
 		Debug.log("CombatTextManager", "Connected to enemy: %s" % enemy.name)
+
+
+func _on_enemy_died(enemy_id: int) -> void:
+	## Clean up tracking when enemy dies to prevent stale references
+	if enemy_id in _connected_enemies:
+		_connected_enemies.erase(enemy_id)
+	if enemy_id in _target_texts:
+		_target_texts.erase(enemy_id)
+	# Clean up any pending tick batches for this enemy
+	var keys_to_remove: Array[String] = []
+	for key in _pending_ticks:
+		if key.begins_with(str(enemy_id) + "_"):
+			keys_to_remove.append(key)
+	for key in keys_to_remove:
+		_pending_ticks.erase(key)
 
 
 func _on_zone_changed(_zone_id: String) -> void:
@@ -294,7 +313,7 @@ func _process(delta: float) -> void:
 		_pending_ticks.erase(key)
 
 
-func _flush_batch(batch_key: String, batch: Dictionary) -> void:
+func _flush_batch(_batch_key: String, batch: Dictionary) -> void:
 	var target: Node2D = batch.target
 	if not is_instance_valid(target):
 		return
@@ -388,7 +407,7 @@ func _show_tick(target: Node2D, amount: float, category_id: String, color: Color
 	text_displayed.emit(target, category_id, amount)
 
 
-func _build_config(target: Node2D, amount: float, category: Dictionary, is_crit: bool = false) -> Dictionary:
+func _build_config(_target: Node2D, amount: float, category: Dictionary, _is_crit: bool = false) -> Dictionary:
 	var lifetime_mult: float = category.get("lifetime_mult", 1.0)
 	var font_size: int = int(category.get("font_size", 12))
 	var anim_str: String = category.get("animation", "float_up")

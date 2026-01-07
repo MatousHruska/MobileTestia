@@ -122,7 +122,7 @@ func _create_circle_hitbox(
 #===============================================================================
 
 func _create_cone_hitbox(
-	ability: AbilityData,
+	_ability: AbilityData,
 	caster: Node2D,
 	direction: Vector2,
 	offset: Vector2,
@@ -197,7 +197,7 @@ func _create_line_hitbox(
 func _create_cross_hitbox(
 	ability: AbilityData,
 	caster: Node2D,
-	direction: Vector2,
+	_direction: Vector2,
 	offset: Vector2
 ) -> Area2D:
 	var area := Area2D.new()

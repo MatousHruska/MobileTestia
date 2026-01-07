@@ -321,7 +321,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	backpack_panel.ready.connect(_on_backpack_ready.bind(backpack_panel, backpack_margin, scroll_container))
 
 
-func _on_backpack_ready(panel: PanelContainer, margin: MarginContainer, scroll: ScrollContainer) -> void:
+func _on_backpack_ready(_panel: PanelContainer, _margin: MarginContainer, scroll: ScrollContainer) -> void:
 	# Wait one frame for layout to settle
 	await get_tree().process_frame
 
