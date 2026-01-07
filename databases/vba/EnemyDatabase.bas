@@ -17,15 +17,16 @@ Private Const COL_EN_TYPE As Integer = 3           ' Normal, Miniboss, Boss
 Private Const COL_EN_BASE_HEALTH As Integer = 4
 Private Const COL_EN_BASE_DAMAGE As Integer = 5
 Private Const COL_EN_ARMOR As Integer = 6
-Private Const COL_EN_MOVE_SPEED As Integer = 7
-Private Const COL_EN_ATTACK_SPEED As Integer = 8
-Private Const COL_EN_ATTACK_RANGE As Integer = 9
-Private Const COL_EN_DETECTION_RANGE As Integer = 10
-Private Const COL_EN_XP_REWARD As Integer = 11
-Private Const COL_EN_LOOT_TABLE_ID As Integer = 12
-Private Const COL_EN_ABILITY_IDS As Integer = 13
-Private Const COL_EN_BEHAVIOR_PROFILE As Integer = 14  ' Links to behavior_profiles.json
-Private Const COL_EN_DESCRIPTION As Integer = 15
+Private Const COL_EN_BASE_SHIELD As Integer = 7    ' Shield absorbs damage before health
+Private Const COL_EN_MOVE_SPEED As Integer = 8
+Private Const COL_EN_ATTACK_SPEED As Integer = 9
+Private Const COL_EN_ATTACK_RANGE As Integer = 10
+Private Const COL_EN_DETECTION_RANGE As Integer = 11
+Private Const COL_EN_XP_REWARD As Integer = 12
+Private Const COL_EN_LOOT_TABLE_ID As Integer = 13
+Private Const COL_EN_ABILITY_IDS As Integer = 14
+Private Const COL_EN_BEHAVIOR_PROFILE As Integer = 15  ' Links to behavior_profiles.json
+Private Const COL_EN_DESCRIPTION As Integer = 16
 
 ' Column indices for EnemyAbilities (expanded for AI system)
 Private Const COL_EA_ID As Integer = 1
@@ -140,6 +141,10 @@ Public Sub ValidateEnemies()
             LogValidationError errors, errorCount, i, "Base Damage", "Cannot be negative"
         End If
 
+        If GetDefaultNumeric(ws.Cells(i, COL_EN_BASE_SHIELD)) < 0 Then
+            LogValidationError errors, errorCount, i, "Base Shield", "Cannot be negative"
+        End If
+
         If GetDefaultNumeric(ws.Cells(i, COL_EN_XP_REWARD)) < 0 Then
             LogValidationError errors, errorCount, i, "XP Reward", "Cannot be negative"
         End If
@@ -191,6 +196,7 @@ Public Sub ExportEnemies()
         json = json & "      ""base_health"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_BASE_HEALTH), 100)) & "," & vbCrLf
         json = json & "      ""base_damage"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_BASE_DAMAGE), 10)) & "," & vbCrLf
         json = json & "      ""armor"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_ARMOR))) & "," & vbCrLf
+        json = json & "      ""base_shield"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_BASE_SHIELD))) & "," & vbCrLf
         json = json & "      ""move_speed"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_MOVE_SPEED), 80)) & "," & vbCrLf
         json = json & "      ""attack_speed"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_ATTACK_SPEED), 1)) & "," & vbCrLf
         json = json & "      ""attack_range"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_ATTACK_RANGE), 24)) & "," & vbCrLf
@@ -401,7 +407,7 @@ Public Sub SetupEnemiesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet(SHEET_ENEMIES)
     Dim headers As Variant
-    headers = Array("id", "name", "type", "base_health", "base_damage", "armor", _
+    headers = Array("id", "name", "type", "base_health", "base_damage", "armor", "base_shield", _
                     "move_speed", "attack_speed", "attack_range", "detection_range", _
                     "xp_reward", "loot_table_id", "ability_ids", "behavior_profile", "description")
     SetupSheetHeaders ws, headers
@@ -411,13 +417,15 @@ Public Sub SetupEnemiesSheet()
     SafeAddComment ws.Cells(1, 3), "Normal, Miniboss, or Boss"
     SafeAddComment ws.Cells(1, 4), "Base health points"
     SafeAddComment ws.Cells(1, 5), "Base damage dealt"
-    SafeAddComment ws.Cells(1, 7), "Movement speed (default 80)"
-    SafeAddComment ws.Cells(1, 8), "Attacks per second (default 1)"
-    SafeAddComment ws.Cells(1, 9), "Melee attack range (default 24)"
-    SafeAddComment ws.Cells(1, 10), "Range to detect player (default 150)"
-    SafeAddComment ws.Cells(1, 12), "Reference to LootTables id"
-    SafeAddComment ws.Cells(1, 13), "Comma-separated ability IDs (e.g., abl_slash,abl_bite)"
-    SafeAddComment ws.Cells(1, 14), "Reference to BehaviorProfiles id (default: bhv_basic_melee)"
+    SafeAddComment ws.Cells(1, 6), "Armor reduces physical damage"
+    SafeAddComment ws.Cells(1, 7), "Shield absorbs damage before health (0 = no shield)"
+    SafeAddComment ws.Cells(1, 8), "Movement speed (default 80)"
+    SafeAddComment ws.Cells(1, 9), "Attacks per second (default 1)"
+    SafeAddComment ws.Cells(1, 10), "Melee attack range (default 24)"
+    SafeAddComment ws.Cells(1, 11), "Range to detect player (default 150)"
+    SafeAddComment ws.Cells(1, 13), "Reference to LootTables id"
+    SafeAddComment ws.Cells(1, 14), "Comma-separated ability IDs (e.g., abl_slash,abl_bite)"
+    SafeAddComment ws.Cells(1, 15), "Reference to BehaviorProfiles id (default: bhv_basic_melee)"
 End Sub
 
 '-------------------------------------------------------------------------------
