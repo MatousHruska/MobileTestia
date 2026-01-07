@@ -19,12 +19,12 @@ config/icon="res://icon.svg"
 [autoload]
 
 Debug="*res://autoloads/debug_manager.gd"
+DatabaseLoader="*res://autoloads/database_loader.gd"
 UITheme="*res://autoloads/ui_theme.gd"
 Game="*res://autoloads/game_manager.gd"
 Inventory="*res://scripts/inventory/inventory_manager.gd"
 PlayerStats="*res://autoloads/player_stats.gd"
 NPCManager="*res://autoloads/npc_manager.gd"
-DatabaseLoader="*res://autoloads/database_loader.gd"
 UIManager="*res://autoloads/ui_manager.gd"
 Persistence="*res://autoloads/persistence_manager.gd"
 QuestManager="*res://scripts/quests/quest_manager.gd"
