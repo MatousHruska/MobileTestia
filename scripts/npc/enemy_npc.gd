@@ -379,6 +379,10 @@ func _on_hurtbox_area_entered(area: Area2D) -> void:
 		# Apply armor reduction
 		final_damage = _calculate_damage_after_armor(final_damage)
 
+		# Store damage metadata for combat text
+		set_meta("last_damage_type", damage_result.get("damage_type", "physical"))
+		set_meta("last_hit_was_crit", damage_result.is_critical)
+
 		# Visual crit feedback
 		if damage_result.is_critical:
 			Debug.log("Combat", "Critical hit on %s!" % enemy_name, "%.0f damage" % final_damage)

@@ -37,6 +37,7 @@ DamageCalculator="*res://autoloads/damage_calculator.gd"
 ResponsiveUI="*res://autoloads/responsive_ui.gd"
 GlobalProgress="*res://autoloads/global_progress_manager.gd"
 SaveManager="*res://autoloads/save_manager.gd"
+CombatText="*res://autoloads/floating_combat_text_manager.gd"
 
 [display]
 
