@@ -125,7 +125,8 @@ func save_chest_state(chest_id: String, is_opened: bool, is_looted: bool = false
 
 func is_chest_opened(chest_id: String) -> bool:
 	var state := load_state("chests", chest_id)
-	return state.get("is_opened", false)
+	# Check both keys for compatibility (old format used is_opened, new uses looted)
+	return state.get("is_opened", false) or state.get("looted", false) or state.get("is_looted", false)
 
 
 func save_enemy_killed(enemy_id: String) -> void:
