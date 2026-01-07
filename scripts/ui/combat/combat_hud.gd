@@ -1371,11 +1371,11 @@ func is_interact_visible() -> bool:
 
 ## Layout customization stubs (for future implementation)
 
-func set_user_scale(scale: float) -> void:
+func set_user_scale(scale_value: float) -> void:
 	## Stub: Adjust overall HUD scale
-	config.user_scale = clampf(scale, config.min_scale, config.max_scale)
+	config.user_scale = clampf(scale_value, config.min_scale, config.max_scale)
 	# TODO: Apply scale to all buttons
-	Debug.log("Combat", "User scale set (stub)", {"scale": scale})
+	Debug.log("Combat", "User scale set (stub)", {"scale": scale_value})
 
 
 func set_left_handed_mode(enabled: bool) -> void:

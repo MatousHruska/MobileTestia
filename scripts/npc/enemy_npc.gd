@@ -171,7 +171,7 @@ func _on_status_effect_removed(effect_type: String) -> void:
 		_remove_burning_visual()
 
 
-func _on_status_effect_tick(effect_type: String, damage: float) -> void:
+func _on_status_effect_tick(effect_type: String, _damage: float) -> void:
 	## Handle visual feedback on DoT tick
 	if effect_type == "burning" or effect_type == "status_burning":
 		modulate = Color(1.0, 0.6, 0.3)

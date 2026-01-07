@@ -212,7 +212,7 @@ func _select_highest_priority(abilities: Array[AbilityData]) -> AbilityData:
 	return best
 
 
-func _select_conditional(abilities: Array[AbilityData], target: Node2D) -> AbilityData:
+func _select_conditional(abilities: Array[AbilityData], _target: Node2D) -> AbilityData:
 	## Select ability based on conditions, falling back to priority
 
 	# First try to find abilities with matching conditions

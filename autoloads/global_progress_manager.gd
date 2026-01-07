@@ -407,10 +407,10 @@ func _check_achievements_for_stat(stat_id: String) -> void:
 func _show_achievement_popup(achievement_id: String) -> void:
 	## Show achievement unlock popup
 	var def: Dictionary = _achievement_definitions.get(achievement_id, {})
-	var name: String = def.get("name", "Achievement")
+	var achievement_name: String = def.get("name", "Achievement")
 
 	if PopupMessage:
-		PopupMessage.show_message("Achievement Unlocked!\n%s" % name)
+		PopupMessage.show_message("Achievement Unlocked!\n%s" % achievement_name)
 
 
 #===============================================================================

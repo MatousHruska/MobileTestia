@@ -82,7 +82,7 @@ func _process(delta: float) -> void:
 	queue_redraw()
 
 
-func _update_windup(delta: float) -> void:
+func _update_windup(_delta: float) -> void:
 	## Pulsing warning during windup
 	var progress := elapsed / windup_duration if windup_duration > 0 else 1.0
 
@@ -116,7 +116,7 @@ func _start_fadeout() -> void:
 	elapsed = 0.0
 
 
-func _update_fadeout(delta: float) -> void:
+func _update_fadeout(_delta: float) -> void:
 	## Fade out and disappear
 	var progress := elapsed / fadeout_duration if fadeout_duration > 0 else 1.0
 	alpha = 0.7 * (1.0 - progress)
@@ -229,10 +229,10 @@ func _draw_ring(color: Color, outline_color: Color) -> void:
 # HIT EFFECT
 #===============================================================================
 
-static func spawn_hit_effect(parent: Node, position: Vector2, damage_type: String = "physical") -> void:
+static func spawn_hit_effect(parent: Node, spawn_pos: Vector2, damage_type: String = "physical") -> void:
 	## Spawn a hit flash effect at the given position
 	var effect := HitEffect.new()
-	effect.global_position = position
+	effect.global_position = spawn_pos
 	effect.damage_type = damage_type
 	parent.add_child(effect)
 

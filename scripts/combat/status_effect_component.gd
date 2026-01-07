@@ -21,8 +21,8 @@ var _owner: Node2D = null
 # INITIALIZATION
 #===============================================================================
 
-func setup(owner: Node2D) -> void:
-	_owner = owner
+func setup(effect_owner: Node2D) -> void:
+	_owner = effect_owner
 
 
 #===============================================================================
@@ -108,7 +108,7 @@ func _remove_effect(effect_type: String) -> void:
 
 
 ## Override for cleanup (e.g., removing visuals)
-func _on_effect_removed(effect_type: String) -> void:
+func _on_effect_removed(_effect_type: String) -> void:
 	pass
 
 
@@ -284,7 +284,7 @@ func apply_status_effect(effect_id: String) -> void:
 
 
 ## Override for visual effect spawning
-func _on_effect_applied(effect_type: String, is_debuff: bool) -> void:
+func _on_effect_applied(_effect_type: String, _is_debuff: bool) -> void:
 	pass
 
 
