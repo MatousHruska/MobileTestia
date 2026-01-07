@@ -151,10 +151,11 @@ func _on_enemy_spawned(enemy: Node2D) -> void:
 		enemy.damaged.connect(_on_enemy_damaged.bind(enemy))
 		_connected_enemies.append(enemy_id)
 
-		# Connect to enemy status effects for DoT
-		var status_component = enemy.get_node_or_null("StatusEffectComponent")
-		if status_component:
+		# Connect to enemy status effects for DoT batching
+		var status_component = enemy.get_node_or_null("StatusEffects")
+		if status_component and status_component.has_signal("effect_tick"):
 			status_component.effect_tick.connect(_on_enemy_dot_tick.bind(enemy))
+			Debug.log("CombatTextManager", "Connected to enemy DoT: %s" % enemy.name)
 
 		Debug.log("CombatTextManager", "Connected to enemy: %s" % enemy.name)
 
@@ -202,6 +203,16 @@ func _on_player_healed(amount: float) -> void:
 
 func _on_enemy_damaged(amount: float, _attacker: Node2D, enemy: Node2D) -> void:
 	if not _enabled or not is_instance_valid(enemy):
+		return
+
+	# Check if this was DoT damage - if so, let the batching handler deal with it
+	var was_dot := false
+	if enemy.has_meta("last_damage_was_dot"):
+		was_dot = enemy.get_meta("last_damage_was_dot")
+		enemy.set_meta("last_damage_was_dot", false)  # Clear the flag
+
+	if was_dot:
+		# DoT damage is handled by _on_enemy_dot_tick batching, skip here
 		return
 
 	# Get damage type from last hit context if available

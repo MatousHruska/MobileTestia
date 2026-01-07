@@ -241,6 +241,9 @@ func _contact_enemy(enemy: Node2D) -> void:
 
 	# Apply contact damage if any
 	if contact_damage > 0 and enemy.has_method("take_damage"):
+		# Set damage type metadata for combat text
+		enemy.set_meta("last_damage_type", damage_type)
+		enemy.set_meta("last_hit_was_crit", false)
 		enemy.take_damage(contact_damage, source)
 
 	# Apply status effect
@@ -316,6 +319,10 @@ func _apply_explosion_damage() -> void:
 				var falloff_pct := explosion_falloff / 100.0  # Convert % to decimal
 				var falloff := 1.0 - (dist / explosion_radius) * falloff_pct if explosion_falloff > 0 else 1.0
 				var final_dmg := explosion_damage * falloff
+
+				# Set damage type metadata for combat text
+				collider.set_meta("last_damage_type", damage_type)
+				collider.set_meta("last_hit_was_crit", false)
 
 				collider.take_damage(final_dmg, source)
 				Debug.log("Combat", "Explosion hit %s for %.0f damage (falloff: %.0f%%)" % [collider.name, final_dmg, (1.0 - falloff) * 100])
