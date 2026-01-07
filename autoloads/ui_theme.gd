@@ -93,6 +93,27 @@ const DEFAULTS := {
 	"cast_bar_height": 16,
 	"cast_bar_width": 200,
 	"cast_bar_y_percent": 0.38,
+	# Enemy health bar settings
+	"enemy_health_bar_height": 6,
+	"enemy_health_bar_width_percent": 1.0,
+	"enemy_health_bar_y_offset": -8,
+	"enemy_health_bar_corner_radius": 2,
+	"color_enemy_health_bg": "0.1,0.1,0.12,0.9",
+	"color_enemy_health_fill": "0.8,0.2,0.2,1.0",
+	"color_enemy_health_border": "0.3,0.3,0.35,0.8",
+	"color_enemy_health_damage": "0.95,0.5,0.5,1.0",
+	"color_enemy_shield_fill": "0.3,0.7,0.9,0.9",
+	"color_enemy_dot_fire": "1.0,0.4,0.1,0.6",
+	"color_enemy_dot_poison": "0.3,0.8,0.2,0.6",
+	"color_enemy_dot_bleed": "0.8,0.1,0.1,0.6",
+	"color_enemy_dot_cold": "0.3,0.7,1.0,0.6",
+	"color_enemy_dot_generic": "0.7,0.5,0.3,0.6",
+	"enemy_health_bar_lerp_speed": 12.0,
+	"enemy_health_bar_dot_preview_alpha": 0.6,
+	"enemy_health_bar_show_on_full": false,
+	"enemy_health_bar_fade_delay": 2.0,
+	"enemy_health_bar_boss_height": 10,
+	"enemy_health_bar_boss_show_name": true,
 }
 
 #===============================================================================
@@ -352,6 +373,71 @@ var CAST_BAR_WIDTH: int:
 
 var CAST_BAR_Y_PERCENT: float:
 	get: return get_float("cast_bar_y_percent")
+
+
+#===============================================================================
+# ENEMY HEALTH BAR PROPERTIES
+#===============================================================================
+
+var ENEMY_HEALTH_BAR_HEIGHT: int:
+	get: return get_int("enemy_health_bar_height")
+
+var ENEMY_HEALTH_BAR_WIDTH_PERCENT: float:
+	get: return get_float("enemy_health_bar_width_percent")
+
+var ENEMY_HEALTH_BAR_Y_OFFSET: int:
+	get: return get_int("enemy_health_bar_y_offset")
+
+var ENEMY_HEALTH_BAR_CORNER_RADIUS: int:
+	get: return get_int("enemy_health_bar_corner_radius")
+
+var COLOR_ENEMY_HEALTH_BG: Color:
+	get: return get_color("color_enemy_health_bg")
+
+var COLOR_ENEMY_HEALTH_FILL: Color:
+	get: return get_color("color_enemy_health_fill")
+
+var COLOR_ENEMY_HEALTH_BORDER: Color:
+	get: return get_color("color_enemy_health_border")
+
+var COLOR_ENEMY_HEALTH_DAMAGE: Color:
+	get: return get_color("color_enemy_health_damage")
+
+var COLOR_ENEMY_SHIELD_FILL: Color:
+	get: return get_color("color_enemy_shield_fill")
+
+var COLOR_ENEMY_DOT_FIRE: Color:
+	get: return get_color("color_enemy_dot_fire")
+
+var COLOR_ENEMY_DOT_POISON: Color:
+	get: return get_color("color_enemy_dot_poison")
+
+var COLOR_ENEMY_DOT_BLEED: Color:
+	get: return get_color("color_enemy_dot_bleed")
+
+var COLOR_ENEMY_DOT_COLD: Color:
+	get: return get_color("color_enemy_dot_cold")
+
+var COLOR_ENEMY_DOT_GENERIC: Color:
+	get: return get_color("color_enemy_dot_generic")
+
+var ENEMY_HEALTH_BAR_LERP_SPEED: float:
+	get: return get_float("enemy_health_bar_lerp_speed")
+
+var ENEMY_HEALTH_BAR_DOT_PREVIEW_ALPHA: float:
+	get: return get_float("enemy_health_bar_dot_preview_alpha")
+
+var ENEMY_HEALTH_BAR_SHOW_ON_FULL: bool:
+	get: return get_int("enemy_health_bar_show_on_full") == 1
+
+var ENEMY_HEALTH_BAR_FADE_DELAY: float:
+	get: return get_float("enemy_health_bar_fade_delay")
+
+var ENEMY_HEALTH_BAR_BOSS_HEIGHT: int:
+	get: return get_int("enemy_health_bar_boss_height")
+
+var ENEMY_HEALTH_BAR_BOSS_SHOW_NAME: bool:
+	get: return get_int("enemy_health_bar_boss_show_name") == 1
 
 
 #===============================================================================

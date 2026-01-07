@@ -76,6 +76,10 @@ const StatusEffectComponentScript = preload("res://scripts/combat/status_effect_
 var status_effects: Node = null  ## StatusEffectComponent instance
 var _burning_visual: Node2D = null  ## Visual effect for burning status
 
+## Health bar
+const EnemyHealthBarScript = preload("res://scripts/ui/enemy_health_bar.gd")
+var _health_bar: Node2D = null  ## EnemyHealthBar instance
+
 
 func _ready() -> void:
 	super._ready()
@@ -87,6 +91,7 @@ func _ready() -> void:
 	_setup_ai()
 	_setup_hitbox()
 	_setup_hurtbox()
+	_setup_health_bar()
 
 	# Register with NPCManager
 	if NPCManager:
@@ -376,6 +381,14 @@ func _setup_hurtbox() -> void:
 
 	# Connect to receive hits
 	hurtbox.area_entered.connect(_on_hurtbox_area_entered)
+
+
+func _setup_health_bar() -> void:
+	## Setup the floating health bar above the enemy
+	_health_bar = EnemyHealthBarScript.new()
+	_health_bar.name = "HealthBar"
+	add_child(_health_bar)
+	_health_bar.setup(self, is_boss)
 
 
 func _on_hurtbox_area_entered(area: Area2D) -> void:
