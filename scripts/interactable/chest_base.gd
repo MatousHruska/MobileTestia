@@ -269,6 +269,7 @@ func _save_persistence() -> void:
 
 	Persistence.save_state("chests", chest_id, {
 		"looted": true,
+		"looted_at": Time.get_unix_time_from_system(),
 		"tier": chest_tier,
 	})
 	Debug.log("Chest", "Saved looted state for: %s" % chest_id)
