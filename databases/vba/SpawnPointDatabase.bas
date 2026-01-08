@@ -25,6 +25,8 @@ Private Const COL_SP_REQUIRE_QUEST_ACTIVE As Integer = 13
 Private Const COL_SP_REQUIRE_QUEST_COMPLETED As Integer = 14
 Private Const COL_SP_DISABLE_AFTER_QUEST As Integer = 15
 Private Const COL_SP_DISABLE_DURING_QUEST As Integer = 16
+Private Const COL_SP_CAN_RESPAWN As Integer = 17
+Private Const COL_SP_RESPAWN_TIME As Integer = 18
 
 '-------------------------------------------------------------------------------
 ' ValidateSpawnPoints - Validates all rows in SpawnPoints sheet
@@ -107,6 +109,10 @@ Public Sub ValidateSpawnPoints()
 
         If GetDefaultNumeric(ws.Cells(i, COL_SP_SPAWN_RADIUS)) < 0 Then
             LogValidationError errors, errorCount, i, "Spawn Radius", "Cannot be negative"
+        End If
+
+        If GetDefaultNumeric(ws.Cells(i, COL_SP_RESPAWN_TIME)) < 0 Then
+            LogValidationError errors, errorCount, i, "Respawn Time", "Cannot be negative"
         End If
 
 NextSpawnPoint:
@@ -202,7 +208,9 @@ Public Sub ExportSpawnPoints()
         json = json & "      ""require_quest_active"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SP_REQUIRE_QUEST_ACTIVE))) & """," & vbCrLf
         json = json & "      ""require_quest_completed"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SP_REQUIRE_QUEST_COMPLETED))) & """," & vbCrLf
         json = json & "      ""disable_after_quest"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SP_DISABLE_AFTER_QUEST))) & """," & vbCrLf
-        json = json & "      ""disable_during_quest"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SP_DISABLE_DURING_QUEST))) & """" & vbCrLf
+        json = json & "      ""disable_during_quest"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SP_DISABLE_DURING_QUEST))) & """," & vbCrLf
+        json = json & "      ""can_respawn"": " & LCase(GetDefaultBoolean(ws.Cells(i, COL_SP_CAN_RESPAWN), True)) & "," & vbCrLf
+        json = json & "      ""respawn_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_SP_RESPAWN_TIME), 300)) & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -238,7 +246,7 @@ Public Sub SetupSpawnPointsSheet()
     headers = Array("id", "name", "description", "enemy_pool", "min_level", "max_level", _
                     "check_interval", "spawn_chance", "max_active_enemies", "respawn_delay", _
                     "spawn_radius", "spawn_group", "require_quest_active", "require_quest_completed", _
-                    "disable_after_quest", "disable_during_quest")
+                    "disable_after_quest", "disable_during_quest", "can_respawn", "respawn_time")
 
     Dim col As Integer
     For col = 0 To UBound(headers)
@@ -250,11 +258,15 @@ Public Sub SetupSpawnPointsSheet()
 
     ' Add column notes
     SafeAddComment ws.Cells(1, 4), "Format: enemy_id:weight,enemy_id:weight (e.g., ene_zombie_basic:70,ene_ghoul_basic:30)"
+    SafeAddComment ws.Cells(1, 7), "Seconds between spawn checks (lower = faster respawn detection)"
     SafeAddComment ws.Cells(1, 8), "0.0 to 1.0 (1.0 = 100% chance)"
+    SafeAddComment ws.Cells(1, 10), "In-zone delay after enemy death before respawn check (seconds)"
     SafeAddComment ws.Cells(1, 13), "Quest ID - only spawn if this quest is active"
     SafeAddComment ws.Cells(1, 14), "Quest ID - only spawn if this quest is completed"
     SafeAddComment ws.Cells(1, 15), "Quest ID - stop spawning after quest completed"
     SafeAddComment ws.Cells(1, 16), "Quest ID - don't spawn while quest active or completed"
+    SafeAddComment ws.Cells(1, 17), "TRUE/FALSE - whether enemies can respawn after being cleared"
+    SafeAddComment ws.Cells(1, 18), "Seconds before cleared spawn point can respawn (cross-zone persistence)"
 
     MsgBox "SpawnPoints sheet created with headers!", vbInformation
 End Sub
