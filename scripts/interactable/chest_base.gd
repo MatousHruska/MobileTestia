@@ -255,11 +255,9 @@ func _on_chest_looted() -> void:
 
 func _check_persistence() -> void:
 	## Check if this chest was previously looted and restore state
-	if Persistence.has_state("chests", chest_id):
-		var state := Persistence.load_state("chests", chest_id)
-		if state.get("looted", false):
-			set_opened(true)
-			Debug.log("Chest", "Restored looted state for: %s" % chest_id)
+	if Persistence.is_chest_opened(chest_id):
+		set_opened(true)
+		Debug.log("Chest", "Restored looted state for: %s" % chest_id)
 
 
 func _save_persistence() -> void:
