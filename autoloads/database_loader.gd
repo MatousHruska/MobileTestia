@@ -1009,6 +1009,10 @@ func apply_spawn_point_preset(spawn_point: Node2D, preset_id: String) -> bool:
 	spawn_point.spawn_radius = float(preset.get("spawn_radius", 0))
 	spawn_point.spawn_group = preset.get("spawn_group", "")
 
+	# Persistence settings (cross-zone respawn control)
+	spawn_point.can_respawn = preset.get("can_respawn", true)
+	spawn_point.respawn_time = float(preset.get("respawn_time", 300))
+
 	# Quest conditions
 	spawn_point.require_quest_active = preset.get("require_quest_active", "")
 	spawn_point.require_quest_completed = preset.get("require_quest_completed", "")
