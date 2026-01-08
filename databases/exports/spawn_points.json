@@ -18,7 +18,7 @@
       "disable_after_quest": "",
       "disable_during_quest": "",
       "can_respawn": true,
-      "respawn_time": 10
+      "respawn_time": 40
     }
   ]
 }
