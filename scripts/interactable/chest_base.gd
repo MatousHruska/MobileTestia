@@ -264,29 +264,15 @@ func _check_persistence() -> void:
 
 func _save_persistence() -> void:
 	## Save chest looted state to persistence
-	Debug.info("Chest", "=== SAVING PERSISTENCE for: %s ===" % chest_id)
-
 	if chest_id.is_empty():
-		Debug.warn("Chest", "  SKIPPED: chest_id is empty!")
 		return
 
-	if not Persistence:
-		Debug.err("Chest", "  FAILED: Persistence autoload is NULL!")
-		return
-
-	var save_data := {
+	Persistence.save_state("chests", chest_id, {
 		"looted": true,
 		"looted_at": Time.get_unix_time_from_system(),
 		"tier": chest_tier,
-	}
-	Debug.info("Chest", "  Saving data: %s" % save_data)
-
-	Persistence.save_state("chests", chest_id, save_data)
-
-	# Verify save worked
-	var verify := Persistence.load_state("chests", chest_id)
-	Debug.info("Chest", "  Verify after save: %s" % verify)
-	Debug.info("Chest", "  is_chest_opened: %s" % Persistence.is_chest_opened(chest_id))
+	})
+	Debug.log("Chest", "Saved looted state for: %s" % chest_id)
 
 
 ## Get tier multiplier for loot calculations
