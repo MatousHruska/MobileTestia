@@ -553,6 +553,7 @@ Private Sub ApplyForeignKeyValidation()
     ApplyValidation "SpawnPoints", 14, "ID_Quests"  ' require_quest_completed
     ApplyValidation "SpawnPoints", 15, "ID_Quests"  ' disable_after_quest
     ApplyValidation "SpawnPoints", 16, "ID_Quests"  ' disable_during_quest
+    ApplyListValidation "SpawnPoints", 17, "TRUE,FALSE"  ' can_respawn
 
     ' Quests
     ApplyValidation "Quests", 6, "ID_NPCs"          ' giver_npc
