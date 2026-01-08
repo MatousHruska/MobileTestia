@@ -51,6 +51,17 @@ func _try_spawn_chest() -> void:
 	if _db_data.is_empty():
 		return
 
+	# DEBUG: Log persistence state at spawn time
+	Debug.info("ChestSpawn", "=== SPAWN CHECK: %s ===" % database_chest_id)
+	if Persistence:
+		var has_state := Persistence.has_state("chests", database_chest_id)
+		var is_opened := Persistence.is_chest_opened(database_chest_id)
+		var state := Persistence.load_state("chests", database_chest_id)
+		Debug.info("ChestSpawn", "  has_state: %s, is_opened: %s" % [has_state, is_opened])
+		Debug.info("ChestSpawn", "  state data: %s" % state)
+	else:
+		Debug.warn("ChestSpawn", "  Persistence autoload is NULL!")
+
 	# Get spawn chance from database (default 1.0 = 100%)
 	var spawn_chance: float = float(_db_data.get("spawn_chance", 1.0))
 	if randf() > spawn_chance:

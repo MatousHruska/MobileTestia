@@ -69,5 +69,12 @@ func _on_body_entered(body: Node2D) -> void:
 
 	Debug.info("Zone", "Player entered transition: %s" % display_name)
 
+	# DEBUG: Dump persistence state before zone change
+	Debug.info("Zone", "=== PERSISTENCE STATE BEFORE ZONE CHANGE ===")
+	if Persistence:
+		Persistence.print_state()
+	else:
+		Debug.warn("Zone", "Persistence autoload is NULL!")
+
 	# Trigger zone change
 	Game.change_zone(target_zone, spawn_point_id)
