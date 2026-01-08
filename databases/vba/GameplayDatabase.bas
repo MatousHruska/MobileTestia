@@ -39,21 +39,19 @@ Private Const COL_SE_ICON_COLOR As Integer = 12
 Private Const COL_SE_DESCRIPTION As Integer = 13
 
 ' Column indices for Zones
+' NOTE: enemy_spawn_list and respawn_time removed - use SpawnPoints database instead
 Private Const COL_ZN_ID As Integer = 1
 Private Const COL_ZN_NAME As Integer = 2
 Private Const COL_ZN_ZONE_TYPE As Integer = 3
 Private Const COL_ZN_MIN_LEVEL As Integer = 4
 Private Const COL_ZN_MAX_LEVEL As Integer = 5
-Private Const COL_ZN_ENEMY_SPAWN_LIST As Integer = 6
-Private Const COL_ZN_LOOT_TABLE_ID As Integer = 7
-Private Const COL_ZN_RESPAWN_TIME As Integer = 8
-Private Const COL_ZN_MUSIC_TRACK As Integer = 9
-Private Const COL_ZN_AMBIENT_SOUND As Integer = 10
-Private Const COL_ZN_IS_SAFE_ZONE As Integer = 11
-Private Const COL_ZN_IS_PVP_ENABLED As Integer = 12
-Private Const COL_ZN_STATUS_EFFECT_ID As Integer = 13
-Private Const COL_ZN_DISCOVERY_POPUP As Integer = 14
-Private Const COL_ZN_DESCRIPTION As Integer = 15
+Private Const COL_ZN_MUSIC_TRACK As Integer = 6
+Private Const COL_ZN_AMBIENT_SOUND As Integer = 7
+Private Const COL_ZN_IS_SAFE_ZONE As Integer = 8
+Private Const COL_ZN_IS_PVP_ENABLED As Integer = 9
+Private Const COL_ZN_STATUS_EFFECT_ID As Integer = 10
+Private Const COL_ZN_DISCOVERY_POPUP As Integer = 11
+Private Const COL_ZN_DESCRIPTION As Integer = 12
 
 ' Column indices for GameplaySettings (key-value pairs)
 Private Const COL_GS_KEY As Integer = 1
@@ -431,12 +429,6 @@ Public Sub ValidateZones()
                 "Min level cannot be greater than max level"
         End If
 
-        ' Validate enemy_spawn_list not empty
-        If Len(Trim(ws.Cells(i, COL_ZN_ENEMY_SPAWN_LIST).value)) = 0 Then
-            LogValidationError errors, errorCount, i, "Enemy Spawn List", _
-                "Enemy spawn list is required (comma-separated enemy IDs)"
-        End If
-
 NextZone:
     Next i
 
@@ -508,9 +500,6 @@ Public Sub ExportZones()
         json = json & "      ""zone_type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_ZN_ZONE_TYPE), "outdoor"))) & """," & vbCrLf
         json = json & "      ""min_level"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_ZN_MIN_LEVEL), 1)) & "," & vbCrLf
         json = json & "      ""max_level"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_ZN_MAX_LEVEL), 100)) & "," & vbCrLf
-        json = json & "      ""enemy_spawn_list"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_ENEMY_SPAWN_LIST))) & """," & vbCrLf
-        json = json & "      ""loot_table_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_LOOT_TABLE_ID))) & """," & vbCrLf
-        json = json & "      ""respawn_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_ZN_RESPAWN_TIME), 60)) & "," & vbCrLf
         json = json & "      ""music_track"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_MUSIC_TRACK))) & """," & vbCrLf
         json = json & "      ""ambient_sound"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_AMBIENT_SOUND))) & """," & vbCrLf
         json = json & "      ""is_safe_zone"": " & isSafeZone & "," & vbCrLf
@@ -613,6 +602,39 @@ Public Sub SetupGameplaySettingsSheet()
     SafeAddComment ws.Cells(1, 1), "Setting key name (e.g., armor_constant, base_vitality, health_per_vitality)"
     SafeAddComment ws.Cells(1, 2), "Numeric value for the setting"
     SafeAddComment ws.Cells(1, 3), "Description of what this setting controls"
+End Sub
+
+'-------------------------------------------------------------------------------
+' SetupZonesSheet - Creates Zones sheet with headers
+' NOTE: enemy_spawn_list and respawn_time removed - use SpawnPoints database instead
+'-------------------------------------------------------------------------------
+Public Sub SetupZonesSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet(SHEET_ZONES)
+
+    Dim headers As Variant
+    headers = Array("id", "name", "zone_type", "min_level", "max_level", _
+                    "music_track", "ambient_sound", "is_safe_zone", "is_pvp_enabled", _
+                    "status_effect_id", "discovery_popup", "description")
+
+    SetupSheetHeaders ws, headers
+
+    ' Add column notes
+    SafeAddComment ws.Cells(1, 1), "Format: zone_name (e.g., zone_meadow, zone_dark_forest)"
+    SafeAddComment ws.Cells(1, 2), "Display name shown to player"
+    SafeAddComment ws.Cells(1, 3), "outdoor, dungeon, cave, town, boss_room, camp"
+    SafeAddComment ws.Cells(1, 4), "Minimum recommended player level"
+    SafeAddComment ws.Cells(1, 5), "Maximum recommended player level"
+    SafeAddComment ws.Cells(1, 6), "Music track to play in this zone"
+    SafeAddComment ws.Cells(1, 7), "Ambient sound to play in this zone"
+    SafeAddComment ws.Cells(1, 8), "TRUE/FALSE - combat disabled in safe zones"
+    SafeAddComment ws.Cells(1, 9), "TRUE/FALSE - PvP combat allowed"
+    SafeAddComment ws.Cells(1, 10), "Status effect applied while in zone (e.g., status_cold)"
+    SafeAddComment ws.Cells(1, 11), "TRUE/FALSE - show discovery popup on first visit"
+    SafeAddComment ws.Cells(1, 12), "Flavor text description of the zone"
+
+    MsgBox "Zones sheet setup complete!" & vbCrLf & vbCrLf & _
+           "NOTE: Enemy spawns are now configured in the SpawnPoints sheet.", vbInformation
 End Sub
 
 '-------------------------------------------------------------------------------
