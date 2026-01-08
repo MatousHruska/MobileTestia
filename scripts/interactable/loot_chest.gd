@@ -71,6 +71,9 @@ func _process(delta: float) -> void:
 
 
 func _on_chest_looted() -> void:
+	# CRITICAL: Call base class to save persistence!
+	super._on_chest_looted()
+
 	if can_respawn:
 		# Set respawn timer with some randomness
 		var variance := randf_range(-respawn_randomize, respawn_randomize)
