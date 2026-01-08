@@ -2,36 +2,15 @@
 extends Marker2D
 class_name ChestSpawnPoint
 ## ChestSpawnPoint - Marks where chests can spawn in a zone
-## Spawns random tier chest based on weights and zone settings
+## All chest configuration is loaded from the database via database_chest_id
+## Only position and the database reference are stored in the scene
 
-## Spawn settings
-@export_group("Spawn Settings")
-@export var spawn_id: String = ""  ## Unique ID for this spawn point
-@export var spawn_chance: float = 1.0  ## 0.0-1.0, chance for chest to spawn
+## Database reference - this is the ONLY required setting
+@export var database_chest_id: String = ""  ## ID from chests.json database
+
+## Optional overrides (leave at 0 or empty to use database values)
+@export_group("Overrides")
 @export var zone_level_override: int = 0  ## 0 = use zone's level
-
-## Tier weights (higher = more likely)
-@export_group("Tier Weights")
-@export var wooden_weight: int = 70
-@export var iron_weight: int = 25
-@export var golden_weight: int = 5
-
-## Allowed tiers (restrict which tiers can spawn)
-@export_group("Allowed Tiers")
-@export var allow_wooden: bool = true
-@export var allow_iron: bool = true
-@export var allow_golden: bool = true
-
-## Loot table override
-@export_group("Loot")
-@export var loot_table_id: String = ""  ## Optional specific loot table
-@export var min_items: int = 0
-@export var max_items: int = 2
-
-## Respawn settings
-@export_group("Respawn")
-@export var respawn_time_seconds: float = 300.0  ## 5 minutes default
-@export var can_respawn: bool = true
 
 ## Editor visual
 @export_group("Editor")
@@ -40,6 +19,9 @@ class_name ChestSpawnPoint
 ## Runtime
 var spawned_chest: ChestBase = null
 
+## Cached database data
+var _db_data: Dictionary = {}
+
 
 func _ready() -> void:
 	if Engine.is_editor_hint():
@@ -47,112 +29,174 @@ func _ready() -> void:
 
 	add_to_group("chest_spawn_points")
 
+	# Load database data
+	_load_database_data()
+
 	# Attempt spawn when zone loads
 	call_deferred("_try_spawn_chest")
 
 
-func _try_spawn_chest() -> void:
-	# Check spawn chance
-	if randf() > spawn_chance:
-		Debug.log("ChestSpawn", "Spawn point %s: no spawn (%.0f%% chance)" % [spawn_id, spawn_chance * 100])
+func _load_database_data() -> void:
+	## Load chest configuration from database
+	if database_chest_id.is_empty():
+		Debug.warn("ChestSpawn", "No database_chest_id set for spawn point at %s" % global_position)
 		return
 
-	# Determine tier
+	_db_data = DatabaseLoader.get_chest(database_chest_id)
+	if _db_data.is_empty():
+		Debug.warn("ChestSpawn", "Chest not found in database: %s" % database_chest_id)
+
+
+func _try_spawn_chest() -> void:
+	if _db_data.is_empty():
+		return
+
+	# Get spawn chance from database (default 1.0 = 100%)
+	var spawn_chance: float = float(_db_data.get("spawn_chance", 1.0))
+	if randf() > spawn_chance:
+		Debug.log("ChestSpawn", "Spawn point %s: no spawn (%.0f%% chance)" % [database_chest_id, spawn_chance * 100])
+		return
+
+	# Determine tier using database weights
 	var tier := _roll_tier()
 	if tier == -1:
-		Debug.warn("ChestSpawn", "No allowed tiers for spawn point: %s" % spawn_id)
+		Debug.warn("ChestSpawn", "No valid tier for spawn point: %s" % database_chest_id)
 		return
 
 	# Check if this spawn point's chest was already looted
-	if Persistence and Persistence.is_chest_opened(spawn_id):
-		var state := Persistence.load_state("chests", spawn_id)
+	var can_respawn: bool = _db_data.get("can_respawn", true)
+	var respawn_time: float = float(_db_data.get("respawn_time", 300))
+
+	if Persistence and Persistence.is_chest_opened(database_chest_id):
+		var state := Persistence.load_state("chests", database_chest_id)
 		var loot_time: float = state.get("looted_at", 0.0)
 		var now: float = Time.get_unix_time_from_system()
 
 		# Check respawn conditions
 		if not can_respawn:
-			Debug.log("ChestSpawn", "Spawn point %s: chest was looted and cannot respawn" % spawn_id)
+			Debug.log("ChestSpawn", "Spawn point %s: chest was looted and cannot respawn" % database_chest_id)
 			return
 
-		if now - loot_time < respawn_time_seconds:
-			var remaining := respawn_time_seconds - (now - loot_time)
-			Debug.log("ChestSpawn", "Spawn point %s: chest respawn in %.0f seconds" % [spawn_id, remaining])
+		if now - loot_time < respawn_time:
+			var remaining := respawn_time - (now - loot_time)
+			Debug.log("ChestSpawn", "Spawn point %s: chest respawn in %.0f seconds" % [database_chest_id, remaining])
 			return
 
 		# Respawn allowed - clear old state
-		Debug.info("ChestSpawn", "Spawn point %s: chest respawning after %.0f seconds" % [spawn_id, now - loot_time])
-		Persistence.clear_state("chests", spawn_id)
+		Debug.info("ChestSpawn", "Spawn point %s: chest respawning after %.0f seconds" % [database_chest_id, now - loot_time])
+		Persistence.clear_state("chests", database_chest_id)
 
-	# Create chest with deterministic ID based on spawn_id
-	spawned_chest = LootChest.new()
-	spawned_chest.chest_tier = tier
-	spawned_chest.chest_id = spawn_id  # Use spawn_id directly for persistence
-	spawned_chest.display_name = "%s Chest" % ChestBase.TIER_NAMES[tier]
-
-	# Set zone level
-	if zone_level_override > 0:
-		spawned_chest.zone_level = zone_level_override
+	# Create appropriate chest type based on database
+	var chest_type: String = _db_data.get("chest_type", "loot")
+	if chest_type == "quest":
+		spawned_chest = _create_quest_chest(tier)
 	else:
-		spawned_chest.zone_level = _get_zone_level()
+		spawned_chest = _create_loot_chest(tier)
 
-	# Apply loot settings
-	if not loot_table_id.is_empty():
-		spawned_chest.loot_table_id = loot_table_id
-	spawned_chest.min_items = min_items
-	spawned_chest.max_items = max_items
-
-	# Apply respawn settings
-	spawned_chest.can_respawn = can_respawn
-	spawned_chest.respawn_time_seconds = respawn_time_seconds
+	if spawned_chest == null:
+		return
 
 	# Add to scene
 	get_parent().add_child(spawned_chest)
 	spawned_chest.global_position = global_position
 
-	Debug.info("ChestSpawn", "Spawned %s chest at %s (zone level: %d)" % [
+	Debug.info("ChestSpawn", "Spawned %s %s chest at %s (zone level: %d)" % [
+		chest_type,
 		ChestBase.TIER_NAMES[tier],
-		spawn_id,
+		database_chest_id,
 		spawned_chest.zone_level
 	])
 
 
+func _create_loot_chest(tier: int) -> LootChest:
+	## Create a LootChest with settings from database
+	var chest := LootChest.new()
+
+	# Core settings
+	chest.chest_tier = tier
+	chest.chest_id = database_chest_id
+	chest.display_name = _db_data.get("name", "%s Chest" % ChestBase.TIER_NAMES[tier])
+
+	# Zone level
+	if zone_level_override > 0:
+		chest.zone_level = zone_level_override
+	else:
+		chest.zone_level = _get_zone_level()
+
+	# Loot settings from database
+	chest.loot_table_id = _db_data.get("loot_table_id", "")
+	chest.min_items = int(_db_data.get("min_items", 0))
+	chest.max_items = int(_db_data.get("max_items", 2))
+	chest.guaranteed_gold = _db_data.get("guaranteed_gold", true)
+
+	# Respawn settings from database
+	chest.can_respawn = _db_data.get("can_respawn", true)
+	chest.respawn_time_seconds = float(_db_data.get("respawn_time", 300))
+
+	return chest
+
+
+func _create_quest_chest(tier: int) -> QuestChest:
+	## Create a QuestChest with settings from database
+	var chest := QuestChest.new()
+
+	# Core settings
+	chest.chest_tier = tier
+	chest.chest_id = database_chest_id
+	chest.database_chest_id = database_chest_id  # For database loading
+	chest.display_name = _db_data.get("name", "%s Chest" % ChestBase.TIER_NAMES[tier])
+
+	# Zone level
+	if zone_level_override > 0:
+		chest.zone_level = zone_level_override
+	else:
+		chest.zone_level = _get_zone_level()
+
+	# Fixed contents from database
+	chest.fixed_gold = int(_db_data.get("fixed_gold", 0))
+
+	# Parse fixed_items string into array
+	var fixed_items_str: String = _db_data.get("fixed_items", "")
+	if not fixed_items_str.is_empty():
+		var items := fixed_items_str.split(",")
+		for item_id in items:
+			item_id = item_id.strip_edges()
+			if not item_id.is_empty():
+				chest.fixed_item_ids.append(item_id)
+
+	# Quest integration
+	chest.quest_id = _db_data.get("quest_id", "")
+	chest.required_quest_state = _db_data.get("required_quest_state", "")
+
+	return chest
+
+
 func _roll_tier() -> int:
-	# Build weight array for allowed tiers
-	var tiers: Array = []
-	var weights: Array = []
+	## Roll tier using database weights
+	var wooden_weight: int = int(_db_data.get("wooden_weight", 70))
+	var iron_weight: int = int(_db_data.get("iron_weight", 25))
+	var golden_weight: int = int(_db_data.get("golden_weight", 5))
 
-	if allow_wooden:
-		tiers.append(ChestBase.ChestTier.WOODEN)
-		weights.append(wooden_weight)
-	if allow_iron:
-		tiers.append(ChestBase.ChestTier.IRON)
-		weights.append(iron_weight)
-	if allow_golden:
-		tiers.append(ChestBase.ChestTier.GOLDEN)
-		weights.append(golden_weight)
-
-	if tiers.is_empty():
+	var total := wooden_weight + iron_weight + golden_weight
+	if total <= 0:
 		return -1
 
-	# Calculate total weight
-	var total := 0
-	for w in weights:
-		total += w
-
-	# Roll
 	var roll := randi() % total
 	var cumulative := 0
 
-	for i in range(tiers.size()):
-		cumulative += weights[i]
-		if roll < cumulative:
-			return tiers[i]
+	cumulative += wooden_weight
+	if roll < cumulative:
+		return ChestBase.ChestTier.WOODEN
 
-	return tiers[-1]
+	cumulative += iron_weight
+	if roll < cumulative:
+		return ChestBase.ChestTier.IRON
+
+	return ChestBase.ChestTier.GOLDEN
 
 
 func _get_zone_level() -> int:
-	# Try to get zone level from parent ZoneBase
+	## Try to get zone level from parent ZoneBase
 	var parent := get_parent()
 	while parent != null:
 		if parent is ZoneBase:
@@ -164,22 +208,27 @@ func _get_zone_level() -> int:
 
 
 ## Force spawn a specific tier (for testing/quests)
-func spawn_specific_tier(tier: ChestBase.ChestTier) -> LootChest:
+func spawn_specific_tier(tier: ChestBase.ChestTier) -> ChestBase:
 	if spawned_chest != null:
 		spawned_chest.queue_free()
 
 	# Clear any existing persistence for this spawn point
 	if Persistence:
-		Persistence.clear_state("chests", spawn_id)
+		Persistence.clear_state("chests", database_chest_id)
 
-	spawned_chest = LootChest.new()
-	spawned_chest.chest_tier = tier
-	spawned_chest.chest_id = spawn_id  # Use spawn_id directly for persistence
-	spawned_chest.display_name = "%s Chest" % ChestBase.TIER_NAMES[tier]
-	spawned_chest.zone_level = zone_level_override if zone_level_override > 0 else _get_zone_level()
+	# Reload database data in case it changed
+	_load_database_data()
 
-	get_parent().add_child(spawned_chest)
-	spawned_chest.global_position = global_position
+	var chest_type: String = _db_data.get("chest_type", "loot")
+	if chest_type == "quest":
+		spawned_chest = _create_quest_chest(tier)
+	else:
+		spawned_chest = _create_loot_chest(tier)
+
+	if spawned_chest:
+		spawned_chest.chest_tier = tier  # Override tier
+		get_parent().add_child(spawned_chest)
+		spawned_chest.global_position = global_position
 
 	return spawned_chest
 
@@ -198,6 +247,8 @@ func _draw() -> void:
 	draw_line(Vector2(-8, 0), Vector2(8, 0), marker_color.lightened(0.3), 2.0)
 	draw_line(Vector2(0, -8), Vector2(0, 8), marker_color.lightened(0.3), 2.0)
 
-	# Draw spawn chance indicator
-	if spawn_chance < 1.0:
-		draw_arc(Vector2.ZERO, 12, 0, TAU * spawn_chance, 16, marker_color.lightened(0.5), 2.0)
+	# Draw ID indicator if set
+	if not database_chest_id.is_empty():
+		draw_circle(Vector2(0, -16), 4, Color.GREEN)
+	else:
+		draw_circle(Vector2(0, -16), 4, Color.RED)

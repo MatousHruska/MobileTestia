@@ -537,9 +537,11 @@ Private Sub SetupChestsSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("Chests")
     Dim headers As Variant
-    headers = Array("id", "name", "chest_type", "tier", "zone_id", "spawn_chance", _
-                    "fixed_gold", "fixed_items", "loot_table_id", "min_items", "max_items", _
-                    "respawn_time", "quest_id", "description")
+    headers = Array("id", "name", "chest_type", "zone_id", "spawn_chance", _
+                    "wooden_weight", "iron_weight", "golden_weight", _
+                    "loot_table_id", "min_items", "max_items", "guaranteed_gold", _
+                    "fixed_gold", "fixed_items", "can_respawn", "respawn_time", _
+                    "quest_id", "required_quest_state", "description")
     SetHeaders ws, headers
 End Sub
 

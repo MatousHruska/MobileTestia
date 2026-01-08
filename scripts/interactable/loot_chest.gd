@@ -2,6 +2,11 @@ extends ChestBase
 class_name LootChest
 ## LootChest - Randomized loot chest that respawns after time
 ## Loot quality scales with both chest tier AND zone level
+## All settings can be loaded from database via database_chest_id
+
+## Database integration
+@export_group("Database")
+@export var database_chest_id: String = ""  ## Load settings from database
 
 ## Respawn settings
 @export_group("Respawn")
@@ -19,12 +24,43 @@ class_name LootChest
 ## State
 var _respawn_timer: float = 0.0
 var _original_position: Vector2
+var _db_loaded: bool = false  ## Track if loaded from database
 
 
 func _on_ready() -> void:
 	super._on_ready()
 	_original_position = global_position
 	add_to_group("loot_chests")
+
+	# Load from database if specified (and not already loaded by spawn point)
+	if not database_chest_id.is_empty() and not _db_loaded:
+		_load_from_database()
+
+
+func _load_from_database() -> void:
+	## Load chest settings from chests database
+	var db_data: Dictionary = DatabaseLoader.get_chest(database_chest_id)
+	if db_data.is_empty():
+		Debug.warn("LootChest", "Chest not found in database: %s" % database_chest_id)
+		return
+
+	# Update display name
+	var db_name: String = db_data.get("name", "")
+	if not db_name.is_empty():
+		display_name = db_name
+
+	# Loot settings
+	loot_table_id = db_data.get("loot_table_id", loot_table_id)
+	min_items = int(db_data.get("min_items", min_items))
+	max_items = int(db_data.get("max_items", max_items))
+	guaranteed_gold = db_data.get("guaranteed_gold", guaranteed_gold)
+
+	# Respawn settings
+	can_respawn = db_data.get("can_respawn", can_respawn)
+	respawn_time_seconds = float(db_data.get("respawn_time", respawn_time_seconds))
+
+	_db_loaded = true
+	Debug.log("LootChest", "Loaded from database: %s" % database_chest_id)
 
 
 func _process(delta: float) -> void:
