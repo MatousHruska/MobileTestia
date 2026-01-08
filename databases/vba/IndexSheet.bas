@@ -67,7 +67,12 @@ Public Sub GenerateIndex()
     For Each ws In ThisWorkbook.Sheets
         If ws.Name <> SHEET_INDEX Then
             Dim colorKey As String
-            colorKey = CStr(ws.Tab.Color)
+            ' Handle colorless tabs (ColorIndex = -4142 means no color)
+            If ws.Tab.ColorIndex = -4142 Or ws.Tab.ColorIndex = xlColorIndexNone Then
+                colorKey = "NO_COLOR"
+            Else
+                colorKey = CStr(ws.Tab.Color)
+            End If
 
             If Not sheetsByColor.Exists(colorKey) Then
                 sheetsByColor.Add colorKey, CreateObject("Scripting.Dictionary")
@@ -88,7 +93,16 @@ Public Sub GenerateIndex()
         Dim colorGroup As Object
         Set colorGroup = sheetsByColor(colorKeys(i))
         Dim tabColor As Long
-        tabColor = CLng(colorKeys(i))
+        Dim hasColor As Boolean
+
+        ' Check if this is the colorless group
+        If colorKeys(i) = "NO_COLOR" Then
+            hasColor = False
+            tabColor = RGB(200, 200, 200)  ' Default gray for colorless
+        Else
+            hasColor = True
+            tabColor = CLng(colorKeys(i))
+        End If
 
         ' Add group separator if color changed
         If i > 0 Then
@@ -100,6 +114,9 @@ Public Sub GenerateIndex()
 
         For j = 0 To colorGroup.Count - 1
             Set ws = colorGroup(sheetNames(j))
+
+            Dim sheetHasColor As Boolean
+            sheetHasColor = Not (ws.Tab.ColorIndex = -4142 Or ws.Tab.ColorIndex = xlColorIndexNone)
 
             With wsIndex
                 ' Create hyperlink cell
@@ -116,7 +133,7 @@ Public Sub GenerateIndex()
                     .Font.Underline = xlUnderlineStyleNone
 
                     ' Use sheet tab color for text if it has one, otherwise dark gray
-                    If ws.Tab.Color <> 0 Then
+                    If sheetHasColor Then
                         .Font.Color = DarkenColor(ws.Tab.Color, 0.3)
                     Else
                         .Font.Color = RGB(60, 60, 60)
@@ -127,7 +144,7 @@ Public Sub GenerateIndex()
 
                 ' Add color indicator bar
                 With .Cells(row, col - 1)
-                    If ws.Tab.Color <> 0 Then
+                    If sheetHasColor Then
                         .Interior.Color = ws.Tab.Color
                     Else
                         .Interior.Color = RGB(200, 200, 200)
