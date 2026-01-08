@@ -131,8 +131,9 @@ var is_active: bool = false
 var _check_timer: float = 0.0
 var _respawn_cooldown: float = 0.0
 var _actual_id: String = ""
-var _is_cleared: bool = false  ## True if spawn point was cleared and shouldn't spawn yet
-var _cleared_at: float = 0.0  ## Unix timestamp when spawn point was cleared
+var _is_cleared: bool = false  ## True if spawn point was fully cleared and shouldn't spawn yet
+var _cleared_at: float = 0.0  ## Unix timestamp when spawn point was fully cleared
+var _enemies_killed_persisted: int = 0  ## Number of enemies killed (persisted across save/load)
 
 #===============================================================================
 # LIFECYCLE
@@ -210,62 +211,81 @@ func _load_preset() -> void:
 #===============================================================================
 
 func _check_persistence() -> void:
-	## Check if spawn point was cleared and should stay cleared
+	## Check spawn point persistence state and restore kill count
 	if not Persistence:
 		Debug.warn("SpawnPoint", "Persistence autoload not available!")
 		return
 
 	if not Persistence.has_state("spawn_points", _actual_id):
-		Debug.info("SpawnPoint", "No persistence state for: %s" % _actual_id)
+		Debug.log("SpawnPoint", "No persistence state for: %s" % _actual_id)
 		return
 
 	var state := Persistence.load_state("spawn_points", _actual_id)
+	var enemies_killed: int = state.get("enemies_killed", 0)
+	var last_kill_at: float = state.get("last_kill_at", 0.0)
 	var is_cleared: bool = state.get("cleared", false)
-
-	if not is_cleared:
-		return
-
-	Debug.info("SpawnPoint", "=== CHECKING PERSISTENCE: %s ===" % _actual_id)
-	Debug.info("SpawnPoint", "  State: %s" % state)
-
-	# Spawn point was previously cleared
 	var cleared_at: float = state.get("cleared_at", 0.0)
 
-	if not can_respawn:
-		# Can't respawn - stay cleared forever
-		_is_cleared = true
-		_cleared_at = cleared_at
-		Debug.info("SpawnPoint", "  CLEARED FOREVER (can_respawn=false)")
+	Debug.info("SpawnPoint", "=== CHECKING PERSISTENCE: %s ===" % _actual_id)
+	Debug.info("SpawnPoint", "  State: killed=%d, cleared=%s" % [enemies_killed, is_cleared])
+
+	# No kills recorded - nothing to restore
+	if enemies_killed <= 0:
 		return
 
-	# Check if enough time has passed for respawn
+	# Check if respawn timer has expired
 	var current_time := Time.get_unix_time_from_system()
-	var elapsed := current_time - cleared_at
+	# Use cleared_at for fully cleared, last_kill_at for partial kills
+	var time_reference := cleared_at if is_cleared and cleared_at > 0 else last_kill_at
+	var elapsed := current_time - time_reference
 
-	if respawn_time > 0 and elapsed < respawn_time:
-		# Not enough time passed - stay cleared (but store timestamp for in-zone respawn check)
-		_is_cleared = true
-		_cleared_at = cleared_at
-		var remaining := respawn_time - elapsed
-		Debug.info("SpawnPoint", "  STILL CLEARED: %.1f seconds remaining" % remaining)
-	else:
-		# Enough time passed - clear the persistence state and allow spawning
+	# Can't respawn - keep killed count forever
+	if not can_respawn:
+		_enemies_killed_persisted = enemies_killed
+		if is_cleared:
+			_is_cleared = true
+			_cleared_at = cleared_at
+		Debug.info("SpawnPoint", "  KILLED FOREVER (can_respawn=false): %d enemies" % enemies_killed)
+		return
+
+	# Check if respawn timer expired
+	if respawn_time > 0 and elapsed >= respawn_time:
+		# Respawn allowed - clear all state
+		_enemies_killed_persisted = 0
 		_is_cleared = false
 		_cleared_at = 0.0
 		Persistence.clear_state("spawn_points", _actual_id)
-		Debug.info("SpawnPoint", "  RESPAWN ALLOWED: %.1f seconds elapsed" % elapsed)
+		Debug.info("SpawnPoint", "  RESPAWN ALLOWED: %.1f seconds elapsed, all enemies can respawn" % elapsed)
+		return
+
+	# Respawn timer not expired - restore killed count
+	_enemies_killed_persisted = enemies_killed
+	if is_cleared:
+		_is_cleared = true
+		_cleared_at = cleared_at
+
+	var remaining := respawn_time - elapsed
+	Debug.info("SpawnPoint", "  RESTORED: %d/%d killed, %.1f seconds until respawn" % [
+		_enemies_killed_persisted, max_active_enemies, remaining
+	])
 
 
-func _save_cleared_state() -> void:
-	## Save spawn point cleared state to persistence
+func _save_spawn_state() -> void:
+	## Save spawn point state to persistence (kill count and cleared status)
 	if _actual_id.is_empty():
 		return
 
+	var is_fully_cleared := _enemies_killed_persisted >= max_active_enemies
+
 	Persistence.save_state("spawn_points", _actual_id, {
-		"cleared": true,
-		"cleared_at": Time.get_unix_time_from_system(),
+		"enemies_killed": _enemies_killed_persisted,
+		"last_kill_at": Time.get_unix_time_from_system(),
+		"cleared": is_fully_cleared,
+		"cleared_at": _cleared_at if is_fully_cleared else 0.0,
 	})
-	Debug.info("SpawnPoint", "=== SAVED CLEARED STATE: %s ===" % _actual_id)
+	Debug.info("SpawnPoint", "Saved state: %s (killed: %d/%d, cleared: %s)" % [
+		_actual_id, _enemies_killed_persisted, max_active_enemies, is_fully_cleared
+	])
 
 
 #===============================================================================
@@ -358,30 +378,32 @@ func deactivate() -> void:
 func _try_spawn() -> void:
 	## Attempt to spawn an enemy
 
-	# Check if spawn point is cleared (from persistence or in-zone death)
+	# Check if spawn point is fully cleared (from persistence or in-zone death)
 	if _is_cleared:
 		# Check if respawn is allowed and enough time has passed
 		if can_respawn and respawn_time > 0 and _cleared_at > 0:
 			var elapsed := Time.get_unix_time_from_system() - _cleared_at
 			if elapsed >= respawn_time:
-				# Enough time passed - allow respawning
+				# Enough time passed - allow respawning, reset kill count
 				_is_cleared = false
 				_cleared_at = 0.0
+				_enemies_killed_persisted = 0
 				Persistence.clear_state("spawn_points", _actual_id)
 				Debug.info("SpawnPoint", "RESPAWN ALLOWED after %.1f seconds: %s" % [elapsed, _actual_id])
 			else:
 				var remaining := respawn_time - elapsed
-				Debug.info("SpawnPoint", "SKIP spawn - cleared (%.1fs remaining): %s" % [remaining, _actual_id])
+				Debug.log("SpawnPoint", "SKIP spawn - cleared (%.1fs remaining): %s" % [remaining, _actual_id])
 				return
 		elif not can_respawn:
-			Debug.info("SpawnPoint", "SKIP spawn - cleared forever: %s" % _actual_id)
+			Debug.log("SpawnPoint", "SKIP spawn - cleared forever: %s" % _actual_id)
 			return
 		else:
-			Debug.info("SpawnPoint", "SKIP spawn - cleared: %s" % _actual_id)
+			Debug.log("SpawnPoint", "SKIP spawn - cleared: %s" % _actual_id)
 			return
 
-	# Check if we can spawn more
-	if alive_enemies.size() >= max_active_enemies:
+	# Check if we can spawn more (accounting for killed enemies waiting to respawn)
+	var total_accounted := alive_enemies.size() + _enemies_killed_persisted
+	if total_accounted >= max_active_enemies:
 		return
 
 	# Re-check conditions (quest state may have changed)
@@ -509,17 +531,22 @@ func _on_enemy_died(enemy: EnemyNPC) -> void:
 	alive_enemies.erase(enemy)
 	enemy_died.emit(enemy)
 
-	Debug.info("SpawnPoint", "Enemy died at %s: %s (remaining: %d)" % [
-		_actual_id, enemy.enemy_name, alive_enemies.size()
+	# Track kill for persistence
+	_enemies_killed_persisted += 1
+
+	Debug.info("SpawnPoint", "Enemy died at %s: %s (alive: %d, killed: %d/%d)" % [
+		_actual_id, enemy.enemy_name, alive_enemies.size(),
+		_enemies_killed_persisted, max_active_enemies
 	])
 
-	# Check if spawn point is now cleared (all enemies dead)
-	if alive_enemies.is_empty():
-		# Save cleared state to persistence
-		_save_cleared_state()
+	# Check if spawn point is now fully cleared
+	if _enemies_killed_persisted >= max_active_enemies:
 		_is_cleared = true
 		_cleared_at = Time.get_unix_time_from_system()
-		Debug.info("SpawnPoint", "Spawn point CLEARED: %s" % _actual_id)
+		Debug.info("SpawnPoint", "Spawn point FULLY CLEARED: %s" % _actual_id)
+
+	# Save state on every kill (for partial kill persistence)
+	_save_spawn_state()
 
 	# Start respawn cooldown (for in-zone respawning)
 	if respawn_delay > 0:
@@ -559,10 +586,17 @@ func kill_all() -> void:
 
 
 func reset() -> void:
-	## Reset the spawn point
+	## Reset the spawn point (clears persistence)
 	despawn_all()
 	_check_timer = 0.0
 	_respawn_cooldown = 0.0
+	_enemies_killed_persisted = 0
+	_is_cleared = false
+	_cleared_at = 0.0
+
+	# Clear persistence
+	if Persistence and not _actual_id.is_empty():
+		Persistence.clear_state("spawn_points", _actual_id)
 
 	if enabled:
 		_check_and_activate()
@@ -626,7 +660,9 @@ func debug_print_state() -> void:
 		"enabled": enabled,
 		"is_active": is_active,
 		"alive_enemies": alive_enemies.size(),
+		"enemies_killed": _enemies_killed_persisted,
 		"max_active": max_active_enemies,
+		"is_cleared": _is_cleared,
 		"check_interval": check_interval,
 		"spawn_chance": spawn_chance,
 		"enemy_pool_size": _get_pool_size(),
@@ -642,7 +678,9 @@ func debug_get_info() -> Dictionary:
 		"enabled": enabled,
 		"is_active": is_active,
 		"alive_count": alive_enemies.size(),
+		"killed_count": _enemies_killed_persisted,
 		"max_active": max_active_enemies,
+		"is_cleared": _is_cleared,
 		"pool": get_enemy_ids_in_pool(),
 		"spawn_group": spawn_group
 	}

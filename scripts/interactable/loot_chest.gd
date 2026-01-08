@@ -85,6 +85,11 @@ func _respawn() -> void:
 	current_state = ChestState.CLOSED
 	_update_visual_for_tier()
 	_update_interaction_prompt()
+
+	# Clear persistence state so save/load reflects respawned state
+	if not chest_id.is_empty() and Persistence:
+		Persistence.clear_state("chests", chest_id)
+
 	Debug.info("Chest", "Chest respawned: %s" % display_name)
 
 
