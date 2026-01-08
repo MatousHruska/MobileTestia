@@ -98,31 +98,17 @@ preset_id = "sp_vampire_lord_boss"
 [node name="CryptChest1" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(220, 80)
 script = ExtResource("7_chest_spawn")
-spawn_id = "crypt_chest_1"
-spawn_chance = 0.7
-wooden_weight = 30
-iron_weight = 50
-golden_weight = 20
+database_chest_id = "chest_crypt_01"
 
 [node name="CryptChest2" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(-350, -50)
 script = ExtResource("7_chest_spawn")
-spawn_id = "crypt_chest_2"
-spawn_chance = 0.5
-wooden_weight = 20
-iron_weight = 50
-golden_weight = 30
-allow_wooden = false
+database_chest_id = "chest_crypt_02"
 
 [node name="CryptChest3" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(50, 150)
 script = ExtResource("7_chest_spawn")
-spawn_id = "crypt_chest_3"
-spawn_chance = 0.3
-wooden_weight = 0
-iron_weight = 40
-golden_weight = 60
-allow_wooden = false
+database_chest_id = "chest_crypt_03"
 
 [node name="TransitionToTest" type="Area2D" parent="."]
 position = Vector2(0, -280)

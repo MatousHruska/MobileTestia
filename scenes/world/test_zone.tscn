@@ -162,42 +162,22 @@ object_size = Vector2(16, 16)
 [node name="StarterChest" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(-80, 50)
 script = ExtResource("11_chest_spawn")
-spawn_id = "starter_chest"
-wooden_weight = 100
-iron_weight = 0
-golden_weight = 0
-allow_iron = false
-allow_golden = false
-respawn_time_seconds = 60.0
-marker_color = Color(0.55, 0.35, 0.15, 0.9)
+database_chest_id = "chest_hub_starter"
 
 [node name="ChestSpawn1" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(-300, 80)
 script = ExtResource("11_chest_spawn")
-spawn_id = "hub_chest_1"
-wooden_weight = 80
-iron_weight = 18
-golden_weight = 2
+database_chest_id = "chest_hub_01"
 
 [node name="ChestSpawn2" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(350, 120)
 script = ExtResource("11_chest_spawn")
-spawn_id = "hub_chest_2"
-spawn_chance = 0.75
-wooden_weight = 60
-iron_weight = 35
-marker_color = Color(0.5, 0.5, 0.55, 0.8)
+database_chest_id = "chest_hub_02"
 
 [node name="ChestSpawn3" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(-50, 200)
 script = ExtResource("11_chest_spawn")
-spawn_id = "hub_chest_3"
-spawn_chance = 0.5
-wooden_weight = 40
-iron_weight = 40
-golden_weight = 20
-allow_wooden = false
-marker_color = Color(0.85, 0.65, 0.15, 0.8)
+database_chest_id = "chest_hub_03"
 
 [node name="FriendlyNPCs" type="Node2D" parent="."]
 

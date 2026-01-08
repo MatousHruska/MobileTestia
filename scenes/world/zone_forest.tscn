@@ -98,30 +98,17 @@ preset_id = "sp_forest_ghouls"
 [node name="ForestChest1" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(250, 50)
 script = ExtResource("7_chest_spawn")
-spawn_id = "forest_chest_1"
-spawn_chance = 0.8
-wooden_weight = 50
-iron_weight = 40
-golden_weight = 10
+database_chest_id = "chest_forest_01"
 
 [node name="ForestChest2" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(-400, 120)
 script = ExtResource("7_chest_spawn")
-spawn_id = "forest_chest_2"
-spawn_chance = 0.6
-wooden_weight = 40
-iron_weight = 45
-golden_weight = 15
+database_chest_id = "chest_forest_02"
 
 [node name="ForestChest3" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(150, -150)
 script = ExtResource("7_chest_spawn")
-spawn_id = "forest_chest_3"
-spawn_chance = 0.4
-wooden_weight = 30
-iron_weight = 45
-golden_weight = 25
-allow_wooden = false
+database_chest_id = "chest_forest_03"
 
 [node name="TransitionToTest" type="Area2D" parent="."]
 position = Vector2(0, -280)
@@ -213,12 +200,7 @@ placeholder_size = Vector2(16, 32)
 [node name="SecretChest" type="Marker2D" parent="SecretRoom"]
 position = Vector2(0, 0)
 script = ExtResource("7_chest_spawn")
-spawn_id = "forest_secret_chest"
-spawn_chance = 1.0
-wooden_weight = 0
-iron_weight = 20
-golden_weight = 80
-allow_wooden = false
+database_chest_id = "chest_forest_secret"
 
 [node name="Locations" type="Node2D" parent="."]
 
