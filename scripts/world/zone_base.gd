@@ -18,13 +18,6 @@ class_name ZoneBase
 func _ready() -> void:
 	Debug.info("System", "Zone loaded: %s (id: %s)" % [zone_name, zone_id])
 
-	# DEBUG: Dump persistence state when zone loads
-	Debug.info("Zone", "=== PERSISTENCE STATE ON ZONE LOAD ===")
-	if Persistence:
-		Persistence.print_state()
-	else:
-		Debug.warn("Zone", "Persistence autoload is NULL!")
-
 	# Notify game manager - use zone_id (matches filename) for save/load compatibility
 	Game.current_zone = zone_id
 
