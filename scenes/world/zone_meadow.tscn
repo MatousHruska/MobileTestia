@@ -146,11 +146,7 @@ lever_controlled = true
 [node name="SecretChest" type="Marker2D" parent="SecretRoom"]
 position = Vector2(80, 0)
 script = ExtResource("7_chest_spawn")
-spawn_id = "meadow_secret_chest"
-spawn_chance = 1.0
-wooden_weight = 0
-iron_weight = 0
-golden_weight = 100
+database_chest_id = "chest_meadow_secret"
 
 [node name="Interactables" type="Node2D" parent="."]
 
@@ -176,19 +172,12 @@ preset_id = "sp_meadow_zombies"
 [node name="MeadowChest1" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(250, 80)
 script = ExtResource("7_chest_spawn")
-spawn_id = "meadow_chest_1"
-spawn_chance = 0.8
-marker_color = Color(0.55, 0.35, 0.15, 0.8)
+database_chest_id = "chest_meadow_01"
 
 [node name="MeadowChest2" type="Marker2D" parent="ChestSpawns"]
 position = Vector2(-280, 150)
 script = ExtResource("7_chest_spawn")
-spawn_id = "meadow_chest_2"
-spawn_chance = 0.6
-wooden_weight = 50
-iron_weight = 40
-golden_weight = 10
-marker_color = Color(0.5, 0.5, 0.55, 0.8)
+database_chest_id = "chest_meadow_02"
 
 [node name="TransitionToTest" type="Area2D" parent="."]
 position = Vector2(0, -280)
