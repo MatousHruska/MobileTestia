@@ -543,10 +543,10 @@ Private Sub ApplyForeignKeyValidation()
     ApplyValidation "Enemies", 13, "ID_LootTables"  ' loot_table_id
     ApplyValidation "Enemies", 15, "ID_BehaviorProfiles"  ' behavior_profile
 
-    ' Chests
-    ApplyValidation "Chests", 5, "ID_Zones"         ' zone_id
+    ' Chests (new schema: zone_id=4, loot_table_id=9, quest_id=17)
+    ApplyValidation "Chests", 4, "ID_Zones"         ' zone_id
     ApplyValidation "Chests", 9, "ID_LootTables"    ' loot_table_id
-    ApplyValidation "Chests", 13, "ID_Quests"       ' quest_id
+    ApplyValidation "Chests", 17, "ID_Quests"       ' quest_id
 
     ' SpawnPoints
     ApplyValidation "SpawnPoints", 13, "ID_Quests"  ' require_quest_active
@@ -639,9 +639,10 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "EnemyAbilities", 6, "physical,fire,cold,lightning,poison,arcane,bleed,pure"  ' damage_type
     ApplyListValidation "EnemyAbilities", 10, "circle,cone,line,cross,ring"  ' shape
 
-    ' Chests
+    ' Chests (new schema uses tier weights instead of single tier)
     ApplyListValidation "Chests", 3, "loot,quest"           ' chest_type
-    ApplyListValidation "Chests", 4, "wooden,iron,golden"   ' tier
+    ApplyListValidation "Chests", 12, "TRUE,FALSE"          ' guaranteed_gold
+    ApplyListValidation "Chests", 15, "TRUE,FALSE"          ' can_respawn
 
     ' Quests
     ApplyListValidation "Quests", 4, "story,side"           ' type
