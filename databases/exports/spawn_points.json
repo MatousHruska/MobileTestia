@@ -16,7 +16,9 @@
       "require_quest_active": "",
       "require_quest_completed": "",
       "disable_after_quest": "",
-      "disable_during_quest": ""
+      "disable_during_quest": "",
+      "can_respawn": true,
+      "respawn_time": 10
     },
     {
       "id": "sp_forest_ghouls",
