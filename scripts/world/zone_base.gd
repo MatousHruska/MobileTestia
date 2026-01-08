@@ -18,25 +18,6 @@ class_name ZoneBase
 func _ready() -> void:
 	Debug.info("System", "Zone loaded: %s (id: %s)" % [zone_name, zone_id])
 
-	# DEBUG: Dump persistence state for enemies and spawn points when zone loads
-	Debug.info("Zone", "=== PERSISTENCE STATE ON ZONE LOAD ===")
-	if Persistence:
-		Debug.info("Zone", "  Enemies category:")
-		var enemies_state := Persistence.get_all_states().get("enemies", {})
-		for enemy_id in enemies_state:
-			Debug.info("Zone", "    %s: %s" % [enemy_id, enemies_state[enemy_id]])
-		if enemies_state.is_empty():
-			Debug.info("Zone", "    (empty)")
-
-		Debug.info("Zone", "  Spawn points category:")
-		var sp_state := Persistence.get_all_states().get("spawn_points", {})
-		for sp_id in sp_state:
-			Debug.info("Zone", "    %s: %s" % [sp_id, sp_state[sp_id]])
-		if sp_state.is_empty():
-			Debug.info("Zone", "    (empty)")
-	else:
-		Debug.warn("Zone", "  Persistence autoload is NULL!")
-
 	# Notify game manager - use zone_id (matches filename) for save/load compatibility
 	Game.current_zone = zone_id
 

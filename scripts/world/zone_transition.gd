@@ -69,22 +69,5 @@ func _on_body_entered(body: Node2D) -> void:
 
 	Debug.info("Zone", "Player entered transition: %s" % display_name)
 
-	# DEBUG: Dump enemy persistence state before zone change
-	Debug.info("Zone", "=== PERSISTENCE STATE BEFORE ZONE CHANGE ===")
-	if Persistence:
-		Debug.info("Zone", "  Enemies category:")
-		var enemies_state := Persistence.get_all_states().get("enemies", {})
-		for enemy_id in enemies_state:
-			Debug.info("Zone", "    %s: %s" % [enemy_id, enemies_state[enemy_id]])
-		if enemies_state.is_empty():
-			Debug.info("Zone", "    (empty)")
-
-		Debug.info("Zone", "  Spawn points category:")
-		var sp_state := Persistence.get_all_states().get("spawn_points", {})
-		for sp_id in sp_state:
-			Debug.info("Zone", "    %s: %s" % [sp_id, sp_state[sp_id]])
-		if sp_state.is_empty():
-			Debug.info("Zone", "    (empty)")
-
 	# Trigger zone change
 	Game.change_zone(target_zone, spawn_point_id)
