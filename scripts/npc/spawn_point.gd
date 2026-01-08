@@ -132,6 +132,7 @@ var _check_timer: float = 0.0
 var _respawn_cooldown: float = 0.0
 var _actual_id: String = ""
 var _is_cleared: bool = false  ## True if spawn point was cleared and shouldn't spawn yet
+var _cleared_at: float = 0.0  ## Unix timestamp when spawn point was cleared
 
 #===============================================================================
 # LIFECYCLE
@@ -228,25 +229,29 @@ func _check_persistence() -> void:
 	Debug.info("SpawnPoint", "  State: %s" % state)
 
 	# Spawn point was previously cleared
+	var cleared_at: float = state.get("cleared_at", 0.0)
+
 	if not can_respawn:
 		# Can't respawn - stay cleared forever
 		_is_cleared = true
+		_cleared_at = cleared_at
 		Debug.info("SpawnPoint", "  CLEARED FOREVER (can_respawn=false)")
 		return
 
 	# Check if enough time has passed for respawn
-	var cleared_at: float = state.get("cleared_at", 0.0)
 	var current_time := Time.get_unix_time_from_system()
 	var elapsed := current_time - cleared_at
 
 	if respawn_time > 0 and elapsed < respawn_time:
-		# Not enough time passed - stay cleared
+		# Not enough time passed - stay cleared (but store timestamp for in-zone respawn check)
 		_is_cleared = true
+		_cleared_at = cleared_at
 		var remaining := respawn_time - elapsed
 		Debug.info("SpawnPoint", "  STILL CLEARED: %.1f seconds remaining" % remaining)
 	else:
 		# Enough time passed - clear the persistence state and allow spawning
 		_is_cleared = false
+		_cleared_at = 0.0
 		Persistence.clear_state("spawn_points", _actual_id)
 		Debug.info("SpawnPoint", "  RESPAWN ALLOWED: %.1f seconds elapsed" % elapsed)
 
@@ -353,10 +358,27 @@ func deactivate() -> void:
 func _try_spawn() -> void:
 	## Attempt to spawn an enemy
 
-	# Check if spawn point is cleared (from persistence)
+	# Check if spawn point is cleared (from persistence or in-zone death)
 	if _is_cleared:
-		Debug.info("SpawnPoint", "SKIP spawn - cleared: %s" % _actual_id)
-		return
+		# Check if respawn is allowed and enough time has passed
+		if can_respawn and respawn_time > 0 and _cleared_at > 0:
+			var elapsed := Time.get_unix_time_from_system() - _cleared_at
+			if elapsed >= respawn_time:
+				# Enough time passed - allow respawning
+				_is_cleared = false
+				_cleared_at = 0.0
+				Persistence.clear_state("spawn_points", _actual_id)
+				Debug.info("SpawnPoint", "RESPAWN ALLOWED after %.1f seconds: %s" % [elapsed, _actual_id])
+			else:
+				var remaining := respawn_time - elapsed
+				Debug.info("SpawnPoint", "SKIP spawn - cleared (%.1fs remaining): %s" % [remaining, _actual_id])
+				return
+		elif not can_respawn:
+			Debug.info("SpawnPoint", "SKIP spawn - cleared forever: %s" % _actual_id)
+			return
+		else:
+			Debug.info("SpawnPoint", "SKIP spawn - cleared: %s" % _actual_id)
+			return
 
 	# Check if we can spawn more
 	if alive_enemies.size() >= max_active_enemies:
@@ -496,6 +518,7 @@ func _on_enemy_died(enemy: EnemyNPC) -> void:
 		# Save cleared state to persistence
 		_save_cleared_state()
 		_is_cleared = true
+		_cleared_at = Time.get_unix_time_from_system()
 		Debug.info("SpawnPoint", "Spawn point CLEARED: %s" % _actual_id)
 
 	# Start respawn cooldown (for in-zone respawning)
