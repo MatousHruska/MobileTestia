@@ -27,14 +27,15 @@ signal quest_item_obtained(item_id: String)
 
 ## Internal
 var _glow_node: ColorRect
+var _db_loaded: bool = false  ## Track if we loaded from database
 
 
 func _on_ready() -> void:
 	super._on_ready()
 	add_to_group("quest_chests")
 
-	# Load from database if specified
-	if not database_chest_id.is_empty():
+	# Load from database if specified (and not already loaded by spawn point)
+	if not database_chest_id.is_empty() and not _db_loaded:
 		_load_from_database()
 
 	# Add subtle glow effect
@@ -47,9 +48,41 @@ func _on_ready() -> void:
 
 
 func _load_from_database() -> void:
-	# TODO: Load chest contents from chests database
-	# For now, use the exported values
-	pass
+	## Load chest contents and settings from chests database
+	var db_data: Dictionary = DatabaseLoader.get_chest(database_chest_id)
+	if db_data.is_empty():
+		Debug.warn("QuestChest", "Chest not found in database: %s" % database_chest_id)
+		return
+
+	# Update display name if not already set
+	var db_name: String = db_data.get("name", "")
+	if not db_name.is_empty() and display_name == "Chest":
+		display_name = db_name
+
+	# Load fixed gold (only if not already set by spawn point)
+	if fixed_gold == 0:
+		fixed_gold = int(db_data.get("fixed_gold", 0))
+
+	# Load fixed items (only if not already set by spawn point)
+	if fixed_item_ids.is_empty():
+		var fixed_items_str: String = db_data.get("fixed_items", "")
+		if not fixed_items_str.is_empty():
+			var items := fixed_items_str.split(",")
+			for item_id in items:
+				item_id = item_id.strip_edges()
+				if not item_id.is_empty():
+					fixed_item_ids.append(item_id)
+
+	# Load quest integration settings
+	if quest_id.is_empty():
+		quest_id = db_data.get("quest_id", "")
+	if required_quest_state.is_empty():
+		required_quest_state = db_data.get("required_quest_state", "")
+
+	_db_loaded = true
+	Debug.log("QuestChest", "Loaded from database: %s (gold: %d, items: %d)" % [
+		database_chest_id, fixed_gold, fixed_item_ids.size()
+	])
 
 
 func _add_glow_effect() -> void:
