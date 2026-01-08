@@ -509,20 +509,22 @@ Private Sub SetupGameplaySettingsSheet()
 End Sub
 
 Private Sub SetupZonesSheet()
+    ' NOTE: enemy_spawn_list, loot_table_id, respawn_time removed - use SpawnPoints database
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("Zones")
     Dim headers As Variant
-    headers = Array("id", "name", "zone_type", "min_level", "max_level", "enemy_spawn_list", _
-                    "loot_table_id", "respawn_time", "music_track", "ambient_sound", _
-                    "is_safe_zone", "is_pvp_enabled", "status_effect_id", "discovery_popup", "description")
+    headers = Array("id", "name", "zone_type", "min_level", "max_level", _
+                    "music_track", "ambient_sound", "is_safe_zone", "is_pvp_enabled", _
+                    "status_effect_id", "discovery_popup", "description")
     SetHeaders ws, headers
 
     ' Add comments
-    SafeAddComment ws.Cells(1, 10), "Background ambient sound file"
-    SafeAddComment ws.Cells(1, 11), "true/false - No combat allowed in this zone"
-    SafeAddComment ws.Cells(1, 12), "true/false - PvP enabled in this zone"
-    SafeAddComment ws.Cells(1, 13), "Status effect applied while in zone (e.g., status_cold)"
-    SafeAddComment ws.Cells(1, 14), "true/false - Show discovery popup on first visit"
+    SafeAddComment ws.Cells(1, 6), "Music track to play in this zone"
+    SafeAddComment ws.Cells(1, 7), "Background ambient sound file"
+    SafeAddComment ws.Cells(1, 8), "true/false - No combat allowed in this zone"
+    SafeAddComment ws.Cells(1, 9), "true/false - PvP enabled in this zone"
+    SafeAddComment ws.Cells(1, 10), "Status effect applied while in zone (e.g., status_cold)"
+    SafeAddComment ws.Cells(1, 11), "true/false - Show discovery popup on first visit"
 End Sub
 
 Private Sub SetupDialoguesSheet()

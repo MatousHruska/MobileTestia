@@ -531,9 +531,8 @@ Private Sub ApplyForeignKeyValidation()
     ' ShopInventory
     ApplyValidation "ShopInventory", 3, "ID_ItemBases"  ' item_id
 
-    ' Zones
-    ApplyValidation "Zones", 7, "ID_LootTables"     ' loot_table_id
-    ApplyValidation "Zones", 13, "ID_StatusEffects" ' status_effect_id
+    ' Zones (enemy_spawn_list, loot_table_id, respawn_time removed - use SpawnPoints)
+    ApplyValidation "Zones", 10, "ID_StatusEffects" ' status_effect_id
 
     ' Locations
     ApplyValidation "Locations", 2, "ID_Zones"          ' zone_id
