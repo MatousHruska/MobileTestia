@@ -130,6 +130,17 @@ func _ready() -> void:
 	if not preset_id.is_empty():
 		_load_preset()
 
+	# DEBUG: Log spawn point initialization and persistence state
+	Debug.info("SpawnPoint", "=== SPAWN POINT INIT: %s ===" % _actual_id)
+	Debug.info("SpawnPoint", "  preset_id: %s, enemy_id: %s" % [preset_id, enemy_id])
+	if Persistence:
+		var has_state := Persistence.has_state("spawn_points", _actual_id)
+		var state := Persistence.load_state("spawn_points", _actual_id)
+		Debug.info("SpawnPoint", "  Persistence has_state: %s" % has_state)
+		Debug.info("SpawnPoint", "  Persistence data: %s" % state)
+	else:
+		Debug.warn("SpawnPoint", "  Persistence autoload is NULL!")
+
 	# Register with NPCManager if available
 	if NPCManager:
 		NPCManager.register_spawn_point(self)
@@ -276,19 +287,31 @@ func deactivate() -> void:
 func _try_spawn() -> void:
 	## Attempt to spawn an enemy
 
+	# DEBUG: Log spawn attempt
+	Debug.info("SpawnPoint", "=== TRY SPAWN: %s ===" % _actual_id)
+	if Persistence:
+		var has_state := Persistence.has_state("spawn_points", _actual_id)
+		var sp_state := Persistence.load_state("spawn_points", _actual_id)
+		Debug.info("SpawnPoint", "  Persistence has_state: %s" % has_state)
+		Debug.info("SpawnPoint", "  Persistence data: %s" % sp_state)
+
 	# Check if we can spawn more
 	if alive_enemies.size() >= max_active_enemies:
+		Debug.info("SpawnPoint", "  SKIP: max_active_enemies reached (%d/%d)" % [alive_enemies.size(), max_active_enemies])
 		return
 
 	# Re-check conditions (quest state may have changed)
 	if not _check_all_conditions():
+		Debug.info("SpawnPoint", "  SKIP: conditions not met")
 		deactivate()
 		return
 
 	# Roll spawn chance
 	if spawn_chance < 1.0 and randf() > spawn_chance:
+		Debug.info("SpawnPoint", "  SKIP: spawn chance failed")
 		return
 
+	Debug.info("SpawnPoint", "  SPAWNING enemy...")
 	# Spawn the enemy
 	spawn_enemy()
 
@@ -403,10 +426,18 @@ func _on_enemy_died(enemy: EnemyNPC) -> void:
 	alive_enemies.erase(enemy)
 	enemy_died.emit(enemy)
 
-	Debug.log("SpawnPoint", "Enemy died", {
-		"spawn_point": _actual_id,
-		"remaining": alive_enemies.size()
-	})
+	# DEBUG: Log enemy death and check persistence
+	Debug.info("SpawnPoint", "=== ENEMY DIED at spawn point: %s ===" % _actual_id)
+	Debug.info("SpawnPoint", "  Enemy: %s (id: %s)" % [enemy.enemy_name, enemy.enemy_id])
+	Debug.info("SpawnPoint", "  is_unique: %s, is_boss: %s" % [enemy.is_unique, enemy.is_boss])
+	Debug.info("SpawnPoint", "  Remaining enemies: %d" % alive_enemies.size())
+
+	# Check if persistence was saved for this enemy
+	if Persistence:
+		var enemy_persisted := Persistence.is_enemy_killed(enemy.enemy_id) if not enemy.enemy_id.is_empty() else false
+		var sp_state := Persistence.load_state("spawn_points", _actual_id)
+		Debug.info("SpawnPoint", "  Enemy persisted: %s" % enemy_persisted)
+		Debug.info("SpawnPoint", "  Spawn point state: %s" % sp_state)
 
 	# Start respawn cooldown
 	if respawn_delay > 0:
