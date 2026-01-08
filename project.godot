@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Heroes of Tesia"
+config/name="Heroes of Tesia 080102"
 config/description="Mobile Action RPG - Pixel Art Top-Down"
 run/main_scene="res://scenes/world/zone_test_hub.tscn"
 config/features=PackedStringArray("4.5", "Mobile")
