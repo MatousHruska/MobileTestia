@@ -578,12 +578,6 @@ func _on_death() -> void:
 	if is_dead:
 		return
 
-	# DEBUG: Log death and persistence status
-	Debug.info("Combat", "=== ENEMY DEATH: %s ===" % enemy_name)
-	Debug.info("Combat", "  enemy_id: '%s'" % enemy_id)
-	Debug.info("Combat", "  is_unique: %s, is_boss: %s" % [is_unique, is_boss])
-	Debug.info("Combat", "  Will persist: %s" % (is_unique or is_boss))
-
 	die()  ## Call parent die() for animation
 
 	# Disable collisions
@@ -609,9 +603,7 @@ func _on_death() -> void:
 	# Save death to persistence for unique/boss enemies
 	if is_unique or is_boss:
 		Persistence.save_enemy_killed(enemy_id)
-		Debug.info("Combat", "=== SAVING ENEMY PERSISTENCE: %s ===" % enemy_id)
-	else:
-		Debug.info("Combat", "  NOT PERSISTING: enemy is not unique or boss")
+		Debug.info("Combat", "Unique enemy %s permanently killed" % enemy_name)
 
 	# Drop loot
 	_drop_loot()
