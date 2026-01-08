@@ -13,6 +13,7 @@ var _states: Dictionary = {
 	"levers": {},
 	"chests": {},
 	"enemies": {},  # For boss kill tracking
+	"spawn_points": {},  # For tracking cleared enemy spawn points
 	"quests": {},
 	"npcs": {},
 	"escort_npcs": {},  # Dynamic NPC states during escort quests
@@ -21,7 +22,7 @@ var _states: Dictionary = {
 }
 
 ## Valid categories
-const CATEGORIES := ["doors", "levers", "chests", "enemies", "quests", "npcs", "escort_npcs", "status_effects", "misc"]
+const CATEGORIES := ["doors", "levers", "chests", "enemies", "spawn_points", "quests", "npcs", "escort_npcs", "status_effects", "misc"]
 
 
 func _ready() -> void:
