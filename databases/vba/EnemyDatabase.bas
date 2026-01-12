@@ -26,7 +26,8 @@ Private Const COL_EN_XP_REWARD As Integer = 12
 Private Const COL_EN_LOOT_TABLE_ID As Integer = 13
 Private Const COL_EN_ABILITY_IDS As Integer = 14
 Private Const COL_EN_BEHAVIOR_PROFILE As Integer = 15  ' Links to behavior_profiles.json
-Private Const COL_EN_DESCRIPTION As Integer = 16
+Private Const COL_EN_MODULE_IDS As Integer = 16        ' Modular AI module IDs (comma-separated)
+Private Const COL_EN_DESCRIPTION As Integer = 17
 
 ' Column indices for EnemyAbilities (expanded for AI system)
 Private Const COL_EA_ID As Integer = 1
@@ -204,7 +205,8 @@ Public Sub ExportEnemies()
         json = json & "      ""xp_reward"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_XP_REWARD), 25)) & "," & vbCrLf
         json = json & "      ""loot_table_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_LOOT_TABLE_ID))) & """," & vbCrLf
         json = json & "      ""ability_ids"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_ABILITY_IDS))) & """," & vbCrLf
-        json = json & "      ""behavior_profile"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_BEHAVIOR_PROFILE), "bhv_basic_melee")) & """" & vbCrLf
+        json = json & "      ""behavior_profile"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_BEHAVIOR_PROFILE), "bhv_basic_melee")) & """," & vbCrLf
+        json = json & "      ""module_ids"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_MODULE_IDS))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -409,7 +411,7 @@ Public Sub SetupEnemiesSheet()
     Dim headers As Variant
     headers = Array("id", "name", "type", "base_health", "base_damage", "armor", "base_shield", _
                     "move_speed", "attack_speed", "attack_range", "detection_range", _
-                    "xp_reward", "loot_table_id", "ability_ids", "behavior_profile", "description")
+                    "xp_reward", "loot_table_id", "ability_ids", "behavior_profile", "module_ids", "description")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -426,6 +428,7 @@ Public Sub SetupEnemiesSheet()
     SafeAddComment ws.Cells(1, 13), "Reference to LootTables id"
     SafeAddComment ws.Cells(1, 14), "Comma-separated ability IDs (e.g., abl_slash,abl_bite)"
     SafeAddComment ws.Cells(1, 15), "Reference to BehaviorProfiles id (default: bhv_basic_melee)"
+    SafeAddComment ws.Cells(1, 16), "Comma-separated module IDs for modular AI (e.g., mod_target_detection,mod_chase)"
 End Sub
 
 '-------------------------------------------------------------------------------

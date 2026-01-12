@@ -7,7 +7,7 @@
       "description": "Detects and tracks combat targets within detection radius",
       "script_path": "",
       "priority": 100,
-      "default_config": "{\"detection_radius\": 120}"
+      "default_config": {"detection_radius": 120}
     },
     {
       "id": "mod_chase",
@@ -16,7 +16,7 @@
       "description": "Pursues combat target when not in attack range",
       "script_path": "",
       "priority": 80,
-      "default_config": "{\"chase_speed_mult\": 1.0}"
+      "default_config": {"chase_speed_mult": 1.0}
     },
     {
       "id": "mod_melee_attack",
@@ -25,7 +25,7 @@
       "description": "Triggers melee attack when in range with cooldown",
       "script_path": "",
       "priority": 60,
-      "default_config": "{\"attack_radius\": 24, \"attack_cooldown\": 1.0, \"cardinal_alignment\": true, \"alignment_tolerance\": 16.0}"
+      "default_config": {"attack_radius": 24, "attack_cooldown": 1.0, "cardinal_alignment": true, "alignment_tolerance": 16.0}
     }
   ]
 }
