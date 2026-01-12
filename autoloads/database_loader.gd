@@ -38,6 +38,7 @@ var stat_descriptions: Dictionary = {}  ## Stat name/description for UI display
 var gameplay_settings: Dictionary = {}  ## Key-value pairs for global game settings
 var combat_text_settings: Dictionary = {}  ## Combat text global settings
 var combat_text_categories: Dictionary = {}  ## Combat text category configs (keyed by id)
+var enemy_modules: Dictionary = {}  ## Modular AI modules (keyed by id)
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -58,6 +59,7 @@ var spawn_points_list: Array = []
 var cutscenes_list: Array = []
 var floating_dialogues_list: Array = []
 var popup_messages_list: Array = []
+var enemy_modules_list: Array = []
 
 ## Signals
 signal databases_loaded
@@ -84,6 +86,7 @@ func load_all_databases() -> void:
 	success = _load_database("enemy_abilities.json", "enemy_abilities", enemy_abilities, enemy_abilities_list) and success
 	success = _load_database("enemy_variants.json", "enemy_variants", enemy_variants) and success
 	success = _load_database("behavior_profiles.json", "behavior_profiles", behavior_profiles, behavior_profiles_list) and success
+	success = _load_database("enemy_modules.json", "enemy_modules", enemy_modules, enemy_modules_list) and success
 
 	# Loot
 	success = _load_database("loot_tables.json", "loot_tables", loot_tables) and success
@@ -361,6 +364,11 @@ func get_enemies_by_type(enemy_type: String) -> Array:
 ## Get behavior profile by id
 func get_behavior_profile(id: String) -> Dictionary:
 	return behavior_profiles.get(id, {})
+
+
+## Get AI module by id
+func get_module(id: String) -> Dictionary:
+	return enemy_modules.get(id, {})
 
 
 ## Create AbilityData resource from database entry
