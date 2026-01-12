@@ -1,4 +1,4 @@
-extends Node
+extends Node2D
 class_name TestModuleSystem
 ## Integration test for the modular AI system
 ## Run this script to verify EnemyContext, BaseModule, and ModuleController work correctly
