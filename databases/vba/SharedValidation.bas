@@ -497,6 +497,7 @@ Private Sub CreateIdNamedRanges()
     CreateNamedRange "UITheme", 1, "ID_UITheme"
     CreateNamedRange "Achievements", 1, "ID_Achievements"
     CreateNamedRange "CombatTextCategories", 1, "ID_CombatTextCategories"
+    CreateNamedRange "EnemyModules", 1, "ID_EnemyModules"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -638,6 +639,9 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "EnemyAbilities", 4, "melee,dash_attack,aoe,projectile,pattern,teleport_attack,beam"  ' type
     ApplyListValidation "EnemyAbilities", 6, "physical,fire,cold,lightning,poison,arcane,bleed,pure"  ' damage_type
     ApplyListValidation "EnemyAbilities", 10, "circle,cone,line,cross,ring"  ' shape
+
+    ' EnemyModules
+    ApplyListValidation "EnemyModules", 3, "detection,movement,combat,social,special,utility"  ' module_type
 
     ' Chests (new schema uses tier weights instead of single tier)
     ApplyListValidation "Chests", 3, "loot,quest"           ' chest_type
