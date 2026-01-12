@@ -1257,14 +1257,26 @@ func _map_slot_to_equipment_type(slot: String, item_type: String) -> ItemData.Eq
 # ENEMY FACTORY
 #===============================================================================
 
+## Preload ModularEnemyNPC for module-based enemies
+const ModularEnemyNPCScript := preload("res://scripts/npc/modular_enemy_npc.gd")
+
 ## Create EnemyNPC from database enemy entry
+## Returns ModularEnemyNPC if enemy has module_ids configured, otherwise EnemyNPC
 func create_enemy(enemy_id: String, level: int = 1) -> EnemyNPC:
 	var data: Dictionary = get_enemy(enemy_id)
 	if data.is_empty():
 		Debug.warn("Database", "Enemy not found: %s" % enemy_id)
 		return null
 
-	var enemy := EnemyNPC.new()
+	# Check if enemy uses modular AI system
+	var module_ids_str: String = data.get("module_ids", "")
+	var enemy: EnemyNPC
+	if not module_ids_str.is_empty():
+		enemy = ModularEnemyNPCScript.new()
+		Debug.log("Database", "Creating ModularEnemyNPC: %s" % enemy_id)
+	else:
+		enemy = EnemyNPC.new()
+
 	enemy.enemy_id = enemy_id
 	enemy.enemy_name = data.get("name", "Unknown Enemy")
 	enemy.enemy_level = level
