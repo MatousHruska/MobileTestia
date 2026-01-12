@@ -142,7 +142,7 @@
       "animation": "bounce",
       "show_sign": true,
       "prefix": "",
-      "lifetime_mult": 1,
+      "lifetime_mult": 1.5,
       "scale_with_damage": true,
       "min_scale": 1,
       "max_scale": 1.4,
