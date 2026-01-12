@@ -23,6 +23,7 @@ Public Sub ExportAll()
     ExportEnemyAbilities
     ExportEnemyVariants
     ExportBehaviorProfiles
+    ExportEnemyModules
 
     ' Loot
     ExportLootTables
@@ -96,6 +97,7 @@ Public Sub ValidateAll()
     ValidateAffixes
     ValidateEnemies
     ValidateBehaviorProfiles
+    ValidateEnemyModules
     ValidateLootTables
     ValidateTalentTrees
     ValidateTalents
@@ -145,6 +147,7 @@ Public Sub SetupWorkbook()
     currentSheet = "EnemyAbilities": SetupEnemyAbilitiesSheet
     currentSheet = "EnemyVariants": SetupEnemyVariantsSheet
     currentSheet = "BehaviorProfiles": SetupBehaviorProfilesSheet
+    currentSheet = "EnemyModules": SetupEnemyModulesSheet
     currentSheet = "LootTables": SetupLootTablesSheet
     currentSheet = "TalentTrees": SetupTalentTreesSheet
     currentSheet = "Talents": SetupTalentsSheet
@@ -359,6 +362,21 @@ Private Sub SetupBehaviorProfilesSheet()
     SafeAddComment ws.Cells(1, 27), "0.0-1.0 - chance to use ability vs basic attack"
     SafeAddComment ws.Cells(1, 28), "highest, conditional, random_weighted"
     SafeAddComment ws.Cells(1, 29), "Comma-separated ability IDs"
+End Sub
+
+Private Sub SetupEnemyModulesSheet()
+    Dim ws As Worksheet
+    Set ws = GetOrCreateSheet("EnemyModules")
+    Dim headers As Variant
+    headers = Array("id", "name", "module_type", "description", "script_path", "priority", "default_config")
+    SetHeaders ws, headers
+
+    ' Add column notes
+    SafeAddComment ws.Cells(1, 1), "Module ID: mod_name (e.g., mod_target_detection)"
+    SafeAddComment ws.Cells(1, 3), "detection, movement, combat, social, special, utility"
+    SafeAddComment ws.Cells(1, 5), "GDScript path (auto-generated if empty)"
+    SafeAddComment ws.Cells(1, 6), "Higher priority = runs first (100=detection, 80=movement, 60=combat)"
+    SafeAddComment ws.Cells(1, 7), "JSON config object, e.g., {""detection_radius"": 150}"
 End Sub
 
 Private Sub SetupLootTablesSheet()
