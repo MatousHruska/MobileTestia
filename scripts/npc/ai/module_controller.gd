@@ -81,10 +81,13 @@ func _load_module(module_id: String) -> void:
 	module.module_type = _parse_module_type(type_str)
 
 	# Merge default config with enemy-specific overrides
-	var default_config: Dictionary = module_data.get("default_config", {})
-	if default_config is String:
+	var default_config_raw = module_data.get("default_config", {})
+	var default_config: Dictionary = {}
+	if default_config_raw is String:
 		# Parse JSON string if needed
-		default_config = _parse_json_config(default_config)
+		default_config = _parse_json_config(default_config_raw)
+	elif default_config_raw is Dictionary:
+		default_config = default_config_raw
 	var enemy_overrides = _get_enemy_config_overrides(module_id)
 	var final_config = default_config.duplicate()
 	final_config.merge(enemy_overrides, true)
