@@ -167,6 +167,11 @@ position = Vector2(-150, 120)
 script = ExtResource("9_spawn_point")
 preset_id = "sp_meadow_zombies"
 
+[node name="SpawnPointModular" type="Node2D" parent="Enemies"]
+position = Vector2(200, 50)
+script = ExtResource("9_spawn_point")
+preset_id = "sp_meadow_modular_zombie"
+
 [node name="ChestSpawns" type="Node2D" parent="."]
 
 [node name="MeadowChest1" type="Marker2D" parent="ChestSpawns"]
