@@ -51,6 +51,53 @@ scripts/npc/ai/modules/
 
 ---
 
+## Important Workflows
+
+### VBA/Excel Database Workflow
+
+The game uses Excel with VBA macros for database management. Here's the workflow:
+
+**VBA Files Location:** `databases/vba/`
+
+**To Import/Update VBA Modules:**
+1. Open `TesiaDatabase.xlsm` in Excel
+2. Press `Alt + F11` to open VBA Editor
+3. For new modules: File → Import File → Select `.bas` file
+4. For updated modules: Right-click existing module → Remove → No (don't export) → then Import the new `.bas` file
+5. Close VBA Editor and save the workbook
+
+**Key VBA Commands** (press `Alt + F8` to run):
+- `SetupWorkbook` - Creates all sheets with proper headers
+- `SetupAllDataValidation` - Adds dropdown menus to columns
+- `ExportAll` - Exports all sheets to JSON files
+- `ValidateAll` - Validates all data before export
+
+**Export Output:** `databases/exports/*.json`
+
+### Testing in Godot
+
+Test scenes are located in `tests/unit/`. To run tests:
+
+1. In Godot's **FileSystem** panel, navigate to: `tests/unit/`
+2. Double-click the `.tscn` file to open it (e.g., `test_module_system.tscn`)
+3. Press **F6** to run just that scene (not the main game)
+4. Check the **Output** panel for test results
+
+**Key shortcuts:**
+- **F5** = Run main game
+- **F6** = Run current scene only (use this for tests)
+
+**Expected output format:**
+```
+=== Module System Test ===
+[PASS] Test description
+[PASS] Another test
+...
+=== All Tests Passed ===
+```
+
+---
+
 ## Phase 4 Objectives
 
 Complete the migration:
