@@ -15,7 +15,8 @@
       "xp_reward": 25,
       "loot_table_id": "loot_table_id",
       "ability_ids": "ability_ids",
-      "behavior_profile": "behavior_profile"
+      "behavior_profile": "behavior_profile",
+      "module_ids": ""
     },
     {
       "id": "ene_zombie_basic",
@@ -32,7 +33,26 @@
       "xp_reward": 15,
       "loot_table_id": "loot_zombie",
       "ability_ids": "abl_zombie_bite",
-      "behavior_profile": "bhv_zombie_shamble"
+      "behavior_profile": "bhv_zombie_shamble",
+      "module_ids": ""
+    },
+    {
+      "id": "ene_zombie_modular",
+      "name": "Zombie (Modular)",
+      "type": "Normal",
+      "base_health": 30,
+      "base_damage": 5,
+      "armor": 0,
+      "base_shield": 0,
+      "move_speed": 80,
+      "attack_speed": 0.8,
+      "attack_range": 25,
+      "detection_range": 120,
+      "xp_reward": 15,
+      "loot_table_id": "loot_zombie",
+      "ability_ids": "abl_zombie_bite",
+      "behavior_profile": "bhv_zombie_shamble",
+      "module_ids": "mod_target_detection,mod_chase,mod_melee_attack"
     },
     {
       "id": "ene_ghoul_basic",
@@ -49,7 +69,8 @@
       "xp_reward": 25,
       "loot_table_id": "loot_ghoul",
       "ability_ids": "abl_ghoul_claw,abl_ghoul_leap,abl_ghoul_frenzy",
-      "behavior_profile": "bhv_ghoul_hunter"
+      "behavior_profile": "bhv_ghoul_hunter",
+      "module_ids": ""
     },
     {
       "id": "ene_vampire_basic",
@@ -66,7 +87,8 @@
       "xp_reward": 35,
       "loot_table_id": "loot_vampire",
       "ability_ids": "abl_vampire_bats,abl_vampire_drain",
-      "behavior_profile": "bhv_vampire_cunning"
+      "behavior_profile": "bhv_vampire_cunning",
+      "module_ids": ""
     },
     {
       "id": "ene_vampire_lord",
@@ -83,7 +105,8 @@
       "xp_reward": 200,
       "loot_table_id": "loot_vampire_lord",
       "ability_ids": "abl_vampire_bats,abl_vampire_drain,abl_vampire_strike,abl_vampire_aoe",
-      "behavior_profile": "bhv_vampire_cunning"
+      "behavior_profile": "bhv_vampire_cunning",
+      "module_ids": ""
     }
   ]
 }

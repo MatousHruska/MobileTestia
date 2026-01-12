@@ -1,3 +1,31 @@
 {
-  "enemy_modules": []
+  "enemy_modules": [
+    {
+      "id": "mod_target_detection",
+      "name": "Target Detection",
+      "module_type": "detection",
+      "description": "Detects and tracks combat targets within detection radius",
+      "script_path": "",
+      "priority": 100,
+      "default_config": "{\"detection_radius\": 120}"
+    },
+    {
+      "id": "mod_chase",
+      "name": "Chase",
+      "module_type": "movement",
+      "description": "Pursues combat target when not in attack range",
+      "script_path": "",
+      "priority": 80,
+      "default_config": "{\"chase_speed_mult\": 1.0}"
+    },
+    {
+      "id": "mod_melee_attack",
+      "name": "Melee Attack",
+      "module_type": "combat",
+      "description": "Triggers melee attack when in range with cooldown",
+      "script_path": "",
+      "priority": 60,
+      "default_config": "{\"attack_radius\": 24, \"attack_cooldown\": 1.0, \"cardinal_alignment\": true, \"alignment_tolerance\": 16.0}"
+    }
+  ]
 }
