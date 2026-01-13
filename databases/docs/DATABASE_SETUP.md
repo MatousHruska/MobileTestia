@@ -208,13 +208,14 @@ This guide explains how to set up and use the Excel database system for MobileTe
 | base_health | number | Yes | `100` |
 | base_damage | number | Yes | `10` |
 | armor | number | No | `5` |
+| base_shield | number | No | `0` |
 | move_speed | number | No | `80` |
 | attack_speed | number | No | `1.0` |
 | attack_range | number | No | `24` |
 | detection_range | number | No | `150` |
 | xp_reward | number | No | `25` |
 | loot_table_id | string | No | `loot_zombie_basic` |
-| ability_ids | string | No | `ability_bite,ability_grab` |
+| module_ids | string | No | `mod_detection_sight,mod_chase_basic,mod_melee_attack` |
 | description | string | No | `A shambling corpse...` |
 
 **ID Prefix:** `ene_`
@@ -223,27 +224,7 @@ This guide explains how to set up and use the Excel database system for MobileTe
 
 ---
 
-### EnemyAbilities (NEW)
-| Column | Type | Required | Example |
-|--------|------|----------|---------|
-| id | string | Yes | `ability_slam` |
-| name | string | Yes | `Ground Slam` |
-| type | dropdown | Yes | `melee`, `ranged`, `aoe`, `buff` |
-| damage | number | No | `25` |
-| damage_type | dropdown | Yes | `physical`, `fire`, `cold` |
-| cooldown | number | No | `5` |
-| range | number | No | `50` |
-| description | string | No | `Slams the ground...` |
-
-**ID Prefix:** `ability_`
-
-**Valid Ability Types:** `melee`, `ranged`, `aoe`, `buff`, `debuff`, `summon`, `dash`, `teleport`
-
-**Valid Damage Types:** `physical`, `fire`, `cold`, `lightning`, `poison`, `chaos`, `pure`
-
----
-
-### EnemyVariants (NEW)
+### EnemyVariants
 | Column | Type | Required | Example |
 |--------|------|----------|---------|
 | id | string | Yes | `var_enraged` |

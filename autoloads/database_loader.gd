@@ -7,17 +7,13 @@ const DATABASE_PATH := "res://databases/exports/"
 
 ## Preload data classes to avoid load order issues
 const AbilityDataScript := preload("res://scripts/data/ability_data.gd")
-## DEPRECATED: BehaviorProfileDataScript removed in Phase 2 legacy AI cleanup
-## const BehaviorProfileDataScript := preload("res://scripts/data/behavior_profile_data.gd")
 
 ## Loaded data dictionaries (keyed by id)
 var item_bases: Dictionary = {}
 var affixes: Dictionary = {}
 var unique_items: Dictionary = {}
 var enemies: Dictionary = {}
-var enemy_abilities: Dictionary = {}
 var enemy_variants: Dictionary = {}
-var behavior_profiles: Dictionary = {}
 var loot_tables: Dictionary = {}
 var talent_trees: Dictionary = {}
 var talents: Dictionary = {}
@@ -46,8 +42,6 @@ var item_bases_list: Array = []
 var affixes_list: Array = []
 var unique_items_list: Array = []
 var enemies_list: Array = []
-var enemy_abilities_list: Array = []
-var behavior_profiles_list: Array = []
 var talent_trees_list: Array = []
 var talents_list: Array = []
 var quests_list: Array = []
@@ -84,9 +78,7 @@ func load_all_databases() -> void:
 
 	# Enemies
 	success = _load_database("enemies.json", "enemies", enemies, enemies_list) and success
-	success = _load_database("enemy_abilities.json", "enemy_abilities", enemy_abilities, enemy_abilities_list) and success
 	success = _load_database("enemy_variants.json", "enemy_variants", enemy_variants) and success
-	success = _load_database("behavior_profiles.json", "behavior_profiles", behavior_profiles, behavior_profiles_list) and success
 	success = _load_database("enemy_modules.json", "enemy_modules", enemy_modules, enemy_modules_list) and success
 
 	# Loot
@@ -343,11 +335,6 @@ func get_enemy(id: String) -> Dictionary:
 	return enemies.get(id, {})
 
 
-## Get enemy ability by id
-func get_enemy_ability(id: String) -> Dictionary:
-	return enemy_abilities.get(id, {})
-
-
 ## Get enemy variant by id
 func get_enemy_variant(id: String) -> Dictionary:
 	return enemy_variants.get(id, {})
@@ -362,69 +349,9 @@ func get_enemies_by_type(enemy_type: String) -> Array:
 	return result
 
 
-## DEPRECATED: Get behavior profile by id - legacy AI removed in Phase 2
-func get_behavior_profile(id: String) -> Dictionary:
-	push_warning("get_behavior_profile() is deprecated - legacy AI removed in Phase 2")
-	return behavior_profiles.get(id, {})
-
-
 ## Get AI module by id
 func get_module(id: String) -> Dictionary:
 	return enemy_modules.get(id, {})
-
-
-## Create AbilityData resource from database entry
-func create_ability_data(ability_id: String):  # Returns AbilityData
-	var data: Dictionary = get_enemy_ability(ability_id)
-	if data.is_empty():
-		return null
-
-	var ability = AbilityDataScript.new()
-	ability.id = data.get("id", ability_id)
-	ability.ability_name = data.get("name", "Attack")
-	ability.description = data.get("description", "")
-	ability.type = AbilityDataScript.type_from_string(data.get("type", "melee"))
-	ability.damage_mult = float(data.get("damage_mult", 1.0))
-	ability.damage_type = AbilityDataScript.damage_type_from_string(data.get("damage_type", "physical"))
-	ability.cooldown = float(data.get("cooldown", 0.0))
-	ability.range_min = float(data.get("range_min", 0.0))
-	ability.range_max = float(data.get("range_max", 30.0))
-	ability.shape = AbilityDataScript.shape_from_string(data.get("shape", "circle"))
-	ability.shape_size = float(data.get("shape_size", 25.0))
-	ability.shape_angle = float(data.get("shape_angle", 0.0))
-	ability.windup = float(data.get("windup", 0.2))
-	ability.recovery = float(data.get("recovery", 0.3))
-	ability.animation = data.get("animation", "attack")
-	ability.priority = int(data.get("priority", 1))
-	ability.conditions = data.get("conditions", "")
-	ability.effects_on_hit = data.get("effects_on_hit", "")
-	ability.projectile_speed = float(data.get("projectile_speed", 0.0))
-	ability.dash_speed = float(data.get("dash_speed", 0.0))
-	ability.cardinal_only = data.get("cardinal_only", true)  # Default true for cardinal snapping
-	ability.explosion_falloff = float(data.get("explosion_falloff", 30.0))  # AOE damage falloff at edge
-
-	return ability
-
-
-## DEPRECATED: Create BehaviorProfileData resource from database entry
-## BehaviorProfileData class removed in Phase 2 legacy AI cleanup
-func create_behavior_profile_data(profile_id: String):  # Returns null (deprecated)
-	push_warning("create_behavior_profile_data() is deprecated - legacy AI removed in Phase 2")
-	return null
-
-
-## DEPRECATED: Get abilities for an enemy by parsing ability_ids string
-## Legacy ability system removed in Phase 2 - modules handle attacks now
-func get_abilities_for_enemy(enemy_id: String) -> Array:  # Returns empty Array (deprecated)
-	push_warning("get_abilities_for_enemy() is deprecated - legacy ability system removed in Phase 2")
-	return []
-
-
-## DEPRECATED: Get behavior profile for an enemy
-## BehaviorProfileData class removed in Phase 2 legacy AI cleanup
-func get_behavior_for_enemy(enemy_id: String):  # Returns null (deprecated)
-	push_warning("get_behavior_for_enemy() is deprecated - legacy AI removed in Phase 2")
-	return null
 
 
 #===============================================================================
@@ -1274,8 +1201,7 @@ func print_stats() -> void:
 		"affixes": affixes.size(),
 		"unique_items": unique_items.size(),
 		"enemies": enemies.size(),
-		"enemy_abilities": enemy_abilities.size(),
-		"behavior_profiles": behavior_profiles.size(),
+		"enemy_modules": enemy_modules.size(),
 		"loot_tables": loot_tables.size(),
 		"talent_trees": talent_trees.size(),
 		"talents": talents.size(),
