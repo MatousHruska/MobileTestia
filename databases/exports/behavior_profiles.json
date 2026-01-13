@@ -1,5 +1,0 @@
-{
-  "_deprecated": true,
-  "_note": "DEPRECATED - Enemy AI now uses module_ids system. Legacy behavior profiles removed in Phase 2 cleanup. See enemy_modules.json for the new modular AI system.",
-  "behavior_profiles": []
-}
