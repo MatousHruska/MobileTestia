@@ -26,6 +26,24 @@
       "script_path": "res://scripts/npc/ai/modules/melee_attack_module.gd",
       "priority": 60,
       "default_config": {"attack_radius": 24, "attack_cooldown": 1.0, "cardinal_alignment": true, "alignment_tolerance": 16.0}
+    },
+    {
+      "id": "mod_idle",
+      "name": "Idle",
+      "module_type": "movement",
+      "description": "Stand or roam when no target",
+      "script_path": "res://scripts/npc/ai/modules/idle_module.gd",
+      "priority": 10,
+      "default_config": {"can_roam": true, "roam_radius": 50, "roam_speed_mult": 0.5, "pause_min": 2.0, "pause_max": 5.0}
+    },
+    {
+      "id": "mod_leash",
+      "name": "Leash",
+      "module_type": "utility",
+      "description": "Returns home if too far from spawn",
+      "script_path": "res://scripts/npc/ai/modules/leash_module.gd",
+      "priority": 90,
+      "default_config": {"leash_radius": 300, "home_threshold": 16, "return_speed_mult": 1.0}
     }
   ]
 }
