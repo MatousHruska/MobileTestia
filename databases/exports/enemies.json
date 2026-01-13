@@ -8,15 +8,14 @@
       "base_damage": 5,
       "armor": 0,
       "base_shield": 0,
-      "move_speed": 80,
+      "move_speed": 20,
       "attack_speed": 0.8,
       "attack_range": 25,
       "detection_range": 120,
       "xp_reward": 15,
       "loot_table_id": "loot_zombie",
-      "ability_ids": "abl_zombie_bite",
-      "behavior_profile": "bhv_zombie_shamble",
-      "module_ids": ""
+      "module_ids": "mod_target_detection,mod_chase,mod_melee_attack",
+      "description": "Slow shambling undead"
     },
     {
       "id": "ene_ghoul_basic",
@@ -32,9 +31,8 @@
       "detection_range": 180,
       "xp_reward": 25,
       "loot_table_id": "loot_ghoul",
-      "ability_ids": "abl_ghoul_claw,abl_ghoul_leap,abl_ghoul_frenzy",
-      "behavior_profile": "bhv_ghoul_hunter",
-      "module_ids": ""
+      "module_ids": "mod_target_detection,mod_chase,mod_melee_attack",
+      "description": "Fast aggressive predator"
     },
     {
       "id": "ene_vampire_basic",
@@ -50,9 +48,8 @@
       "detection_range": 200,
       "xp_reward": 35,
       "loot_table_id": "loot_vampire",
-      "ability_ids": "abl_vampire_bats,abl_vampire_drain",
-      "behavior_profile": "bhv_vampire_cunning",
-      "module_ids": ""
+      "module_ids": "mod_target_detection,mod_chase,mod_melee_attack",
+      "description": "Cunning undead with shield"
     },
     {
       "id": "ene_vampire_lord",
@@ -68,27 +65,8 @@
       "detection_range": 250,
       "xp_reward": 200,
       "loot_table_id": "loot_vampire_lord",
-      "ability_ids": "abl_vampire_bats,abl_vampire_drain,abl_vampire_strike,abl_vampire_aoe",
-      "behavior_profile": "bhv_vampire_cunning",
-      "module_ids": ""
-    },
-    {
-      "id": "ene_zombie_modular",
-      "name": "Zombie (Modular)",
-      "type": "Normal",
-      "base_health": 30,
-      "base_damage": 5,
-      "armor": 0,
-      "base_shield": 0,
-      "move_speed": 80,
-      "attack_speed": 0.8,
-      "attack_range": 25,
-      "detection_range": 120,
-      "xp_reward": 15,
-      "loot_table_id": "loot_zombie",
-      "ability_ids": "abl_zombie_bite",
-      "behavior_profile": "bhv_zombie_shamble",
-      "module_ids": "mod_target_detection,mod_chase,mod_melee_attack"
+      "module_ids": "mod_target_detection,mod_chase,mod_melee_attack",
+      "description": "Powerful undead boss"
     }
   ]
 }
