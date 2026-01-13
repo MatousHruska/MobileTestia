@@ -12,6 +12,24 @@ This is the newest version of the codebase. Clone it and add Phase2-Cleanup into
 
 ---
 
+## CRITICAL: Database Workflow
+
+> **NEVER EDIT `.json` FILES DIRECTLY!**
+>
+> The database is managed through Excel with VBA macros. Direct JSON edits will be overwritten.
+>
+> **Correct workflow:**
+> 1. **First:** Provide updated `.bas` VBA files for any schema changes
+> 2. **Second:** Provide Excel-ready data to paste into sheets
+> 3. **Third:** User imports VBA, pastes data, runs `ExportAll`
+>
+> When you need to change database structure or data:
+> - Give me the `.bas` file updates (if schema changes)
+> - Give me tab-separated or table data ready to paste into Excel
+> - I will import/paste and export the JSON myself
+
+---
+
 ## Context: Why Clean Slate?
 
 ### Problem with Hybrid Approach
