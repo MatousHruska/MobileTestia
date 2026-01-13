@@ -6,6 +6,7 @@ class_name ModularEnemyNPC
 ## Module system
 var module_controller: ModuleController = null
 var _using_modules: bool = false
+var _enemy_module_config: Dictionary = {}  # Per-enemy module config overrides
 
 
 func _ready() -> void:
@@ -26,6 +27,15 @@ func _setup_module_system() -> void:
 		return
 
 	_using_modules = true
+
+	# Load per-enemy module config overrides
+	var config_raw = enemy_data.get("module_config", {})
+	if config_raw is String and not config_raw.is_empty():
+		var json := JSON.new()
+		if json.parse(config_raw) == OK:
+			_enemy_module_config = json.data
+	elif config_raw is Dictionary:
+		_enemy_module_config = config_raw
 
 	# Create controller
 	module_controller = ModuleController.new()
@@ -54,15 +64,21 @@ func _load_and_add_module(module_id: String) -> void:
 
 	var module: BaseModule = _create_module_instance(module_id, module_data)
 	if module:
-		# Parse default config
-		var default_config: Dictionary = {}
+		# Parse default config from module database
+		var final_config: Dictionary = {}
 		var config_raw = module_data.get("default_config", {})
 		if config_raw is String and not config_raw.is_empty():
 			var json := JSON.new()
 			if json.parse(config_raw) == OK:
-				default_config = json.data
+				final_config = json.data
 		elif config_raw is Dictionary:
-			default_config = config_raw
+			final_config = config_raw.duplicate()
+
+		# Merge per-enemy config overrides (if any)
+		if _enemy_module_config.has(module_id):
+			var overrides: Dictionary = _enemy_module_config[module_id]
+			for key in overrides:
+				final_config[key] = overrides[key]
 
 		# Set module properties from database
 		module.module_id = module_id
@@ -70,7 +86,7 @@ func _load_and_add_module(module_id: String) -> void:
 		module.priority = int(module_data.get("priority", 0))
 
 		# Setup and add
-		module.setup(self, default_config)
+		module.setup(self, final_config)
 		module_controller.add_module(module)
 
 		Debug.log("AI", "Loaded module: %s (priority=%d)" % [module_id, module.priority])

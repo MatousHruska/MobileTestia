@@ -26,7 +26,8 @@ Private Const COL_EN_DETECTION_RANGE As Integer = 11
 Private Const COL_EN_XP_REWARD As Integer = 12
 Private Const COL_EN_LOOT_TABLE_ID As Integer = 13
 Private Const COL_EN_MODULE_IDS As Integer = 14    ' Modular AI module IDs (comma-separated)
-Private Const COL_EN_DESCRIPTION As Integer = 15
+Private Const COL_EN_MODULE_CONFIG As Integer = 15 ' Per-enemy module config overrides (JSON)
+Private Const COL_EN_DESCRIPTION As Integer = 16
 
 ' Column indices for EnemyVariants
 Private Const COL_EV_ID As Integer = 1
@@ -119,6 +120,16 @@ Public Sub ValidateEnemies()
             LogValidationError errors, errorCount, i, "XP Reward", "Cannot be negative"
         End If
 
+        ' Validate module_config is valid JSON (basic check)
+        Dim moduleConfig As String
+        moduleConfig = Trim(ws.Cells(i, COL_EN_MODULE_CONFIG).value)
+        If Len(moduleConfig) > 0 Then
+            If Left(moduleConfig, 1) <> "{" Or Right(moduleConfig, 1) <> "}" Then
+                LogValidationError errors, errorCount, i, "Module Config", _
+                    "Config must be valid JSON object (start with { and end with })"
+            End If
+        End If
+
 NextEnemy:
     Next i
 
@@ -174,6 +185,16 @@ Public Sub ExportEnemies()
         json = json & "      ""xp_reward"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_XP_REWARD), 25)) & "," & vbCrLf
         json = json & "      ""loot_table_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_LOOT_TABLE_ID))) & """," & vbCrLf
         json = json & "      ""module_ids"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_MODULE_IDS))) & """," & vbCrLf
+
+        ' Module config - output as JSON object (empty {} if not specified)
+        Dim moduleConfig As String
+        moduleConfig = Trim(ws.Cells(i, COL_EN_MODULE_CONFIG).value)
+        If Len(moduleConfig) = 0 Then
+            json = json & "      ""module_config"": {}," & vbCrLf
+        Else
+            json = json & "      ""module_config"": " & moduleConfig & "," & vbCrLf
+        End If
+
         json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_DESCRIPTION))) & """" & vbCrLf
         json = json & "    }"
 
@@ -277,7 +298,7 @@ Public Sub SetupEnemiesSheet()
     Dim headers As Variant
     headers = Array("id", "name", "type", "base_health", "base_damage", "armor", "base_shield", _
                     "move_speed", "attack_speed", "attack_range", "detection_range", _
-                    "xp_reward", "loot_table_id", "module_ids", "description")
+                    "xp_reward", "loot_table_id", "module_ids", "module_config", "description")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -293,6 +314,7 @@ Public Sub SetupEnemiesSheet()
     SafeAddComment ws.Cells(1, 11), "Range to detect player (default 150)"
     SafeAddComment ws.Cells(1, 13), "Reference to LootTables id"
     SafeAddComment ws.Cells(1, 14), "Comma-separated module IDs for AI (e.g., mod_target_detection,mod_chase,mod_melee_attack)"
+    SafeAddComment ws.Cells(1, 15), "Per-enemy module config overrides as JSON. Format: {""mod_idle"": {""can_roam"": false}}"
 End Sub
 
 '-------------------------------------------------------------------------------
