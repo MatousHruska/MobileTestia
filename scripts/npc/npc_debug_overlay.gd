@@ -120,25 +120,25 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 	# AI State label - check for ModularEnemyNPC module system
 	if show_ai_states:
 		var state_name := "STATIC"
-		var state_color := ai_state_colors.get("idle", Color.WHITE)
+		var state_color: Color = ai_state_colors.get("idle", Color.WHITE) as Color
 
 		# Check if using module system (ModularEnemyNPC)
 		if enemy is ModularEnemyNPC and enemy.module_controller:
-			var ctx = enemy.module_controller.get_context()
+			var ctx: EnemyContext = enemy.module_controller.get_context()
 			state_name = EnemyContext.BehaviorState.keys()[ctx.behavior_state]
 			match ctx.behavior_state:
 				EnemyContext.BehaviorState.IDLE:
-					state_color = ai_state_colors.get("idle", Color.WHITE)
+					state_color = ai_state_colors.get("idle", Color.WHITE) as Color
 				EnemyContext.BehaviorState.COMBAT:
-					state_color = ai_state_colors.get("combat", Color.WHITE)
+					state_color = ai_state_colors.get("combat", Color.WHITE) as Color
 				EnemyContext.BehaviorState.DEAD:
-					state_color = ai_state_colors.get("dead", Color.WHITE)
+					state_color = ai_state_colors.get("dead", Color.WHITE) as Color
 
 		_draw_label(screen_pos + Vector2(0, -40), state_name, state_color)
 
 	# Target line - check for ModularEnemyNPC
 	if show_target_lines and enemy is ModularEnemyNPC and enemy.module_controller:
-		var ctx = enemy.module_controller.get_context()
+		var ctx: EnemyContext = enemy.module_controller.get_context()
 		if ctx.current_target and is_instance_valid(ctx.current_target):
 			var target_pos: Vector2 = _world_to_screen(ctx.current_target.global_position, camera)
 			draw_node.draw_line(screen_pos, target_pos, color_target_line, 2.0)
