@@ -3,8 +3,7 @@ Attribute VB_Name = "EnemyDatabase"
 ' EnemyDatabase Module
 ' Handles validation and export for Enemies
 '
-' PHASE 2 UPDATE: Removed ability_ids and behavior_profile columns
-' Enemy AI now uses module_ids system (see EnemyModuleDatabase)
+' Enemy AI uses module_ids system (see EnemyModuleDatabase)
 '===============================================================================
 Option Explicit
 
@@ -13,7 +12,6 @@ Private Const SHEET_ENEMIES As String = "Enemies"
 Private Const SHEET_VARIANTS As String = "EnemyVariants"
 
 ' Column indices for Enemies (1-based)
-' NOTE: ability_ids and behavior_profile REMOVED in Phase 2
 Private Const COL_EN_ID As Integer = 1
 Private Const COL_EN_NAME As Integer = 2
 Private Const COL_EN_TYPE As Integer = 3           ' Normal, Miniboss, Boss
@@ -129,7 +127,6 @@ End Sub
 
 '-------------------------------------------------------------------------------
 ' ExportEnemies - Exports Enemies to JSON
-' NOTE: ability_ids and behavior_profile REMOVED in Phase 2
 '-------------------------------------------------------------------------------
 Public Sub ExportEnemies()
     InitValidLists
@@ -273,13 +270,11 @@ End Sub
 
 '-------------------------------------------------------------------------------
 ' SetupEnemiesSheet - Creates Enemies sheet with headers
-' NOTE: ability_ids and behavior_profile REMOVED in Phase 2
 '-------------------------------------------------------------------------------
 Public Sub SetupEnemiesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet(SHEET_ENEMIES)
     Dim headers As Variant
-    ' Phase 2: Removed ability_ids and behavior_profile columns
     headers = Array("id", "name", "type", "base_health", "base_damage", "armor", "base_shield", _
                     "move_speed", "attack_speed", "attack_range", "detection_range", _
                     "xp_reward", "loot_table_id", "module_ids", "description")

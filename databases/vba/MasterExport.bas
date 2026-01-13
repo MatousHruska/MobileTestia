@@ -2,9 +2,7 @@ Attribute VB_Name = "MasterExport"
 '===============================================================================
 ' MasterExport Module
 ' Master export and validation functions for all databases
-'
-' PHASE 2 UPDATE: Removed EnemyAbilities and BehaviorProfiles exports
-' Enemy AI now uses module_ids system (see EnemyModuleDatabase)
+' Enemy AI uses module_ids system (see EnemyModuleDatabase)
 '===============================================================================
 Option Explicit
 
@@ -21,7 +19,7 @@ Public Sub ExportAll()
     ExportAffixes
     ExportUniqueItems
 
-    ' Enemies (Phase 2: EnemyAbilities and BehaviorProfiles REMOVED)
+    ' Enemies
     ExportEnemies
     ExportEnemyVariants
     ExportEnemyModules
@@ -97,7 +95,6 @@ Public Sub ValidateAll()
     ValidateItemBases
     ValidateAffixes
     ValidateEnemies
-    ' Phase 2: ValidateBehaviorProfiles REMOVED
     ValidateEnemyModules
     ValidateLootTables
     ValidateTalentTrees
@@ -145,9 +142,6 @@ Public Sub SetupWorkbook()
     currentSheet = "Affixes": SetupAffixesSheet
     currentSheet = "UniqueItems": SetupUniqueItemsSheet
     currentSheet = "Enemies": SetupEnemiesSheet
-    ' Phase 2: EnemyAbilities and BehaviorProfiles sheets DEPRECATED
-    ' currentSheet = "EnemyAbilities": SetupEnemyAbilitiesSheet
-    ' currentSheet = "BehaviorProfiles": SetupBehaviorProfilesSheet
     currentSheet = "EnemyVariants": SetupEnemyVariantsSheet
     currentSheet = "EnemyModules": SetupEnemyModulesSheet
     currentSheet = "LootTables": SetupLootTablesSheet
@@ -274,7 +268,6 @@ Private Sub SetupUniqueItemsSheet()
 End Sub
 
 Private Sub SetupEnemiesSheet()
-    ' Phase 2: Removed ability_ids and behavior_profile columns
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet("Enemies")
     Dim headers As Variant
