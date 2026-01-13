@@ -1,11 +1,11 @@
-# Phase 4: Full Migration - Session Prompt
+# Phase 4: Enemy Creation & Advanced Modules - Session Prompt
 
 ## FIRST: Pull the Latest Branch
 
 ```
-Please pull claude/update-codebase-[BRANCH_NAME]
+Please pull claude/[BRANCH_NAME]
 
-This is the newest version of the codebase. Clone it and add Phase4-Final into its name. We will continue our work from here.
+This is the newest version of the codebase. Clone it and add Phase4-Enemies into its name. We will continue our work from here.
 ```
 
 **IMPORTANT:** Replace `[BRANCH_NAME]` with the actual branch name from your last session before pasting this prompt.
@@ -14,649 +14,573 @@ This is the newest version of the codebase. Clone it and add Phase4-Final into i
 
 ## Context: What We Did Before
 
-### Phase 0: Foundation
-- EnemyContext, BaseModule, ModuleController
+### Phase 2: Legacy Cleanup
+- Removed EnemyBehavior, EnemyAbilityController, AbilityExecutor
+- Simplified database schema
+- Clean slate achieved
 
-### Phase 1: Simple Conversion
-- DetectionModule, ChaseModule, MeleeAttackModule
-- ModularEnemyNPC, converted zombie
+### Phase 3: Clean Foundation
+- Created clean EnemyContext, BaseModule, ModuleController
+- Created 5 core modules:
+  - DetectionModule (find targets)
+  - ChaseModule (move toward target)
+  - BasicAttackModule (melee damage)
+  - IdleModule (stand/roam)
+  - LeashModule (return home)
+- Test zombie working with modules
 
-### Phase 2: Core Library
-- RoamModule, LeashModule, ReturnHomeModule
-- FacingModule, AbilityCombatModule
-- Converted: zombie, skeleton, ghoul
-
-### Phase 3: Complex Behaviors
-- AllyAwarenessModule, PackAlertModule
-- FleeModule, KiteModule, RangedAttackModule
-- Converted: archer, vampire, pack enemies
-
-Current modules (13+):
+### Current State:
 ```
 scripts/npc/ai/modules/
-├── detection_module.gd
-├── chase_module.gd
-├── melee_attack_module.gd
-├── roam_module.gd
-├── leash_module.gd
-├── return_home_module.gd
-├── facing_module.gd
-├── ability_combat_module.gd
-├── ally_awareness_module.gd
-├── pack_alert_module.gd
-├── flee_module.gd
-├── kite_module.gd
-└── ranged_attack_module.gd
+├── target_detection_module.gd (pri 100)
+├── leash_module.gd (pri 90)
+├── chase_module.gd (pri 50)
+├── basic_attack_module.gd (pri 40)
+└── idle_module.gd (pri 10)
 ```
 
----
-
-## Important Workflows
-
-### VBA/Excel Database Workflow
-
-The game uses Excel with VBA macros for database management. Here's the workflow:
-
-**VBA Files Location:** `databases/vba/`
-
-**To Import/Update VBA Modules:**
-1. Open `TesiaDatabase.xlsm` in Excel
-2. Press `Alt + F11` to open VBA Editor
-3. For new modules: File → Import File → Select `.bas` file
-4. For updated modules: Right-click existing module → Remove → No (don't export) → then Import the new `.bas` file
-5. Close VBA Editor and save the workbook
-
-**Key VBA Commands** (press `Alt + F8` to run):
-- `SetupWorkbook` - Creates all sheets with proper headers
-- `SetupAllDataValidation` - Adds dropdown menus to columns
-- `ExportAll` - Exports all sheets to JSON files
-- `ValidateAll` - Validates all data before export
-
-**Export Output:** `databases/exports/*.json`
-
-### Testing in Godot
-
-Test scenes are located in `tests/unit/`. To run tests:
-
-1. In Godot's **FileSystem** panel, navigate to: `tests/unit/`
-2. Double-click the `.tscn` file to open it (e.g., `test_module_system.tscn`)
-3. Press **F6** to run just that scene (not the main game)
-4. Check the **Output** panel for test results
-
-**Key shortcuts:**
-- **F5** = Run main game
-- **F6** = Run current scene only (use this for tests)
-
-**Expected output format:**
-```
-=== Module System Test ===
-[PASS] Test description
-[PASS] Another test
-...
-=== All Tests Passed ===
-```
+Now we create all enemies and add advanced modules.
 
 ---
 
 ## Phase 4 Objectives
 
-Complete the migration:
+**Goal:** Create a complete set of enemies using the modular system.
 
-1. **Convert ALL Remaining Enemies**
-   - Audit every enemy in database
-   - Create module configs for each
-   - Test each conversion
+### New Modules to Create:
+1. **FleeModule** - Run away when low health
+2. **RangedAttackModule** - Attack from distance
+3. **KiteModule** - Maintain distance from target
+4. **PackAlertModule** - Alert nearby allies
 
-2. **Update EnemyNPC to Modular-First**
-   - Check for modules before legacy behavior
-   - Warn if using legacy (deprecated)
-
-3. **Deprecate/Remove Legacy Code**
-   - Mark EnemyBehavior as deprecated
-   - Remove unused code paths
-   - Clean up EnemyNPC
-
-4. **Performance Optimization**
-   - Profile module execution
-   - Optimize hot paths
-   - Batch context updates if needed
-
-5. **Final Documentation**
-   - Module creation guide
-   - Troubleshooting guide
-   - Update all docs
-
-**Goal:** 100% enemies use modular system. Legacy code removed.
+### Enemies to Create:
+1. **Zombie** - Basic melee (already done)
+2. **Skeleton** - Fast melee
+3. **Ghoul** - Aggressive hunter (no leash)
+4. **Skeleton Archer** - Ranged + kiting
+5. **Vampire** - Melee + flee when low
+6. **Wolf** - Pack behavior
 
 ---
 
 ## Step-by-Step Implementation
 
-### Step 1: Audit All Enemies
+### Step 1: Create FleeModule
 
-First, let's identify all enemies that need conversion.
-
-Run this to list all enemies:
-```gdscript
-var enemies = DatabaseLoader.enemies_list
-for enemy in enemies:
-    var has_modules = not enemy.get("module_ids", "").is_empty()
-    print("%s: %s" % [enemy.id, "MODULAR" if has_modules else "LEGACY"])
-```
-
-Create a checklist of enemies needing conversion.
-
-### Step 2: Create Module Configs for Remaining Enemies
-
-For each remaining enemy, determine appropriate modules based on their behavior:
-
-**Melee Enemies (basic):**
-```
-mod_target_detection,mod_leash,mod_return_home,mod_chase,mod_melee_attack,mod_roam,mod_facing
-```
-
-**Melee Enemies (aggressive, no roam):**
-```
-mod_target_detection,mod_leash,mod_return_home,mod_chase,mod_ability_combat,mod_facing
-```
-
-**Ranged Enemies:**
-```
-mod_target_detection,mod_leash,mod_return_home,mod_kite,mod_chase,mod_ranged_attack,mod_facing
-```
-
-**Pack Enemies:**
-```
-mod_ally_awareness,mod_pack_alert,mod_target_detection,mod_chase,mod_melee_attack,mod_facing
-```
-
-**Bosses/Minibosses:**
-```
-mod_target_detection,mod_chase,mod_ability_combat,mod_facing
-```
-(No leash - bosses don't return home)
-
-### Step 3: Update EnemyNPC to Modular-First
-
-Modify `scripts/npc/enemy_npc.gd`:
-
-```gdscript
-# At the top of the file
-const WARN_LEGACY_BEHAVIOR = true
-
-func _ready() -> void:
-    # ... existing setup ...
-
-    _setup_ai_system()
-
-func _setup_ai_system() -> void:
-    # Check for modular configuration
-    var enemy_data = DatabaseLoader.get_enemy(enemy_id)
-    var module_ids_str: String = enemy_data.get("module_ids", "")
-
-    if not module_ids_str.is_empty():
-        # Use modular system
-        _setup_modular_ai(module_ids_str)
-    else:
-        # Fall back to legacy
-        if WARN_LEGACY_BEHAVIOR:
-            push_warning("Enemy '%s' using legacy EnemyBehavior - consider migrating to modules" % enemy_id)
-        _setup_legacy_behavior()
-
-func _setup_modular_ai(module_ids_str: String) -> void:
-    # Create controller
-    module_controller = ModuleController.new()
-    module_controller.name = "ModuleController"
-    add_child(module_controller)
-
-    # Load modules
-    var module_ids = module_ids_str.split(",")
-    for module_id in module_ids:
-        module_id = module_id.strip_edges()
-        _load_and_add_module(module_id)
-
-    # Disable legacy behavior
-    if behavior:
-        behavior.queue_free()
-        behavior = null
-
-    _using_modular = true
-
-func _setup_legacy_behavior() -> void:
-    # Existing EnemyBehavior setup
-    _using_modular = false
-```
-
-### Step 4: Deprecate EnemyBehavior
-
-Add deprecation warning to `scripts/npc/enemy_behavior.gd`:
-
-```gdscript
-extends Node
-class_name EnemyBehavior
-## @deprecated: Use ModularEnemyNPC with AI modules instead.
-## This class will be removed in a future version.
-## See docs/modular_ai/ for migration guide.
-
-func _ready() -> void:
-    push_warning("EnemyBehavior is deprecated. Migrate to modular AI system.")
-```
-
-### Step 5: Clean Up EnemyNPC
-
-Remove code that's now handled by modules:
-
-1. **Remove duplicate target detection** - now in DetectionModule
-2. **Remove hardcoded chase logic** - now in ChaseModule
-3. **Simplify attack triggering** - modules set `should_attack`
-
-Keep:
-- Health/damage handling
-- Animation playback
-- Collision/physics
-- Ability execution (called by modules)
-
-### Step 6: Merge ModularEnemyNPC into EnemyNPC
-
-If ModularEnemyNPC was a separate class, merge it back into EnemyNPC:
-
-```gdscript
-# In EnemyNPC
-var module_controller: ModuleController = null
-var _using_modular: bool = false
-
-func _physics_process(delta: float) -> void:
-    if is_dead:
-        return
-
-    if _using_modular and module_controller:
-        module_controller.process_modules(delta)
-        _handle_module_decisions()
-    else:
-        # Legacy processing (if any enemies still use it)
-        _legacy_physics_process(delta)
-
-    # Common processing
-    _update_animation()
-    move_and_slide()
-
-func _handle_module_decisions() -> void:
-    var ctx = module_controller.get_context()
-
-    if ctx.should_attack:
-        _trigger_attack()
-```
-
-### Step 7: Performance Optimization
-
-**Profile the system:**
-```gdscript
-# Add timing around module processing
-var start_time = Time.get_ticks_usec()
-module_controller.process_modules(delta)
-var elapsed = Time.get_ticks_usec() - start_time
-if elapsed > 1000:  # > 1ms
-    push_warning("Slow module processing: %d us for %s" % [elapsed, enemy_id])
-```
-
-**Optimize if needed:**
-
-1. **Skip frames for non-critical modules:**
-```gdscript
-# In AllyAwarenessModule - already does this with scan_timer
-```
-
-2. **Batch nearby enemy queries:**
-```gdscript
-# Cache enemy list at start of frame
-static var _cached_enemies: Array = []
-static var _cache_frame: int = -1
-
-static func get_nearby_enemies() -> Array:
-    var frame = Engine.get_process_frames()
-    if frame != _cache_frame:
-        _cached_enemies = get_tree().get_nodes_in_group("enemies")
-        _cache_frame = frame
-    return _cached_enemies
-```
-
-3. **Reduce detection checks:**
-```gdscript
-# Only check for new target every N frames if no target
-var _detection_skip_counter: int = 0
-func _try_acquire_target(context):
-    if context.has_valid_target:
-        return
-    _detection_skip_counter += 1
-    if _detection_skip_counter < 5:
-        return
-    _detection_skip_counter = 0
-    # ... actual detection logic
-```
-
-### Step 8: Final Testing
-
-Create comprehensive test script:
-
-```gdscript
-extends Node
-
-func _ready() -> void:
-    print("=== Final Migration Test ===")
-    await _test_all_enemies()
-    await _test_performance()
-    await _test_edge_cases()
-    print("=== All Tests Complete ===")
-
-func _test_all_enemies() -> void:
-    print("\n--- Testing All Enemies ---")
-    var enemies = DatabaseLoader.enemies_list
-    var passed = 0
-    var failed = 0
-
-    for enemy_data in enemies:
-        var enemy = DatabaseLoader.create_enemy(enemy_data.id)
-        add_child(enemy)
-        await get_tree().process_frame
-
-        var has_modules = enemy.module_controller != null
-        var is_functioning = not enemy.is_dead
-
-        if has_modules and is_functioning:
-            print("[PASS] %s" % enemy_data.id)
-            passed += 1
-        else:
-            print("[FAIL] %s - modules=%s" % [enemy_data.id, has_modules])
-            failed += 1
-
-        enemy.queue_free()
-        await get_tree().process_frame
-
-    print("Results: %d passed, %d failed" % [passed, failed])
-
-func _test_performance() -> void:
-    print("\n--- Performance Test ---")
-    var enemies = []
-
-    # Spawn 20 enemies
-    for i in 20:
-        var enemy = DatabaseLoader.create_enemy("ene_zombie_basic")
-        enemy.global_position = Vector2(randf() * 500, randf() * 500)
-        add_child(enemy)
-        enemies.append(enemy)
-
-    await get_tree().process_frame
-
-    # Measure frame time with enemies
-    var times = []
-    for i in 60:
-        var start = Time.get_ticks_usec()
-        await get_tree().process_frame
-        times.append(Time.get_ticks_usec() - start)
-
-    var avg = times.reduce(func(a, b): return a + b) / times.size()
-    print("Average frame time with 20 enemies: %d us" % avg)
-
-    if avg < 16000:  # 16ms = 60fps
-        print("[PASS] Performance acceptable")
-    else:
-        print("[WARN] Performance may need optimization")
-
-    for enemy in enemies:
-        enemy.queue_free()
-
-func _test_edge_cases() -> void:
-    print("\n--- Edge Case Tests ---")
-
-    # Test: Enemy with no modules configured
-    # Test: Module with missing config
-    # Test: Invalid module ID
-    # etc.
-```
-
----
-
-## Excel Database Update Guide
-
-### Step 1: Complete Enemy Migration
-
-Ensure ALL enemies in your Enemies sheet have `module_ids`:
-
-| id | name | module_ids |
-|----|------|------------|
-| ene_zombie_basic | Zombie | mod_target_detection,mod_leash,mod_return_home,mod_chase,mod_melee_attack,mod_roam,mod_facing |
-| ene_ghoul_basic | Ghoul | mod_target_detection,mod_chase,mod_ability_combat,mod_facing |
-| ene_vampire_basic | Vampire | mod_target_detection,mod_flee,mod_chase,mod_ability_combat,mod_facing |
-| ene_vampire_lord | Vampire Lord | mod_target_detection,mod_chase,mod_ability_combat,mod_facing |
-| ene_skeleton_basic | Skeleton | mod_target_detection,mod_leash,mod_return_home,mod_chase,mod_ability_combat,mod_facing |
-| ene_skeleton_archer | Skeleton Archer | mod_target_detection,mod_leash,mod_return_home,mod_kite,mod_chase,mod_ranged_attack,mod_facing |
-| (all others) | ... | (appropriate modules) |
-
-### Step 2: Verify Module Completeness
-
-Check that EnemyModules sheet has all referenced modules:
-- mod_target_detection
-- mod_chase
-- mod_melee_attack
-- mod_roam
-- mod_leash
-- mod_return_home
-- mod_facing
-- mod_ability_combat
-- mod_ally_awareness
-- mod_pack_alert
-- mod_flee
-- mod_kite
-- mod_ranged_attack
-
-### Step 3: Remove Deprecated Fields (Optional)
-
-If you want to clean up, you can remove legacy behavior fields that are no longer used. But keep them for now as backup.
-
-### Step 4: Final Export
-
-Run MasterExport to generate final JSON files.
-
----
-
-## Testing & Validation
-
-### Test 1: All Enemies Load
-
-Run the comprehensive test script above. Every enemy should:
-- Load without errors
-- Have module_controller
-- Function correctly
-
-### Test 2: No Legacy Warnings
-
-Check console for:
-```
-Enemy 'xxx' using legacy EnemyBehavior - consider migrating to modules
-```
-
-There should be NONE of these warnings.
-
-### Test 3: Performance Benchmark
-
-With 20 enemies active:
-- Frame time should be < 16ms (60 FPS)
-- No stuttering or lag spikes
-
-### Test 4: Behavior Parity
-
-For each enemy type:
-1. Compare to memory/video of legacy behavior
-2. Detection range should match
-3. Movement speed should match
-4. Attack patterns should match
-5. Special behaviors should match
-
-### Test 5: Save/Load Compatibility
-
-1. Save game with modular enemies
-2. Load game
-3. Verify enemies restore correctly
-
-### Test 6: Edge Cases
-
-- Enemy spawned at runtime
-- Enemy with invalid module_id (should warn, not crash)
-- Enemy killed mid-module-process
-- Multiple pack alerts same frame
-
----
-
-## Cleanup Tasks
-
-### Remove Dead Code
-
-After all tests pass, remove:
-
-1. **EnemyBehavior class** (or keep deprecated for safety)
-2. **Unused methods in EnemyNPC** related to legacy AI
-3. **Test files** no longer needed
-4. **Commented out code** from migration
-
-### Update Documentation
-
-1. Update `README.md` if it mentions EnemyBehavior
-2. Update any wiki/docs about enemy creation
-3. Archive old documentation
-
-### Create New Documentation
-
-Create `docs/modular_ai/MODULE_CREATION_GUIDE.md`:
-
-```markdown
-# Creating New AI Modules
-
-## Quick Start
-
-1. Create new file: `scripts/npc/ai/modules/my_module.gd`
-2. Extend BaseModule
-3. Override `_process_module(context, delta)`
-4. Add to database
-5. Add to enemy's module_ids
-
-## Example Module
+**File:** `scripts/npc/ai/modules/flee_module.gd`
 
 ```gdscript
 extends BaseModule
-class_name MyCustomModule
+class_name FleeModule
+## FleeModule - Runs away when health is low
+
+var _flee_direction: Vector2 = Vector2.ZERO
 
 func _init() -> void:
-    module_id = "mod_my_custom"
-    module_name = "My Custom Module"
-    module_type = ModuleType.UTILITY
-    priority = 50
+    module_id = "mod_flee"
+    module_name = "Flee"
+    module_type = ModuleType.MOVEMENT
+    priority = 85  # Higher than chase, can override it
+
+
+func _process_module(context: EnemyContext, _delta: float) -> void:
+    var flee_threshold = get_config_float("flee_health_percent", 0.2)
+
+    # Should we flee?
+    var should_flee = context.health_percent <= flee_threshold and context.has_valid_target
+
+    if not should_flee:
+        return
+
+    # Flee! Run away from target
+    if context.target_direction != Vector2.ZERO:
+        _flee_direction = -context.target_direction
+
+        # Add some wobble to prevent predictable fleeing
+        var wobble = get_config_float("flee_wobble", 0.3)
+        _flee_direction = _flee_direction.rotated(randf_range(-wobble, wobble))
+        _flee_direction = _flee_direction.normalized()
+
+    context.desired_direction = _flee_direction
+    context.speed_multiplier = get_config_float("flee_speed_mult", 1.3)
+    context.behavior_state = EnemyContext.BehaviorState.IDLE  # Override combat
+
+
+func get_debug_info() -> Dictionary:
+    var info = super.get_debug_info()
+    info["flee_threshold"] = get_config_float("flee_health_percent", 0.2)
+    return info
+```
+
+### Step 2: Create RangedAttackModule
+
+**File:** `scripts/npc/ai/modules/ranged_attack_module.gd`
+
+```gdscript
+extends BaseModule
+class_name RangedAttackModule
+## RangedAttackModule - Attack from range (for archers, mages)
+
+var _cooldown: float = 0.0
+
+func _init() -> void:
+    module_id = "mod_ranged_attack"
+    module_name = "Ranged Attack"
+    module_type = ModuleType.COMBAT
+    priority = 45  # Slightly higher than basic attack
+
 
 func _process_module(context: EnemyContext, delta: float) -> void:
-    # Your logic here
-    pass
+    # Update cooldown
+    _cooldown = maxf(0.0, _cooldown - delta)
+    context.attack_cooldown_remaining = _cooldown
+
+    # Need a valid target
+    if not context.has_valid_target:
+        return
+
+    # Check range
+    var max_range = get_config_float("max_range", 150.0)
+    var min_range = get_config_float("min_range", 30.0)
+
+    var in_range = context.target_distance <= max_range and context.target_distance >= min_range
+
+    if not in_range:
+        return
+
+    # Stop to shoot (optional)
+    var stop_to_attack = get_config_bool("stop_to_attack", true)
+    if stop_to_attack:
+        context.should_stop = true
+
+    # On cooldown?
+    if _cooldown > 0:
+        return
+
+    # Shoot!
+    context.should_attack = true
+    _cooldown = get_config_float("attack_cooldown", 2.0)
+
+
+func get_debug_info() -> Dictionary:
+    var info = super.get_debug_info()
+    info["max_range"] = get_config_float("max_range", 150.0)
+    info["min_range"] = get_config_float("min_range", 30.0)
+    info["cooldown"] = _cooldown
+    return info
 ```
 
-## Module Types
+### Step 3: Create KiteModule
 
-- DETECTION: Target finding (priority 100)
-- MOVEMENT: Movement control (priority 20-85)
-- COMBAT: Attack decisions (priority 60)
-- SOCIAL: Pack behavior (priority 50-98)
-- SPECIAL: Unique behaviors
-- UTILITY: Support functions (priority 10-95)
+**File:** `scripts/npc/ai/modules/kite_module.gd`
 
-## Context Fields
+```gdscript
+extends BaseModule
+class_name KiteModule
+## KiteModule - Maintain distance from target (back away if too close)
 
-See `enemy_context.gd` for all available fields.
+func _init() -> void:
+    module_id = "mod_kite"
+    module_name = "Kite"
+    module_type = ModuleType.MOVEMENT
+    priority = 55  # Slightly higher than chase
 
-Key fields to READ:
-- context.has_valid_target
-- context.target_distance
-- context.health_percent
 
-Key fields to WRITE:
-- context.desired_direction
-- context.should_attack
-- context.should_stop
+func _process_module(context: EnemyContext, _delta: float) -> void:
+    # Only kite if we have a target
+    if not context.has_valid_target:
+        return
+
+    var preferred_range = get_config_float("preferred_range", 100.0)
+    var too_close_range = get_config_float("too_close_range", 50.0)
+
+    # Too close? Back away
+    if context.target_distance < too_close_range:
+        # Move away from target
+        context.desired_direction = -context.target_direction
+        context.speed_multiplier = get_config_float("kite_speed_mult", 0.8)
+        return
+
+    # At preferred range? Stop
+    if context.target_distance >= preferred_range * 0.9 and context.target_distance <= preferred_range * 1.1:
+        context.should_stop = true
+        return
+
+    # Too far? Let ChaseModule handle it (don't set desired_direction)
+
+
+func get_debug_info() -> Dictionary:
+    var info = super.get_debug_info()
+    info["preferred_range"] = get_config_float("preferred_range", 100.0)
+    info["too_close_range"] = get_config_float("too_close_range", 50.0)
+    return info
 ```
+
+### Step 4: Create PackAlertModule
+
+**File:** `scripts/npc/ai/modules/pack_alert_module.gd`
+
+```gdscript
+extends BaseModule
+class_name PackAlertModule
+## PackAlertModule - Alert nearby allies when acquiring target
+
+var _alerted_for_current_target: bool = false
+var _last_target: Node2D = null
+
+func _init() -> void:
+    module_id = "mod_pack_alert"
+    module_name = "Pack Alert"
+    module_type = ModuleType.UTILITY
+    priority = 95  # Run early, after detection
+
+
+func _process_module(context: EnemyContext, _delta: float) -> void:
+    # Reset alert flag when target changes
+    if context.current_target != _last_target:
+        _last_target = context.current_target
+        _alerted_for_current_target = false
+
+    # Alert allies when we acquire a target
+    if context.has_valid_target and not _alerted_for_current_target:
+        _alert_nearby_allies(context)
+        _alerted_for_current_target = true
+
+
+func _alert_nearby_allies(context: EnemyContext) -> void:
+    var alert_radius = get_config_float("alert_radius", 150.0)
+    var pack_id = get_config_string("pack_id", "")
+
+    # Find nearby enemies
+    var enemies = _owner.get_tree().get_nodes_in_group("enemies")
+
+    for enemy in enemies:
+        if enemy == _owner:
+            continue
+        if not is_instance_valid(enemy) or enemy.is_dead:
+            continue
+
+        # Check distance
+        var dist = context.global_position.distance_to(enemy.global_position)
+        if dist > alert_radius:
+            continue
+
+        # Check pack ID match (if specified)
+        if not pack_id.is_empty():
+            if not _has_matching_pack_id(enemy, pack_id):
+                continue
+
+        # Alert this ally
+        _send_alert_to(enemy, context.current_target)
+
+
+func _has_matching_pack_id(enemy: Node2D, pack_id: String) -> bool:
+    if not enemy.has_node("ModuleController"):
+        return false
+    var controller = enemy.get_node("ModuleController")
+    var pack_module = controller.get_module("mod_pack_alert")
+    if not pack_module:
+        return false
+    return pack_module.get_config_string("pack_id", "") == pack_id
+
+
+func _send_alert_to(enemy: Node2D, target: Node2D) -> void:
+    if not enemy.has_node("ModuleController"):
+        return
+
+    var controller = enemy.get_node("ModuleController")
+    var ctx = controller.get_context()
+
+    # Only alert if they don't have a target
+    if ctx.has_valid_target:
+        return
+
+    # Give them our target
+    ctx.current_target = target
+    ctx.has_valid_target = true
+    ctx.target_just_acquired = true
+    ctx.behavior_state = EnemyContext.BehaviorState.CHASING
+```
+
+### Step 5: Update EnemyNPC Module Creation
+
+Add new modules to `_create_module()`:
+
+```gdscript
+func _create_module(module_id: String) -> BaseModule:
+    match module_id:
+        "mod_target_detection":
+            return DetectionModule.new()
+        "mod_chase":
+            return ChaseModule.new()
+        "mod_basic_attack":
+            return BasicAttackModule.new()
+        "mod_idle":
+            return IdleModule.new()
+        "mod_leash":
+            return LeashModule.new()
+        # NEW MODULES:
+        "mod_flee":
+            return FleeModule.new()
+        "mod_ranged_attack":
+            return RangedAttackModule.new()
+        "mod_kite":
+            return KiteModule.new()
+        "mod_pack_alert":
+            return PackAlertModule.new()
+        _:
+            push_warning("Unknown module: %s" % module_id)
+            return null
+```
+
+### Step 6: Update Database - Add New Modules
+
+**Add to enemy_modules.json:**
+
+```json
+{
+  "id": "mod_flee",
+  "name": "Flee",
+  "module_type": "movement",
+  "description": "Runs away when health is low",
+  "priority": 85,
+  "default_config": {"flee_health_percent": 0.2, "flee_speed_mult": 1.3, "flee_wobble": 0.3}
+},
+{
+  "id": "mod_ranged_attack",
+  "name": "Ranged Attack",
+  "module_type": "combat",
+  "description": "Attack from distance",
+  "priority": 45,
+  "default_config": {"max_range": 150, "min_range": 30, "attack_cooldown": 2.0, "stop_to_attack": true}
+},
+{
+  "id": "mod_kite",
+  "name": "Kite",
+  "module_type": "movement",
+  "description": "Maintain distance from target",
+  "priority": 55,
+  "default_config": {"preferred_range": 100, "too_close_range": 50, "kite_speed_mult": 0.8}
+},
+{
+  "id": "mod_pack_alert",
+  "name": "Pack Alert",
+  "module_type": "utility",
+  "description": "Alert nearby allies when aggro",
+  "priority": 95,
+  "default_config": {"alert_radius": 150, "pack_id": ""}
+}
+```
+
+### Step 7: Create All Enemies
+
+**Update enemies.json with all enemies:**
+
+```json
+{
+  "enemies": [
+    {
+      "id": "ene_zombie_basic",
+      "name": "Zombie",
+      "type": "Normal",
+      "base_health": 30,
+      "base_damage": 5,
+      "armor": 0,
+      "move_speed": 80,
+      "attack_range": 25,
+      "detection_range": 120,
+      "xp_reward": 15,
+      "loot_table_id": "loot_zombie",
+      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_basic_attack,mod_idle"
+    },
+    {
+      "id": "ene_skeleton_basic",
+      "name": "Skeleton",
+      "type": "Normal",
+      "base_health": 25,
+      "base_damage": 6,
+      "armor": 2,
+      "move_speed": 100,
+      "attack_range": 24,
+      "detection_range": 140,
+      "xp_reward": 20,
+      "loot_table_id": "loot_skeleton",
+      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_basic_attack,mod_idle"
+    },
+    {
+      "id": "ene_ghoul_basic",
+      "name": "Ghoul",
+      "type": "Normal",
+      "base_health": 50,
+      "base_damage": 8,
+      "armor": 0,
+      "move_speed": 90,
+      "attack_range": 28,
+      "detection_range": 180,
+      "xp_reward": 30,
+      "loot_table_id": "loot_ghoul",
+      "module_ids": "mod_target_detection,mod_chase,mod_basic_attack"
+    },
+    {
+      "id": "ene_skeleton_archer",
+      "name": "Skeleton Archer",
+      "type": "Normal",
+      "base_health": 20,
+      "base_damage": 8,
+      "armor": 0,
+      "move_speed": 70,
+      "attack_range": 150,
+      "detection_range": 200,
+      "xp_reward": 25,
+      "loot_table_id": "loot_skeleton",
+      "module_ids": "mod_target_detection,mod_leash,mod_kite,mod_chase,mod_ranged_attack,mod_idle"
+    },
+    {
+      "id": "ene_vampire_basic",
+      "name": "Vampire",
+      "type": "Normal",
+      "base_health": 60,
+      "base_damage": 10,
+      "armor": 5,
+      "move_speed": 85,
+      "attack_range": 26,
+      "detection_range": 160,
+      "xp_reward": 40,
+      "loot_table_id": "loot_vampire",
+      "module_ids": "mod_target_detection,mod_flee,mod_leash,mod_chase,mod_basic_attack,mod_idle"
+    },
+    {
+      "id": "ene_wolf_basic",
+      "name": "Wolf",
+      "type": "Normal",
+      "base_health": 35,
+      "base_damage": 7,
+      "armor": 0,
+      "move_speed": 110,
+      "attack_range": 22,
+      "detection_range": 150,
+      "xp_reward": 20,
+      "loot_table_id": "loot_wolf",
+      "module_ids": "mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_basic_attack,mod_idle"
+    }
+  ]
+}
+```
+
+### Enemy Behavior Summary
+
+| Enemy | Key Behavior | Modules |
+|-------|--------------|---------|
+| Zombie | Basic shambler | detect, leash, chase, attack, idle |
+| Skeleton | Fast melee | detect, leash, chase, attack, idle |
+| Ghoul | Aggressive (no leash!) | detect, chase, attack |
+| Skeleton Archer | Ranged, backs away | detect, leash, kite, chase, ranged, idle |
+| Vampire | Flees when hurt | detect, flee, leash, chase, attack, idle |
+| Wolf | Pack behavior | detect, pack_alert, leash, chase, attack, idle |
+
+---
+
+## Module Presets (Reference)
+
+Common module combinations for copy-paste:
+
+| Preset | Modules |
+|--------|---------|
+| Basic Melee | mod_target_detection,mod_leash,mod_chase,mod_basic_attack,mod_idle |
+| Aggressive Melee | mod_target_detection,mod_chase,mod_basic_attack |
+| Ranged Kiter | mod_target_detection,mod_leash,mod_kite,mod_chase,mod_ranged_attack,mod_idle |
+| Fleeing Melee | mod_target_detection,mod_flee,mod_leash,mod_chase,mod_basic_attack,mod_idle |
+| Pack Melee | mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_basic_attack,mod_idle |
+
+---
+
+## Testing
+
+### Test 1: All Enemies Load
+
+```gdscript
+var enemy_ids = ["ene_zombie_basic", "ene_skeleton_basic", "ene_ghoul_basic",
+                 "ene_skeleton_archer", "ene_vampire_basic", "ene_wolf_basic"]
+
+for enemy_id in enemy_ids:
+    var enemy = DatabaseLoader.create_enemy(enemy_id)
+    add_child(enemy)
+    await get_tree().process_frame
+
+    var has_modules = enemy.module_controller != null
+    print("%s: %s" % [enemy_id, "OK" if has_modules else "FAIL"])
+
+    enemy.queue_free()
+```
+
+### Test 2: Ghoul Has No Leash
+
+1. Spawn ghoul
+2. Aggro it
+3. Run far away (500+ px)
+4. Ghoul should KEEP CHASING (no leash)
+
+### Test 3: Archer Kiting
+
+1. Spawn skeleton archer
+2. Walk toward it
+3. Archer should back away while shooting
+4. If you stop at ~100px, archer should stop too
+
+### Test 4: Vampire Flee
+
+1. Spawn vampire
+2. Fight it, get its health below 20%
+3. Vampire should run away
+4. If health goes above 20%, it should fight again
+
+### Test 5: Wolf Pack
+
+1. Spawn 3 wolves near each other
+2. Aggro ONE wolf
+3. All wolves should aggro (pack alert)
+
+### Test 6: Performance
+
+1. Spawn 20 mixed enemies
+2. Verify 60 FPS maintained
+3. No lag spikes
 
 ---
 
 ## Deliverables Checklist
 
-### Code Completion
-- [ ] All enemies have module_ids in database
-- [ ] EnemyNPC uses modular-first approach
-- [ ] EnemyBehavior marked deprecated
-- [ ] ModularEnemyNPC merged into EnemyNPC (or removed if separate)
-- [ ] No legacy behavior warnings in console
-- [ ] Performance optimizations applied if needed
+### New Modules
+- [ ] FleeModule created and working
+- [ ] RangedAttackModule created and working
+- [ ] KiteModule created and working
+- [ ] PackAlertModule created and working
+
+### Enemies
+- [ ] Zombie working (basic melee)
+- [ ] Skeleton working (fast melee)
+- [ ] Ghoul working (aggressive, no leash)
+- [ ] Skeleton Archer working (ranged + kite)
+- [ ] Vampire working (melee + flee)
+- [ ] Wolf working (pack alert)
+
+### Database
+- [ ] enemy_modules.json has all 9 modules
+- [ ] enemies.json has all 6 enemies
+- [ ] VBA files updated (if needed)
 
 ### Testing
-- [ ] All enemies load and function
+- [ ] All enemies load without errors
+- [ ] Each enemy behavior works correctly
 - [ ] Performance acceptable (60 FPS with 20 enemies)
-- [ ] Behavior matches legacy for all enemy types
-- [ ] Save/load works correctly
-- [ ] Edge cases handled
-
-### Documentation
-- [ ] MODULE_CREATION_GUIDE.md created
-- [ ] All phase docs updated/finalized
-- [ ] README updated if needed
-- [ ] Troubleshooting guide updated
-
-### Cleanup
-- [ ] Dead code removed
-- [ ] Test files cleaned up
-- [ ] No console warnings/errors
 
 ---
 
-## Migration Complete!
+## What's Next (Phase 5 Preview)
 
-Congratulations! The modular AI system is now fully implemented.
-
-### Summary of What Was Built
-
-**Infrastructure:**
-- EnemyContext - Shared data for module communication
-- BaseModule - Abstract module base class
-- ModuleController - Module orchestration
-
-**Modules (13+):**
-- Detection: mod_target_detection
-- Movement: mod_chase, mod_roam, mod_return_home, mod_flee, mod_kite
-- Combat: mod_melee_attack, mod_ability_combat, mod_ranged_attack
-- Social: mod_ally_awareness, mod_pack_alert
-- Utility: mod_leash, mod_facing
-
-**Benefits Achieved:**
-- Database-driven enemy AI configuration
-- Reusable, composable behavior modules
-- Easy to create new enemy types
-- Better separation of concerns
-- Easier debugging and testing
-
-### Future Possibilities
-
-With this system, you can easily add:
-- Boss phase transition modules
-- Environmental awareness modules
-- Dialogue/bark modules
-- Patrol route modules
-- Formation modules
-- Summoning modules
-- And much more!
-
----
-
-## Report Back
-
-After completing Phase 4, let me know:
-1. All enemies converted successfully?
-2. Performance acceptable?
-3. Any remaining legacy code?
-4. Documentation complete?
-5. Any issues or concerns?
-
-The modular AI migration is complete!
+With all enemies working, Phase 5 will:
+1. Add boss/miniboss enemies
+2. Create debug overlay for easy testing
+3. Performance optimization if needed
+4. Final polish and documentation
+5. Clean up any remaining issues
