@@ -473,9 +473,10 @@ Private Sub CreateIdNamedRanges()
     ' Create named ranges for each sheet's ID column
     CreateNamedRange "Zones", 1, "ID_Zones"
     CreateNamedRange "Enemies", 1, "ID_Enemies"
-    CreateNamedRange "EnemyAbilities", 1, "ID_EnemyAbilities"
+    ' Phase 2: EnemyAbilities and BehaviorProfiles DEPRECATED
+    ' CreateNamedRange "EnemyAbilities", 1, "ID_EnemyAbilities"
     CreateNamedRange "EnemyVariants", 1, "ID_EnemyVariants"
-    CreateNamedRange "BehaviorProfiles", 1, "ID_BehaviorProfiles"
+    ' CreateNamedRange "BehaviorProfiles", 1, "ID_BehaviorProfiles"
     CreateNamedRange "LootTables", 1, "ID_LootTables"
     CreateNamedRange "ItemBases", 1, "ID_ItemBases"
     CreateNamedRange "Affixes", 1, "ID_Affixes"
@@ -539,9 +540,10 @@ Private Sub ApplyForeignKeyValidation()
     ApplyValidation "Locations", 2, "ID_Zones"          ' zone_id
     ApplyValidation "Locations", 7, "ID_StatusEffects"  ' status_effect_id
 
-    ' Enemies (column 7 = base_shield added)
+    ' Enemies (Phase 2: behavior_profile REMOVED, column 13 = loot_table_id)
     ApplyValidation "Enemies", 13, "ID_LootTables"  ' loot_table_id
-    ApplyValidation "Enemies", 15, "ID_BehaviorProfiles"  ' behavior_profile
+    ' Phase 2: behavior_profile column REMOVED
+    ' ApplyValidation "Enemies", 15, "ID_BehaviorProfiles"  ' behavior_profile
 
     ' Chests (new schema: zone_id=4, loot_table_id=9, quest_id=17)
     ApplyValidation "Chests", 4, "ID_Zones"         ' zone_id
@@ -578,13 +580,13 @@ End Sub
 ' ApplyEnumValidation - Applies dropdown validation for enum fields
 '-------------------------------------------------------------------------------
 Private Sub ApplyEnumValidation()
-    ' BehaviorProfiles
-    ApplyListValidation "BehaviorProfiles", 4, "stand,roam,patrol"  ' idle_behavior
-    ApplyListValidation "BehaviorProfiles", 11, "sight,none"        ' detection_type
-    ApplyListValidation "BehaviorProfiles", 15, "aggressive,ranged,opportunist,hit_run"  ' combat_style
-    ApplyListValidation "BehaviorProfiles", 16, "direct,charge,kite,phase,circle"  ' approach_behavior
-    ApplyListValidation "BehaviorProfiles", 22, "clockwise,counter,random"  ' circle_direction
-    ApplyListValidation "BehaviorProfiles", 28, "highest,conditional,random_weighted"  ' ability_priority_mode
+    ' Phase 2: BehaviorProfiles sheet DEPRECATED
+    ' ApplyListValidation "BehaviorProfiles", 4, "stand,roam,patrol"  ' idle_behavior
+    ' ApplyListValidation "BehaviorProfiles", 11, "sight,none"        ' detection_type
+    ' ApplyListValidation "BehaviorProfiles", 15, "aggressive,ranged,opportunist,hit_run"  ' combat_style
+    ' ApplyListValidation "BehaviorProfiles", 16, "direct,charge,kite,phase,circle"  ' approach_behavior
+    ' ApplyListValidation "BehaviorProfiles", 22, "clockwise,counter,random"  ' circle_direction
+    ' ApplyListValidation "BehaviorProfiles", 28, "highest,conditional,random_weighted"  ' ability_priority_mode
 
     ' CombatTextCategories
     ApplyListValidation "CombatTextCategories", 2, "damage,heal,heal_tick,dot_tick,label"  ' category_type
@@ -664,8 +666,9 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "Affixes", 4, "attack_power,spell_power,fire_power,cold_power,lightning_power,poison_power,strength,dexterity,intelligence,vitality,energy,luck,armor,magic_resistance,dodge_chance,attack_speed,critical_chance,critical_damage,life,mana,life_regen,mana_regen,movement_speed"  ' stat_modifier
 
     ' Boolean fields (TRUE/FALSE)
-    ApplyListValidation "BehaviorProfiles", 9, "TRUE,FALSE"   ' patrol_loop
-    ApplyListValidation "BehaviorProfiles", 12, "TRUE,FALSE"  ' aggro_on_damage
+    ' Phase 2: BehaviorProfiles sheet DEPRECATED
+    ' ApplyListValidation "BehaviorProfiles", 9, "TRUE,FALSE"   ' patrol_loop
+    ' ApplyListValidation "BehaviorProfiles", 12, "TRUE,FALSE"  ' aggro_on_damage
     ApplyListValidation "Quests", 10, "TRUE,FALSE"            ' can_abandon
     ApplyListValidation "Quests", 11, "TRUE,FALSE"            ' auto_complete
     ApplyListValidation "QuestObjectives", 7, "TRUE,FALSE"    ' optional
