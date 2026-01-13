@@ -1,16 +1,19 @@
 Attribute VB_Name = "EnemyDatabase"
 '===============================================================================
 ' EnemyDatabase Module
-' Handles validation and export for Enemies and Enemy Abilities
+' Handles validation and export for Enemies
+'
+' PHASE 2 UPDATE: Removed ability_ids and behavior_profile columns
+' Enemy AI now uses module_ids system (see EnemyModuleDatabase)
 '===============================================================================
 Option Explicit
 
 ' Sheet names
 Private Const SHEET_ENEMIES As String = "Enemies"
-Private Const SHEET_ABILITIES As String = "EnemyAbilities"
 Private Const SHEET_VARIANTS As String = "EnemyVariants"
 
 ' Column indices for Enemies (1-based)
+' NOTE: ability_ids and behavior_profile REMOVED in Phase 2
 Private Const COL_EN_ID As Integer = 1
 Private Const COL_EN_NAME As Integer = 2
 Private Const COL_EN_TYPE As Integer = 3           ' Normal, Miniboss, Boss
@@ -24,34 +27,8 @@ Private Const COL_EN_ATTACK_RANGE As Integer = 10
 Private Const COL_EN_DETECTION_RANGE As Integer = 11
 Private Const COL_EN_XP_REWARD As Integer = 12
 Private Const COL_EN_LOOT_TABLE_ID As Integer = 13
-Private Const COL_EN_ABILITY_IDS As Integer = 14
-Private Const COL_EN_BEHAVIOR_PROFILE As Integer = 15  ' Links to behavior_profiles.json
-Private Const COL_EN_MODULE_IDS As Integer = 16        ' Modular AI module IDs (comma-separated)
-Private Const COL_EN_DESCRIPTION As Integer = 17
-
-' Column indices for EnemyAbilities (expanded for AI system)
-Private Const COL_EA_ID As Integer = 1
-Private Const COL_EA_NAME As Integer = 2
-Private Const COL_EA_DESCRIPTION As Integer = 3
-Private Const COL_EA_TYPE As Integer = 4           ' melee, dash_attack, aoe, projectile, pattern, teleport_attack, beam
-Private Const COL_EA_DAMAGE_MULT As Integer = 5    ' Multiplier applied to base damage
-Private Const COL_EA_DAMAGE_TYPE As Integer = 6    ' physical, fire, cold, chaos, etc
-Private Const COL_EA_COOLDOWN As Integer = 7
-Private Const COL_EA_RANGE_MIN As Integer = 8      ' Minimum range to use ability
-Private Const COL_EA_RANGE_MAX As Integer = 9      ' Maximum range to use ability
-Private Const COL_EA_SHAPE As Integer = 10         ' circle, cone, line, cross, ring
-Private Const COL_EA_SHAPE_SIZE As Integer = 11    ' Size/radius of shape
-Private Const COL_EA_SHAPE_ANGLE As Integer = 12   ' Angle for cones/beams
-Private Const COL_EA_WINDUP As Integer = 13        ' Wind-up time before damage
-Private Const COL_EA_RECOVERY As Integer = 14      ' Recovery time after attack
-Private Const COL_EA_ANIMATION As Integer = 15     ' Animation to play
-Private Const COL_EA_PRIORITY As Integer = 16      ' AI priority (higher = preferred)
-Private Const COL_EA_CONDITIONS As Integer = 17    ' Conditions like "distance>50" or "health<50%"
-Private Const COL_EA_EFFECTS_ON_HIT As Integer = 18 ' Effects: "stun:0.5", "burn:3:5", "knockback:100"
-Private Const COL_EA_PROJECTILE_SPEED As Integer = 19 ' For projectile abilities
-Private Const COL_EA_DASH_SPEED As Integer = 20    ' For dash abilities
-Private Const COL_EA_CARDINAL_ONLY As Integer = 21 ' Snap attack to 4 cardinal directions (TRUE/FALSE, default TRUE)
-Private Const COL_EA_EXPLOSION_FALLOFF As Integer = 22 ' Damage falloff % at AOE edge (default 30, 0=no falloff)
+Private Const COL_EN_MODULE_IDS As Integer = 14    ' Modular AI module IDs (comma-separated)
+Private Const COL_EN_DESCRIPTION As Integer = 15
 
 ' Column indices for EnemyVariants
 Private Const COL_EV_ID As Integer = 1
@@ -64,18 +41,12 @@ Private Const COL_EV_VISUAL_EFFECT As Integer = 7
 
 ' Valid dropdown values
 Private validEnemyTypes() As String
-Private validAbilityTypes() As String
-Private validDamageTypes() As String
-Private validAbilityShapes() As String
 
 '-------------------------------------------------------------------------------
 ' InitValidLists - Initialize validation dropdown arrays
 '-------------------------------------------------------------------------------
 Private Sub InitValidLists()
     validEnemyTypes = Split("Normal,Miniboss,Boss", ",")
-    validAbilityTypes = Split("melee,dash_attack,aoe,projectile,pattern,teleport_attack,beam", ",")
-    validDamageTypes = Split("physical,fire,cold,lightning,poison,chaos,pure", ",")
-    validAbilityShapes = Split("circle,cone,line,cross,ring", ",")
 End Sub
 
 '===============================================================================
@@ -158,6 +129,7 @@ End Sub
 
 '-------------------------------------------------------------------------------
 ' ExportEnemies - Exports Enemies to JSON
+' NOTE: ability_ids and behavior_profile REMOVED in Phase 2
 '-------------------------------------------------------------------------------
 Public Sub ExportEnemies()
     InitValidLists
@@ -204,9 +176,8 @@ Public Sub ExportEnemies()
         json = json & "      ""detection_range"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_DETECTION_RANGE), 150)) & "," & vbCrLf
         json = json & "      ""xp_reward"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_XP_REWARD), 25)) & "," & vbCrLf
         json = json & "      ""loot_table_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_LOOT_TABLE_ID))) & """," & vbCrLf
-        json = json & "      ""ability_ids"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_ABILITY_IDS))) & """," & vbCrLf
-        json = json & "      ""behavior_profile"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_BEHAVIOR_PROFILE), "bhv_basic_melee")) & """," & vbCrLf
-        json = json & "      ""module_ids"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_MODULE_IDS))) & """" & vbCrLf
+        json = json & "      ""module_ids"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_MODULE_IDS))) & """," & vbCrLf
+        json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_DESCRIPTION))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -221,107 +192,6 @@ NextExportEnemy:
     WriteJsonFile filePath, json
 
     MsgBox "Exported " & itemCount & " enemies to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-End Sub
-
-'===============================================================================
-' ENEMY ABILITIES
-'===============================================================================
-
-'-------------------------------------------------------------------------------
-' ExportEnemyAbilities - Exports EnemyAbilities to JSON (expanded for AI system)
-'-------------------------------------------------------------------------------
-Public Sub ExportEnemyAbilities()
-    InitValidLists
-
-    Dim ws As Worksheet
-    On Error Resume Next
-    Set ws = ThisWorkbook.Sheets(SHEET_ABILITIES)
-    On Error GoTo 0
-
-    If ws Is Nothing Then
-        MsgBox "Sheet '" & SHEET_ABILITIES & "' not found!", vbExclamation
-        Exit Sub
-    End If
-
-    Dim json As String
-    json = "{" & vbCrLf & "  ""enemy_abilities"": [" & vbCrLf
-
-    Dim lastRow As Long
-    lastRow = ws.Cells(ws.Rows.Count, COL_EA_ID).End(xlUp).row
-
-    Dim itemCount As Integer
-    itemCount = 0
-
-    Dim i As Long
-    For i = 2 To lastRow
-        Dim id As String
-        id = Trim(ws.Cells(i, COL_EA_ID).value)
-
-        If Len(id) = 0 Then GoTo NextExportAbility
-
-        If itemCount > 0 Then json = json & "," & vbCrLf
-
-        json = json & "    {" & vbCrLf
-        json = json & "      ""id"": """ & EscapeJsonString(id) & """," & vbCrLf
-        json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_NAME))) & """," & vbCrLf
-        json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_DESCRIPTION))) & """," & vbCrLf
-        json = json & "      ""type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_EA_TYPE), "melee"))) & """," & vbCrLf
-        json = json & "      ""damage_mult"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_DAMAGE_MULT), 1)) & "," & vbCrLf
-        json = json & "      ""damage_type"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_EA_DAMAGE_TYPE), "physical"))) & """," & vbCrLf
-        json = json & "      ""cooldown"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_COOLDOWN), 0)) & "," & vbCrLf
-        json = json & "      ""range_min"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_RANGE_MIN), 0)) & "," & vbCrLf
-        json = json & "      ""range_max"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_RANGE_MAX), 30)) & "," & vbCrLf
-        json = json & "      ""shape"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_EA_SHAPE), "circle"))) & """," & vbCrLf
-        json = json & "      ""shape_size"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_SHAPE_SIZE), 25)) & "," & vbCrLf
-        json = json & "      ""shape_angle"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_SHAPE_ANGLE), 0)) & "," & vbCrLf
-        json = json & "      ""windup"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_WINDUP), 0.2)) & "," & vbCrLf
-        json = json & "      ""recovery"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_RECOVERY), 0.3)) & "," & vbCrLf
-        json = json & "      ""animation"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_ANIMATION), "attack")) & """," & vbCrLf
-        json = json & "      ""priority"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EA_PRIORITY), 1)) & "," & vbCrLf
-        json = json & "      ""conditions"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_CONDITIONS))) & """," & vbCrLf
-        json = json & "      ""effects_on_hit"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EA_EFFECTS_ON_HIT))) & """"
-
-        ' Add optional projectile/dash speed if present
-        Dim projSpeed As Double
-        Dim dashSpeed As Double
-        projSpeed = GetDefaultNumeric(ws.Cells(i, COL_EA_PROJECTILE_SPEED), 0)
-        dashSpeed = GetDefaultNumeric(ws.Cells(i, COL_EA_DASH_SPEED), 0)
-
-        If projSpeed > 0 Then
-            json = json & "," & vbCrLf & "      ""projectile_speed"": " & FormatJsonNumber(projSpeed)
-        End If
-        If dashSpeed > 0 Then
-            json = json & "," & vbCrLf & "      ""dash_speed"": " & FormatJsonNumber(dashSpeed)
-        End If
-
-        ' Add cardinal_only if explicitly set to FALSE (default is TRUE)
-        Dim cardinalOnly As String
-        cardinalOnly = UCase(Trim(GetDefaultString(ws.Cells(i, COL_EA_CARDINAL_ONLY), "TRUE")))
-        If cardinalOnly = "FALSE" Then
-            json = json & "," & vbCrLf & "      ""cardinal_only"": false"
-        End If
-
-        ' Add explosion_falloff for AOE abilities (default 30)
-        Dim explosionFalloff As Double
-        explosionFalloff = GetDefaultNumeric(ws.Cells(i, COL_EA_EXPLOSION_FALLOFF), 0)
-        If explosionFalloff > 0 Then
-            json = json & "," & vbCrLf & "      ""explosion_falloff"": " & FormatJsonNumber(explosionFalloff)
-        End If
-
-        json = json & vbCrLf & "    }"
-
-        itemCount = itemCount + 1
-
-NextExportAbility:
-    Next i
-
-    json = json & vbCrLf & "  ]" & vbCrLf & "}"
-
-    Dim filePath As String
-    filePath = GetExportPath() & "enemy_abilities.json"
-    WriteJsonFile filePath, json
-
-    MsgBox "Exported " & itemCount & " enemy abilities to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -393,7 +263,6 @@ End Sub
 '-------------------------------------------------------------------------------
 Public Sub ExportAllEnemies()
     ExportEnemies
-    ExportEnemyAbilities
     ExportEnemyVariants
     MsgBox "All enemy databases exported!", vbInformation, "Export Complete"
 End Sub
@@ -404,14 +273,16 @@ End Sub
 
 '-------------------------------------------------------------------------------
 ' SetupEnemiesSheet - Creates Enemies sheet with headers
+' NOTE: ability_ids and behavior_profile REMOVED in Phase 2
 '-------------------------------------------------------------------------------
 Public Sub SetupEnemiesSheet()
     Dim ws As Worksheet
     Set ws = GetOrCreateSheet(SHEET_ENEMIES)
     Dim headers As Variant
+    ' Phase 2: Removed ability_ids and behavior_profile columns
     headers = Array("id", "name", "type", "base_health", "base_damage", "armor", "base_shield", _
                     "move_speed", "attack_speed", "attack_range", "detection_range", _
-                    "xp_reward", "loot_table_id", "ability_ids", "behavior_profile", "module_ids", "description")
+                    "xp_reward", "loot_table_id", "module_ids", "description")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -426,39 +297,7 @@ Public Sub SetupEnemiesSheet()
     SafeAddComment ws.Cells(1, 10), "Melee attack range (default 24)"
     SafeAddComment ws.Cells(1, 11), "Range to detect player (default 150)"
     SafeAddComment ws.Cells(1, 13), "Reference to LootTables id"
-    SafeAddComment ws.Cells(1, 14), "Comma-separated ability IDs (e.g., abl_slash,abl_bite)"
-    SafeAddComment ws.Cells(1, 15), "Reference to BehaviorProfiles id (default: bhv_basic_melee)"
-    SafeAddComment ws.Cells(1, 16), "Comma-separated module IDs for modular AI (e.g., mod_target_detection,mod_chase)"
-End Sub
-
-'-------------------------------------------------------------------------------
-' SetupEnemyAbilitiesSheet - Creates EnemyAbilities sheet with headers
-'-------------------------------------------------------------------------------
-Public Sub SetupEnemyAbilitiesSheet()
-    Dim ws As Worksheet
-    Set ws = GetOrCreateSheet(SHEET_ABILITIES)
-    Dim headers As Variant
-    headers = Array("id", "name", "description", "type", "damage_mult", "damage_type", _
-                    "cooldown", "range_min", "range_max", "shape", "shape_size", "shape_angle", _
-                    "windup", "recovery", "animation", "priority", "conditions", "effects_on_hit", _
-                    "projectile_speed", "dash_speed", "cardinal_only", "explosion_falloff")
-    SetupSheetHeaders ws, headers
-
-    ' Add column notes
-    SafeAddComment ws.Cells(1, 1), "Format: abl_name (e.g., abl_zombie_bite)"
-    SafeAddComment ws.Cells(1, 4), "melee, dash_attack, aoe, projectile, pattern, teleport_attack, beam"
-    SafeAddComment ws.Cells(1, 5), "Damage multiplier (1 = 100% base damage)"
-    SafeAddComment ws.Cells(1, 6), "physical, fire, cold, lightning, poison, chaos, pure"
-    SafeAddComment ws.Cells(1, 8), "Minimum range to use ability"
-    SafeAddComment ws.Cells(1, 9), "Maximum range to use ability"
-    SafeAddComment ws.Cells(1, 10), "circle, cone, line, cross, ring"
-    SafeAddComment ws.Cells(1, 13), "Wind-up time before damage"
-    SafeAddComment ws.Cells(1, 14), "Recovery time after attack"
-    SafeAddComment ws.Cells(1, 16), "AI priority (higher = preferred)"
-    SafeAddComment ws.Cells(1, 17), "Conditions like distance>50 or health<50%"
-    SafeAddComment ws.Cells(1, 18), "Effects: stun:0.5, burn:3:5, knockback:100"
-    SafeAddComment ws.Cells(1, 21), "TRUE/FALSE - snap to 4 cardinal directions (default TRUE)"
-    SafeAddComment ws.Cells(1, 22), "AOE: damage falloff % at edge (default 30, 0=no falloff)"
+    SafeAddComment ws.Cells(1, 14), "Comma-separated module IDs for AI (e.g., mod_target_detection,mod_chase,mod_melee_attack)"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -486,7 +325,6 @@ End Sub
 '-------------------------------------------------------------------------------
 Public Sub SetupAllEnemySheets()
     SetupEnemiesSheet
-    SetupEnemyAbilitiesSheet
     SetupEnemyVariantsSheet
     MsgBox "All enemy sheets created!", vbInformation, "Setup Complete"
 End Sub

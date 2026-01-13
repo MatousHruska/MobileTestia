@@ -1,7 +1,7 @@
 extends EnemyNPC
 class_name ModularEnemyNPC
 ## ModularEnemyNPC - Enemy class that uses the modular AI system
-## Falls back to legacy EnemyBehavior if no modules are configured
+## Requires module_ids to be configured in the database
 
 ## Module system
 var module_controller: ModuleController = null
@@ -20,9 +20,9 @@ func _setup_module_system() -> void:
 	var module_ids_str: String = enemy_data.get("module_ids", "")
 
 	if module_ids_str.is_empty():
-		# No modules configured, use legacy behavior
+		# No modules configured - enemy will be static
 		_using_modules = false
-		Debug.log("AI", "%s using legacy behavior (no modules)" % enemy_name)
+		Debug.warn("AI", "%s has no modules configured - will be static" % enemy_name)
 		return
 
 	_using_modules = true
@@ -38,11 +38,6 @@ func _setup_module_system() -> void:
 		module_id = module_id.strip_edges()
 		if not module_id.is_empty():
 			_load_and_add_module(module_id)
-
-	# Disable legacy behavior if using modules
-	if behavior:
-		behavior.set_process(false)
-		behavior.set_physics_process(false)
 
 	Debug.info("AI", "%s using modular AI with %d modules" % [
 		enemy_name,
@@ -136,21 +131,12 @@ func _handle_module_decisions() -> void:
 
 
 func _execute_attack() -> void:
-	"""Execute an attack - uses ability system if available, else basic attack"""
+	"""Execute an attack - uses basic attack"""
 	var ctx = module_controller.get_context()
 	ctx.attack_in_progress = true
 
-	if _use_ability_system and ability_controller:
-		# Use ability system
-		var target = ctx.current_target
-		if target and ability_controller.try_attack(target):
-			play_attack()
-		else:
-			# Fall back to basic attack
-			_perform_basic_attack()
-	else:
-		# Basic attack
-		_perform_basic_attack()
+	# Basic attack
+	_perform_basic_attack()
 
 	# Brief attack state (for animation)
 	get_tree().create_timer(0.3).timeout.connect(func():
@@ -186,10 +172,6 @@ func on_hit_from_attacker(attacker: Node2D) -> void:
 			ctx.has_valid_target = true
 			ctx.target_just_acquired = true
 			ctx.behavior_state = EnemyContext.BehaviorState.COMBAT
-
-	# Also call legacy behavior's on_hit
-	if behavior:
-		behavior.on_hit(attacker)
 
 
 ## Override get_debug_info for module info

@@ -1,7 +1,7 @@
 extends BaseCharacter
 class_name EnemyNPC
 ## EnemyNPC - Hostile NPCs with health, combat stats, loot, and AI
-## Uses EnemyBehavior for simple chase/attack behavior
+## AI is handled by ModuleController (see ModularEnemyNPC or module system)
 
 ## Signals
 signal health_changed(current: float, maximum: float)
@@ -55,14 +55,8 @@ var current_health: float = 100.0:
 			_on_death()
 
 ## Components
-var behavior: EnemyBehavior
-var ability_controller  # EnemyAbilityController - dynamic to avoid load order issues
 var hitbox: Area2D
 var hurtbox: Area2D
-
-## AI/Ability Data (dynamic types to avoid load order issues with autoloads)
-var behavior_profile  # BehaviorProfileData
-var abilities: Array = []  # Array of AbilityData
 
 ## Internal
 var _damage_flash_timer: float = 0.0
@@ -70,7 +64,6 @@ var _invulnerable_timer: float = 0.0
 var _original_modulate: Color = Color.WHITE
 var _spawner: Node = null  ## Reference to spawner that created this enemy
 var home_position: Vector2 = Vector2.ZERO
-var _use_ability_system: bool = false  ## True if using new ability system
 
 ## Status effects - using unified StatusEffectComponent
 const StatusEffectComponentScript = preload("res://scripts/combat/status_effect_component.gd")
@@ -94,7 +87,6 @@ func _ready() -> void:
 
 	_setup_status_effects()
 	_setup_shield()
-	_setup_ai()
 	_setup_hitbox()
 	_setup_hurtbox()
 	_setup_health_bar()
@@ -248,128 +240,6 @@ func _remove_burning_visual() -> void:
 		_burning_visual = null
 
 
-## Setup
-func _setup_ai() -> void:
-	# Load behavior profile and abilities from database if available
-	if not enemy_id.is_empty() and DatabaseLoader:
-		behavior_profile = DatabaseLoader.get_behavior_for_enemy(enemy_id)
-		abilities = DatabaseLoader.get_abilities_for_enemy(enemy_id)
-
-	# Create EnemyBehavior (basic movement/chase AI)
-	behavior = EnemyBehavior.new()
-	behavior.name = "EnemyBehavior"
-	behavior.detection_radius = detection_radius
-	behavior.attack_radius = attack_radius
-	behavior.leash_radius = leash_radius
-	behavior.attack_cooldown = 1.0 / attack_speed
-	add_child(behavior)
-
-	# Apply behavior profile settings if available
-	if behavior_profile:
-		_apply_behavior_profile()
-
-	# Setup ability controller if we have abilities
-	if not abilities.is_empty():
-		_setup_ability_controller()
-
-	var ability_names: Array = []
-	for a in abilities:
-		ability_names.append(a.id)
-	Debug.log("NPC", "AI setup for %s" % enemy_name, {
-		"behavior_profile": behavior_profile.id if behavior_profile else "none",
-		"abilities": ability_names,
-		"use_ability_system": _use_ability_system,
-		"attack_radius": attack_radius,
-		"behavior_attack_radius": behavior.attack_radius
-	})
-
-
-func _apply_behavior_profile() -> void:
-	## Apply behavior profile settings to EnemyBehavior component
-	if not behavior_profile or not behavior:
-		return
-
-	# Override detection from profile
-	if behavior_profile.detection_range > 0:
-		detection_radius = behavior_profile.detection_range
-		behavior.detection_radius = detection_radius
-
-	# Override leash from profile
-	if behavior_profile.leash_range > 0:
-		leash_radius = behavior_profile.leash_range
-		behavior.leash_radius = leash_radius
-
-	# Override attack range from preferred range
-	if behavior_profile.preferred_range > 0:
-		attack_radius = behavior_profile.preferred_range
-		behavior.attack_radius = attack_radius
-
-	# Apply chase speed multiplier
-	if behavior_profile.chase_speed_mult != 1.0:
-		move_speed *= behavior_profile.chase_speed_mult
-
-	# Apply idle behavior settings
-	behavior.idle_behavior = _get_idle_behavior_string(behavior_profile.idle_behavior)
-	behavior.roam_radius = behavior_profile.idle_roam_radius
-	behavior.roam_speed_mult = behavior_profile.idle_roam_speed_mult
-	behavior.roam_pause_min = behavior_profile.idle_pause_min
-	behavior.roam_pause_max = behavior_profile.idle_pause_max
-
-
-func _get_idle_behavior_string(idle_enum) -> String:
-	## Convert IdleBehavior enum to string for EnemyBehavior
-	# Handle both enum and int values
-	if idle_enum is int:
-		match idle_enum:
-			0: return "stand"
-			1: return "roam"
-			2: return "patrol"
-			_: return "stand"
-	return "stand"
-
-
-func _setup_ability_controller() -> void:
-	## Setup the ability controller for database-driven attacks
-	var EnemyAbilityControllerScript = preload("res://scripts/npc/enemy_ability_controller.gd")
-	ability_controller = EnemyAbilityControllerScript.new()
-	ability_controller.name = "AbilityController"
-	add_child(ability_controller)
-
-	# Configure with behavior profile and abilities
-	ability_controller.setup(behavior_profile, abilities)
-
-	# Connect signals
-	ability_controller.attack_started.connect(_on_ability_attack_started)
-	ability_controller.attack_completed.connect(_on_ability_attack_completed)
-
-	# Enable ability system
-	_use_ability_system = true
-
-	# Update attack radius based on abilities
-	var max_range: float = ability_controller.get_max_attack_range()
-	Debug.log("NPC", "Ability range check for %s" % enemy_name, {
-		"max_range": max_range,
-		"current_attack_radius": attack_radius,
-		"abilities_count": abilities.size()
-	})
-	if max_range > attack_radius:
-		attack_radius = max_range
-		behavior.attack_radius = attack_radius
-		Debug.log("NPC", "Updated %s attack radius to %.0f" % [enemy_name, attack_radius])
-
-
-func _on_ability_attack_started() -> void:
-	# Stop movement during ability execution
-	if behavior:
-		behavior.set_attacking(true)
-
-
-func _on_ability_attack_completed() -> void:
-	# Resume movement after ability
-	if behavior:
-		behavior.set_attacking(false)
-
-
 func _setup_hitbox() -> void:
 	## Hitbox = area that deals damage to player
 	hitbox = Area2D.new()
@@ -465,10 +335,6 @@ func take_damage(amount: float, attacker: Node2D = null) -> void:
 	# Brief invulnerability to prevent damage spam
 	_invulnerable_timer = 0.1
 
-	# Notify AI
-	if behavior:
-		behavior.on_hit(attacker)
-
 	damaged.emit(amount, attacker)
 	Debug.log("Combat", "%s took damage" % enemy_name, {
 		"damage": int(amount),
@@ -540,31 +406,14 @@ func _damage_flash() -> void:
 
 
 func perform_attack() -> void:
-	## Called by AI when in attack state
-	Debug.log("NPC", "%s perform_attack called" % enemy_name, {
-		"use_ability_system": _use_ability_system,
-		"has_controller": ability_controller != null,
-		"distance_to_player": get_distance_to_player()
-	})
-	if _use_ability_system and ability_controller:
-		# Use new ability system
-		var player := Game.player if Game else null
-		if player:
-			var success: bool = ability_controller.try_attack(player)
-			Debug.log("NPC", "%s try_attack result: %s" % [enemy_name, success])
-			if success:
-				play_attack()
-				return
-			# Fall through to basic attack if no ability available
-
-	# Legacy basic attack
+	## Called by AI modules when in attack state
+	## Performs a basic melee attack
 	play_attack()
 
 	# Deal damage to player if in range
 	var distance := get_distance_to_player()
 	if distance <= attack_radius:
 		var damage := base_damage
-		# Could add crit chance for enemies here
 		PlayerStats.damage(damage)
 		Debug.log("Combat", "%s attacked player" % enemy_name, ["damage:", damage])
 
@@ -587,14 +436,6 @@ func _on_death() -> void:
 	if hurtbox:
 		hurtbox.set_deferred("monitoring", false)
 		hurtbox.set_deferred("monitorable", false)
-
-	# Interrupt any ongoing abilities
-	if ability_controller:
-		ability_controller.interrupt()
-
-	# Notify AI
-	if behavior:
-		behavior.on_death()
 
 	# Grant experience
 	PlayerStats.add_experience(experience_reward)
@@ -842,17 +683,8 @@ func print_state() -> void:
 		"damage": base_damage,
 		"armor": armor,
 		"position": global_position,
-		"ai_state": behavior.get_state_name() if behavior else "none",
 		"is_dead": is_dead,
 	}
-
-	# Add ability system info
-	if _use_ability_system:
-		state_info["ability_system"] = true
-		state_info["behavior_profile"] = behavior_profile.id if behavior_profile else "none"
-		state_info["abilities"] = abilities.size()
-		if ability_controller:
-			state_info["ability_busy"] = ability_controller.is_busy()
 
 	Debug.snapshot("NPC", "%s State" % enemy_name, state_info)
 
@@ -870,27 +702,3 @@ func debug_kill() -> void:
 func debug_full_heal() -> void:
 	current_health = max_health
 	Debug.info("Debug", "%s fully healed" % enemy_name)
-
-
-func debug_enable_hitbox_visualization(enabled: bool = true) -> void:
-	## Toggle hitbox debug visualization for abilities
-	if ability_controller:
-		ability_controller.set_debug_hitboxes(enabled)
-		Debug.info("Debug", "%s hitbox visualization: %s" % [enemy_name, enabled])
-
-
-func debug_get_ability_info() -> Dictionary:
-	## Get detailed ability system debug info
-	var info := {
-		"use_ability_system": _use_ability_system,
-		"behavior_profile": behavior_profile.get_debug_info() if behavior_profile else {},
-		"abilities": []
-	}
-
-	for ability in abilities:
-		info.abilities.append(ability.get_debug_info())
-
-	if ability_controller:
-		info["controller"] = ability_controller.get_debug_info()
-
-	return info
