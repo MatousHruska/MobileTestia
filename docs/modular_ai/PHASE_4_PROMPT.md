@@ -1,11 +1,11 @@
-# Phase 4: Enemy Creation & Advanced Modules - Session Prompt
+# Phase 4: Advanced Modules & Enemy Variety - Session Prompt
 
 ## FIRST: Pull the Latest Branch
 
 ```
 Please pull claude/[BRANCH_NAME]
 
-This is the newest version of the codebase. Clone it and add Phase4-Enemies into its name. We will continue our work from here.
+This is the newest version of the codebase. Clone it and add Phase4-AdvancedModules into its name. We will continue our work from here.
 ```
 
 **IMPORTANT:** Replace `[BRANCH_NAME]` with the actual branch name from your last session before pasting this prompt.
@@ -37,52 +37,47 @@ This is the newest version of the codebase. Clone it and add Phase4-Enemies into
 
 ## Context: What We Did Before
 
-### Phase 2: Legacy Cleanup
-- Removed EnemyBehavior, EnemyAbilityController, AbilityExecutor
-- Simplified database schema
-- Clean slate achieved
+### Phase 2: Full Legacy Cleanup
+- Completely removed EnemyBehavior, EnemyAbilityController, AbilityExecutor
+- Deleted all legacy VBA/JSON files
+- Clean database schema with module_ids
 
-### Phase 3: Clean Foundation
-- Created clean EnemyContext, BaseModule, ModuleController
-- Created 5 core modules:
-  - DetectionModule (find targets)
-  - ChaseModule (move toward target)
-  - BasicAttackModule (melee damage)
-  - IdleModule (stand/roam)
-  - LeashModule (return home)
-- Test zombie working with modules
-
-### Current State:
+### Phase 3: Core Modules Complete
+5 core modules working:
 ```
 scripts/npc/ai/modules/
-├── target_detection_module.gd (pri 100)
-├── leash_module.gd (pri 90)
-├── chase_module.gd (pri 50)
-├── basic_attack_module.gd (pri 40)
-└── idle_module.gd (pri 10)
+├── target_detection_module.gd  (pri 100) - Find targets
+├── leash_module.gd             (pri 90)  - Return home if too far
+├── chase_module.gd             (pri 80)  - Move toward target
+├── melee_attack_module.gd      (pri 60)  - Melee damage
+└── idle_module.gd              (pri 10)  - Stand/roam
 ```
 
-Now we create all enemies and add advanced modules.
+### Current State:
+- Basic enemies work: detect → chase → attack → leash → idle
+- Ready for advanced behaviors
 
 ---
 
 ## Phase 4 Objectives
 
-**Goal:** Create a complete set of enemies using the modular system.
+**Goal:** Add advanced modules and create enemy variety.
 
 ### New Modules to Create:
-1. **FleeModule** - Run away when low health
-2. **RangedAttackModule** - Attack from distance
-3. **KiteModule** - Maintain distance from target
-4. **PackAlertModule** - Alert nearby allies
+1. **FleeModule** (pri 85) - Run away when low health
+2. **RangedAttackModule** (pri 55) - Attack from distance
+3. **KiteModule** (pri 75) - Maintain distance from target
+4. **PackAlertModule** (pri 95) - Alert nearby allies when aggro
 
 ### Enemies to Create:
-1. **Zombie** - Basic melee (already done)
-2. **Skeleton** - Fast melee
-3. **Ghoul** - Aggressive hunter (no leash)
-4. **Skeleton Archer** - Ranged + kiting
-5. **Vampire** - Melee + flee when low
-6. **Wolf** - Pack behavior
+| Enemy | Behavior | Key Modules |
+|-------|----------|-------------|
+| Zombie | Basic shambler | detect, leash, chase, melee, idle |
+| Skeleton | Fast melee | detect, leash, chase, melee, idle |
+| Ghoul | Aggressive (no leash) | detect, chase, melee |
+| Archer | Ranged kiter | detect, leash, kite, chase, ranged, idle |
+| Vampire | Flees when hurt | detect, flee, leash, chase, melee, idle |
+| Wolf | Pack behavior | detect, pack_alert, leash, chase, melee, idle |
 
 ---
 
@@ -126,13 +121,7 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 
     context.desired_direction = _flee_direction
     context.speed_multiplier = get_config_float("flee_speed_mult", 1.3)
-    context.behavior_state = EnemyContext.BehaviorState.IDLE  # Override combat
-
-
-func get_debug_info() -> Dictionary:
-    var info = super.get_debug_info()
-    info["flee_threshold"] = get_config_float("flee_health_percent", 0.2)
-    return info
+    # Don't change behavior_state - let other modules still function
 ```
 
 ### Step 2: Create RangedAttackModule
@@ -150,7 +139,7 @@ func _init() -> void:
     module_id = "mod_ranged_attack"
     module_name = "Ranged Attack"
     module_type = ModuleType.COMBAT
-    priority = 45  # Slightly higher than basic attack
+    priority = 55  # Higher than melee, preferred when in range
 
 
 func _process_module(context: EnemyContext, delta: float) -> void:
@@ -175,6 +164,7 @@ func _process_module(context: EnemyContext, delta: float) -> void:
     var stop_to_attack = get_config_bool("stop_to_attack", true)
     if stop_to_attack:
         context.should_stop = true
+        context.behavior_state = EnemyContext.BehaviorState.COMBAT
 
     # On cooldown?
     if _cooldown > 0:
@@ -182,15 +172,8 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
     # Shoot!
     context.should_attack = true
+    context.ranged_attack = true  # Flag for EnemyNPC to spawn projectile
     _cooldown = get_config_float("attack_cooldown", 2.0)
-
-
-func get_debug_info() -> Dictionary:
-    var info = super.get_debug_info()
-    info["max_range"] = get_config_float("max_range", 150.0)
-    info["min_range"] = get_config_float("min_range", 30.0)
-    info["cooldown"] = _cooldown
-    return info
 ```
 
 ### Step 3: Create KiteModule
@@ -206,7 +189,7 @@ func _init() -> void:
     module_id = "mod_kite"
     module_name = "Kite"
     module_type = ModuleType.MOVEMENT
-    priority = 55  # Slightly higher than chase
+    priority = 75  # Between leash and chase
 
 
 func _process_module(context: EnemyContext, _delta: float) -> void:
@@ -214,29 +197,25 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
     if not context.has_valid_target:
         return
 
+    # Don't kite if returning home
+    if context.behavior_state == EnemyContext.BehaviorState.RETURNING:
+        return
+
     var preferred_range = get_config_float("preferred_range", 100.0)
     var too_close_range = get_config_float("too_close_range", 50.0)
 
     # Too close? Back away
     if context.target_distance < too_close_range:
-        # Move away from target
         context.desired_direction = -context.target_direction
         context.speed_multiplier = get_config_float("kite_speed_mult", 0.8)
         return
 
-    # At preferred range? Stop
+    # At preferred range? Stop and let combat module handle
     if context.target_distance >= preferred_range * 0.9 and context.target_distance <= preferred_range * 1.1:
         context.should_stop = true
         return
 
-    # Too far? Let ChaseModule handle it (don't set desired_direction)
-
-
-func get_debug_info() -> Dictionary:
-    var info = super.get_debug_info()
-    info["preferred_range"] = get_config_float("preferred_range", 100.0)
-    info["too_close_range"] = get_config_float("too_close_range", 50.0)
-    return info
+    # Too far? Let ChaseModule handle approaching
 ```
 
 ### Step 4: Create PackAlertModule
@@ -272,7 +251,7 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 
 func _alert_nearby_allies(context: EnemyContext) -> void:
     var alert_radius = get_config_float("alert_radius", 150.0)
-    var pack_id = get_config_string("pack_id", "")
+    var pack_group = get_config_string("pack_group", "")
 
     # Find nearby enemies
     var enemies = _owner.get_tree().get_nodes_in_group("enemies")
@@ -288,31 +267,31 @@ func _alert_nearby_allies(context: EnemyContext) -> void:
         if dist > alert_radius:
             continue
 
-        # Check pack ID match (if specified)
-        if not pack_id.is_empty():
-            if not _has_matching_pack_id(enemy, pack_id):
+        # Check pack group match (if specified)
+        if not pack_group.is_empty():
+            if not _has_matching_pack_group(enemy, pack_group):
                 continue
 
         # Alert this ally
         _send_alert_to(enemy, context.current_target)
 
+    Debug.log("AI", "%s alerted pack within %.0f radius" % [context.owner.name, alert_radius])
 
-func _has_matching_pack_id(enemy: Node2D, pack_id: String) -> bool:
-    if not enemy.has_node("ModuleController"):
+
+func _has_matching_pack_group(enemy: Node2D, pack_group: String) -> bool:
+    if not "module_controller" in enemy or not enemy.module_controller:
         return false
-    var controller = enemy.get_node("ModuleController")
-    var pack_module = controller.get_module("mod_pack_alert")
+    var pack_module = enemy.module_controller.get_module("mod_pack_alert")
     if not pack_module:
         return false
-    return pack_module.get_config_string("pack_id", "") == pack_id
+    return pack_module.get_config_string("pack_group", "") == pack_group
 
 
 func _send_alert_to(enemy: Node2D, target: Node2D) -> void:
-    if not enemy.has_node("ModuleController"):
+    if not "module_controller" in enemy or not enemy.module_controller:
         return
 
-    var controller = enemy.get_node("ModuleController")
-    var ctx = controller.get_context()
+    var ctx = enemy.module_controller.get_context()
 
     # Only alert if they don't have a target
     if ctx.has_valid_target:
@@ -322,288 +301,143 @@ func _send_alert_to(enemy: Node2D, target: Node2D) -> void:
     ctx.current_target = target
     ctx.has_valid_target = true
     ctx.target_just_acquired = true
-    ctx.behavior_state = EnemyContext.BehaviorState.CHASING
+    ctx.behavior_state = EnemyContext.BehaviorState.COMBAT
+    Debug.log("AI", "%s received pack alert" % enemy.name)
 ```
 
-### Step 5: Update EnemyNPC Module Creation
+### Step 5: Register New Modules
 
-Add new modules to `_create_module()`:
+**In `modular_enemy_npc.gd` `_create_module()`:**
 
 ```gdscript
-func _create_module(module_id: String) -> BaseModule:
-    match module_id:
-        "mod_target_detection":
-            return DetectionModule.new()
-        "mod_chase":
-            return ChaseModule.new()
-        "mod_basic_attack":
-            return BasicAttackModule.new()
-        "mod_idle":
-            return IdleModule.new()
-        "mod_leash":
-            return LeashModule.new()
-        # NEW MODULES:
-        "mod_flee":
-            return FleeModule.new()
-        "mod_ranged_attack":
-            return RangedAttackModule.new()
-        "mod_kite":
-            return KiteModule.new()
-        "mod_pack_alert":
-            return PackAlertModule.new()
-        _:
-            push_warning("Unknown module: %s" % module_id)
-            return null
+"mod_flee":
+    return FleeModule.new()
+"mod_ranged_attack":
+    return RangedAttackModule.new()
+"mod_kite":
+    return KiteModule.new()
+"mod_pack_alert":
+    return PackAlertModule.new()
 ```
 
-### Step 6: Update Database - Add New Modules
+### Step 6: Update Database - New Modules
 
-**Add to enemy_modules.json:**
+**Add to EnemyModules sheet:**
 
-```json
-{
-  "id": "mod_flee",
-  "name": "Flee",
-  "module_type": "movement",
-  "description": "Runs away when health is low",
-  "priority": 85,
-  "default_config": {"flee_health_percent": 0.2, "flee_speed_mult": 1.3, "flee_wobble": 0.3}
-},
-{
-  "id": "mod_ranged_attack",
-  "name": "Ranged Attack",
-  "module_type": "combat",
-  "description": "Attack from distance",
-  "priority": 45,
-  "default_config": {"max_range": 150, "min_range": 30, "attack_cooldown": 2.0, "stop_to_attack": true}
-},
-{
-  "id": "mod_kite",
-  "name": "Kite",
-  "module_type": "movement",
-  "description": "Maintain distance from target",
-  "priority": 55,
-  "default_config": {"preferred_range": 100, "too_close_range": 50, "kite_speed_mult": 0.8}
-},
-{
-  "id": "mod_pack_alert",
-  "name": "Pack Alert",
-  "module_type": "utility",
-  "description": "Alert nearby allies when aggro",
-  "priority": 95,
-  "default_config": {"alert_radius": 150, "pack_id": ""}
-}
-```
+| id | name | module_type | priority | default_config |
+|----|------|-------------|----------|----------------|
+| mod_flee | Flee | movement | 85 | {"flee_health_percent": 0.2, "flee_speed_mult": 1.3, "flee_wobble": 0.3} |
+| mod_ranged_attack | Ranged Attack | combat | 55 | {"max_range": 150, "min_range": 30, "attack_cooldown": 2.0, "stop_to_attack": true} |
+| mod_kite | Kite | movement | 75 | {"preferred_range": 100, "too_close_range": 50, "kite_speed_mult": 0.8} |
+| mod_pack_alert | Pack Alert | utility | 95 | {"alert_radius": 150, "pack_group": ""} |
 
-### Step 7: Create All Enemies
+### Step 7: Create Enemy Variety
 
-**Update enemies.json with all enemies:**
+**Update Enemies sheet with diverse module combinations:**
 
-```json
-{
-  "enemies": [
-    {
-      "id": "ene_zombie_basic",
-      "name": "Zombie",
-      "type": "Normal",
-      "base_health": 30,
-      "base_damage": 5,
-      "armor": 0,
-      "move_speed": 80,
-      "attack_range": 25,
-      "detection_range": 120,
-      "xp_reward": 15,
-      "loot_table_id": "loot_zombie",
-      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_basic_attack,mod_idle"
-    },
-    {
-      "id": "ene_skeleton_basic",
-      "name": "Skeleton",
-      "type": "Normal",
-      "base_health": 25,
-      "base_damage": 6,
-      "armor": 2,
-      "move_speed": 100,
-      "attack_range": 24,
-      "detection_range": 140,
-      "xp_reward": 20,
-      "loot_table_id": "loot_skeleton",
-      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_basic_attack,mod_idle"
-    },
-    {
-      "id": "ene_ghoul_basic",
-      "name": "Ghoul",
-      "type": "Normal",
-      "base_health": 50,
-      "base_damage": 8,
-      "armor": 0,
-      "move_speed": 90,
-      "attack_range": 28,
-      "detection_range": 180,
-      "xp_reward": 30,
-      "loot_table_id": "loot_ghoul",
-      "module_ids": "mod_target_detection,mod_chase,mod_basic_attack"
-    },
-    {
-      "id": "ene_skeleton_archer",
-      "name": "Skeleton Archer",
-      "type": "Normal",
-      "base_health": 20,
-      "base_damage": 8,
-      "armor": 0,
-      "move_speed": 70,
-      "attack_range": 150,
-      "detection_range": 200,
-      "xp_reward": 25,
-      "loot_table_id": "loot_skeleton",
-      "module_ids": "mod_target_detection,mod_leash,mod_kite,mod_chase,mod_ranged_attack,mod_idle"
-    },
-    {
-      "id": "ene_vampire_basic",
-      "name": "Vampire",
-      "type": "Normal",
-      "base_health": 60,
-      "base_damage": 10,
-      "armor": 5,
-      "move_speed": 85,
-      "attack_range": 26,
-      "detection_range": 160,
-      "xp_reward": 40,
-      "loot_table_id": "loot_vampire",
-      "module_ids": "mod_target_detection,mod_flee,mod_leash,mod_chase,mod_basic_attack,mod_idle"
-    },
-    {
-      "id": "ene_wolf_basic",
-      "name": "Wolf",
-      "type": "Normal",
-      "base_health": 35,
-      "base_damage": 7,
-      "armor": 0,
-      "move_speed": 110,
-      "attack_range": 22,
-      "detection_range": 150,
-      "xp_reward": 20,
-      "loot_table_id": "loot_wolf",
-      "module_ids": "mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_basic_attack,mod_idle"
-    }
-  ]
-}
-```
-
-### Enemy Behavior Summary
-
-| Enemy | Key Behavior | Modules |
-|-------|--------------|---------|
-| Zombie | Basic shambler | detect, leash, chase, attack, idle |
-| Skeleton | Fast melee | detect, leash, chase, attack, idle |
-| Ghoul | Aggressive (no leash!) | detect, chase, attack |
-| Skeleton Archer | Ranged, backs away | detect, leash, kite, chase, ranged, idle |
-| Vampire | Flees when hurt | detect, flee, leash, chase, attack, idle |
-| Wolf | Pack behavior | detect, pack_alert, leash, chase, attack, idle |
-
----
-
-## Module Presets (Reference)
-
-Common module combinations for copy-paste:
-
-| Preset | Modules |
-|--------|---------|
-| Basic Melee | mod_target_detection,mod_leash,mod_chase,mod_basic_attack,mod_idle |
-| Aggressive Melee | mod_target_detection,mod_chase,mod_basic_attack |
-| Ranged Kiter | mod_target_detection,mod_leash,mod_kite,mod_chase,mod_ranged_attack,mod_idle |
-| Fleeing Melee | mod_target_detection,mod_flee,mod_leash,mod_chase,mod_basic_attack,mod_idle |
-| Pack Melee | mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_basic_attack,mod_idle |
+| id | name | type | module_ids |
+|----|------|------|------------|
+| ene_zombie_basic | Zombie | Normal | mod_target_detection,mod_leash,mod_chase,mod_melee_attack,mod_idle |
+| ene_skeleton_basic | Skeleton | Normal | mod_target_detection,mod_leash,mod_chase,mod_melee_attack,mod_idle |
+| ene_ghoul_basic | Ghoul | Normal | mod_target_detection,mod_chase,mod_melee_attack |
+| ene_skeleton_archer | Skeleton Archer | Normal | mod_target_detection,mod_leash,mod_kite,mod_chase,mod_ranged_attack,mod_idle |
+| ene_vampire_basic | Vampire | Normal | mod_target_detection,mod_flee,mod_leash,mod_chase,mod_melee_attack,mod_idle |
+| ene_wolf_basic | Wolf | Normal | mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_melee_attack,mod_idle |
 
 ---
 
 ## Testing
 
-### Test 1: All Enemies Load
+### Test 1: Flee Works
+1. Spawn vampire
+2. Fight it until health < 20%
+3. Vampire should run away
+4. If you stop attacking, it might recover and fight again
 
-```gdscript
-var enemy_ids = ["ene_zombie_basic", "ene_skeleton_basic", "ene_ghoul_basic",
-                 "ene_skeleton_archer", "ene_vampire_basic", "ene_wolf_basic"]
-
-for enemy_id in enemy_ids:
-    var enemy = DatabaseLoader.create_enemy(enemy_id)
-    add_child(enemy)
-    await get_tree().process_frame
-
-    var has_modules = enemy.module_controller != null
-    print("%s: %s" % [enemy_id, "OK" if has_modules else "FAIL"])
-
-    enemy.queue_free()
-```
-
-### Test 2: Ghoul Has No Leash
-
-1. Spawn ghoul
-2. Aggro it
-3. Run far away (500+ px)
-4. Ghoul should KEEP CHASING (no leash)
-
-### Test 3: Archer Kiting
-
+### Test 2: Kiting Works
 1. Spawn skeleton archer
 2. Walk toward it
 3. Archer should back away while shooting
-4. If you stop at ~100px, archer should stop too
+4. Stop at ~100px → archer stops too
 
-### Test 4: Vampire Flee
-
-1. Spawn vampire
-2. Fight it, get its health below 20%
-3. Vampire should run away
-4. If health goes above 20%, it should fight again
-
-### Test 5: Wolf Pack
-
+### Test 3: Pack Alert Works
 1. Spawn 3 wolves near each other
 2. Aggro ONE wolf
-3. All wolves should aggro (pack alert)
+3. All wolves should aggro (pack alert propagates)
 
-### Test 6: Performance
+### Test 4: Ghoul Aggression
+1. Spawn ghoul
+2. Aggro it and run far away (500+ px)
+3. Ghoul should KEEP CHASING (no leash module)
 
-1. Spawn 20 mixed enemies
-2. Verify 60 FPS maintained
-3. No lag spikes
+### Test 5: All Enemies Load
+```gdscript
+var ids = ["ene_zombie_basic", "ene_skeleton_basic", "ene_ghoul_basic",
+           "ene_skeleton_archer", "ene_vampire_basic", "ene_wolf_basic"]
+for id in ids:
+    var e = DatabaseLoader.create_enemy(id)
+    assert(e != null, "Failed: " + id)
+    assert(e.module_controller != null, "No modules: " + id)
+    e.queue_free()
+print("All enemies OK!")
+```
+
+---
+
+## Module Reference
+
+### Complete Module Library (9 modules)
+
+| Priority | Module | Type | Purpose |
+|----------|--------|------|---------|
+| 100 | mod_target_detection | detection | Find and track targets |
+| 95 | mod_pack_alert | utility | Alert nearby allies |
+| 90 | mod_leash | utility | Return home if too far |
+| 85 | mod_flee | movement | Run when low health |
+| 75 | mod_kite | movement | Maintain distance |
+| 80 | mod_chase | movement | Move toward target |
+| 55 | mod_ranged_attack | combat | Ranged damage |
+| 60 | mod_melee_attack | combat | Melee damage |
+| 10 | mod_idle | movement | Stand/roam |
+
+### Module Presets
+
+| Preset | Modules |
+|--------|---------|
+| Basic Melee | detect, leash, chase, melee, idle |
+| Aggressive | detect, chase, melee |
+| Ranged Kiter | detect, leash, kite, chase, ranged, idle |
+| Cowardly | detect, flee, leash, chase, melee, idle |
+| Pack Hunter | detect, pack_alert, leash, chase, melee, idle |
 
 ---
 
 ## Deliverables Checklist
 
-### New Modules
+### Modules
 - [ ] FleeModule created and working
 - [ ] RangedAttackModule created and working
 - [ ] KiteModule created and working
 - [ ] PackAlertModule created and working
 
 ### Enemies
-- [ ] Zombie working (basic melee)
-- [ ] Skeleton working (fast melee)
-- [ ] Ghoul working (aggressive, no leash)
-- [ ] Skeleton Archer working (ranged + kite)
-- [ ] Vampire working (melee + flee)
-- [ ] Wolf working (pack alert)
-
-### Database
-- [ ] enemy_modules.json has all 9 modules
-- [ ] enemies.json has all 6 enemies
-- [ ] VBA files updated (if needed)
+- [ ] All 6 enemy types created
+- [ ] Each has appropriate module combination
+- [ ] Behaviors match design intent
 
 ### Testing
 - [ ] All enemies load without errors
-- [ ] Each enemy behavior works correctly
-- [ ] Performance acceptable (60 FPS with 20 enemies)
+- [ ] Flee behavior works
+- [ ] Kiting behavior works
+- [ ] Pack alert works
+- [ ] Ghoul has no leash
 
 ---
 
 ## What's Next (Phase 5 Preview)
 
-With all enemies working, Phase 5 will:
-1. Add boss/miniboss enemies
-2. Create debug overlay for easy testing
-3. Performance optimization if needed
+Phase 5 will add:
+1. Boss/Miniboss enemies
+2. Debug overlay for testing
+3. Performance optimization
 4. Final polish and documentation
-5. Clean up any remaining issues
