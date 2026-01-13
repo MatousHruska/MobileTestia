@@ -273,14 +273,15 @@ func update_from_owner() -> void:
 		if owner.has_method("get_shield_percent"):
 			shield_percent = owner.get_shield_percent()
 
-	# Config - sync from owner if available
+	# Config - sync from owner if available (only once to avoid feedback loop)
 	if "detection_radius" in owner:
 		detection_radius = owner.detection_radius
 	if "attack_radius" in owner:
 		attack_radius = owner.attack_radius
 	if "leash_radius" in owner:
 		leash_radius = owner.leash_radius
-	if "move_speed" in owner:
+	# Only sync base_move_speed once (when it's 0) to avoid feedback from speed_multiplier
+	if base_move_speed == 0.0 and "move_speed" in owner:
 		base_move_speed = owner.move_speed
 	if "base_damage" in owner:
 		base_damage = owner.base_damage
@@ -303,7 +304,8 @@ func apply_to_owner() -> void:
 	elif desired_direction != Vector2.ZERO:
 		if owner.has_method("set_move_direction"):
 			owner.set_move_direction(desired_direction)
-		if speed_multiplier != 1.0 and "move_speed" in owner:
+		# Always apply speed (to restore normal speed when multiplier returns to 1.0)
+		if "move_speed" in owner and base_move_speed > 0:
 			owner.move_speed = base_move_speed * speed_multiplier
 
 
