@@ -473,10 +473,7 @@ Private Sub CreateIdNamedRanges()
     ' Create named ranges for each sheet's ID column
     CreateNamedRange "Zones", 1, "ID_Zones"
     CreateNamedRange "Enemies", 1, "ID_Enemies"
-    ' Phase 2: EnemyAbilities and BehaviorProfiles DEPRECATED
-    ' CreateNamedRange "EnemyAbilities", 1, "ID_EnemyAbilities"
     CreateNamedRange "EnemyVariants", 1, "ID_EnemyVariants"
-    ' CreateNamedRange "BehaviorProfiles", 1, "ID_BehaviorProfiles"
     CreateNamedRange "LootTables", 1, "ID_LootTables"
     CreateNamedRange "ItemBases", 1, "ID_ItemBases"
     CreateNamedRange "Affixes", 1, "ID_Affixes"
@@ -540,10 +537,8 @@ Private Sub ApplyForeignKeyValidation()
     ApplyValidation "Locations", 2, "ID_Zones"          ' zone_id
     ApplyValidation "Locations", 7, "ID_StatusEffects"  ' status_effect_id
 
-    ' Enemies (Phase 2: behavior_profile REMOVED, column 13 = loot_table_id)
+    ' Enemies
     ApplyValidation "Enemies", 13, "ID_LootTables"  ' loot_table_id
-    ' Phase 2: behavior_profile column REMOVED
-    ' ApplyValidation "Enemies", 15, "ID_BehaviorProfiles"  ' behavior_profile
 
     ' Chests (new schema: zone_id=4, loot_table_id=9, quest_id=17)
     ApplyValidation "Chests", 4, "ID_Zones"         ' zone_id
@@ -580,14 +575,6 @@ End Sub
 ' ApplyEnumValidation - Applies dropdown validation for enum fields
 '-------------------------------------------------------------------------------
 Private Sub ApplyEnumValidation()
-    ' Phase 2: BehaviorProfiles sheet DEPRECATED
-    ' ApplyListValidation "BehaviorProfiles", 4, "stand,roam,patrol"  ' idle_behavior
-    ' ApplyListValidation "BehaviorProfiles", 11, "sight,none"        ' detection_type
-    ' ApplyListValidation "BehaviorProfiles", 15, "aggressive,ranged,opportunist,hit_run"  ' combat_style
-    ' ApplyListValidation "BehaviorProfiles", 16, "direct,charge,kite,phase,circle"  ' approach_behavior
-    ' ApplyListValidation "BehaviorProfiles", 22, "clockwise,counter,random"  ' circle_direction
-    ' ApplyListValidation "BehaviorProfiles", 28, "highest,conditional,random_weighted"  ' ability_priority_mode
-
     ' CombatTextCategories
     ApplyListValidation "CombatTextCategories", 2, "damage,heal,heal_tick,dot_tick,label"  ' category_type
     ApplyListValidation "CombatTextCategories", 3, "physical,fire,cold,lightning,poison,arcane,bleed,true,critical"  ' damage_type
@@ -637,11 +624,6 @@ Private Sub ApplyEnumValidation()
     ' Enemies
     ApplyListValidation "Enemies", 3, "Normal,Miniboss,Boss"  ' type
 
-    ' EnemyAbilities
-    ApplyListValidation "EnemyAbilities", 4, "melee,dash_attack,aoe,projectile,pattern,teleport_attack,beam"  ' type
-    ApplyListValidation "EnemyAbilities", 6, "physical,fire,cold,lightning,poison,arcane,bleed,pure"  ' damage_type
-    ApplyListValidation "EnemyAbilities", 10, "circle,cone,line,cross,ring"  ' shape
-
     ' EnemyModules
     ApplyListValidation "EnemyModules", 3, "detection,movement,combat,social,special,utility"  ' module_type
 
@@ -666,16 +648,12 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "Affixes", 4, "attack_power,spell_power,fire_power,cold_power,lightning_power,poison_power,strength,dexterity,intelligence,vitality,energy,luck,armor,magic_resistance,dodge_chance,attack_speed,critical_chance,critical_damage,life,mana,life_regen,mana_regen,movement_speed"  ' stat_modifier
 
     ' Boolean fields (TRUE/FALSE)
-    ' Phase 2: BehaviorProfiles sheet DEPRECATED
-    ' ApplyListValidation "BehaviorProfiles", 9, "TRUE,FALSE"   ' patrol_loop
-    ' ApplyListValidation "BehaviorProfiles", 12, "TRUE,FALSE"  ' aggro_on_damage
     ApplyListValidation "Quests", 10, "TRUE,FALSE"            ' can_abandon
     ApplyListValidation "Quests", 11, "TRUE,FALSE"            ' auto_complete
     ApplyListValidation "QuestObjectives", 7, "TRUE,FALSE"    ' optional
     ApplyListValidation "NPCs", 10, "TRUE,FALSE"              ' is_interactable
     ApplyListValidation "StatusEffects", 9, "TRUE,FALSE"      ' stackable
     ApplyListValidation "StatusEffects", 11, "TRUE,FALSE"     ' show_in_hud
-    ApplyListValidation "EnemyAbilities", 21, "TRUE,FALSE"    ' cardinal_only
     ApplyListValidation "Cutscenes", 6, "TRUE,FALSE"          ' once_only
     ApplyListValidation "Talents", 43, "TRUE,FALSE"           ' can_move_while_casting
     ApplyListValidation "Talents", 44, "TRUE,FALSE"           ' interrupt_on_damage
