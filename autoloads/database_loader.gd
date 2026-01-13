@@ -7,7 +7,8 @@ const DATABASE_PATH := "res://databases/exports/"
 
 ## Preload data classes to avoid load order issues
 const AbilityDataScript := preload("res://scripts/data/ability_data.gd")
-const BehaviorProfileDataScript := preload("res://scripts/data/behavior_profile_data.gd")
+## DEPRECATED: BehaviorProfileDataScript removed in Phase 2 legacy AI cleanup
+## const BehaviorProfileDataScript := preload("res://scripts/data/behavior_profile_data.gd")
 
 ## Loaded data dictionaries (keyed by id)
 var item_bases: Dictionary = {}
@@ -361,8 +362,9 @@ func get_enemies_by_type(enemy_type: String) -> Array:
 	return result
 
 
-## Get behavior profile by id
+## DEPRECATED: Get behavior profile by id - legacy AI removed in Phase 2
 func get_behavior_profile(id: String) -> Dictionary:
+	push_warning("get_behavior_profile() is deprecated - legacy AI removed in Phase 2")
 	return behavior_profiles.get(id, {})
 
 
@@ -404,98 +406,25 @@ func create_ability_data(ability_id: String):  # Returns AbilityData
 	return ability
 
 
-## Create BehaviorProfileData resource from database entry
-func create_behavior_profile_data(profile_id: String):  # Returns BehaviorProfileData
-	var data: Dictionary = get_behavior_profile(profile_id)
-	if data.is_empty():
-		return null
-
-	var profile = BehaviorProfileDataScript.new()
-	profile.id = data.get("id", profile_id)
-	profile.profile_name = data.get("name", "Basic")
-	profile.description = data.get("description", "")
-
-	# Idle behavior
-	profile.idle_behavior = BehaviorProfileDataScript.idle_from_string(data.get("idle_behavior", "stand"))
-	profile.idle_roam_radius = float(data.get("idle_roam_radius", 0.0))
-	profile.idle_roam_speed_mult = float(data.get("idle_roam_speed_mult", 0.5))
-	profile.idle_pause_min = float(data.get("idle_pause_min", 2.0))
-	profile.idle_pause_max = float(data.get("idle_pause_max", 5.0))
-	profile.patrol_loop = data.get("patrol_loop", true)
-
-	# Detection
-	profile.detection_range = float(data.get("detection_range", 150.0))
-	profile.detection_type = BehaviorProfileDataScript.detection_from_string(data.get("detection_type", "sight"))
-	profile.aggro_on_damage = data.get("aggro_on_damage", true)
-	profile.aggro_memory_time = float(data.get("aggro_memory_time", 10.0))
-	profile.leash_range = float(data.get("leash_range", 300.0))
-
-	# Combat
-	profile.combat_style = BehaviorProfileDataScript.combat_from_string(data.get("combat_style", "aggressive"))
-	profile.approach_behavior = BehaviorProfileDataScript.approach_from_string(data.get("approach_behavior", "direct"))
-	profile.preferred_range = float(data.get("preferred_range", 30.0))
-	profile.chase_speed_mult = float(data.get("chase_speed_mult", 1.0))
-	profile.strafe_chance = float(data.get("strafe_chance", 0.0))
-
-	# Advanced movement
-	profile.kite_distance = float(data.get("kite_distance", 0.0))
-	profile.kite_speed_mult = float(data.get("kite_speed_mult", 1.0))
-	profile.circle_direction = data.get("circle_direction", "random")
-	profile.attack_retreat_distance = float(data.get("attack_retreat_distance", 0.0))
-	profile.attack_retreat_duration = float(data.get("attack_retreat_duration", 0.0))
-
-	# Flee
-	profile.flee_health_threshold = float(data.get("flee_health_threshold", 0.0))
-	profile.flee_speed_mult = float(data.get("flee_speed_mult", 1.2))
-
-	# Abilities
-	profile.ability_use_chance = float(data.get("ability_use_chance", 1.0))
-	profile.ability_priority_mode = BehaviorProfileDataScript.priority_mode_from_string(data.get("ability_priority_mode", "highest"))
-
-	# Parse abilities array
-	var abilities_raw = data.get("abilities", [])
-	if abilities_raw is Array:
-		for ability_id in abilities_raw:
-			profile.ability_ids.append(str(ability_id))
-	elif abilities_raw is String and not abilities_raw.is_empty():
-		# Support comma-separated string format
-		for ability_id in abilities_raw.split(","):
-			profile.ability_ids.append(ability_id.strip_edges())
-
-	return profile
+## DEPRECATED: Create BehaviorProfileData resource from database entry
+## BehaviorProfileData class removed in Phase 2 legacy AI cleanup
+func create_behavior_profile_data(profile_id: String):  # Returns null (deprecated)
+	push_warning("create_behavior_profile_data() is deprecated - legacy AI removed in Phase 2")
+	return null
 
 
-## Get abilities for an enemy by parsing ability_ids string
-func get_abilities_for_enemy(enemy_id: String) -> Array:  # Returns Array of AbilityData
-	var result: Array = []
-	var enemy_data := get_enemy(enemy_id)
-	if enemy_data.is_empty():
-		return result
-
-	var ability_ids_str: String = enemy_data.get("ability_ids", "")
-	if ability_ids_str.is_empty():
-		return result
-
-	var ability_ids := ability_ids_str.split(",")
-	for ability_id in ability_ids:
-		ability_id = ability_id.strip_edges()
-		if ability_id.is_empty():
-			continue
-		var ability = create_ability_data(ability_id)
-		if ability:
-			result.append(ability)
-
-	return result
+## DEPRECATED: Get abilities for an enemy by parsing ability_ids string
+## Legacy ability system removed in Phase 2 - modules handle attacks now
+func get_abilities_for_enemy(enemy_id: String) -> Array:  # Returns empty Array (deprecated)
+	push_warning("get_abilities_for_enemy() is deprecated - legacy ability system removed in Phase 2")
+	return []
 
 
-## Get behavior profile for an enemy
-func get_behavior_for_enemy(enemy_id: String):  # Returns BehaviorProfileData
-	var enemy_data := get_enemy(enemy_id)
-	if enemy_data.is_empty():
-		return null
-
-	var profile_id: String = enemy_data.get("behavior_profile", "bhv_basic_melee")
-	return create_behavior_profile_data(profile_id)
+## DEPRECATED: Get behavior profile for an enemy
+## BehaviorProfileData class removed in Phase 2 legacy AI cleanup
+func get_behavior_for_enemy(enemy_id: String):  # Returns null (deprecated)
+	push_warning("get_behavior_for_enemy() is deprecated - legacy AI removed in Phase 2")
+	return null
 
 
 #===============================================================================

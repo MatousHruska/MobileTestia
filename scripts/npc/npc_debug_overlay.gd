@@ -13,9 +13,7 @@ class_name NPCDebugOverlay
 @export var show_facing_arrows: bool = true
 @export var show_target_lines: bool = true
 @export var show_velocity_vectors: bool = false
-@export var show_ability_info: bool = true
-@export var show_ability_hitboxes: bool = false
-@export var show_behavior_profile: bool = true
+@export var show_module_info: bool = true
 
 ## Colors
 var color_health_bar_bg := Color(0.2, 0.2, 0.2, 0.8)
@@ -29,16 +27,15 @@ var color_target_line := Color(1.0, 0.5, 0.0, 0.6)
 var color_velocity := Color(0.0, 1.0, 1.0, 0.7)
 var color_friendly := Color(0.3, 0.8, 1.0, 0.8)
 var color_enemy := Color(1.0, 0.4, 0.4, 0.8)
-var color_ability := Color(0.9, 0.6, 1.0, 0.8)
-var color_cooldown := Color(0.5, 0.5, 0.6, 0.7)
-var color_windup := Color(1.0, 0.8, 0.2, 0.9)
-var color_recovery := Color(0.4, 0.4, 0.8, 0.8)
+var color_module := Color(0.9, 0.6, 1.0, 0.8)
 
-## State colors for AI (using EnemyBehavior states)
+## State colors for AI
 var ai_state_colors := {
-	EnemyBehavior.State.IDLE: Color(0.5, 0.5, 0.5),
-	EnemyBehavior.State.COMBAT: Color(1.0, 0.3, 0.0),
-	EnemyBehavior.State.DEAD: Color(0.3, 0.3, 0.3),
+	"idle": Color(0.5, 0.5, 0.5),
+	"combat": Color(1.0, 0.3, 0.0),
+	"dead": Color(0.3, 0.3, 0.3),
+	"chase": Color(1.0, 0.6, 0.0),
+	"attack": Color(1.0, 0.2, 0.2),
 }
 
 ## Drawing node
@@ -107,12 +104,12 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 	var screen_pos: Vector2 = _world_to_screen(enemy.global_position, camera)
 
 	# Detection radius
-	if show_detection_radii and enemy.behavior:
+	if show_detection_radii:
 		var radius: float = enemy.detection_radius * camera.zoom.x
 		draw_node.draw_arc(screen_pos, radius, 0, TAU, 32, color_detection, 2.0)
 
 	# Attack radius
-	if show_attack_radii and enemy.behavior:
+	if show_attack_radii:
 		var radius: float = enemy.attack_radius * camera.zoom.x
 		draw_node.draw_arc(screen_pos, radius, 0, TAU, 24, color_attack, 2.0)
 
@@ -120,20 +117,31 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 	if show_health_bars and not enemy.is_dead:
 		_draw_health_bar(screen_pos + Vector2(-20, -30), 40, 6, enemy.get_health_percent())
 
-	# AI State label
-	if show_ai_states and enemy.behavior:
-		var state_name: String = enemy.behavior.get_state_name()
-		var state_color: Color = ai_state_colors.get(enemy.behavior.state, Color.WHITE)
+	# AI State label - check for ModularEnemyNPC module system
+	if show_ai_states:
+		var state_name := "STATIC"
+		var state_color := ai_state_colors.get("idle", Color.WHITE)
+
+		# Check if using module system (ModularEnemyNPC)
+		if enemy is ModularEnemyNPC and enemy.module_controller:
+			var ctx = enemy.module_controller.get_context()
+			state_name = EnemyContext.BehaviorState.keys()[ctx.behavior_state]
+			match ctx.behavior_state:
+				EnemyContext.BehaviorState.IDLE:
+					state_color = ai_state_colors.get("idle", Color.WHITE)
+				EnemyContext.BehaviorState.COMBAT:
+					state_color = ai_state_colors.get("combat", Color.WHITE)
+				EnemyContext.BehaviorState.DEAD:
+					state_color = ai_state_colors.get("dead", Color.WHITE)
+
 		_draw_label(screen_pos + Vector2(0, -40), state_name, state_color)
 
-		# Show if has target
-		if enemy.behavior.has_target():
-			_draw_label(screen_pos + Vector2(0, -52), "[TARGETING]", Color(1.0, 0.5, 0.0), 10)
-
-	# Target line
-	if show_target_lines and enemy.behavior and enemy.behavior.target:
-		var target_pos: Vector2 = _world_to_screen(enemy.behavior.target.global_position, camera)
-		draw_node.draw_line(screen_pos, target_pos, color_target_line, 2.0)
+	# Target line - check for ModularEnemyNPC
+	if show_target_lines and enemy is ModularEnemyNPC and enemy.module_controller:
+		var ctx = enemy.module_controller.get_context()
+		if ctx.current_target and is_instance_valid(ctx.current_target):
+			var target_pos: Vector2 = _world_to_screen(ctx.current_target.global_position, camera)
+			draw_node.draw_line(screen_pos, target_pos, color_target_line, 2.0)
 
 	# Facing arrow
 	if show_facing_arrows:
@@ -148,18 +156,45 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 		draw_node.draw_line(screen_pos, screen_pos + vel_vec, color_velocity, 1.5)
 
 	# Leash radius (area enemy will chase within)
-	if show_patrol_paths and enemy.behavior:
+	if show_patrol_paths:
 		var leash_screen: Vector2 = _world_to_screen(enemy.home_position, camera)
 		var leash_radius: float = enemy.leash_radius * camera.zoom.x
 		draw_node.draw_arc(leash_screen, leash_radius, 0, TAU, 32, Color(0.5, 0.3, 0.3, 0.2), 1.5)
 
-	# Ability system info
-	if show_ability_info and enemy._use_ability_system:
-		_draw_ability_info(enemy, screen_pos, camera)
+	# Module info for ModularEnemyNPC
+	if show_module_info and enemy is ModularEnemyNPC and enemy.module_controller:
+		_draw_module_info(enemy, screen_pos)
 
-	# Behavior profile info
-	if show_behavior_profile and enemy.behavior_profile:
-		_draw_behavior_profile_info(enemy, screen_pos)
+
+func _draw_module_info(enemy: ModularEnemyNPC, screen_pos: Vector2) -> void:
+	## Draw module system debug info
+	var y_offset := 15.0
+	var x_offset := 50.0
+
+	var ctx = enemy.module_controller.get_context()
+
+	# Show target info
+	if ctx.has_valid_target and ctx.current_target:
+		var target_label := "Target: %s (%.0f)" % [ctx.current_target.name, ctx.target_distance]
+		_draw_label(screen_pos + Vector2(x_offset, y_offset), target_label, color_target_line, 9)
+		y_offset += 10.0
+
+	# Show attack state
+	if ctx.is_in_attack_range:
+		_draw_label(screen_pos + Vector2(x_offset, y_offset), "[IN RANGE]", color_attack, 9)
+		y_offset += 10.0
+
+	if ctx.attack_in_progress:
+		_draw_label(screen_pos + Vector2(x_offset, y_offset), "[ATTACKING]", Color(1.0, 0.3, 0.3), 9)
+		y_offset += 10.0
+
+	# Show active modules
+	var modules = enemy.module_controller.get_all_modules()
+	for module in modules:
+		var minfo = module.get_debug_info()
+		var module_label := "%s (p=%d)" % [minfo.name, minfo.priority]
+		_draw_label(screen_pos + Vector2(x_offset, y_offset), module_label, color_module, 8)
+		y_offset += 9.0
 
 
 func _draw_friendly(npc: Node2D, camera: Camera2D) -> void:
@@ -310,69 +345,5 @@ func toggle_velocity_vectors() -> void:
 	show_velocity_vectors = not show_velocity_vectors
 
 
-func toggle_ability_info() -> void:
-	show_ability_info = not show_ability_info
-
-
-func toggle_ability_hitboxes() -> void:
-	show_ability_hitboxes = not show_ability_hitboxes
-	# Enable hitbox visualization on all enemies
-	for enemy in get_tree().get_nodes_in_group("enemies"):
-		if enemy is EnemyNPC and enemy.has_method("debug_enable_hitbox_visualization"):
-			enemy.debug_enable_hitbox_visualization(show_ability_hitboxes)
-
-
-func toggle_behavior_profile() -> void:
-	show_behavior_profile = not show_behavior_profile
-
-
-#===============================================================================
-# ABILITY SYSTEM DRAWING
-#===============================================================================
-
-func _draw_ability_info(enemy: EnemyNPC, screen_pos: Vector2, _camera: Camera2D) -> void:
-	## Draw ability system debug info for an enemy
-	if not enemy.ability_controller:
-		return
-
-	var y_offset := 15.0
-	var x_offset := 50.0
-
-	# Show current execution state
-	if enemy.ability_controller.is_busy():
-		var state_label: String = "WINDUP" if enemy.ability_controller.is_winding_up() else "RECOVERY"
-		var state_color: Color = color_windup if enemy.ability_controller.is_winding_up() else color_recovery
-		_draw_label(screen_pos + Vector2(x_offset, y_offset), state_label, state_color, 10)
-		y_offset += 12.0
-
-	# Show ability list with cooldowns
-	for i in range(min(enemy.abilities.size(), 4)):  # Max 4 abilities shown
-		var ability = enemy.abilities[i]  # AbilityData
-		var on_cd: bool = enemy.ability_controller._executor.is_on_cooldown(ability) if enemy.ability_controller._executor else false
-		var cd_remaining: float = enemy.ability_controller._executor.get_cooldown_remaining(ability) if on_cd else 0.0
-
-		var ability_text: String = ability.ability_name
-		if on_cd:
-			ability_text += " (%.1fs)" % cd_remaining
-
-		var ability_color: Color = color_cooldown if on_cd else color_ability
-		_draw_label(screen_pos + Vector2(x_offset, y_offset), ability_text, ability_color, 9)
-		y_offset += 10.0
-
-
-func _draw_behavior_profile_info(enemy: EnemyNPC, screen_pos: Vector2) -> void:
-	## Draw behavior profile info
-	var profile = enemy.behavior_profile  # BehaviorProfileData
-	if not profile:
-		return
-
-	var y_offset := -65.0
-
-	# Profile name
-	_draw_label(screen_pos + Vector2(0, y_offset), "[%s]" % profile.profile_name, Color(0.6, 0.8, 1.0), 9)
-	y_offset -= 10.0
-
-	# Combat style - get from profile's debug info
-	var debug_info: Dictionary = profile.get_debug_info() if profile.has_method("get_debug_info") else {}
-	var style_text: String = debug_info.get("combat", "unknown").to_upper()
-	_draw_label(screen_pos + Vector2(0, y_offset), style_text, Color(0.8, 0.6, 0.4), 8)
+func toggle_module_info() -> void:
+	show_module_info = not show_module_info
