@@ -27,6 +27,11 @@ This is the newest version of the codebase. Clone it and add Phase5-Final into i
 > - Give me the `.bas` file updates (if schema changes)
 > - Give me tab-separated or table data ready to paste into Excel
 > - I will import/paste and export the JSON myself
+>
+> **IMPORTANT:** When changing database schema, always update:
+> - The specific database `.bas` file (e.g., `EnemyDatabase.bas`)
+> - `MasterExport.bas` (ExportAll, ValidateAll, SetupWorkbook functions)
+> - `SharedValidation.bas` (named ranges, foreign key validations, enum validations)
 
 ---
 
