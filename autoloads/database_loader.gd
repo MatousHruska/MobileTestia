@@ -36,6 +36,8 @@ var gameplay_settings: Dictionary = {}  ## Key-value pairs for global game setti
 var combat_text_settings: Dictionary = {}  ## Combat text global settings
 var combat_text_categories: Dictionary = {}  ## Combat text category configs (keyed by id)
 var enemy_modules: Dictionary = {}  ## Modular AI modules (keyed by id)
+var abilities: Dictionary = {}  ## Combat abilities (keyed by id)
+var enemy_abilities: Array = []  ## Enemy-to-ability assignments (list of dictionaries)
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -55,6 +57,7 @@ var cutscenes_list: Array = []
 var floating_dialogues_list: Array = []
 var popup_messages_list: Array = []
 var enemy_modules_list: Array = []
+var abilities_list: Array = []
 
 ## Signals
 signal databases_loaded
@@ -80,6 +83,10 @@ func load_all_databases() -> void:
 	success = _load_database("enemies.json", "enemies", enemies, enemies_list) and success
 	success = _load_database("enemy_variants.json", "enemy_variants", enemy_variants) and success
 	success = _load_database("enemy_modules.json", "enemy_modules", enemy_modules, enemy_modules_list) and success
+
+	# Abilities (Combat System)
+	success = _load_database("abilities.json", "abilities", abilities, abilities_list) and success
+	success = _load_enemy_abilities() and success
 
 	# Loot
 	success = _load_database("loot_tables.json", "loot_tables", loot_tables) and success
@@ -220,6 +227,36 @@ func get_setting_int(key: String, default_value: int = 0) -> int:
 	return int(gameplay_settings.get(key, default_value))
 
 
+## Load enemy abilities (linking enemies to abilities)
+func _load_enemy_abilities() -> bool:
+	var path := DATABASE_PATH + "enemy_abilities.json"
+
+	if not FileAccess.file_exists(path):
+		Debug.warn("Database", "enemy_abilities.json not found (this is OK if not yet exported)")
+		return true  # Not an error
+
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		Debug.warn("Database", "Failed to open enemy_abilities.json")
+		return false
+
+	var json_text := file.get_as_text()
+	file.close()
+
+	var json := JSON.new()
+	var error := json.parse(json_text)
+	if error != OK:
+		Debug.warn("Database", "JSON parse error in enemy_abilities.json: %s" % json.get_error_message())
+		return false
+
+	var data: Dictionary = json.data
+	if data.has("enemy_abilities"):
+		enemy_abilities = data["enemy_abilities"]
+		Debug.log("Database", "Loaded %d enemy ability assignments" % enemy_abilities.size())
+
+	return true
+
+
 ## Load combat text settings and categories
 func _load_combat_text() -> bool:
 	var path := DATABASE_PATH + "combat_text.json"
@@ -352,6 +389,39 @@ func get_enemies_by_type(enemy_type: String) -> Array:
 ## Get AI module by id
 func get_module(id: String) -> Dictionary:
 	return enemy_modules.get(id, {})
+
+
+#===============================================================================
+# ABILITY ACCESS
+#===============================================================================
+
+## Get ability by id
+func get_ability(id: String) -> Dictionary:
+	return abilities.get(id, {})
+
+
+## Get all abilities for an enemy
+## Returns array of enemy_ability assignment dictionaries
+func get_enemy_abilities(enemy_id: String) -> Array:
+	var result: Array = []
+	for ea in enemy_abilities:
+		if ea.get("enemy_id", "") == enemy_id:
+			result.append(ea)
+	return result
+
+
+## Get all abilities of a specific type
+func get_abilities_by_type(ability_type: String) -> Array:
+	var result: Array = []
+	for ability in abilities_list:
+		if ability.get("ability_type", "melee") == ability_type:
+			result.append(ability)
+	return result
+
+
+## Get all ability IDs
+func get_all_ability_ids() -> Array:
+	return abilities.keys()
 
 
 #===============================================================================
@@ -1202,6 +1272,8 @@ func print_stats() -> void:
 		"unique_items": unique_items.size(),
 		"enemies": enemies.size(),
 		"enemy_modules": enemy_modules.size(),
+		"abilities": abilities.size(),
+		"enemy_abilities": enemy_abilities.size(),
 		"loot_tables": loot_tables.size(),
 		"talent_trees": talent_trees.size(),
 		"talents": talents.size(),

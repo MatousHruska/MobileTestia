@@ -101,6 +101,10 @@ func _create_module_instance(module_id: String, _module_data: Dictionary) -> Bas
 			return ChaseModule.new()
 		"mod_melee_attack":
 			return MeleeAttackModule.new()
+		"mod_combat":
+			return CombatModule.new()
+		"mod_flee":
+			return FleeModule.new()
 		"mod_idle":
 			return IdleModule.new()
 		"mod_leash":
@@ -144,41 +148,241 @@ func _handle_module_decisions() -> void:
 
 	# Handle attack decision
 	if ctx.should_attack:
-		_execute_attack()
+		if not ctx.current_ability.is_empty():
+			_execute_ability(ctx.current_ability)
+			ctx.current_ability = {}  # Clear after use
+		else:
+			# Fallback to basic attack if no ability specified
+			_execute_basic_attack()
 
 	# Movement is applied automatically by context.apply_to_owner()
 	# but we can add additional handling here if needed
 
 
-func _execute_attack() -> void:
-	"""Execute an attack - uses basic attack"""
+func _execute_ability(ability: Dictionary) -> void:
+	"""Execute a specific ability based on its type"""
 	var ctx = module_controller.get_context()
 	ctx.attack_in_progress = true
 
-	# Basic attack
-	_perform_basic_attack()
+	var ability_type: String = ability.get("ability_type", "melee")
 
-	# Brief attack state (for animation)
-	get_tree().create_timer(0.3).timeout.connect(func():
+	match ability_type:
+		"melee":
+			_execute_melee_attack(ability)
+		"ranged", "projectile":
+			_execute_ranged_attack(ability)
+		"dash":
+			_execute_dash_attack(ability)
+		"buff":
+			_execute_buff(ability)
+		"debuff":
+			_execute_debuff(ability)
+		_:
+			# Fallback to melee
+			_execute_melee_attack(ability)
+
+	# Get cast time for how long attack is in progress
+	var cast_time: float = float(ability.get("cast_time", 0.3))
+	cast_time = maxf(cast_time, 0.3)  # Minimum 0.3s for animation
+
+	# Clear attack_in_progress after cast time
+	get_tree().create_timer(cast_time).timeout.connect(func():
 		if module_controller:
 			module_controller.get_context().attack_in_progress = false
 	)
 
 
-func _perform_basic_attack() -> void:
-	"""Perform a basic melee attack"""
+func _execute_melee_attack(ability: Dictionary) -> void:
+	"""Execute a melee attack ability"""
+	play_attack()
+
+	var ctx = module_controller.get_context()
+	var ability_range: float = float(ability.get("range", attack_radius))
+
+	if ctx.current_target and ctx.target_distance <= ability_range:
+		var damage: float = base_damage * float(ability.get("damage_mult", 1.0))
+
+		if ctx.current_target.has_method("take_damage"):
+			ctx.current_target.take_damage(damage, self)
+		elif PlayerStats:
+			PlayerStats.damage(damage)
+
+		# Apply status effect if ability has one
+		_apply_ability_status_effect(ability, ctx.current_target)
+
+		Debug.log("Combat", "%s melee attack '%s' (damage=%.0f)" % [
+			enemy_name,
+			ability.get("name", "Melee"),
+			damage
+		])
+
+
+func _execute_ranged_attack(ability: Dictionary) -> void:
+	"""Execute a ranged/projectile attack ability"""
+	play_attack()
+
+	var ctx = module_controller.get_context()
+	if ctx.current_target:
+		_spawn_projectile(ability, ctx.target_direction, ctx.current_target)
+
+
+func _execute_dash_attack(ability: Dictionary) -> void:
+	"""Execute a dash attack ability (dash toward or away from target)"""
+	var ctx = module_controller.get_context()
+	var movement_type: String = ability.get("movement_type", "dash_to")
+	var distance: float = float(ability.get("movement_distance", 100.0))
+
+	var direction: Vector2 = ctx.target_direction
+	if movement_type == "dash_away":
+		direction = -direction
+	elif movement_type == "teleport":
+		# For teleport, just move instantly
+		global_position += direction * distance
+		return
+
+	# Perform dash (quick movement in direction)
+	# TODO: Implement smooth dash with tween
+	# For now, instant movement + melee damage if dash_to
+	global_position += direction * distance
+	play_attack()
+
+	if movement_type == "dash_to":
+		# Deal damage at end of dash
+		_execute_melee_attack(ability)
+
+
+func _execute_buff(ability: Dictionary) -> void:
+	"""Execute a buff ability (heal self, shield, etc.)"""
+	var damage_mult: float = float(ability.get("damage_mult", 0.0))
+
+	# Negative damage_mult = healing
+	if damage_mult < 0:
+		var heal_amount: float = max_health * abs(damage_mult)
+		current_health = minf(current_health + heal_amount, max_health)
+
+		Debug.log("Combat", "%s healed for %.0f" % [enemy_name, heal_amount])
+
+	# Apply status effect to self
+	var status_effect_id: String = ability.get("status_effect_id", "")
+	if not status_effect_id.is_empty():
+		_apply_status_effect_to_self(status_effect_id)
+
+	play_attack()  # Play animation
+
+
+func _execute_debuff(ability: Dictionary) -> void:
+	"""Execute a debuff ability on target"""
+	play_attack()
+
+	var ctx = module_controller.get_context()
+	if ctx.current_target:
+		_apply_ability_status_effect(ability, ctx.current_target)
+
+
+func _spawn_projectile(ability: Dictionary, direction: Vector2, target: Node2D) -> void:
+	"""Spawn a projectile for ranged attacks"""
+	# Try to use the existing projectile system if available
+	var projectile_speed: float = float(ability.get("projectile_speed", 200.0))
+	var damage: float = base_damage * float(ability.get("damage_mult", 1.0))
+	var aoe_radius: float = float(ability.get("aoe_radius", 0.0))
+
+	# Check if we have a projectile spawner or scene
+	if has_node("ProjectileSpawner"):
+		var spawner = get_node("ProjectileSpawner")
+		if spawner.has_method("spawn_projectile"):
+			spawner.spawn_projectile(direction, damage, projectile_speed)
+			Debug.log("Combat", "%s fired projectile '%s'" % [
+				enemy_name,
+				ability.get("name", "Projectile")
+			])
+			return
+
+	# Fallback: try to load and spawn projectile scene
+	var projectile_scene: PackedScene = null
+	if aoe_radius > 0:
+		projectile_scene = load("res://scenes/prefabs/magic_projectile.tscn") if ResourceLoader.exists("res://scenes/prefabs/magic_projectile.tscn") else null
+	else:
+		projectile_scene = load("res://scenes/prefabs/projectile.tscn") if ResourceLoader.exists("res://scenes/prefabs/projectile.tscn") else null
+
+	if projectile_scene:
+		var projectile = projectile_scene.instantiate()
+		get_tree().current_scene.add_child(projectile)
+		projectile.global_position = global_position
+
+		# Configure projectile if it has the expected properties
+		if "direction" in projectile:
+			projectile.direction = direction
+		if "speed" in projectile:
+			projectile.speed = projectile_speed
+		if "damage" in projectile:
+			projectile.damage = damage
+		if "owner_node" in projectile:
+			projectile.owner_node = self
+
+		Debug.log("Combat", "%s spawned projectile '%s' (damage=%.0f, speed=%.0f)" % [
+			enemy_name,
+			ability.get("name", "Projectile"),
+			damage,
+			projectile_speed
+		])
+	else:
+		# No projectile system available - fall back to instant ranged damage
+		Debug.warn("Combat", "No projectile scene found, using instant damage")
+		var ctx = module_controller.get_context()
+		if ctx.current_target:
+			var damage_final: float = base_damage * float(ability.get("damage_mult", 1.0))
+			if ctx.current_target.has_method("take_damage"):
+				ctx.current_target.take_damage(damage_final, self)
+			elif PlayerStats:
+				PlayerStats.damage(damage_final)
+
+
+func _apply_ability_status_effect(ability: Dictionary, target: Node2D) -> void:
+	"""Apply status effect from ability to target"""
+	var status_effect_id: String = ability.get("status_effect_id", "")
+	if status_effect_id.is_empty():
+		return
+
+	# Try to apply via StatusEffectComponent if target has one
+	if target.has_node("StatusEffectComponent"):
+		var status_component = target.get_node("StatusEffectComponent")
+		if status_component.has_method("apply_effect"):
+			status_component.apply_effect(status_effect_id, self)
+	elif target.has_method("apply_status_effect"):
+		target.apply_status_effect(status_effect_id, self)
+
+
+func _apply_status_effect_to_self(status_effect_id: String) -> void:
+	"""Apply status effect to self"""
+	if has_node("StatusEffectComponent"):
+		var status_component = get_node("StatusEffectComponent")
+		if status_component.has_method("apply_effect"):
+			status_component.apply_effect(status_effect_id, self)
+	elif has_method("apply_status_effect"):
+		apply_status_effect(status_effect_id, self)
+
+
+func _execute_basic_attack() -> void:
+	"""Fallback basic attack when no ability is specified"""
+	var ctx = module_controller.get_context()
+	ctx.attack_in_progress = true
+
 	play_attack()
 
 	# Deal damage to target if still in range
-	var ctx = module_controller.get_context()
 	if ctx.current_target and ctx.target_distance <= attack_radius:
 		if ctx.current_target.has_method("take_damage"):
 			ctx.current_target.take_damage(base_damage, self)
-		elif "PlayerStats" in get_tree().root:
-			# Player damage
+		elif PlayerStats:
 			PlayerStats.damage(base_damage)
 
 	Debug.log("Combat", "%s basic attack (damage=%.0f)" % [enemy_name, base_damage])
+
+	# Brief attack state
+	get_tree().create_timer(0.3).timeout.connect(func():
+		if module_controller:
+			module_controller.get_context().attack_in_progress = false
+	)
 
 
 ## Override on_hit to also notify modules if using module system

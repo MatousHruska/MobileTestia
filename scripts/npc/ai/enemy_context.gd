@@ -97,6 +97,12 @@ var last_ability_id: String = ""
 ## Attack cooldown remaining (seconds)
 var attack_cooldown_remaining: float = 0.0
 
+## Current ability being used (set by CombatModule, read by ModularEnemyNPC)
+var current_ability: Dictionary = {}
+
+## Is this a ranged attack? (for ModularEnemyNPC to know what to spawn)
+var is_ranged_attack: bool = false
+
 #===============================================================================
 # HEALTH STATE (Read from: EnemyNPC)
 #===============================================================================
@@ -235,6 +241,8 @@ func reset_frame_flags() -> void:
 	should_stop = false
 	desired_direction = Vector2.ZERO
 	speed_multiplier = 1.0
+	# Note: current_ability is NOT reset here - it persists until cleared by ModularEnemyNPC
+	is_ranged_attack = false
 
 
 func update_from_owner() -> void:
