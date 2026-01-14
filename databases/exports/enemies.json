@@ -14,7 +14,7 @@
       "detection_range": 120,
       "xp_reward": 15,
       "loot_table_id": "loot_zombie",
-      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_melee_attack,mod_idle",
+      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle",
       "module_config": {"mod_idle": {"can_roam": true, "roam_radius": 50}},
       "description": "Slow shambling undead"
     },
@@ -32,7 +32,7 @@
       "detection_range": 180,
       "xp_reward": 25,
       "loot_table_id": "loot_ghoul",
-      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_melee_attack,mod_idle",
+      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle",
       "module_config": {"mod_idle": {"can_roam": false}},
       "description": "Fast aggressive predator"
     },
@@ -50,7 +50,7 @@
       "detection_range": 200,
       "xp_reward": 35,
       "loot_table_id": "loot_vampire",
-      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_melee_attack,mod_idle",
+      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle",
       "module_config": {"mod_idle": {"can_roam": true, "roam_radius": 100}},
       "description": "Cunning undead with shield"
     },
@@ -68,7 +68,7 @@
       "detection_range": 250,
       "xp_reward": 200,
       "loot_table_id": "loot_vampire_lord",
-      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_melee_attack,mod_idle",
+      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle",
       "module_config": {"mod_idle": {"can_roam": true, "roam_radius": 100}},
       "description": "Powerful undead boss"
     }

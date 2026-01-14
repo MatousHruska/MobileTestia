@@ -1,5 +1,40 @@
 {
-  "_deprecated": true,
-  "_note": "DEPRECATED - Enemy attacks now handled by combat modules. Legacy ability system removed in Phase 2 cleanup. See enemy_modules.json for the new modular AI system.",
-  "enemy_abilities": []
+  "enemy_abilities": [
+    {
+      "enemy_id": "ene_zombie_basic",
+      "ability_id": "abi_melee_strike",
+      "priority": 50,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_ghoul_basic",
+      "ability_id": "abi_leap_attack",
+      "priority": 100,
+      "condition": "opener"
+    },
+    {
+      "enemy_id": "ene_ghoul_basic",
+      "ability_id": "abi_melee_strike",
+      "priority": 50,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_vampire_basic",
+      "ability_id": "abi_heavy_strike",
+      "priority": 60,
+      "condition": "health_above_50"
+    },
+    {
+      "enemy_id": "ene_vampire_basic",
+      "ability_id": "abi_melee_strike",
+      "priority": 50,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_vampire_basic",
+      "ability_id": "abi_heal_self",
+      "priority": 80,
+      "condition": "health_below_30"
+    }
+  ]
 }
