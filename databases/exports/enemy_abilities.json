@@ -7,6 +7,12 @@
       "condition": "default"
     },
     {
+      "enemy_id": "ene_zombie_basic",
+      "ability_id": "abi_rot_strike",
+      "priority": 100,
+      "condition": "default"
+    },
+    {
       "enemy_id": "ene_ghoul_basic",
       "ability_id": "abi_leap_attack",
       "priority": 100,
