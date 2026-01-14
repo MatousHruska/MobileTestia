@@ -16,14 +16,14 @@
       "enemy_id": "ene_ghoul_basic",
       "ability_id": "abi_leap_attack",
       "priority": 100,
-      "condition": "opener"
+      "condition": "opener",
+      "config_override": {"dash_duration": 0.6, "cast_time": 0.3}
     },
     {
       "enemy_id": "ene_ghoul_basic",
       "ability_id": "abi_melee_strike",
       "priority": 50,
-      "condition": "default",
-      "config_override": {"dash_duration": 0.6, "cast_time": 0.3}
+      "condition": "default"
     },
     {
       "enemy_id": "ene_vampire_basic",
