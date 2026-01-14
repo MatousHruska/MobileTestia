@@ -72,6 +72,18 @@ func _load_abilities_from_database(owner: Node2D) -> void:
 			var override_mult: float = float(ea.get("damage_mult_override"))
 			merged["damage_mult"] = base_mult * override_mult
 
+		# Apply config_override - merges any fields from the JSON object
+		if ea.has("config_override") and ea.config_override is Dictionary:
+			for key in ea.config_override:
+				merged[key] = ea.config_override[key]
+
+		# Also merge extra_config from base ability if present
+		if ability_data.has("extra_config") and ability_data.extra_config is Dictionary:
+			if not merged.has("extra_config"):
+				merged["extra_config"] = {}
+			for key in ability_data.extra_config:
+				merged["extra_config"][key] = ability_data.extra_config[key]
+
 		_abilities.append(merged)
 		_cooldowns[ability_id] = 0.0
 
