@@ -21,7 +21,7 @@ Public Sub SetupAbilitiesSheet()
     headers = Array("id", "name", "ability_type", "damage_mult", "damage_type", _
                     "range", "cooldown", "cast_time", "projectile_speed", _
                     "aoe_radius", "movement_type", "movement_distance", _
-                    "status_effect_id", "animation", "description")
+                    "status_effect_id", "animation", "extra_config", "description")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -38,6 +38,7 @@ Public Sub SetupAbilitiesSheet()
     SafeAddComment ws.Cells(1, 12), "Distance for dash/teleport abilities"
     SafeAddComment ws.Cells(1, 13), "Status effect to apply (from StatusEffects)"
     SafeAddComment ws.Cells(1, 14), "Animation name to play"
+    SafeAddComment ws.Cells(1, 15), "JSON config for ability-specific params, e.g. {""falloff_type"": ""linear"", ""center_mult"": 2.0}"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -92,7 +93,15 @@ Public Sub ExportAbilities()
             json = json & "      ""movement_distance"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(row, 12), 0)) & "," & vbCrLf
             json = json & "      ""status_effect_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 13))) & """," & vbCrLf
             json = json & "      ""animation"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 14), "attack")) & """," & vbCrLf
-            json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 15))) & """" & vbCrLf
+
+            ' extra_config - parse as JSON object if present
+            Dim extraConfig As String
+            extraConfig = Trim(ws.Cells(row, 15).Value)
+            If Len(extraConfig) > 0 Then
+                json = json & "      ""extra_config"": " & extraConfig & "," & vbCrLf
+            End If
+
+            json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 16))) & """" & vbCrLf
             json = json & "    }"
         End If
     Next row
@@ -198,7 +207,7 @@ Public Sub SetupEnemyAbilitiesSheet()
 
     Dim headers As Variant
     headers = Array("enemy_id", "ability_id", "priority", "condition", _
-                    "cooldown_override", "damage_mult_override")
+                    "cooldown_override", "damage_mult_override", "config_override")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -208,6 +217,7 @@ Public Sub SetupEnemyAbilitiesSheet()
     SafeAddComment ws.Cells(1, 4), "When to use: default, opener, target_close, target_far, health_below_X, health_above_X, on_cooldown_X, ally_nearby"
     SafeAddComment ws.Cells(1, 5), "Override base cooldown (optional)"
     SafeAddComment ws.Cells(1, 6), "Override damage multiplier (optional, multiplies with ability's damage_mult)"
+    SafeAddComment ws.Cells(1, 7), "JSON to override any ability field, e.g. {""range"": 300, ""cast_time"": 0.1}"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -269,6 +279,14 @@ Public Sub ExportEnemyAbilities()
             If damageMultOverride >= 0 Then
                 json = json & "," & vbCrLf
                 json = json & "      ""damage_mult_override"": " & FormatJsonNumber(damageMultOverride)
+            End If
+
+            ' config_override - parse as JSON object if present
+            Dim configOverride As String
+            configOverride = Trim(ws.Cells(row, 7).Value)
+            If Len(configOverride) > 0 Then
+                json = json & "," & vbCrLf
+                json = json & "      ""config_override"": " & configOverride
             End If
 
             json = json & vbCrLf & "    }"
