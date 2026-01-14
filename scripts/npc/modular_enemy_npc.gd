@@ -199,6 +199,9 @@ func _execute_melee_attack(ability: Dictionary) -> void:
 	var ctx = module_controller.get_context()
 	var ability_range: float = float(ability.get("range", attack_radius))
 
+	# Show debug hitbox
+	_show_debug_hitbox(global_position, ability_range, Color.RED, 0.3)
+
 	if ctx.current_target and ctx.target_distance <= ability_range:
 		var damage: float = base_damage * float(ability.get("damage_mult", 1.0))
 
@@ -232,23 +235,35 @@ func _execute_dash_attack(ability: Dictionary) -> void:
 	var movement_type: String = ability.get("movement_type", "dash_to")
 	var distance: float = float(ability.get("movement_distance", 100.0))
 
+	# Get extra_config for dash customization
+	var extra: Dictionary = ability.get("extra_config", {})
+	var dash_duration: float = float(extra.get("dash_duration", 0.0))  # 0 = instant
+
 	var direction: Vector2 = ctx.target_direction
 	if movement_type == "dash_away":
 		direction = -direction
-	elif movement_type == "teleport":
-		# For teleport, just move instantly
-		global_position += direction * distance
-		return
 
-	# Perform dash (quick movement in direction)
-	# TODO: Implement smooth dash with tween
-	# For now, instant movement + melee damage if dash_to
-	global_position += direction * distance
-	play_attack()
+	var start_pos: Vector2 = global_position
+	var end_pos: Vector2 = global_position + direction * distance
 
-	if movement_type == "dash_to":
-		# Deal damage at end of dash
-		_execute_melee_attack(ability)
+	# Show debug line for dash path
+	_show_debug_line(start_pos, end_pos, Color.ORANGE, dash_duration + 0.3)
+
+	if movement_type == "teleport" or dash_duration <= 0:
+		# Instant teleport
+		global_position = end_pos
+		play_attack()
+		if movement_type == "dash_to":
+			_execute_melee_attack(ability)
+	else:
+		# Smooth dash with tween
+		play_attack()
+		var tween = create_tween()
+		tween.tween_property(self, "global_position", end_pos, dash_duration)
+		tween.tween_callback(func():
+			if movement_type == "dash_to":
+				_execute_melee_attack(ability)
+		)
 
 
 func _execute_buff(ability: Dictionary) -> void:
@@ -474,3 +489,87 @@ func debug_print_module_state() -> void:
 	for module in module_controller.get_all_modules():
 		var minfo = module.get_debug_info()
 		print("  [%s] %s (pri=%d)" % [minfo.type, minfo.name, minfo.priority])
+
+
+#===============================================================================
+# DEBUG HITBOX VISUALIZATION
+#===============================================================================
+
+func _show_debug_hitbox(center: Vector2, radius: float, color: Color, duration: float = 0.3) -> void:
+	"""Show a debug circle for attack range visualization"""
+	if not OS.is_debug_build():
+		return
+
+	var debug_circle = _create_debug_circle(radius, color)
+	debug_circle.global_position = center
+	get_tree().current_scene.add_child(debug_circle)
+
+	# Fade out and remove
+	var tween = debug_circle.create_tween()
+	tween.tween_property(debug_circle, "modulate:a", 0.0, duration)
+	tween.tween_callback(debug_circle.queue_free)
+
+
+func _show_debug_line(start: Vector2, end: Vector2, color: Color, duration: float = 0.3) -> void:
+	"""Show a debug line for dash/projectile path visualization"""
+	if not OS.is_debug_build():
+		return
+
+	var debug_line = _create_debug_line(start, end, color)
+	get_tree().current_scene.add_child(debug_line)
+
+	# Fade out and remove
+	var tween = debug_line.create_tween()
+	tween.tween_property(debug_line, "modulate:a", 0.0, duration)
+	tween.tween_callback(debug_line.queue_free)
+
+
+func _create_debug_circle(radius: float, color: Color) -> Node2D:
+	"""Create a circle Node2D for debug visualization"""
+	var circle = Node2D.new()
+	circle.set_script(preload("res://scripts/npc/debug_hitbox_circle.gd") if ResourceLoader.exists("res://scripts/npc/debug_hitbox_circle.gd") else null)
+
+	# If no script, create inline drawing
+	if circle.get_script() == null:
+		var draw_circle = Node2D.new()
+		draw_circle.name = "DebugCircle"
+		draw_circle.set_meta("radius", radius)
+		draw_circle.set_meta("color", color)
+		draw_circle.set_script(_get_inline_circle_script())
+		circle.add_child(draw_circle)
+	else:
+		circle.radius = radius
+		circle.color = color
+
+	return circle
+
+
+func _create_debug_line(start: Vector2, end: Vector2, color: Color) -> Node2D:
+	"""Create a line Node2D for debug visualization"""
+	var line = Line2D.new()
+	line.width = 3.0
+	line.default_color = color
+	line.add_point(start)
+	line.add_point(end)
+	return line
+
+
+## Inline GDScript for circle drawing (avoids needing external file)
+static var _inline_circle_script: GDScript = null
+
+func _get_inline_circle_script() -> GDScript:
+	if _inline_circle_script == null:
+		_inline_circle_script = GDScript.new()
+		_inline_circle_script.source_code = """
+extends Node2D
+
+func _draw() -> void:
+	var radius: float = get_meta("radius", 24.0)
+	var color: Color = get_meta("color", Color.RED)
+	color.a = 0.4
+	draw_circle(Vector2.ZERO, radius, color)
+	color.a = 0.8
+	draw_arc(Vector2.ZERO, radius, 0, TAU, 32, color, 2.0)
+"""
+		_inline_circle_script.reload()
+	return _inline_circle_script
