@@ -527,19 +527,14 @@ func _show_debug_line(start: Vector2, end: Vector2, color: Color, duration: floa
 func _create_debug_circle(radius: float, color: Color) -> Node2D:
 	"""Create a circle Node2D for debug visualization"""
 	var circle = Node2D.new()
-	circle.set_script(preload("res://scripts/npc/debug_hitbox_circle.gd") if ResourceLoader.exists("res://scripts/npc/debug_hitbox_circle.gd") else null)
 
-	# If no script, create inline drawing
-	if circle.get_script() == null:
-		var draw_circle = Node2D.new()
-		draw_circle.name = "DebugCircle"
-		draw_circle.set_meta("radius", radius)
-		draw_circle.set_meta("color", color)
-		draw_circle.set_script(_get_inline_circle_script())
-		circle.add_child(draw_circle)
-	else:
-		circle.radius = radius
-		circle.color = color
+	# Use inline script for drawing (no external file dependency)
+	var draw_circle = Node2D.new()
+	draw_circle.name = "DebugCircle"
+	draw_circle.set_meta("radius", radius)
+	draw_circle.set_meta("color", color)
+	draw_circle.set_script(_get_inline_circle_script())
+	circle.add_child(draw_circle)
 
 	return circle
 
