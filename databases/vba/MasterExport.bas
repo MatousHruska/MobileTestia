@@ -24,6 +24,10 @@ Public Sub ExportAll()
     ExportEnemyVariants
     ExportEnemyModules
 
+    ' Abilities (Combat System)
+    ExportAbilities
+    ExportEnemyAbilities
+
     ' Loot
     ExportLootTables
 
@@ -96,6 +100,8 @@ Public Sub ValidateAll()
     ValidateAffixes
     ValidateEnemies
     ValidateEnemyModules
+    ValidateAbilities
+    ValidateEnemyAbilities
     ValidateLootTables
     ValidateTalentTrees
     ValidateTalents
@@ -144,6 +150,8 @@ Public Sub SetupWorkbook()
     currentSheet = "Enemies": SetupEnemiesSheet
     currentSheet = "EnemyVariants": SetupEnemyVariantsSheet
     currentSheet = "EnemyModules": SetupEnemyModulesSheet
+    currentSheet = "Abilities": SetupAbilitiesSheet
+    currentSheet = "EnemyAbilities": SetupEnemyAbilitiesSheet
     currentSheet = "LootTables": SetupLootTablesSheet
     currentSheet = "TalentTrees": SetupTalentTreesSheet
     currentSheet = "Talents": SetupTalentsSheet
