@@ -22,7 +22,8 @@
       "enemy_id": "ene_ghoul_basic",
       "ability_id": "abi_melee_strike",
       "priority": 50,
-      "condition": "default"
+      "condition": "default",
+      "config_override": {"dash_duration": 0.6, "cast_time": 0.3}
     },
     {
       "enemy_id": "ene_vampire_basic",
