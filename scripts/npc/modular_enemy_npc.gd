@@ -343,13 +343,58 @@ func _apply_ability_status_effect(ability: Dictionary, target: Node2D) -> void:
 	if status_effect_id.is_empty():
 		return
 
-	# Try to apply via StatusEffectComponent if target has one
+	# Look up status effect data from database
+	var effect_data: Dictionary = DatabaseLoader.status_effects.get(status_effect_id, {})
+	if effect_data.is_empty():
+		Debug.warn("Combat", "Status effect not found: %s" % status_effect_id)
+		return
+
+	var effect_type: String = effect_data.get("type", "debuff")
+	var duration: float = float(effect_data.get("duration", 5.0))
+	var value: float = float(effect_data.get("value", 0.0))
+	var tick_interval: float = float(effect_data.get("tick_interval", 1.0))
+	var show_in_hud: bool = effect_data.get("show_in_hud", true)
+
+	# Try StatusEffectManager (Player) first
+	if target.has_node("StatusEffectManager"):
+		var manager = target.get_node("StatusEffectManager")
+		_apply_effect_to_manager(manager, status_effect_id, effect_type, duration, value, tick_interval, show_in_hud)
+		Debug.log("Combat", "Applied %s to target via StatusEffectManager" % status_effect_id)
+		return
+
+	# Try StatusEffectComponent (enemies/NPCs)
 	if target.has_node("StatusEffectComponent"):
-		var status_component = target.get_node("StatusEffectComponent")
-		if status_component.has_method("apply_effect"):
-			status_component.apply_effect(status_effect_id, self)
-	elif target.has_method("apply_status_effect"):
+		var component = target.get_node("StatusEffectComponent")
+		if component.has_method("apply_effect"):
+			component.apply_effect(status_effect_id, self)
+			Debug.log("Combat", "Applied %s to target via StatusEffectComponent" % status_effect_id)
+			return
+
+	# Fallback: direct method
+	if target.has_method("apply_status_effect"):
 		target.apply_status_effect(status_effect_id, self)
+		Debug.log("Combat", "Applied %s to target via apply_status_effect method" % status_effect_id)
+
+
+func _apply_effect_to_manager(manager: Node, effect_id: String, effect_type: String, duration: float, value: float, tick_interval: float, show_in_hud: bool) -> void:
+	"""Apply effect using StatusEffectManager's specific methods"""
+	match effect_type:
+		"debuff_dot":
+			if manager.has_method("apply_dot"):
+				manager.apply_dot(effect_id, duration, abs(value), tick_interval, show_in_hud)
+		"buff_hot":
+			if manager.has_method("apply_hot"):
+				manager.apply_hot(effect_id, duration, abs(value), tick_interval, show_in_hud)
+		"buff":
+			if manager.has_method("apply_buff"):
+				manager.apply_buff(effect_id, duration, show_in_hud)
+		"debuff":
+			if manager.has_method("apply_debuff"):
+				manager.apply_debuff(effect_id, duration, show_in_hud)
+		_:
+			# Default to debuff for unknown types
+			if manager.has_method("apply_debuff"):
+				manager.apply_debuff(effect_id, duration, show_in_hud)
 
 
 func _apply_status_effect_to_self(status_effect_id: String) -> void:
