@@ -10,6 +10,9 @@ var _abilities: Array[Dictionary] = []
 ## Cooldown tracking: ability_id -> remaining cooldown
 var _cooldowns: Dictionary = {}
 
+## Global attack cooldown - minimum time between ANY attacks based on attack_speed
+var _global_attack_cooldown: float = 0.0
+
 ## Track if opener ability was used this engagement
 var _opener_used: bool = false
 
@@ -98,12 +101,16 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	for ability_id in _cooldowns:
 		_cooldowns[ability_id] = maxf(0.0, _cooldowns[ability_id] - delta)
 
-	# Track attack cooldown for UI/debug (use shortest cooldown among available abilities)
-	var min_cooldown: float = INF
+	# Update global attack cooldown
+	_global_attack_cooldown = maxf(0.0, _global_attack_cooldown - delta)
+
+	# Track attack cooldown for UI/debug (use max of global and shortest ability cooldown)
+	var min_ability_cooldown: float = INF
 	for ability_id in _cooldowns:
-		if _cooldowns[ability_id] < min_cooldown:
-			min_cooldown = _cooldowns[ability_id]
-	context.attack_cooldown_remaining = min_cooldown if min_cooldown != INF else 0.0
+		if _cooldowns[ability_id] < min_ability_cooldown:
+			min_ability_cooldown = _cooldowns[ability_id]
+	var effective_cooldown: float = maxf(_global_attack_cooldown, min_ability_cooldown if min_ability_cooldown != INF else 0.0)
+	context.attack_cooldown_remaining = effective_cooldown
 
 	# Need valid target for combat
 	if not context.has_valid_target:
@@ -126,6 +133,10 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
 	# Already attacking?
 	if context.attack_in_progress:
+		return
+
+	# Check global attack cooldown (prevents overlapping attacks)
+	if _global_attack_cooldown > 0:
 		return
 
 	# Find best ability to use
@@ -221,9 +232,19 @@ func _execute_ability(context: EnemyContext, ability: Dictionary) -> void:
 	var ability_id: String = ability.get("id", "")
 	var ability_type: String = ability.get("ability_type", "melee")
 
-	# Set cooldown
+	# Set ability-specific cooldown
 	var cooldown: float = float(ability.get("cooldown", 1.0))
 	_cooldowns[ability_id] = cooldown
+
+	# Set global attack cooldown based on attack_speed
+	# attack_speed of 1.0 = 1 second between attacks, 0.8 = 1.25s, 2.0 = 0.5s
+	var attack_speed: float = 1.0
+	if context.owner and "attack_speed" in context.owner:
+		attack_speed = context.owner.attack_speed
+	if attack_speed > 0:
+		_global_attack_cooldown = 1.0 / attack_speed
+	else:
+		_global_attack_cooldown = 1.0
 
 	# Mark opener used
 	if ability.get("condition") == "opener":
@@ -305,6 +326,8 @@ func get_debug_info() -> Dictionary:
 	var info: Dictionary = super.get_debug_info()
 	info["ability_count"] = _abilities.size()
 	info["opener_used"] = _opener_used
+	if _global_attack_cooldown > 0:
+		info["global_cd"] = "%.1fs" % _global_attack_cooldown
 
 	# Show ability cooldowns
 	var cooldown_info: Array = []

@@ -84,9 +84,9 @@ func _setup_collision() -> void:
 	_collision.shape = circle
 	add_child(_collision)
 
-	# Projectile layer - detect player but not walls for simplicity
+	# Projectile layer - detect player (Layer 2)
 	collision_layer = 0
-	collision_mask = 0b00000100  # Layer 3 = player
+	collision_mask = 0b00000010  # Layer 2 = Player Body
 
 
 func _physics_process(delta: float) -> void:

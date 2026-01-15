@@ -48,6 +48,11 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 				context.pack_target.name if context.pack_target else "Unknown"
 			])
 
+		# Clear the alert flag after processing (whether successful or not)
+		context.pack_alert_received = false
+		context.pack_target = null
+		context.pack_alert_source = null
+
 
 func _alert_nearby_allies(context: EnemyContext) -> void:
 	"""Send alert to nearby allies about our target"""
