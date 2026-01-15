@@ -93,7 +93,7 @@ func _load_and_add_module(module_id: String) -> void:
 
 
 func _create_module_instance(module_id: String, _module_data: Dictionary) -> BaseModule:
-	"""Create module instance by ID - maps to class names"""
+	"""Create module instance by ID - maps to class names or loads from script_path"""
 	match module_id:
 		"mod_target_detection":
 			return DetectionModule.new()
@@ -109,20 +109,24 @@ func _create_module_instance(module_id: String, _module_data: Dictionary) -> Bas
 			return IdleModule.new()
 		"mod_leash":
 			return LeashModule.new()
-		"mod_pack_alert":
-			return PackAlertModule.new()
-		"mod_kite":
-			return KiteModule.new()
+		"mod_pack_alert", "mod_kite":
+			# Load these from script_path (avoids class name resolution issues)
+			return _load_module_from_script(_module_data)
 		_:
 			# Try to load from script_path if provided
-			var script_path: String = _module_data.get("script_path", "")
-			if not script_path.is_empty() and ResourceLoader.exists(script_path):
-				var ModuleScript = load(script_path)
-				if ModuleScript:
-					return ModuleScript.new()
+			return _load_module_from_script(_module_data)
 
-			push_warning("ModularEnemyNPC: Unknown module ID: %s" % module_id)
-			return null
+
+func _load_module_from_script(_module_data: Dictionary) -> BaseModule:
+	"""Load a module instance from its script_path"""
+	var script_path: String = _module_data.get("script_path", "")
+	if not script_path.is_empty() and ResourceLoader.exists(script_path):
+		var ModuleScript = load(script_path)
+		if ModuleScript:
+			return ModuleScript.new()
+
+	push_warning("ModularEnemyNPC: Could not load module from script_path: %s" % script_path)
+	return null
 
 
 func _physics_process(delta: float) -> void:
