@@ -42,6 +42,36 @@
       "ability_id": "abi_heal_self",
       "priority": 80,
       "condition": "health_below_30"
+    },
+    {
+      "enemy_id": "ene_wolf_basic",
+      "ability_id": "abi_melee_strike",
+      "priority": 50,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_skeleton_archer",
+      "ability_id": "abi_arrow_shot",
+      "priority": 100,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_skeleton_archer",
+      "ability_id": "abi_melee_strike",
+      "priority": 30,
+      "condition": "target_close"
+    },
+    {
+      "enemy_id": "ene_skeleton_king",
+      "ability_id": "abi_heavy_strike",
+      "priority": 100,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_skeleton_king",
+      "ability_id": "abi_melee_strike",
+      "priority": 50,
+      "condition": "default"
     }
   ]
 }

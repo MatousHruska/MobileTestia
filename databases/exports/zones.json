@@ -55,6 +55,20 @@
       "status_effect_id": "",
       "discovery_popup": false,
       "description": ""
+    },
+    {
+      "id": "zone_mountain",
+      "name": "Rocky Mountain",
+      "zone_type": "outdoor",
+      "min_level": 5,
+      "max_level": 15,
+      "music_track": "",
+      "ambient_sound": "",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": true,
+      "description": "Mountain testing area with wolves, archers, and boss"
     }
   ]
 }
