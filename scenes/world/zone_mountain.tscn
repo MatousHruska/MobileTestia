@@ -1,0 +1,153 @@
+[gd_scene load_steps=10 format=3 uid="uid://zone_mountain_001"]
+
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
+[ext_resource type="Script" path="res://scripts/camera/game_camera.gd" id="3_camera"]
+[ext_resource type="Script" path="res://scripts/world/zone_base.gd" id="4_zone"]
+[ext_resource type="Script" path="res://scripts/world/zone_transition.gd" id="5_transition"]
+[ext_resource type="Script" path="res://scripts/npc/spawn_point.gd" id="6_spawn_point"]
+[ext_resource type="Script" path="res://scripts/world/spawn_point.gd" id="7_player_spawn"]
+[ext_resource type="Script" path="res://scripts/world/reference_object.gd" id="8_ref"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
+size = Vector2(80, 40)
+
+[node name="ZoneMountain" type="Node2D"]
+script = ExtResource("4_zone")
+zone_id = "zone_mountain"
+zone_name = "Rocky Mountain"
+
+[node name="Background" type="ColorRect" parent="."]
+offset_left = -800.0
+offset_top = -600.0
+offset_right = 800.0
+offset_bottom = 600.0
+color = Color(0.25, 0.22, 0.2, 1)
+
+[node name="Decorations" type="Node2D" parent="."]
+
+[node name="Rock1" type="Node2D" parent="Decorations"]
+position = Vector2(-300, -200)
+script = ExtResource("8_ref")
+object_color = Color(0.4, 0.35, 0.3, 1)
+object_size = Vector2(60, 45)
+
+[node name="Rock2" type="Node2D" parent="Decorations"]
+position = Vector2(250, -150)
+script = ExtResource("8_ref")
+object_color = Color(0.35, 0.32, 0.28, 1)
+object_size = Vector2(80, 50)
+
+[node name="Rock3" type="Node2D" parent="Decorations"]
+position = Vector2(-100, 300)
+script = ExtResource("8_ref")
+object_color = Color(0.38, 0.34, 0.3, 1)
+object_size = Vector2(70, 55)
+
+[node name="Rock4" type="Node2D" parent="Decorations"]
+position = Vector2(400, 200)
+script = ExtResource("8_ref")
+object_color = Color(0.42, 0.38, 0.32, 1)
+object_size = Vector2(55, 40)
+
+[node name="Boulder1" type="Node2D" parent="Decorations"]
+position = Vector2(-500, 100)
+script = ExtResource("8_ref")
+object_color = Color(0.5, 0.45, 0.4, 1)
+object_size = Vector2(100, 80)
+
+[node name="Boulder2" type="Node2D" parent="Decorations"]
+position = Vector2(500, -100)
+script = ExtResource("8_ref")
+object_color = Color(0.48, 0.43, 0.38, 1)
+object_size = Vector2(90, 70)
+
+[node name="AreaLabels" type="Node2D" parent="."]
+
+[node name="LabelWolves" type="Label" parent="AreaLabels"]
+offset_left = -550.0
+offset_top = -350.0
+offset_right = -350.0
+offset_bottom = -320.0
+text = "WOLF PACK AREA"
+horizontal_alignment = 1
+
+[node name="LabelArchers" type="Label" parent="AreaLabels"]
+offset_left = 250.0
+offset_top = -350.0
+offset_right = 450.0
+offset_bottom = -320.0
+text = "ARCHER AREA"
+horizontal_alignment = 1
+
+[node name="LabelBoss" type="Label" parent="AreaLabels"]
+offset_left = -100.0
+offset_top = 350.0
+offset_right = 100.0
+offset_bottom = 380.0
+text = "BOSS ARENA"
+horizontal_alignment = 1
+
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="WolfSpawn1" type="Node2D" parent="Enemies"]
+position = Vector2(-450, -250)
+script = ExtResource("6_spawn_point")
+preset_id = "sp_mountain_wolves"
+
+[node name="WolfSpawn2" type="Node2D" parent="Enemies"]
+position = Vector2(-350, -200)
+script = ExtResource("6_spawn_point")
+preset_id = "sp_mountain_wolves"
+
+[node name="WolfSpawn3" type="Node2D" parent="Enemies"]
+position = Vector2(-500, -150)
+script = ExtResource("6_spawn_point")
+preset_id = "sp_mountain_wolves"
+
+[node name="ArcherSpawn1" type="Node2D" parent="Enemies"]
+position = Vector2(350, -250)
+script = ExtResource("6_spawn_point")
+preset_id = "sp_mountain_archers"
+
+[node name="ArcherSpawn2" type="Node2D" parent="Enemies"]
+position = Vector2(450, -180)
+script = ExtResource("6_spawn_point")
+preset_id = "sp_mountain_archers"
+
+[node name="BossSpawn" type="Node2D" parent="Enemies"]
+position = Vector2(0, 400)
+script = ExtResource("6_spawn_point")
+preset_id = "sp_skeleton_king_boss"
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="SpawnFromHub" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(0, -450)
+script = ExtResource("7_player_spawn")
+spawn_id = "from_hub"
+marker_color = Color(0.5, 0.4, 0.3, 0.8)
+
+[node name="SpawnDefault" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(0, -400)
+script = ExtResource("7_player_spawn")
+
+[node name="TransitionToHub" type="Area2D" parent="."]
+position = Vector2(0, -500)
+script = ExtResource("5_transition")
+target_zone = "res://scenes/world/zone_test_hub.tscn"
+spawn_point_id = "from_mountain"
+display_name = "To Hub"
+transition_color = Color(0.5, 0.4, 0.3, 0.6)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TransitionToHub"]
+shape = SubResource("RectangleShape2D_trans")
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+
+[node name="GameCamera" type="Camera2D" parent="."]
+script = ExtResource("3_camera")
+follow_smoothing = 8.0
+look_ahead_distance = 30.0
+
+[node name="HUD" parent="." instance=ExtResource("2_hud")]
