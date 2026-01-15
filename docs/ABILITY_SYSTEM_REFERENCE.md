@@ -177,6 +177,51 @@ Combat-related modules have their own configurations defined in `enemy_modules.j
 | `flee_health_percent` | float | 0.2 | Health threshold to start fleeing (20%) |
 | `flee_speed_mult` | float | 1.3 | Speed multiplier when fleeing |
 | `flee_wobble` | float | 0.3 | Random direction variation (0-1) |
+| `flee_only_in_combat` | bool | true | Only flee if has a valid target |
+| `respect_leash_while_fleeing` | bool | false | Try to flee toward home position |
+
+### Pack Alert Module (`mod_pack_alert`)
+
+Social module that alerts nearby allies when acquiring a target. Useful for pack behaviors where enemies coordinate aggro.
+
+| Config Key | Type | Default | Description |
+|------------|------|---------|-------------|
+| `alert_radius` | float | 150.0 | Range to alert nearby allies |
+| `pack_group` | string | "" | Only alert allies with matching pack_group (empty = all allies) |
+
+**How it works:**
+1. When this enemy acquires a target, it broadcasts an alert to nearby allies
+2. Allies within `alert_radius` receive the alert via `context.pack_alert_received`
+3. Allies without a target will acquire the shared target
+4. If `pack_group` is set, only allies with matching `pack_group` config respond
+
+**Example - Wolf Pack:**
+```json
+{"mod_pack_alert": {"pack_group": "wolves", "alert_radius": 200}}
+```
+
+### Kite Module (`mod_kite`)
+
+Movement module that maintains preferred distance from target. Useful for ranged enemies that want to keep targets at a distance.
+
+| Config Key | Type | Default | Description |
+|------------|------|---------|-------------|
+| `preferred_range` | float | 100.0 | Ideal distance to maintain from target |
+| `too_close_range` | float | 50.0 | Distance at which enemy backs away |
+| `kite_speed_mult` | float | 0.8 | Speed multiplier when backing away |
+| `sweet_spot_tolerance` | float | 0.1 | Tolerance for "in range" check (10% of preferred_range) |
+
+**How it works:**
+1. If target is closer than `too_close_range`, backs away while facing target
+2. If target is within `sweet_spot_tolerance` of `preferred_range`, stops and faces target
+3. If target is farther than preferred range, does nothing (lets ChaseModule handle approach)
+
+**Priority interaction:** KiteModule (75) runs after ChaseModule (80), so it can override chase direction when too close.
+
+**Example - Skeleton Archer:**
+```json
+{"mod_kite": {"preferred_range": 120, "too_close_range": 60}}
+```
 
 ---
 
@@ -220,3 +265,23 @@ config_override
 | Status effect application | `modular_enemy_npc.gd` | `_apply_ability_status_effect()` |
 | Debug hitbox visualization | `modular_enemy_npc.gd` | `_show_debug_hitbox()` |
 | Flee behavior | `flee_module.gd` | `_process_module()` |
+| Pack alert broadcasting | `pack_alert_module.gd` | `_alert_nearby_allies()` |
+| Pack alert response | `pack_alert_module.gd` | `_process_module()` |
+| Kite distance maintenance | `kite_module.gd` | `_process_module()` |
+
+---
+
+## Module Priority Reference
+
+All modules listed by priority (highest runs first):
+
+| Priority | Module ID | Type | Purpose |
+|----------|-----------|------|---------|
+| 100 | `mod_target_detection` | detection | Find and track combat targets |
+| 95 | `mod_pack_alert` | social | Alert allies when acquiring target |
+| 90 | `mod_leash` | utility | Return home if too far from spawn |
+| 85 | `mod_flee` | movement | Run away when health is low |
+| 80 | `mod_chase` | movement | Move toward current target |
+| 75 | `mod_kite` | movement | Maintain distance from target |
+| 60 | `mod_combat` | combat | Execute abilities from database |
+| 10 | `mod_idle` | movement | Stand or roam when no target |
