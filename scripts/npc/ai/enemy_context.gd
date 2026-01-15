@@ -243,6 +243,8 @@ func reset_frame_flags() -> void:
 	speed_multiplier = 1.0
 	# Note: current_ability is NOT reset here - it persists until cleared by ModularEnemyNPC
 	is_ranged_attack = false
+	# Pack alert flag resets each frame, but pack_target persists until used
+	pack_alert_received = false
 
 
 func update_from_owner() -> void:
@@ -320,11 +322,29 @@ func apply_to_owner() -> void:
 func get_debug_dict() -> Dictionary:
 	"""Return context as dictionary for debugging"""
 	return {
-		"target": current_target.name if current_target else "none",
-		"target_distance": target_distance,
-		"health": "%d/%d" % [current_health, max_health],
 		"state": BehaviorState.keys()[behavior_state],
-		"in_attack_range": is_in_attack_range,
-		"should_attack": should_attack,
-		"desired_direction": desired_direction
+		"target": current_target.name if current_target else "none",
+		"target_dist": "%.0f" % target_distance,
+		"health": "%.0f%%" % (health_percent * 100),
+		"home_dist": "%.0f" % distance_from_home,
+		"cooldown": "%.1f" % attack_cooldown_remaining,
+		"flags": _get_flags_string(),
 	}
+
+
+func _get_flags_string() -> String:
+	"""Return string representation of current flags"""
+	var flags: Array = []
+	if should_attack:
+		flags.append("ATK")
+	if should_stop:
+		flags.append("STOP")
+	if is_beyond_leash:
+		flags.append("LEASH")
+	if pack_alert_received:
+		flags.append("PACK")
+	if is_in_attack_range:
+		flags.append("INRNG")
+	if attack_in_progress:
+		flags.append("ATKING")
+	return ",".join(flags) if flags.size() > 0 else "-"

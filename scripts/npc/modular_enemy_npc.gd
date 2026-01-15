@@ -109,6 +109,10 @@ func _create_module_instance(module_id: String, _module_data: Dictionary) -> Bas
 			return IdleModule.new()
 		"mod_leash":
 			return LeashModule.new()
+		"mod_pack_alert":
+			return PackAlertModule.new()
+		"mod_kite":
+			return KiteModule.new()
 		_:
 			# Try to load from script_path if provided
 			var script_path: String = _module_data.get("script_path", "")
