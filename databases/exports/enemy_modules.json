@@ -43,7 +43,7 @@
       "description": "Returns home if too far from spawn",
       "script_path": "res://scripts/npc/ai/modules/leash_module.gd",
       "priority": 90,
-      "default_config": {"leash_radius": 300, "home_threshold": 16, "return_speed_mult": 1.0}
+      "default_config": {"leash_radius": 500, "home_threshold": 16, "return_speed_mult": 1.0}
     },
     {
       "id": "mod_combat",
@@ -70,7 +70,7 @@
       "description": "Alert nearby allies when acquiring target",
       "script_path": "res://scripts/npc/ai/modules/pack_alert_module.gd",
       "priority": 95,
-      "default_config": {"alert_radius": 150, "pack_group": ""}
+      "default_config": {"alert_radius": 300, "pack_group": ""}
     },
     {
       "id": "mod_kite",
