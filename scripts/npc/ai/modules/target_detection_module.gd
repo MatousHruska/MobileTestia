@@ -37,6 +37,10 @@ func _is_target_valid(target: Node2D) -> bool:
 
 func _try_acquire_target(context: EnemyContext) -> void:
 	"""Try to find a valid target within detection range"""
+	# Don't acquire new targets while returning home (prevents leash loop)
+	if context.behavior_state == EnemyContext.BehaviorState.RETURNING:
+		return
+
 	# Get player reference from Game autoload
 	if not Game:
 		return
