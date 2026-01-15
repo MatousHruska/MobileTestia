@@ -57,6 +57,16 @@ transition_color = Color(0.3, 0.2, 0.4, 0.7)
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ZoneTransitions/ToCrypt"]
 shape = SubResource("RectangleShape2D_trans")
 
+[node name="ToMountain" type="Area2D" parent="ZoneTransitions"]
+position = Vector2(400, -350)
+script = ExtResource("9_transition")
+target_zone = "res://scenes/world/zone_mountain.tscn"
+display_name = "Mountain"
+transition_color = Color(0.5, 0.4, 0.3, 0.7)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZoneTransitions/ToMountain"]
+shape = SubResource("RectangleShape2D_trans")
+
 [node name="SpawnPoints" type="Node2D" parent="."]
 
 [node name="SpawnFromMeadow" type="Marker2D" parent="SpawnPoints"]
@@ -76,6 +86,12 @@ position = Vector2(200, -280)
 script = ExtResource("10_spawn")
 spawn_id = "from_crypt"
 marker_color = Color(0.3, 0.2, 0.4, 0.8)
+
+[node name="SpawnFromMountain" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(400, -280)
+script = ExtResource("10_spawn")
+spawn_id = "from_mountain"
+marker_color = Color(0.5, 0.4, 0.3, 0.8)
 
 [node name="SpawnDefault" type="Marker2D" parent="SpawnPoints"]
 script = ExtResource("10_spawn")
@@ -107,6 +123,15 @@ offset_right = 240.0
 offset_bottom = -377.0
 text = "CRYPT
 (Vampires)"
+horizontal_alignment = 1
+
+[node name="LabelMountain" type="Label" parent="TransitionLabels"]
+offset_left = 360.0
+offset_top = -400.0
+offset_right = 440.0
+offset_bottom = -377.0
+text = "MOUNTAIN
+(Test AI)"
 horizontal_alignment = 1
 
 [node name="Grid" type="Node2D" parent="."]
