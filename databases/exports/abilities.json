@@ -78,7 +78,7 @@
       "range": 180,
       "cooldown": 4,
       "cast_time": 0,
-      "projectile_speed": 250,
+      "projectile_speed": 50,
       "aoe_radius": 0,
       "movement_type": "none",
       "movement_distance": 0,
