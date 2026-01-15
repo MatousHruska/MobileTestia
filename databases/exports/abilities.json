@@ -49,6 +49,7 @@
       "movement_distance": 80,
       "status_effect_id": "",
       "animation": "attack",
+      "extra_config": {"dash_duration": 0.4},
       "description": "Dash to target and strike"
     },
     {
