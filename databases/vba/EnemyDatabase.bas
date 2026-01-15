@@ -21,13 +21,12 @@ Private Const COL_EN_ARMOR As Integer = 6
 Private Const COL_EN_BASE_SHIELD As Integer = 7    ' Shield absorbs damage before health
 Private Const COL_EN_MOVE_SPEED As Integer = 8
 Private Const COL_EN_ATTACK_SPEED As Integer = 9
-Private Const COL_EN_ATTACK_RANGE As Integer = 10
-Private Const COL_EN_DETECTION_RANGE As Integer = 11
-Private Const COL_EN_XP_REWARD As Integer = 12
-Private Const COL_EN_LOOT_TABLE_ID As Integer = 13
-Private Const COL_EN_MODULE_IDS As Integer = 14    ' Modular AI module IDs (comma-separated)
-Private Const COL_EN_MODULE_CONFIG As Integer = 15 ' Per-enemy module config overrides (JSON)
-Private Const COL_EN_DESCRIPTION As Integer = 16
+Private Const COL_EN_DETECTION_RANGE As Integer = 10
+Private Const COL_EN_XP_REWARD As Integer = 11
+Private Const COL_EN_LOOT_TABLE_ID As Integer = 12
+Private Const COL_EN_MODULE_IDS As Integer = 13    ' Modular AI module IDs (comma-separated)
+Private Const COL_EN_MODULE_CONFIG As Integer = 14 ' Per-enemy module config overrides (JSON)
+Private Const COL_EN_DESCRIPTION As Integer = 15
 
 ' Column indices for EnemyVariants
 Private Const COL_EV_ID As Integer = 1
@@ -180,7 +179,6 @@ Public Sub ExportEnemies()
         json = json & "      ""base_shield"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_BASE_SHIELD))) & "," & vbCrLf
         json = json & "      ""move_speed"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_MOVE_SPEED), 80)) & "," & vbCrLf
         json = json & "      ""attack_speed"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_ATTACK_SPEED), 1)) & "," & vbCrLf
-        json = json & "      ""attack_range"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_ATTACK_RANGE), 24)) & "," & vbCrLf
         json = json & "      ""detection_range"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_DETECTION_RANGE), 150)) & "," & vbCrLf
         json = json & "      ""xp_reward"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_EN_XP_REWARD), 25)) & "," & vbCrLf
         json = json & "      ""loot_table_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_LOOT_TABLE_ID))) & """," & vbCrLf
@@ -297,7 +295,7 @@ Public Sub SetupEnemiesSheet()
     Set ws = GetOrCreateSheet(SHEET_ENEMIES)
     Dim headers As Variant
     headers = Array("id", "name", "type", "base_health", "base_damage", "armor", "base_shield", _
-                    "move_speed", "attack_speed", "attack_range", "detection_range", _
+                    "move_speed", "attack_speed", "detection_range", _
                     "xp_reward", "loot_table_id", "module_ids", "module_config", "description")
     SetupSheetHeaders ws, headers
 
@@ -309,12 +307,11 @@ Public Sub SetupEnemiesSheet()
     SafeAddComment ws.Cells(1, 6), "Armor reduces physical damage"
     SafeAddComment ws.Cells(1, 7), "Shield absorbs damage before health (0 = no shield)"
     SafeAddComment ws.Cells(1, 8), "Movement speed (default 80)"
-    SafeAddComment ws.Cells(1, 9), "Attacks per second (default 1)"
-    SafeAddComment ws.Cells(1, 10), "Melee attack range (default 24)"
-    SafeAddComment ws.Cells(1, 11), "Range to detect player (default 150)"
-    SafeAddComment ws.Cells(1, 13), "Reference to LootTables id"
-    SafeAddComment ws.Cells(1, 14), "Comma-separated module IDs for AI (e.g., mod_target_detection,mod_chase,mod_melee_attack)"
-    SafeAddComment ws.Cells(1, 15), "Per-enemy module config overrides as JSON. Format: {""mod_idle"": {""can_roam"": false}}"
+    SafeAddComment ws.Cells(1, 9), "Attacks per second (default 1). Also controls minimum time between attacks."
+    SafeAddComment ws.Cells(1, 10), "Range to detect player (default 150)"
+    SafeAddComment ws.Cells(1, 12), "Reference to LootTables id"
+    SafeAddComment ws.Cells(1, 13), "Comma-separated module IDs for AI (e.g., mod_target_detection,mod_chase,mod_combat)"
+    SafeAddComment ws.Cells(1, 14), "Per-enemy module config overrides as JSON. Format: {""mod_idle"": {""can_roam"": false}}"
 End Sub
 
 '-------------------------------------------------------------------------------
