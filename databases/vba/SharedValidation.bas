@@ -539,7 +539,7 @@ Private Sub ApplyForeignKeyValidation()
     ApplyValidation "Locations", 7, "ID_StatusEffects"  ' status_effect_id
 
     ' Enemies
-    ApplyValidation "Enemies", 13, "ID_LootTables"  ' loot_table_id
+    ApplyValidation "Enemies", 12, "ID_LootTables"  ' loot_table_id
 
     ' Chests (new schema: zone_id=4, loot_table_id=9, quest_id=17)
     ApplyValidation "Chests", 4, "ID_Zones"         ' zone_id
