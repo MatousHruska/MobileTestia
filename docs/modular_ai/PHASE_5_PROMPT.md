@@ -3,12 +3,10 @@
 ## FIRST: Pull the Latest Branch
 
 ```
-Please pull claude/[BRANCH_NAME]
+Please pull claude/phase4-combat-system-EGmhA
 
 This is the newest version of the codebase. Clone it and add Phase5-Final into its name. We will continue our work from here.
 ```
-
-**IMPORTANT:** Replace `[BRANCH_NAME]` with the actual branch name from your last session before pasting this prompt.
 
 ---
 
@@ -32,6 +30,8 @@ This is the newest version of the codebase. Clone it and add Phase5-Final into i
 > - The specific database `.bas` file (e.g., `EnemyDatabase.bas`)
 > - `MasterExport.bas` (ExportAll, ValidateAll, SetupWorkbook functions)
 > - `SharedValidation.bas` (named ranges, foreign key validations, enum validations)
+>
+> **VBA Naming Convention:** Export functions should be named `ExportXxxData` where Xxx matches the sheet name (e.g., `ExportAbilitiesData`, `ExportEnemyAbilitiesData`).
 
 ---
 
@@ -45,11 +45,13 @@ This is the newest version of the codebase. Clone it and add Phase5-Final into i
 - TargetDetection, Leash, Chase, MeleeAttack (placeholder), Idle
 - Per-enemy module config overrides
 
-### Phase 4: Combat System & Flee
-- **Abilities database** - Define ability stats
-- **EnemyAbilities database** - Link enemies to abilities with conditions
+### Phase 4: Combat System & Flee (COMPLETED)
+- **Abilities database** - Define ability stats with `extra_config` JSON column for ability-specific params
+- **EnemyAbilities database** - Link enemies to abilities with conditions + `config_override` JSON for per-enemy customization
 - **CombatModule** - Replaced mod_melee_attack, handles all combat
 - **FleeModule** - Run away when low health
+- **Debug visualization** - Red circles for melee hitboxes, orange lines for dash paths (debug builds only)
+- **Status effects** - Works with Player's StatusEffectManager (apply_dot, apply_buff, etc.)
 
 ### Current Module Library:
 ```
@@ -61,6 +63,38 @@ scripts/npc/ai/modules/
 ├── combat_module.gd            (pri 60)  - Execute abilities
 └── idle_module.gd              (pri 10)  - Stand/roam
 ```
+
+### Key Documentation:
+- `docs/ABILITY_SYSTEM_REFERENCE.md` - All hardcoded configs (ability_type, condition, extra_config keys, etc.)
+
+---
+
+## Phase 4 Learnings (Important!)
+
+These findings from Phase 4 should be applied in Phase 5:
+
+### 1. Status Effect Application
+Player uses `StatusEffectManager` with specific methods:
+- `apply_dot(id, duration, value, tick_interval, show_in_hud)`
+- `apply_hot(id, duration, value, tick_interval, show_in_hud)`
+- `apply_buff(id, duration, show_in_hud)`
+- `apply_debuff(id, duration, show_in_hud)`
+
+NPCs use `StatusEffectComponent` with `apply_effect(id, source)`.
+
+### 2. Ability Flexibility
+- **extra_config** (Abilities table): JSON column for ability-specific params (e.g., `{"dash_duration": 0.3}`)
+- **config_override** (EnemyAbilities table): JSON that merges into ability data per-enemy
+
+### 3. Debug Visualization
+Use `_show_debug_hitbox()` and `_show_debug_line()` for testing. Only shows in debug builds:
+```gdscript
+if not OS.is_debug_build():
+    return
+```
+
+### 4. Preload vs Load
+Never use `preload()` for files that might not exist - it's compile-time. Use `load()` with `ResourceLoader.exists()` check instead, or inline scripts.
 
 ---
 
@@ -74,13 +108,31 @@ scripts/npc/ai/modules/
 2. **KiteModule** - Maintain distance from target (for ranged enemies)
 3. **Boss/Miniboss enemies** - Special configurations
 4. **Debug overlay improvements** - Better AI visualization
-5. **Final documentation** - Quick reference guide
+5. **Update QUICK_REFERENCE.md** - Final documentation
 
 ---
 
 ## Step-by-Step Implementation
 
-### Step 1: Create PackAlertModule
+### Step 1: Update EnemyContext for Pack Behavior
+
+Add pack-related fields to `scripts/npc/ai/enemy_context.gd`:
+
+```gdscript
+# In SOCIAL/PACK section:
+
+## Received alert from ally
+var pack_alert_received: bool = false
+
+## Target from pack alert
+var pack_target: Node2D = null
+
+# In reset_frame_flags():
+pack_alert_received = false
+# NOTE: Don't reset pack_target here - it should persist until used
+```
+
+### Step 2: Create PackAlertModule
 
 **File:** `scripts/npc/ai/modules/pack_alert_module.gd`
 
@@ -183,7 +235,7 @@ func _send_alert_to(enemy: Node2D, target: Node2D) -> bool:
     return true
 ```
 
-### Step 2: Create KiteModule
+### Step 3: Create KiteModule
 
 **File:** `scripts/npc/ai/modules/kite_module.gd`
 
@@ -196,7 +248,7 @@ func _init() -> void:
     module_id = "mod_kite"
     module_name = "Kite"
     module_type = ModuleType.MOVEMENT
-    priority = 75  # Between leash and chase
+    priority = 75  # Between chase (80) and combat (60)
 
 
 func _process_module(context: EnemyContext, _delta: float) -> void:
@@ -238,24 +290,6 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
     # Too far? Let ChaseModule handle approaching (do nothing here)
 ```
 
-### Step 3: Update EnemyContext for Pack Behavior
-
-Add pack-related fields if not already present:
-
-```gdscript
-# In EnemyContext - PACK/SOCIAL section should have:
-
-## Received alert from ally
-var pack_alert_received: bool = false
-
-## Target from pack alert
-var pack_target: Node2D = null
-
-# In reset_frame_flags():
-pack_alert_received = false
-# Don't reset pack_target here - it should persist until used
-```
-
 ### Step 4: Register New Modules
 
 **In `modular_enemy_npc.gd` `_create_module_instance()`:**
@@ -293,22 +327,18 @@ Bosses differ from normal enemies:
 | ene_vampire_lord | Vampire Lord | Miniboss | detection,flee,chase,combat | Flees at 10%, no leash |
 | ene_skeleton_king | Skeleton King | Boss | detection,chase,combat | No flee, no leash |
 
-**Vampire Lord (Miniboss):**
-```
-module_ids: mod_target_detection,mod_flee,mod_chase,mod_combat
-module_config: {"mod_flee": {"flee_health_percent": 0.1}}
+**Vampire Lord (Miniboss) module_config:**
+```json
+{"mod_flee": {"flee_health_percent": 0.1}}
 ```
 Note: Has flee (at 10% health) but NO leash - will chase until killed or flees.
 
 **Skeleton King (Boss):**
-```
-module_ids: mod_target_detection,mod_chase,mod_combat
-```
-Note: No flee, no leash - pure aggression.
+No special config needed - just omit leash and flee modules.
 
 ### Step 7: Update Debug Overlay
 
-Enhance `npc_debug_overlay.gd` or `EnemyContext.get_debug_dict()`:
+Enhance `EnemyContext.get_debug_dict()` to show pack info:
 
 ```gdscript
 func get_debug_dict() -> Dictionary:
@@ -316,7 +346,7 @@ func get_debug_dict() -> Dictionary:
         "state": BehaviorState.keys()[behavior_state],
         "target": current_target.name if current_target else "none",
         "target_dist": "%.0f" % target_distance,
-        "health": "%.0f/%.0f (%.0f%%)" % [current_health, max_health, health_percent * 100],
+        "health": "%.0f%%" % (health_percent * 100),
         "home_dist": "%.0f" % distance_from_home,
         "cooldown": "%.1f" % attack_cooldown_remaining,
         "flags": _get_flags_string(),
@@ -379,22 +409,32 @@ Higher priority = runs first, can override lower priority modules.
 | Boss | detection, chase, combat |
 | Miniboss | detection, flee, chase, combat |
 
+## Ability Types
+
+| Type | Description |
+|------|-------------|
+| melee | Close-range attack |
+| ranged/projectile | Spawns projectile |
+| dash | Movement + attack (dash_to, dash_away, teleport) |
+| buff | Self-buff (healing, shields) |
+| debuff | Apply status to target |
+
 ## Ability Conditions
 
 | Condition | When Used |
 |-----------|-----------|
-| default | No other condition matches |
-| opener | First attack after acquiring target |
-| health_below_X | Health below X% |
-| health_above_X | Health above X% |
-| target_close | Target in melee range |
-| target_far | Target beyond melee range |
-| ally_nearby | Friendly within range |
+| default | Always available |
+| opener | First attack on new target |
+| health_below_X | Health < X% |
+| health_above_X | Health > X% |
+| target_close | Within attack_radius |
+| target_far | Beyond attack_radius * 2 |
+| ally_nearby | Ally in nearby_allies |
 
-## Per-Enemy Config Overrides
+## Per-Enemy Customization
 
-Override module defaults in enemy's module_config column:
-
+### Module Config (enemy's module_config column)
+Override module defaults:
 ```json
 {
   "mod_idle": {"can_roam": false},
@@ -403,23 +443,20 @@ Override module defaults in enemy's module_config column:
 }
 ```
 
-## EnemyContext Key Fields
+### Ability Config Override (EnemyAbilities config_override column)
+Customize ability per-enemy:
+```json
+{"movement_distance": 150, "damage_mult": 2.0}
+```
 
-**Read by modules:**
-- `has_valid_target` - Is there a combat target?
-- `target_distance` - Distance to target
-- `target_direction` - Direction to target (normalized)
-- `health_percent` - Current health ratio (0.0 to 1.0)
-- `behavior_state` - Current AI state
-- `distance_from_home` - Distance from spawn point
+### Extra Config (Abilities extra_config column)
+Ability-specific params:
+```json
+{"dash_duration": 0.3}
+```
 
-**Written by modules:**
-- `desired_direction` - Movement direction
-- `should_attack` - Trigger attack
-- `should_stop` - Stop moving
-- `speed_multiplier` - Speed modifier
-- `behavior_state` - Update AI state
-- `current_ability` - Ability to execute
+## See Also
+- `docs/ABILITY_SYSTEM_REFERENCE.md` - Full ability system documentation
 ```
 
 ---
@@ -427,27 +464,27 @@ Override module defaults in enemy's module_config column:
 ## Testing
 
 ### Test 1: Pack Alert Works
-1. Spawn 3 wolves near each other
+1. Spawn 3 wolves near each other (with pack_alert module)
 2. Aggro ONE wolf
 3. All wolves should aggro (pack alert propagates)
 
 ### Test 2: Kiting Works
-1. Spawn skeleton archer
+1. Spawn skeleton archer (with kite module)
 2. Walk toward it
 3. Archer should back away while shooting
-4. Stop at ~100px → archer stops and shoots
+4. Stop at ~100px - archer stops and shoots
 
 ### Test 3: Boss Fights Work
-1. Spawn Skeleton King
+1. Spawn Skeleton King (no leash, no flee)
 2. Fight it
-3. Should never give up (no leash)
-4. Should not flee (no flee module)
+3. Should never give up chase
+4. Should not flee at low health
 
 ### Test 4: Miniboss Flees
-1. Spawn Vampire Lord
+1. Spawn Vampire Lord (flee at 10%, no leash)
 2. Get its health below 10%
-3. Should flee (has flee module at 10%)
-4. Should not leash (no leash module)
+3. Should flee
+4. Should not return to spawn point (no leash)
 
 ### Test 5: Performance with 20+ Enemies
 1. Spawn 20 mixed enemies
@@ -463,69 +500,51 @@ Override module defaults in enemy's module_config column:
 - [ ] PackAlertModule created and working
 - [ ] KiteModule created and working
 - [ ] Modules registered in _create_module_instance()
+- [ ] EnemyContext updated with pack fields
 
-### Enemies
-- [ ] Wolf (pack hunter) created
-- [ ] Skeleton Archer (ranged kiter) created
-- [ ] Vampire Lord (miniboss) created
-- [ ] Skeleton King (boss) created
-
-### Tools
-- [ ] Debug overlay shows module info
-- [ ] Shows all relevant context data
+### Database
+- [ ] New modules added to EnemyModules sheet
+- [ ] Sample enemies created (wolf, archer, miniboss, boss)
+- [ ] Abilities configured for new enemies
 
 ### Documentation
-- [ ] Quick reference guide created
-- [ ] All modules documented
-- [ ] Common patterns listed
+- [ ] QUICK_REFERENCE.md created/updated
+- [ ] ABILITY_SYSTEM_REFERENCE.md already exists from Phase 4
+
+### Testing
+- [ ] Pack alert propagates correctly
+- [ ] Kiting behavior works
+- [ ] Boss has no leash/flee
+- [ ] Miniboss flees correctly
 
 ---
 
 ## Migration Complete!
 
-**Congratulations!** The modular AI system is now complete.
+After Phase 5, the modular AI system is complete.
 
-### What Was Built
+### Full Module Library (8 modules):
+- **Detection** - Target acquisition
+- **PackAlert** - Social coordination
+- **Leash** - Return home behavior
+- **Flee** - Low health escape
+- **Chase** - Pursue target
+- **Kite** - Maintain distance
+- **Combat** - Execute abilities
+- **Idle** - Fallback behavior
 
-**Infrastructure:**
-- EnemyContext - Shared state for modules
-- BaseModule - Module base class
-- ModuleController - Orchestrates modules
-
-**Modules (8):**
-- Detection, PackAlert, Leash (utility/setup)
-- Flee, Kite, Chase (movement)
-- Combat (combat with database-driven abilities)
-- Idle (fallback)
-
-**Database Tables:**
-- EnemyModules - Module definitions
-- Abilities - Ability stats
-- EnemyAbilities - Enemy-ability links with conditions
+### Database Tables:
+- **EnemyModules** - Module definitions
+- **Abilities** - Ability stats + extra_config
+- **EnemyAbilities** - Enemy-ability links + config_override
 
 ### Future Expansion Ideas
-
 With this system you can easily add:
 - **Phase modules** - Boss phase transitions
 - **Summon modules** - Spawn minions
 - **Patrol modules** - Follow waypoints
 - **Environmental modules** - React to hazards
-- **Dialog modules** - Bark/taunt during combat
 - **Buff ally modules** - Cast buffs on allies
 - **Formation modules** - Stay in formation with pack
 
 Each new module is isolated and can be mixed with existing ones!
-
----
-
-## Final Report
-
-After completing Phase 5:
-1. ✅ All enemies working?
-2. ✅ Pack behavior works?
-3. ✅ Kiting behavior works?
-4. ✅ Bosses behave correctly?
-5. ✅ Performance acceptable?
-6. ✅ Documentation complete?
-
-The modular AI migration is complete!
