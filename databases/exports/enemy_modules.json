@@ -62,6 +62,24 @@
       "script_path": "res://scripts/npc/ai/modules/flee_module.gd",
       "priority": 85,
       "default_config": {"flee_health_percent": 0.2, "flee_speed_mult": 1.3, "flee_wobble": 0.3}
+    },
+    {
+      "id": "mod_pack_alert",
+      "name": "Pack Alert",
+      "module_type": "social",
+      "description": "Alert nearby allies when acquiring target",
+      "script_path": "res://scripts/npc/ai/modules/pack_alert_module.gd",
+      "priority": 95,
+      "default_config": {"alert_radius": 150, "pack_group": ""}
+    },
+    {
+      "id": "mod_kite",
+      "name": "Kite",
+      "module_type": "movement",
+      "description": "Maintain distance from target",
+      "script_path": "res://scripts/npc/ai/modules/kite_module.gd",
+      "priority": 75,
+      "default_config": {"preferred_range": 100, "too_close_range": 50, "kite_speed_mult": 0.8}
     }
   ]
 }
