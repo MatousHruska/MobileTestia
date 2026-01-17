@@ -552,6 +552,8 @@ Private Sub ApplyForeignKeyValidation()
     ApplyValidation "SpawnPoints", 15, "ID_Quests"  ' disable_after_quest
     ApplyValidation "SpawnPoints", 16, "ID_Quests"  ' disable_during_quest
     ApplyListValidation "SpawnPoints", 17, "TRUE,FALSE"  ' can_respawn
+    ' Note: Column 19 (modules_to_inject) accepts comma-separated module IDs - no dropdown validation
+    ' Note: Column 20 (module_config_override) accepts JSON - no dropdown validation
 
     ' Quests
     ApplyValidation "Quests", 6, "ID_NPCs"          ' giver_npc

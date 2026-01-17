@@ -27,6 +27,8 @@ Private Const COL_SP_DISABLE_AFTER_QUEST As Integer = 15
 Private Const COL_SP_DISABLE_DURING_QUEST As Integer = 16
 Private Const COL_SP_CAN_RESPAWN As Integer = 17
 Private Const COL_SP_RESPAWN_TIME As Integer = 18
+Private Const COL_SP_MODULES_TO_INJECT As Integer = 19
+Private Const COL_SP_MODULE_CONFIG_OVERRIDE As Integer = 20
 
 '-------------------------------------------------------------------------------
 ' ValidateSpawnPoints - Validates all rows in SpawnPoints sheet
@@ -115,6 +117,26 @@ Public Sub ValidateSpawnPoints()
             LogValidationError errors, errorCount, i, "Respawn Time", "Cannot be negative"
         End If
 
+        ' Validate modules_to_inject format (comma-separated module IDs)
+        Dim modulesToInject As String
+        modulesToInject = Trim(ws.Cells(i, COL_SP_MODULES_TO_INJECT).value)
+        If Len(modulesToInject) > 0 Then
+            If Not ValidateModuleIdList(modulesToInject) Then
+                LogValidationError errors, errorCount, i, "Modules To Inject", _
+                    "Invalid format. Use comma-separated module IDs (e.g., mod_patrol,mod_ambush)"
+            End If
+        End If
+
+        ' Validate module_config_override is valid JSON
+        Dim moduleConfig As String
+        moduleConfig = Trim(ws.Cells(i, COL_SP_MODULE_CONFIG_OVERRIDE).value)
+        If Len(moduleConfig) > 0 Then
+            If Left(moduleConfig, 1) <> "{" Or Right(moduleConfig, 1) <> "}" Then
+                LogValidationError errors, errorCount, i, "Module Config Override", _
+                    "Config must be valid JSON object (start with { and end with })"
+            End If
+        End If
+
 NextSpawnPoint:
     Next i
 
@@ -158,6 +180,34 @@ Private Function ValidateEnemyPoolFormat(ByVal poolString As String) As Boolean
     Next i
 
     ValidateEnemyPoolFormat = True
+End Function
+
+'-------------------------------------------------------------------------------
+' ValidateModuleIdList - Validates comma-separated module ID list
+'-------------------------------------------------------------------------------
+Private Function ValidateModuleIdList(ByVal moduleList As String) As Boolean
+    ' Format: mod_id1,mod_id2,mod_id3
+    Dim entries() As String
+    entries = Split(moduleList, ",")
+
+    Dim i As Integer
+    For i = 0 To UBound(entries)
+        Dim entry As String
+        entry = Trim(entries(i))
+
+        If Len(entry) = 0 Then
+            ValidateModuleIdList = False
+            Exit Function
+        End If
+
+        ' Each entry should start with mod_
+        If Left(entry, 4) <> "mod_" Then
+            ValidateModuleIdList = False
+            Exit Function
+        End If
+    Next i
+
+    ValidateModuleIdList = True
 End Function
 
 '-------------------------------------------------------------------------------
@@ -210,7 +260,18 @@ Public Sub ExportSpawnPoints()
         json = json & "      ""disable_after_quest"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SP_DISABLE_AFTER_QUEST))) & """," & vbCrLf
         json = json & "      ""disable_during_quest"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SP_DISABLE_DURING_QUEST))) & """," & vbCrLf
         json = json & "      ""can_respawn"": " & LCase(GetDefaultBoolean(ws.Cells(i, COL_SP_CAN_RESPAWN), True)) & "," & vbCrLf
-        json = json & "      ""respawn_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_SP_RESPAWN_TIME), 300)) & vbCrLf
+        json = json & "      ""respawn_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_SP_RESPAWN_TIME), 300)) & "," & vbCrLf
+        json = json & "      ""modules_to_inject"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SP_MODULES_TO_INJECT))) & """," & vbCrLf
+
+        ' Module config override - output as JSON object (not string)
+        Dim moduleConfigStr As String
+        moduleConfigStr = Trim(ws.Cells(i, COL_SP_MODULE_CONFIG_OVERRIDE).value)
+        If Len(moduleConfigStr) = 0 Then
+            json = json & "      ""module_config_override"": {}" & vbCrLf
+        Else
+            json = json & "      ""module_config_override"": " & moduleConfigStr & vbCrLf
+        End If
+
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -246,7 +307,8 @@ Public Sub SetupSpawnPointsSheet()
     headers = Array("id", "name", "description", "enemy_pool", "min_level", "max_level", _
                     "check_interval", "spawn_chance", "max_active_enemies", "respawn_delay", _
                     "spawn_radius", "spawn_group", "require_quest_active", "require_quest_completed", _
-                    "disable_after_quest", "disable_during_quest", "can_respawn", "respawn_time")
+                    "disable_after_quest", "disable_during_quest", "can_respawn", "respawn_time", _
+                    "modules_to_inject", "module_config_override")
 
     Dim col As Integer
     For col = 0 To UBound(headers)
@@ -267,6 +329,8 @@ Public Sub SetupSpawnPointsSheet()
     SafeAddComment ws.Cells(1, 16), "Quest ID - don't spawn while quest active or completed"
     SafeAddComment ws.Cells(1, 17), "TRUE/FALSE - whether enemies can respawn after being cleared"
     SafeAddComment ws.Cells(1, 18), "Seconds before cleared spawn point can respawn (cross-zone persistence)"
+    SafeAddComment ws.Cells(1, 19), "Comma-separated module IDs to add (e.g., mod_patrol,mod_ambush)"
+    SafeAddComment ws.Cells(1, 20), "JSON config override for modules. Example: {""mod_patrol"": {""waypoints_relative"": [[0,0], [100,0]], ""loop"": true}}"
 
     MsgBox "SpawnPoints sheet created with headers!", vbInformation
 End Sub
