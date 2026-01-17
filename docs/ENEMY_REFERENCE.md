@@ -169,6 +169,12 @@ Abilities define what attacks/actions enemies can perform.
 | `buff` | Self-buff (healing, shields) | damage_mult (negative = heal), status_effect_id |
 | `debuff` | Apply status to target | status_effect_id |
 
+#### Status Effect Conditional Removal
+Status effects applied by abilities can use `ends_when` for automatic removal based on player state:
+- `player_full_health` - Effect ends when player heals to max HP
+- `player_below_50` / `player_above_50` - Health threshold triggers
+- See `COMBAT_SYSTEM.md` for full details
+
 #### Dash Movement Types
 - `dash_to` - Dash toward target, then attack
 - `dash_away` - Dash away from target (escape)

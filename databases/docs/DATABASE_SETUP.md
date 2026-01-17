@@ -422,6 +422,9 @@ This guide explains how to set up and use the Excel database system for MobileTe
 | visual_effect | string | No | `poison_cloud` |
 | stackable | boolean | No | `true` |
 | max_stacks | number | No | `5` |
+| show_in_hud | boolean | No | `true` |
+| icon_color | string | No | `#FF5500` |
+| ends_when | dropdown | No | `player_full_health` |
 | description | string | No | Auto-generated |
 
 **ID Prefix:** `status_`
@@ -439,6 +442,13 @@ This guide explains how to set up and use the Excel database system for MobileTe
 - For DoTs/HoTs, this is damage/heal per tick
 
 **Tick Interval:** Seconds between damage/heal ticks (0 = one-time effect)
+
+**Conditional Removal (ends_when):**
+Allows effects to automatically end based on player state, regardless of remaining duration.
+- `player_full_health` - Ends when player heals to max HP
+- `player_below_50` - Ends when player drops below 50% HP
+- `player_above_50` - Ends when player exceeds 50% HP
+- Also supports parameterized: `player_health_above_75`, `player_health_below_25`, etc.
 
 ---
 
@@ -639,6 +649,7 @@ To prevent typos, add Data Validation to these columns:
 | Skills | type | `active,passive,buff,toggle` |
 | Skills | tree | `combat,magic,utility,class` |
 | StatusEffects | type | `buff,debuff,debuff_dot,buff_hot,control` |
+| StatusEffects | ends_when | `player_full_health,player_below_50,player_above_50` |
 | Zones | zone_type | `outdoor,dungeon,cave,town,boss_room,camp` |
 | Quests | type | `main,side,daily,event,tutorial` |
 | QuestObjectives | type | `kill,collect,talk,explore,escort,defend,craft,use` |
