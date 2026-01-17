@@ -184,7 +184,9 @@ func _handle_no_ability_available(context: EnemyContext) -> void:
 		if ability_type in ["ranged", "projectile"] and remaining_cd > 0:
 			if context.target_distance <= ability_range:
 				# We're in range for our ranged attack - wait for cooldown instead of chasing
-				context.should_stop = true
+				# BUT only if a higher-priority module (like kite) hasn't set movement to back away
+				if context.desired_direction == Vector2.ZERO:
+					context.should_stop = true
 				context.facing_direction = context.target_direction
 				return
 
