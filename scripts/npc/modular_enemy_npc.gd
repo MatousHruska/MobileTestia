@@ -3,6 +3,9 @@ class_name ModularEnemyNPC
 ## ModularEnemyNPC - Enemy class that uses the modular AI system
 ## Requires module_ids to be configured in the database
 
+## Signals
+signal damage_dealt(target: Node2D, amount: float, ability_id: String)
+
 ## Module system
 var module_controller: ModuleController = null
 var _using_modules: bool = false
@@ -218,6 +221,9 @@ func _execute_melee_attack(ability: Dictionary) -> void:
 		elif PlayerStats:
 			PlayerStats.damage(damage)
 
+		# Emit signal for modules that react to damage dealt
+		damage_dealt.emit(ctx.current_target, damage, ability.get("id", ""))
+
 		# Apply status effect if ability has one
 		_apply_ability_status_effect(ability, ctx.current_target)
 
@@ -358,6 +364,8 @@ func _spawn_projectile(ability: Dictionary, direction: Vector2, target: Node2D) 
 				ctx.current_target.take_damage(damage_final, self)
 			elif PlayerStats:
 				PlayerStats.damage(damage_final)
+			# Emit signal for modules that react to damage dealt
+			damage_dealt.emit(ctx.current_target, damage_final, ability.get("id", ""))
 
 
 func _apply_ability_status_effect(ability: Dictionary, target: Node2D) -> void:
