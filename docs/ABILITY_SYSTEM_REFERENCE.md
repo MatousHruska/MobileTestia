@@ -23,9 +23,11 @@ The `ability_type` field in the Abilities database determines how an ability is 
 
 #### melee
 - Deals `base_damage * damage_mult` to target if in range
+- **Hit detection**: Uses `aoe_radius` if > 0, otherwise uses `range`
 - Shows debug hitbox (red circle) in debug builds
 - Can apply status effects on hit
 - Requires cardinal alignment by default (configurable)
+- If `cast_while_moving` is false (default), enemy stops during cast time
 
 #### ranged / projectile
 - Spawns projectile from `ProjectileSpawner` node if available
@@ -38,8 +40,10 @@ The `ability_type` field in the Abilities database determines how an ability is 
   - `dash_away` - Dash away from target (escape)
   - `teleport` - Instant position change
 - Uses `movement_distance` for how far to move
+- **Hit detection after dash**: Uses `aoe_radius` if > 0, otherwise uses `range`
 - Shows debug line (orange) for dash path
 - If `extra_config.dash_duration` > 0, uses smooth tween animation
+- If `cast_while_moving` is false (default), enemy stops during cast time before dashing
 
 #### buff
 - Applies to self
@@ -59,6 +63,7 @@ The `condition` field in EnemyAbilities database determines when an ability can 
 | Condition | Description |
 |-----------|-------------|
 | `default` | Always available (when off cooldown) |
+| `never` | Never used by combat module (use for conditional_cast abilities) |
 | `opener` | Only used once per engagement (first attack on a new target) |
 | `target_close` | Target distance <= attack_radius |
 | `target_close_X` | Target distance <= X pixels (e.g., `target_close_60` = within 60px) |
@@ -251,6 +256,55 @@ Movement module that prevents melee enemies from bunching up when chasing the sa
 {"mod_surround": {"surround_radius": 100, "spread_strength": 0.6, "min_ally_distance": 50}}
 ```
 
+### Circle Module (`mod_circle`)
+
+Movement module that makes enemies orbit around their target. Useful for predatory behavior.
+
+| Config Key | Type | Default | Description |
+|------------|------|---------|-------------|
+| `circle_radius` | float | 80.0 | Distance to maintain from target while circling |
+| `circle_speed_mult` | float | 0.7 | Speed multiplier while circling |
+| `only_when_on_cooldown` | bool | true | Only circle when attack ability is on cooldown |
+| `coordinate_with_allies` | bool | true | Spread out from other circling allies |
+
+**Example - Wolf Circle:**
+```json
+{"mod_circle": {"circle_radius": 140, "circle_speed_mult": 0.8}}
+```
+
+### Conditional Cast Module (`mod_conditional_cast`)
+
+Special module that casts an ability when specified conditions are met. Unlike combat module which selects abilities based on priority, this module checks conditions periodically and casts a specific ability.
+
+| Config Key | Type | Default | Description |
+|------------|------|---------|-------------|
+| `ability_id` | string | "" | The ability to cast when conditions are met |
+| `conditions` | array | [] | Array of conditions that must ALL be true |
+| `check_interval` | float | 0.5 | How often to check conditions (seconds) |
+| `cooldown` | float | 30.0 | Cooldown after casting the ability |
+
+**Supported Conditions:**
+| Condition | Description |
+|-----------|-------------|
+| `player_damaged_recently:X` | Player took damage in last X seconds |
+| `self_not_buffed:buff_id` | This enemy doesn't have the specified buff |
+| `self_buffed:buff_id` | This enemy has the specified buff |
+| `health_below:X` | Enemy health below X percent |
+| `target_in_range:X` | Target within X units |
+
+**Example - Blood Howl:**
+```json
+{
+  "mod_conditional_cast": {
+    "ability_id": "abi_blood_howl",
+    "conditions": ["player_damaged_recently:10", "self_not_buffed:status_blood_frenzy"],
+    "cooldown": 30.0
+  }
+}
+```
+
+**Note:** Abilities used by conditional_cast should have `condition: never` in EnemyAbilities so they aren't also selected by the combat module.
+
 ---
 
 ## Status Effect Types
@@ -271,9 +325,17 @@ Status effects in `status_effects.json` use these type values:
 ### Abilities Table
 ```
 id, name, ability_type, damage_mult, damage_type, range, cooldown, cast_time,
-projectile_speed, aoe_radius, movement_type, movement_distance, status_effect_id,
-animation, extra_config, description
+cast_while_moving, projectile_speed, aoe_radius, movement_type, movement_distance,
+status_effect_id, animation, extra_config, description
 ```
+
+**Key Fields:**
+| Field | Description |
+|-------|-------------|
+| `range` | Max distance to USE ability (initiation range) |
+| `aoe_radius` | Hit detection radius after attack (if > 0, overrides range for hit detection) |
+| `cast_time` | Wind-up time before ability executes |
+| `cast_while_moving` | If FALSE (default), enemy stops during cast_time |
 
 ### EnemyAbilities Table
 ```
@@ -309,8 +371,10 @@ All modules listed by priority (highest runs first):
 | 95 | `mod_pack_alert` | social | Alert allies when acquiring target |
 | 90 | `mod_leash` | utility | Return home if too far from spawn |
 | 85 | `mod_flee` | movement | Run away when health is low |
+| 85 | `mod_conditional_cast` | special | Cast ability when conditions met |
 | 80 | `mod_chase` | movement | Move toward current target |
 | 78 | `mod_surround` | movement | Spread out from allies (flanking) |
+| 76 | `mod_circle` | movement | Orbit around target while on cooldown |
 | 75 | `mod_kite` | movement | Maintain distance from target |
 | 60 | `mod_combat` | combat | Execute abilities from database |
 | 10 | `mod_idle` | movement | Stand or roam when no target |
