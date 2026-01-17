@@ -57,9 +57,11 @@ Higher priority = runs first, can override lower priority modules.
 |-----------|-----------|
 | default | Always available |
 | opener | First attack on new target |
-| health_below_X | Health < X% |
-| health_above_X | Health > X% |
+| health_below_X | Health < X% (e.g., health_below_30) |
+| health_above_X | Health > X% (e.g., health_above_50) |
 | target_close | Within attack_radius |
+| target_close_X | Within X pixels (e.g., target_close_60) |
+| target_melee | Within melee_range (default 40px, configurable via config_override) |
 | target_far | Beyond attack_radius * 2 |
 | ally_nearby | Ally in nearby_allies |
 
@@ -125,14 +127,19 @@ Ability-specific params:
 |-----|---------|-------------|
 | preferred_range | 100.0 | Ideal distance from target |
 | too_close_range | 50.0 | Back away if closer than this |
+| melee_commit_range | 0.0 | If player gets this close, commit to melee (0 = disabled) |
 | kite_speed_mult | 0.8 | Speed when backing away |
 | sweet_spot_tolerance | 0.1 | Range tolerance (10%) |
 
 ### mod_combat
 | Key | Default | Description |
 |-----|---------|-------------|
-| base_cooldown | 1.5 | Time between attacks |
-| attack_radius | 24.0 | Melee attack range |
+| cardinal_alignment | true | Require X/Y alignment for melee attacks |
+| alignment_tolerance | 16.0 | Pixels tolerance for cardinal alignment |
+
+**Global Attack Cooldown**: Combat module enforces a minimum time between ANY attacks based on the enemy's `attack_speed` stat. An attack_speed of 1.0 = 1 second minimum between attacks.
+
+**Ranged Cooldown Behavior**: When a ranged ability is on cooldown and the enemy is within range, they will stop and wait instead of chasing into melee. However, if the kite module wants them to back away (player too close), they will respect that and continue kiting.
 
 ### mod_idle
 | Key | Default | Description |
@@ -162,8 +169,9 @@ module_config: {"mod_pack_alert": {"pack_group": "wolves"}}
 **Skeleton Archer (Ranged Kiter)**
 ```
 module_ids: mod_target_detection,mod_leash,mod_kite,mod_chase,mod_combat,mod_idle
-module_config: {"mod_kite": {"preferred_range": 120, "too_close_range": 60}}
+module_config: {"mod_kite": {"preferred_range": 300, "too_close_range": 120, "melee_commit_range": 40}}
 ```
+Behavior: Shoots from ~300px, backs away if player closes to <120px, commits to melee if player gets within 40px.
 
 **Vampire Lord (Miniboss)**
 ```
@@ -176,6 +184,51 @@ module_config: {"mod_flee": {"flee_health_percent": 0.1}}
 module_ids: mod_target_detection,mod_chase,mod_combat
 module_config: {}
 ```
+
+## Ranged Kiter Behavior (Detailed)
+
+Ranged enemies using the kite module follow this logic:
+
+### Module Execution Order
+1. **mod_chase (priority 80)**: Sets movement TOWARD target
+2. **mod_kite (priority 75)**: May override with movement AWAY from target
+3. **mod_combat (priority 60)**: Executes attacks, manages cooldowns
+
+### Kite Module Decision Tree
+```
+Is player within melee_commit_range?
+  → YES: Do nothing (let chase handle melee approach)
+  → NO: Continue...
+
+Is player within too_close_range?
+  → YES: Set movement AWAY from target (back away)
+  → NO: Continue...
+
+Is player at preferred_range (±10% tolerance)?
+  → YES: Stop and face target
+  → NO: Let chase module approach target
+```
+
+### Combat Module Ranged Cooldown Behavior
+```
+Is ranged ability on cooldown AND in range?
+  → Is kite module backing away? (movement away from target)
+    → YES: Respect kite, keep backing away
+    → NO: Stop and wait for cooldown (don't chase into melee)
+```
+
+### Example: Skeleton Archer with config
+```json
+{"mod_kite": {"preferred_range": 300, "too_close_range": 120, "melee_commit_range": 40}}
+```
+
+| Player Distance | Behavior |
+|-----------------|----------|
+| >300px | Chase toward player |
+| 270-330px | Stop, shoot when ready |
+| 120-270px | Stop and wait for ranged cooldown |
+| 40-120px | Back away while waiting |
+| <40px | Commit to melee attack |
 
 ## Debug Information
 
