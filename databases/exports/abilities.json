@@ -154,7 +154,7 @@
       "damage_type": "physical",
       "range": 0,
       "cooldown": 0,
-      "cast_time": 0.5,
+      "cast_time": 2.0,
       "cast_while_moving": false,
       "projectile_speed": 0,
       "aoe_radius": 150,
