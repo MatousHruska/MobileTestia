@@ -60,8 +60,10 @@ Higher priority = runs first, can be overridden by lower priority modules.
 | 95 | mod_pack_alert | social | Alert nearby allies |
 | 90 | mod_leash | utility | Return home if too far |
 | 85 | mod_flee | movement | Run when low health |
+| 85 | mod_conditional_cast | special | Cast ability when conditions met |
 | 80 | mod_chase | movement | Move toward target |
 | 78 | mod_surround | movement | Spread out from allies (flanking) |
+| 76 | mod_circle | movement | Orbit target while on cooldown |
 | 75 | mod_kite | movement | Maintain distance from target |
 | 60 | mod_combat | combat | Execute abilities |
 | 10 | mod_idle | movement | Stand or roam when no target |
@@ -153,6 +155,44 @@ Each module has configurable options via the `module_config` JSON column.
 | roam_interval_min | 2.0 | Min seconds between roams |
 | roam_interval_max | 5.0 | Max seconds between roams |
 
+#### mod_circle
+| Key | Default | Description |
+|-----|---------|-------------|
+| circle_radius | 80.0 | Distance to orbit from target |
+| circle_speed_mult | 0.7 | Speed multiplier while circling |
+| only_when_on_cooldown | true | Only circle when attack on cooldown |
+| coordinate_with_allies | true | Spread out from other circling allies |
+
+**Behavior:** Enemy orbits around target at specified radius. Useful for predatory behavior (wolves circling prey before striking).
+
+#### mod_conditional_cast
+| Key | Default | Description |
+|-----|---------|-------------|
+| ability_id | "" | Ability to cast when conditions met |
+| conditions | [] | Array of conditions that must ALL be true |
+| check_interval | 0.5 | How often to check conditions (seconds) |
+| cooldown | 30.0 | Cooldown after casting |
+
+**Supported Conditions:**
+| Condition | Description |
+|-----------|-------------|
+| `player_damaged_recently:X` | Player took damage in last X seconds |
+| `self_not_buffed:buff_id` | This enemy doesn't have the buff |
+| `self_buffed:buff_id` | This enemy has the buff |
+| `health_below:X` | Enemy health below X percent |
+| `target_in_range:X` | Target within X units |
+
+**Example - Blood Howl on damage:**
+```json
+{
+  "mod_conditional_cast": {
+    "ability_id": "abi_blood_howl",
+    "conditions": ["player_damaged_recently:10", "self_not_buffed:status_blood_frenzy"],
+    "cooldown": 30.0
+  }
+}
+```
+
 ---
 
 ## Ability System
@@ -187,6 +227,7 @@ Conditions determine when an ability can be used. Checked in priority order.
 | Condition | When Available |
 |-----------|----------------|
 | `default` | Always (when off cooldown) |
+| `never` | Never used by combat module (for conditional_cast abilities) |
 | `opener` | First attack on new target only |
 | `health_below_X` | Health < X% (e.g., `health_below_30`) |
 | `health_above_X` | Health > X% (e.g., `health_above_50`) |
@@ -229,9 +270,17 @@ Any ability field can be overridden per-enemy.
 **Abilities Table:**
 ```
 id, name, ability_type, damage_mult, damage_type, range, cooldown, cast_time,
-projectile_speed, aoe_radius, movement_type, movement_distance, status_effect_id,
-animation, extra_config, description
+cast_while_moving, projectile_speed, aoe_radius, movement_type, movement_distance,
+status_effect_id, animation, extra_config, description
 ```
+
+**Key Fields:**
+| Field | Description |
+|-------|-------------|
+| `range` | Max distance to USE ability (initiation range) |
+| `aoe_radius` | Hit detection radius (if > 0, overrides range for hit detection) |
+| `cast_time` | Wind-up time before ability executes |
+| `cast_while_moving` | If false (default), enemy stops during cast |
 
 **EnemyAbilities Table:**
 ```
@@ -273,15 +322,32 @@ enemy_id, ability_id, priority, condition, cooldown_override, damage_mult_overri
 
 ## Behavior Examples
 
-### Wolf (Pack Hunter + Surround + Leap)
+### Starved Wolf (Pack Hunter + Circle + Leap + Blood Howl)
 ```
-module_ids: mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_surround,mod_combat,mod_idle
-module_config: {"mod_surround": {"surround_radius": 100, "spread_strength": 0.6, "min_ally_distance": 50}}
+module_ids: mod_target_detection,mod_pack_alert,mod_conditional_cast,mod_leash,mod_chase,mod_surround,mod_circle,mod_combat,mod_idle
+
+module_config: {
+  "mod_conditional_cast": {
+    "ability_id": "abi_blood_howl",
+    "conditions": ["player_damaged_recently:10", "self_not_buffed:status_blood_frenzy"],
+    "cooldown": 30.0
+  },
+  "mod_circle": {"circle_radius": 140, "circle_speed_mult": 0.8}
+}
+
 abilities:
-  - abi_leap_attack (priority 100, condition: opener) - 100px range, 80px dash, 8s cooldown
-  - abi_melee_strike (priority 50, condition: default) - fallback while leap on cooldown
+  - abi_wolf_leap (priority 100, condition: opener) - 100px range, 40px hit radius, 2s cast, 6s cooldown
+  - abi_blood_howl (priority 150, condition: never) - triggered by conditional_cast module, not combat
 ```
-**Behavior:** Pack alerts allies, spreads out to flank from multiple angles, leaps at player as opener, then melee while leap on cooldown.
+
+**Behavior:**
+1. Pack alerts allies when one wolf spots player
+2. Wolves spread out to flank (surround module)
+3. When in range, wolf stops and prepares leap (2s cast time)
+4. Wolf leaps at player dealing 2x damage
+5. While leap on cooldown, wolf circles target at 140px radius
+6. If player damaged recently AND wolf not buffed, casts Blood Howl (2s cast, red ring visual)
+7. Blood Howl buffs self and nearby wolves with Blood Frenzy (+30% speed)
 
 ### Skeleton Archer (Ranged Kiter)
 ```
@@ -352,15 +418,17 @@ Before surround:     After surround:
 
 ### Wolf Pack Behavior
 
-Wolves combine pack alerts, surround flanking, and leap attacks:
+Wolves combine pack alerts, surround flanking, leap attacks, circling, and Blood Howl:
 
 **Attack Sequence:**
-1. **Detection**: First wolf spots player (within 300px)
+1. **Detection**: First wolf spots player (within 250px)
 2. **Pack Alert**: Alerts nearby wolves (within 300px alert radius)
 3. **Chase + Surround**: All wolves chase, spreading to flank
-4. **Leap Attack**: When in range (100px), wolves leap as opener (80px dash, 4x damage)
-5. **Melee Fallback**: While leap on 8s cooldown, use basic melee strikes
-6. **Leap Again**: When cooldown ready, leap again
+4. **Cast Preparation**: When in range (100px), wolf stops for 2s cast time
+5. **Leap Attack**: Wolf dashes 80px toward target, dealing 2x damage (40px hit radius)
+6. **Circle**: While leap on 6s cooldown, wolf orbits player at 140px radius
+7. **Blood Howl**: If player damaged recently AND wolf not buffed, casts Blood Howl (2s cast)
+8. **Repeat**: When cooldown ready, prepare and leap again
 
 **Combat Flow:**
 ```
@@ -372,12 +440,20 @@ Wolves combine pack alerts, surround flanking, and leap attacks:
                          ↘   ↓   ↙
                     [In Range - 100px]
                               ↓
+                    [Cast Prep - 2s]
+                              ↓
                     [LEAP! - opener]
                               ↓
-                    [Melee while CD]
+                    [Circle while CD] ←→ [Blood Howl if conditions met]
                               ↓
-                    [Leap ready → LEAP!]
+                    [Leap ready → Cast Prep → LEAP!]
 ```
+
+**Blood Howl Trigger:**
+- Condition: Player took damage in last 10 seconds
+- Condition: Wolf does NOT have Blood Frenzy buff
+- Effect: Buffs self and nearby wolves (+30% speed for 60s)
+- Visual: Expanding red ring when cast completes
 
 ### Ranged Kiter Behavior
 
@@ -460,6 +536,8 @@ Shows per-enemy information:
 | Chase Module | `scripts/npc/ai/modules/chase_module.gd` |
 | Kite Module | `scripts/npc/ai/modules/kite_module.gd` |
 | Surround Module | `scripts/npc/ai/modules/surround_module.gd` |
+| Circle Module | `scripts/npc/ai/modules/circle_module.gd` |
+| Conditional Cast Module | `scripts/npc/ai/modules/conditional_cast_module.gd` |
 | Pack Alert Module | `scripts/npc/ai/modules/pack_alert_module.gd` |
 | Flee Module | `scripts/npc/ai/modules/flee_module.gd` |
 | Modular Enemy NPC | `scripts/npc/modular_enemy_npc.gd` |
