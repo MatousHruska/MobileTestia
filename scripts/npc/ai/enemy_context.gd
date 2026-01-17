@@ -243,6 +243,7 @@ func reset_frame_flags() -> void:
 	speed_multiplier = 1.0
 	# Note: current_ability is NOT reset here - it persists until cleared by ModularEnemyNPC
 	is_ranged_attack = false
+	is_in_attack_range = false  # Reset each frame - combat module will set appropriately
 	# Note: pack_alert_received is NOT reset here - it persists until PackAlertModule processes it
 	# This allows alerts sent in one frame to be processed by other enemies in subsequent frames
 

@@ -15,10 +15,6 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 	if not context.has_valid_target:
 		return
 
-	# Don't chase if already in attack range
-	if context.is_in_attack_range:
-		return
-
 	# Don't chase if beyond leash
 	if context.is_beyond_leash:
 		_handle_return_home(context)
