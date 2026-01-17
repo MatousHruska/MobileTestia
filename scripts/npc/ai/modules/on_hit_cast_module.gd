@@ -182,12 +182,9 @@ func _execute_on_hit_ability(ability_id: String, _trigger_target: Node2D) -> voi
 	var cast_time: float = float(ability_data.get("cast_time", 0.0))
 	var aoe_radius: float = float(ability_data.get("aoe_radius", 150.0))
 
-	# Show visual effect for the ability
-	_show_howl_visual(aoe_radius)
-
-	# Handle cast time (brief pause for animation)
+	# Handle cast time (wolf stops and prepares)
 	if cast_time > 0:
-		# Lock the enemy briefly for the cast animation
+		# Lock the enemy during the cast
 		if _owner_ref.module_controller:
 			var ctx = _owner_ref.module_controller.get_context()
 			if ctx:
@@ -198,22 +195,39 @@ func _execute_on_hit_ability(ability_id: String, _trigger_target: Node2D) -> voi
 		if _owner_ref.has_method("stop_movement"):
 			_owner_ref.stop_movement()
 
-		# Create timer to unlock and apply effect
+		Debug.log("AI", "%s preparing Blood Howl (%.1fs cast)" % [
+			_owner_ref.enemy_name if _owner_ref else "?",
+			cast_time
+		])
+
+		# Create timer - visual and effect happen AFTER cast completes
 		var timer := _owner_ref.get_tree().create_timer(cast_time)
 		timer.timeout.connect(func():
+			if not _owner_ref or not is_instance_valid(_owner_ref):
+				return
+			if _owner_ref.is_dead:
+				return
+
+			# NOW show the visual effect (after cast completes)
+			_show_howl_visual(aoe_radius)
+
+			# Apply the buff effect
 			_apply_on_hit_effect(ability_data)
-			if _owner_ref and _owner_ref.module_controller:
+
+			# Play howl animation
+			if _owner_ref.has_method("play_attack"):
+				_owner_ref.play_attack()
+
+			# Unlock after effect
+			if _owner_ref.module_controller:
 				var ctx = _owner_ref.module_controller.get_context()
 				if ctx:
 					ctx.is_locked = false
 					ctx.attack_in_progress = false
 		)
-
-		# Play howl animation if available
-		if _owner_ref.has_method("play_attack"):
-			_owner_ref.play_attack()
 	else:
-		# Instant cast
+		# Instant cast - show visual and apply immediately
+		_show_howl_visual(aoe_radius)
 		_apply_on_hit_effect(ability_data)
 
 
