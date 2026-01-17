@@ -80,6 +80,15 @@
       "script_path": "res://scripts/npc/ai/modules/kite_module.gd",
       "priority": 75,
       "default_config": {"preferred_range": 100, "too_close_range": 50, "kite_speed_mult": 0.8}
+    },
+    {
+      "id": "mod_surround",
+      "name": "Surround",
+      "module_type": "movement",
+      "description": "Spread out when multiple enemies chase same target, creates flanking behavior",
+      "script_path": "res://scripts/npc/ai/modules/surround_module.gd",
+      "priority": 78,
+      "default_config": {"surround_radius": 80, "spread_strength": 0.5, "min_ally_distance": 40}
     }
   ]
 }
