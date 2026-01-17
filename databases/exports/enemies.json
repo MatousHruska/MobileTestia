@@ -99,7 +99,7 @@
       "xp_reward": 25,
       "loot_table_id": "loot_skeleton",
       "module_ids": "mod_target_detection,mod_leash,mod_kite,mod_chase,mod_combat,mod_idle",
-      "module_config": {"mod_kite": {"preferred_range": 300, "too_close_range": 60, "melee_commit_range": 40}},
+      "module_config": {"mod_kite": {"preferred_range": 300, "too_close_range": 200, "melee_commit_range": 40}},
       "description": ""
     },
     {
