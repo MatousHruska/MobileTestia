@@ -383,8 +383,8 @@ func _create_howl_burst(center: Vector2) -> Node2D:
 		var particle := _create_howl_particle(i * TAU / 8.0)
 		burst.add_child(particle)
 
-	# Auto-destroy after animation
-	var timer := burst.get_tree().create_timer(0.8)
+	# Auto-destroy after animation (use owner's tree since burst isn't in tree yet)
+	var timer := _owner_ref.get_tree().create_timer(0.8)
 	timer.timeout.connect(burst.queue_free)
 
 	return burst
