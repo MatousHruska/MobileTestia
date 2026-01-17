@@ -85,7 +85,7 @@ offset_left = -100.0
 offset_top = 350.0
 offset_right = 100.0
 offset_bottom = 380.0
-text = "BOSS ARENA"
+text = "WOLF TEST AREA"
 horizontal_alignment = 1
 
 [node name="Enemies" type="Node2D" parent="."]
@@ -115,10 +115,21 @@ position = Vector2(450, -180)
 script = ExtResource("6_spawn_point")
 preset_id = "sp_mountain_archers"
 
-[node name="BossSpawn" type="Node2D" parent="Enemies"]
-position = Vector2(0, 400)
+[node name="StarvedWolfSpawn1" type="Node2D" parent="Enemies"]
+position = Vector2(-400, 350)
 script = ExtResource("6_spawn_point")
-preset_id = "sp_skeleton_king_boss"
+enemy_id = "ene_starved_wolf"
+max_active_enemies = 1
+can_respawn = true
+respawn_time = 30.0
+
+[node name="StarvedWolfSpawn2" type="Node2D" parent="Enemies"]
+position = Vector2(400, 350)
+script = ExtResource("6_spawn_point")
+enemy_id = "ene_starved_wolf"
+max_active_enemies = 1
+can_respawn = true
+respawn_time = 30.0
 
 [node name="SpawnPoints" type="Node2D" parent="."]
 
