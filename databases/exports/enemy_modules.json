@@ -7,7 +7,7 @@
       "description": "Detects and tracks combat targets within detection radius",
       "script_path": "res://scripts/npc/ai/modules/target_detection_module.gd",
       "priority": 100,
-      "default_config": {"detection_radius": 120}
+      "default_config": {"detection_radius": 300}
     },
     {
       "id": "mod_chase",
