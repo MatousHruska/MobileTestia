@@ -24,6 +24,10 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 	if context.is_locked:
 		return
 
+	# Don't chase if attack in progress (casting/winding up)
+	if context.attack_in_progress:
+		return
+
 	# Don't chase if dead
 	if context.is_dead:
 		return
