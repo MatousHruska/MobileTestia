@@ -155,11 +155,15 @@ func _check_self_not_buffed(buff_id: String) -> bool:
 	if not _owner_ref:
 		return false
 
-	# Check StatusEffectComponent
+	# Check StatusEffectComponent (may be named "StatusEffects")
+	var status_comp: Node = null
 	if _owner_ref.has_node("StatusEffectComponent"):
-		var status_comp = _owner_ref.get_node("StatusEffectComponent")
-		if status_comp.has_method("has_effect"):
-			return not status_comp.has_effect(buff_id)
+		status_comp = _owner_ref.get_node("StatusEffectComponent")
+	elif _owner_ref.has_node("StatusEffects"):
+		status_comp = _owner_ref.get_node("StatusEffects")
+
+	if status_comp and status_comp.has_method("has_effect"):
+		return not status_comp.has_effect(buff_id)
 
 	# Fallback: check for a has_buff method
 	if _owner_ref.has_method("has_buff"):
@@ -277,11 +281,16 @@ func _apply_buff_to_self(status_effect_id: String) -> void:
 	if not _owner_ref:
 		return
 
+	# Find StatusEffectComponent (may be named "StatusEffects")
+	var status_comp: Node = null
 	if _owner_ref.has_node("StatusEffectComponent"):
-		var status_comp = _owner_ref.get_node("StatusEffectComponent")
-		if status_comp.has_method("apply_effect"):
-			status_comp.apply_effect(status_effect_id, _owner_ref)
-			Debug.log("AI", "Applied %s to %s" % [status_effect_id, _owner_ref.enemy_name])
+		status_comp = _owner_ref.get_node("StatusEffectComponent")
+	elif _owner_ref.has_node("StatusEffects"):
+		status_comp = _owner_ref.get_node("StatusEffects")
+
+	if status_comp and status_comp.has_method("apply_effect"):
+		status_comp.apply_effect(status_effect_id, _owner_ref)
+		Debug.log("AI", "Applied %s to %s" % [status_effect_id, _owner_ref.enemy_name])
 
 
 func _apply_buff_to_nearby_allies(status_effect_id: String, radius: float) -> void:
@@ -303,15 +312,19 @@ func _apply_buff_to_nearby_allies(status_effect_id: String, radius: float) -> vo
 
 		var dist: float = center.distance_to(enemy.global_position)
 		if dist <= radius:
-			# Apply buff
+			# Find StatusEffectComponent (may be named "StatusEffects")
+			var status_comp: Node = null
 			if enemy.has_node("StatusEffectComponent"):
-				var status_comp = enemy.get_node("StatusEffectComponent")
-				if status_comp.has_method("apply_effect"):
-					status_comp.apply_effect(status_effect_id, _owner_ref)
-					Debug.log("AI", "Applied %s to nearby %s" % [
-						status_effect_id,
-						enemy.enemy_name if "enemy_name" in enemy else enemy.name
-					])
+				status_comp = enemy.get_node("StatusEffectComponent")
+			elif enemy.has_node("StatusEffects"):
+				status_comp = enemy.get_node("StatusEffects")
+
+			if status_comp and status_comp.has_method("apply_effect"):
+				status_comp.apply_effect(status_effect_id, _owner_ref)
+				Debug.log("AI", "Applied %s to nearby %s" % [
+					status_effect_id,
+					enemy.enemy_name if "enemy_name" in enemy else enemy.name
+				])
 
 
 #===============================================================================

@@ -343,6 +343,7 @@ func apply_status_effect(effect_id: String) -> void:
 	var tick_interval: float = effect_data.get("tick_interval", 1.0)
 	var show_in_hud: bool = effect_data.get("show_in_hud", true)
 	var ends_when: String = effect_data.get("ends_when", "")
+	var stat_affected: String = effect_data.get("stat_affected", "")
 
 	# Strip "status_" prefix for effect type name
 	var effect_name: String = effect_id.replace("status_", "")
@@ -362,6 +363,18 @@ func apply_status_effect(effect_id: String) -> void:
 	# If ends_when was specified and effect was added, update it
 	if not ends_when.is_empty() and effect_name in _active_effects:
 		_active_effects[effect_name]["ends_when"] = ends_when
+
+	# Store stat modifier if specified
+	if not stat_affected.is_empty() and effect_name in _active_effects:
+		_active_effects[effect_name]["stat_affected"] = stat_affected
+		_active_effects[effect_name]["stat_value"] = value
+		Debug.log("StatusEffect", "Effect %s modifies %s by %s" % [effect_name, stat_affected, value])
+
+
+## Apply effect - wrapper for compatibility with code that expects this method name
+## source_node is optional and ignored (kept for API compatibility)
+func apply_effect(effect_id: String, _source_node: Node2D = null) -> void:
+	apply_status_effect(effect_id)
 
 
 ## Override for visual effect spawning
@@ -406,6 +419,23 @@ func get_hud_visible_effects() -> Dictionary:
 		if effect.get("show_in_hud", true):
 			result[effect_type] = effect.duplicate()
 	return result
+
+
+## Get total stat modifier for a specific stat from all active effects
+## Returns percentage modifier (e.g., 30 means +30%)
+func get_stat_modifier(stat_name: String) -> float:
+	var total: float = 0.0
+	for effect_type in _active_effects:
+		var effect: Dictionary = _active_effects[effect_type]
+		if effect.get("stat_affected", "") == stat_name:
+			total += effect.get("stat_value", 0.0)
+	return total
+
+
+## Get stat multiplier for a specific stat (1.0 = no change, 1.3 = +30%)
+func get_stat_multiplier(stat_name: String) -> float:
+	var modifier: float = get_stat_modifier(stat_name)
+	return 1.0 + (modifier / 100.0)
 
 
 #===============================================================================

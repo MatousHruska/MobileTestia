@@ -69,6 +69,9 @@ var desired_direction: Vector2 = Vector2.ZERO
 ## Desired movement speed multiplier (1.0 = normal)
 var speed_multiplier: float = 1.0
 
+## Buff-based speed multiplier from status effects (applied on top of speed_multiplier)
+var buff_speed_multiplier: float = 1.0
+
 ## Should stop moving this frame
 var should_stop: bool = false
 
@@ -303,6 +306,16 @@ func update_from_owner() -> void:
 		distance_from_home = global_position.distance_to(home_position)
 		is_beyond_leash = distance_from_home > leash_radius
 
+	# Read buff stat modifiers from StatusEffectComponent (may be named "StatusEffects")
+	buff_speed_multiplier = 1.0
+	var status_comp: Node = null
+	if owner.has_node("StatusEffectComponent"):
+		status_comp = owner.get_node("StatusEffectComponent")
+	elif owner.has_node("StatusEffects"):
+		status_comp = owner.get_node("StatusEffects")
+	if status_comp and status_comp.has_method("get_stat_multiplier"):
+		buff_speed_multiplier = status_comp.get_stat_multiplier("movement_speed")
+
 
 func apply_to_owner() -> void:
 	"""Apply context decisions to owner EnemyNPC"""
@@ -316,13 +329,14 @@ func apply_to_owner() -> void:
 		if owner.has_method("set_move_direction"):
 			owner.set_move_direction(desired_direction)
 		# Always apply speed (to restore normal speed when multiplier returns to 1.0)
+		# Combines module speed_multiplier with buff_speed_multiplier from status effects
 		if "move_speed" in owner and base_move_speed > 0:
-			owner.move_speed = base_move_speed * speed_multiplier
+			owner.move_speed = base_move_speed * speed_multiplier * buff_speed_multiplier
 
 
 func get_debug_dict() -> Dictionary:
 	"""Return context as dictionary for debugging"""
-	return {
+	var debug_dict: Dictionary = {
 		"state": BehaviorState.keys()[behavior_state],
 		"target": current_target.name if current_target else "none",
 		"target_dist": "%.0f" % target_distance,
@@ -331,6 +345,10 @@ func get_debug_dict() -> Dictionary:
 		"cooldown": "%.1f" % attack_cooldown_remaining,
 		"flags": _get_flags_string(),
 	}
+	# Show buff speed multiplier if not 1.0
+	if buff_speed_multiplier != 1.0:
+		debug_dict["buff_spd"] = "%.0f%%" % (buff_speed_multiplier * 100)
+	return debug_dict
 
 
 func _get_flags_string() -> String:
