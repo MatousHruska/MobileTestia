@@ -180,8 +180,10 @@ func _execute_ability(ability: Dictionary) -> void:
 	var ctx = module_controller.get_context()
 	ctx.attack_in_progress = true
 
-	# Stop movement during cast
-	stop_movement()
+	# Check if ability can be cast while moving (default: false = must stop)
+	var cast_while_moving: bool = ability.get("cast_while_moving", false)
+	if not cast_while_moving:
+		stop_movement()
 
 	var ability_type: String = ability.get("ability_type", "melee")
 	var cast_time: float = float(ability.get("cast_time", 0.0))

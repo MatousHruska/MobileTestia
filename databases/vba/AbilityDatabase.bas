@@ -19,7 +19,7 @@ Public Sub SetupAbilitiesSheet()
 
     Dim headers As Variant
     headers = Array("id", "name", "ability_type", "damage_mult", "damage_type", _
-                    "range", "cooldown", "cast_time", "projectile_speed", _
+                    "range", "cooldown", "cast_time", "cast_while_moving", "projectile_speed", _
                     "aoe_radius", "movement_type", "movement_distance", _
                     "status_effect_id", "animation", "extra_config", "description")
     SetupSheetHeaders ws, headers
@@ -31,14 +31,15 @@ Public Sub SetupAbilitiesSheet()
     SafeAddComment ws.Cells(1, 5), "physical, fire, cold, lightning, poison, healing"
     SafeAddComment ws.Cells(1, 6), "Effective range in pixels"
     SafeAddComment ws.Cells(1, 7), "Base cooldown in seconds"
-    SafeAddComment ws.Cells(1, 8), "Cast time (0 = instant)"
-    SafeAddComment ws.Cells(1, 9), "For ranged/projectile types (pixels/sec)"
-    SafeAddComment ws.Cells(1, 10), "For area effects (0 = single target)"
-    SafeAddComment ws.Cells(1, 11), "none, dash_to, dash_away, teleport"
-    SafeAddComment ws.Cells(1, 12), "Distance for dash/teleport abilities"
-    SafeAddComment ws.Cells(1, 13), "Status effect to apply (from StatusEffects)"
-    SafeAddComment ws.Cells(1, 14), "Animation name to play"
-    SafeAddComment ws.Cells(1, 15), "JSON config for ability-specific params, e.g. {""falloff_type"": ""linear"", ""center_mult"": 2.0}"
+    SafeAddComment ws.Cells(1, 8), "Cast time / wind-up before ability executes (0 = instant)"
+    SafeAddComment ws.Cells(1, 9), "TRUE = can move while casting, FALSE = must stop (default FALSE)"
+    SafeAddComment ws.Cells(1, 10), "For ranged/projectile types (pixels/sec)"
+    SafeAddComment ws.Cells(1, 11), "For area effects (0 = single target)"
+    SafeAddComment ws.Cells(1, 12), "none, dash_to, dash_away, teleport"
+    SafeAddComment ws.Cells(1, 13), "Distance for dash/teleport abilities"
+    SafeAddComment ws.Cells(1, 14), "Status effect to apply (from StatusEffects)"
+    SafeAddComment ws.Cells(1, 15), "Animation name to play"
+    SafeAddComment ws.Cells(1, 16), "JSON config for ability-specific params, e.g. {""falloff_type"": ""linear"", ""center_mult"": 2.0}"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -87,21 +88,22 @@ Public Sub ExportAbilities()
             json = json & "      ""range"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(row, 6), 24)) & "," & vbCrLf
             json = json & "      ""cooldown"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(row, 7), 1)) & "," & vbCrLf
             json = json & "      ""cast_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(row, 8), 0)) & "," & vbCrLf
-            json = json & "      ""projectile_speed"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(row, 9), 0)) & "," & vbCrLf
-            json = json & "      ""aoe_radius"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(row, 10), 0)) & "," & vbCrLf
-            json = json & "      ""movement_type"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 11), "none")) & """," & vbCrLf
-            json = json & "      ""movement_distance"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(row, 12), 0)) & "," & vbCrLf
-            json = json & "      ""status_effect_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 13))) & """," & vbCrLf
-            json = json & "      ""animation"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 14), "attack")) & """," & vbCrLf
+            json = json & "      ""cast_while_moving"": " & LCase(CStr(GetDefaultBoolean(ws.Cells(row, 9), False))) & "," & vbCrLf
+            json = json & "      ""projectile_speed"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(row, 10), 0)) & "," & vbCrLf
+            json = json & "      ""aoe_radius"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(row, 11), 0)) & "," & vbCrLf
+            json = json & "      ""movement_type"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 12), "none")) & """," & vbCrLf
+            json = json & "      ""movement_distance"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(row, 13), 0)) & "," & vbCrLf
+            json = json & "      ""status_effect_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 14))) & """," & vbCrLf
+            json = json & "      ""animation"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 15), "attack")) & """," & vbCrLf
 
             ' extra_config - parse as JSON object if present
             Dim extraConfig As String
-            extraConfig = Trim(ws.Cells(row, 15).Value)
+            extraConfig = Trim(ws.Cells(row, 16).Value)
             If Len(extraConfig) > 0 Then
                 json = json & "      ""extra_config"": " & extraConfig & "," & vbCrLf
             End If
 
-            json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 16))) & """" & vbCrLf
+            json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 17))) & """" & vbCrLf
             json = json & "    }"
         End If
     Next row
@@ -169,11 +171,11 @@ Public Sub ValidateAbilities()
                 LogValidationError errors, errorCount, row, "E", "Invalid damage_type: " & damageType
             End If
 
-            ' Validate movement_type
+            ' Validate movement_type (column 12 after adding cast_while_moving)
             Dim movementType As String
-            movementType = LCase(Trim(ws.Cells(row, 11).Value))
+            movementType = LCase(Trim(ws.Cells(row, 12).Value))
             If Len(movementType) > 0 And Not ValidateDropdown(movementType, validMovementTypes) Then
-                LogValidationError errors, errorCount, row, "K", "Invalid movement_type: " & movementType
+                LogValidationError errors, errorCount, row, "L", "Invalid movement_type: " & movementType
             End If
 
             ' Validate numeric ranges
