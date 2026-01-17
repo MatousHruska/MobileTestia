@@ -195,10 +195,15 @@ func _check_condition(context: EnemyContext, ability: Dictionary) -> bool:
 			return not _opener_used
 
 		"target_close":
+			# Default: within melee attack radius
 			return context.target_distance <= context.attack_radius
 
 		"target_far":
 			return context.target_distance > context.attack_radius * 2
+
+		"target_melee":
+			# Within typical melee range (for ranged enemies that have melee backup)
+			return context.target_distance <= 40.0
 
 		"ally_nearby":
 			return context.nearby_allies.size() > 0
@@ -218,6 +223,13 @@ func _check_condition(context: EnemyContext, ability: Dictionary) -> bool:
 				if threshold_str.is_valid_float():
 					var threshold: float = float(threshold_str) / 100.0
 					return context.health_percent > threshold
+
+			# target_close_X (e.g., target_close_60 means within 60 pixels)
+			elif condition.begins_with("target_close_"):
+				var range_str: String = condition.substr(13)
+				if range_str.is_valid_float():
+					var close_range: float = float(range_str)
+					return context.target_distance <= close_range
 
 			# on_cooldown_X (e.g., on_cooldown_5 means every 5 seconds)
 			# This is handled differently - always true if off cooldown
