@@ -1188,7 +1188,8 @@ const ModularEnemyNPCScript := preload("res://scripts/npc/modular_enemy_npc.gd")
 
 ## Create EnemyNPC from database enemy entry
 ## Returns ModularEnemyNPC if enemy has module_ids configured, otherwise EnemyNPC
-func create_enemy(enemy_id: String, level: int = 1) -> EnemyNPC:
+## spawn_config: Optional dictionary from spawn point with module overrides
+func create_enemy(enemy_id: String, level: int = 1, spawn_config: Dictionary = {}) -> EnemyNPC:
 	var data: Dictionary = get_enemy(enemy_id)
 	if data.is_empty():
 		Debug.warn("Database", "Enemy not found: %s" % enemy_id)
@@ -1234,6 +1235,10 @@ func create_enemy(enemy_id: String, level: int = 1) -> EnemyNPC:
 	var loot_table_id: String = data.get("loot_table_id", "")
 	if not loot_table_id.is_empty():
 		enemy.set_meta("loot_table_id", loot_table_id)
+
+	# Store spawn config for module system to apply later
+	if not spawn_config.is_empty():
+		enemy.set_meta("spawn_config", spawn_config)
 
 	Debug.log("Database", "Created enemy from database", {
 		"id": enemy_id,

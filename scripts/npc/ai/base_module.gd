@@ -98,6 +98,13 @@ func get_config_string(key: String, default: String = "") -> String:
 	"""Get string value from config with default"""
 	return str(config.get(key, default))
 
+
+func merge_config(additional_config: Dictionary) -> void:
+	"""Merge additional config values into existing config.
+	Used by spawn points to override module settings."""
+	for key in additional_config:
+		config[key] = additional_config[key]
+
 #===============================================================================
 # DEBUG
 #===============================================================================
