@@ -75,7 +75,7 @@
       "ability_type": "projectile",
       "damage_mult": 4,
       "damage_type": "physical",
-      "range": 300,
+      "range": 400,
       "cooldown": 4,
       "cast_time": 0,
       "projectile_speed": 100,
