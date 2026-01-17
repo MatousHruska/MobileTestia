@@ -154,6 +154,9 @@ var _equipment_bonuses: Dictionary = {}
 ## Buff/debuff modifiers
 var _buff_modifiers: Dictionary = {}
 
+## Damage tracking (for AI conditions like "player_damaged_recently")
+var last_damage_time: float = -1000.0  # Time.get_ticks_msec()/1000 when last damaged
+
 
 func _ready() -> void:
 	add_to_group("saveable")  # Register for auto-discovery save system
@@ -330,11 +333,20 @@ func _regenerate_resources(delta: float) -> void:
 
 func damage(amount: float, damage_type: String = "physical", is_crit: bool = false) -> void:
 	current_life -= amount
+	last_damage_time = Time.get_ticks_msec() / 1000.0  # Track when damage occurred
 	damaged.emit(amount, damage_type, is_crit)
 	Debug.log("Combat", "Damage taken", {"amount": amount, "type": damage_type, "crit": is_crit})
 	if current_life <= 0:
 		Debug.warn("Combat", "Player died!")
 		Game.game_over()
+
+
+func get_time_since_last_damage() -> float:
+	"""Returns seconds since player last took damage, or -1 if never damaged"""
+	if last_damage_time < 0:
+		return -1.0
+	var current_time: float = Time.get_ticks_msec() / 1000.0
+	return current_time - last_damage_time
 
 
 func heal(amount: float) -> void:
