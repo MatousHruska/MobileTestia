@@ -137,6 +137,8 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
 	# Check global attack cooldown (prevents overlapping attacks)
 	if _global_attack_cooldown > 0:
+		# Still check if we should wait in place for ranged cooldown
+		_handle_no_ability_available(context)
 		return
 
 	# Find best ability to use
