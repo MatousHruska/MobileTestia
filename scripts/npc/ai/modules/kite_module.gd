@@ -2,6 +2,13 @@ extends BaseModule
 class_name KiteModule
 ## KiteModule - Maintain distance from target (back away if too close)
 ## Useful for ranged enemies that want to keep targets at a distance
+##
+## Config options:
+##   preferred_range: ideal distance to maintain (default 100)
+##   too_close_range: back away if closer than this (default 50)
+##   melee_commit_range: if player gets this close, commit to melee instead of kiting (default 0 = disabled)
+##   kite_speed_mult: movement speed multiplier when kiting (default 0.8)
+##   sweet_spot_tolerance: tolerance for preferred range (default 0.1 = 10%)
 
 func _init() -> void:
 	module_id = "mod_kite"
@@ -29,9 +36,16 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 	# Get kiting configuration
 	var preferred_range: float = get_config_float("preferred_range", 100.0)
 	var too_close_range: float = get_config_float("too_close_range", 50.0)
+	var melee_commit_range: float = get_config_float("melee_commit_range", 0.0)
 	var kite_speed_mult: float = get_config_float("kite_speed_mult", 0.8)
 
-	# Too close? Back away
+	# If player is within melee commit range, stop kiting and let chase/combat handle it
+	# This prevents the "dance" where enemy backs away then chases back repeatedly
+	if melee_commit_range > 0 and context.target_distance < melee_commit_range:
+		# Don't interfere - let chase module move toward target for melee
+		return
+
+	# Too close (but not committed to melee)? Back away
 	if context.target_distance < too_close_range:
 		context.desired_direction = -context.target_direction
 		context.speed_multiplier = kite_speed_mult
@@ -61,5 +75,6 @@ func get_debug_info() -> Dictionary:
 	var info: Dictionary = super.get_debug_info()
 	info["preferred_range"] = get_config_float("preferred_range", 100.0)
 	info["too_close_range"] = get_config_float("too_close_range", 50.0)
+	info["melee_commit_range"] = get_config_float("melee_commit_range", 0.0)
 	info["kite_speed_mult"] = get_config_float("kite_speed_mult", 0.8)
 	return info
