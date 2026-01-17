@@ -641,7 +641,7 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "Abilities", 11, "none,dash_to,dash_away,teleport"  ' movement_type
 
     ' EnemyAbilities
-    ApplyListValidation "EnemyAbilities", 4, "default,opener,target_close,target_far,health_below_30,health_below_50,health_above_50,health_above_70,ally_nearby"  ' condition
+    ApplyListValidation "EnemyAbilities", 4, "default,opener,target_close,target_melee,target_close_60,target_far,health_below_30,health_below_50,health_above_50,health_above_70,ally_nearby"  ' condition
 
     ' Chests (new schema uses tier weights instead of single tier)
     ApplyListValidation "Chests", 3, "loot,quest"           ' chest_type
