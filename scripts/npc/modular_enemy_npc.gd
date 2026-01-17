@@ -40,6 +40,17 @@ func _setup_module_system() -> void:
 	elif config_raw is Dictionary:
 		_enemy_module_config = config_raw
 
+	# Apply spawn config overrides (from spawn point)
+	var spawn_config: Dictionary = get_meta("spawn_config", {})
+	if spawn_config.has("module_config_override"):
+		var spawn_overrides: Dictionary = spawn_config.module_config_override
+		for module_id in spawn_overrides:
+			if not _enemy_module_config.has(module_id):
+				_enemy_module_config[module_id] = {}
+			var overrides: Dictionary = spawn_overrides[module_id]
+			for key in overrides:
+				_enemy_module_config[module_id][key] = overrides[key]
+
 	# Create controller
 	module_controller = ModuleController.new()
 	module_controller.name = "ModuleController"
@@ -51,6 +62,18 @@ func _setup_module_system() -> void:
 		module_id = module_id.strip_edges()
 		if not module_id.is_empty():
 			_load_and_add_module(module_id)
+
+	# Inject additional modules from spawn config
+	if spawn_config.has("modules_to_inject"):
+		var inject_ids_str: String = spawn_config.modules_to_inject
+		var inject_ids = inject_ids_str.split(",")
+		for module_id in inject_ids:
+			module_id = module_id.strip_edges()
+			if not module_id.is_empty():
+				# Check if already loaded
+				if not module_controller.has_module(module_id):
+					_load_and_add_module(module_id)
+					Debug.log("AI", "Injected module from spawn config: %s" % module_id)
 
 	Debug.info("AI", "%s using modular AI with %d modules" % [
 		enemy_name,
@@ -112,6 +135,8 @@ func _create_module_instance(module_id: String, _module_data: Dictionary) -> Bas
 			return IdleModule.new()
 		"mod_leash":
 			return LeashModule.new()
+		"mod_patrol":
+			return PatrolModule.new()
 		"mod_pack_alert", "mod_kite":
 			# Load these from script_path (avoids class name resolution issues)
 			return _load_module_from_script(_module_data)

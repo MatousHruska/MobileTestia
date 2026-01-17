@@ -123,6 +123,20 @@ signal spawn_point_deactivated()
 @export var spawn_point_id: String = ""
 
 #===============================================================================
+# MODULE OVERRIDE (For patrol, ambush, etc.)
+#===============================================================================
+
+@export_group("Module Override")
+
+## Additional modules to inject into spawned enemies (comma-separated IDs)
+## Example: "mod_patrol" - adds patrol module even if not in base enemy
+@export var modules_to_inject: String = ""
+
+## Module configuration to merge/override when spawning
+## Example: {"mod_patrol": {"waypoints_relative": [[0,0], [100,0]], "loop": true}}
+@export var module_config_override: Dictionary = {}
+
+#===============================================================================
 # STATE
 #===============================================================================
 
@@ -431,8 +445,11 @@ func spawn_enemy() -> EnemyNPC:
 	# Get random level
 	var level := randi_range(min_level, max_level)
 
-	# Create enemy from database
-	var enemy := DatabaseLoader.create_enemy(selected_enemy_id, level)
+	# Prepare spawn configuration (for patrol, ambush, etc.)
+	var spawn_config := _prepare_spawn_config()
+
+	# Create enemy from database with spawn config
+	var enemy := DatabaseLoader.create_enemy(selected_enemy_id, level, spawn_config)
 	if not enemy:
 		Debug.err("SpawnPoint", "Failed to create enemy", {
 			"id": _actual_id,
@@ -514,6 +531,36 @@ func _get_spawn_position() -> Vector2:
 	else:
 		# Exact position
 		return global_position
+
+
+func _prepare_spawn_config() -> Dictionary:
+	## Prepare spawn configuration for module override (patrol, ambush, etc.)
+	var config: Dictionary = {}
+
+	# Add modules to inject
+	if not modules_to_inject.is_empty():
+		config["modules_to_inject"] = modules_to_inject
+
+	# Process module config override
+	if not module_config_override.is_empty():
+		var processed_config: Dictionary = module_config_override.duplicate(true)
+
+		# Convert relative waypoints to absolute for any module that has them
+		for module_id in processed_config:
+			var mod_config = processed_config[module_id]
+			if mod_config is Dictionary and mod_config.has("waypoints_relative"):
+				var absolute_waypoints: Array = []
+				for offset in mod_config.waypoints_relative:
+					if offset is Array and offset.size() >= 2:
+						absolute_waypoints.append(global_position + Vector2(offset[0], offset[1]))
+					elif offset is Vector2:
+						absolute_waypoints.append(global_position + offset)
+				mod_config["waypoints"] = absolute_waypoints
+				mod_config.erase("waypoints_relative")
+
+		config["module_config_override"] = processed_config
+
+	return config
 
 
 func _get_pool_size() -> int:
