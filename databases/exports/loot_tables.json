@@ -118,6 +118,23 @@
       "gold_max": 80,
       "item_pool": "",
       "guaranteed_drops": ""
+    },
+    {
+      "id": "loot_starved_wolf",
+      "name": "Starved Wolf Loot",
+      "min_drops": 1,
+      "max_drops": 1,
+      "rarity_weights": {
+        "nothing": 650,
+        "common": 60,
+        "magic": 15,
+        "rare": 5,
+        "unique": 0
+      },
+      "gold_min": 1,
+      "gold_max": 4,
+      "item_pool": "",
+      "guaranteed_drops": ""
     }
   ]
 }
