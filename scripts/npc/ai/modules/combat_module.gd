@@ -107,11 +107,13 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	# Update global attack cooldown
 	_global_attack_cooldown = maxf(0.0, _global_attack_cooldown - delta)
 
-	# Track attack cooldown for UI/debug (use max of global and shortest ability cooldown)
+	# Track attack cooldown for UI/debug (use max of global and shortest ACTIVE ability cooldown)
 	var min_ability_cooldown: float = INF
 	for ability_id in _cooldowns:
-		if _cooldowns[ability_id] < min_ability_cooldown:
-			min_ability_cooldown = _cooldowns[ability_id]
+		var remaining: float = _cooldowns[ability_id]
+		# Only consider abilities that are actually on cooldown (> 0)
+		if remaining > 0.0 and remaining < min_ability_cooldown:
+			min_ability_cooldown = remaining
 	var effective_cooldown: float = maxf(_global_attack_cooldown, min_ability_cooldown if min_ability_cooldown != INF else 0.0)
 	context.attack_cooldown_remaining = effective_cooldown
 
