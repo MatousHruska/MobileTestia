@@ -25,6 +25,7 @@ Higher priority = runs first, can override lower priority modules.
 | 90 | mod_leash | utility | Check distance from home |
 | 85 | mod_flee | movement | Run when low health |
 | 80 | mod_chase | movement | Move toward target |
+| 78 | mod_surround | movement | Spread out from allies |
 | 75 | mod_kite | movement | Maintain distance |
 | 60 | mod_combat | combat | Execute abilities |
 | 10 | mod_idle | movement | Stand/roam |
@@ -122,6 +123,17 @@ Ability-specific params:
 |-----|---------|-------------|
 | chase_speed_mult | 1.0 | Speed multiplier when chasing |
 
+### mod_surround
+| Key | Default | Description |
+|-----|---------|-------------|
+| surround_radius | 80.0 | How far to check for allies |
+| spread_strength | 0.5 | How much to offset approach angle (0-1) |
+| min_ally_distance | 40.0 | Minimum desired distance between allies |
+
+**Behavior:** Prevents melee enemies from bunching into a ball. When multiple enemies chase the same target:
+- If too close to an ally, adds separation force (pushes away)
+- If on same side as ally cluster, offsets approach angle to flank
+
 ### mod_kite
 | Key | Default | Description |
 |-----|---------|-------------|
@@ -160,11 +172,12 @@ Ability-specific params:
 
 ### Example Configurations
 
-**Wolf (Pack Hunter)**
+**Wolf (Pack Hunter with Surround)**
 ```
-module_ids: mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_combat,mod_idle
-module_config: {"mod_pack_alert": {"pack_group": "wolves"}}
+module_ids: mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_surround,mod_combat,mod_idle
+module_config: {"mod_surround": {"surround_radius": 100, "spread_strength": 0.6, "min_ally_distance": 50}}
 ```
+Behavior: Pack alerts allies, spreads out when attacking same target to flank from multiple angles.
 
 **Skeleton Archer (Ranged Kiter)**
 ```
@@ -183,6 +196,39 @@ module_config: {"mod_flee": {"flee_health_percent": 0.1}}
 ```
 module_ids: mod_target_detection,mod_chase,mod_combat
 module_config: {}
+```
+
+## Surround/Flanking Behavior (Detailed)
+
+Melee enemies using the surround module spread out instead of bunching up:
+
+### Module Execution Order
+1. **mod_chase (priority 80)**: Sets movement TOWARD target
+2. **mod_surround (priority 78)**: Modifies direction to spread from allies
+3. **mod_combat (priority 60)**: Executes attacks
+
+### Surround Module Decision Tree
+```
+Are there allies nearby chasing same target?
+  → NO: Do nothing (single enemy, no spread needed)
+  → YES: Continue...
+
+Are any allies within min_ally_distance?
+  → YES: Add separation force (push away from nearby allies)
+  → NO: Check flanking...
+
+Am I on same side of target as ally cluster?
+  → YES: Offset approach angle perpendicular to cluster
+  → NO: Continue normal chase
+```
+
+### Example: 3 Wolves attacking player
+```
+Before surround:     After surround:
+     W W W                W
+       ↓                 ↙ ↓ ↘
+       P                   P
+                         W   W
 ```
 
 ## Ranged Kiter Behavior (Detailed)
