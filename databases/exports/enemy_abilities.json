@@ -77,6 +77,18 @@
       "ability_id": "abi_melee_strike",
       "priority": 50,
       "condition": "default"
+    },
+    {
+      "enemy_id": "ene_starved_wolf",
+      "ability_id": "abi_wolf_leap",
+      "priority": 100,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_starved_wolf",
+      "ability_id": "abi_blood_howl",
+      "priority": 150,
+      "condition": "never"
     }
   ]
 }

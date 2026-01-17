@@ -119,6 +119,42 @@
       "status_effect_id": "status_rot",
       "animation": "attack",
       "description": "Basic melee attack"
+    },
+    {
+      "id": "abi_wolf_leap",
+      "name": "Wolf Leap",
+      "ability_type": "dash",
+      "damage_mult": 2,
+      "damage_type": "physical",
+      "range": 100,
+      "cooldown": 6,
+      "cast_time": 1,
+      "projectile_speed": 0,
+      "aoe_radius": 0,
+      "movement_type": "dash_to",
+      "movement_distance": 80,
+      "status_effect_id": "",
+      "animation": "attack",
+      "extra_config": {"dash_duration": 0.3},
+      "description": "Leaps at target after preparing"
+    },
+    {
+      "id": "abi_blood_howl",
+      "name": "Blood Howl",
+      "ability_type": "buff",
+      "damage_mult": 0,
+      "damage_type": "physical",
+      "range": 0,
+      "cooldown": 0,
+      "cast_time": 0.5,
+      "projectile_speed": 0,
+      "aoe_radius": 150,
+      "movement_type": "none",
+      "movement_distance": 0,
+      "status_effect_id": "status_blood_frenzy",
+      "animation": "attack",
+      "extra_config": {},
+      "description": "Howls to buff self and nearby wolves"
     }
   ]
 }
