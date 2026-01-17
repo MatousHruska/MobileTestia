@@ -10,13 +10,12 @@
       "base_shield": 0,
       "move_speed": 20,
       "attack_speed": 0.8,
-      "attack_range": 25,
-      "detection_range": 300,
-      "xp_reward": 15,
-      "loot_table_id": "loot_zombie",
-      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle",
-      "module_config": {"mod_idle": {"can_roam": true, "roam_radius": 50}},
-      "description": "Slow shambling undead"
+      "detection_range": 25,
+      "xp_reward": 300,
+      "loot_table_id": "15",
+      "module_ids": "loot_zombie",
+      "module_config": mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle,
+      "description": ""
     },
     {
       "id": "ene_ghoul_basic",
@@ -28,13 +27,12 @@
       "base_shield": 0,
       "move_speed": 80,
       "attack_speed": 1,
-      "attack_range": 28,
-      "detection_range": 300,
-      "xp_reward": 25,
-      "loot_table_id": "loot_ghoul",
-      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle",
-      "module_config": {"mod_idle": {"can_roam": false}},
-      "description": "Fast aggressive predator"
+      "detection_range": 28,
+      "xp_reward": 300,
+      "loot_table_id": "25",
+      "module_ids": "loot_ghoul",
+      "module_config": mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle,
+      "description": ""
     },
     {
       "id": "ene_vampire_basic",
@@ -46,13 +44,12 @@
       "base_shield": 50,
       "move_speed": 70,
       "attack_speed": 1,
-      "attack_range": 30,
-      "detection_range": 300,
-      "xp_reward": 35,
-      "loot_table_id": "loot_vampire",
-      "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle",
-      "module_config": {"mod_idle": {"can_roam": true, "roam_radius": 100}},
-      "description": "Cunning undead with shield"
+      "detection_range": 30,
+      "xp_reward": 300,
+      "loot_table_id": "35",
+      "module_ids": "loot_vampire",
+      "module_config": mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle,
+      "description": ""
     },
     {
       "id": "ene_vampire_lord",
@@ -64,13 +61,12 @@
       "base_shield": 100,
       "move_speed": 80,
       "attack_speed": 1,
-      "attack_range": 35,
-      "detection_range": 300,
-      "xp_reward": 200,
-      "loot_table_id": "loot_vampire_lord",
-      "module_ids": "mod_target_detection,mod_flee,mod_chase,mod_combat",
-      "module_config": {"mod_flee": {"flee_health_percent": 0.1}},
-      "description": "Powerful undead boss"
+      "detection_range": 35,
+      "xp_reward": 300,
+      "loot_table_id": "200",
+      "module_ids": "loot_vampire_lord",
+      "module_config": mod_target_detection,mod_flee,mod_chase,mod_combat,
+      "description": ""
     },
     {
       "id": "ene_wolf_basic",
@@ -82,13 +78,12 @@
       "base_shield": 0,
       "move_speed": 90,
       "attack_speed": 1,
-      "attack_range": 25,
-      "detection_range": 300,
-      "xp_reward": 20,
-      "loot_table_id": "loot_wolf",
-      "module_ids": "mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_combat,mod_idle",
-      "module_config": {"mod_pack_alert": {"pack_group": "wolves"}},
-      "description": "Pack hunter that alerts nearby wolves"
+      "detection_range": 25,
+      "xp_reward": 300,
+      "loot_table_id": "20",
+      "module_ids": "loot_wolf",
+      "module_config": mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_combat,mod_idle,
+      "description": ""
     },
     {
       "id": "ene_skeleton_archer",
@@ -100,13 +95,12 @@
       "base_shield": 0,
       "move_speed": 60,
       "attack_speed": 1,
-      "attack_range": 100,
-      "detection_range": 300,
-      "xp_reward": 25,
-      "loot_table_id": "loot_skeleton",
-      "module_ids": "mod_target_detection,mod_leash,mod_kite,mod_chase,mod_combat,mod_idle",
-      "module_config": {"mod_kite": {"preferred_range": 120, "too_close_range": 60}},
-      "description": "Ranged enemy that keeps distance"
+      "detection_range": 100,
+      "xp_reward": 300,
+      "loot_table_id": "25",
+      "module_ids": "loot_skeleton",
+      "module_config": mod_target_detection,mod_leash,mod_kite,mod_chase,mod_combat,mod_idle,
+      "description": ""
     },
     {
       "id": "ene_skeleton_king",
@@ -118,13 +112,12 @@
       "base_shield": 0,
       "move_speed": 50,
       "attack_speed": 0.8,
-      "attack_range": 35,
-      "detection_range": 300,
-      "xp_reward": 500,
-      "loot_table_id": "loot_skeleton_king",
-      "module_ids": "mod_target_detection,mod_chase,mod_combat",
-      "module_config": {},
-      "description": "Powerful boss with no retreat"
+      "detection_range": 35,
+      "xp_reward": 300,
+      "loot_table_id": "500",
+      "module_ids": "loot_skeleton_king",
+      "module_config": mod_target_detection,mod_chase,mod_combat,
+      "description": ""
     }
   ]
 }
