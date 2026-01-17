@@ -1,0 +1,483 @@
+# Enemy System Reference
+
+Complete reference for the database-driven modular enemy AI system.
+
+---
+
+## Table of Contents
+
+1. [Quick Start](#quick-start)
+2. [Module System](#module-system)
+3. [Ability System](#ability-system)
+4. [Enemy Configuration](#enemy-configuration)
+5. [Behavior Examples](#behavior-examples)
+6. [Detailed Behaviors](#detailed-behaviors)
+7. [Debug Tools](#debug-tools)
+8. [Code Reference](#code-reference)
+
+---
+
+## Quick Start
+
+### Adding a New Enemy
+
+1. **Enemies Sheet**: Add row with stats and module list
+2. **EnemyAbilities Sheet**: Assign abilities with priorities/conditions
+3. **Export database**
+4. Done - enemy uses modules automatically
+
+### Minimal Example
+
+```
+Enemies Sheet:
+  id: ene_goblin
+  name: Goblin
+  base_health: 50
+  base_damage: 10
+  move_speed: 80
+  module_ids: mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle
+
+EnemyAbilities Sheet:
+  enemy_id: ene_goblin
+  ability_id: abi_melee_strike
+  priority: 50
+  condition: default
+```
+
+---
+
+## Module System
+
+Modules are the building blocks of enemy AI. Each module handles one aspect of behavior.
+
+### Module Priority Order
+
+Higher priority = runs first, can be overridden by lower priority modules.
+
+| Pri | Module | Type | Purpose |
+|-----|--------|------|---------|
+| 100 | mod_target_detection | detection | Find and track targets |
+| 95 | mod_pack_alert | social | Alert nearby allies |
+| 90 | mod_leash | utility | Return home if too far |
+| 85 | mod_flee | movement | Run when low health |
+| 80 | mod_chase | movement | Move toward target |
+| 78 | mod_surround | movement | Spread out from allies (flanking) |
+| 75 | mod_kite | movement | Maintain distance from target |
+| 60 | mod_combat | combat | Execute abilities |
+| 10 | mod_idle | movement | Stand or roam when no target |
+
+### Common Module Combinations
+
+| Behavior | Modules |
+|----------|---------|
+| Basic Melee | mod_target_detection, mod_leash, mod_chase, mod_combat, mod_idle |
+| Aggressive (no leash) | mod_target_detection, mod_chase, mod_combat |
+| Ranged Kiter | mod_target_detection, mod_leash, mod_kite, mod_chase, mod_combat, mod_idle |
+| Pack Hunter | mod_target_detection, mod_pack_alert, mod_leash, mod_chase, mod_surround, mod_combat, mod_idle |
+| Cowardly | mod_target_detection, mod_flee, mod_leash, mod_chase, mod_combat, mod_idle |
+| Boss | mod_target_detection, mod_chase, mod_combat |
+| Miniboss | mod_target_detection, mod_flee, mod_chase, mod_combat |
+
+### Module Configuration
+
+Each module has configurable options via the `module_config` JSON column.
+
+#### mod_target_detection
+| Key | Default | Description |
+|-----|---------|-------------|
+| detection_radius | 120.0 | Range to detect targets (pixels) |
+| prefer_attacker | true | Prioritize who hit us first |
+
+#### mod_pack_alert
+| Key | Default | Description |
+|-----|---------|-------------|
+| alert_radius | 150.0 | Range to alert nearby allies |
+| pack_group | "" | Only alert allies with matching group (empty = all) |
+
+#### mod_leash
+| Key | Default | Description |
+|-----|---------|-------------|
+| leash_radius | 300.0 | Max distance from spawn point |
+| home_threshold | 16.0 | Distance to consider "home" |
+| return_speed_mult | 1.0 | Speed multiplier when returning |
+
+#### mod_flee
+| Key | Default | Description |
+|-----|---------|-------------|
+| flee_health_percent | 0.2 | Health % to trigger flee (20%) |
+| flee_speed_mult | 1.3 | Speed multiplier when fleeing |
+| flee_wobble | 0.3 | Direction randomness (0-1) |
+| flee_only_in_combat | true | Only flee if has valid target |
+| respect_leash_while_fleeing | false | Try to flee toward home |
+
+#### mod_chase
+| Key | Default | Description |
+|-----|---------|-------------|
+| chase_speed_mult | 1.0 | Speed multiplier when chasing |
+
+#### mod_surround
+| Key | Default | Description |
+|-----|---------|-------------|
+| surround_radius | 80.0 | Range to check for allies |
+| spread_strength | 0.5 | Offset angle strength (0-1) |
+| min_ally_distance | 40.0 | Minimum distance between allies |
+
+**Behavior:** Prevents melee enemies from bunching into a ball:
+- If too close to ally, adds separation force (pushes apart)
+- If on same side as ally cluster, offsets approach angle to flank
+
+#### mod_kite
+| Key | Default | Description |
+|-----|---------|-------------|
+| preferred_range | 100.0 | Ideal distance from target |
+| too_close_range | 50.0 | Back away if closer than this |
+| melee_commit_range | 0.0 | Commit to melee if player this close (0 = disabled) |
+| kite_speed_mult | 0.8 | Speed when backing away |
+| sweet_spot_tolerance | 0.1 | Tolerance for preferred range (10%) |
+
+#### mod_combat
+| Key | Default | Description |
+|-----|---------|-------------|
+| cardinal_alignment | true | Require X/Y alignment for melee |
+| alignment_tolerance | 16.0 | Pixels tolerance for alignment |
+
+**Global Attack Cooldown:** Enforces minimum time between ANY attacks based on `attack_speed` stat. attack_speed of 1.0 = 1 second between attacks.
+
+**Ranged Cooldown Behavior:** When ranged ability is on cooldown and in range, enemy stops and waits instead of chasing into melee. Respects kite module if backing away.
+
+#### mod_idle
+| Key | Default | Description |
+|-----|---------|-------------|
+| can_roam | true | Randomly wander when idle |
+| roam_radius | 50.0 | Max roam distance from home |
+| roam_interval_min | 2.0 | Min seconds between roams |
+| roam_interval_max | 5.0 | Max seconds between roams |
+
+---
+
+## Ability System
+
+Abilities define what attacks/actions enemies can perform.
+
+### Ability Types
+
+| Type | Description | Key Fields |
+|------|-------------|------------|
+| `melee` | Close-range attack | range, damage_mult, status_effect_id |
+| `ranged` / `projectile` | Spawns projectile | projectile_speed, damage_mult, aoe_radius |
+| `dash` | Movement + attack | movement_type, movement_distance, extra_config.dash_duration |
+| `buff` | Self-buff (healing, shields) | damage_mult (negative = heal), status_effect_id |
+| `debuff` | Apply status to target | status_effect_id |
+
+#### Dash Movement Types
+- `dash_to` - Dash toward target, then attack
+- `dash_away` - Dash away from target (escape)
+- `teleport` - Instant position change
+
+### Ability Conditions
+
+Conditions determine when an ability can be used. Checked in priority order.
+
+| Condition | When Available |
+|-----------|----------------|
+| `default` | Always (when off cooldown) |
+| `opener` | First attack on new target only |
+| `health_below_X` | Health < X% (e.g., `health_below_30`) |
+| `health_above_X` | Health > X% (e.g., `health_above_50`) |
+| `target_close` | Within attack_radius |
+| `target_close_X` | Within X pixels (e.g., `target_close_60`) |
+| `target_melee` | Within melee_range (default 40px) |
+| `target_far` | Beyond attack_radius * 2 |
+| `ally_nearby` | At least one ally nearby |
+
+### Ability Priority
+
+Abilities are checked in **priority order** (highest first). First ability that:
+1. Is off cooldown
+2. Meets its condition
+3. Is in range
+...will be executed.
+
+### Ability Configuration
+
+#### Extra Config (Abilities sheet - extra_config column)
+Ability-specific parameters in JSON:
+```json
+{"dash_duration": 0.4}
+```
+
+| Key | Type | Used By | Description |
+|-----|------|---------|-------------|
+| dash_duration | float | dash | Tween duration (0 = instant) |
+
+#### Config Override (EnemyAbilities sheet - config_override column)
+Per-enemy customization that merges into ability data:
+```json
+{"movement_distance": 150, "damage_mult": 2.0, "melee_range": 50}
+```
+
+Any ability field can be overridden per-enemy.
+
+### Database Schema
+
+**Abilities Table:**
+```
+id, name, ability_type, damage_mult, damage_type, range, cooldown, cast_time,
+projectile_speed, aoe_radius, movement_type, movement_distance, status_effect_id,
+animation, extra_config, description
+```
+
+**EnemyAbilities Table:**
+```
+enemy_id, ability_id, priority, condition, cooldown_override, damage_mult_override, config_override
+```
+
+---
+
+## Enemy Configuration
+
+### Enemies Sheet Columns
+
+| Column | Type | Description |
+|--------|------|-------------|
+| id | string | Unique ID (ene_xxx) |
+| name | string | Display name |
+| type | enum | Normal, Miniboss, Boss |
+| base_health | int | Starting health |
+| base_damage | int | Base damage for abilities |
+| armor | int | Damage reduction |
+| base_shield | int | Shield points |
+| move_speed | int | Movement speed (pixels/sec) |
+| attack_speed | float | Attacks per second (1.0 = 1/sec) |
+| detection_range | int | Default detection radius |
+| xp_reward | int | XP given on death |
+| loot_table_id | string | Reference to loot table |
+| module_ids | string | Comma-separated module list |
+| module_config | JSON | Per-enemy module overrides |
+
+### Enemy Types
+
+| Type | Leash | Flee | Pack Alert | Notes |
+|------|-------|------|------------|-------|
+| Normal | Yes | Optional | Optional | Standard enemy |
+| Miniboss | No | Yes (low %) | No | Stronger, unique abilities |
+| Boss | No | No | No | Major encounter |
+
+---
+
+## Behavior Examples
+
+### Wolf (Pack Hunter + Surround + Leap)
+```
+module_ids: mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_surround,mod_combat,mod_idle
+module_config: {"mod_surround": {"surround_radius": 100, "spread_strength": 0.6, "min_ally_distance": 50}}
+abilities:
+  - abi_leap_attack (priority 100, condition: opener) - 100px range, 80px dash, 8s cooldown
+  - abi_melee_strike (priority 50, condition: default) - fallback while leap on cooldown
+```
+**Behavior:** Pack alerts allies, spreads out to flank from multiple angles, leaps at player as opener, then melee while leap on cooldown.
+
+### Skeleton Archer (Ranged Kiter)
+```
+module_ids: mod_target_detection,mod_leash,mod_kite,mod_chase,mod_combat,mod_idle
+module_config: {"mod_kite": {"preferred_range": 300, "too_close_range": 120, "melee_commit_range": 40}}
+abilities:
+  - abi_arrow_shot (priority 100, condition: default) - 400px range, 4s cooldown
+  - abi_melee_strike (priority 50, condition: target_melee) - backup melee
+```
+**Behavior:** Shoots from ~300px, backs away if player closes to <120px, commits to melee if player gets within 40px.
+
+### Vampire Lord (Miniboss)
+```
+module_ids: mod_target_detection,mod_flee,mod_chase,mod_combat
+module_config: {"mod_flee": {"flee_health_percent": 0.1}}
+abilities:
+  - abi_heal_self (priority 80, condition: health_below_30)
+  - abi_heavy_strike (priority 60, condition: default)
+```
+**Behavior:** Aggressive melee, heals when low, flees at 10% health.
+
+### Skeleton King (Boss)
+```
+module_ids: mod_target_detection,mod_chase,mod_combat
+module_config: {}
+abilities:
+  - abi_heavy_strike (priority 100, condition: opener)
+  - abi_melee_strike (priority 50, condition: default)
+```
+**Behavior:** Pure aggression, no leash or flee, alternates heavy and normal strikes.
+
+---
+
+## Detailed Behaviors
+
+### Surround/Flanking Behavior
+
+Melee enemies using mod_surround spread out instead of bunching:
+
+**Module Execution Order:**
+1. `mod_chase (80)`: Sets movement TOWARD target
+2. `mod_surround (78)`: Modifies direction to spread from allies
+3. `mod_combat (60)`: Executes attacks
+
+**Decision Tree:**
+```
+Are there allies nearby chasing same target?
+  → NO: Do nothing
+  → YES: Continue...
+
+Are any allies within min_ally_distance?
+  → YES: Add separation force (push away)
+  → NO: Check flanking...
+
+Am I on same side of target as ally cluster?
+  → YES: Offset approach angle perpendicular
+  → NO: Continue normal chase
+```
+
+**Visual:**
+```
+Before surround:     After surround:
+     W W W                W
+       ↓                 ↙ ↓ ↘
+       P                   P
+                         W   W
+```
+
+### Wolf Pack Behavior
+
+Wolves combine pack alerts, surround flanking, and leap attacks:
+
+**Attack Sequence:**
+1. **Detection**: First wolf spots player (within 300px)
+2. **Pack Alert**: Alerts nearby wolves (within 300px alert radius)
+3. **Chase + Surround**: All wolves chase, spreading to flank
+4. **Leap Attack**: When in range (100px), wolves leap as opener (80px dash, 4x damage)
+5. **Melee Fallback**: While leap on 8s cooldown, use basic melee strikes
+6. **Leap Again**: When cooldown ready, leap again
+
+**Combat Flow:**
+```
+[Idle] → [Detect Player] → [Alert Pack]
+                              ↓
+                    [Chase + Surround]
+                         ↙    ↓    ↘
+                      W      W      W  (flanking)
+                         ↘   ↓   ↙
+                    [In Range - 100px]
+                              ↓
+                    [LEAP! - opener]
+                              ↓
+                    [Melee while CD]
+                              ↓
+                    [Leap ready → LEAP!]
+```
+
+### Ranged Kiter Behavior
+
+Ranged enemies using mod_kite maintain distance:
+
+**Module Execution Order:**
+1. `mod_chase (80)`: Sets movement TOWARD target
+2. `mod_kite (75)`: May override with movement AWAY
+3. `mod_combat (60)`: Executes attacks, manages cooldowns
+
+**Kite Decision Tree:**
+```
+Is player within melee_commit_range?
+  → YES: Do nothing (let chase handle melee)
+  → NO: Continue...
+
+Is player within too_close_range?
+  → YES: Move AWAY from target
+  → NO: Continue...
+
+Is player at preferred_range (±10%)?
+  → YES: Stop and face target
+  → NO: Let chase approach
+```
+
+**Ranged Cooldown Behavior:**
+```
+Is ranged ability on cooldown AND in range?
+  → Is kite backing away?
+    → YES: Keep backing away
+    → NO: Stop and wait for cooldown
+```
+
+**Distance Table (Skeleton Archer):**
+| Distance | Behavior |
+|----------|----------|
+| >300px | Chase toward player |
+| 270-330px | Stop, shoot when ready |
+| 120-270px | Stop and wait for cooldown |
+| 40-120px | Back away while waiting |
+| <40px | Commit to melee |
+
+---
+
+## Debug Tools
+
+### Debug Overlay (F9)
+
+Shows per-enemy information:
+- **state**: IDLE, COMBAT, FLEEING, RETURNING, DEAD
+- **target**: Current target name
+- **target_dist**: Distance to target (pixels)
+- **health**: Health percentage
+- **home_dist**: Distance from spawn point
+- **cooldown**: Attack cooldown remaining
+- **flags**: Active flags
+
+**Flag Meanings:**
+| Flag | Meaning |
+|------|---------|
+| ATK | Should attack this frame |
+| STOP | Should stop moving |
+| LEASH | Beyond leash radius |
+| PACK | Pack alert received |
+| INRNG | In attack range |
+| ATKING | Attack in progress |
+
+---
+
+## Code Reference
+
+### Key Files
+
+| System | File |
+|--------|------|
+| Module Base | `scripts/npc/ai/base_module.gd` |
+| Module Controller | `scripts/npc/ai/module_controller.gd` |
+| Enemy Context | `scripts/npc/ai/enemy_context.gd` |
+| Combat Module | `scripts/npc/ai/modules/combat_module.gd` |
+| Chase Module | `scripts/npc/ai/modules/chase_module.gd` |
+| Kite Module | `scripts/npc/ai/modules/kite_module.gd` |
+| Surround Module | `scripts/npc/ai/modules/surround_module.gd` |
+| Pack Alert Module | `scripts/npc/ai/modules/pack_alert_module.gd` |
+| Flee Module | `scripts/npc/ai/modules/flee_module.gd` |
+| Modular Enemy NPC | `scripts/npc/modular_enemy_npc.gd` |
+| Ability Execution | `scripts/npc/modular_enemy_npc.gd:_execute_ability()` |
+| Condition Check | `scripts/npc/ai/modules/combat_module.gd:_check_condition()` |
+
+### Adding a New Module
+
+1. Create `scripts/npc/ai/modules/my_module.gd` extending `BaseModule`
+2. Set `module_id`, `module_name`, `module_type`, `priority` in `_init()`
+3. Implement `_process_module(context, delta)`
+4. Add to `enemy_modules.json` database
+5. Add module_id to enemy's `module_ids` list
+
+### Adding a New Ability Condition
+
+1. Edit `combat_module.gd:_check_condition()`
+2. Add new match case or parameterized check
+3. Document in this reference
+
+---
+
+## See Also
+
+- `docs/COMBAT_SYSTEM.md` - Full combat system (player + enemy)
+- `databases/docs/DATABASE_SETUP.md` - Excel/VBA database workflow
+- `docs/COLLISION_LAYERS.md` - Collision layer reference

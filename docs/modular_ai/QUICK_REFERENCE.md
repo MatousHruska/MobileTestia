@@ -1,5 +1,7 @@
 # Modular AI Quick Reference
 
+> **Note:** This is the quick reference. For complete documentation, see `docs/ENEMY_REFERENCE.md`
+
 ## Adding a New Enemy
 
 1. Add row to Enemies sheet with:
@@ -327,6 +329,7 @@ The debug overlay shows:
 
 ## See Also
 
-- `docs/ABILITY_SYSTEM_REFERENCE.md` - Full ability system documentation
-- `docs/modular_ai/6_QUICK_START_GUIDE.md` - Getting started guide
+- `docs/ENEMY_REFERENCE.md` - **Complete enemy system documentation**
+- `docs/ABILITY_SYSTEM_REFERENCE.md` - Ability system details
+- `docs/COMBAT_SYSTEM.md` - Full combat system (player + enemy)
 - `databases/docs/DATABASE_SETUP.md` - Database workflow

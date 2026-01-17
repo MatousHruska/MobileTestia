@@ -2,6 +2,8 @@
 
 This document describes all hardcoded configurations, logic values, and customization options for the database-driven ability system.
 
+> **See Also:** For complete enemy AI documentation including modules, behaviors, and examples, see `docs/ENEMY_REFERENCE.md`
+
 ---
 
 ## Ability Types (`ability_type`)
@@ -59,6 +61,8 @@ The `condition` field in EnemyAbilities database determines when an ability can 
 | `default` | Always available (when off cooldown) |
 | `opener` | Only used once per engagement (first attack on a new target) |
 | `target_close` | Target distance <= attack_radius |
+| `target_close_X` | Target distance <= X pixels (e.g., `target_close_60` = within 60px) |
+| `target_melee` | Target within melee_range (default 40px, configurable via config_override) |
 | `target_far` | Target distance > attack_radius * 2 |
 | `ally_nearby` | At least one ally in nearby_allies array |
 | `health_below_X` | Health percent < X% (e.g., `health_below_30` = < 30%) |
@@ -208,19 +212,43 @@ Movement module that maintains preferred distance from target. Useful for ranged
 |------------|------|---------|-------------|
 | `preferred_range` | float | 100.0 | Ideal distance to maintain from target |
 | `too_close_range` | float | 50.0 | Distance at which enemy backs away |
+| `melee_commit_range` | float | 0.0 | If player this close, commit to melee instead of kiting (0 = disabled) |
 | `kite_speed_mult` | float | 0.8 | Speed multiplier when backing away |
 | `sweet_spot_tolerance` | float | 0.1 | Tolerance for "in range" check (10% of preferred_range) |
 
 **How it works:**
-1. If target is closer than `too_close_range`, backs away while facing target
-2. If target is within `sweet_spot_tolerance` of `preferred_range`, stops and faces target
-3. If target is farther than preferred range, does nothing (lets ChaseModule handle approach)
+1. If target within `melee_commit_range`, do nothing (let chase handle melee approach)
+2. If target is closer than `too_close_range`, backs away while facing target
+3. If target is within `sweet_spot_tolerance` of `preferred_range`, stops and faces target
+4. If target is farther than preferred range, does nothing (lets ChaseModule handle approach)
 
 **Priority interaction:** KiteModule (75) runs after ChaseModule (80), so it can override chase direction when too close.
 
 **Example - Skeleton Archer:**
 ```json
-{"mod_kite": {"preferred_range": 120, "too_close_range": 60}}
+{"mod_kite": {"preferred_range": 300, "too_close_range": 120, "melee_commit_range": 40}}
+```
+
+### Surround Module (`mod_surround`)
+
+Movement module that prevents melee enemies from bunching up when chasing the same target.
+
+| Config Key | Type | Default | Description |
+|------------|------|---------|-------------|
+| `surround_radius` | float | 80.0 | Range to check for nearby allies |
+| `spread_strength` | float | 0.5 | How much to offset approach angle (0-1) |
+| `min_ally_distance` | float | 40.0 | Minimum distance between allies |
+
+**How it works:**
+1. Finds nearby allies chasing the same target
+2. If too close to ally, adds separation force (pushes apart)
+3. If on same side as ally cluster, offsets approach angle to flank
+
+**Priority interaction:** SurroundModule (78) runs after ChaseModule (80) but before KiteModule (75), modifying chase direction.
+
+**Example - Wolf Pack:**
+```json
+{"mod_surround": {"surround_radius": 100, "spread_strength": 0.6, "min_ally_distance": 50}}
 ```
 
 ---
@@ -282,6 +310,9 @@ All modules listed by priority (highest runs first):
 | 90 | `mod_leash` | utility | Return home if too far from spawn |
 | 85 | `mod_flee` | movement | Run away when health is low |
 | 80 | `mod_chase` | movement | Move toward current target |
+| 78 | `mod_surround` | movement | Spread out from allies (flanking) |
 | 75 | `mod_kite` | movement | Maintain distance from target |
 | 60 | `mod_combat` | combat | Execute abilities from database |
 | 10 | `mod_idle` | movement | Stand or roam when no target |
+
+> **See Also:** `docs/ENEMY_REFERENCE.md` for detailed behavior examples and decision trees.
