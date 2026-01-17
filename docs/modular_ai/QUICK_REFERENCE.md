@@ -172,12 +172,15 @@ Ability-specific params:
 
 ### Example Configurations
 
-**Wolf (Pack Hunter with Surround)**
+**Wolf (Pack Hunter with Surround + Leap)**
 ```
 module_ids: mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_surround,mod_combat,mod_idle
 module_config: {"mod_surround": {"surround_radius": 100, "spread_strength": 0.6, "min_ally_distance": 50}}
+abilities:
+  - abi_leap_attack (priority 100, condition: opener) - 100px range, 80px dash, 8s cooldown
+  - abi_melee_strike (priority 50, condition: default) - fallback while leap on cooldown
 ```
-Behavior: Pack alerts allies, spreads out when attacking same target to flank from multiple angles.
+Behavior: Pack alerts allies, spreads out to flank from multiple angles, leaps at player as opener, then melee while leap on cooldown.
 
 **Skeleton Archer (Ranged Kiter)**
 ```
@@ -230,6 +233,41 @@ Before surround:     After surround:
        P                   P
                          W   W
 ```
+
+## Wolf Pack Behavior (Detailed)
+
+Wolves combine pack alerts, surround flanking, and leap attacks:
+
+### Attack Sequence
+1. **Detection**: First wolf spots player (within 300px)
+2. **Pack Alert**: Alerts nearby wolves (within 300px alert radius)
+3. **Chase + Surround**: All wolves chase, spreading to flank
+4. **Leap Attack**: When in range (100px), wolves leap as opener (80px dash, 4x damage)
+5. **Melee Fallback**: While leap on 8s cooldown, use basic melee strikes
+6. **Leap Again**: When cooldown ready, leap again
+
+### Combat Flow Diagram
+```
+[Idle] → [Detect Player] → [Alert Pack]
+                              ↓
+                    [Chase + Surround]
+                         ↙    ↓    ↘
+                      W      W      W  (flanking from angles)
+                         ↘   ↓   ↙
+                    [In Range - 100px]
+                              ↓
+                    [LEAP! - opener]
+                              ↓
+                    [Melee while CD]
+                              ↓
+                    [Leap ready → LEAP!]
+```
+
+### Why This Works
+- **Pack Alert** brings reinforcements quickly
+- **Surround** prevents bunching, creates tactical flanking
+- **Leap opener** deals burst damage (4x), closes distance fast
+- **Melee fallback** maintains pressure during 8s leap cooldown
 
 ## Ranged Kiter Behavior (Detailed)
 
