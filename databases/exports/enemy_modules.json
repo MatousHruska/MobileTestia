@@ -100,13 +100,13 @@
       "default_config": {"circle_radius": 80, "circle_speed_mult": 0.7, "only_when_on_cooldown": true, "coordinate_with_allies": true}
     },
     {
-      "id": "mod_on_hit_cast",
-      "name": "On Hit Cast",
+      "id": "mod_conditional_cast",
+      "name": "Conditional Cast",
       "module_type": "special",
-      "description": "Cast ability when dealing damage to target",
-      "script_path": "res://scripts/npc/ai/modules/on_hit_cast_module.gd",
-      "priority": 92,
-      "default_config": {"ability_id": "", "condition": "", "cast_chance": 1.0, "aoe_buff_radius": 150}
+      "description": "Cast ability when conditions are met (e.g. player damaged recently)",
+      "script_path": "res://scripts/npc/ai/modules/conditional_cast_module.gd",
+      "priority": 85,
+      "default_config": {"ability_id": "", "conditions": [], "check_interval": 0.5, "cooldown": 30.0}
     }
   ]
 }
