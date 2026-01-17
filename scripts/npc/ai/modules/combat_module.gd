@@ -203,7 +203,9 @@ func _check_condition(context: EnemyContext, ability: Dictionary) -> bool:
 
 		"target_melee":
 			# Within typical melee range (for ranged enemies that have melee backup)
-			return context.target_distance <= 40.0
+			# Can be overridden via config_override: {"melee_range": 50}
+			var melee_range: float = float(ability.get("melee_range", 40.0))
+			return context.target_distance <= melee_range
 
 		"ally_nearby":
 			return context.nearby_allies.size() > 0
