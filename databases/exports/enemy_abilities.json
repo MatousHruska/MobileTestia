@@ -44,15 +44,15 @@
     },
     {
       "enemy_id": "ene_wolf_basic",
-      "ability_id": "abi_leap_attack",
-      "priority": 100,
-      "condition": "opener"
-    },
-    {
-      "enemy_id": "ene_wolf_basic",
       "ability_id": "abi_melee_strike",
       "priority": 50,
       "condition": "default"
+    },
+    {
+      "enemy_id": "ene_wolf_basic",
+      "ability_id": "abi_leap_attack",
+      "priority": 100,
+      "condition": "opener"
     },
     {
       "enemy_id": "ene_skeleton_archer",
