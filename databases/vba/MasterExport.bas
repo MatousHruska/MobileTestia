@@ -441,11 +441,12 @@ Private Sub SetupStatusEffectsSheet()
     Dim headers As Variant
     headers = Array("id", "name", "type", "stat_affected", "value", "duration", _
                     "tick_interval", "visual_effect", "stackable", "max_stacks", "show_in_hud", _
-                    "icon_color", "description")
+                    "icon_color", "ends_when", "description")
     SetHeaders ws, headers
 
     ' Add comments
     SafeAddComment ws.Cells(1, 12), "Hex color for HUD icon (e.g., #FF5500 for orange)"
+    SafeAddComment ws.Cells(1, 13), "Condition that removes the effect (e.g., player_full_health, player_below_50)"
 End Sub
 
 Private Sub SetupGameplaySettingsSheet()

@@ -36,7 +36,8 @@ Private Const COL_SE_STACKABLE As Integer = 9
 Private Const COL_SE_MAX_STACKS As Integer = 10
 Private Const COL_SE_SHOW_IN_HUD As Integer = 11
 Private Const COL_SE_ICON_COLOR As Integer = 12
-Private Const COL_SE_DESCRIPTION As Integer = 13
+Private Const COL_SE_ENDS_WHEN As Integer = 13
+Private Const COL_SE_DESCRIPTION As Integer = 14
 
 ' Column indices for Zones
 ' NOTE: enemy_spawn_list and respawn_time removed - use SpawnPoints database instead
@@ -346,10 +347,23 @@ Public Sub ExportStatusEffects()
         json = json & "      ""duration"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_SE_DURATION))) & "," & vbCrLf
         json = json & "      ""tick_interval"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_SE_TICK_INTERVAL), 1)) & "," & vbCrLf
         json = json & "      ""visual_effect"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SE_VISUAL_EFFECT))) & """," & vbCrLf
+        ' Handle optional ends_when condition
+        Dim endsWhen As String
+        endsWhen = Trim(ws.Cells(i, COL_SE_ENDS_WHEN).value)
+
         json = json & "      ""stackable"": " & stackable & "," & vbCrLf
         json = json & "      ""max_stacks"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_SE_MAX_STACKS), 1)) & "," & vbCrLf
         json = json & "      ""show_in_hud"": " & showInHud & "," & vbCrLf
-        json = json & "      ""icon_color"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SE_ICON_COLOR))) & """" & vbCrLf
+        json = json & "      ""icon_color"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_SE_ICON_COLOR))) & """," & vbCrLf
+
+        ' Only include ends_when if specified (conditional removal trigger)
+        If Len(endsWhen) > 0 Then
+            json = json & "      ""ends_when"": """ & EscapeJsonString(LCase(endsWhen)) & """" & vbCrLf
+        Else
+            ' Remove trailing comma from icon_color line if no ends_when
+            json = Left(json, Len(json) - 3) & vbCrLf
+        End If
+
         json = json & "    }"
 
         itemCount = itemCount + 1

@@ -670,6 +670,7 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "NPCs", 10, "TRUE,FALSE"              ' is_interactable
     ApplyListValidation "StatusEffects", 9, "TRUE,FALSE"      ' stackable
     ApplyListValidation "StatusEffects", 11, "TRUE,FALSE"     ' show_in_hud
+    ApplyListValidation "StatusEffects", 13, "player_full_health,player_below_50,player_above_50"  ' ends_when (conditional removal)
     ApplyListValidation "Cutscenes", 6, "TRUE,FALSE"          ' once_only
     ApplyListValidation "Talents", 43, "TRUE,FALSE"           ' can_move_while_casting
     ApplyListValidation "Talents", 44, "TRUE,FALSE"           ' interrupt_on_damage
