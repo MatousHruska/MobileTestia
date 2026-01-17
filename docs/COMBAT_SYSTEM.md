@@ -398,48 +398,52 @@ func _physics_process(delta):
 
 ## Enemy AI and Abilities
 
-### AI Decision Flow
+> **Note:** The enemy AI system uses a modular architecture. For complete documentation including all modules, configurations, and behavior examples, see `docs/ENEMY_REFERENCE.md`.
+
+### Modular AI Overview
+
+Enemies use a module-based AI system where each module handles one aspect of behavior:
 
 ```
-EnemyBehavior._update_behavior()
+ModuleController._process()
   ↓
-Has target in detection_radius?
-  ├─ NO → _do_idle() (roam or stand)
-  └─ YES → Check distance to target
-              ├─ > attack_radius → _do_chase()
-              └─ <= attack_radius → _do_attack()
-                    ↓
-              EnemyAbilityController._select_ability()
-                ├─ Filter by: cooldown, range, conditions
-                └─ Select by: priority mode (HIGHEST/CONDITIONAL/RANDOM)
-                    ↓
-              AbilityExecutor.execute_ability()
-                ├─ WINDUP phase (0.2s)
-                ├─ EXECUTE phase (spawn hitbox / dash / projectile)
-                └─ RECOVERY phase (0.3s)
+For each module (by priority, highest first):
+  ├─ mod_target_detection (100) - Find targets
+  ├─ mod_pack_alert (95) - Alert allies
+  ├─ mod_leash (90) - Check distance from home
+  ├─ mod_flee (85) - Run if low health
+  ├─ mod_chase (80) - Move toward target
+  ├─ mod_surround (78) - Spread from allies
+  ├─ mod_kite (75) - Maintain distance
+  ├─ mod_combat (60) - Execute abilities
+  └─ mod_idle (10) - Roam when no target
+        ↓
+  Each module reads/writes to EnemyContext
+        ↓
+  ModularEnemyNPC applies context (movement, attacks)
 ```
 
-### Ability Selection Modes
+### Ability Types
 
-| Mode | Behavior |
-|------|----------|
-| `HIGHEST` | Always pick highest priority ability |
-| `CONDITIONAL` | Prefer abilities with matching conditions |
-| `RANDOM_WEIGHTED` | Random selection weighted by priority |
+| Type | Description |
+|------|-------------|
+| `melee` | Close-range hitbox attack |
+| `projectile` | Spawns traveling projectile |
+| `dash` | Movement + attack (dash_to, dash_away, teleport) |
+| `buff` | Self-buff (healing, shields) |
+| `debuff` | Apply status to target |
 
-### Ability Types (AbilityData)
+### Ability Conditions
 
-```gdscript
-enum AbilityType {
-    MELEE,           # Instant hitbox at position
-    DASH_ATTACK,     # Move to target, then hitbox (Ghoul!)
-    AOE,             # Circular area damage
-    PROJECTILE,      # Launch traveling projectile
-    TELEPORT_ATTACK, # Teleport behind target, attack
-    PATTERN,         # Multi-directional (cross, etc.)
-    BEAM             # Sweeping line attack
-}
-```
+| Condition | When Used |
+|-----------|-----------|
+| `default` | Always available |
+| `opener` | First attack on new target |
+| `health_below_X` | Health < X% |
+| `target_melee` | Within melee range |
+| `target_close_X` | Within X pixels |
+
+See `docs/ENEMY_REFERENCE.md` for complete module configs, behavior examples, and decision trees.
 
 ---
 
