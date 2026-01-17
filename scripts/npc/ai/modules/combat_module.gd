@@ -142,6 +142,9 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	# Find best ability to use
 	var ability: Dictionary = _select_ability(context)
 	if ability.is_empty():
+		# No ability available - check if we should wait for ranged cooldown
+		# instead of chasing into melee range
+		_handle_no_ability_available(context)
 		return
 
 	# Check if in range for this ability
@@ -163,6 +166,27 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
 	# Execute ability
 	_execute_ability(context, ability)
+
+
+func _handle_no_ability_available(context: EnemyContext) -> void:
+	"""Handle case when no ability is ready - decide whether to wait or chase"""
+	# Check if we have a ranged ability on cooldown that we're in range for
+	# If so, stop and wait instead of chasing into melee
+	for ability in _abilities:
+		var ability_id: String = ability.get("id", "")
+		var ability_type: String = ability.get("ability_type", "melee")
+		var ability_range: float = float(ability.get("range", context.attack_radius))
+		var remaining_cd: float = _cooldowns.get(ability_id, 0.0)
+
+		# If this is a ranged ability on cooldown and we're in range for it
+		if ability_type in ["ranged", "projectile"] and remaining_cd > 0:
+			if context.target_distance <= ability_range:
+				# We're in range for our ranged attack - wait for cooldown instead of chasing
+				context.should_stop = true
+				context.facing_direction = context.target_direction
+				return
+
+	# No ranged ability to wait for - let chase module handle movement
 
 
 func _select_ability(context: EnemyContext) -> Dictionary:
