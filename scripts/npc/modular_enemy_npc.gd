@@ -180,8 +180,43 @@ func _execute_ability(ability: Dictionary) -> void:
 	var ctx = module_controller.get_context()
 	ctx.attack_in_progress = true
 
-	var ability_type: String = ability.get("ability_type", "melee")
+	# Stop movement during cast
+	stop_movement()
 
+	var ability_type: String = ability.get("ability_type", "melee")
+	var cast_time: float = float(ability.get("cast_time", 0.0))
+
+	# If there's a cast time, delay the actual ability execution
+	if cast_time > 0.0:
+		# Show we're preparing (could add visual indicator here)
+		Debug.log("AI", "%s preparing %s (%.1fs)" % [enemy_name, ability.get("id", "?"), cast_time])
+
+		# Wait for cast time, then execute
+		get_tree().create_timer(cast_time).timeout.connect(func():
+			if is_dead:
+				return
+			_do_execute_ability(ability, ability_type)
+		)
+
+		# Clear attack_in_progress after cast + a small buffer for the actual attack
+		var total_time: float = cast_time + 0.3
+		get_tree().create_timer(total_time).timeout.connect(func():
+			if module_controller:
+				module_controller.get_context().attack_in_progress = false
+		)
+	else:
+		# No cast time - execute immediately
+		_do_execute_ability(ability, ability_type)
+
+		# Clear attack_in_progress after minimum animation time
+		get_tree().create_timer(0.3).timeout.connect(func():
+			if module_controller:
+				module_controller.get_context().attack_in_progress = false
+		)
+
+
+func _do_execute_ability(ability: Dictionary, ability_type: String) -> void:
+	"""Actually perform the ability after any cast time"""
 	match ability_type:
 		"melee":
 			_execute_melee_attack(ability)
@@ -196,16 +231,6 @@ func _execute_ability(ability: Dictionary) -> void:
 		_:
 			# Fallback to melee
 			_execute_melee_attack(ability)
-
-	# Get cast time for how long attack is in progress
-	var cast_time: float = float(ability.get("cast_time", 0.3))
-	cast_time = maxf(cast_time, 0.3)  # Minimum 0.3s for animation
-
-	# Clear attack_in_progress after cast time
-	get_tree().create_timer(cast_time).timeout.connect(func():
-		if module_controller:
-			module_controller.get_context().attack_in_progress = false
-	)
 
 
 func _execute_melee_attack(ability: Dictionary) -> void:
