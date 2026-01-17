@@ -38,12 +38,15 @@ func _load_abilities_from_database(owner: Node2D) -> void:
 	if "enemy_id" in owner:
 		enemy_id = owner.enemy_id
 
+	Debug.log("AI", "Loading abilities for %s (enemy_id=%s)" % [owner.name, enemy_id])
+
 	if enemy_id.is_empty():
 		Debug.warn("AI", "%s has no enemy_id, cannot load abilities" % owner.name)
 		return
 
 	# Get enemy's ability assignments
 	var enemy_abilities: Array = DatabaseLoader.get_enemy_abilities(enemy_id)
+	Debug.log("AI", "Found %d ability assignments for %s" % [enemy_abilities.size(), enemy_id])
 
 	if enemy_abilities.is_empty():
 		Debug.log("AI", "%s has no abilities configured" % owner.name)
@@ -144,6 +147,9 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	# Find best ability to use
 	var ability: Dictionary = _select_ability(context)
 	if ability.is_empty():
+		# Debug: log why no ability was selected
+		if _abilities.is_empty():
+			Debug.warn("AI", "%s has NO ABILITIES loaded!" % (context.owner.name if context.owner else "Unknown"))
 		# No ability available - check if we should wait for ranged cooldown
 		# instead of chasing into melee range
 		_handle_no_ability_available(context)
@@ -154,6 +160,14 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	context.is_in_attack_range = context.target_distance <= ability_range
 
 	if not context.is_in_attack_range:
+		# Debug: occasionally log that we're waiting for range
+		if Engine.get_process_frames() % 60 == 0:
+			Debug.log("AI", "%s waiting for range: dist=%.0f, need=%.0f for %s" % [
+				context.owner.name if context.owner else "Unknown",
+				context.target_distance,
+				ability_range,
+				ability.get("id", "?")
+			])
 		return
 
 	# Check cardinal alignment if required (for melee attacks)
@@ -278,6 +292,15 @@ func _execute_ability(context: EnemyContext, ability: Dictionary) -> void:
 	"""Execute the selected ability"""
 	var ability_id: String = ability.get("id", "")
 	var ability_type: String = ability.get("ability_type", "melee")
+	var ability_range: float = float(ability.get("range", context.attack_radius))
+
+	Debug.info("AI", "%s TRIGGERING ability: %s (type=%s, range=%.0f, dist=%.0f)" % [
+		context.owner.name if context.owner else "Unknown",
+		ability_id,
+		ability_type,
+		ability_range,
+		context.target_distance
+	])
 
 	# Set ability-specific cooldown
 	var cooldown: float = float(ability.get("cooldown", 1.0))
