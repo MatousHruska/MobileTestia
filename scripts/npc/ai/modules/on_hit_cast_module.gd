@@ -28,13 +28,24 @@ func _init() -> void:
 
 
 func _on_setup(owner: Node2D) -> void:
+	Debug.info("AI", "OnHitCast _on_setup called with owner: %s (type: %s)" % [
+		owner.name if owner else "null",
+		owner.get_class() if owner else "?"
+	])
 	if owner is ModularEnemyNPC:
 		_owner_ref = owner
 		# Connect to damage_dealt signal
 		if not _owner_ref.damage_dealt.is_connected(_on_damage_dealt):
 			_owner_ref.damage_dealt.connect(_on_damage_dealt)
 			_connected = true
-			Debug.log("AI", "OnHitCast module connected to damage_dealt signal")
+			Debug.info("AI", "OnHitCast module connected to damage_dealt signal for %s (ability: %s)" % [
+				_owner_ref.enemy_name if _owner_ref else "?",
+				get_config_string("ability_id", "?")
+			])
+		else:
+			Debug.info("AI", "OnHitCast: signal already connected")
+	else:
+		Debug.warn("AI", "OnHitCast: owner is NOT ModularEnemyNPC, is: %s" % (owner.get_class() if owner else "null"))
 
 
 func _on_cleanup() -> void:
@@ -52,22 +63,35 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
 func _on_damage_dealt(target: Node2D, amount: float, ability_id: String) -> void:
 	"""Called when owner deals damage to target"""
+	Debug.info("AI", "OnHitCast _on_damage_dealt triggered! target=%s, amount=%.0f, ability=%s" % [
+		target.name if target else "null",
+		amount,
+		ability_id
+	])
+
 	if not _owner_ref:
+		Debug.warn("AI", "OnHitCast: _owner_ref is null!")
 		return
 
 	# Check cooldown
 	if _cooldown_remaining > 0:
+		Debug.log("AI", "OnHitCast: on cooldown (%.1fs remaining)" % _cooldown_remaining)
 		return
 
 	# Check cast chance
 	var cast_chance: float = get_config_float("cast_chance", 1.0)
-	if randf() > cast_chance:
+	var roll: float = randf()
+	if roll > cast_chance:
+		Debug.log("AI", "OnHitCast: failed cast chance (rolled %.2f > %.2f)" % [roll, cast_chance])
 		return
 
 	# Check condition
 	var condition: String = get_config_string("condition", "")
-	if not condition.is_empty() and not _check_condition(condition):
-		return
+	if not condition.is_empty():
+		var condition_met: bool = _check_condition(condition)
+		Debug.log("AI", "OnHitCast: condition '%s' = %s" % [condition, condition_met])
+		if not condition_met:
+			return
 
 	# Get ability to cast
 	var cast_ability_id: String = get_config_string("ability_id", "")
@@ -75,17 +99,17 @@ func _on_damage_dealt(target: Node2D, amount: float, ability_id: String) -> void
 		Debug.warn("AI", "OnHitCast module has no ability_id configured")
 		return
 
+	Debug.info("AI", "%s CASTING on-hit ability: %s" % [
+		_owner_ref.enemy_name if _owner_ref else "Unknown",
+		cast_ability_id
+	])
+
 	# Execute the ability
 	_execute_on_hit_ability(cast_ability_id, target)
 
 	# Apply cooldown
 	var cooldown: float = get_config_float("cooldown", 0.0)
 	_cooldown_remaining = cooldown
-
-	Debug.log("AI", "%s triggered on-hit ability: %s" % [
-		_owner_ref.enemy_name if _owner_ref else "Unknown",
-		cast_ability_id
-	])
 
 
 func _check_condition(condition: String) -> bool:
@@ -156,6 +180,10 @@ func _execute_on_hit_ability(ability_id: String, _trigger_target: Node2D) -> voi
 
 	var ability_type: String = ability_data.get("ability_type", "buff")
 	var cast_time: float = float(ability_data.get("cast_time", 0.0))
+	var aoe_radius: float = float(ability_data.get("aoe_radius", 150.0))
+
+	# Show visual effect for the ability
+	_show_howl_visual(aoe_radius)
 
 	# Handle cast time (brief pause for animation)
 	if cast_time > 0:
@@ -164,6 +192,11 @@ func _execute_on_hit_ability(ability_id: String, _trigger_target: Node2D) -> voi
 			var ctx = _owner_ref.module_controller.get_context()
 			if ctx:
 				ctx.is_locked = true
+				ctx.attack_in_progress = true
+
+		# Stop movement during cast
+		if _owner_ref.has_method("stop_movement"):
+			_owner_ref.stop_movement()
 
 		# Create timer to unlock and apply effect
 		var timer := _owner_ref.get_tree().create_timer(cast_time)
@@ -173,6 +206,7 @@ func _execute_on_hit_ability(ability_id: String, _trigger_target: Node2D) -> voi
 				var ctx = _owner_ref.module_controller.get_context()
 				if ctx:
 					ctx.is_locked = false
+					ctx.attack_in_progress = false
 		)
 
 		# Play howl animation if available
@@ -266,3 +300,138 @@ func get_debug_info() -> Dictionary:
 	info["cooldown_remaining"] = _cooldown_remaining
 	info["connected"] = _connected
 	return info
+
+
+#===============================================================================
+# VISUAL EFFECTS
+#===============================================================================
+
+func _show_howl_visual(aoe_radius: float) -> void:
+	"""Show a visual effect for the howl ability"""
+	if not _owner_ref or not _owner_ref.is_inside_tree():
+		return
+
+	var center: Vector2 = _owner_ref.global_position
+
+	# Create expanding ring effect
+	var ring := _create_howl_ring(center, aoe_radius)
+	_owner_ref.get_tree().current_scene.add_child(ring)
+
+	# Create center burst effect
+	var burst := _create_howl_burst(center)
+	_owner_ref.get_tree().current_scene.add_child(burst)
+
+	Debug.log("AI", "Blood Howl visual effect at %s (radius=%.0f)" % [center, aoe_radius])
+
+
+func _create_howl_ring(center: Vector2, radius: float) -> Node2D:
+	"""Create an expanding ring visual"""
+	var ring := Node2D.new()
+	ring.global_position = center
+	ring.z_index = 10
+
+	# Use a custom draw node
+	var draw_node := Node2D.new()
+	draw_node.name = "HowlRing"
+	draw_node.set_meta("radius", 10.0)  # Start small
+	draw_node.set_meta("max_radius", radius)
+	draw_node.set_meta("color", Color(0.6, 0.0, 0.0, 0.8))  # Dark red
+
+	# Inline script for ring drawing and animation
+	var script := GDScript.new()
+	script.source_code = """
+extends Node2D
+
+var current_radius: float = 10.0
+var max_radius: float = 150.0
+var expansion_speed: float = 300.0
+var alpha: float = 0.8
+
+func _ready() -> void:
+	current_radius = get_meta("radius", 10.0)
+	max_radius = get_meta("max_radius", 150.0)
+
+func _process(delta: float) -> void:
+	current_radius += expansion_speed * delta
+	alpha = 0.8 * (1.0 - current_radius / max_radius)
+
+	if current_radius >= max_radius:
+		queue_free()
+	else:
+		queue_redraw()
+
+func _draw() -> void:
+	var color := Color(0.6, 0.0, 0.0, alpha)
+	var width: float = 4.0 * (1.0 - current_radius / max_radius) + 1.0
+	draw_arc(Vector2.ZERO, current_radius, 0, TAU, 48, color, width)
+"""
+	script.reload()
+	draw_node.set_script(script)
+
+	ring.add_child(draw_node)
+	return ring
+
+
+func _create_howl_burst(center: Vector2) -> Node2D:
+	"""Create a central burst visual"""
+	var burst := Node2D.new()
+	burst.global_position = center
+	burst.z_index = 11
+
+	# Create multiple expanding particles
+	for i in range(8):
+		var particle := _create_howl_particle(i * TAU / 8.0)
+		burst.add_child(particle)
+
+	# Auto-destroy after animation
+	var timer := burst.get_tree().create_timer(0.8)
+	timer.timeout.connect(burst.queue_free)
+
+	return burst
+
+
+func _create_howl_particle(angle: float) -> Node2D:
+	"""Create a single particle for the burst effect"""
+	var particle := Node2D.new()
+
+	# Use Line2D for simple particle trail
+	var line := Line2D.new()
+	line.width = 3.0
+	line.default_color = Color(0.8, 0.1, 0.1, 0.9)
+	line.add_point(Vector2.ZERO)
+	line.add_point(Vector2.from_angle(angle) * 20.0)
+	particle.add_child(line)
+
+	# Animate the particle outward
+	var end_pos := Vector2.from_angle(angle) * 60.0
+
+	# Use inline animation
+	var script := GDScript.new()
+	script.source_code = """
+extends Node2D
+
+var direction: Vector2 = Vector2.RIGHT
+var speed: float = 150.0
+var alpha: float = 1.0
+var traveled: float = 0.0
+var max_travel: float = 60.0
+
+func _ready() -> void:
+	direction = Vector2.from_angle(get_meta("angle", 0.0))
+	max_travel = get_meta("max_travel", 60.0)
+
+func _process(delta: float) -> void:
+	position += direction * speed * delta
+	traveled += speed * delta
+	alpha = 1.0 - (traveled / max_travel)
+	modulate.a = alpha
+
+	if traveled >= max_travel:
+		queue_free()
+"""
+	script.reload()
+	particle.set_script(script)
+	particle.set_meta("angle", angle)
+	particle.set_meta("max_travel", 60.0)
+
+	return particle

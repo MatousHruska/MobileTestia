@@ -254,6 +254,11 @@ func _execute_melee_attack(ability: Dictionary) -> void:
 			PlayerStats.damage(damage)
 
 		# Emit signal for modules that react to damage dealt
+		Debug.info("AI", "Emitting damage_dealt signal: target=%s, damage=%.0f, ability=%s" % [
+			ctx.current_target.name if ctx.current_target else "null",
+			damage,
+			ability.get("id", "")
+		])
 		damage_dealt.emit(ctx.current_target, damage, ability.get("id", ""))
 
 		# Apply status effect if ability has one
