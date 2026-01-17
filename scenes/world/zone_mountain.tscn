@@ -116,7 +116,7 @@ script = ExtResource("6_spawn_point")
 preset_id = "sp_mountain_archers"
 
 [node name="StarvedWolfSpawn1" type="Node2D" parent="Enemies"]
-position = Vector2(-80, 350)
+position = Vector2(-200, 350)
 script = ExtResource("6_spawn_point")
 enemy_id = "ene_starved_wolf"
 max_active_enemies = 1
@@ -124,7 +124,7 @@ can_respawn = true
 respawn_time = 30.0
 
 [node name="StarvedWolfSpawn2" type="Node2D" parent="Enemies"]
-position = Vector2(80, 350)
+position = Vector2(200, 350)
 script = ExtResource("6_spawn_point")
 enemy_id = "ene_starved_wolf"
 max_active_enemies = 1
