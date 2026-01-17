@@ -240,12 +240,17 @@ func _execute_melee_attack(ability: Dictionary) -> void:
 	play_attack()
 
 	var ctx = module_controller.get_context()
+
+	# For hit detection: use aoe_radius if set, otherwise fall back to range
+	# This allows dash attacks to have separate "initiation range" vs "hit radius"
+	var aoe_radius: float = float(ability.get("aoe_radius", 0.0))
 	var ability_range: float = float(ability.get("range", attack_radius))
+	var hit_radius: float = aoe_radius if aoe_radius > 0 else ability_range
 
 	# Show debug hitbox
-	_show_debug_hitbox(global_position, ability_range, Color.RED, 0.3)
+	_show_debug_hitbox(global_position, hit_radius, Color.RED, 0.3)
 
-	if ctx.current_target and ctx.target_distance <= ability_range:
+	if ctx.current_target and ctx.target_distance <= hit_radius:
 		var damage: float = base_damage * float(ability.get("damage_mult", 1.0))
 
 		if ctx.current_target.has_method("take_damage"):
