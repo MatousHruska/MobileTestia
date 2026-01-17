@@ -254,6 +254,13 @@ func _finish_cast(ability_data: Dictionary, aoe_radius: float, context: EnemyCon
 		# Also apply to nearby allies
 		_apply_buff_to_nearby_allies(status_effect_id, aoe_radius)
 
+	# Apply additional status effects from config (e.g., cooldown reduction)
+	var additional_effects: Array = config.get("additional_status_effects", [])
+	for extra_effect_id in additional_effects:
+		if extra_effect_id is String and not extra_effect_id.is_empty():
+			_apply_buff_to_self(extra_effect_id)
+			_apply_buff_to_nearby_allies(extra_effect_id, aoe_radius)
+
 	# Play animation
 	if _owner_ref.has_method("play_attack"):
 		_owner_ref.play_attack()

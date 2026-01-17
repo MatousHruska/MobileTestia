@@ -100,12 +100,16 @@ func _load_abilities_from_database(owner: Node2D) -> void:
 
 
 func _process_module(context: EnemyContext, delta: float) -> void:
-	# Update cooldowns
+	# Get cooldown reduction multiplier from status effects (30% CDR = 1.3x faster recovery)
+	var cdr_multiplier: float = _get_cooldown_reduction_multiplier(context)
+
+	# Update cooldowns (apply CDR multiplier to make cooldowns recover faster)
+	var adjusted_delta: float = delta * cdr_multiplier
 	for ability_id in _cooldowns:
-		_cooldowns[ability_id] = maxf(0.0, _cooldowns[ability_id] - delta)
+		_cooldowns[ability_id] = maxf(0.0, _cooldowns[ability_id] - adjusted_delta)
 
 	# Update global attack cooldown
-	_global_attack_cooldown = maxf(0.0, _global_attack_cooldown - delta)
+	_global_attack_cooldown = maxf(0.0, _global_attack_cooldown - adjusted_delta)
 
 	# Track attack cooldown for UI/debug (use max of global and shortest ACTIVE ability cooldown)
 	var min_ability_cooldown: float = INF
@@ -395,6 +399,24 @@ func _snap_to_cardinal(direction: Vector2) -> Vector2:
 		return Vector2.RIGHT if direction.x > 0 else Vector2.LEFT
 	else:
 		return Vector2.DOWN if direction.y > 0 else Vector2.UP
+
+
+func _get_cooldown_reduction_multiplier(context: EnemyContext) -> float:
+	"""Get cooldown reduction multiplier from status effects (1.3 = 30% faster cooldowns)"""
+	if not context.owner:
+		return 1.0
+
+	# Find StatusEffectComponent (may be named "StatusEffects")
+	var status_comp: Node = null
+	if context.owner.has_node("StatusEffectComponent"):
+		status_comp = context.owner.get_node("StatusEffectComponent")
+	elif context.owner.has_node("StatusEffects"):
+		status_comp = context.owner.get_node("StatusEffects")
+
+	if status_comp and status_comp.has_method("get_stat_multiplier"):
+		return status_comp.get_stat_multiplier("cooldown_reduction")
+
+	return 1.0
 
 
 func get_debug_info() -> Dictionary:
