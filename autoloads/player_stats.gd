@@ -12,6 +12,8 @@ signal skill_points_changed(points: int)
 signal leveled_up(new_level: int)  ## Emitted for level up visual effect
 signal damaged(amount: float, damage_type: String, is_crit: bool)  ## For combat text
 signal healed(amount: float)  ## For combat text
+signal health_full()  ## Emitted when player reaches max health
+signal health_not_full()  ## Emitted when player drops below max health
 
 ## Constants (loaded from database, these are fallback defaults)
 var POINTS_PER_LEVEL: int = 5  ## Attribute points per level
@@ -103,8 +105,15 @@ var skill_points: int = 0:
 ## Vital Stats (Resources) - Current values
 var current_life: float = 100.0:
 	set(value):
+		var was_full := is_health_full()
 		current_life = clampf(value, 0.0, max_life)
 		resource_changed.emit("life", current_life, max_life)
+		# Emit health state signals on transitions
+		var is_full := is_health_full()
+		if is_full and not was_full:
+			health_full.emit()
+		elif not is_full and was_full:
+			health_not_full.emit()
 
 var current_mana: float = 50.0:
 	set(value):
@@ -296,6 +305,17 @@ func allocate_luck() -> bool:
 	attribute_points -= 1
 	Debug.log("Stats", "Allocated point to LUK", luck)
 	return true
+
+
+## Health state queries
+func is_health_full() -> bool:
+	return current_life >= max_life
+
+
+func get_health_percent() -> float:
+	if max_life <= 0:
+		return 0.0
+	return current_life / max_life
 
 
 ## Resource management

@@ -47,8 +47,8 @@ func apply_hot(effect_type: String, duration: float, heal_per_tick: float, tick_
 
 
 ## Override apply_buff to add persistence
-func apply_buff(effect_type: String, duration: float, show_in_hud: bool = true) -> void:
-	super.apply_buff(effect_type, duration, show_in_hud)
+func apply_buff(effect_type: String, duration: float, show_in_hud: bool = true, ends_when: String = "") -> void:
+	super.apply_buff(effect_type, duration, show_in_hud, ends_when)
 	_save_persisted_effects()
 
 

@@ -81,6 +81,10 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F9:
 		debug_full_state()
 
+	# Debug: Press F10 to test ends_when buff system
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F10:
+		debug_test_ends_when_buff()
+
 
 ## State management
 func set_playing() -> void:
@@ -286,3 +290,26 @@ func debug_full_state() -> void:
 		"can_move": can_player_move,
 		"player_valid": is_player_valid()
 	})
+
+
+func debug_test_ends_when_buff() -> void:
+	## Test the ends_when buff system - applies a buff that ends when player heals to full
+	## Press F10 to activate
+	print("============================================================")
+	print("=== TESTING ENDS_WHEN BUFF SYSTEM ===")
+	print("============================================================")
+
+	if not is_player_valid():
+		print("ERROR: No valid player found!")
+		return
+
+	if player.has_method("debug_test_ends_when_buff"):
+		player.debug_test_ends_when_buff()
+		print("")
+		print("Test buff 'test_frenzy' applied!")
+		print("- This buff will automatically END when you heal to full health")
+		print("- Current health: %.0f / %.0f" % [PlayerStats.current_life, PlayerStats.max_life])
+		print("- Wait for natural regen or use a heal to see the buff disappear")
+		print("============================================================")
+	else:
+		print("ERROR: Player doesn't have debug_test_ends_when_buff method!")

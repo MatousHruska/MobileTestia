@@ -17,12 +17,35 @@ var _active_effects: Dictionary = {}
 ## Owner reference (set by parent)
 var _owner: Node2D = null
 
+## Track if we're connected to PlayerStats signals (for ends_when conditions)
+var _player_signals_connected: bool = false
+
 #===============================================================================
 # INITIALIZATION
 #===============================================================================
 
 func setup(effect_owner: Node2D) -> void:
 	_owner = effect_owner
+	_connect_player_signals()
+
+
+func _connect_player_signals() -> void:
+	## Connect to PlayerStats signals for ends_when conditions
+	if _player_signals_connected:
+		return
+
+	# Check if PlayerStats autoload exists
+	if not Engine.has_singleton("PlayerStats") and not has_node("/root/PlayerStats"):
+		# Try deferred connection
+		call_deferred("_connect_player_signals")
+		return
+
+	var player_stats = get_node_or_null("/root/PlayerStats")
+	if player_stats:
+		if player_stats.has_signal("health_full"):
+			player_stats.health_full.connect(_on_player_health_full)
+			_player_signals_connected = true
+			Debug.log("StatusEffect", "Connected to PlayerStats health signals")
 
 
 #===============================================================================
@@ -52,8 +75,58 @@ func process_effects(delta: float) -> void:
 		if effect.max_duration > 0 and effect.remaining_duration <= 0:
 			expired_effects.append(effect_type)
 
+		# Check ends_when conditions (for conditional removal)
+		if _check_ends_when_condition(effect):
+			if effect_type not in expired_effects:
+				expired_effects.append(effect_type)
+
 	# Remove expired effects
 	for effect_type in expired_effects:
+		_remove_effect(effect_type)
+
+
+func _check_ends_when_condition(effect: Dictionary) -> bool:
+	## Check if effect should end based on its ends_when condition
+	var ends_when: String = effect.get("ends_when", "")
+	if ends_when.is_empty():
+		return false
+
+	var player_stats = get_node_or_null("/root/PlayerStats")
+
+	match ends_when:
+		"player_full_health":
+			if player_stats and player_stats.has_method("is_health_full"):
+				return player_stats.is_health_full()
+		"player_below_50":
+			if player_stats and player_stats.has_method("get_health_percent"):
+				return player_stats.get_health_percent() < 0.5
+		"player_above_50":
+			if player_stats and player_stats.has_method("get_health_percent"):
+				return player_stats.get_health_percent() > 0.5
+		_:
+			# Handle parameterized conditions like "player_health_above_75"
+			if ends_when.begins_with("player_health_above_"):
+				var threshold := ends_when.replace("player_health_above_", "").to_float() / 100.0
+				if player_stats and player_stats.has_method("get_health_percent"):
+					return player_stats.get_health_percent() > threshold
+			elif ends_when.begins_with("player_health_below_"):
+				var threshold := ends_when.replace("player_health_below_", "").to_float() / 100.0
+				if player_stats and player_stats.has_method("get_health_percent"):
+					return player_stats.get_health_percent() < threshold
+
+	return false
+
+
+func _on_player_health_full() -> void:
+	## Called when player reaches full health - check for effects that should end
+	var to_remove: Array[String] = []
+	for effect_type in _active_effects:
+		var effect: Dictionary = _active_effects[effect_type]
+		if effect.get("ends_when", "") == "player_full_health":
+			to_remove.append(effect_type)
+			Debug.log("StatusEffect", "Effect ending (player full health)", effect_type)
+
+	for effect_type in to_remove:
 		_remove_effect(effect_type)
 
 
@@ -185,7 +258,8 @@ func apply_hot(effect_type: String, duration: float, heal_per_tick: float, tick_
 
 
 ## Apply a buff effect (positive, no tick damage/heal)
-func apply_buff(effect_type: String, duration: float, show_in_hud: bool = true) -> void:
+## ends_when: Optional condition for automatic removal (e.g., "player_full_health")
+func apply_buff(effect_type: String, duration: float, show_in_hud: bool = true, ends_when: String = "") -> void:
 	if effect_type in _active_effects:
 		var existing: Dictionary = _active_effects[effect_type]
 		existing.remaining_duration = maxf(existing.remaining_duration, duration)
@@ -200,13 +274,15 @@ func apply_buff(effect_type: String, duration: float, show_in_hud: bool = true) 
 			"tick_interval": 1.0,
 			"tick_timer": 1.0,
 			"is_debuff": false,
-			"show_in_hud": show_in_hud
+			"show_in_hud": show_in_hud,
+			"ends_when": ends_when
 		}
 		effect_applied.emit(effect_type, duration, show_in_hud, false)
 		_on_effect_applied(effect_type, false)
 		Debug.log("StatusEffect", "Buff applied", {
 			"type": effect_type,
-			"duration": duration
+			"duration": duration,
+			"ends_when": ends_when if not ends_when.is_empty() else "none"
 		})
 
 
@@ -266,6 +342,7 @@ func apply_status_effect(effect_id: String) -> void:
 	var value: float = effect_data.get("value", 0.0)
 	var tick_interval: float = effect_data.get("tick_interval", 1.0)
 	var show_in_hud: bool = effect_data.get("show_in_hud", true)
+	var ends_when: String = effect_data.get("ends_when", "")
 
 	# Strip "status_" prefix for effect type name
 	var effect_name: String = effect_id.replace("status_", "")
@@ -276,11 +353,15 @@ func apply_status_effect(effect_id: String) -> void:
 		"buff_hot":
 			apply_hot(effect_name, duration, absf(value), tick_interval, show_in_hud)
 		"buff":
-			apply_buff(effect_name, duration, show_in_hud)
+			apply_buff(effect_name, duration, show_in_hud, ends_when)
 		"debuff":
 			apply_debuff(effect_name, duration, show_in_hud)
 		_:
 			Debug.warn("StatusEffect", "Unknown effect type: %s" % effect_type)
+
+	# If ends_when was specified and effect was added, update it
+	if not ends_when.is_empty() and effect_name in _active_effects:
+		_active_effects[effect_name]["ends_when"] = ends_when
 
 
 ## Override for visual effect spawning

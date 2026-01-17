@@ -483,3 +483,17 @@ func print_state() -> void:
 		"cast_skill": _current_cast_skill,
 		"cast_progress": get_cast_progress(),
 	})
+
+
+func debug_test_ends_when_buff() -> void:
+	## Test the ends_when system - applies a buff that ends when player heals to full
+	## Call from console or debug button
+	if _status_effect_manager:
+		# Deal some damage first so player isn't at full health
+		PlayerStats.damage(20.0, "debug", false)
+		Debug.info("Debug", "Dealt 20 damage to player")
+
+		# Apply test buff that ends when healed to full
+		_status_effect_manager.apply_buff("test_frenzy", 60.0, true, "player_full_health")
+		Debug.info("Debug", "Applied test_frenzy buff (ends when player heals to full)")
+		Debug.info("Debug", "Heal to full health to see buff disappear!")
