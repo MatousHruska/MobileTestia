@@ -238,6 +238,9 @@ func _check_condition(context: EnemyContext, ability: Dictionary) -> bool:
 		"default":
 			return true
 
+		"never":
+			return false  # Never use this ability via normal selection (e.g., triggered by modules)
+
 		"opener":
 			return not _opener_used
 
