@@ -19,8 +19,9 @@ var all_spawn_points: Array = []
 ## Persistence (for unique/boss NPCs)
 var killed_unique_ids: Array[String] = []
 
-## Debug overlay
+## Debug overlays
 var debug_overlay: Node = null
+var ai_debug_overlay: Node = null
 
 ## Stats tracking
 var total_enemies_killed: int = 0
@@ -44,6 +45,13 @@ func _create_debug_overlay() -> void:
 		debug_overlay.name = "NPCDebugOverlay"
 		debug_overlay.enabled = false  ## Start disabled
 		add_child(debug_overlay)
+
+	# Create AI debug overlay
+	var ai_overlay_script := load("res://scripts/npc/ai/ai_debug_overlay.gd")
+	if ai_overlay_script:
+		ai_debug_overlay = ai_overlay_script.new()
+		ai_debug_overlay.name = "AIDebugOverlay"
+		add_child(ai_debug_overlay)
 
 
 ## Registration (called by NPCs on ready)

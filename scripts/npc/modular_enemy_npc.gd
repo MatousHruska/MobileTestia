@@ -159,11 +159,16 @@ func _handle_module_decisions() -> void:
 
 	# Handle attack decision
 	if ctx.should_attack:
+		Debug.log("AI", "%s should_attack=true, ability=%s" % [
+			enemy_name,
+			ctx.current_ability.get("id", "NONE") if not ctx.current_ability.is_empty() else "EMPTY"
+		])
 		if not ctx.current_ability.is_empty():
 			_execute_ability(ctx.current_ability)
 			ctx.current_ability = {}  # Clear after use
 		else:
 			# Fallback to basic attack if no ability specified
+			Debug.warn("AI", "%s should_attack but no ability - using basic attack" % enemy_name)
 			_execute_basic_attack()
 
 	# Movement is applied automatically by context.apply_to_owner()
