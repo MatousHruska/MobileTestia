@@ -570,8 +570,8 @@ Private Sub ApplyForeignKeyValidation()
     ApplyValidation "EnemyAbilities", 1, "ID_Enemies"   ' enemy_id
     ApplyValidation "EnemyAbilities", 2, "ID_Abilities" ' ability_id
 
-    ' Abilities
-    ApplyValidation "Abilities", 13, "ID_StatusEffects" ' status_effect_id
+    ' Abilities (column 14 after adding cast_while_moving)
+    ApplyValidation "Abilities", 14, "ID_StatusEffects" ' status_effect_id
 
     ' Cutscenes
     ApplyValidation "Cutscenes", 4, "ID_Zones"      ' trigger_target (for zone_enter)
@@ -635,10 +635,11 @@ Private Sub ApplyEnumValidation()
     ' EnemyModules
     ApplyListValidation "EnemyModules", 3, "detection,movement,combat,social,special,utility"  ' module_type
 
-    ' Abilities
+    ' Abilities (column indices shifted after adding cast_while_moving at column 9)
     ApplyListValidation "Abilities", 3, "melee,ranged,projectile,dash,buff,debuff"  ' ability_type
     ApplyListValidation "Abilities", 5, "physical,fire,cold,lightning,poison,healing"  ' damage_type
-    ApplyListValidation "Abilities", 11, "none,dash_to,dash_away,teleport"  ' movement_type
+    ApplyListValidation "Abilities", 9, "TRUE,FALSE"  ' cast_while_moving
+    ApplyListValidation "Abilities", 12, "none,dash_to,dash_away,teleport"  ' movement_type
 
     ' EnemyAbilities
     ApplyListValidation "EnemyAbilities", 4, "default,opener,target_close,target_melee,target_close_60,target_far,health_below_30,health_below_50,health_above_50,health_above_70,ally_nearby"  ' condition
