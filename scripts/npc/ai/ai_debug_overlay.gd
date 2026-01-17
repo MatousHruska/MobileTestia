@@ -1,6 +1,6 @@
 extends CanvasLayer
 ## AIDebugOverlay - Visual debugging overlay for the enemy AI system
-## Toggle with F8 key
+## Toggle with F11 key
 ##
 ## Shows:
 ## - Nearby enemies and their AI state
@@ -26,11 +26,11 @@ func _ready() -> void:
 	layer = 201  # Above quest overlay
 	_create_ui()
 	visible = false
-	Debug.info("AI", "Debug overlay initialized (press F8 to toggle)")
+	Debug.info("AI", "Debug overlay initialized (press F11 to toggle)")
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F8:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F11:
 		toggle()
 
 
@@ -89,7 +89,7 @@ func _create_ui() -> void:
 
 	# Header
 	var header := Label.new()
-	header.text = "=== AI DEBUG (F8) ==="
+	header.text = "=== AI DEBUG (F11) ==="
 	header.add_theme_color_override("font_color", Color.GOLD)
 	_vbox.add_child(header)
 
