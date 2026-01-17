@@ -128,7 +128,7 @@
       "damage_type": "physical",
       "range": 100,
       "cooldown": 6,
-      "cast_time": 1,
+      "cast_time": 2,
       "projectile_speed": 0,
       "aoe_radius": 0,
       "movement_type": "dash_to",
