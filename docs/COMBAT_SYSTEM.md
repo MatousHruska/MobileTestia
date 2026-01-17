@@ -325,8 +325,38 @@ Both player and enemy attacks follow the same **three-phase pattern**:
   "value": 10,
   "duration": 30,
   "tick_interval": 2,
-  "show_in_hud": true
+  "show_in_hud": true,
+  "ends_when": ""
 }
+```
+
+### Conditional Removal (ends_when)
+
+Status effects can be configured to automatically end when certain conditions are met, independent of their duration.
+
+| Condition | Description |
+|-----------|-------------|
+| `player_full_health` | Effect ends when player heals to max HP |
+| `player_below_50` | Effect ends when player drops below 50% HP |
+| `player_above_50` | Effect ends when player exceeds 50% HP |
+| `player_health_above_X` | Parameterized: ends when above X% (e.g., `player_health_above_75`) |
+| `player_health_below_X` | Parameterized: ends when below X% (e.g., `player_health_below_25`) |
+
+**Example - Blood Frenzy buff that ends when player heals:**
+```json
+{
+  "id": "status_blood_frenzy",
+  "name": "Blood Frenzy",
+  "type": "buff",
+  "duration": 60,
+  "ends_when": "player_full_health"
+}
+```
+
+**Code Usage:**
+```gdscript
+# Apply buff that ends when player heals to full
+status_effect_manager.apply_buff("blood_frenzy", 60.0, true, "player_full_health")
 ```
 
 ### Player vs Enemy Implementation
