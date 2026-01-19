@@ -953,6 +953,17 @@ func apply_spawn_point_preset(spawn_point: Node2D, preset_id: String) -> bool:
 	spawn_point.disable_after_quest = preset.get("disable_after_quest", "")
 	spawn_point.disable_during_quest = preset.get("disable_during_quest", "")
 
+	# Module override settings (for patrol, ambush, etc.)
+	spawn_point.modules_to_inject = preset.get("modules_to_inject", "")
+	var module_config = preset.get("module_config_override", {})
+	if module_config is Dictionary:
+		spawn_point.module_config_override = module_config
+	elif module_config is String and not module_config.is_empty():
+		# Parse JSON string if stored as string
+		var json := JSON.new()
+		if json.parse(module_config) == OK:
+			spawn_point.module_config_override = json.data
+
 	Debug.log("Database", "Applied spawn point preset: %s" % preset_id)
 	return true
 
