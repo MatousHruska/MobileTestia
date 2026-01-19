@@ -299,6 +299,11 @@ func load_chunk(chunk_id: String, coords: Vector2i = Vector2i.ZERO) -> void:
 	_set_chunk_state(chunk_data, ChunkState.LOADED)
 	loaded_chunks[chunk_id] = chunk_data
 
+	# Notify LootManager to recreate loot visuals for this chunk
+	var loot_mgr = get_node_or_null("/root/LootManager")
+	if loot_mgr and loot_mgr.has_method("on_chunk_loaded"):
+		loot_mgr.on_chunk_loaded(chunk_id)
+
 	Debug.log("ChunkManager", "Loaded chunk: %s at %s" % [chunk_id, coords])
 	chunk_loaded.emit(chunk_id)
 
@@ -322,11 +327,11 @@ func unload_chunk(chunk_id: String) -> void:
 	# Save enemy states before unloading
 	_save_enemy_states(chunk_id)
 
-	# Notify LootManager to preserve loot data
+	# Notify LootManager to clear visual nodes but preserve data
 	var loot_mgr = get_node_or_null("/root/LootManager")
-	if loot_mgr:
-		# LootManager keeps loot data in memory, just need to remove visual nodes
-		Debug.log("ChunkManager", "Loot data preserved for chunk: %s" % chunk_id)
+	if loot_mgr and loot_mgr.has_method("on_chunk_unloading"):
+		loot_mgr.on_chunk_unloading(chunk_id)
+		Debug.log("ChunkManager", "Loot visuals cleared for chunk: %s" % chunk_id)
 
 	# Free chunk nodes
 	if chunk_data.node and is_instance_valid(chunk_data.node):
