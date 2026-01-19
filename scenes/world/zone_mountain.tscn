@@ -64,72 +64,41 @@ object_size = Vector2(90, 70)
 
 [node name="AreaLabels" type="Node2D" parent="."]
 
-[node name="LabelWolves" type="Label" parent="AreaLabels"]
+[node name="LabelPatrolLeft" type="Label" parent="AreaLabels"]
 offset_left = -550.0
 offset_top = -350.0
 offset_right = -350.0
 offset_bottom = -320.0
-text = "WOLF PACK AREA"
+text = "PATROL ROUTE LEFT"
 horizontal_alignment = 1
 
-[node name="LabelArchers" type="Label" parent="AreaLabels"]
+[node name="LabelPatrolRight" type="Label" parent="AreaLabels"]
 offset_left = 250.0
 offset_top = -350.0
 offset_right = 450.0
 offset_bottom = -320.0
-text = "ARCHER AREA"
+text = "PATROL ROUTE RIGHT"
 horizontal_alignment = 1
 
-[node name="LabelBoss" type="Label" parent="AreaLabels"]
+[node name="LabelCenter" type="Label" parent="AreaLabels"]
 offset_left = -100.0
 offset_top = 350.0
 offset_right = 100.0
 offset_bottom = 380.0
-text = "WOLF TEST AREA"
+text = "MOUNTAIN CENTER"
 horizontal_alignment = 1
 
 [node name="Enemies" type="Node2D" parent="."]
 
-[node name="WolfSpawn1" type="Node2D" parent="Enemies"]
-position = Vector2(-450, -250)
+[node name="PatrolWolfLeft" type="Node2D" parent="Enemies"]
+position = Vector2(-400, -200)
 script = ExtResource("6_spawn_point")
-preset_id = "sp_mountain_wolves"
+preset_id = "sp_mountain_patrol_left"
 
-[node name="WolfSpawn2" type="Node2D" parent="Enemies"]
-position = Vector2(-350, -200)
+[node name="PatrolWolfRight" type="Node2D" parent="Enemies"]
+position = Vector2(400, -200)
 script = ExtResource("6_spawn_point")
-preset_id = "sp_mountain_wolves"
-
-[node name="WolfSpawn3" type="Node2D" parent="Enemies"]
-position = Vector2(-500, -150)
-script = ExtResource("6_spawn_point")
-preset_id = "sp_mountain_wolves"
-
-[node name="ArcherSpawn1" type="Node2D" parent="Enemies"]
-position = Vector2(350, -250)
-script = ExtResource("6_spawn_point")
-preset_id = "sp_mountain_archers"
-
-[node name="ArcherSpawn2" type="Node2D" parent="Enemies"]
-position = Vector2(450, -180)
-script = ExtResource("6_spawn_point")
-preset_id = "sp_mountain_archers"
-
-[node name="StarvedWolfSpawn1" type="Node2D" parent="Enemies"]
-position = Vector2(-200, 350)
-script = ExtResource("6_spawn_point")
-enemy_id = "ene_starved_wolf"
-max_active_enemies = 1
-can_respawn = true
-respawn_time = 30.0
-
-[node name="StarvedWolfSpawn2" type="Node2D" parent="Enemies"]
-position = Vector2(200, 350)
-script = ExtResource("6_spawn_point")
-enemy_id = "ene_starved_wolf"
-max_active_enemies = 1
-can_respawn = true
-respawn_time = 30.0
+preset_id = "sp_mountain_patrol_right"
 
 [node name="SpawnPoints" type="Node2D" parent="."]
 
