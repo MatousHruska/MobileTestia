@@ -130,16 +130,7 @@
       "can_respawn": true,
       "respawn_time": 60,
       "modules_to_inject": "mod_patrol",
-      "module_config_override": {
-        "mod_patrol": {
-          "waypoints_relative": [[0, 0], [0, 250], [-100, 400], [0, 500]],
-          "loop": false,
-          "ping_pong": true,
-          "patrol_speed_mult": 0.5,
-          "waypoint_pause": 3.0,
-          "resume_nearest": true
-        }
-      }
+      "module_config_override": {"mod_patrol": {"waypoints_relative": [[0, 0], [0, 250], [-100, 400], [0, 500]], "loop": false, "ping_pong": true, "patrol_speed_mult": 0.5, "waypoint_pause": 3.0, "resume_nearest": true}}
     },
     {
       "id": "sp_mountain_patrol_right",
@@ -161,16 +152,7 @@
       "can_respawn": true,
       "respawn_time": 60,
       "modules_to_inject": "mod_patrol",
-      "module_config_override": {
-        "mod_patrol": {
-          "waypoints_relative": [[0, 0], [0, 250], [100, 400], [0, 500]],
-          "loop": false,
-          "ping_pong": true,
-          "patrol_speed_mult": 0.5,
-          "waypoint_pause": 3.0,
-          "resume_nearest": true
-        }
-      }
+      "module_config_override": {"mod_patrol": {"waypoints_relative": [[0, 0], [0, 250], [100, 400], [0, 500]], "loop": false, "ping_pong": true, "patrol_speed_mult": 0.5, "waypoint_pause": 3.0, "resume_nearest": true}}
     }
   ]
 }

@@ -10,40 +10,13 @@
       "default_config": {"detection_radius": 300}
     },
     {
-      "id": "mod_chase",
-      "name": "Chase",
-      "module_type": "movement",
-      "description": "Pursues combat target when not in attack range",
-      "script_path": "res://scripts/npc/ai/modules/chase_module.gd",
-      "priority": 80,
-      "default_config": {"chase_speed_mult": 1.0}
-    },
-    {
-      "id": "mod_melee_attack",
-      "name": "Melee Attack",
-      "module_type": "combat",
-      "description": "Triggers melee attack when in range with cooldown",
-      "script_path": "res://scripts/npc/ai/modules/melee_attack_module.gd",
-      "priority": 60,
-      "default_config": {"attack_radius": 24, "attack_cooldown": 1.0, "cardinal_alignment": true, "alignment_tolerance": 16.0}
-    },
-    {
-      "id": "mod_idle",
-      "name": "Idle",
-      "module_type": "movement",
-      "description": "Stand or roam when no target",
-      "script_path": "res://scripts/npc/ai/modules/idle_module.gd",
-      "priority": 10,
-      "default_config": {"can_roam": true, "roam_radius": 50, "roam_speed_mult": 0.5, "pause_min": 2.0, "pause_max": 5.0}
-    },
-    {
-      "id": "mod_patrol",
-      "name": "Patrol",
-      "module_type": "movement",
-      "description": "Follow a path of waypoints when not in combat",
-      "script_path": "res://scripts/npc/ai/modules/patrol_module.gd",
-      "priority": 5,
-      "default_config": {"waypoints": [], "loop": true, "ping_pong": false, "patrol_speed_mult": 0.6, "waypoint_pause": 2.0, "waypoint_threshold": 10.0, "resume_nearest": true}
+      "id": "mod_pack_alert",
+      "name": "Pack Alert",
+      "module_type": "social",
+      "description": "Alert nearby allies when acquiring target",
+      "script_path": "res://scripts/npc/ai/modules/pack_alert_module.gd",
+      "priority": 95,
+      "default_config": {"alert_radius": 300, "pack_group": ""}
     },
     {
       "id": "mod_leash",
@@ -55,15 +28,6 @@
       "default_config": {"leash_radius": 500, "home_threshold": 16, "return_speed_mult": 1.0}
     },
     {
-      "id": "mod_combat",
-      "name": "Combat",
-      "module_type": "combat",
-      "description": "Database-driven ability system",
-      "script_path": "res://scripts/npc/ai/modules/combat_module.gd",
-      "priority": 60,
-      "default_config": {"cardinal_alignment": true, "alignment_tolerance": 16.0}
-    },
-    {
       "id": "mod_flee",
       "name": "Flee",
       "module_type": "movement",
@@ -73,22 +37,22 @@
       "default_config": {"flee_health_percent": 0.2, "flee_speed_mult": 1.3, "flee_wobble": 0.3}
     },
     {
-      "id": "mod_pack_alert",
-      "name": "Pack Alert",
-      "module_type": "social",
-      "description": "Alert nearby allies when acquiring target",
-      "script_path": "res://scripts/npc/ai/modules/pack_alert_module.gd",
-      "priority": 95,
-      "default_config": {"alert_radius": 300, "pack_group": ""}
+      "id": "mod_conditional_cast",
+      "name": "Conditional Cast",
+      "module_type": "special",
+      "description": "Cast ability when conditions are met (e.g. player damaged recently)",
+      "script_path": "res://scripts/npc/ai/modules/conditional_cast_module.gd",
+      "priority": 85,
+      "default_config": {"ability_id": "", "conditions": [], "check_interval": 0.5, "cooldown": 30.0}
     },
     {
-      "id": "mod_kite",
-      "name": "Kite",
+      "id": "mod_chase",
+      "name": "Chase",
       "module_type": "movement",
-      "description": "Maintain distance from target",
-      "script_path": "res://scripts/npc/ai/modules/kite_module.gd",
-      "priority": 75,
-      "default_config": {"preferred_range": 100, "too_close_range": 50, "kite_speed_mult": 0.8}
+      "description": "Pursues combat target when not in attack range",
+      "script_path": "res://scripts/npc/ai/modules/chase_module.gd",
+      "priority": 80,
+      "default_config": {"chase_speed_mult": 1.0}
     },
     {
       "id": "mod_surround",
@@ -109,13 +73,49 @@
       "default_config": {"circle_radius": 80, "circle_speed_mult": 0.7, "only_when_on_cooldown": true, "coordinate_with_allies": true}
     },
     {
-      "id": "mod_conditional_cast",
-      "name": "Conditional Cast",
-      "module_type": "special",
-      "description": "Cast ability when conditions are met (e.g. player damaged recently)",
-      "script_path": "res://scripts/npc/ai/modules/conditional_cast_module.gd",
-      "priority": 85,
-      "default_config": {"ability_id": "", "conditions": [], "check_interval": 0.5, "cooldown": 30.0}
+      "id": "mod_kite",
+      "name": "Kite",
+      "module_type": "movement",
+      "description": "Maintain distance from target",
+      "script_path": "res://scripts/npc/ai/modules/kite_module.gd",
+      "priority": 75,
+      "default_config": {"preferred_range": 100, "too_close_range": 50, "kite_speed_mult": 0.8}
+    },
+    {
+      "id": "mod_melee_attack",
+      "name": "Melee Attack",
+      "module_type": "combat",
+      "description": "Triggers melee attack when in range with cooldown",
+      "script_path": "res://scripts/npc/ai/modules/melee_attack_module.gd",
+      "priority": 60,
+      "default_config": {"attack_radius": 24, "attack_cooldown": 1.0, "cardinal_alignment": true, "alignment_tolerance": 16.0}
+    },
+    {
+      "id": "mod_combat",
+      "name": "Combat",
+      "module_type": "combat",
+      "description": "Database-driven ability system",
+      "script_path": "res://scripts/npc/ai/modules/combat_module.gd",
+      "priority": 60,
+      "default_config": {"cardinal_alignment": true, "alignment_tolerance": 16.0}
+    },
+    {
+      "id": "mod_idle",
+      "name": "Idle",
+      "module_type": "movement",
+      "description": "Stand or roam when no target",
+      "script_path": "res://scripts/npc/ai/modules/idle_module.gd",
+      "priority": 10,
+      "default_config": {"can_roam": true, "roam_radius": 50, "roam_speed_mult": 0.5, "pause_min": 2.0, "pause_max": 5.0}
+    },
+    {
+      "id": "mod_patrol",
+      "name": "Patrol",
+      "module_type": "movement",
+      "description": "Follow a path of waypoints when not in combat",
+      "script_path": "res://scripts/npc/ai/modules/patrol_module.gd",
+      "priority": 5,
+      "default_config": {"waypoints": [], "loop": true, "ping_pong": false, "patrol_speed_mult": 0.6, "waypoint_pause": 2.0, "waypoint_threshold": 10.0, "resume_nearest": true}
     }
   ]
 }
