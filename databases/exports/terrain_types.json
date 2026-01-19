@@ -5,7 +5,7 @@
       "name": "Grass",
       "placeholder_color": "#3d6e3d",
       "has_collision": false,
-      "movement_cost": 1.0,
+      "movement_cost": 1,
       "footstep_sound": "sfx_step_grass",
       "can_spawn_on": true
     },
@@ -14,7 +14,7 @@
       "name": "Dirt",
       "placeholder_color": "#6b5344",
       "has_collision": false,
-      "movement_cost": 1.0,
+      "movement_cost": 1,
       "footstep_sound": "sfx_step_dirt",
       "can_spawn_on": true
     },
@@ -23,7 +23,7 @@
       "name": "Stone",
       "placeholder_color": "#666673",
       "has_collision": false,
-      "movement_cost": 1.0,
+      "movement_cost": 1,
       "footstep_sound": "sfx_step_stone",
       "can_spawn_on": true
     },
@@ -32,7 +32,7 @@
       "name": "Water",
       "placeholder_color": "#334d99",
       "has_collision": true,
-      "movement_cost": 0.0,
+      "movement_cost": 0,
       "footstep_sound": "sfx_step_water",
       "can_spawn_on": false
     },
@@ -41,7 +41,7 @@
       "name": "Wall",
       "placeholder_color": "#4d4033",
       "has_collision": true,
-      "movement_cost": 0.0,
+      "movement_cost": 0,
       "footstep_sound": "",
       "can_spawn_on": false
     },
@@ -50,7 +50,7 @@
       "name": "Sand",
       "placeholder_color": "#c4a35a",
       "has_collision": false,
-      "movement_cost": 1.5,
+      "movement_cost": 1,
       "footstep_sound": "sfx_step_sand",
       "can_spawn_on": true
     },
@@ -59,7 +59,7 @@
       "name": "Snow",
       "placeholder_color": "#e0e8f0",
       "has_collision": false,
-      "movement_cost": 1.2,
+      "movement_cost": 1,
       "footstep_sound": "sfx_step_snow",
       "can_spawn_on": true
     },
@@ -68,7 +68,7 @@
       "name": "Void",
       "placeholder_color": "#1a1a1a",
       "has_collision": true,
-      "movement_cost": 0.0,
+      "movement_cost": 0,
       "footstep_sound": "",
       "can_spawn_on": false
     }
