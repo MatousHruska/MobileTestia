@@ -1,6 +1,21 @@
-# Modular AI Quick Reference
+# Quick Reference
 
-> **Note:** This is the quick reference. For complete documentation, see `docs/ENEMY_REFERENCE.md`
+> **Note:** This is the quick reference for all major systems.
+
+## Documentation Index
+
+| System | Quick Ref | Full Doc |
+|--------|-----------|----------|
+| Enemies & AI | [Below](#adding-a-new-enemy) | `docs/ENEMY_REFERENCE.md` |
+| Abilities | [Ability Types](#ability-types) | `docs/ABILITY_SYSTEM_REFERENCE.md` |
+| Combat | - | `docs/COMBAT_SYSTEM.md` |
+| Maps & Zones | [Below](#map-building-quick-reference) | `docs/MAP_BUILDING_REFERENCE.md` |
+| Zone Design | - | `docs/ZONE_DESIGN_GUIDE.md` |
+| Database | - | `databases/docs/DATABASE_SETUP.md` |
+
+---
+
+# Modular AI Quick Reference
 
 ## Adding a New Enemy
 
@@ -408,3 +423,128 @@ The debug overlay shows:
 - `docs/ABILITY_SYSTEM_REFERENCE.md` - Ability system details
 - `docs/COMBAT_SYSTEM.md` - Full combat system (player + enemy)
 - `databases/docs/DATABASE_SETUP.md` - Database workflow
+
+---
+
+# Map Building Quick Reference
+
+> **Note:** For complete documentation, see `docs/MAP_BUILDING_REFERENCE.md` and `docs/ZONE_DESIGN_GUIDE.md`
+
+## Core Specifications
+
+| Setting | Value |
+|---------|-------|
+| Tile size | 16x16 px |
+| Chunk size | 64x64 tiles (1024x1024 px) |
+| Loading radius | 5x5 chunks (25 loaded) |
+| Viewport | 918x424 px |
+
+## Hierarchy
+
+```
+Zone (zone_forest)
+├── Chunks (performance grid)
+│   └── chunk_forest_0_0, chunk_forest_1_0...
+└── Locations (gameplay areas)
+    └── loc_forest_north, loc_forest_south...
+```
+
+## Chunk Unload Conditions
+
+A chunk can ONLY unload when ALL are true:
+1. Outside 5x5 radius from player
+2. No enemies targeting player (combat lock)
+3. No enemies returning to leash (leash lock)
+
+## Creating a New Zone
+
+1. Add to `zones.json` database
+2. Create scene `scenes/world/zone_{id}.tscn`
+3. Design in LDtk, export JSON
+4. Add chunk entries to `chunks.json`
+5. Add location entries to `locations.json`
+6. Add spawn points to `spawn_points.json`
+7. Place Location Area2D nodes
+8. Place ZoneTransition nodes
+
+## Placeholder Colors (Terrain)
+
+| Terrain | Hex |
+|---------|-----|
+| Grass | #3d6e3d |
+| Dirt | #6b5344 |
+| Stone | #666673 |
+| Water | #334d99 |
+| Wall | #4d4033 |
+
+## Placeholder Colors (Entities)
+
+| Entity | Hex | Shape |
+|--------|-----|-------|
+| Player Spawn | #00ff00 | Circle |
+| Enemy Spawn | #ff0000 | Circle |
+| Chest | #ffcc00 | Square |
+| NPC | #00ccff | Circle |
+| Transition | #ff00ff | Rectangle |
+
+## Key Constants
+
+```gdscript
+const TILE_SIZE := 16
+const CHUNK_TILES := 64
+const CHUNK_SIZE_PX := 1024  # TILE_SIZE * CHUNK_TILES
+const LOADING_RADIUS := 2    # Results in 5x5 grid
+```
+
+## Chunk Coordinate Calculation
+
+```gdscript
+func get_chunk_coords(world_pos: Vector2) -> Vector2i:
+    return Vector2i(
+        int(world_pos.x / CHUNK_SIZE_PX),
+        int(world_pos.y / CHUNK_SIZE_PX)
+    )
+```
+
+## Zone Database Entry
+
+```json
+{
+  "id": "zone_forest",
+  "name": "Whispering Woods",
+  "zone_type": "outdoor",
+  "min_level": 1,
+  "max_level": 10,
+  "music_track": "music_forest",
+  "ambient_sound": "amb_forest_birds",
+  "is_safe_zone": false
+}
+```
+
+## Location Database Entry
+
+```json
+{
+  "id": "loc_forest_north",
+  "zone_id": "zone_forest",
+  "name": "Northern Forest",
+  "music_track": "",
+  "is_safe_zone": null,
+  "discovery_popup": true
+}
+```
+
+## Loot Behavior
+
+- Dropped loot persists across chunk load/unload (tracked by LootManager)
+- Loot despawns on game save (clean saves)
+- Corpses are visual only, despawn after 2 seconds
+
+## Enemy Density Guidelines
+
+| Density | Enemies/Chunk |
+|---------|---------------|
+| Low | 1-2 |
+| Medium | 2-4 |
+| High | 4-6 |
+| Very High | 6-8 |
