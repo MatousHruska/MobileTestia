@@ -27,9 +27,11 @@ func _ready() -> void:
 	Game.current_zone = zone_id
 
 	# Initialize chunk system for this zone
-	if use_chunk_system and ChunkManager:
-		ChunkManager.initialize_for_zone(zone_id)
-		Debug.info("Zone", "ChunkManager initialized for zone: %s" % zone_id)
+	if use_chunk_system:
+		var chunk_mgr = get_node_or_null("/root/ChunkManager")
+		if chunk_mgr:
+			chunk_mgr.initialize_for_zone(zone_id)
+			Debug.info("Zone", "ChunkManager initialized for zone: %s" % zone_id)
 
 	# Position player at spawn point
 	_position_player_at_spawn()
@@ -144,6 +146,8 @@ func get_zone_data() -> Dictionary:
 
 func _exit_tree() -> void:
 	## Clean up when leaving the zone
-	if use_chunk_system and ChunkManager:
-		ChunkManager.cleanup_zone()
-		Debug.info("Zone", "ChunkManager cleaned up for zone: %s" % zone_id)
+	if use_chunk_system:
+		var chunk_mgr = get_node_or_null("/root/ChunkManager")
+		if chunk_mgr:
+			chunk_mgr.cleanup_zone()
+			Debug.info("Zone", "ChunkManager cleaned up for zone: %s" % zone_id)
