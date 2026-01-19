@@ -32,7 +32,7 @@ func _init() -> void:
 	module_id = "mod_patrol"
 	module_name = "Patrol"
 	module_type = ModuleType.MOVEMENT
-	priority = 15  # Between idle (10) and chase (80)
+	priority = 5  # Lower than idle (10) so patrol runs AFTER and overrides random roaming
 
 
 func _on_setup(owner: Node2D) -> void:
