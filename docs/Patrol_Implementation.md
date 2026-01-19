@@ -290,7 +290,7 @@ func _init() -> void:
     module_id = "mod_patrol"
     module_name = "Patrol"
     module_type = ModuleType.MOVEMENT
-    priority = 15  # Between idle (10) and chase (80)
+    priority = 5  # LOWER than idle (10) - see "Module Priority" section below
 
 func _on_setup(_owner: Node2D) -> void:
     _load_waypoints()
@@ -436,7 +436,7 @@ func get_debug_info() -> Dictionary:
   "id": "mod_patrol",
   "name": "Patrol",
   "module_type": "movement",
-  "priority": 15,
+  "priority": 5,
   "script_path": "res://scripts/npc/ai/modules/patrol_module.gd",
   "default_config": {
     "waypoints": [],
@@ -449,6 +449,25 @@ func get_debug_info() -> Dictionary:
   }
 }
 ```
+
+### 2.3 Module Priority Explained
+
+**CRITICAL**: The module system processes modules in **descending priority order** (highest first). Each module modifies the `EnemyContext`, and **later modules can override earlier decisions**.
+
+For patrol to work correctly, it must run **AFTER** the idle module so it can override idle's random roaming with waypoint-based movement.
+
+**Priority ordering for movement modules:**
+| Module | Priority | Description |
+|--------|----------|-------------|
+| mod_leash | 90 | Returns to spawn if too far |
+| mod_chase | 80 | Pursues target |
+| mod_idle | 10 | Random roaming when no target |
+| **mod_patrol** | **5** | Waypoint following (overrides idle) |
+
+**Why patrol must be lower than idle:**
+1. `mod_idle` (priority 10) runs first, may set `desired_direction` to random roaming
+2. `mod_patrol` (priority 5) runs later, overwrites `desired_direction` with waypoint direction
+3. The LAST module to write wins, so patrol controls movement
 
 ### 2.3 Update ModularEnemyNPC Module Loader
 
@@ -793,19 +812,21 @@ Note: This would need special handling - ambush should reveal first, then patrol
 ## Implementation Checklist
 
 ### Phase 1: Core Infrastructure
-- [ ] Update `spawn_point.gd` with module_config_override support
-- [ ] Update `DatabaseLoader.create_enemy()` to accept spawn_config
-- [ ] Update `ModularEnemyNPC._setup_module_system()` to apply spawn config
-- [ ] Add `merge_config()` to BaseModule
-- [ ] Add `has_module()` and `get_module()` to ModuleController
-- [ ] Update SpawnPointDatabase.bas with new columns
-- [ ] Update spawn_points.json schema
+- [x] Update `spawn_point.gd` with module_config_override support
+- [x] Update `DatabaseLoader.create_enemy()` to accept spawn_config
+- [x] Update `DatabaseLoader.apply_spawn_point_preset()` to handle module overrides
+- [x] Update `ModularEnemyNPC._setup_module_system()` to apply spawn config
+- [x] Add `merge_config()` to BaseModule
+- [x] Add `has_module()` and `get_module()` to ModuleController (already existed)
+- [x] Update SpawnPointDatabase.bas with new columns (19, 20)
+- [x] Update spawn_points.json schema
 
 ### Phase 2: Patrol Module
-- [ ] Create `patrol_module.gd`
-- [ ] Add mod_patrol to enemy_modules.json
-- [ ] Update ModularEnemyNPC module loader
-- [ ] Test patrol with simple waypoints
+- [x] Create `patrol_module.gd`
+- [x] Add mod_patrol to enemy_modules.json
+- [x] Update ModularEnemyNPC module loader
+- [x] Test patrol with simple waypoints
+- [x] **Fix priority to 5** (must be lower than idle's 10 to override)
 - [ ] Test leash return → resume patrol
 - [ ] Test ping_pong mode
 
