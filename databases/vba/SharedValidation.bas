@@ -497,6 +497,8 @@ Private Sub CreateIdNamedRanges()
     CreateNamedRange "CombatTextCategories", 1, "ID_CombatTextCategories"
     CreateNamedRange "EnemyModules", 1, "ID_EnemyModules"
     CreateNamedRange "Abilities", 1, "ID_Abilities"
+    CreateNamedRange "Chunks", 1, "ID_Chunks"
+    CreateNamedRange "TerrainTypes", 1, "ID_TerrainTypes"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -579,6 +581,10 @@ Private Sub ApplyForeignKeyValidation()
     ApplyValidation "Cutscenes", 4, "ID_Zones"      ' trigger_target (for zone_enter)
 
     ' FloatingDialogues - trigger_filter contains zone_id but is free-form text
+
+    ' Chunks
+    ApplyValidation "Chunks", 2, "ID_Zones"          ' zone_id
+    ApplyValidation "Chunks", 7, "ID_SpawnPoints"    ' spawn_table_id (optional)
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -591,6 +597,15 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "CombatTextCategories", 6, "float_up,float_up_slow,bounce,slide_right,flash"  ' animation
     ApplyListValidation "CombatTextCategories", 7, "TRUE,FALSE"  ' show_sign
     ApplyListValidation "CombatTextCategories", 10, "TRUE,FALSE"  ' scale_with_damage
+
+    ' Chunks - Map System
+    ApplyListValidation "Chunks", 5, "grass,forest,cave,dungeon,town,desert,snow,swamp,mountain,beach"  ' biome_type
+    ApplyListValidation "Chunks", 6, "none,low,medium,high,very_high"  ' enemy_density
+    ApplyListValidation "Chunks", 9, "default,dark,bright,dim,magical,sunset,night,underground"  ' lighting_preset
+
+    ' TerrainTypes - Map System
+    ApplyListValidation "TerrainTypes", 4, "TRUE,FALSE"  ' has_collision
+    ApplyListValidation "TerrainTypes", 7, "TRUE,FALSE"  ' can_spawn_on
 
     ' Talents
     ApplyValidation "Talents", 3, "ID_TalentTrees"     ' tree reference

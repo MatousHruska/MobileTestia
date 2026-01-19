@@ -20,6 +20,8 @@ config/icon="res://icon.svg"
 
 Debug="*res://autoloads/debug_manager.gd"
 DatabaseLoader="*res://autoloads/database_loader.gd"
+ChunkManager="*res://autoloads/chunk_manager.gd"
+LootManager="*res://autoloads/loot_manager.gd"
 UITheme="*res://autoloads/ui_theme.gd"
 Game="*res://autoloads/game_manager.gd"
 Inventory="*res://scripts/inventory/inventory_manager.gd"
