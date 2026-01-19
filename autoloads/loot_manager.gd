@@ -279,20 +279,29 @@ func _recreate_drop_visual(drop_data: Dictionary) -> Node2D:
 ## Recreate an item pickup from stored data
 func _recreate_item_pickup(drop_data: Dictionary, parent: Node) -> Node2D:
 	var item_dict: Dictionary = drop_data.get("item_data", {})
-	var position: Vector2 = drop_data.get("position", Vector2.ZERO)
+	var pos: Vector2 = drop_data.get("position", Vector2.ZERO)
 
 	if item_dict.is_empty():
 		Debug.warn("LootManager", "Cannot recreate item pickup - no item data")
 		return null
 
-	# Deserialize item
-	var item: ItemData = ItemData.from_dict(item_dict)
+	# Deserialize item based on class type
+	var class_type: String = item_dict.get("class_type", "ItemData")
+	var item: ItemData = null
+
+	if class_type == "EquipmentData":
+		item = EquipmentData.from_dict(item_dict)
+	else:
+		# Base ItemData or KeyData
+		item = ItemData.new()
+		item.deserialize_from(item_dict)
+
 	if not item:
 		Debug.warn("LootManager", "Failed to deserialize item from data")
 		return null
 
 	# Create pickup
-	var pickup := LootPickup.create_at(position, item)
+	var pickup := LootPickup.create_at(pos, item)
 	pickup.set_meta("drop_id", drop_data.get("drop_id", ""))
 	parent.add_child(pickup)
 
@@ -518,9 +527,11 @@ func debug_list_drops() -> void:
 	for drop_id in _drops:
 		var drop: Dictionary = _drops[drop_id]
 		var drop_type: int = drop.get("drop_type", DropType.ITEM)
-		var type_str := "ITEM" if drop_type == DropType.ITEM else "GOLD"
-		var age := Time.get_unix_time_from_system() - drop.get("created_at", 0)
-		var has_node := drop.get("node") != null and is_instance_valid(drop.get("node"))
+		var type_str: String = "ITEM" if drop_type == DropType.ITEM else "GOLD"
+		var created_at: float = float(drop.get("created_at", 0))
+		var age: float = Time.get_unix_time_from_system() - created_at
+		var node_ref = drop.get("node")
+		var has_node: bool = node_ref != null and is_instance_valid(node_ref)
 
 		Debug.log("LootManager", "  %s [%s] at %s (chunk: %s, age: %.0fs, node: %s)" % [
 			drop_id,
