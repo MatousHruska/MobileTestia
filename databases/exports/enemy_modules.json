@@ -42,7 +42,7 @@
       "module_type": "movement",
       "description": "Follow a path of waypoints when not in combat",
       "script_path": "res://scripts/npc/ai/modules/patrol_module.gd",
-      "priority": 15,
+      "priority": 5,
       "default_config": {"waypoints": [], "loop": true, "ping_pong": false, "patrol_speed_mult": 0.6, "waypoint_pause": 2.0, "waypoint_threshold": 10.0, "resume_nearest": true}
     },
     {
