@@ -158,7 +158,7 @@ static func spawn_coins(parent: Node, pos: Vector2, total_gold: int, coin_count:
 
 		# Register with LootManager for chunk persistence
 		if loot_mgr:
-			var drop_id := loot_mgr.register_gold_drop(pos, coin_value)
+			var drop_id: String = loot_mgr.register_gold_drop(pos, coin_value)
 			if not drop_id.is_empty():
 				coin.set_meta("drop_id", drop_id)
 				# Note: Node is set after adding to tree, so defer it
