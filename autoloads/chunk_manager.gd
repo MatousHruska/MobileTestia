@@ -323,7 +323,8 @@ func unload_chunk(chunk_id: String) -> void:
 	_save_enemy_states(chunk_id)
 
 	# Notify LootManager to preserve loot data
-	if LootManager:
+	var loot_mgr = get_node_or_null("/root/LootManager")
+	if loot_mgr:
 		# LootManager keeps loot data in memory, just need to remove visual nodes
 		Debug.log("ChunkManager", "Loot data preserved for chunk: %s" % chunk_id)
 
