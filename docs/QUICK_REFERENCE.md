@@ -18,7 +18,7 @@
 
 ## Module Priority Order
 
-Higher priority = runs first, can override lower priority modules.
+**IMPORTANT**: Higher priority = runs first. Lower priority modules run LATER and can OVERRIDE earlier decisions. The LAST module to write wins.
 
 | Pri | Module | Type | Purpose |
 |-----|--------|------|---------|
@@ -33,6 +33,7 @@ Higher priority = runs first, can override lower priority modules.
 | 75 | mod_kite | movement | Maintain distance |
 | 60 | mod_combat | combat | Execute abilities |
 | 10 | mod_idle | movement | Stand/roam |
+| 5 | mod_patrol | movement | Follow waypoints (overrides idle) |
 
 ## Common Module Combinations
 
@@ -181,6 +182,8 @@ Ability-specific params:
 | conditions | [] | Array of conditions (ALL must be true) |
 | check_interval | 0.5 | How often to check conditions |
 | cooldown | 30.0 | Cooldown after casting |
+| status_effect_id | "" | Status effect to apply |
+| additional_status_effects | "" | Extra status effects (comma-separated) |
 
 **Conditional Cast Conditions:**
 | Condition | Description |
@@ -190,6 +193,37 @@ Ability-specific params:
 | `self_buffed:buff_id` | Enemy has the buff |
 | `health_below:X` | Enemy health below X% |
 | `target_in_range:X` | Target within X units |
+
+### mod_patrol
+| Key | Default | Description |
+|-----|---------|-------------|
+| waypoints | [] | Absolute positions to visit |
+| waypoints_relative | [] | Offsets from spawn (auto-converted) |
+| loop | true | Loop back to start |
+| ping_pong | false | Reverse at ends |
+| patrol_speed_mult | 0.6 | Speed while patrolling |
+| waypoint_pause | 2.0 | Pause at each waypoint (seconds) |
+| resume_nearest | true | Resume from nearest waypoint after combat |
+
+**Note:** mod_patrol is typically injected via spawn points, not hardcoded in enemy definitions.
+
+## Spawn Point Module Injection
+
+Spawn points can inject modules into spawned enemies:
+
+```json
+{
+  "modules_to_inject": "mod_patrol",
+  "module_config_override": {
+    "mod_patrol": {
+      "waypoints_relative": [[0,0], [100,0], [100,100]],
+      "ping_pong": true
+    }
+  }
+}
+```
+
+This allows the same enemy type to behave differently based on spawn location.
 
 ## Boss vs Normal Enemy
 
