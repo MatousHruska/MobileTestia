@@ -89,6 +89,10 @@ func _collect() -> void:
 	Debug.info("GoldPickup", "Collecting coin", "Value: %d, Inventory gold before: %d" % [gold_value, Inventory.gold])
 	Inventory.add_gold(gold_value)
 	Debug.info("GoldPickup", "Coin collected", "Inventory gold after: %d" % Inventory.gold)
+
+	# Notify LootManager that this drop was collected
+	_notify_loot_manager_collected()
+
 	# Small scale pop effect before destroying
 	var tween := create_tween()
 	tween.tween_property(_visual, "scale", Vector2(1.5, 1.5), 0.05)
@@ -98,6 +102,18 @@ func _collect() -> void:
 	# Disable further processing
 	_can_pickup = false
 	set_physics_process(false)
+
+
+## Notify LootManager when this gold is collected
+func _notify_loot_manager_collected() -> void:
+	var drop_id: String = get_meta("drop_id", "")
+	if drop_id.is_empty():
+		return
+
+	var loot_mgr = get_node_or_null("/root/LootManager")
+	if loot_mgr:
+		loot_mgr.remove_drop(drop_id)
+		Debug.log("GoldPickup", "Notified LootManager: drop %s collected" % drop_id)
 
 
 ## Set scatter direction and speed
@@ -126,6 +142,9 @@ static func spawn_coins(parent: Node, pos: Vector2, total_gold: int, coin_count:
 	var remainder: int = total_gold - (gold_per_coin * coin_count)
 	Debug.info("GoldPickup", "Coin distribution", "%d coins, %d gold each" % [coin_count, gold_per_coin])
 
+	# Get LootManager for registration
+	var loot_mgr = parent.get_node_or_null("/root/LootManager")
+
 	for i in coin_count:
 		# Random scatter direction
 		var angle: float = randf() * TAU
@@ -136,4 +155,13 @@ static func spawn_coins(parent: Node, pos: Vector2, total_gold: int, coin_count:
 		var coin_value: int = gold_per_coin + (remainder if i == 0 else 0)
 
 		var coin := GoldPickup.create_at(pos, coin_value, scatter_dir, scatter_speed)
+
+		# Register with LootManager for chunk persistence
+		if loot_mgr:
+			var drop_id := loot_mgr.register_gold_drop(pos, coin_value)
+			if not drop_id.is_empty():
+				coin.set_meta("drop_id", drop_id)
+				# Note: Node is set after adding to tree, so defer it
+				coin.tree_entered.connect(func(): loot_mgr.set_drop_node(drop_id, coin), CONNECT_ONE_SHOT)
+
 		parent.add_child(coin)

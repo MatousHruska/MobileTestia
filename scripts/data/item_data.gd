@@ -126,3 +126,52 @@ static func get_slot_for_type(equip_type: EquipmentType) -> EquipSlot:
 			return EquipSlot.ACCESSORY_2  # Amulets use accessory slot
 		_:
 			return EquipSlot.NONE
+
+
+#===============================================================================
+# SERIALIZATION (for loot persistence across chunk loads)
+#===============================================================================
+
+## Serialize item to dictionary for storage
+func to_dict() -> Dictionary:
+	return {
+		"id": id,
+		"item_name": item_name,
+		"description": description,
+		"rarity": rarity,
+		"item_type": item_type,
+		"max_stack": max_stack,
+		"sell_value": sell_value,
+		"class_type": "ItemData"
+	}
+
+
+## Deserialize item from dictionary
+static func from_dict(data: Dictionary) -> ItemData:
+	var class_type: String = data.get("class_type", "ItemData")
+
+	# Handle equipment data
+	if class_type == "EquipmentData":
+		return EquipmentData.from_dict(data)
+
+	# Handle key items (simple recreation from ID)
+	var item_id: String = data.get("id", "")
+	if item_id.begins_with("key_"):
+		var key_item := ItemData.new()
+		key_item.id = item_id
+		key_item.item_name = data.get("item_name", "Key")
+		key_item.description = data.get("description", "")
+		key_item.rarity = data.get("rarity", Rarity.COMMON)
+		key_item.item_type = ItemType.KEY
+		return key_item
+
+	# Base item data
+	var item := ItemData.new()
+	item.id = item_id
+	item.item_name = data.get("item_name", "Unknown Item")
+	item.description = data.get("description", "")
+	item.rarity = data.get("rarity", Rarity.COMMON)
+	item.item_type = data.get("item_type", ItemType.EQUIPMENT)
+	item.max_stack = data.get("max_stack", 1)
+	item.sell_value = data.get("sell_value", 0)
+	return item

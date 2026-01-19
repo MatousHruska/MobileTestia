@@ -90,12 +90,26 @@ func _on_interact() -> void:
 
 	if success:
 		Debug.info("Loot", "Picked up: %s" % item.item_name)
+		# Notify LootManager that this drop was collected
+		_notify_loot_manager_collected()
 		# Remove this pickup from the world
 		queue_free()
 	else:
 		Debug.warn("Loot", "Inventory full, cannot pickup: %s" % item.item_name)
 		pickup_failed.emit()
 		end_interaction()
+
+
+## Notify LootManager when this pickup is collected
+func _notify_loot_manager_collected() -> void:
+	var drop_id: String = get_meta("drop_id", "")
+	if drop_id.is_empty():
+		return
+
+	var loot_mgr = get_node_or_null("/root/LootManager")
+	if loot_mgr:
+		loot_mgr.remove_drop(drop_id)
+		Debug.log("Loot", "Notified LootManager: drop %s collected" % drop_id)
 
 
 ## Factory method to create a pickup at a position

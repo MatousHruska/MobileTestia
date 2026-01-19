@@ -614,11 +614,20 @@ func _spawn_loot_pickup(item_id: String, rarity: int = ItemData.Rarity.COMMON) -
 		Debug.warn("Loot", "Failed to create item: %s" % item_id)
 		return
 
+	# Register with LootManager for chunk persistence
+	var loot_mgr = get_node_or_null("/root/LootManager")
+	var drop_id := ""
+	if loot_mgr:
+		drop_id = loot_mgr.register_item_drop(global_position, item)
+
 	# Create and spawn the pickup
 	var pickup := LootPickup.create_at(global_position, item)
+	if not drop_id.is_empty():
+		pickup.set_meta("drop_id", drop_id)
+		loot_mgr.set_drop_node(drop_id, pickup)
 	get_tree().current_scene.add_child(pickup)
 	loot_dropped.emit([{"type": "item", "item_id": item_id}])
-	Debug.info("Loot", "Spawned loot pickup: %s at %s" % [item.item_name, global_position])
+	Debug.info("Loot", "Spawned loot pickup: %s at %s (drop_id: %s)" % [item.item_name, global_position, drop_id])
 
 
 ## Spawn a random equipment piece when no item_pool specified

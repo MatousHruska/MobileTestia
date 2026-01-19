@@ -213,3 +213,125 @@ func get_type_name() -> String:
 			return "Amulet"
 		_:
 			return "Equipment"
+
+
+#===============================================================================
+# SERIALIZATION (for loot persistence across chunk loads)
+#===============================================================================
+
+## Serialize equipment to dictionary for storage
+func to_dict() -> Dictionary:
+	var data := super.to_dict()
+	data["class_type"] = "EquipmentData"
+	data["equipment_type"] = equipment_type
+
+	# Weapon stats
+	data["weapon_damage"] = weapon_damage
+	data["physical_damage"] = physical_damage
+	data["fire_damage"] = fire_damage
+	data["cold_damage"] = cold_damage
+	data["lightning_damage"] = lightning_damage
+	data["poison_damage"] = poison_damage
+	data["weapon_attack_speed"] = weapon_attack_speed
+	data["weapon_category"] = weapon_category
+
+	# Stat bonuses
+	data["bonus_strength"] = bonus_strength
+	data["bonus_dexterity"] = bonus_dexterity
+	data["bonus_intelligence"] = bonus_intelligence
+	data["bonus_vitality"] = bonus_vitality
+	data["bonus_energy"] = bonus_energy
+	data["bonus_luck"] = bonus_luck
+
+	# Offensive bonuses
+	data["bonus_attack_power"] = bonus_attack_power
+	data["bonus_spell_power"] = bonus_spell_power
+	data["bonus_attack_speed"] = bonus_attack_speed
+	data["bonus_crit_chance"] = bonus_crit_chance
+	data["bonus_crit_damage"] = bonus_crit_damage
+
+	# Defensive bonuses
+	data["bonus_armor"] = bonus_armor
+	data["bonus_magic_resistance"] = bonus_magic_resistance
+	data["bonus_dodge_chance"] = bonus_dodge_chance
+	data["bonus_health"] = bonus_health
+	data["bonus_mana"] = bonus_mana
+	data["bonus_stamina"] = bonus_stamina
+
+	# Utility bonuses
+	data["bonus_movement_speed"] = bonus_movement_speed
+	data["bonus_life_regen"] = bonus_life_regen
+	data["bonus_mana_regen"] = bonus_mana_regen
+	data["bonus_stamina_regen"] = bonus_stamina_regen
+
+	# Requirements
+	data["required_level"] = required_level
+	data["required_strength"] = required_strength
+	data["required_dexterity"] = required_dexterity
+	data["required_intelligence"] = required_intelligence
+
+	return data
+
+
+## Deserialize equipment from dictionary
+static func from_dict(data: Dictionary) -> EquipmentData:
+	var equip := EquipmentData.new()
+
+	# Base item properties
+	equip.id = data.get("id", "")
+	equip.item_name = data.get("item_name", "Unknown Equipment")
+	equip.description = data.get("description", "")
+	equip.rarity = data.get("rarity", Rarity.COMMON)
+	equip.item_type = ItemType.EQUIPMENT
+	equip.max_stack = 1
+	equip.sell_value = data.get("sell_value", 0)
+
+	# Equipment type
+	equip.equipment_type = data.get("equipment_type", EquipmentType.NONE)
+
+	# Weapon stats
+	equip.weapon_damage = data.get("weapon_damage", 0)
+	equip.physical_damage = data.get("physical_damage", 0)
+	equip.fire_damage = data.get("fire_damage", 0)
+	equip.cold_damage = data.get("cold_damage", 0)
+	equip.lightning_damage = data.get("lightning_damage", 0)
+	equip.poison_damage = data.get("poison_damage", 0)
+	equip.weapon_attack_speed = data.get("weapon_attack_speed", 1.0)
+	equip.weapon_category = data.get("weapon_category", "")
+
+	# Stat bonuses
+	equip.bonus_strength = data.get("bonus_strength", 0)
+	equip.bonus_dexterity = data.get("bonus_dexterity", 0)
+	equip.bonus_intelligence = data.get("bonus_intelligence", 0)
+	equip.bonus_vitality = data.get("bonus_vitality", 0)
+	equip.bonus_energy = data.get("bonus_energy", 0)
+	equip.bonus_luck = data.get("bonus_luck", 0)
+
+	# Offensive bonuses
+	equip.bonus_attack_power = data.get("bonus_attack_power", 0)
+	equip.bonus_spell_power = data.get("bonus_spell_power", 0)
+	equip.bonus_attack_speed = data.get("bonus_attack_speed", 0.0)
+	equip.bonus_crit_chance = data.get("bonus_crit_chance", 0.0)
+	equip.bonus_crit_damage = data.get("bonus_crit_damage", 0.0)
+
+	# Defensive bonuses
+	equip.bonus_armor = data.get("bonus_armor", 0)
+	equip.bonus_magic_resistance = data.get("bonus_magic_resistance", 0)
+	equip.bonus_dodge_chance = data.get("bonus_dodge_chance", 0.0)
+	equip.bonus_health = data.get("bonus_health", 0)
+	equip.bonus_mana = data.get("bonus_mana", 0)
+	equip.bonus_stamina = data.get("bonus_stamina", 0)
+
+	# Utility bonuses
+	equip.bonus_movement_speed = data.get("bonus_movement_speed", 0.0)
+	equip.bonus_life_regen = data.get("bonus_life_regen", 0.0)
+	equip.bonus_mana_regen = data.get("bonus_mana_regen", 0.0)
+	equip.bonus_stamina_regen = data.get("bonus_stamina_regen", 0.0)
+
+	# Requirements
+	equip.required_level = data.get("required_level", 1)
+	equip.required_strength = data.get("required_strength", 0)
+	equip.required_dexterity = data.get("required_dexterity", 0)
+	equip.required_intelligence = data.get("required_intelligence", 0)
+
+	return equip
