@@ -52,7 +52,7 @@ Modules are the building blocks of enemy AI. Each module handles one aspect of b
 
 ### Module Priority Order
 
-Higher priority = runs first, can be overridden by lower priority modules.
+**IMPORTANT**: Modules process in descending priority order (highest first). Each module modifies the `EnemyContext`, and **later modules can override earlier decisions**. The LAST module to write to a context field wins.
 
 | Pri | Module | Type | Purpose |
 |-----|--------|------|---------|
@@ -67,6 +67,9 @@ Higher priority = runs first, can be overridden by lower priority modules.
 | 75 | mod_kite | movement | Maintain distance from target |
 | 60 | mod_combat | combat | Execute abilities |
 | 10 | mod_idle | movement | Stand or roam when no target |
+| 5 | mod_patrol | movement | Follow waypoints (overrides idle) |
+
+**Why mod_patrol has priority 5:** Patrol must run AFTER idle (10) to override random roaming with waypoint-based movement. Since lower priority runs later and can override, patrol at 5 runs after idle and controls the final movement direction.
 
 ### Common Module Combinations
 
@@ -77,6 +80,7 @@ Higher priority = runs first, can be overridden by lower priority modules.
 | Ranged Kiter | mod_target_detection, mod_leash, mod_kite, mod_chase, mod_combat, mod_idle |
 | Pack Hunter | mod_target_detection, mod_pack_alert, mod_leash, mod_chase, mod_surround, mod_combat, mod_idle |
 | Cowardly | mod_target_detection, mod_flee, mod_leash, mod_chase, mod_combat, mod_idle |
+| Patrolling | Base modules + mod_patrol (injected via spawn point) |
 | Boss | mod_target_detection, mod_chase, mod_combat |
 | Miniboss | mod_target_detection, mod_flee, mod_chase, mod_combat |
 
@@ -172,6 +176,8 @@ Each module has configurable options via the `module_config` JSON column.
 | conditions | [] | Array of conditions that must ALL be true |
 | check_interval | 0.5 | How often to check conditions (seconds) |
 | cooldown | 30.0 | Cooldown after casting |
+| status_effect_id | "" | Status effect to apply when cast |
+| additional_status_effects | "" | Comma-separated extra status effect IDs |
 
 **Supported Conditions:**
 | Condition | Description |
@@ -188,10 +194,77 @@ Each module has configurable options via the `module_config` JSON column.
   "mod_conditional_cast": {
     "ability_id": "abi_blood_howl",
     "conditions": ["player_damaged_recently:10", "self_not_buffed:status_blood_frenzy"],
-    "cooldown": 30.0
+    "cooldown": 30.0,
+    "status_effect_id": "status_blood_frenzy",
+    "additional_status_effects": "status_blood_frenzy_cdr"
   }
 }
 ```
+
+#### mod_patrol
+| Key | Default | Description |
+|-----|---------|-------------|
+| waypoints | [] | Array of absolute Vector2 positions |
+| waypoints_relative | [] | Relative offsets from spawn (converted to absolute) |
+| loop | true | Loop back to start when reaching end |
+| ping_pong | false | Reverse direction at ends instead of looping |
+| patrol_speed_mult | 0.6 | Speed multiplier while patrolling |
+| waypoint_pause | 2.0 | Seconds to pause at each waypoint |
+| waypoint_threshold | 10.0 | Distance to consider waypoint "reached" |
+| resume_nearest | true | After combat, resume from nearest waypoint |
+
+**Note:** mod_patrol is typically injected via spawn points rather than hardcoded in enemy definitions. This allows the same enemy type to patrol or roam depending on where it spawns.
+
+---
+
+## Spawn Point Module Injection
+
+Spawn points can inject modules and override module configuration for any spawned enemy. This allows the same enemy type to behave differently based on spawn location.
+
+### Spawn Point Configuration
+
+**SpawnPoints database fields:**
+| Field | Description |
+|-------|-------------|
+| modules_to_inject | Comma-separated module IDs to add (e.g., "mod_patrol") |
+| module_config_override | JSON config overrides for injected or existing modules |
+
+### How It Works
+
+1. Spawn point defines `modules_to_inject` and `module_config_override`
+2. Enemy is created from database with base modules
+3. Additional modules are injected from spawn point
+4. Config overrides are merged into module configs
+5. Relative waypoints are converted to absolute positions
+
+### Example: Patrolling Wolf
+
+**Spawn Point Preset (spawn_points.json):**
+```json
+{
+  "id": "sp_mountain_patrol_left",
+  "enemy_pool": "ene_starved_wolf:100",
+  "modules_to_inject": "mod_patrol",
+  "module_config_override": {
+    "mod_patrol": {
+      "waypoints_relative": [[0, 0], [0, 250], [-100, 400], [0, 500]],
+      "loop": false,
+      "ping_pong": true,
+      "patrol_speed_mult": 0.5,
+      "waypoint_pause": 3.0
+    }
+  }
+}
+```
+
+**Result:** Starved wolves spawned from this point will patrol a path, while wolves from other spawn points roam randomly.
+
+### Relative vs Absolute Waypoints
+
+- `waypoints_relative`: Offsets from spawn point position (e.g., `[[0,0], [100,0]]`)
+- `waypoints`: Absolute world positions (rarely used in spawn points)
+
+Spawn points automatically convert `waypoints_relative` to absolute `waypoints` at spawn time.
 
 ---
 
@@ -540,9 +613,14 @@ Shows per-enemy information:
 | Conditional Cast Module | `scripts/npc/ai/modules/conditional_cast_module.gd` |
 | Pack Alert Module | `scripts/npc/ai/modules/pack_alert_module.gd` |
 | Flee Module | `scripts/npc/ai/modules/flee_module.gd` |
+| Patrol Module | `scripts/npc/ai/modules/patrol_module.gd` |
 | Modular Enemy NPC | `scripts/npc/modular_enemy_npc.gd` |
+| Spawn Point | `scripts/npc/spawn_point.gd` |
+| Status Effect Component | `scripts/combat/status_effect_component.gd` |
+| Database Loader | `autoloads/database_loader.gd` |
 | Ability Execution | `scripts/npc/modular_enemy_npc.gd:_execute_ability()` |
 | Condition Check | `scripts/npc/ai/modules/combat_module.gd:_check_condition()` |
+| Spawn Config Apply | `scripts/npc/modular_enemy_npc.gd:_setup_module_system()` |
 
 ### Adding a New Module
 

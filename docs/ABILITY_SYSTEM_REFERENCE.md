@@ -318,6 +318,41 @@ Status effects in `status_effects.json` use these type values:
 | `buff` | `apply_buff()` | Generic buff (duration only) |
 | `debuff` | `apply_debuff()` | Generic debuff (duration only) |
 
+### Stat Modifiers
+
+Status effects can modify enemy stats via `stat_affected` and `value` fields:
+
+| stat_affected | Effect |
+|---------------|--------|
+| `movement_speed` | Multiplies move speed (value = percentage, e.g., 30 = +30%) |
+| `cooldown_reduction` | Speeds up ability cooldowns (value = percentage, e.g., 30 = 30% faster) |
+
+**Example - Blood Frenzy (+30% speed):**
+```json
+{
+  "id": "status_blood_frenzy",
+  "stat_affected": "movement_speed",
+  "value": 30,
+  "duration": 60.0
+}
+```
+
+**Example - CDR Buff (+30% cooldown reduction):**
+```json
+{
+  "id": "status_blood_frenzy_cdr",
+  "stat_affected": "cooldown_reduction",
+  "value": 30,
+  "duration": 60.0
+}
+```
+
+**How stat modifiers work:**
+1. StatusEffectComponent stores `stat_affected` and `value` when effect is applied
+2. `get_stat_multiplier(stat_name)` returns `1.0 + (value / 100.0)`
+3. EnemyContext reads `movement_speed` multiplier and applies to owner
+4. CombatModule reads `cooldown_reduction` multiplier for faster cooldown recovery
+
 ---
 
 ## Database Schema Quick Reference
@@ -363,7 +398,7 @@ config_override
 
 ## Module Priority Reference
 
-All modules listed by priority (highest runs first):
+**IMPORTANT**: Modules process in descending priority order (highest first). Each module modifies the `EnemyContext`, and **later modules can override earlier decisions**. The LAST module to write wins.
 
 | Priority | Module ID | Type | Purpose |
 |----------|-----------|------|---------|
@@ -378,5 +413,8 @@ All modules listed by priority (highest runs first):
 | 75 | `mod_kite` | movement | Maintain distance from target |
 | 60 | `mod_combat` | combat | Execute abilities from database |
 | 10 | `mod_idle` | movement | Stand or roam when no target |
+| 5 | `mod_patrol` | movement | Follow waypoints (overrides idle) |
+
+**Why mod_patrol has priority 5:** Patrol must run AFTER idle (10) to override random roaming. Since lower priority runs later and can override, patrol controls the final movement direction.
 
 > **See Also:** `docs/ENEMY_REFERENCE.md` for detailed behavior examples and decision trees.
