@@ -2,6 +2,8 @@ extends Node
 class_name ChunkManagerClass
 ## ChunkManager - Manages chunk-based map loading for large seamless worlds
 ## Handles loading/unloading chunks based on player position
+## Includes combat lock and leash lock safety mechanisms to prevent
+## premature unloading of chunks with active enemies
 
 #===============================================================================
 # CONSTANTS
@@ -19,20 +21,59 @@ const CHUNK_SIZE_PX: int = TILE_SIZE * CHUNK_TILES
 ## Loading radius in chunks (5x5 = 25 chunks loaded at once)
 const LOADING_RADIUS: int = 2
 
+## Distance threshold for considering enemy "at home"
+const HOME_THRESHOLD: float = 16.0
+
+#===============================================================================
+# ENUMS
+#===============================================================================
+
+## Chunk state machine states
+enum ChunkState {
+	UNLOADED,        ## Chunk is not loaded
+	LOADING,         ## Chunk is currently loading
+	LOADED,          ## Chunk is fully loaded and active
+	COMBAT_LOCKED,   ## Chunk has enemy actively targeting player
+	LEASH_LOCKED,    ## Chunk has enemy returning to home position
+	UNLOADING        ## Chunk is being unloaded
+}
+
 #===============================================================================
 # SIGNALS
 #===============================================================================
 
+signal chunk_loading(chunk_id: String)
 signal chunk_loaded(chunk_id: String)
+signal chunk_unloading(chunk_id: String)
 signal chunk_unloaded(chunk_id: String)
+signal chunk_state_changed(chunk_id: String, old_state: ChunkState, new_state: ChunkState)
 signal zone_initialized(zone_id: String)
+signal zone_cleanup()
+
+#===============================================================================
+# CHUNK DATA CLASS
+#===============================================================================
+
+## Internal class to track chunk state and data
+class ChunkData:
+	var chunk_id: String = ""
+	var coords: Vector2i = Vector2i.ZERO
+	var state: int = ChunkState.UNLOADED  # Use int for ChunkState enum
+	var node: Node2D = null  # Container for chunk content
+	var enemy_temp_states: Array = []  # Saved enemy states for reload
+	var load_time: float = 0.0  # When chunk was loaded
+	var database_data: Dictionary = {}  # Data from DatabaseLoader
+
+	func _init(id: String = "", chunk_coords: Vector2i = Vector2i.ZERO) -> void:
+		chunk_id = id
+		coords = chunk_coords
 
 #===============================================================================
 # STATE
 #===============================================================================
 
 ## Currently loaded chunks by ID
-var loaded_chunks: Dictionary = {}
+var loaded_chunks: Dictionary = {}  # chunk_id -> ChunkData
 
 ## Current zone ID
 var current_zone_id: String = ""
@@ -43,6 +84,30 @@ var player_chunk: Vector2i = Vector2i.ZERO
 ## Whether the manager is initialized for a zone
 var _initialized: bool = false
 
+## Parent node for chunk content
+var _chunk_root: Node2D = null
+
+## Temporary enemy state storage (persists during zone session)
+## Format: { chunk_id: [EnemyTempState, ...] }
+var _enemy_temp_storage: Dictionary = {}
+
+## Debug visualization enabled
+var _debug_borders_enabled: bool = false
+
+#===============================================================================
+# ENEMY TEMP STATE
+#===============================================================================
+
+## Stores enemy state when chunk unloads for restoration on reload
+class EnemyTempState:
+	var enemy_id: String = ""
+	var spawn_point_id: String = ""
+	var position: Vector2 = Vector2.ZERO
+	var health_percent: float = 1.0
+	var was_in_combat: bool = false
+	var home_position: Vector2 = Vector2.ZERO
+	var level: int = 1
+
 #===============================================================================
 # LIFECYCLE
 #===============================================================================
@@ -52,8 +117,22 @@ func _ready() -> void:
 	Debug.info("ChunkManager", "ChunkManager initialized")
 
 
+func _process(_delta: float) -> void:
+	if not _initialized:
+		return
+
+	if not Game or not Game.is_player_valid():
+		return
+
+	# Update chunks based on player position
+	update_chunks(Game.player.global_position)
+
+	# Update chunk lock states
+	_update_chunk_lock_states()
+
+
 #===============================================================================
-# PUBLIC API
+# PUBLIC API - Zone Management
 #===============================================================================
 
 ## Initialize the chunk manager for a specific zone
@@ -65,14 +144,62 @@ func initialize_for_zone(zone_id: String) -> void:
 
 	# Unload any existing chunks
 	if _initialized:
-		_unload_all_chunks()
+		cleanup_zone()
 
 	current_zone_id = zone_id
 	_initialized = true
 
+	# Create chunk root node
+	_create_chunk_root()
+
+	# Reset temp storage for new zone
+	_enemy_temp_storage.clear()
+
+	# Initial chunk loading around spawn point (will happen on first update_chunks call)
+	player_chunk = Vector2i.MIN  # Force refresh on first update
+
 	Debug.info("ChunkManager", "Initialized for zone: %s" % zone_id)
 	zone_initialized.emit(zone_id)
 
+
+## Clean up all chunks when leaving a zone
+func cleanup_zone() -> void:
+	_unload_all_chunks()
+
+	if _chunk_root and is_instance_valid(_chunk_root):
+		_chunk_root.queue_free()
+		_chunk_root = null
+
+	current_zone_id = ""
+	_initialized = false
+	_enemy_temp_storage.clear()
+	player_chunk = Vector2i.ZERO
+
+	Debug.info("ChunkManager", "Zone cleanup complete")
+	zone_cleanup.emit()
+
+
+func _create_chunk_root() -> void:
+	## Create or find chunk root node
+	if _chunk_root and is_instance_valid(_chunk_root):
+		return
+
+	var scene_root := get_tree().current_scene
+	if not scene_root:
+		Debug.warn("ChunkManager", "No current scene for chunk root")
+		return
+
+	# Check if ChunkRoot already exists
+	_chunk_root = scene_root.get_node_or_null("ChunkRoot")
+	if not _chunk_root:
+		_chunk_root = Node2D.new()
+		_chunk_root.name = "ChunkRoot"
+		scene_root.add_child(_chunk_root)
+
+
+#===============================================================================
+# PUBLIC API - Chunk Updates
+#===============================================================================
 
 ## Update loaded chunks based on player position
 ## Call this regularly (e.g., in _physics_process or when player moves significantly)
@@ -87,22 +214,39 @@ func update_chunks(player_position: Vector2) -> void:
 	if new_chunk == player_chunk:
 		return
 
+	var old_chunk := player_chunk
 	player_chunk = new_chunk
 
-	# Determine which chunks should be loaded
-	var chunks_to_load := _get_chunks_in_radius(player_chunk)
+	Debug.log("ChunkManager", "Player moved to chunk %s from %s" % [new_chunk, old_chunk])
+
+	_refresh_loaded_chunks()
+
+
+## Force refresh of all chunks around player
+func force_refresh() -> void:
+	if not _initialized:
+		return
+
+	player_chunk = Vector2i.MIN  # Force full refresh
+	if Game and Game.is_player_valid():
+		update_chunks(Game.player.global_position)
+
+
+func _refresh_loaded_chunks() -> void:
+	## Load new chunks and unload distant ones
+	var desired_chunks := _get_chunks_in_radius(player_chunk)
 
 	# Load new chunks
-	for chunk_coords in chunks_to_load:
-		var chunk_id := _make_chunk_id(current_zone_id, chunk_coords.x, chunk_coords.y)
-		if not loaded_chunks.has(chunk_id):
-			load_chunk(chunk_id)
+	for coords in desired_chunks:
+		var chunk_id := _make_chunk_id(current_zone_id, coords.x, coords.y)
+		if chunk_id not in loaded_chunks:
+			load_chunk(chunk_id, coords)
 
-	# Unload chunks that are now out of range
+	# Unload distant chunks (if safe)
 	var chunks_to_unload: Array[String] = []
 	for chunk_id in loaded_chunks:
-		var coords := _parse_chunk_coords(chunk_id)
-		if coords.distance_to(player_chunk) > LOADING_RADIUS + 1:
+		var chunk_data: ChunkData = loaded_chunks[chunk_id]
+		if chunk_data.coords not in desired_chunks:
 			if can_chunk_unload(chunk_id):
 				chunks_to_unload.append(chunk_id)
 
@@ -110,57 +254,93 @@ func update_chunks(player_position: Vector2) -> void:
 		unload_chunk(chunk_id)
 
 
+#===============================================================================
+# PUBLIC API - Chunk Loading
+#===============================================================================
+
 ## Load a specific chunk by ID
-## STUB: Will be implemented in later phase with actual chunk loading logic
-func load_chunk(chunk_id: String) -> void:
+func load_chunk(chunk_id: String, coords: Vector2i = Vector2i.ZERO) -> void:
 	if loaded_chunks.has(chunk_id):
 		Debug.log("ChunkManager", "Chunk already loaded: %s" % chunk_id)
 		return
 
+	# Parse coords from ID if not provided
+	if coords == Vector2i.ZERO:
+		coords = _parse_chunk_coords(chunk_id)
+
+	# Create ChunkData
+	var chunk_data := ChunkData.new(chunk_id, coords)
+	chunk_data.state = ChunkState.LOADING
+	chunk_data.load_time = Time.get_unix_time_from_system()
+
+	chunk_loading.emit(chunk_id)
+
 	# Get chunk data from database
-	var chunk_data := DatabaseLoader.get_chunk(chunk_id)
-	if chunk_data.is_empty():
-		Debug.warn("ChunkManager", "Chunk not found in database: %s" % chunk_id)
-		# Still mark as "loaded" with empty data to prevent repeated attempts
-		loaded_chunks[chunk_id] = {"id": chunk_id, "loaded_at": Time.get_unix_time_from_system()}
-		return
+	var db_data := DatabaseLoader.get_chunk(chunk_id)
+	if not db_data.is_empty():
+		chunk_data.database_data = db_data
 
-	# STUB: Actual chunk loading logic will be added in later phase
-	# This will include:
-	# - Loading LDtk chunk data
-	# - Spawning terrain tiles
-	# - Spawning enemies from spawn tables
-	# - Restoring persistent state (opened chests, killed enemies, etc.)
+	# Create chunk container node
+	if _chunk_root and is_instance_valid(_chunk_root):
+		var chunk_node := Node2D.new()
+		chunk_node.name = "Chunk_%s" % chunk_id
+		chunk_node.position = chunk_to_world(coords)
+		_chunk_root.add_child(chunk_node)
+		chunk_data.node = chunk_node
 
-	loaded_chunks[chunk_id] = {
-		"id": chunk_id,
-		"data": chunk_data,
-		"loaded_at": Time.get_unix_time_from_system()
-	}
+	# Check for saved enemy states to restore
+	if _enemy_temp_storage.has(chunk_id):
+		chunk_data.enemy_temp_states = _enemy_temp_storage[chunk_id]
+		Debug.log("ChunkManager", "Restoring %d enemy states for chunk %s" % [
+			chunk_data.enemy_temp_states.size(), chunk_id
+		])
 
-	Debug.log("ChunkManager", "Loaded chunk: %s" % chunk_id)
+	# Mark as loaded
+	_set_chunk_state(chunk_data, ChunkState.LOADED)
+	loaded_chunks[chunk_id] = chunk_data
+
+	Debug.log("ChunkManager", "Loaded chunk: %s at %s" % [chunk_id, coords])
 	chunk_loaded.emit(chunk_id)
 
 
 ## Unload a specific chunk by ID
-## STUB: Will be implemented in later phase with actual chunk unloading logic
 func unload_chunk(chunk_id: String) -> void:
 	if not loaded_chunks.has(chunk_id):
 		Debug.log("ChunkManager", "Chunk not loaded: %s" % chunk_id)
 		return
 
-	# STUB: Actual chunk unloading logic will be added in later phase
-	# This will include:
-	# - Saving any modified state to persistence
-	# - Removing terrain tiles
-	# - Removing/pooling enemies
-	# - Cleaning up loot drops (via LootManager)
+	var chunk_data: ChunkData = loaded_chunks[chunk_id]
 
+	# Safety check
+	if not can_chunk_unload(chunk_id):
+		Debug.warn("ChunkManager", "Cannot unload chunk %s - locked" % chunk_id)
+		return
+
+	_set_chunk_state(chunk_data, ChunkState.UNLOADING)
+	chunk_unloading.emit(chunk_id)
+
+	# Save enemy states before unloading
+	_save_enemy_states(chunk_id)
+
+	# Notify LootManager to preserve loot data
+	if LootManager:
+		# LootManager keeps loot data in memory, just need to remove visual nodes
+		Debug.log("ChunkManager", "Loot data preserved for chunk: %s" % chunk_id)
+
+	# Free chunk nodes
+	if chunk_data.node and is_instance_valid(chunk_data.node):
+		chunk_data.node.queue_free()
+
+	# Remove from loaded chunks
 	loaded_chunks.erase(chunk_id)
 
 	Debug.log("ChunkManager", "Unloaded chunk: %s" % chunk_id)
 	chunk_unloaded.emit(chunk_id)
 
+
+#===============================================================================
+# SAFETY LOCK SYSTEM
+#===============================================================================
 
 ## Check if a chunk can be safely unloaded
 ## Returns false if chunk contains important entities that shouldn't despawn
@@ -168,32 +348,225 @@ func can_chunk_unload(chunk_id: String) -> bool:
 	if not loaded_chunks.has(chunk_id):
 		return true
 
-	# STUB: Will check for:
-	# - Active quest NPCs
-	# - Boss enemies in combat
-	# - Player-owned entities
-	# - Other important entities
+	# Check combat lock
+	if _has_combat_lock(chunk_id):
+		return false
+
+	# Check leash lock
+	if _has_leash_lock(chunk_id):
+		return false
 
 	return true
 
 
-## Get chunk ID for a world position
-func get_chunk_id_at(world_position: Vector2) -> String:
-	var coords := world_to_chunk(world_position)
-	return _make_chunk_id(current_zone_id, coords.x, coords.y)
+## Check if chunk has combat lock (enemy actively targeting player)
+func _has_combat_lock(chunk_id: String) -> bool:
+	for enemy in _get_enemies_in_chunk(chunk_id):
+		if _is_enemy_targeting_player(enemy):
+			return true
+	return false
 
 
-## Check if a chunk is currently loaded
-func is_chunk_loaded(chunk_id: String) -> bool:
-	return loaded_chunks.has(chunk_id)
+## Check if chunk has leash lock (enemy returning to home)
+func _has_leash_lock(chunk_id: String) -> bool:
+	for enemy in _get_enemies_in_chunk(chunk_id):
+		if _is_enemy_returning_home(enemy):
+			return true
+	return false
 
 
-## Get list of all currently loaded chunk IDs
-func get_loaded_chunk_ids() -> Array[String]:
-	var result: Array[String] = []
+## Check if an enemy is actively targeting the player
+func _is_enemy_targeting_player(enemy: Node2D) -> bool:
+	if not is_instance_valid(enemy):
+		return false
+
+	# Get AI controller (supports both 'behavior' and 'module_controller' properties)
+	var controller = _get_enemy_controller(enemy)
+	if controller and controller.has_method("get_context"):
+		var context = controller.get_context()
+		if context:
+			# Check if has valid target that is the player
+			if context.has_valid_target and context.current_target:
+				if Game and Game.is_player_valid():
+					return context.current_target == Game.player
+
+	return false
+
+
+## Check if an enemy is returning to home position
+func _is_enemy_returning_home(enemy: Node2D) -> bool:
+	if not is_instance_valid(enemy):
+		return false
+
+	# Get AI controller (supports both 'behavior' and 'module_controller' properties)
+	var controller = _get_enemy_controller(enemy)
+	if controller and controller.has_method("get_context"):
+		var context = controller.get_context()
+		if context:
+			# Check behavior state for RETURNING
+			if context.behavior_state == EnemyContext.BehaviorState.RETURNING:
+				return true
+
+			# Also check if lost target but not yet at home
+			if not context.has_valid_target:
+				if "home_position" in enemy:
+					var dist_to_home := enemy.global_position.distance_to(enemy.home_position)
+					if dist_to_home > HOME_THRESHOLD:
+						return true
+
+	return false
+
+
+## Get the AI controller from an enemy (supports multiple property names)
+func _get_enemy_controller(enemy: Node2D) -> Node:
+	# Check for 'behavior' property (EnemyNPC)
+	if "behavior" in enemy and enemy.behavior:
+		return enemy.behavior
+	# Check for 'module_controller' property (ModularEnemyNPC)
+	if "module_controller" in enemy and enemy.module_controller:
+		return enemy.module_controller
+	return null
+
+
+## Get all enemies currently in a chunk
+func _get_enemies_in_chunk(chunk_id: String) -> Array:
+	if not loaded_chunks.has(chunk_id):
+		return []
+
+	var chunk_data: ChunkData = loaded_chunks[chunk_id]
+	var chunk_bounds := Rect2(
+		chunk_to_world(chunk_data.coords),
+		Vector2(CHUNK_SIZE_PX, CHUNK_SIZE_PX)
+	)
+
+	var enemies: Array = []
+	if NPCManager:
+		for enemy in NPCManager.all_enemies:
+			if is_instance_valid(enemy) and not enemy.is_dead:
+				if chunk_bounds.has_point(enemy.global_position):
+					enemies.append(enemy)
+
+	return enemies
+
+
+## Update lock states for all loaded chunks
+func _update_chunk_lock_states() -> void:
 	for chunk_id in loaded_chunks:
-		result.append(chunk_id)
-	return result
+		var chunk_data: ChunkData = loaded_chunks[chunk_id]
+		var old_state: int = chunk_data.state
+
+		# Skip if not in a loaded state
+		if old_state == ChunkState.LOADING or old_state == ChunkState.UNLOADING:
+			continue
+
+		# Check for combat lock
+		if _has_combat_lock(chunk_id):
+			if old_state != ChunkState.COMBAT_LOCKED:
+				_set_chunk_state(chunk_data, ChunkState.COMBAT_LOCKED)
+			continue
+
+		# Check for leash lock
+		if _has_leash_lock(chunk_id):
+			if old_state != ChunkState.LEASH_LOCKED:
+				_set_chunk_state(chunk_data, ChunkState.LEASH_LOCKED)
+			continue
+
+		# No locks - return to LOADED state
+		if old_state == ChunkState.COMBAT_LOCKED or old_state == ChunkState.LEASH_LOCKED:
+			_set_chunk_state(chunk_data, ChunkState.LOADED)
+
+
+func _set_chunk_state(chunk_data: ChunkData, new_state: int) -> void:
+	## Set chunk state and emit signal
+	var old_state: int = chunk_data.state
+	if old_state == new_state:
+		return
+
+	chunk_data.state = new_state
+
+	var state_names := ["UNLOADED", "LOADING", "LOADED", "COMBAT_LOCKED", "LEASH_LOCKED", "UNLOADING"]
+	Debug.log("ChunkManager", "Chunk %s state: %s -> %s" % [
+		chunk_data.chunk_id,
+		state_names[old_state],
+		state_names[new_state]
+	])
+
+	chunk_state_changed.emit(chunk_data.chunk_id, old_state, new_state)
+
+
+#===============================================================================
+# ENEMY STATE STORAGE
+#===============================================================================
+
+## Save enemy states before chunk unloads
+func _save_enemy_states(chunk_id: String) -> void:
+	var enemies := _get_enemies_in_chunk(chunk_id)
+	if enemies.is_empty():
+		return
+
+	var states: Array = []
+	for enemy in enemies:
+		if not is_instance_valid(enemy) or enemy.is_dead:
+			continue
+
+		var state := EnemyTempState.new()
+		state.enemy_id = enemy.enemy_id if "enemy_id" in enemy else ""
+		state.position = enemy.global_position
+		state.health_percent = enemy.get_health_percent() if enemy.has_method("get_health_percent") else 1.0
+		state.home_position = enemy.home_position if "home_position" in enemy else enemy.global_position
+		state.level = enemy.enemy_level if "enemy_level" in enemy else 1
+
+		# Get spawn point reference
+		if enemy.has_meta("spawn_point"):
+			var sp = enemy.get_meta("spawn_point")
+			if sp and sp.has_method("get_spawn_point_id"):
+				state.spawn_point_id = sp.get_spawn_point_id()
+
+		# Check if was in combat
+		var controller = _get_enemy_controller(enemy)
+		if controller and controller.has_method("get_context"):
+			var context = controller.get_context()
+			if context:
+				state.was_in_combat = context.has_valid_target
+
+		states.append(state)
+
+	_enemy_temp_storage[chunk_id] = states
+	Debug.log("ChunkManager", "Saved %d enemy states for chunk %s" % [states.size(), chunk_id])
+
+
+## Get saved enemy states for a chunk (called by spawn points on chunk reload)
+func get_saved_enemy_states(chunk_id: String) -> Array:
+	return _enemy_temp_storage.get(chunk_id, [])
+
+
+## Clear saved enemy states for a chunk (called after restoration)
+func clear_saved_enemy_states(chunk_id: String) -> void:
+	_enemy_temp_storage.erase(chunk_id)
+
+
+## Check if we have saved states for a specific spawn point
+func has_saved_state_for_spawn_point(chunk_id: String, spawn_point_id: String) -> bool:
+	if not _enemy_temp_storage.has(chunk_id):
+		return false
+
+	for state in _enemy_temp_storage[chunk_id]:
+		if state.spawn_point_id == spawn_point_id:
+			return true
+
+	return false
+
+
+## Get saved state for a specific spawn point
+func get_saved_state_for_spawn_point(chunk_id: String, spawn_point_id: String) -> EnemyTempState:
+	if not _enemy_temp_storage.has(chunk_id):
+		return null
+
+	for state in _enemy_temp_storage[chunk_id]:
+		if state.spawn_point_id == spawn_point_id:
+			return state
+
+	return null
 
 
 #===============================================================================
@@ -208,12 +581,22 @@ func world_to_chunk(world_position: Vector2) -> Vector2i:
 	)
 
 
+## Alias for world_to_chunk
+func get_chunk_coords(world_pos: Vector2) -> Vector2i:
+	return world_to_chunk(world_pos)
+
+
 ## Convert chunk coordinates to world position (top-left corner)
 func chunk_to_world(chunk_coords: Vector2i) -> Vector2:
 	return Vector2(
 		chunk_coords.x * CHUNK_SIZE_PX,
 		chunk_coords.y * CHUNK_SIZE_PX
 	)
+
+
+## Alias for chunk_to_world
+func get_world_position(coords: Vector2i) -> Vector2:
+	return chunk_to_world(coords)
 
 
 ## Get the center of a chunk in world coordinates
@@ -231,15 +614,31 @@ func world_to_tile_in_chunk(world_position: Vector2) -> Vector2i:
 	)
 
 
+## Get chunk ID for a world position
+func get_chunk_id_at(world_position: Vector2) -> String:
+	var coords := world_to_chunk(world_position)
+	return _make_chunk_id(current_zone_id, coords.x, coords.y)
+
+
+## Get chunk ID from zone and coordinates
+func get_chunk_id(zone_id: String, coords: Vector2i) -> String:
+	return _make_chunk_id(zone_id, coords.x, coords.y)
+
+
+## Get all chunk coordinates within loading radius of a center chunk
+func get_chunks_in_radius(center: Vector2i, radius: int = LOADING_RADIUS) -> Array[Vector2i]:
+	return _get_chunks_in_radius(center, radius)
+
+
 #===============================================================================
 # INTERNAL HELPERS
 #===============================================================================
 
 ## Get all chunk coordinates within loading radius of a center chunk
-func _get_chunks_in_radius(center: Vector2i) -> Array[Vector2i]:
+func _get_chunks_in_radius(center: Vector2i, radius: int = LOADING_RADIUS) -> Array[Vector2i]:
 	var result: Array[Vector2i] = []
-	for x in range(center.x - LOADING_RADIUS, center.x + LOADING_RADIUS + 1):
-		for y in range(center.y - LOADING_RADIUS, center.y + LOADING_RADIUS + 1):
+	for x in range(center.x - radius, center.x + radius + 1):
+		for y in range(center.y - radius, center.y + radius + 1):
 			result.append(Vector2i(x, y))
 	return result
 
@@ -267,13 +666,62 @@ func _parse_chunk_coords(chunk_id: String) -> Vector2i:
 	return Vector2i(x, y)
 
 
+## Alias for _parse_chunk_coords
+func _get_coords_from_id(chunk_id: String) -> Vector2i:
+	return _parse_chunk_coords(chunk_id)
+
+
 ## Unload all currently loaded chunks
 func _unload_all_chunks() -> void:
 	var all_chunk_ids := loaded_chunks.keys()
 	for chunk_id in all_chunk_ids:
-		unload_chunk(chunk_id)
+		# Force unload even if locked (zone is changing)
+		var chunk_data: ChunkData = loaded_chunks[chunk_id]
+		if chunk_data.node and is_instance_valid(chunk_data.node):
+			chunk_data.node.queue_free()
+		loaded_chunks.erase(chunk_id)
+		chunk_unloaded.emit(chunk_id)
 
 	Debug.info("ChunkManager", "Unloaded all chunks")
+
+
+#===============================================================================
+# QUERY API
+#===============================================================================
+
+## Check if a chunk is currently loaded
+func is_chunk_loaded(chunk_id: String) -> bool:
+	return loaded_chunks.has(chunk_id)
+
+
+## Get list of all currently loaded chunk IDs
+func get_loaded_chunk_ids() -> Array[String]:
+	var result: Array[String] = []
+	for chunk_id in loaded_chunks:
+		result.append(chunk_id)
+	return result
+
+
+## Get chunk state
+func get_chunk_state(chunk_id: String) -> int:
+	if not loaded_chunks.has(chunk_id):
+		return ChunkState.UNLOADED
+	return loaded_chunks[chunk_id].state
+
+
+## Get chunk data (for debugging/queries)
+func get_chunk_data(chunk_id: String) -> Dictionary:
+	if not loaded_chunks.has(chunk_id):
+		return {}
+
+	var chunk_data: ChunkData = loaded_chunks[chunk_id]
+	return {
+		"chunk_id": chunk_data.chunk_id,
+		"coords": chunk_data.coords,
+		"state": chunk_data.state,
+		"load_time": chunk_data.load_time,
+		"enemy_count": _get_enemies_in_chunk(chunk_id).size()
+	}
 
 
 #===============================================================================
@@ -322,10 +770,127 @@ func load_save_data(data: Dictionary) -> void:
 #===============================================================================
 
 func debug_print_state() -> void:
+	var state_names := ["UNLOADED", "LOADING", "LOADED", "COMBAT_LOCKED", "LEASH_LOCKED", "UNLOADING"]
+	var chunks_info: Array = []
+
+	for chunk_id in loaded_chunks:
+		var chunk_data: ChunkData = loaded_chunks[chunk_id]
+		chunks_info.append({
+			"id": chunk_id,
+			"coords": chunk_data.coords,
+			"state": state_names[chunk_data.state],
+			"enemies": _get_enemies_in_chunk(chunk_id).size()
+		})
+
 	Debug.snapshot("ChunkManager", "ChunkManager State", {
 		"initialized": _initialized,
 		"current_zone": current_zone_id,
 		"player_chunk": player_chunk,
-		"loaded_chunks": loaded_chunks.size(),
-		"chunk_ids": loaded_chunks.keys()
+		"loaded_count": loaded_chunks.size(),
+		"chunks": chunks_info,
+		"temp_storage_chunks": _enemy_temp_storage.size()
 	})
+
+
+func debug_force_unload(chunk_id: String) -> void:
+	## Force unload a chunk, bypassing safety checks (for testing)
+	if not loaded_chunks.has(chunk_id):
+		Debug.warn("ChunkManager", "Chunk not loaded: %s" % chunk_id)
+		return
+
+	var chunk_data: ChunkData = loaded_chunks[chunk_id]
+
+	Debug.info("ChunkManager", "Force unloading chunk: %s" % chunk_id)
+
+	# Save enemy states before unloading
+	_save_enemy_states(chunk_id)
+
+	# Free chunk nodes
+	if chunk_data.node and is_instance_valid(chunk_data.node):
+		chunk_data.node.queue_free()
+
+	loaded_chunks.erase(chunk_id)
+	chunk_unloaded.emit(chunk_id)
+
+
+func debug_show_chunk_borders(enabled: bool) -> void:
+	## Toggle visual debug overlay showing chunk boundaries
+	_debug_borders_enabled = enabled
+
+	if not _chunk_root:
+		return
+
+	# Remove existing debug lines
+	for child in _chunk_root.get_children():
+		if child.name.begins_with("DebugChunkBorder_"):
+			child.queue_free()
+
+	if not enabled:
+		return
+
+	# Draw borders for all loaded chunks
+	for chunk_id in loaded_chunks:
+		var chunk_data: ChunkData = loaded_chunks[chunk_id]
+		_draw_chunk_border(chunk_data)
+
+
+func _draw_chunk_border(chunk_data: ChunkData) -> void:
+	## Draw a debug border around a chunk
+	var line := Line2D.new()
+	line.name = "DebugChunkBorder_%s" % chunk_data.chunk_id
+	line.default_color = _get_state_color(chunk_data.state)
+	line.width = 2.0
+	line.z_index = 100
+
+	var origin := chunk_to_world(chunk_data.coords)
+	var size := Vector2(CHUNK_SIZE_PX, CHUNK_SIZE_PX)
+
+	line.add_point(origin)
+	line.add_point(origin + Vector2(size.x, 0))
+	line.add_point(origin + size)
+	line.add_point(origin + Vector2(0, size.y))
+	line.add_point(origin)
+
+	_chunk_root.add_child(line)
+
+
+func _get_state_color(state: int) -> Color:
+	## Get color for chunk state visualization
+	match state:
+		ChunkState.LOADED:
+			return Color.GREEN
+		ChunkState.COMBAT_LOCKED:
+			return Color.RED
+		ChunkState.LEASH_LOCKED:
+			return Color.ORANGE
+		ChunkState.LOADING:
+			return Color.YELLOW
+		ChunkState.UNLOADING:
+			return Color.GRAY
+		_:
+			return Color.WHITE
+
+
+func debug_get_lock_status(chunk_id: String) -> Dictionary:
+	## Get detailed lock status for a chunk
+	return {
+		"combat_locked": _has_combat_lock(chunk_id),
+		"leash_locked": _has_leash_lock(chunk_id),
+		"can_unload": can_chunk_unload(chunk_id),
+		"enemies": _get_enemies_in_chunk(chunk_id).size()
+	}
+
+
+func debug_list_enemies_in_chunk(chunk_id: String) -> void:
+	## Print all enemies in a chunk
+	var enemies := _get_enemies_in_chunk(chunk_id)
+	Debug.info("ChunkManager", "=== Enemies in chunk %s ===" % chunk_id)
+
+	for enemy in enemies:
+		var targeting_player := _is_enemy_targeting_player(enemy)
+		var returning_home := _is_enemy_returning_home(enemy)
+		Debug.info("ChunkManager", "  %s - target_player: %s, returning: %s" % [
+			enemy.enemy_name if "enemy_name" in enemy else enemy.name,
+			targeting_player,
+			returning_home
+		])

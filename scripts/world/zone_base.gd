@@ -2,6 +2,7 @@ extends Node2D
 class_name ZoneBase
 ## ZoneBase - Base script for game zones
 ## Handles zone setup, player spawning, and enemy spawning via EnemySpawnPoints
+## Integrates with ChunkManager for chunk-based world loading
 
 ## Zone identification - links to zones database
 @export var zone_id: String = ""
@@ -10,6 +11,10 @@ class_name ZoneBase
 ## Legacy enemy spawning (DEPRECATED - use EnemySpawnPoint nodes instead)
 @export var spawn_enemies: bool = false
 @export var enemy_spawn_positions: Array[Vector2] = []
+
+## Chunk system configuration
+@export_group("Chunk System")
+@export var use_chunk_system: bool = true  ## Enable chunk-based loading for this zone
 
 ## Auto-find references
 @onready var hud: HUD = $HUD
@@ -20,6 +25,11 @@ func _ready() -> void:
 
 	# Notify game manager - use zone_id (matches filename) for save/load compatibility
 	Game.current_zone = zone_id
+
+	# Initialize chunk system for this zone
+	if use_chunk_system and ChunkManager:
+		ChunkManager.initialize_for_zone(zone_id)
+		Debug.info("Zone", "ChunkManager initialized for zone: %s" % zone_id)
 
 	# Position player at spawn point
 	_position_player_at_spawn()
@@ -130,3 +140,10 @@ func get_zone_data() -> Dictionary:
 	if zone_id.is_empty():
 		return {}
 	return DatabaseLoader.zones.get(zone_id, {})
+
+
+func _exit_tree() -> void:
+	## Clean up when leaving the zone
+	if use_chunk_system and ChunkManager:
+		ChunkManager.cleanup_zone()
+		Debug.info("Zone", "ChunkManager cleaned up for zone: %s" % zone_id)
