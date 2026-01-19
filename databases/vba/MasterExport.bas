@@ -78,6 +78,10 @@ Public Sub ExportAll()
     ' Combat Text
     ExportCombatText
 
+    ' Map System (Chunks & Terrain)
+    ExportChunksData
+    ExportTerrainTypesData
+
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -120,6 +124,8 @@ Public Sub ValidateAll()
     ValidateUITheme
     ValidateAchievements
     ValidateCombatText
+    ValidateChunks
+    ValidateTerrainTypes
     On Error GoTo 0
 
     Dim elapsed As Double
@@ -177,6 +183,8 @@ Public Sub SetupWorkbook()
     currentSheet = "Achievements": SetupAchievementsSheet
     currentSheet = "CombatTextSettings": SetupCombatTextSettingsSheet
     currentSheet = "CombatTextCategories": SetupCombatTextCategoriesSheet
+    currentSheet = "Chunks": SetupChunksSheet
+    currentSheet = "TerrainTypes": SetupTerrainTypesSheet
 
     MsgBox "Workbook setup complete!" & vbCrLf & vbCrLf & _
            "All sheets have been created with proper headers." & vbCrLf & _

@@ -38,6 +38,8 @@ var combat_text_categories: Dictionary = {}  ## Combat text category configs (ke
 var enemy_modules: Dictionary = {}  ## Modular AI modules (keyed by id)
 var abilities: Dictionary = {}  ## Combat abilities (keyed by id)
 var enemy_abilities: Array = []  ## Enemy-to-ability assignments (list of dictionaries)
+var chunks: Dictionary = {}  ## Map chunks for chunk-based loading (keyed by id)
+var terrain_types: Dictionary = {}  ## Terrain types for map system (keyed by id)
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -58,6 +60,8 @@ var floating_dialogues_list: Array = []
 var popup_messages_list: Array = []
 var enemy_modules_list: Array = []
 var abilities_list: Array = []
+var chunks_list: Array = []
+var terrain_types_list: Array = []
 
 ## Signals
 signal databases_loaded
@@ -131,6 +135,10 @@ func load_all_databases() -> void:
 
 	# Combat Text
 	success = _load_combat_text() and success
+
+	# Map System (Chunks & Terrain)
+	success = _load_database("chunks.json", "chunks", chunks, chunks_list) and success
+	success = _load_database("terrain_types.json", "terrain_types", terrain_types, terrain_types_list) and success
 
 	if success:
 		Debug.info("Database", "All databases loaded successfully")
@@ -779,6 +787,71 @@ func get_all_zones() -> Array:
 
 
 #===============================================================================
+# CHUNK ACCESS (Map System)
+#===============================================================================
+
+## Get chunk by id
+func get_chunk(id: String) -> Dictionary:
+	return chunks.get(id, {})
+
+
+## Get all chunks for a zone
+func get_chunks_for_zone(zone_id: String) -> Array:
+	var result: Array = []
+	for chunk in chunks_list:
+		if chunk.get("zone_id", "") == zone_id:
+			result.append(chunk)
+	return result
+
+
+## Get chunk at specific grid coordinates for a zone
+func get_chunk_at(zone_id: String, grid_x: int, grid_y: int) -> Dictionary:
+	for chunk in chunks_list:
+		if chunk.get("zone_id", "") == zone_id and \
+		   int(chunk.get("grid_x", -1)) == grid_x and \
+		   int(chunk.get("grid_y", -1)) == grid_y:
+			return chunk
+	return {}
+
+
+## Get all chunks
+func get_all_chunks() -> Array:
+	return chunks_list
+
+
+#===============================================================================
+# TERRAIN TYPE ACCESS (Map System)
+#===============================================================================
+
+## Get terrain type by id
+func get_terrain_type(id: String) -> Dictionary:
+	return terrain_types.get(id, {})
+
+
+## Get all terrain types
+func get_all_terrain_types() -> Array:
+	return terrain_types_list
+
+
+## Get passable terrain types (for pathfinding/spawning)
+func get_passable_terrain_types() -> Array:
+	var result: Array = []
+	for terrain in terrain_types_list:
+		if not terrain.get("has_collision", false):
+			result.append(terrain)
+	return result
+
+
+## Get spawnable terrain types (for enemy spawning)
+func get_spawnable_terrain_types() -> Array:
+	var result: Array = []
+	for terrain in terrain_types_list:
+		if terrain.get("can_spawn_on", false):
+			result.append(terrain)
+	return result
+
+
+#===============================================================================
 # LOCATION ACCESS
 #===============================================================================
 
@@ -1304,4 +1377,6 @@ func print_stats() -> void:
 		"cutscenes": cutscenes.size(),
 		"floating_dialogues": floating_dialogues.size(),
 		"popup_messages": popup_messages.size(),
+		"chunks": chunks.size(),
+		"terrain_types": terrain_types.size(),
 	})
