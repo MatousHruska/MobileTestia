@@ -3,7 +3,7 @@
 		{
 			"ambient_override": "",
 			"biome_type": "dirt",
-			"enemy_density": "medium",
+			"enemy_density": "none",
 			"grid_x": 0,
 			"grid_y": 0,
 			"id": "chunk_ldtk_test_0_0",
@@ -24,7 +24,7 @@
 		},
 		{
 			"ambient_override": "",
-			"biome_type": "grass",
+			"biome_type": "dirt",
 			"enemy_density": "none",
 			"grid_x": 0,
 			"grid_y": 1,
@@ -35,7 +35,7 @@
 		},
 		{
 			"ambient_override": "",
-			"biome_type": "grass",
+			"biome_type": "water",
 			"enemy_density": "none",
 			"grid_x": 1,
 			"grid_y": 1,
