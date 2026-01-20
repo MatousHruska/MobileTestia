@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=6 format=3 uid="uid://d1kw178kdxchc"]
 
 [ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -10,14 +10,12 @@
 script = ExtResource("4_zone")
 zone_id = "zone_test"
 zone_name = "LDtk Test Zone"
-use_chunk_system = true
 
 [node name="SpawnPoints" type="Node2D" parent="."]
 
 [node name="SpawnDefault" type="Marker2D" parent="SpawnPoints"]
 position = Vector2(136, 144)
 script = ExtResource("5_spawn")
-spawn_id = "default"
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 position = Vector2(136, 144)

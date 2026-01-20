@@ -2,8 +2,8 @@
 	"chunks": [
 		{
 			"ambient_override": "",
-			"biome_type": "grass",
-			"enemy_density": "none",
+			"biome_type": "dirt",
+			"enemy_density": "high",
 			"grid_x": 0,
 			"grid_y": 0,
 			"id": "chunk_test_0_0",
