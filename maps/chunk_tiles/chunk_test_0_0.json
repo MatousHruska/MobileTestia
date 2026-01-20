@@ -1,5 +1,526 @@
 {
 	"collision": [],
 	"decoration": [],
-	"ground": []
+	"ground": [
+		{
+			"terrain_id": "terrain_water",
+			"x": 13,
+			"y": 3
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 10,
+			"y": 4
+		},
+		{
+			"terrain_id": "terrain_stone",
+			"x": 12,
+			"y": 4
+		},
+		{
+			"terrain_id": "terrain_water",
+			"x": 13,
+			"y": 4
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 5,
+			"y": 5
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 6,
+			"y": 5
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 7,
+			"y": 5
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 8,
+			"y": 5
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 9,
+			"y": 5
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 10,
+			"y": 5
+		},
+		{
+			"terrain_id": "terrain_stone",
+			"x": 11,
+			"y": 5
+		},
+		{
+			"terrain_id": "terrain_stone",
+			"x": 12,
+			"y": 5
+		},
+		{
+			"terrain_id": "terrain_water",
+			"x": 13,
+			"y": 5
+		},
+		{
+			"terrain_id": "terrain_water",
+			"x": 14,
+			"y": 5
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 5,
+			"y": 6
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 6,
+			"y": 6
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 7,
+			"y": 6
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 8,
+			"y": 6
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 9,
+			"y": 6
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 10,
+			"y": 6
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 11,
+			"y": 6
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 12,
+			"y": 6
+		},
+		{
+			"terrain_id": "terrain_stone",
+			"x": 13,
+			"y": 6
+		},
+		{
+			"terrain_id": "terrain_water",
+			"x": 14,
+			"y": 6
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 1,
+			"y": 7
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 6,
+			"y": 7
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 7,
+			"y": 7
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 8,
+			"y": 7
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 9,
+			"y": 7
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 10,
+			"y": 7
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 11,
+			"y": 7
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 12,
+			"y": 7
+		},
+		{
+			"terrain_id": "terrain_water",
+			"x": 13,
+			"y": 7
+		},
+		{
+			"terrain_id": "terrain_water",
+			"x": 14,
+			"y": 7
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 5,
+			"y": 8
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 6,
+			"y": 8
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 7,
+			"y": 8
+		},
+		{
+			"terrain_id": "terrain_water",
+			"x": 9,
+			"y": 8
+		},
+		{
+			"terrain_id": "terrain_water",
+			"x": 10,
+			"y": 8
+		},
+		{
+			"terrain_id": "terrain_water",
+			"x": 11,
+			"y": 8
+		},
+		{
+			"terrain_id": "terrain_water",
+			"x": 12,
+			"y": 8
+		},
+		{
+			"terrain_id": "terrain_water",
+			"x": 13,
+			"y": 8
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 6,
+			"y": 9
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 7,
+			"y": 9
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 8,
+			"y": 9
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 9,
+			"y": 9
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 10,
+			"y": 9
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 11,
+			"y": 9
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 12,
+			"y": 9
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 13,
+			"y": 9
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 6,
+			"y": 10
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 7,
+			"y": 10
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 8,
+			"y": 10
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 20,
+			"y": 17
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 21,
+			"y": 17
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 22,
+			"y": 17
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 23,
+			"y": 17
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 24,
+			"y": 17
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 25,
+			"y": 17
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 26,
+			"y": 17
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 27,
+			"y": 17
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 21,
+			"y": 18
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 22,
+			"y": 18
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 23,
+			"y": 18
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 24,
+			"y": 18
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 25,
+			"y": 18
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 26,
+			"y": 18
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 27,
+			"y": 18
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 21,
+			"y": 19
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 22,
+			"y": 19
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 23,
+			"y": 19
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 24,
+			"y": 19
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 25,
+			"y": 19
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 26,
+			"y": 19
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 27,
+			"y": 19
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 28,
+			"y": 19
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 29,
+			"y": 19
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 21,
+			"y": 20
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 22,
+			"y": 20
+		},
+		{
+			"terrain_id": "terrain_snow",
+			"x": 23,
+			"y": 20
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 24,
+			"y": 20
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 25,
+			"y": 20
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 26,
+			"y": 20
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 27,
+			"y": 20
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 28,
+			"y": 20
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 29,
+			"y": 20
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 22,
+			"y": 21
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 23,
+			"y": 21
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 24,
+			"y": 21
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 25,
+			"y": 21
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 26,
+			"y": 21
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 27,
+			"y": 21
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 28,
+			"y": 21
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 29,
+			"y": 21
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 24,
+			"y": 22
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 25,
+			"y": 22
+		},
+		{
+			"terrain_id": "terrain_grass",
+			"x": 26,
+			"y": 22
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 27,
+			"y": 22
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 28,
+			"y": 22
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 29,
+			"y": 22
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 27,
+			"y": 23
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 28,
+			"y": 23
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 29,
+			"y": 23
+		},
+		{
+			"terrain_id": "terrain_dirt",
+			"x": 28,
+			"y": 24
+		}
+	]
 }
