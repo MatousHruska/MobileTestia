@@ -729,13 +729,76 @@ const CORPSE_DURATION := 2.0  # seconds
 
 1. [ ] Add zone entry to `zones.json` database
 2. [ ] Create zone scene `scenes/world/zone_{id}.tscn`
-3. [ ] Design zone in LDtk
+3. [ ] Design zone in LDtk (level identifier = `zone_{id}`)
 4. [ ] Export LDtk and run importer
 5. [ ] Add chunk entries to `chunks.json`
 6. [ ] Add location entries to `locations.json`
 7. [ ] Add spawn point entries to `spawn_points.json`
-8. [ ] Place Location Area2D nodes in scene
-9. [ ] Place ZoneTransition nodes for connections
-10. [ ] Test chunk loading/unloading
-11. [ ] Test combat lock and leash lock
-12. [ ] Test loot persistence across chunks
+8. [ ] **CRITICAL**: Set scene's `zone_id` export to match LDTK level identifier exactly
+9. [ ] Place Location Area2D nodes in scene
+10. [ ] Place ZoneTransition nodes for connections
+11. [ ] Test chunk loading/unloading
+12. [ ] Test combat lock and leash lock
+13. [ ] Test loot persistence across chunks
+14. [ ] Test save/load cycle (save, load, verify chunks load)
+
+---
+
+## Debug Tools
+
+### Zone Naming Diagnostic (F11)
+
+Press **F11** in-game to run a comprehensive zone naming diagnostic:
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║            ZONE NAMING DIAGNOSTIC REPORT                       ║
+╠════════════════════════════════════════════════════════════════╣
+║ 1. ZONE NAME VALUES                                            ║
+║   Scene Filename:        zone_ldtk_test                        ║
+║   ZoneBase zone_id:      zone_ldtk_test                        ║
+║   Game.current_zone:     zone_ldtk_test                        ║
+║   ChunkManager zone_id:  zone_ldtk_test                        ║
+╠════════════════════════════════════════════════════════════════╣
+║ 2. CHUNK FILE RESOLUTION                                       ║
+║   Expected chunk_0_0:    chunk_ldtk_test_0_0                   ║
+║   File exists:           YES ✓                                 ║
+╠════════════════════════════════════════════════════════════════╣
+║ SUMMARY                                                        ║
+║   ✓ No issues detected                                        ║
+╚════════════════════════════════════════════════════════════════╝
+```
+
+### Zone Resolution Trace (F12)
+
+Press **F12** to trace the save/load zone resolution path:
+
+```
+[ZoneDebug] ========== ZONE RESOLUTION TRACE ==========
+[ZoneDebug] SAVE: Would store zone = 'zone_ldtk_test'
+[ZoneDebug] LOAD: Would reconstruct path = 'res://scenes/world/zone_ldtk_test.tscn'
+[ZoneDebug] SCENE: zone_id export = 'zone_ldtk_test'
+[ZoneDebug] CHUNK: Would initialize_for_zone('zone_ldtk_test')
+[ZoneDebug] CHUNK: Would look for 'chunk_ldtk_test_0_0'
+[ZoneDebug] CHUNK: Exists: true
+[ZoneDebug] ================================================
+```
+
+### Other Debug Functions
+
+```gdscript
+# From ChunkManager autoload:
+ChunkManager.debug_zone_naming_diagnostic()  # Full diagnostic
+ChunkManager.debug_trace_zone_resolution()   # Save/load trace
+ChunkManager.debug_check_zone_naming()       # Quick true/false check
+ChunkManager.debug_print_chunk_id_generation("zone_id", 0, 0)  # Test chunk ID
+```
+
+### Common Debug Scenarios
+
+| Symptom | Debug Action | Likely Cause |
+|---------|--------------|--------------|
+| Empty zone after load | Press F11 | zone_id mismatch |
+| Chunks not loading | Press F11, check section 6 | ChunkManager not initialized |
+| Save/load breaks zone | Press F12 | Scene filename vs zone_id mismatch |
+| "CHUNK FILE NOT FOUND" spam | Check chunk file names | LDTK level identifier wrong |
