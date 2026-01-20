@@ -87,8 +87,9 @@ func _respawn() -> void:
 	_update_interaction_prompt()
 
 	# Clear persistence state so save/load reflects respawned state
-	if not chest_id.is_empty() and Persistence:
-		Persistence.clear_state("chests", chest_id)
+	var pkey := _get_persistence_key()
+	if not pkey.is_empty() and Persistence:
+		Persistence.clear_state("chests", pkey)
 
 	Debug.info("Chest", "Chest respawned: %s" % display_name)
 
@@ -309,14 +310,15 @@ func get_scaled_respawn_time() -> float:
 
 ## Override to include respawn data in persistence
 func _save_persistence() -> void:
-	if chest_id.is_empty():
+	var pkey := _get_persistence_key()
+	if pkey.is_empty():
 		return
 
-	Persistence.save_state("chests", chest_id, {
+	Persistence.save_state("chests", pkey, {
 		"looted": true,
 		"looted_at": Time.get_unix_time_from_system(),
 		"tier": chest_tier,
 		"can_respawn": can_respawn,
 		"respawn_time": respawn_time_seconds,
 	})
-	Debug.log("Chest", "Saved looted state with respawn data for: %s" % chest_id)
+	Debug.log("Chest", "Saved looted state with respawn data for: %s" % pkey)
