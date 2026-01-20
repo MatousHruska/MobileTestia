@@ -21,6 +21,9 @@ const DATABASE_OUTPUT_DIR := "res://databases/exports/"
 ## Output directory for chunk tile data
 const CHUNK_TILES_DIR := "res://maps/chunk_tiles/"
 
+## Output directory for per-zone entity data
+const ZONE_ENTITIES_DIR := "res://maps/entities/"
+
 ## Chunk size constants (must match ChunkManager)
 const TILE_SIZE: int = 16
 const CHUNK_TILES: int = 64
@@ -122,6 +125,7 @@ func _ensure_directories() -> void:
 	## Create output directories if they don't exist
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(DATABASE_OUTPUT_DIR))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(CHUNK_TILES_DIR))
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(ZONE_ENTITIES_DIR))
 
 
 #===============================================================================
@@ -568,54 +572,99 @@ func _save_chunk_tiles(chunk_id: String, tile_data: Dictionary) -> void:
 
 
 func _export_entities_summary(entities: Dictionary) -> void:
-	## Print summary of extracted entities (for manual database entry)
+	## Export entities to per-zone JSON files for runtime loading
 	print("\n=== Entity Summary ===")
-	print("(Add these to appropriate database files manually)")
 
-	if not entities.spawn_points.is_empty():
-		print("\nSpawn Points (%d):" % entities.spawn_points.size())
-		for sp in entities.spawn_points:
-			print("  - %s in %s at (%d, %d)" % [
-				sp.get("id", "unknown"),
-				sp.get("zone_id", "unknown"),
-				sp.get("position_x", 0),
-				sp.get("position_y", 0)
-			])
+	# Group entities by zone_id
+	var zones_data: Dictionary = {}
 
-	if not entities.transitions.is_empty():
-		print("\nZone Transitions (%d):" % entities.transitions.size())
-		for t in entities.transitions:
-			print("  - %s -> %s:%s" % [
-				t.get("zone_id", "unknown"),
-				t.get("target_zone", "unknown"),
-				t.get("target_spawn", "default")
-			])
+	# Process spawn points
+	for sp in entities.spawn_points:
+		var zone_id: String = sp.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].spawn_points.append({
+			"id": sp.get("id", ""),
+			"position": {"x": sp.get("position_x", 0), "y": sp.get("position_y", 0)},
+			"spawn_group": sp.get("spawn_group", "")
+		})
 
-	if not entities.locations.is_empty():
-		print("\nLocation Areas (%d):" % entities.locations.size())
-		for loc in entities.locations:
-			print("  - %s in %s (%dx%d)" % [
-				loc.get("id", "unknown"),
-				loc.get("zone_id", "unknown"),
-				loc.get("width", 0),
-				loc.get("height", 0)
-			])
+	# Process chests
+	for c in entities.chests:
+		var zone_id: String = c.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].chests.append({
+			"id": c.get("id", ""),
+			"position": {"x": c.get("position_x", 0), "y": c.get("position_y", 0)},
+			"type": c.get("chest_type", "common")
+		})
 
-	if not entities.chests.is_empty():
-		print("\nChests (%d):" % entities.chests.size())
-		for c in entities.chests:
-			print("  - %s (%s) in %s" % [
-				c.get("id", "unknown"),
-				c.get("chest_type", "common"),
-				c.get("zone_id", "unknown")
-			])
+	# Process transitions
+	for t in entities.transitions:
+		var zone_id: String = t.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].transitions.append({
+			"target_zone": t.get("target_zone", ""),
+			"target_spawn": t.get("target_spawn", "default"),
+			"position": {"x": t.get("position_x", 0), "y": t.get("position_y", 0)},
+			"size": {"w": t.get("width", 64), "h": t.get("height", 64)}
+		})
 
-	if not entities.player_spawns.is_empty():
-		print("\nPlayer Spawns (%d):" % entities.player_spawns.size())
-		for ps in entities.player_spawns:
-			print("  - %s in %s at (%d, %d)" % [
-				ps.get("id", "unknown"),
-				ps.get("zone_id", "unknown"),
-				ps.get("position_x", 0),
-				ps.get("position_y", 0)
-			])
+	# Process locations (exported but not chunk-spawned - zone level)
+	for loc in entities.locations:
+		var zone_id: String = loc.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].locations.append({
+			"id": loc.get("id", ""),
+			"position": {"x": loc.get("position_x", 0), "y": loc.get("position_y", 0)},
+			"size": {"w": loc.get("width", 64), "h": loc.get("height", 64)}
+		})
+
+	# Process player spawns
+	for ps in entities.player_spawns:
+		var zone_id: String = ps.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].player_spawns.append({
+			"id": ps.get("id", ""),
+			"position": {"x": ps.get("position_x", 0), "y": ps.get("position_y", 0)}
+		})
+
+	# Export each zone's entities to a separate JSON file
+	for zone_id in zones_data:
+		_export_zone_entities(zone_id, zones_data[zone_id])
+
+	# Print summary
+	print("Exported entities for %d zones:" % zones_data.size())
+	for zone_id in zones_data:
+		var zd: Dictionary = zones_data[zone_id]
+		print("  %s: %d spawn_points, %d chests, %d transitions, %d player_spawns" % [
+			zone_id,
+			zd.spawn_points.size(),
+			zd.chests.size(),
+			zd.transitions.size(),
+			zd.player_spawns.size()
+		])
+
+
+func _ensure_zone_data(zones_data: Dictionary, zone_id: String) -> void:
+	## Ensure zone entry exists in the dictionary
+	if zone_id not in zones_data:
+		zones_data[zone_id] = {
+			"spawn_points": [],
+			"chests": [],
+			"transitions": [],
+			"locations": [],
+			"player_spawns": []
+		}
+
+
+func _export_zone_entities(zone_id: String, data: Dictionary) -> void:
+	## Export entities for a single zone to JSON file
+	var path := ZONE_ENTITIES_DIR + zone_id + ".json"
+	var file := FileAccess.open(path, FileAccess.WRITE)
+
+	if file:
+		file.store_string(JSON.stringify(data, "\t"))
+		file.close()
+		print("Exported: %s" % path)
+	else:
+		push_error("Failed to write zone entities: %s" % path)

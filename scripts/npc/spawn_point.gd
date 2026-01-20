@@ -148,6 +148,9 @@ var _actual_id: String = ""
 var _is_cleared: bool = false  ## True if spawn point was fully cleared and shouldn't spawn yet
 var _cleared_at: float = 0.0  ## Unix timestamp when spawn point was fully cleared
 var _enemies_killed_persisted: int = 0  ## Number of enemies killed (persisted across save/load)
+var _chunk_id: String = ""  ## Chunk this spawn point belongs to (if chunk-spawned)
+var _is_chunk_spawned: bool = false  ## True if created by ChunkManager
+var _restored_from_temp_state: bool = false  ## True if enemies were restored from temp state
 
 #===============================================================================
 # LIFECYCLE
@@ -157,12 +160,21 @@ func _ready() -> void:
 	# Generate ID if not set
 	_actual_id = spawn_point_id if not spawn_point_id.is_empty() else str(get_path())
 
+	# Check if this was spawned by ChunkManager
+	_is_chunk_spawned = has_meta("chunk_spawned")
+	if _is_chunk_spawned:
+		_chunk_id = get_meta("chunk_id", "")
+
 	# Load preset if specified
 	if not preset_id.is_empty():
 		_load_preset()
 
 	# Check persistence state - was this spawn point cleared?
 	_check_persistence()
+
+	# Check for temp state restoration from ChunkManager (chunk reload scenario)
+	if _is_chunk_spawned and not _chunk_id.is_empty():
+		_try_restore_from_chunk_state()
 
 	# Register with NPCManager if available
 	if NPCManager:
@@ -218,6 +230,107 @@ func _load_preset() -> void:
 
 	if DatabaseLoader:
 		DatabaseLoader.apply_spawn_point_preset(self, preset_id)
+
+
+#===============================================================================
+# CHUNK STATE RESTORATION
+#===============================================================================
+
+func _try_restore_from_chunk_state() -> void:
+	## Try to restore enemies from ChunkManager temp state (chunk reload scenario)
+	if not ChunkManager:
+		return
+
+	if not ChunkManager.has_saved_state_for_spawn_point(_chunk_id, _actual_id):
+		return
+
+	var saved_states: Array = _get_saved_enemy_states_from_chunk()
+	if saved_states.is_empty():
+		return
+
+	Debug.info("SpawnPoint", "Restoring %d enemies from chunk state: %s" % [saved_states.size(), _actual_id])
+	_restored_from_temp_state = true
+
+	# Restore each enemy from saved state
+	for state in saved_states:
+		_restore_enemy_from_state(state)
+
+
+func _get_saved_enemy_states_from_chunk() -> Array:
+	## Get saved enemy states for this spawn point from ChunkManager
+	if not ChunkManager:
+		return []
+
+	var chunk_states: Array = ChunkManager.get_saved_enemy_states(_chunk_id)
+	var matching_states: Array = []
+
+	for state in chunk_states:
+		if state.spawn_point_id == _actual_id:
+			matching_states.append(state)
+
+	return matching_states
+
+
+func _restore_enemy_from_state(state) -> void:
+	## Restore a single enemy from saved temp state
+	var selected_enemy_id: String = state.enemy_id if state.enemy_id != "" else _select_enemy_from_pool()
+	if selected_enemy_id.is_empty():
+		Debug.warn("SpawnPoint", "Cannot restore enemy - no enemy ID")
+		return
+
+	# Prepare spawn configuration
+	var spawn_config := _prepare_spawn_config()
+
+	# Create enemy from database
+	var enemy := DatabaseLoader.create_enemy(selected_enemy_id, state.level, spawn_config)
+	if not enemy:
+		Debug.warn("SpawnPoint", "Failed to restore enemy: %s" % selected_enemy_id)
+		return
+
+	# Restore position from state
+	enemy.global_position = state.position
+	enemy.home_position = state.home_position
+
+	# Restore health percentage
+	if enemy.has_method("get_max_health"):
+		var max_hp: float = enemy.get_max_health()
+		enemy.current_health = max_hp * state.health_percent
+	elif "max_health" in enemy:
+		enemy.current_health = enemy.max_health * state.health_percent
+
+	# Connect signals
+	enemy.died.connect(_on_enemy_died.bind(enemy))
+
+	# Track spawner reference
+	if enemy.has_method("set_spawn_point"):
+		enemy.set_spawn_point(self)
+	else:
+		enemy.set_meta("spawn_point", self)
+
+	# Add to scene
+	var parent := get_parent()
+	if parent:
+		parent.add_child(enemy)
+
+	alive_enemies.append(enemy)
+	enemy_spawned.emit(enemy)
+
+	Debug.info("SpawnPoint", "Restored enemy from chunk state", {
+		"spawn_point": _actual_id,
+		"enemy_id": selected_enemy_id,
+		"position": enemy.global_position,
+		"health_percent": state.health_percent
+	})
+
+
+func get_chunk_id() -> String:
+	## Get the chunk ID this spawn point belongs to
+	return _chunk_id
+
+
+func is_chunk_spawned() -> bool:
+	## Check if this spawn point was created by ChunkManager
+	return _is_chunk_spawned
 
 
 #===============================================================================
@@ -391,6 +504,12 @@ func deactivate() -> void:
 
 func _try_spawn() -> void:
 	## Attempt to spawn an enemy
+
+	# Skip initial spawn if we restored from chunk temp state
+	if _restored_from_temp_state:
+		_restored_from_temp_state = false  # Clear flag after first check
+		Debug.log("SpawnPoint", "Skipping spawn - restored from chunk state: %s" % _actual_id)
+		return
 
 	# Check if spawn point is fully cleared (from persistence or in-zone death)
 	if _is_cleared:
