@@ -403,7 +403,14 @@ func _collect_world_state() -> Dictionary:
 	## Collect world persistence state
 	if not Persistence:
 		return {}
-	return Persistence.get_all_states()
+	var states := Persistence.get_all_states()
+	# Debug: log chest states being saved
+	var chest_count: int = states.get("chests", {}).size()
+	print("[SAVELOAD] _collect_world_state: saving %d chest states" % chest_count)
+	if chest_count > 0:
+		for key in states.get("chests", {}):
+			print("[SAVELOAD]   chest: %s" % key)
+	return states
 
 
 func _collect_location_data() -> Dictionary:
@@ -464,7 +471,15 @@ func _apply_save_data(save_data: Dictionary) -> bool:
 func _apply_world_state(data: Dictionary) -> bool:
 	if not Persistence:
 		return false
+	# Debug: log chest states being loaded
+	var chest_count: int = data.get("chests", {}).size()
+	print("[SAVELOAD] _apply_world_state: loading %d chest states" % chest_count)
+	if chest_count > 0:
+		for key in data.get("chests", {}):
+			print("[SAVELOAD]   chest: %s -> %s" % [key, data["chests"][key]])
 	Persistence.set_all_states(data)
+	# Verify it was applied
+	print("[SAVELOAD] After set_all_states, Persistence has %d chests" % Persistence._states.get("chests", {}).size())
 	return true
 
 

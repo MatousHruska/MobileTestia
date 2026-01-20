@@ -821,9 +821,13 @@ func _spawn_chest(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 	var persistence_key := "%s@%d,%d" % [chest_id, int(world_pos.x), int(world_pos.y)]
 
 	# Check persistence - is chest already looted? (using unique key)
-	if Persistence and Persistence.is_chest_opened(persistence_key):
+	print("[CHEST] Checking persistence for: %s" % persistence_key)
+	var is_opened := Persistence.is_chest_opened(persistence_key) if Persistence else false
+	print("[CHEST] Persistence.is_chest_opened(%s) = %s" % [persistence_key, is_opened])
+	if Persistence and is_opened:
 		# Check if can respawn
 		var state := Persistence.load_state("chests", persistence_key)
+		print("[CHEST] Found looted state: %s" % state)
 		var can_respawn: bool = state.get("can_respawn", true)
 		if not can_respawn:
 			Debug.log("ChunkManager", "Chest already looted (permanent): %s" % persistence_key)

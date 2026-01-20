@@ -244,3 +244,26 @@ func print_state() -> void:
 			Debug.info("Persistence", "%s: %d entries" % [category, count])
 			for id in _states[category]:
 				Debug.log("Persistence", "  %s: %s" % [id, _states[category][id]])
+
+
+func debug_print_chests() -> void:
+	## Debug: Print all chest states
+	print("")
+	print("╔════════════════════════════════════════════════════════════════╗")
+	print("║            CHEST PERSISTENCE STATE                             ║")
+	print("╠════════════════════════════════════════════════════════════════╣")
+
+	var chest_states: Dictionary = _states.get("chests", {})
+	if chest_states.is_empty():
+		print("║   No chests tracked                                            ║")
+	else:
+		print("║   Tracked chests: %d                                            ║" % chest_states.size())
+		print("╟────────────────────────────────────────────────────────────────╢")
+		for key in chest_states:
+			var state: Dictionary = chest_states[key]
+			var looted: bool = state.get("looted", false) or state.get("is_opened", false)
+			print("║   %s" % key)
+			print("║     looted: %s, at: %s" % [looted, state.get("looted_at", "?")])
+
+	print("╚════════════════════════════════════════════════════════════════╝")
+	print("")

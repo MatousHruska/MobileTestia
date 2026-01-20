@@ -140,6 +140,13 @@ func _input(event: InputEvent) -> void:
 		KEY_KP_9:
 			debug_test_ends_when_buff()
 
+		# Numpad 0: Chest persistence state
+		KEY_KP_0:
+			if Persistence:
+				Persistence.debug_print_chests()
+			else:
+				print("Persistence not available")
+
 
 func _debug_print_enemy_summary() -> void:
 	## Print summary of all enemies when NPCManager.print_state() isn't available
