@@ -47,86 +47,6 @@
 				"y": 1232.0
 			},
 			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 40.0,
-				"y": 224.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 72.0,
-				"y": 224.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 104.0,
-				"y": 224.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 152.0,
-				"y": 224.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 200.0,
-				"y": 224.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "",
-			"position": {
-				"x": 216.0,
-				"y": 256.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 168.0,
-				"y": 256.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 120.0,
-				"y": 256.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 88.0,
-				"y": 256.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 24.0,
-				"y": 256.0
-			},
-			"type": "common"
 		}
 	],
 	"locations": [
@@ -151,7 +71,88 @@
 			}
 		}
 	],
-	"spawn_points": [],
+	"spawn_points": [
+		{
+			"id": "",
+			"position": {
+				"x": 792.0,
+				"y": 344.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"position": {
+				"x": 1192.0,
+				"y": 296.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"position": {
+				"x": 1368.0,
+				"y": 456.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"position": {
+				"x": 1800.0,
+				"y": 120.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"position": {
+				"x": 1080.0,
+				"y": 808.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"position": {
+				"x": 552.0,
+				"y": 1176.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "",
+			"position": {
+				"x": 264.0,
+				"y": 1848.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"position": {
+				"x": 296.0,
+				"y": 1816.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"position": {
+				"x": 1864.0,
+				"y": 1896.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"position": {
+				"x": 1416.0,
+				"y": 1400.0
+			},
+			"spawn_group": ""
+		}
+	],
 	"transitions": [
 		{
 			"position": {
