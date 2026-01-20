@@ -3,8 +3,128 @@
 		{
 			"id": "chest_crypt_01",
 			"position": {
+				"x": 792.0,
+				"y": 16.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 360.0,
+				"y": 592.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 760.0,
+				"y": 1808.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 1832.0,
+				"y": 64.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 1080.0,
+				"y": 800.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 584.0,
+				"y": 1232.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 40.0,
+				"y": 224.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 72.0,
+				"y": 224.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
 				"x": 104.0,
-				"y": 48.0
+				"y": 224.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 152.0,
+				"y": 224.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 200.0,
+				"y": 224.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "",
+			"position": {
+				"x": 216.0,
+				"y": 256.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 168.0,
+				"y": 256.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 120.0,
+				"y": 256.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 88.0,
+				"y": 256.0
+			},
+			"type": "common"
+		},
+		{
+			"id": "chest_forest_01",
+			"position": {
+				"x": 24.0,
+				"y": 256.0
 			},
 			"type": "common"
 		}
@@ -31,32 +151,7 @@
 			}
 		}
 	],
-	"spawn_points": [
-		{
-			"id": "sp_test_ghouls",
-			"position": {
-				"x": 200.0,
-				"y": 232.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_skeleton",
-			"position": {
-				"x": 24.0,
-				"y": 232.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_mountain_patrol_right",
-			"position": {
-				"x": 440.0,
-				"y": 56.0
-			},
-			"spawn_group": ""
-		}
-	],
+	"spawn_points": [],
 	"transitions": [
 		{
 			"position": {
