@@ -344,6 +344,9 @@ func load_chunk(chunk_id: String, coords: Vector2i = Vector2i.ZERO) -> void:
 		Debug.log("ChunkManager", "Chunk already loaded: %s" % chunk_id)
 		return
 
+	# Start performance tracking
+	var perf_start := _track_load_start()
+
 	# Parse coords from ID if not provided
 	if coords == Vector2i.ZERO:
 		coords = _parse_chunk_coords(chunk_id)
@@ -393,6 +396,9 @@ func load_chunk(chunk_id: String, coords: Vector2i = Vector2i.ZERO) -> void:
 	if loot_mgr and loot_mgr.has_method("on_chunk_loaded"):
 		loot_mgr.on_chunk_loaded(chunk_id)
 
+	# End performance tracking
+	_track_load_end(perf_start, chunk_id)
+
 	Debug.log("ChunkManager", "Loaded chunk: %s at %s" % [chunk_id, coords])
 	chunk_loaded.emit(chunk_id)
 
@@ -409,6 +415,9 @@ func unload_chunk(chunk_id: String) -> void:
 	if not can_chunk_unload(chunk_id):
 		Debug.warn("ChunkManager", "Cannot unload chunk %s - locked" % chunk_id)
 		return
+
+	# Start performance tracking
+	var perf_start := _track_unload_start()
 
 	_set_chunk_state(chunk_data, ChunkState.UNLOADING)
 	chunk_unloading.emit(chunk_id)
@@ -431,6 +440,9 @@ func unload_chunk(chunk_id: String) -> void:
 
 	# Remove from loaded chunks
 	loaded_chunks.erase(chunk_id)
+
+	# End performance tracking
+	_track_unload_end(perf_start)
 
 	Debug.log("ChunkManager", "Unloaded chunk: %s" % chunk_id)
 	chunk_unloaded.emit(chunk_id)
@@ -1993,3 +2005,540 @@ func debug_trace_zone_resolution() -> void:
 
 	print("[ZoneDebug] ================================================")
 	print("")
+
+
+#===============================================================================
+# DEBUG OVERLAY SYSTEM
+#===============================================================================
+
+## Overlay enabled state
+var _debug_overlay_enabled: bool = false
+
+## Overlay CanvasLayer for drawing
+var _debug_overlay_canvas: CanvasLayer = null
+var _debug_overlay_draw_node: Node2D = null
+
+## Toggle the debug overlay visualization
+func debug_toggle_overlay() -> void:
+	_debug_overlay_enabled = not _debug_overlay_enabled
+
+	if _debug_overlay_enabled:
+		_create_debug_overlay()
+		Debug.info("ChunkManager", "Debug overlay ENABLED (F2 to toggle)")
+	else:
+		_destroy_debug_overlay()
+		Debug.info("ChunkManager", "Debug overlay DISABLED")
+
+
+## Create the debug overlay drawing layer
+func _create_debug_overlay() -> void:
+	if _debug_overlay_canvas:
+		return
+
+	# Create CanvasLayer for HUD-like overlay
+	_debug_overlay_canvas = CanvasLayer.new()
+	_debug_overlay_canvas.name = "ChunkDebugOverlay"
+	_debug_overlay_canvas.layer = 100  # Above everything
+	add_child(_debug_overlay_canvas)
+
+	# Create draw node
+	_debug_overlay_draw_node = DebugOverlayDraw.new()
+	_debug_overlay_draw_node.chunk_manager = self
+	_debug_overlay_canvas.add_child(_debug_overlay_draw_node)
+
+
+## Destroy the debug overlay
+func _destroy_debug_overlay() -> void:
+	if _debug_overlay_canvas:
+		_debug_overlay_canvas.queue_free()
+		_debug_overlay_canvas = null
+		_debug_overlay_draw_node = null
+
+
+## Check if overlay is enabled
+func is_overlay_enabled() -> bool:
+	return _debug_overlay_enabled
+
+
+#===============================================================================
+# PERFORMANCE METRICS
+#===============================================================================
+
+## Performance tracking data
+var _perf_chunk_load_times: Array[float] = []
+var _perf_chunk_unload_times: Array[float] = []
+var _perf_peak_loaded_chunks: int = 0
+var _perf_total_loads: int = 0
+var _perf_total_unloads: int = 0
+var _perf_last_load_time: float = 0.0
+
+## Track chunk load performance
+func _track_load_start() -> float:
+	return Time.get_ticks_msec()
+
+
+func _track_load_end(start_time: float, chunk_id: String) -> void:
+	var elapsed := Time.get_ticks_msec() - start_time
+	_perf_chunk_load_times.append(elapsed)
+	_perf_last_load_time = elapsed
+	_perf_total_loads += 1
+
+	# Track peak
+	if loaded_chunks.size() > _perf_peak_loaded_chunks:
+		_perf_peak_loaded_chunks = loaded_chunks.size()
+
+	# Keep only last 100 measurements
+	if _perf_chunk_load_times.size() > 100:
+		_perf_chunk_load_times.pop_front()
+
+	# Warn if load took too long
+	if elapsed > 50:
+		Debug.warn("ChunkManager", "Slow chunk load: %s took %dms" % [chunk_id, elapsed])
+
+
+func _track_unload_start() -> float:
+	return Time.get_ticks_msec()
+
+
+func _track_unload_end(start_time: float) -> void:
+	var elapsed := Time.get_ticks_msec() - start_time
+	_perf_chunk_unload_times.append(elapsed)
+	_perf_total_unloads += 1
+
+	if _perf_chunk_unload_times.size() > 100:
+		_perf_chunk_unload_times.pop_front()
+
+
+## Get average of an array
+func _array_average(arr: Array) -> float:
+	if arr.is_empty():
+		return 0.0
+	var sum := 0.0
+	for val in arr:
+		sum += val
+	return sum / arr.size()
+
+
+## Get max of an array
+func _array_max(arr: Array) -> float:
+	if arr.is_empty():
+		return 0.0
+	var max_val: float = arr[0]
+	for val in arr:
+		if val > max_val:
+			max_val = val
+	return max_val
+
+
+## Print performance metrics
+func debug_print_perf() -> void:
+	var avg_load := _array_average(_perf_chunk_load_times)
+	var max_load := _array_max(_perf_chunk_load_times)
+	var avg_unload := _array_average(_perf_chunk_unload_times)
+	var max_unload := _array_max(_perf_chunk_unload_times)
+
+	print("")
+	print("╔════════════════════════════════════════════════════════════════╗")
+	print("║            CHUNK MANAGER PERFORMANCE METRICS                   ║")
+	print("╠════════════════════════════════════════════════════════════════╣")
+	print("║   Average Load Time:     %.2f ms                               ║" % avg_load)
+	print("║   Max Load Time:         %.2f ms                               ║" % max_load)
+	print("║   Last Load Time:        %.2f ms                               ║" % _perf_last_load_time)
+	print("║   Average Unload Time:   %.2f ms                               ║" % avg_unload)
+	print("║   Max Unload Time:       %.2f ms                               ║" % max_unload)
+	print("╟────────────────────────────────────────────────────────────────╢")
+	print("║   Total Loads:           %d                                    ║" % _perf_total_loads)
+	print("║   Total Unloads:         %d                                    ║" % _perf_total_unloads)
+	print("║   Peak Loaded Chunks:    %d                                    ║" % _perf_peak_loaded_chunks)
+	print("║   Current Loaded:        %d                                    ║" % loaded_chunks.size())
+	print("╟────────────────────────────────────────────────────────────────╢")
+
+	# Count enemies
+	var total_enemies := 0
+	if NPCManager:
+		total_enemies = NPCManager.all_enemies.size()
+	print("║   Total Enemies:         %d                                    ║" % total_enemies)
+
+	# Count locks
+	var combat_locks := 0
+	var leash_locks := 0
+	for chunk_id in loaded_chunks:
+		if _has_combat_lock(chunk_id):
+			combat_locks += 1
+		elif _has_leash_lock(chunk_id):
+			leash_locks += 1
+	print("║   Combat Locked Chunks:  %d                                    ║" % combat_locks)
+	print("║   Leash Locked Chunks:   %d                                    ║" % leash_locks)
+	print("╚════════════════════════════════════════════════════════════════╝")
+	print("")
+
+	Debug.snapshot("ChunkManager", "Performance Metrics", {
+		"avg_load_ms": avg_load,
+		"max_load_ms": max_load,
+		"last_load_ms": _perf_last_load_time,
+		"avg_unload_ms": avg_unload,
+		"max_unload_ms": max_unload,
+		"total_loads": _perf_total_loads,
+		"total_unloads": _perf_total_unloads,
+		"peak_loaded": _perf_peak_loaded_chunks,
+		"current_loaded": loaded_chunks.size(),
+		"total_enemies": total_enemies,
+		"combat_locks": combat_locks,
+		"leash_locks": leash_locks
+	})
+
+
+## Reset performance metrics
+func debug_reset_perf() -> void:
+	_perf_chunk_load_times.clear()
+	_perf_chunk_unload_times.clear()
+	_perf_peak_loaded_chunks = loaded_chunks.size()
+	_perf_total_loads = 0
+	_perf_total_unloads = 0
+	_perf_last_load_time = 0.0
+	Debug.info("ChunkManager", "Performance metrics reset")
+
+
+#===============================================================================
+# DEBUG COMMANDS
+#===============================================================================
+
+## Teleport player to center of specified chunk
+func debug_teleport_to_chunk(x: int, y: int) -> void:
+	if not Game or not Game.is_player_valid():
+		Debug.warn("ChunkManager", "Cannot teleport - no valid player")
+		return
+
+	var center := Vector2(
+		(x + 0.5) * CHUNK_SIZE_PX,
+		(y + 0.5) * CHUNK_SIZE_PX
+	)
+	Game.player.global_position = center
+	Debug.info("ChunkManager", "Teleported player to chunk (%d, %d) at %s" % [x, y, center])
+
+
+## Force unload all chunks (bypass safety - use for testing)
+func debug_force_unload_all() -> void:
+	var count := loaded_chunks.size()
+	for chunk_id in loaded_chunks.keys():
+		var chunk_data: ChunkData = loaded_chunks[chunk_id]
+		if chunk_data.node and is_instance_valid(chunk_data.node):
+			chunk_data.node.queue_free()
+		loaded_chunks.erase(chunk_id)
+		chunk_unloaded.emit(chunk_id)
+
+	Debug.info("ChunkManager", "Force unloaded all %d chunks" % count)
+
+
+## Get detailed summary for debug display
+func debug_get_summary() -> Dictionary:
+	var combat_locks := 0
+	var leash_locks := 0
+	var total_enemies := 0
+
+	for chunk_id in loaded_chunks:
+		if _has_combat_lock(chunk_id):
+			combat_locks += 1
+		elif _has_leash_lock(chunk_id):
+			leash_locks += 1
+		total_enemies += _get_enemies_in_chunk(chunk_id).size()
+
+	return {
+		"zone": current_zone_id,
+		"player_chunk": player_chunk,
+		"loaded": loaded_chunks.size(),
+		"combat_locks": combat_locks,
+		"leash_locks": leash_locks,
+		"enemies": total_enemies,
+		"temp_states": _enemy_temp_storage.size(),
+		"perf_last_load": _perf_last_load_time
+	}
+
+
+#===============================================================================
+# EDGE CASE: Player at Chunk Corner
+#===============================================================================
+
+## Get all chunks the player overlaps (could be 1-4 chunks at corners)
+func get_all_player_chunks() -> Array[String]:
+	if not Game or not Game.is_player_valid():
+		return []
+
+	var player_pos := Game.player.global_position
+	var player_radius := 16.0  # Approximate player collision radius
+
+	var chunks: Array[String] = []
+	var corners := [
+		player_pos + Vector2(-player_radius, -player_radius),
+		player_pos + Vector2(player_radius, -player_radius),
+		player_pos + Vector2(-player_radius, player_radius),
+		player_pos + Vector2(player_radius, player_radius),
+	]
+
+	for corner in corners:
+		var chunk_id := get_chunk_id(current_zone_id, world_to_chunk(corner))
+		if chunk_id not in chunks:
+			chunks.append(chunk_id)
+
+	return chunks
+
+
+#===============================================================================
+# EDGE CASE: Enemy Crosses Chunk Boundary
+#===============================================================================
+
+## Get the chunk an enemy is currently in
+func get_enemy_chunk(enemy: Node2D) -> String:
+	if not is_instance_valid(enemy):
+		return ""
+	var coords := world_to_chunk(enemy.global_position)
+	return get_chunk_id(current_zone_id, coords)
+
+
+## Handle enemy moving between chunks (called by enemy AI if needed)
+func on_enemy_chunk_change(enemy: Node2D, old_chunk: String, new_chunk: String) -> void:
+	if old_chunk == new_chunk:
+		return
+
+	Debug.log("ChunkManager", "Enemy %s moved from %s to %s" % [
+		enemy.name, old_chunk, new_chunk
+	])
+
+	# If old chunk was only kept loaded for this enemy, recheck unload
+	call_deferred("_recheck_chunk_unload", old_chunk)
+
+
+func _recheck_chunk_unload(chunk_id: String) -> void:
+	if not loaded_chunks.has(chunk_id):
+		return
+
+	var chunk_data: ChunkData = loaded_chunks[chunk_id]
+
+	# Check if chunk should be unloaded now
+	if chunk_data.coords not in _get_chunks_in_radius(player_chunk):
+		if can_chunk_unload(chunk_id):
+			unload_chunk(chunk_id)
+
+
+#===============================================================================
+# EDGE CASE: Save During Combat Lock
+#===============================================================================
+
+## Prepare for save - release all locks and clean up
+func prepare_for_save() -> void:
+	Debug.info("ChunkManager", "Preparing for save...")
+
+	# Force all enemies back to their spawn/home positions
+	if NPCManager:
+		for enemy in NPCManager.all_enemies:
+			if is_instance_valid(enemy) and not enemy.is_dead:
+				if "home_position" in enemy:
+					enemy.global_position = enemy.home_position
+
+	# Clear temp states (they'll be restored from spawn points on load)
+	_enemy_temp_storage.clear()
+
+	# Clear combat states
+	_update_chunk_lock_states()
+
+	Debug.info("ChunkManager", "Save preparation complete")
+
+
+#===============================================================================
+# DEBUG OVERLAY DRAW NODE (Inner Class)
+#===============================================================================
+
+## Run automated stress test
+func run_stress_test() -> void:
+	if not _initialized:
+		Debug.warn("ChunkManager", "Cannot run stress test - not initialized")
+		return
+
+	print("Starting ChunkManager stress test...")
+	print("Use ChunkStressTestRuntime node for comprehensive testing.")
+	print("")
+
+	# Quick inline test
+	var original_pos := Vector2.ZERO
+	if Game and Game.is_player_valid():
+		original_pos = Game.player.global_position
+
+	debug_reset_perf()
+
+	# Rapid teleport test
+	print("Test: Rapid teleportation...")
+	for i in range(10):
+		debug_teleport_to_chunk(randi() % 3, randi() % 3)
+		# Note: In actual game, would await process_frame
+
+	print("Test complete. Check performance with F5.")
+	debug_print_perf()
+
+	# Return player
+	if Game and Game.is_player_valid() and original_pos != Vector2.ZERO:
+		Game.player.global_position = original_pos
+
+
+#===============================================================================
+# DEBUG OVERLAY DRAW NODE (Inner Class)
+#===============================================================================
+
+class DebugOverlayDraw extends Node2D:
+	var chunk_manager: ChunkManagerClass = null
+
+	func _ready() -> void:
+		z_index = 1000
+
+	func _process(_delta: float) -> void:
+		queue_redraw()
+
+	func _draw() -> void:
+		if not chunk_manager or not chunk_manager._debug_overlay_enabled:
+			return
+
+		var viewport := get_viewport()
+		if not viewport:
+			return
+
+		var camera := viewport.get_camera_2d()
+		if not camera:
+			return
+
+		var view_size := viewport.get_visible_rect().size
+		var camera_pos := camera.global_position
+		var zoom := camera.zoom if camera.zoom != Vector2.ZERO else Vector2.ONE
+
+		# Calculate visible area in world coordinates
+		var half_size := view_size / (2.0 * zoom)
+		var view_rect := Rect2(camera_pos - half_size, half_size * 2.0)
+
+		# Get chunk range to draw
+		var start_chunk := chunk_manager.world_to_chunk(view_rect.position)
+		var end_chunk := chunk_manager.world_to_chunk(view_rect.end)
+
+		# Draw chunk grid
+		for cx in range(start_chunk.x - 1, end_chunk.x + 2):
+			for cy in range(start_chunk.y - 1, end_chunk.y + 2):
+				var chunk_id := chunk_manager.get_chunk_id(chunk_manager.current_zone_id, Vector2i(cx, cy))
+				_draw_chunk(cx, cy, chunk_id, camera_pos, zoom)
+
+		# Draw HUD info (fixed position)
+		_draw_hud(camera_pos, zoom, view_size)
+
+	func _draw_chunk(cx: int, cy: int, chunk_id: String, camera_pos: Vector2, zoom: Vector2) -> void:
+		var chunk_origin := Vector2(cx, cy) * chunk_manager.CHUNK_SIZE_PX
+		var chunk_size := Vector2(chunk_manager.CHUNK_SIZE_PX, chunk_manager.CHUNK_SIZE_PX)
+
+		# Transform to screen coordinates
+		var screen_origin := (chunk_origin - camera_pos) * zoom + get_viewport().get_visible_rect().size / 2.0
+		var screen_size := chunk_size * zoom
+		var screen_rect := Rect2(screen_origin, screen_size)
+
+		# Determine color based on state
+		var fill_color := Color.DARK_GRAY
+		var border_color := Color.GRAY
+		var is_loaded := false
+		var state_text := "UNLOADED"
+
+		if chunk_manager.loaded_chunks.has(chunk_id):
+			is_loaded = true
+			var chunk_data: ChunkManagerClass.ChunkData = chunk_manager.loaded_chunks[chunk_id]
+			match chunk_data.state:
+				ChunkManagerClass.ChunkState.LOADED:
+					fill_color = Color(0.0, 0.5, 0.0, 0.2)  # Green
+					border_color = Color.GREEN
+					state_text = "LOADED"
+				ChunkManagerClass.ChunkState.COMBAT_LOCKED:
+					fill_color = Color(0.5, 0.0, 0.0, 0.3)  # Red
+					border_color = Color.RED
+					state_text = "COMBAT"
+				ChunkManagerClass.ChunkState.LEASH_LOCKED:
+					fill_color = Color(0.5, 0.3, 0.0, 0.25)  # Orange
+					border_color = Color.ORANGE
+					state_text = "LEASH"
+				ChunkManagerClass.ChunkState.LOADING:
+					fill_color = Color(0.5, 0.5, 0.0, 0.2)  # Yellow
+					border_color = Color.YELLOW
+					state_text = "LOADING"
+				ChunkManagerClass.ChunkState.UNLOADING:
+					fill_color = Color(0.3, 0.3, 0.3, 0.2)  # Gray
+					border_color = Color.GRAY
+					state_text = "UNLOAD"
+		else:
+			fill_color = Color(0.1, 0.1, 0.1, 0.1)
+			border_color = Color(0.3, 0.3, 0.3, 0.5)
+
+		# Highlight player's chunk
+		if chunk_manager.player_chunk == Vector2i(cx, cy):
+			border_color = Color.WHITE
+			fill_color.a += 0.1
+
+		# Draw fill
+		draw_rect(screen_rect, fill_color)
+
+		# Draw border
+		draw_rect(screen_rect, border_color, false, 2.0)
+
+		# Draw chunk label
+		var font := ThemeDB.fallback_font
+		var font_size := 12
+		var label := "(%d,%d)" % [cx, cy]
+		var text_pos := screen_origin + Vector2(4, 16)
+		draw_string(font, text_pos, label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, border_color)
+
+		# Draw state
+		if is_loaded:
+			var state_pos := screen_origin + Vector2(4, 32)
+			draw_string(font, state_pos, state_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, border_color)
+
+			# Draw enemy count
+			var enemies := chunk_manager._get_enemies_in_chunk(chunk_id)
+			if enemies.size() > 0:
+				var enemy_pos := screen_origin + Vector2(4, 46)
+				draw_string(font, enemy_pos, "E:%d" % enemies.size(), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color.RED)
+
+	func _draw_hud(camera_pos: Vector2, zoom: Vector2, view_size: Vector2) -> void:
+		var summary := chunk_manager.debug_get_summary()
+		var font := ThemeDB.fallback_font
+		var font_size := 14
+		var line_height := 18
+		var margin := Vector2(10, 10)
+		var bg_padding := 8
+
+		# Build info lines
+		var lines: Array[String] = [
+			"[Chunk Debug] F2 to toggle",
+			"Zone: %s" % summary.zone,
+			"Player Chunk: %s" % str(summary.player_chunk),
+			"Loaded: %d chunks" % summary.loaded,
+			"Enemies: %d" % summary.enemies,
+			"Combat Locks: %d" % summary.combat_locks,
+			"Leash Locks: %d" % summary.leash_locks,
+			"Last Load: %.1fms" % summary.perf_last_load
+		]
+
+		# Calculate background size
+		var max_width := 0.0
+		for line in lines:
+			var width := font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+			if width > max_width:
+				max_width = width
+
+		var bg_size := Vector2(max_width + bg_padding * 2, lines.size() * line_height + bg_padding * 2)
+		var bg_rect := Rect2(margin, bg_size)
+
+		# Draw background
+		draw_rect(bg_rect, Color(0, 0, 0, 0.7))
+		draw_rect(bg_rect, Color.WHITE, false, 1.0)
+
+		# Draw text
+		for i in range(lines.size()):
+			var text_pos := margin + Vector2(bg_padding, bg_padding + (i + 1) * line_height - 4)
+			var color := Color.WHITE
+			if i == 0:
+				color = Color.YELLOW
+			elif "Combat" in lines[i] and summary.combat_locks > 0:
+				color = Color.RED
+			elif "Leash" in lines[i] and summary.leash_locks > 0:
+				color = Color.ORANGE
+			draw_string(font, text_pos, lines[i], HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)

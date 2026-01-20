@@ -84,23 +84,112 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	# Debug: Press F9 to dump game state
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F9:
-		debug_full_state()
+	# Only process debug keys in debug builds or when testing
+	if not OS.is_debug_build():
+		return
 
-	# Debug: Press F10 to test ends_when buff system
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F10:
-		debug_test_ends_when_buff()
+	if not (event is InputEventKey and event.pressed):
+		return
 
-	# Debug: Press F11 to run zone naming diagnostic (for save/load debugging)
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F11:
-		if ChunkManager:
-			ChunkManager.debug_zone_naming_diagnostic()
+	match event.keycode:
+		# F1: ChunkManager state snapshot
+		KEY_F1:
+			if ChunkManager:
+				ChunkManager.debug_print_state()
 
-	# Debug: Press F12 to trace zone resolution path
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F12:
-		if ChunkManager:
-			ChunkManager.debug_trace_zone_resolution()
+		# F2: Toggle chunk debug overlay
+		KEY_F2:
+			if ChunkManager:
+				ChunkManager.debug_toggle_overlay()
+
+		# F3: LootManager state
+		KEY_F3:
+			var loot_mgr = get_node_or_null("/root/LootManager")
+			if loot_mgr and loot_mgr.has_method("debug_print_state"):
+				loot_mgr.debug_print_state()
+			else:
+				Debug.info("System", "LootManager not available or has no debug_print_state()")
+
+		# F4: NPCManager/Enemy state
+		KEY_F4:
+			if NPCManager and NPCManager.has_method("print_state"):
+				NPCManager.print_state()
+			else:
+				_debug_print_enemy_summary()
+
+		# F5: Performance metrics
+		KEY_F5:
+			if ChunkManager:
+				ChunkManager.debug_print_perf()
+
+		# F9: Full game state dump
+		KEY_F9:
+			debug_full_state()
+
+		# F10: Test ends_when buff system
+		KEY_F10:
+			debug_test_ends_when_buff()
+
+		# F11: Zone naming diagnostic (for save/load debugging)
+		KEY_F11:
+			if ChunkManager:
+				ChunkManager.debug_zone_naming_diagnostic()
+
+		# F12: Trace zone resolution path
+		KEY_F12:
+			if ChunkManager:
+				ChunkManager.debug_trace_zone_resolution()
+
+
+func _debug_print_enemy_summary() -> void:
+	## Print summary of all enemies when NPCManager.print_state() isn't available
+	print("")
+	print("╔════════════════════════════════════════════════════════════════╗")
+	print("║            ENEMY SUMMARY                                       ║")
+	print("╠════════════════════════════════════════════════════════════════╣")
+
+	if not NPCManager:
+		print("║   NPCManager not available                                     ║")
+		print("╚════════════════════════════════════════════════════════════════╝")
+		return
+
+	var all_enemies: Array = NPCManager.all_enemies if "all_enemies" in NPCManager else []
+	var alive_count := 0
+	var dead_count := 0
+	var in_combat := 0
+
+	for enemy in all_enemies:
+		if not is_instance_valid(enemy):
+			continue
+		if enemy.is_dead:
+			dead_count += 1
+		else:
+			alive_count += 1
+			# Check if in combat
+			var controller = null
+			if "behavior" in enemy and enemy.behavior:
+				controller = enemy.behavior
+			elif "module_controller" in enemy and enemy.module_controller:
+				controller = enemy.module_controller
+
+			if controller and controller.has_method("get_context"):
+				var ctx = controller.get_context()
+				if ctx and ctx.has_valid_target:
+					in_combat += 1
+
+	print("║   Total Enemies: %d                                             ║" % all_enemies.size())
+	print("║   Alive: %d                                                     ║" % alive_count)
+	print("║   Dead: %d                                                      ║" % dead_count)
+	print("║   In Combat: %d                                                 ║" % in_combat)
+	print("╚════════════════════════════════════════════════════════════════╝")
+	print("")
+
+	Debug.snapshot("NPC", "Enemy Summary", {
+		"total": all_enemies.size(),
+		"alive": alive_count,
+		"dead": dead_count,
+		"in_combat": in_combat
+	})
 
 
 ## State management
