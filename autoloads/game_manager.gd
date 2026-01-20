@@ -244,9 +244,10 @@ func _load_zone(zone_path: String) -> void:
 	print("[SAVELOAD] GM load: Calling change_scene_to_file()...")
 	var error := get_tree().change_scene_to_file(zone_path)
 	if error != OK:
-		print("[SAVELOAD] GM load: change_scene_to_file returned error: %d" % error)
+		var error_code := int(error)
+		print("[SAVELOAD] GM load: change_scene_to_file returned error: %d (ERR_BUSY=%d, match=%s)" % [error_code, ERR_BUSY, error_code == ERR_BUSY])
 		# ERR_BUSY (19) means scene tree is busy - retry after a short delay
-		if error == ERR_BUSY:
+		if error_code == ERR_BUSY:
 			_zone_load_retry_count += 1
 			if _zone_load_retry_count <= MAX_ZONE_LOAD_RETRIES:
 				print("[SAVELOAD] GM load: ERR_BUSY - scheduling retry %d/%d" % [_zone_load_retry_count, MAX_ZONE_LOAD_RETRIES])
