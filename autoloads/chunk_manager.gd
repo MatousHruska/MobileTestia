@@ -341,11 +341,10 @@ func load_chunk(chunk_id: String, coords: Vector2i = Vector2i.ZERO) -> void:
 			if not tile_data.is_empty():
 				_create_chunk_tilemap(chunk_id, tile_data, chunk_node)
 
-	# Check for saved enemy states to restore
+	# Log if we have saved enemy states to restore (spawn points will read them)
 	if _enemy_temp_storage.has(chunk_id):
-		chunk_data.enemy_temp_states = _enemy_temp_storage[chunk_id]
-		Debug.log("ChunkManager", "Restoring %d enemy states for chunk %s" % [
-			chunk_data.enemy_temp_states.size(), chunk_id
+		Debug.log("ChunkManager", "Have %d enemy states to restore for chunk %s" % [
+			_enemy_temp_storage[chunk_id].size(), chunk_id
 		])
 
 	# Spawn entities for this chunk
@@ -633,6 +632,11 @@ func _spawn_chunk_entities(chunk_id: String, chunk_node: Node2D, chunk_coords: V
 	if not spawned_entities.is_empty():
 		_chunk_entities[chunk_id] = spawned_entities
 		Debug.log("ChunkManager", "Spawned %d entities in chunk %s" % [spawned_entities.size(), chunk_id])
+
+	# Clear enemy temp states after spawn points have been created and consumed them
+	# Use call_deferred to ensure all spawn point _ready() calls complete first
+	if _enemy_temp_storage.has(chunk_id):
+		call_deferred("_clear_consumed_temp_states", chunk_id)
 
 
 ## Spawn an enemy spawn point from entity data
@@ -1089,6 +1093,14 @@ func get_saved_enemy_states(chunk_id: String) -> Array:
 ## Clear saved enemy states for a chunk (called after restoration)
 func clear_saved_enemy_states(chunk_id: String) -> void:
 	_enemy_temp_storage.erase(chunk_id)
+
+
+## Clear temp states after spawn points have consumed them (called via deferred)
+func _clear_consumed_temp_states(chunk_id: String) -> void:
+	if _enemy_temp_storage.has(chunk_id):
+		var state_count: int = _enemy_temp_storage[chunk_id].size()
+		_enemy_temp_storage.erase(chunk_id)
+		Debug.log("ChunkManager", "Cleared %d consumed enemy temp states for chunk %s" % [state_count, chunk_id])
 
 
 ## Check if we have saved states for a specific spawn point

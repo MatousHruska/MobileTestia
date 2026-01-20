@@ -186,3 +186,18 @@ func lock() -> void:
 ## Get list of fixed item IDs for quest integration
 func get_contained_item_ids() -> Array[String]:
 	return fixed_item_ids
+
+
+## Override to ensure quest chests never respawn (stays looted forever)
+func _save_persistence() -> void:
+	if chest_id.is_empty():
+		return
+
+	Persistence.save_state("chests", chest_id, {
+		"looted": true,
+		"looted_at": Time.get_unix_time_from_system(),
+		"tier": chest_tier,
+		"can_respawn": false,  # Quest chests never respawn
+		"respawn_time": 0.0,
+	})
+	Debug.log("QuestChest", "Saved looted state (permanent) for: %s" % chest_id)
