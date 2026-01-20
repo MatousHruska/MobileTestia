@@ -1,5 +1,11 @@
 # Map Building Phase 4: LDtk Integration
 
+## Status: COMPLETED
+
+**Completed:** 2026-01-20
+
+---
+
 ## Session Goal
 Create the import pipeline to convert LDtk map data into Godot-compatible chunk data and runtime tilemap generation.
 
@@ -13,7 +19,7 @@ Create the import pipeline to convert LDtk map data into Godot-compatible chunk 
 - Phase 3: LootManager for drop persistence
 
 ### LDtk Overview
-LDtk (Level Designer Toolkit) is a modern 2D level editor that exports to JSON. We'll use it as our primary map editor.
+LDtk (Level Designer Toolkit) is a modern 2D level editor that exports to JSON. We use it as our primary map editor.
 
 **Why LDtk:**
 - Entity system for spawn points, chests, NPCs
@@ -22,557 +28,177 @@ LDtk (Level Designer Toolkit) is a modern 2D level editor that exports to JSON. 
 - Clean JSON export
 
 ### Reference Documentation
-- `docs/MAP_BUILDING_REFERENCE.md` - LDtk Workflow section
+- `docs/LDTK_SETUP_GUIDE.md` - Complete LDtk setup documentation
 - LDtk documentation: https://ldtk.io/docs/
 
 ---
 
-## Tasks for This Phase
+## Implementation Summary
 
-### 1. LDtk Project Setup Guide
+### Files Created
 
-Create a setup guide document for the LDtk project structure:
+| File | Purpose |
+|------|---------|
+| `docs/LDTK_SETUP_GUIDE.md` | Complete LDtk project setup guide |
+| `scripts/tools/ldtk_importer.gd` | Editor script to parse LDtk JSON and export chunk data |
+| `scripts/tools/generate_placeholder_tileset.gd` | Creates colored placeholder tileset |
+| `resources/tilesets/placeholder_tileset.tres` | Generated tileset resource |
+| `maps/MobileTestia.ldtk` | Sample LDtk project with test zone |
+| `scenes/world/zone_ldtk_test.tscn` | Test zone scene for LDtk integration |
 
-#### 1.1 Project Configuration
-```
-File: MobileTestia.ldtk
+### Files Modified
 
-Settings:
-- Default grid size: 16px
-- World layout: Free (zones placed manually)
-- External levels: Yes (one file per zone)
-- Simplified export: No (we need full data)
-```
-
-#### 1.2 Layer Definitions
-
-| Layer Name | Type | Purpose |
-|------------|------|---------|
-| Entities | Entity | Spawn points, chests, transitions |
-| Collision | IntGrid | Collision data |
-| Ground | IntGrid | Base terrain with auto-tiles |
-| Decoration | Tiles | Manual decorations |
-
-#### 1.3 IntGrid Values (Terrain)
-
-| Value | Name | Color | Collision |
-|-------|------|-------|-----------|
-| 0 | Empty | #1a1a1a | No |
-| 1 | Grass | #3d6e3d | No |
-| 2 | Dirt | #6b5344 | No |
-| 3 | Stone | #666673 | No |
-| 4 | Water | #334d99 | Yes |
-| 5 | Wall | #4d4033 | Yes |
-| 6 | Sand | #c4a35a | No |
-| 7 | Snow | #e0e8f0 | No |
-
-#### 1.4 Entity Definitions
-
-**SpawnPoint:**
-```
-Fields:
-- spawn_point_id: String (required)
-- spawn_group: String (optional)
-Size: 16x16
-Color: #ff0000
-```
-
-**ChestSpawn:**
-```
-Fields:
-- chest_id: String (required)
-- chest_type: Enum [common, uncommon, rare, quest]
-Size: 16x16
-Color: #ffcc00
-```
-
-**ZoneTransition:**
-```
-Fields:
-- target_zone: String (required)
-- target_spawn: String (required)
-Size: Variable (resizable)
-Color: #ff00ff
-```
-
-**LocationArea:**
-```
-Fields:
-- location_id: String (required)
-Size: Variable (resizable)
-Color: #ffffff (transparent fill)
-```
-
-**PlayerSpawn:**
-```
-Fields:
-- spawn_id: String (required)
-Size: 16x16
-Color: #00ff00
-```
+| File | Changes |
+|------|---------|
+| `autoloads/chunk_manager.gd` | Added TileMap generation from chunk tile data |
 
 ---
 
-### 2. Create LDtk Importer Script
+## How to Use
 
-Create `scripts/tools/ldtk_importer.gd`:
+### Initial Setup
 
-This is an editor tool script that converts LDtk JSON to our database format.
+1. Install LDtk from https://ldtk.io/
+2. Open `maps/MobileTestia.ldtk` in LDtk
+3. Run `scripts/tools/generate_placeholder_tileset.gd` in Godot editor (Ctrl+Shift+X)
 
-```gdscript
-@tool
-extends EditorScript
-## LDtk Importer - Converts LDtk JSON to MobileTestia format
-## Run from Editor: Script > Run
+### Edit-Import Workflow
 
-const LDTK_PATH := "res://maps/MobileTestia.ldtk"
-const OUTPUT_DIR := "res://databases/exports/"
-
-func _run() -> void:
-    print("=== LDtk Importer ===")
-
-    var ldtk_data := _load_ldtk_file()
-    if ldtk_data.is_empty():
-        push_error("Failed to load LDtk file")
-        return
-
-    # Process each level (zone)
-    var all_chunks: Array = []
-    var all_chunk_tiles: Dictionary = {}  # chunk_id -> tile_data
-
-    for level in ldtk_data.get("levels", []):
-        var zone_data := _process_level(level)
-        all_chunks.append_array(zone_data.chunks)
-        all_chunk_tiles.merge(zone_data.tile_data)
-
-    # Export to JSON
-    _export_chunks_json(all_chunks)
-    _export_chunk_tiles(all_chunk_tiles)
-
-    print("=== Import Complete ===")
+```
+1. Edit map in LDtk
+2. Save (Ctrl+S in LDtk)
+3. Run ldtk_importer.gd in Godot (Ctrl+Shift+X)
+4. Play game to see changes
 ```
 
-#### 2.1 LDtk File Loading
+### Running Editor Scripts
 
-```gdscript
-func _load_ldtk_file() -> Dictionary:
-    var file := FileAccess.open(LDTK_PATH, FileAccess.READ)
-    if file == null:
-        push_error("Cannot open: %s" % LDTK_PATH)
-        return {}
-
-    var json := JSON.new()
-    var error := json.parse(file.get_as_text())
-    file.close()
-
-    if error != OK:
-        push_error("JSON parse error: %s" % json.get_error_message())
-        return {}
-
-    return json.data
-```
-
-#### 2.2 Level Processing
-
-```gdscript
-func _process_level(level: Dictionary) -> Dictionary:
-    var zone_id: String = level.get("identifier", "").to_lower()
-    var world_x: int = level.get("worldX", 0)
-    var world_y: int = level.get("worldY", 0)
-    var width: int = level.get("pxWid", 0)
-    var height: int = level.get("pxHei", 0)
-
-    print("Processing zone: %s (%dx%d)" % [zone_id, width, height])
-
-    # Calculate chunk grid
-    var chunks_x := ceili(width / float(ChunkManager.CHUNK_SIZE_PX))
-    var chunks_y := ceili(height / float(ChunkManager.CHUNK_SIZE_PX))
-
-    var chunks: Array = []
-    var tile_data: Dictionary = {}
-
-    # Process each chunk in grid
-    for cy in range(chunks_y):
-        for cx in range(chunks_x):
-            var chunk_id := "chunk_%s_%d_%d" % [zone_id, cx, cy]
-            var chunk_bounds := Rect2(
-                cx * ChunkManager.CHUNK_SIZE_PX,
-                cy * ChunkManager.CHUNK_SIZE_PX,
-                ChunkManager.CHUNK_SIZE_PX,
-                ChunkManager.CHUNK_SIZE_PX
-            )
-
-            # Extract chunk metadata
-            var chunk_meta := _extract_chunk_metadata(level, chunk_bounds, zone_id, cx, cy)
-            chunks.append(chunk_meta)
-
-            # Extract tile data for this chunk
-            var tiles := _extract_chunk_tiles(level, chunk_bounds)
-            tile_data[chunk_id] = tiles
-
-    return {
-        "chunks": chunks,
-        "tile_data": tile_data
-    }
-```
-
-#### 2.3 Chunk Metadata Extraction
-
-```gdscript
-func _extract_chunk_metadata(level: Dictionary, bounds: Rect2, zone_id: String, cx: int, cy: int) -> Dictionary:
-    # Analyze terrain in chunk to determine biome
-    var biome := _analyze_biome(level, bounds)
-
-    # Count spawn points to determine enemy density
-    var density := _analyze_density(level, bounds)
-
-    return {
-        "id": "chunk_%s_%d_%d" % [zone_id, cx, cy],
-        "zone_id": zone_id,
-        "grid_x": cx,
-        "grid_y": cy,
-        "biome_type": biome,
-        "enemy_density": density,
-        "spawn_table_id": "",
-        "ambient_override": "",
-        "lighting_preset": "default"
-    }
-
-func _analyze_biome(level: Dictionary, bounds: Rect2) -> String:
-    # Count terrain types in chunk
-    var terrain_counts := {}
-
-    for layer in level.get("layerInstances", []):
-        if layer.get("__type") == "IntGrid":
-            for tile in layer.get("intGridCsv", []):
-                # ... count terrain types in bounds
-                pass
-
-    # Return most common terrain type
-    return "grass"  # Default, improve with actual analysis
-
-func _analyze_density(level: Dictionary, bounds: Rect2) -> String:
-    var spawn_count := 0
-
-    for layer in level.get("layerInstances", []):
-        if layer.get("__type") == "Entities":
-            for entity in layer.get("entityInstances", []):
-                if entity.get("__identifier") == "SpawnPoint":
-                    var pos := Vector2(entity.get("px", [0, 0])[0], entity.get("px", [0, 0])[1])
-                    if bounds.has_point(pos):
-                        spawn_count += 1
-
-    if spawn_count == 0:
-        return "none"
-    elif spawn_count <= 1:
-        return "low"
-    elif spawn_count <= 3:
-        return "medium"
-    elif spawn_count <= 5:
-        return "high"
-    else:
-        return "very_high"
-```
-
-#### 2.4 Tile Data Extraction
-
-```gdscript
-func _extract_chunk_tiles(level: Dictionary, bounds: Rect2) -> Dictionary:
-    var result := {
-        "ground": [],  # Array of {x, y, terrain_id}
-        "collision": [],  # Array of {x, y}
-        "decoration": []  # Array of {x, y, tile_id}
-    }
-
-    for layer in level.get("layerInstances", []):
-        var layer_type: String = layer.get("__type", "")
-        var layer_id: String = layer.get("__identifier", "")
-
-        match layer_id:
-            "Ground":
-                result.ground = _extract_intgrid_tiles(layer, bounds)
-            "Collision":
-                result.collision = _extract_collision_tiles(layer, bounds)
-            "Decoration":
-                result.decoration = _extract_tile_tiles(layer, bounds)
-
-    return result
-
-func _extract_intgrid_tiles(layer: Dictionary, bounds: Rect2) -> Array:
-    var tiles: Array = []
-    var grid_size: int = layer.get("__gridSize", 16)
-    var c_wid: int = layer.get("__cWid", 0)
-    var csv: Array = layer.get("intGridCsv", [])
-
-    for i in range(csv.size()):
-        var value: int = csv[i]
-        if value == 0:
-            continue
-
-        var gx: int = i % c_wid
-        var gy: int = i / c_wid
-        var px: float = gx * grid_size
-        var py: float = gy * grid_size
-
-        if bounds.has_point(Vector2(px, py)):
-            # Convert to chunk-local coordinates
-            var local_x: int = int(px - bounds.position.x) / grid_size
-            var local_y: int = int(py - bounds.position.y) / grid_size
-            tiles.append({
-                "x": local_x,
-                "y": local_y,
-                "terrain_id": _intgrid_to_terrain(value)
-            })
-
-    return tiles
-
-func _intgrid_to_terrain(value: int) -> String:
-    match value:
-        1: return "terrain_grass"
-        2: return "terrain_dirt"
-        3: return "terrain_stone"
-        4: return "terrain_water"
-        5: return "terrain_wall"
-        6: return "terrain_sand"
-        7: return "terrain_snow"
-        _: return "terrain_void"
-```
-
-#### 2.5 Entity Extraction
-
-```gdscript
-func _extract_entities(level: Dictionary) -> Dictionary:
-    var result := {
-        "spawn_points": [],
-        "chests": [],
-        "transitions": [],
-        "locations": [],
-        "player_spawns": []
-    }
-
-    for layer in level.get("layerInstances", []):
-        if layer.get("__type") != "Entities":
-            continue
-
-        for entity in layer.get("entityInstances", []):
-            var entity_type: String = entity.get("__identifier", "")
-            var px: Array = entity.get("px", [0, 0])
-            var position := Vector2(px[0], px[1])
-            var fields := _extract_entity_fields(entity)
-
-            match entity_type:
-                "SpawnPoint":
-                    result.spawn_points.append({
-                        "id": fields.get("spawn_point_id", ""),
-                        "position": {"x": position.x, "y": position.y},
-                        "group": fields.get("spawn_group", "")
-                    })
-                "ChestSpawn":
-                    result.chests.append({
-                        "id": fields.get("chest_id", ""),
-                        "position": {"x": position.x, "y": position.y},
-                        "type": fields.get("chest_type", "common")
-                    })
-                "ZoneTransition":
-                    var size: Array = entity.get("__size", [16, 16])
-                    result.transitions.append({
-                        "target_zone": fields.get("target_zone", ""),
-                        "target_spawn": fields.get("target_spawn", ""),
-                        "position": {"x": position.x, "y": position.y},
-                        "size": {"w": size[0], "h": size[1]}
-                    })
-                "LocationArea":
-                    var size: Array = entity.get("__size", [64, 64])
-                    result.locations.append({
-                        "id": fields.get("location_id", ""),
-                        "position": {"x": position.x, "y": position.y},
-                        "size": {"w": size[0], "h": size[1]}
-                    })
-                "PlayerSpawn":
-                    result.player_spawns.append({
-                        "id": fields.get("spawn_id", ""),
-                        "position": {"x": position.x, "y": position.y}
-                    })
-
-    return result
-
-func _extract_entity_fields(entity: Dictionary) -> Dictionary:
-    var result := {}
-    for field in entity.get("fieldInstances", []):
-        var field_id: String = field.get("__identifier", "")
-        var value = field.get("__value")
-        result[field_id] = value
-    return result
-```
-
-#### 2.6 JSON Export
-
-```gdscript
-func _export_chunks_json(chunks: Array) -> void:
-    var path := OUTPUT_DIR + "chunks.json"
-    var file := FileAccess.open(path, FileAccess.WRITE)
-    if file:
-        file.store_string(JSON.stringify(chunks, "\t"))
-        file.close()
-        print("Exported: %s (%d chunks)" % [path, chunks.size()])
-
-func _export_chunk_tiles(tile_data: Dictionary) -> void:
-    # Export tile data to separate directory
-    var dir_path := "res://maps/chunk_tiles/"
-    DirAccess.make_dir_recursive_absolute(dir_path)
-
-    for chunk_id in tile_data:
-        var path := dir_path + chunk_id + ".json"
-        var file := FileAccess.open(path, FileAccess.WRITE)
-        if file:
-            file.store_string(JSON.stringify(tile_data[chunk_id], "\t"))
-            file.close()
-
-    print("Exported tile data for %d chunks" % tile_data.size())
-```
+1. Open the script in Godot editor
+2. Press **Ctrl+Shift+X** (Script > Run)
+3. Check Output panel for results
 
 ---
 
-### 3. Runtime Chunk Tile Loading
+## Technical Details
 
-Update `autoloads/chunk_manager.gd` to load tile data:
+### Tile Layer Z-Index Values
 
-```gdscript
-func _load_chunk_tiles(chunk_id: String) -> Dictionary:
-    var path := "res://maps/chunk_tiles/%s.json" % chunk_id
-    if not FileAccess.file_exists(path):
-        return {}
+The TileMap layers use negative z_index values to render behind the player:
 
-    var file := FileAccess.open(path, FileAccess.READ)
-    if file == null:
-        return {}
+| Layer | z_index | Purpose |
+|-------|---------|---------|
+| Ground | -10 | Base terrain (furthest back) |
+| Collision | -9 | Wall tiles with collision shapes |
+| Decoration | -5 | Floor decorations |
 
-    var json := JSON.new()
-    var error := json.parse(file.get_as_text())
-    file.close()
-
-    if error != OK:
-        return {}
-
-    return json.data
-```
-
----
-
-### 4. Create Placeholder Tileset
-
-Create `resources/tilesets/placeholder_tileset.tres`:
-
-A TileSet resource with colored tiles matching terrain types.
+### Terrain ID to Tile Atlas Mapping
 
 ```gdscript
-# Script to generate placeholder tileset programmatically
-# scripts/tools/generate_placeholder_tileset.gd
-
-@tool
-extends EditorScript
-
-const TERRAIN_COLORS := {
-    "terrain_grass": Color("#3d6e3d"),
-    "terrain_dirt": Color("#6b5344"),
-    "terrain_stone": Color("#666673"),
-    "terrain_water": Color("#334d99"),
-    "terrain_wall": Color("#4d4033"),
-    "terrain_sand": Color("#c4a35a"),
-    "terrain_snow": Color("#e0e8f0"),
-    "terrain_void": Color("#1a1a1a"),
+const TERRAIN_TO_TILE := {
+    "terrain_void": Vector2i(0, 0),
+    "terrain_grass": Vector2i(1, 0),
+    "terrain_dirt": Vector2i(2, 0),
+    "terrain_stone": Vector2i(3, 0),
+    "terrain_water": Vector2i(4, 0),
+    "terrain_wall": Vector2i(5, 0),
+    "terrain_sand": Vector2i(6, 0),
+    "terrain_snow": Vector2i(7, 0),
 }
-
-func _run() -> void:
-    var tileset := TileSet.new()
-    tileset.tile_size = Vector2i(16, 16)
-
-    # Create a source with colored tiles
-    var source := TileSetAtlasSource.new()
-    # ... generate colored tile atlas image
-    # ... add to tileset
-
-    ResourceSaver.save(tileset, "res://resources/tilesets/placeholder_tileset.tres")
-    print("Placeholder tileset generated")
 ```
 
----
+### Chunk ID Naming Convention
 
-### 5. Update ChunkManager for TileMap Generation
-
-Add to `chunk_manager.gd`:
-
-```gdscript
-var _tileset: TileSet = preload("res://resources/tilesets/placeholder_tileset.tres")
-
-func _create_chunk_tilemap(chunk_id: String, tile_data: Dictionary) -> void:
-    var chunk_node: Node2D = loaded_chunks[chunk_id].node
-
-    # Create ground layer
-    var ground_layer := TileMapLayer.new()
-    ground_layer.name = "Ground"
-    ground_layer.tile_set = _tileset
-    chunk_node.add_child(ground_layer)
-
-    # Populate tiles
-    for tile in tile_data.get("ground", []):
-        var coords := Vector2i(tile.x, tile.y)
-        var terrain_id: String = tile.terrain_id
-        var tile_id := _get_tile_id_for_terrain(terrain_id)
-        ground_layer.set_cell(coords, 0, tile_id)
-
-    # Create collision layer
-    var collision_layer := TileMapLayer.new()
-    collision_layer.name = "Collision"
-    collision_layer.tile_set = _tileset
-    collision_layer.collision_enabled = true
-    chunk_node.add_child(collision_layer)
-
-    for tile in tile_data.get("collision", []):
-        var coords := Vector2i(tile.x, tile.y)
-        collision_layer.set_cell(coords, 0, _wall_tile_id)
-```
+The importer strips the "zone_" prefix to match ChunkManager:
+- LDtk level: `zone_test`
+- Chunk ID: `chunk_test_0_0` (not `chunk_zone_test_0_0`)
 
 ---
 
-## Files to Reference
+## Issues Encountered and Fixed
 
-Before starting, read these files:
-- `autoloads/chunk_manager.gd` - Your Phase 2 implementation
-- `autoloads/database_loader.gd` - JSON loading patterns
-- `scripts/world/zone_base.gd` - Zone structure
-- LDtk JSON format documentation
+### 1. Physics Layer Error in Tileset Generator
+**Problem:** `Index p_layer_id = 0 is out of bounds (physics.size() = 0)`
+**Solution:** Add source to tileset BEFORE adding collision polygons
 
----
+### 2. Type Inference Warnings
+**Problem:** `The variable type is being inferred from a Variant value`
+**Solution:** Added explicit types: `var atlas_coords: Vector2i = TERRAIN_TO_TILE.get(terrain_id, Vector2i(0, 0))`
 
-## Deliverables
+### 3. Chunk ID Naming Mismatch
+**Problem:** ChunkManager looked for `chunk_test_0_0` but importer created `chunk_zone_test_0_0`
+**Solution:** Strip "zone_" prefix in importer to match ChunkManager._make_chunk_id() behavior
 
-1. LDtk project setup documentation
-2. `scripts/tools/ldtk_importer.gd` - Editor script for import
-3. `scripts/tools/generate_placeholder_tileset.gd` - Tileset generator
-4. `resources/tilesets/placeholder_tileset.tres` - Placeholder tileset
-5. Updated `autoloads/chunk_manager.gd` with TileMap generation
-6. Sample LDtk project file with one test zone
+### 4. Case-Sensitivity in LDtk Identifiers
+**Problem:** Importer couldn't find layers/entities because LDtk uses lowercase (`ground`, `spawnpoint`) but code matched capitalized versions
+**Solution:** Added `.to_lower()` to all identifier comparisons in importer
+
+### 5. Tile Layer Z-Index Ordering
+**Problem:** Player appeared under tile textures
+**Solution:** Set negative z_index values for tile layers (-10, -9, -5)
 
 ---
 
 ## Success Criteria
 
-- [ ] LDtk project created with correct layer/entity setup
-- [ ] Importer correctly parses LDtk JSON
-- [ ] Chunk metadata exported to chunks.json
-- [ ] Tile data exported per-chunk
-- [ ] Entities (spawn points, transitions) extracted
-- [ ] Placeholder tileset displays terrain colors
-- [ ] ChunkManager generates TileMaps from data
-- [ ] End-to-end: Edit in LDtk → Export → Import → See in game
+- [x] LDtk project created with correct layer/entity setup
+- [x] Importer correctly parses LDtk JSON
+- [x] Chunk metadata exported to chunks.json
+- [x] Tile data exported per-chunk to `maps/chunk_tiles/`
+- [x] Entities (spawn points, transitions) extracted
+- [x] Placeholder tileset displays terrain colors
+- [x] ChunkManager generates TileMaps from data
+- [x] End-to-end: Edit in LDtk → Export → Import → See in game
 
 ---
 
-## Testing Scenarios
+## Testing Completed
 
-1. **Basic Import**: Create simple zone in LDtk, import, verify JSON output
-2. **Terrain Types**: Paint all terrain types, verify colors correct
-3. **Entities**: Place spawn points and transitions, verify extracted
-4. **Chunk Boundaries**: Verify tiles correctly assigned to chunks
-5. **Runtime Loading**: Walk through imported zone, verify tiles appear
+1. **Basic Import**: Created zone_test in LDtk, imported, verified JSON output
+2. **Terrain Types**: Painted all terrain types (grass, dirt, snow, etc.), verified colors correct
+3. **Chunk Loading**: Walked through imported zone, verified tiles appear and unload correctly
+4. **Z-Index Ordering**: Verified player renders on top of terrain tiles
+
+---
+
+## Next Phase
+
+Proceed to **Phase 5: Entity Integration** to:
+- Create spawn points from LDtk entity data
+- Implement enemy state save/restore on chunk unload
+- Spawn chests and zone transitions
+- Handle location area discovery
+
+---
+
+## Quick Reference
+
+### File Paths
+
+```
+LDtk Project:     res://maps/MobileTestia.ldtk
+Tileset:          res://resources/tilesets/placeholder_tileset.tres
+Chunk Tiles:      res://maps/chunk_tiles/chunk_{zone}_{x}_{y}.json
+Importer:         res://scripts/tools/ldtk_importer.gd
+Tileset Generator: res://scripts/tools/generate_placeholder_tileset.gd
+Test Zone Scene:  res://scenes/world/zone_ldtk_test.tscn
+```
+
+### LDtk Layer Names (Case-Sensitive in LDtk, lowercase in code)
+
+- `Ground` - IntGrid for base terrain
+- `Collision` - IntGrid for blocking tiles
+- `Entities` - Entity layer for spawn points, etc.
+- `Decoration` - Tiles layer for decorations
+
+### IntGrid Values
+
+| Value | Terrain |
+|-------|---------|
+| 0 | Empty/Void |
+| 1 | Grass |
+| 2 | Dirt |
+| 3 | Stone |
+| 4 | Water |
+| 5 | Wall |
+| 6 | Sand |
+| 7 | Snow |
