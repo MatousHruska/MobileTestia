@@ -428,13 +428,13 @@ func _create_chunk_tilemap(chunk_id: String, tile_data: Dictionary, chunk_node: 
 		Debug.warn("ChunkManager", "Cannot create tilemap without tileset")
 		return
 
-	# Create ground layer
+	# Create ground layer (z_index -10 so it renders behind player/entities)
 	var ground_tiles: Array = tile_data.get("ground", [])
 	if not ground_tiles.is_empty():
 		var ground_layer := TileMapLayer.new()
 		ground_layer.name = "Ground"
 		ground_layer.tile_set = tileset
-		ground_layer.z_index = 0
+		ground_layer.z_index = -10
 		chunk_node.add_child(ground_layer)
 
 		# Populate ground tiles
@@ -446,13 +446,13 @@ func _create_chunk_tilemap(chunk_id: String, tile_data: Dictionary, chunk_node: 
 
 		Debug.log("ChunkManager", "Created ground layer with %d tiles for %s" % [ground_tiles.size(), chunk_id])
 
-	# Create collision layer
+	# Create collision layer (z_index -9 so walls render behind player but above ground)
 	var collision_tiles: Array = tile_data.get("collision", [])
 	if not collision_tiles.is_empty():
 		var collision_layer := TileMapLayer.new()
 		collision_layer.name = "Collision"
 		collision_layer.tile_set = tileset
-		collision_layer.z_index = 1
+		collision_layer.z_index = -9
 		collision_layer.collision_enabled = true
 		chunk_node.add_child(collision_layer)
 
@@ -464,13 +464,13 @@ func _create_chunk_tilemap(chunk_id: String, tile_data: Dictionary, chunk_node: 
 
 		Debug.log("ChunkManager", "Created collision layer with %d tiles for %s" % [collision_tiles.size(), chunk_id])
 
-	# Create decoration layer (if present)
+	# Create decoration layer (z_index -5 for floor decorations, behind player)
 	var decoration_tiles: Array = tile_data.get("decoration", [])
 	if not decoration_tiles.is_empty():
 		var decoration_layer := TileMapLayer.new()
 		decoration_layer.name = "Decoration"
 		decoration_layer.tile_set = tileset
-		decoration_layer.z_index = 2
+		decoration_layer.z_index = -5
 		chunk_node.add_child(decoration_layer)
 
 		# Populate decoration tiles
