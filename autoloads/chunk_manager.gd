@@ -815,20 +815,25 @@ func _spawn_chest(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 		Debug.warn("ChunkManager", "Chest has no ID, skipping")
 		return null
 
-	# Check persistence - is chest already looted?
-	if Persistence and Persistence.is_chest_opened(chest_id):
+	# Generate unique persistence key from chest_id + position
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	var persistence_key := "%s@%d,%d" % [chest_id, int(world_pos.x), int(world_pos.y)]
+
+	# Check persistence - is chest already looted? (using unique key)
+	if Persistence and Persistence.is_chest_opened(persistence_key):
 		# Check if can respawn
-		var state := Persistence.load_state("chests", chest_id)
+		var state := Persistence.load_state("chests", persistence_key)
 		var can_respawn: bool = state.get("can_respawn", true)
 		if not can_respawn:
-			Debug.log("ChunkManager", "Chest already looted (permanent): %s" % chest_id)
+			Debug.log("ChunkManager", "Chest already looted (permanent): %s" % persistence_key)
 			return null
 
 		var looted_at: float = state.get("looted_at", 0.0)
 		var respawn_time: float = state.get("respawn_time", 300.0)
 		var elapsed := Time.get_unix_time_from_system() - looted_at
 		if elapsed < respawn_time:
-			Debug.log("ChunkManager", "Chest not yet respawned: %s (%.1f remaining)" % [chest_id, respawn_time - elapsed])
+			Debug.log("ChunkManager", "Chest not yet respawned: %s (%.1f remaining)" % [persistence_key, respawn_time - elapsed])
 			return null
 
 	# Try to load chest spawn point scene
@@ -847,22 +852,23 @@ func _spawn_chest(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 		Debug.warn("ChunkManager", "Could not create chest: %s" % chest_id)
 		return null
 
-	# Set position relative to chunk
-	var pos: Dictionary = data.get("position", {})
-	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	# Set position relative to chunk (world_pos already calculated above)
 	chest.position = world_pos - chunk_origin
 
 	# Configure chest
 	if "database_chest_id" in chest:
 		chest.database_chest_id = chest_id
+	if "persistence_key" in chest:
+		chest.persistence_key = persistence_key  # Unique per placement
 
 	# Mark as chunk-spawned
 	chest.set_meta("chunk_spawned", true)
 	chest.set_meta("chunk_id", chunk_id)
 	chest.set_meta("world_position", world_pos)
+	chest.set_meta("persistence_key", persistence_key)
 
 	parent.add_child(chest)
-	Debug.log("ChunkManager", "Spawned chest: %s at %s" % [chest_id, world_pos])
+	Debug.log("ChunkManager", "Spawned chest: %s (key: %s) at %s" % [chest_id, persistence_key, world_pos])
 
 	return chest
 
