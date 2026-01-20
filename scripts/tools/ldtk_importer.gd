@@ -222,7 +222,7 @@ func _analyze_biome(level: Dictionary, bounds: Rect2) -> String:
 	var terrain_counts := {}
 
 	for layer in level.get("layerInstances", []):
-		if layer.get("__identifier", "") != "Ground":
+		if layer.get("__identifier", "").to_lower() != "ground":
 			continue
 		if layer.get("__type", "") != "IntGrid":
 			continue
@@ -271,7 +271,7 @@ func _analyze_density(level: Dictionary, bounds: Rect2) -> String:
 			continue
 
 		for entity in layer.get("entityInstances", []):
-			if entity.get("__identifier", "") == "SpawnPoint":
+			if entity.get("__identifier", "").to_lower() == "spawnpoint":
 				var px_array: Array = entity.get("px", [0, 0])
 				var pos := Vector2(px_array[0], px_array[1])
 				if bounds.has_point(pos):
@@ -304,14 +304,14 @@ func _extract_chunk_tiles(level: Dictionary, bounds: Rect2) -> Dictionary:
 
 	for layer in level.get("layerInstances", []):
 		var layer_type: String = layer.get("__type", "")
-		var layer_id: String = layer.get("__identifier", "")
+		var layer_id: String = layer.get("__identifier", "").to_lower()
 
 		match layer_id:
-			"Ground":
+			"ground":
 				result.ground = _extract_intgrid_tiles(layer, bounds)
-			"Collision":
+			"collision":
 				result.collision = _extract_collision_tiles(layer, bounds)
-			"Decoration":
+			"decoration":
 				result.decoration = _extract_tile_layer_tiles(layer, bounds)
 
 	return result
@@ -462,13 +462,13 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 			continue
 
 		for entity in layer.get("entityInstances", []):
-			var entity_type: String = entity.get("__identifier", "")
+			var entity_type: String = entity.get("__identifier", "").to_lower()
 			var px_array: Array = entity.get("px", [0, 0])
 			var position := Vector2(px_array[0], px_array[1])
 			var fields := _extract_entity_fields(entity)
 
 			match entity_type:
-				"SpawnPoint":
+				"spawnpoint":
 					result.spawn_points.append({
 						"id": fields.get("spawn_point_id", ""),
 						"zone_id": zone_id,
@@ -477,7 +477,7 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 						"spawn_group": fields.get("spawn_group", "")
 					})
 
-				"ChestSpawn":
+				"chestspawn":
 					result.chests.append({
 						"id": fields.get("chest_id", ""),
 						"zone_id": zone_id,
@@ -486,7 +486,7 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 						"chest_type": fields.get("chest_type", "common")
 					})
 
-				"ZoneTransition":
+				"zonetransition":
 					var width: int = entity.get("width", 16)
 					var height: int = entity.get("height", 16)
 					result.transitions.append({
@@ -499,7 +499,7 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 						"height": height
 					})
 
-				"LocationArea":
+				"locationarea":
 					var width: int = entity.get("width", 64)
 					var height: int = entity.get("height", 64)
 					result.locations.append({
@@ -511,7 +511,7 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 						"height": height
 					})
 
-				"PlayerSpawn":
+				"playerspawn":
 					result.player_spawns.append({
 						"id": fields.get("spawn_id", ""),
 						"zone_id": zone_id,
