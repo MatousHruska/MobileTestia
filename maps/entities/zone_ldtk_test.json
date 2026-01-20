@@ -1,0 +1,74 @@
+{
+	"chests": [
+		{
+			"id": "chest_crypt_01",
+			"position": {
+				"x": 104.0,
+				"y": 48.0
+			},
+			"type": "common"
+		}
+	],
+	"locations": [
+		{
+			"id": "loc_test_north",
+			"position": {
+				"x": 0.0,
+				"y": 0.0
+			},
+			"size": {
+				"h": 1024,
+				"w": 1024
+			}
+		}
+	],
+	"player_spawns": [
+		{
+			"id": "default",
+			"position": {
+				"x": 136.0,
+				"y": 144.0
+			}
+		}
+	],
+	"spawn_points": [
+		{
+			"id": "sp_test_ghouls",
+			"position": {
+				"x": 200.0,
+				"y": 232.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_skeleton",
+			"position": {
+				"x": 24.0,
+				"y": 232.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_mountain_patrol_right",
+			"position": {
+				"x": 440.0,
+				"y": 56.0
+			},
+			"spawn_group": ""
+		}
+	],
+	"transitions": [
+		{
+			"position": {
+				"x": 1920.0,
+				"y": 1024.0
+			},
+			"size": {
+				"h": 128,
+				"w": 64
+			},
+			"target_spawn": "from_test",
+			"target_zone": "zone_forest"
+		}
+	]
+}

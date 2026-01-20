@@ -639,7 +639,7 @@
 	], "iconTilesetUid": null, "externalRelPath": null, "externalFileChecksum": null, "tags": [] }], "externalEnums": [], "levelFields": [] },
 	"levels": [
 		{
-			"identifier": "zone_test",
+			"identifier": "zone_ldtk_test",
 			"iid": "level-0001-0001-0001-000000000001",
 			"uid": 60,
 			"worldX": 0,
