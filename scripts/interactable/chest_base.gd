@@ -29,9 +29,13 @@ signal chest_looted
 
 ## Chest configuration
 @export_group("Chest Settings")
-@export var chest_id: String = ""  ## Unique ID for persistence
+@export var chest_id: String = ""  ## Database ID for loot/config lookup
 @export var chest_tier: ChestTier = ChestTier.WOODEN
 @export var display_name: String = "Chest"
+
+## Persistence key - unique per chest placement (auto-generated if empty)
+## Format: "chest_id@x,y" - allows same database chest at different locations
+var persistence_key: String = ""
 
 ## Current state
 var current_state: ChestState = ChestState.CLOSED
@@ -255,22 +259,42 @@ func _on_chest_looted() -> void:
 
 func _check_persistence() -> void:
 	## Check if this chest was previously looted and restore state
-	if Persistence.is_chest_opened(chest_id):
+	var key := _get_persistence_key()
+	if key.is_empty():
+		return
+
+	if Persistence.is_chest_opened(key):
 		set_opened(true)
-		Debug.log("Chest", "Restored looted state for: %s" % chest_id)
+		Debug.log("Chest", "Restored looted state for: %s" % key)
 
 
 func _save_persistence() -> void:
 	## Save chest looted state to persistence
-	if chest_id.is_empty():
+	var key := _get_persistence_key()
+	if key.is_empty():
 		return
 
-	Persistence.save_state("chests", chest_id, {
+	Persistence.save_state("chests", key, {
 		"looted": true,
 		"looted_at": Time.get_unix_time_from_system(),
 		"tier": chest_tier,
+		"chest_id": chest_id,  # Store original database ID for reference
 	})
-	Debug.log("Chest", "Saved looted state for: %s" % chest_id)
+	Debug.log("Chest", "Saved looted state for: %s" % key)
+
+
+func _get_persistence_key() -> String:
+	## Get the unique persistence key for this chest
+	## Uses persistence_key if set, otherwise generates from chest_id + position
+	if not persistence_key.is_empty():
+		return persistence_key
+
+	if chest_id.is_empty():
+		return ""
+
+	# Auto-generate from chest_id + position
+	var pos := global_position if is_inside_tree() else position
+	return "%s@%d,%d" % [chest_id, int(pos.x), int(pos.y)]
 
 
 ## Get tier multiplier for loot calculations
