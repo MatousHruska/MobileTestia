@@ -483,12 +483,12 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 					})
 
 				"chestspawn":
+					# Only chest_id needed - all properties come from database
 					result.chests.append({
 						"id": fields.get("chest_id", ""),
 						"zone_id": zone_id,
 						"position_x": position.x,
-						"position_y": position.y,
-						"chest_type": fields.get("chest_type", "common")
+						"position_y": position.y
 					})
 
 				"zonetransition":
