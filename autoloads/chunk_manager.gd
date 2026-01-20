@@ -27,6 +27,9 @@ const HOME_THRESHOLD: float = 16.0
 ## Path to chunk tile data directory
 const CHUNK_TILES_DIR := "res://maps/chunk_tiles/"
 
+## Path to zone entity data directory
+const ZONE_ENTITIES_DIR := "res://maps/entities/"
+
 ## Tileset resource for rendering chunks
 const PLACEHOLDER_TILESET_PATH := "res://resources/tilesets/placeholder_tileset.tres"
 
@@ -113,6 +116,18 @@ var _enemy_temp_storage: Dictionary = {}
 ## Debug visualization enabled
 var _debug_borders_enabled: bool = false
 
+## Debug entity visualization enabled
+var _debug_entities_enabled: bool = false
+
+## Zone entity data (loaded once per zone)
+var _zone_entities: Dictionary = {}
+
+## Player spawn positions for current zone
+var _player_spawns: Dictionary = {}  # spawn_id -> Vector2
+
+## Spawned entities tracking for cleanup
+var _chunk_entities: Dictionary = {}  # chunk_id -> Array[Node]
+
 ## Cached tileset resource for chunk tile rendering
 var _tileset: TileSet = null
 
@@ -179,6 +194,10 @@ func initialize_for_zone(zone_id: String) -> void:
 
 	# Reset temp storage for new zone
 	_enemy_temp_storage.clear()
+	_chunk_entities.clear()
+
+	# Load zone entity data
+	_load_zone_entities(zone_id)
 
 	# Initial chunk loading around spawn point (will happen on first update_chunks call)
 	player_chunk = Vector2i.MIN  # Force refresh on first update
@@ -198,6 +217,9 @@ func cleanup_zone() -> void:
 	current_zone_id = ""
 	_initialized = false
 	_enemy_temp_storage.clear()
+	_chunk_entities.clear()
+	_zone_entities.clear()
+	_player_spawns.clear()
 	player_chunk = Vector2i.ZERO
 
 	Debug.info("ChunkManager", "Zone cleanup complete")
@@ -326,6 +348,10 @@ func load_chunk(chunk_id: String, coords: Vector2i = Vector2i.ZERO) -> void:
 			chunk_data.enemy_temp_states.size(), chunk_id
 		])
 
+	# Spawn entities for this chunk
+	if chunk_data.node:
+		_spawn_chunk_entities(chunk_id, chunk_data.node, coords)
+
 	# Mark as loaded
 	_set_chunk_state(chunk_data, ChunkState.LOADED)
 	loaded_chunks[chunk_id] = chunk_data
@@ -357,6 +383,9 @@ func unload_chunk(chunk_id: String) -> void:
 
 	# Save enemy states before unloading
 	_save_enemy_states(chunk_id)
+
+	# Clean up spawned entities (spawn points, chests, transitions)
+	_cleanup_chunk_entities(chunk_id)
 
 	# Notify LootManager to clear visual nodes but preserve data
 	var loot_mgr = get_node_or_null("/root/LootManager")
@@ -485,6 +514,366 @@ func _create_chunk_tilemap(chunk_id: String, tile_data: Dictionary, chunk_node: 
 			decoration_layer.set_cell(coords, 0, atlas_coords)
 
 		Debug.log("ChunkManager", "Created decoration layer with %d tiles for %s" % [decoration_tiles.size(), chunk_id])
+
+
+#===============================================================================
+# ZONE ENTITY LOADING
+#===============================================================================
+
+## Load entity data for a zone from JSON file
+func _load_zone_entities(zone_id: String) -> void:
+	# Clear previous data
+	_zone_entities.clear()
+	_player_spawns.clear()
+
+	# Try zone_id as-is first, then with zone_ prefix stripped
+	var path := ZONE_ENTITIES_DIR + zone_id + ".json"
+	if not FileAccess.file_exists(path):
+		# Try stripping zone_ prefix
+		var alt_zone_id := zone_id
+		if alt_zone_id.begins_with("zone_"):
+			alt_zone_id = alt_zone_id.substr(5)
+		path = ZONE_ENTITIES_DIR + alt_zone_id + ".json"
+
+	if not FileAccess.file_exists(path):
+		Debug.log("ChunkManager", "No entity data found for zone: %s" % zone_id)
+		return
+
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		Debug.warn("ChunkManager", "Failed to open entity data: %s" % path)
+		return
+
+	var json := JSON.new()
+	var error := json.parse(file.get_as_text())
+	file.close()
+
+	if error != OK:
+		Debug.warn("ChunkManager", "JSON parse error in %s: %s" % [path, json.get_error_message()])
+		return
+
+	_zone_entities = json.data
+
+	# Register player spawns
+	var player_spawns: Array = _zone_entities.get("player_spawns", [])
+	for ps in player_spawns:
+		var spawn_id: String = ps.get("id", "default")
+		var pos: Dictionary = ps.get("position", {})
+		_player_spawns[spawn_id] = Vector2(pos.get("x", 0), pos.get("y", 0))
+
+	Debug.info("ChunkManager", "Loaded zone entities: %s" % path, {
+		"spawn_points": _zone_entities.get("spawn_points", []).size(),
+		"chests": _zone_entities.get("chests", []).size(),
+		"transitions": _zone_entities.get("transitions", []).size(),
+		"player_spawns": player_spawns.size()
+	})
+
+
+## Get player spawn position by ID
+func get_player_spawn_position(spawn_id: String = "default") -> Vector2:
+	if _player_spawns.has(spawn_id):
+		return _player_spawns[spawn_id]
+	# Fallback to "default" or first available spawn
+	if _player_spawns.has("default"):
+		return _player_spawns["default"]
+	if not _player_spawns.is_empty():
+		return _player_spawns.values()[0]
+	# No spawns found - return origin
+	Debug.warn("ChunkManager", "No player spawn found for: %s" % spawn_id)
+	return Vector2.ZERO
+
+
+## Check if player spawn exists
+func has_player_spawn(spawn_id: String) -> bool:
+	return _player_spawns.has(spawn_id)
+
+
+#===============================================================================
+# ENTITY SPAWNING
+#===============================================================================
+
+## Spawn entities when a chunk loads
+func _spawn_chunk_entities(chunk_id: String, chunk_node: Node2D, chunk_coords: Vector2i) -> void:
+	if _zone_entities.is_empty():
+		return
+
+	var chunk_origin := chunk_to_world(chunk_coords)
+	var chunk_bounds := Rect2(chunk_origin, Vector2(CHUNK_SIZE_PX, CHUNK_SIZE_PX))
+
+	var spawned_entities: Array = []
+
+	# Spawn enemy spawn points
+	for sp_data in _zone_entities.get("spawn_points", []):
+		var pos: Dictionary = sp_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_spawn_point(sp_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
+	# Spawn chests
+	for chest_data in _zone_entities.get("chests", []):
+		var pos: Dictionary = chest_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_chest(chest_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
+	# Spawn zone transitions
+	for trans_data in _zone_entities.get("transitions", []):
+		var pos: Dictionary = trans_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_transition(trans_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
+	# Track spawned entities for cleanup
+	if not spawned_entities.is_empty():
+		_chunk_entities[chunk_id] = spawned_entities
+		Debug.log("ChunkManager", "Spawned %d entities in chunk %s" % [spawned_entities.size(), chunk_id])
+
+
+## Spawn an enemy spawn point from entity data
+func _spawn_spawn_point(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var sp_id: String = data.get("id", "")
+	if sp_id.is_empty():
+		Debug.warn("ChunkManager", "Spawn point has no ID, skipping")
+		return null
+
+	# Get spawn point config from database
+	var sp_config: Dictionary = {}
+	if DatabaseLoader:
+		sp_config = DatabaseLoader.get_spawn_point(sp_id)
+	if sp_config.is_empty():
+		Debug.warn("ChunkManager", "Unknown spawn point in database: %s" % sp_id)
+		# Continue anyway - spawn point might work without database config
+
+	# Try to load spawn point scene
+	var spawn_point: Node2D = null
+	var scene_path := "res://scenes/prefabs/spawn_point.tscn"
+	if ResourceLoader.exists(scene_path):
+		var scene := load(scene_path) as PackedScene
+		if scene:
+			spawn_point = scene.instantiate()
+
+	if spawn_point == null:
+		# Create programmatically
+		spawn_point = _create_spawn_point_programmatic()
+
+	# Set position relative to chunk
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	spawn_point.position = world_pos - chunk_origin
+
+	# Configure from data and database
+	if "spawn_point_id" in spawn_point:
+		spawn_point.spawn_point_id = sp_id
+	if "spawn_group" in spawn_point:
+		spawn_point.spawn_group = data.get("spawn_group", "")
+
+	# Apply database config if available
+	if not sp_config.is_empty() and DatabaseLoader:
+		DatabaseLoader.apply_spawn_point_preset(spawn_point, sp_id)
+
+	# Mark as chunk-spawned for proper tracking
+	spawn_point.set_meta("chunk_spawned", true)
+	spawn_point.set_meta("chunk_id", chunk_id)
+	spawn_point.set_meta("world_position", world_pos)
+
+	parent.add_child(spawn_point)
+	Debug.log("ChunkManager", "Spawned spawn point: %s at %s" % [sp_id, world_pos])
+
+	return spawn_point
+
+
+## Create a spawn point node programmatically (fallback if scene doesn't exist)
+func _create_spawn_point_programmatic() -> Node2D:
+	var spawn_point_script := load("res://scripts/npc/spawn_point.gd")
+	if spawn_point_script:
+		var node := Node2D.new()
+		node.set_script(spawn_point_script)
+		return node
+	# Last resort - return empty Node2D
+	Debug.warn("ChunkManager", "Could not load spawn_point.gd script")
+	return Node2D.new()
+
+
+## Apply database configuration to spawn point
+func _apply_spawn_point_config(spawn_point: Node2D, config: Dictionary) -> void:
+	if "enemy_id" in spawn_point and config.has("enemy_id"):
+		spawn_point.enemy_id = config.enemy_id
+	if "enemy_pool" in spawn_point and config.has("enemy_pool"):
+		spawn_point.enemy_pool = config.enemy_pool
+	if "min_level" in spawn_point and config.has("min_level"):
+		spawn_point.min_level = int(config.min_level)
+	if "max_level" in spawn_point and config.has("max_level"):
+		spawn_point.max_level = int(config.max_level)
+	if "max_active_enemies" in spawn_point and config.has("max_active_enemies"):
+		spawn_point.max_active_enemies = int(config.max_active_enemies)
+	if "respawn_time" in spawn_point and config.has("respawn_time"):
+		spawn_point.respawn_time = float(config.respawn_time)
+	if "spawn_radius" in spawn_point and config.has("spawn_radius"):
+		spawn_point.spawn_radius = float(config.spawn_radius)
+	if "spawn_chance" in spawn_point and config.has("spawn_chance"):
+		spawn_point.spawn_chance = float(config.spawn_chance)
+	if "check_interval" in spawn_point and config.has("check_interval"):
+		spawn_point.check_interval = float(config.check_interval)
+	if "can_respawn" in spawn_point and config.has("can_respawn"):
+		spawn_point.can_respawn = config.can_respawn
+	# Quest conditions
+	if "require_quest_active" in spawn_point and config.has("require_quest_active"):
+		spawn_point.require_quest_active = config.require_quest_active
+	if "require_quest_completed" in spawn_point and config.has("require_quest_completed"):
+		spawn_point.require_quest_completed = config.require_quest_completed
+	if "disable_after_quest" in spawn_point and config.has("disable_after_quest"):
+		spawn_point.disable_after_quest = config.disable_after_quest
+	if "disable_during_quest" in spawn_point and config.has("disable_during_quest"):
+		spawn_point.disable_during_quest = config.disable_during_quest
+	# Module injection
+	if "modules_to_inject" in spawn_point and config.has("modules_to_inject"):
+		spawn_point.modules_to_inject = config.modules_to_inject
+	if "module_config_override" in spawn_point and config.has("module_config_override"):
+		spawn_point.module_config_override = config.module_config_override
+
+
+## Spawn a chest from entity data
+func _spawn_chest(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var chest_id: String = data.get("id", "")
+	if chest_id.is_empty():
+		Debug.warn("ChunkManager", "Chest has no ID, skipping")
+		return null
+
+	# Check persistence - is chest already looted?
+	if Persistence and Persistence.is_chest_opened(chest_id):
+		# Check if can respawn
+		var state := Persistence.load_state("chests", chest_id)
+		var can_respawn: bool = state.get("can_respawn", true)
+		if not can_respawn:
+			Debug.log("ChunkManager", "Chest already looted (permanent): %s" % chest_id)
+			return null
+
+		var looted_at: float = state.get("looted_at", 0.0)
+		var respawn_time: float = state.get("respawn_time", 300.0)
+		var elapsed := Time.get_unix_time_from_system() - looted_at
+		if elapsed < respawn_time:
+			Debug.log("ChunkManager", "Chest not yet respawned: %s (%.1f remaining)" % [chest_id, respawn_time - elapsed])
+			return null
+
+	# Try to load chest spawn point scene
+	var chest: Node2D = null
+	var scene_path := "res://scenes/interactable/chest_spawn_point.tscn"
+	if ResourceLoader.exists(scene_path):
+		var scene := load(scene_path) as PackedScene
+		if scene:
+			chest = scene.instantiate()
+
+	if chest == null:
+		# Create programmatically
+		chest = _create_chest_programmatic(chest_id)
+
+	if chest == null:
+		Debug.warn("ChunkManager", "Could not create chest: %s" % chest_id)
+		return null
+
+	# Set position relative to chunk
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	chest.position = world_pos - chunk_origin
+
+	# Configure chest
+	if "database_chest_id" in chest:
+		chest.database_chest_id = chest_id
+
+	# Mark as chunk-spawned
+	chest.set_meta("chunk_spawned", true)
+	chest.set_meta("chunk_id", chunk_id)
+	chest.set_meta("world_position", world_pos)
+
+	parent.add_child(chest)
+	Debug.log("ChunkManager", "Spawned chest: %s at %s" % [chest_id, world_pos])
+
+	return chest
+
+
+## Create a chest spawn point programmatically
+func _create_chest_programmatic(chest_id: String) -> Node2D:
+	var chest_script := load("res://scripts/interactable/chest_spawn_point.gd")
+	if chest_script:
+		var node := Marker2D.new()
+		node.set_script(chest_script)
+		if "database_chest_id" in node:
+			node.database_chest_id = chest_id
+		return node
+	Debug.warn("ChunkManager", "Could not load chest_spawn_point.gd script")
+	return null
+
+
+## Spawn a zone transition from entity data
+func _spawn_transition(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var target_zone: String = data.get("target_zone", "")
+	if target_zone.is_empty():
+		Debug.warn("ChunkManager", "Transition has no target zone, skipping")
+		return null
+
+	# Create transition Area2D
+	var transition := Area2D.new()
+	transition.name = "ZoneTransition_%s" % target_zone
+
+	# Load and apply zone transition script
+	var trans_script := load("res://scripts/world/zone_transition.gd")
+	if trans_script:
+		transition.set_script(trans_script)
+	else:
+		Debug.warn("ChunkManager", "Could not load zone_transition.gd script")
+
+	# Set position relative to chunk
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	transition.position = world_pos - chunk_origin
+
+	# Configure transition
+	if "target_zone" in transition:
+		# Build proper scene path
+		transition.target_zone = "res://scenes/world/%s.tscn" % target_zone
+	if "spawn_point_id" in transition:
+		transition.spawn_point_id = data.get("target_spawn", "default")
+	if "display_name" in transition:
+		transition.display_name = "To %s" % target_zone.capitalize()
+
+	# Create collision shape
+	var size: Dictionary = data.get("size", {"w": 64, "h": 64})
+	var collision_shape := CollisionShape2D.new()
+	collision_shape.name = "CollisionShape2D"
+	var rect_shape := RectangleShape2D.new()
+	rect_shape.size = Vector2(size.get("w", 64), size.get("h", 64))
+	collision_shape.shape = rect_shape
+	transition.add_child(collision_shape)
+
+	# Mark as chunk-spawned
+	transition.set_meta("chunk_spawned", true)
+	transition.set_meta("chunk_id", chunk_id)
+	transition.set_meta("world_position", world_pos)
+
+	parent.add_child(transition)
+	Debug.log("ChunkManager", "Spawned transition: -> %s at %s" % [target_zone, world_pos])
+
+	return transition
+
+
+## Clean up entities when a chunk unloads
+func _cleanup_chunk_entities(chunk_id: String) -> void:
+	if not _chunk_entities.has(chunk_id):
+		return
+
+	var entities: Array = _chunk_entities[chunk_id]
+	for entity in entities:
+		if is_instance_valid(entity):
+			entity.queue_free()
+
+	_chunk_entities.erase(chunk_id)
+	Debug.log("ChunkManager", "Cleaned up entities for chunk: %s" % chunk_id)
 
 
 #===============================================================================
@@ -665,11 +1054,18 @@ func _save_enemy_states(chunk_id: String) -> void:
 		state.home_position = enemy.home_position if "home_position" in enemy else enemy.global_position
 		state.level = enemy.enemy_level if "enemy_level" in enemy else 1
 
-		# Get spawn point reference
+		# Get spawn point reference - try multiple approaches
+		var sp_id: String = ""
 		if enemy.has_meta("spawn_point"):
 			var sp = enemy.get_meta("spawn_point")
-			if sp and sp.has_method("get_spawn_point_id"):
-				state.spawn_point_id = sp.get_spawn_point_id()
+			if sp and is_instance_valid(sp):
+				if sp.has_method("get_spawn_point_id"):
+					sp_id = sp.get_spawn_point_id()
+				elif "spawn_point_id" in sp:
+					sp_id = sp.spawn_point_id
+				elif "_actual_id" in sp:
+					sp_id = sp._actual_id
+		state.spawn_point_id = sp_id
 
 		# Check if was in combat
 		var controller = _get_enemy_controller(enemy)
@@ -680,8 +1076,9 @@ func _save_enemy_states(chunk_id: String) -> void:
 
 		states.append(state)
 
-	_enemy_temp_storage[chunk_id] = states
-	Debug.log("ChunkManager", "Saved %d enemy states for chunk %s" % [states.size(), chunk_id])
+	if not states.is_empty():
+		_enemy_temp_storage[chunk_id] = states
+		Debug.log("ChunkManager", "Saved %d enemy states for chunk %s" % [states.size(), chunk_id])
 
 
 ## Get saved enemy states for a chunk (called by spawn points on chunk reload)
@@ -1043,3 +1440,159 @@ func debug_list_enemies_in_chunk(chunk_id: String) -> void:
 			targeting_player,
 			returning_home
 		])
+
+
+func debug_show_entities(enabled: bool) -> void:
+	## Toggle visual debug overlay showing entity positions
+	_debug_entities_enabled = enabled
+
+	if not _chunk_root:
+		return
+
+	# Remove existing debug markers
+	for child in _chunk_root.get_children():
+		if child.name.begins_with("DebugEntity_"):
+			child.queue_free()
+
+	if not enabled:
+		return
+
+	# Draw markers for all spawned entities
+	for chunk_id in _chunk_entities:
+		for entity in _chunk_entities[chunk_id]:
+			if is_instance_valid(entity):
+				_draw_entity_debug_marker(entity)
+
+	# Also draw markers from zone entity data (for entities not yet spawned)
+	_draw_zone_entity_markers()
+
+
+func _draw_entity_debug_marker(entity: Node2D) -> void:
+	## Draw a debug marker for a spawned entity
+	var marker := Node2D.new()
+	marker.name = "DebugEntity_%s" % entity.name
+	marker.z_index = 100
+
+	# Determine marker color based on entity type
+	var color := Color.WHITE
+	if entity is EnemySpawnPoint or entity.get_script() == load("res://scripts/npc/spawn_point.gd"):
+		color = Color.RED
+	elif entity.name.begins_with("ZoneTransition"):
+		color = Color.BLUE
+	elif entity.get_script() == load("res://scripts/interactable/chest_spawn_point.gd"):
+		color = Color.YELLOW
+
+	# Create circle marker
+	var circle := _create_debug_circle(8.0, color)
+	marker.add_child(circle)
+
+	# Position at entity's world position
+	if entity.has_meta("world_position"):
+		marker.global_position = entity.get_meta("world_position")
+	else:
+		marker.global_position = entity.global_position
+
+	_chunk_root.add_child(marker)
+
+
+func _draw_zone_entity_markers() -> void:
+	## Draw markers for all entities in zone data (useful for unloaded chunks)
+	if _zone_entities.is_empty():
+		return
+
+	# Spawn points
+	for sp_data in _zone_entities.get("spawn_points", []):
+		var pos: Dictionary = sp_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		_draw_debug_marker_at(world_pos, Color.RED, "SP_%s" % sp_data.get("id", "unknown"))
+
+	# Chests
+	for chest_data in _zone_entities.get("chests", []):
+		var pos: Dictionary = chest_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		_draw_debug_marker_at(world_pos, Color.YELLOW, "Chest_%s" % chest_data.get("id", "unknown"))
+
+	# Transitions
+	for trans_data in _zone_entities.get("transitions", []):
+		var pos: Dictionary = trans_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		_draw_debug_marker_at(world_pos, Color.BLUE, "Trans_%s" % trans_data.get("target_zone", "unknown"))
+
+	# Player spawns
+	for ps_data in _zone_entities.get("player_spawns", []):
+		var pos: Dictionary = ps_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		_draw_debug_marker_at(world_pos, Color.GREEN, "PlayerSpawn_%s" % ps_data.get("id", "default"))
+
+
+func _draw_debug_marker_at(position: Vector2, color: Color, marker_name: String) -> void:
+	## Draw a debug marker at a specific position
+	var marker := Node2D.new()
+	marker.name = "DebugEntity_%s" % marker_name
+	marker.z_index = 100
+	marker.global_position = position
+
+	var circle := _create_debug_circle(6.0, color)
+	marker.add_child(circle)
+
+	_chunk_root.add_child(marker)
+
+
+func _create_debug_circle(radius: float, color: Color) -> Node2D:
+	## Create a simple debug circle visualization
+	# Using a Line2D to draw a circle
+	var circle := Line2D.new()
+	circle.default_color = color
+	circle.width = 2.0
+
+	var points: int = 12
+	for i in range(points + 1):
+		var angle := (float(i) / float(points)) * TAU
+		circle.add_point(Vector2(cos(angle), sin(angle)) * radius)
+
+	return circle
+
+
+func debug_print_zone_entities() -> void:
+	## Print all entities loaded for current zone
+	Debug.info("ChunkManager", "=== Zone Entities: %s ===" % current_zone_id)
+
+	if _zone_entities.is_empty():
+		Debug.info("ChunkManager", "  No entities loaded")
+		return
+
+	Debug.info("ChunkManager", "  Spawn Points: %d" % _zone_entities.get("spawn_points", []).size())
+	for sp in _zone_entities.get("spawn_points", []):
+		var pos: Dictionary = sp.get("position", {})
+		Debug.info("ChunkManager", "    - %s at (%d, %d)" % [sp.get("id", "?"), pos.get("x", 0), pos.get("y", 0)])
+
+	Debug.info("ChunkManager", "  Chests: %d" % _zone_entities.get("chests", []).size())
+	for chest in _zone_entities.get("chests", []):
+		var pos: Dictionary = chest.get("position", {})
+		Debug.info("ChunkManager", "    - %s at (%d, %d)" % [chest.get("id", "?"), pos.get("x", 0), pos.get("y", 0)])
+
+	Debug.info("ChunkManager", "  Transitions: %d" % _zone_entities.get("transitions", []).size())
+	for trans in _zone_entities.get("transitions", []):
+		var pos: Dictionary = trans.get("position", {})
+		Debug.info("ChunkManager", "    - -> %s at (%d, %d)" % [trans.get("target_zone", "?"), pos.get("x", 0), pos.get("y", 0)])
+
+	Debug.info("ChunkManager", "  Player Spawns: %d" % _zone_entities.get("player_spawns", []).size())
+	for ps in _zone_entities.get("player_spawns", []):
+		var pos: Dictionary = ps.get("position", {})
+		Debug.info("ChunkManager", "    - %s at (%d, %d)" % [ps.get("id", "default"), pos.get("x", 0), pos.get("y", 0)])
+
+
+func debug_print_spawned_entities() -> void:
+	## Print all currently spawned entities per chunk
+	Debug.info("ChunkManager", "=== Spawned Entities ===")
+
+	if _chunk_entities.is_empty():
+		Debug.info("ChunkManager", "  No spawned entities")
+		return
+
+	for chunk_id in _chunk_entities:
+		var entities: Array = _chunk_entities[chunk_id]
+		Debug.info("ChunkManager", "  Chunk %s: %d entities" % [chunk_id, entities.size()])
+		for entity in entities:
+			if is_instance_valid(entity):
+				Debug.info("ChunkManager", "    - %s at %s" % [entity.name, entity.global_position])
