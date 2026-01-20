@@ -441,7 +441,7 @@ func _create_chunk_tilemap(chunk_id: String, tile_data: Dictionary, chunk_node: 
 		for tile in ground_tiles:
 			var coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
 			var terrain_id: String = tile.get("terrain_id", "terrain_void")
-			var atlas_coords := TERRAIN_TO_TILE.get(terrain_id, Vector2i(0, 0))
+			var atlas_coords: Vector2i = TERRAIN_TO_TILE.get(terrain_id, Vector2i(0, 0))
 			ground_layer.set_cell(coords, 0, atlas_coords)
 
 		Debug.log("ChunkManager", "Created ground layer with %d tiles for %s" % [ground_tiles.size(), chunk_id])
@@ -457,7 +457,7 @@ func _create_chunk_tilemap(chunk_id: String, tile_data: Dictionary, chunk_node: 
 		chunk_node.add_child(collision_layer)
 
 		# Populate collision tiles (using wall tile which has collision shape)
-		var wall_atlas := TERRAIN_TO_TILE.get("terrain_wall", Vector2i(5, 0))
+		var wall_atlas: Vector2i = TERRAIN_TO_TILE.get("terrain_wall", Vector2i(5, 0))
 		for tile in collision_tiles:
 			var coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
 			collision_layer.set_cell(coords, 0, wall_atlas)
