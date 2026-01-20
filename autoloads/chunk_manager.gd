@@ -212,20 +212,22 @@ func initialize_for_zone(zone_id: String) -> void:
 	print("[SAVELOAD] CM init: Zone entities loaded: spawn_points=%d, chests=%d" % [_zone_entities.get("spawn_points", []).size(), _zone_entities.get("chests", []).size()])
 
 	# Check if we have pending save data that matches this zone
-	# If so, restore the player chunk position for proper chunk loading
+	# If so, log it but still force a refresh - the player's actual position will determine chunks
 	if has_meta("pending_zone_id") and get_meta("pending_zone_id") == zone_id:
 		print("[SAVELOAD] CM init: USING PENDING SAVE DATA")
 		if has_meta("pending_player_chunk"):
-			player_chunk = get_meta("pending_player_chunk")
-			print("[SAVELOAD] CM init: Restored player_chunk from save: %s" % player_chunk)
-			Debug.info("ChunkManager", "Restored player chunk from save: %s" % player_chunk)
+			var saved_chunk = get_meta("pending_player_chunk")
+			print("[SAVELOAD] CM init: Saved player_chunk was: %s (will refresh from actual position)" % saved_chunk)
+			Debug.info("ChunkManager", "Restored player chunk from save: %s" % saved_chunk)
 		# Clear the pending meta data
 		remove_meta("pending_zone_id")
 		remove_meta("pending_player_chunk")
 	else:
-		# Initial chunk loading around spawn point (will happen on first update_chunks call)
-		print("[SAVELOAD] CM init: No pending save data - setting player_chunk to MIN for refresh")
-		player_chunk = Vector2i.MIN  # Force refresh on first update
+		print("[SAVELOAD] CM init: No pending save data")
+
+	# Always force refresh on first update - let actual player position determine chunks
+	print("[SAVELOAD] CM init: Setting player_chunk to MIN for refresh")
+	player_chunk = Vector2i.MIN  # Force refresh on first update
 
 	print("[SAVELOAD] CM init: COMPLETE - initialized=%s, zone=%s, player_chunk=%s" % [_initialized, current_zone_id, player_chunk])
 	Debug.info("ChunkManager", "Initialized for zone: %s" % zone_id)
