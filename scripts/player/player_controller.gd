@@ -66,12 +66,16 @@ var _cast_interrupt_on_damage: bool = true
 
 
 func _ready() -> void:
+	print("[SAVELOAD] PlayerController._ready() | Frame: %d" % Engine.get_process_frames())
+	print("[SAVELOAD] Player: Game.current_state BEFORE setting player: %s" % (Game.GameState.keys()[Game.current_state] if Game else "null"))
 	Debug.info("Player", "PlayerController ready")
 	Game.player = self
+	print("[SAVELOAD] Player: Set Game.player = self, Game.current_state AFTER: %s" % (Game.GameState.keys()[Game.current_state] if Game else "null"))
 	_load_settings_from_database()
 	_update_facing(Facing.DOWN)
 	_setup_level_up_effect()
 	_setup_status_effect_manager()
+	print("[SAVELOAD] PlayerController._ready() COMPLETE")
 
 
 func _load_settings_from_database() -> void:

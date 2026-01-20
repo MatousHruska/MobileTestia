@@ -25,6 +25,9 @@ var player: Node2D = null:
 	set(value):
 		var old_player := player
 		player = value
+		print("[SAVELOAD] Game.player SETTER | Frame: %d" % Engine.get_process_frames())
+		print("[SAVELOAD] GM player: old=%s, new=%s" % [old_player.name if old_player and is_instance_valid(old_player) else "null", value.name if value else "null"])
+		print("[SAVELOAD] GM player: current_state=%s, tree_paused=%s" % [GameState.keys()[current_state], get_tree().paused])
 		Debug.info("Player", "Player setter called", {
 			"old": old_player.name if old_player and is_instance_valid(old_player) else "null",
 			"new": value.name if value else "null",
@@ -32,12 +35,16 @@ var player: Node2D = null:
 			"tree_paused": get_tree().paused
 		})
 		if player:
+			print("[SAVELOAD] GM player: Emitting player_spawned signal")
 			player_spawned.emit(player)
 			# Auto-transition to PLAYING when player is ready
 			if current_state == GameState.LOADING:
+				print("[SAVELOAD] GM player: AUTO-TRANSITIONING to PLAYING from LOADING")
 				Debug.info("Player", "Auto-transitioning to PLAYING from LOADING")
 				set_playing()
+				print("[SAVELOAD] GM player: State after set_playing(): %s" % GameState.keys()[current_state])
 			else:
+				print("[SAVELOAD] GM player: NOT auto-transitioning - state is not LOADING (is %s)" % GameState.keys()[current_state])
 				Debug.warn("Player", "NOT auto-transitioning - state is not LOADING", GameState.keys()[current_state])
 
 ## Game flags
@@ -207,50 +214,41 @@ func game_over() -> void:
 
 ## Zone management
 func change_zone(zone_path: String, spawn_id: String = "default") -> void:
-	Debug.info("System", "change_zone() called", {
-		"zone_path": zone_path,
-		"spawn_id": spawn_id,
-		"state_before": GameState.keys()[current_state],
-		"tree_paused_before": get_tree().paused
-	})
+	print("[SAVELOAD] Game.change_zone() called | Frame: %d" % Engine.get_process_frames())
+	print("[SAVELOAD] GM: zone_path=%s, spawn_id=%s" % [zone_path, spawn_id])
+	print("[SAVELOAD] GM: state BEFORE: %s, player_valid: %s" % [GameState.keys()[current_state], is_player_valid()])
+
 	spawn_point_id = spawn_id
 	current_state = GameState.LOADING
-	Debug.info("System", "change_zone() set state to LOADING, scheduling _load_zone")
+	print("[SAVELOAD] GM: Set state to LOADING, scheduling _load_zone via call_deferred")
 
 	# Use call_deferred to allow current frame to finish
 	call_deferred("_load_zone", zone_path)
 
 func _load_zone(zone_path: String) -> void:
-	Debug.info("System", "_load_zone() executing", {
-		"zone_path": zone_path,
-		"state": GameState.keys()[current_state],
-		"tree_paused": get_tree().paused,
-		"player_valid": is_player_valid()
-	})
-	Debug.perf_start("zone_load")
+	print("[SAVELOAD] Game._load_zone() EXECUTING | Frame: %d" % Engine.get_process_frames())
+	print("[SAVELOAD] GM load: zone_path=%s" % zone_path)
+	print("[SAVELOAD] GM load: state=%s, tree_paused=%s, player_valid=%s" % [GameState.keys()[current_state], get_tree().paused, is_player_valid()])
+	print("[SAVELOAD] GM load: ChunkManager state: initialized=%s, zone=%s" % [ChunkManager._initialized if ChunkManager else "null", ChunkManager.current_zone_id if ChunkManager else "null"])
 
 	# Clear player reference since it will be invalid after scene change
 	# The new scene's player will set this in its _ready()
+	print("[SAVELOAD] GM load: Clearing player reference")
 	player = null
 
+	print("[SAVELOAD] GM load: Calling change_scene_to_file()...")
 	var error := get_tree().change_scene_to_file(zone_path)
 	if error != OK:
-		Debug.err("System", "Failed to load zone", [zone_path, "error:", error])
-		Debug.perf_end("zone_load")
+		print("[SAVELOAD] GM load: ERROR! change_scene_to_file failed with error: %d" % error)
 		return
 
+	print("[SAVELOAD] GM load: change_scene_to_file() returned OK")
 	# Note: change_scene_to_file() queues the scene change for end of frame
 	# The actual scene loads asynchronously, but the function returns OK immediately
-	# perf_end here measures only the time to queue the change, not the actual load
 	current_zone = zone_path.get_file().get_basename()
 	zone_changed.emit(current_zone)
-	Debug.perf_end("zone_load")
-	Debug.info("System", "_load_zone() queued scene change", {
-		"zone": current_zone,
-		"state_after": GameState.keys()[current_state],
-		"tree_paused_after": get_tree().paused,
-		"note": "actual scene loads at end of frame"
-	})
+	print("[SAVELOAD] GM load: Emitted zone_changed signal for: %s" % current_zone)
+	print("[SAVELOAD] GM load: DONE (scene change queued for end of frame) | Frame: %d" % Engine.get_process_frames())
 
 
 ## Utility

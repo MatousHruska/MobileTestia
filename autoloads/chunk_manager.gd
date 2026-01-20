@@ -178,49 +178,69 @@ func _process(_delta: float) -> void:
 ## Initialize the chunk manager for a specific zone
 ## Call this when entering a new zone
 func initialize_for_zone(zone_id: String) -> void:
+	print("[SAVELOAD] ChunkManager.initialize_for_zone(%s) called | Frame: %d" % [zone_id, Engine.get_process_frames()])
+	print("[SAVELOAD] CM init: Current state: initialized=%s, zone=%s" % [_initialized, current_zone_id])
+	print("[SAVELOAD] CM init: Has pending_zone_id meta: %s" % has_meta("pending_zone_id"))
+	if has_meta("pending_zone_id"):
+		print("[SAVELOAD] CM init: pending_zone_id=%s, pending_player_chunk=%s" % [get_meta("pending_zone_id"), get_meta("pending_player_chunk") if has_meta("pending_player_chunk") else "none"])
+
 	if _initialized and current_zone_id == zone_id:
+		print("[SAVELOAD] CM init: EARLY RETURN - already initialized for this zone!")
 		Debug.log("ChunkManager", "Already initialized for zone: %s" % zone_id)
 		return
 
 	# Unload any existing chunks
 	if _initialized:
+		print("[SAVELOAD] CM init: Was initialized for different zone - calling cleanup_zone()")
 		cleanup_zone()
 
 	current_zone_id = zone_id
 	_initialized = true
 
 	# Create chunk root node
+	print("[SAVELOAD] CM init: Creating chunk root...")
 	_create_chunk_root()
+	print("[SAVELOAD] CM init: _chunk_root created: %s" % (is_instance_valid(_chunk_root) if _chunk_root else false))
 
 	# Reset temp storage for new zone
 	_enemy_temp_storage.clear()
 	_chunk_entities.clear()
 
 	# Load zone entity data
+	print("[SAVELOAD] CM init: Loading zone entities...")
 	_load_zone_entities(zone_id)
+	print("[SAVELOAD] CM init: Zone entities loaded: spawn_points=%d, chests=%d" % [_zone_entities.get("spawn_points", []).size(), _zone_entities.get("chests", []).size()])
 
 	# Check if we have pending save data that matches this zone
 	# If so, restore the player chunk position for proper chunk loading
 	if has_meta("pending_zone_id") and get_meta("pending_zone_id") == zone_id:
+		print("[SAVELOAD] CM init: USING PENDING SAVE DATA")
 		if has_meta("pending_player_chunk"):
 			player_chunk = get_meta("pending_player_chunk")
+			print("[SAVELOAD] CM init: Restored player_chunk from save: %s" % player_chunk)
 			Debug.info("ChunkManager", "Restored player chunk from save: %s" % player_chunk)
 		# Clear the pending meta data
 		remove_meta("pending_zone_id")
 		remove_meta("pending_player_chunk")
 	else:
 		# Initial chunk loading around spawn point (will happen on first update_chunks call)
+		print("[SAVELOAD] CM init: No pending save data - setting player_chunk to MIN for refresh")
 		player_chunk = Vector2i.MIN  # Force refresh on first update
 
+	print("[SAVELOAD] CM init: COMPLETE - initialized=%s, zone=%s, player_chunk=%s" % [_initialized, current_zone_id, player_chunk])
 	Debug.info("ChunkManager", "Initialized for zone: %s" % zone_id)
 	zone_initialized.emit(zone_id)
 
 
 ## Clean up all chunks when leaving a zone
 func cleanup_zone() -> void:
+	print("[SAVELOAD] ChunkManager.cleanup_zone() called | Frame: %d" % Engine.get_process_frames())
+	print("[SAVELOAD] CM cleanup: BEFORE: initialized=%s, zone=%s, chunks=%d" % [_initialized, current_zone_id, loaded_chunks.size()])
+
 	_unload_all_chunks()
 
 	if _chunk_root and is_instance_valid(_chunk_root):
+		print("[SAVELOAD] CM cleanup: Freeing _chunk_root")
 		_chunk_root.queue_free()
 		_chunk_root = null
 
@@ -232,6 +252,7 @@ func cleanup_zone() -> void:
 	_player_spawns.clear()
 	player_chunk = Vector2i.ZERO
 
+	print("[SAVELOAD] CM cleanup: AFTER: initialized=%s, zone=%s" % [_initialized, current_zone_id])
 	Debug.info("ChunkManager", "Zone cleanup complete")
 	zone_cleanup.emit()
 
@@ -1322,11 +1343,17 @@ func load_save_data(data: Dictionary) -> void:
 	## will call initialize_for_zone() which handles proper setup.
 	## We only store the data needed for the zone to use.
 
+	print("[SAVELOAD] ChunkManager.load_save_data() called | Frame: %d" % Engine.get_process_frames())
+	print("[SAVELOAD] CM: Current state BEFORE: initialized=%s, zone=%s, player_chunk=%s" % [_initialized, current_zone_id, player_chunk])
+	print("[SAVELOAD] CM: _chunk_root valid: %s" % (is_instance_valid(_chunk_root) if _chunk_root else false))
+
 	var saved_zone_id: String = data.get("current_zone_id", "")
 	var saved_player_chunk := Vector2i(
 		data.get("player_chunk_x", 0),
 		data.get("player_chunk_y", 0)
 	)
+
+	print("[SAVELOAD] CM: Save data: zone=%s, chunk=%s" % [saved_zone_id, saved_player_chunk])
 
 	# Store for reference but don't set as current - let initialize_for_zone() handle it
 	# This prevents race conditions where ChunkManager thinks it's initialized
@@ -1334,12 +1361,17 @@ func load_save_data(data: Dictionary) -> void:
 
 	# If we're currently initialized for a different zone, clean up first
 	if _initialized:
+		print("[SAVELOAD] CM: Currently initialized - calling cleanup_zone()")
 		cleanup_zone()
+		print("[SAVELOAD] CM: cleanup_zone() done")
 
 	# Store the expected zone for validation when zone loads
 	# (but don't set _initialized = true - that happens in initialize_for_zone)
 	set_meta("pending_zone_id", saved_zone_id)
 	set_meta("pending_player_chunk", saved_player_chunk)
+
+	print("[SAVELOAD] CM: Set pending meta: zone=%s, chunk=%s" % [saved_zone_id, saved_player_chunk])
+	print("[SAVELOAD] CM: State AFTER: initialized=%s, zone=%s" % [_initialized, current_zone_id])
 
 	Debug.info("ChunkManager", "Loaded save data (pending)", {
 		"zone": saved_zone_id,

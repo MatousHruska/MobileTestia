@@ -21,6 +21,11 @@ class_name ZoneBase
 
 
 func _ready() -> void:
+	print("[SAVELOAD] ====== ZoneBase._ready() START | Frame: %d ======" % Engine.get_process_frames())
+	print("[SAVELOAD] Zone: name=%s, id=%s" % [zone_name, zone_id])
+	print("[SAVELOAD] Zone: Game.current_state=%s, Game.player_valid=%s" % [Game.GameState.keys()[Game.current_state] if Game else "null", Game.is_player_valid() if Game else false])
+	print("[SAVELOAD] Zone: ChunkManager state BEFORE init: initialized=%s, zone=%s" % [ChunkManager._initialized if ChunkManager else "null", ChunkManager.current_zone_id if ChunkManager else "null"])
+
 	Debug.info("System", "Zone loaded: %s (id: %s)" % [zone_name, zone_id])
 
 	# Notify game manager - use zone_id (matches filename) for save/load compatibility
@@ -28,12 +33,19 @@ func _ready() -> void:
 
 	# Initialize chunk system for this zone
 	if use_chunk_system:
+		print("[SAVELOAD] Zone: Initializing ChunkManager for zone: %s" % zone_id)
 		var chunk_mgr = get_node_or_null("/root/ChunkManager")
 		if chunk_mgr:
 			chunk_mgr.initialize_for_zone(zone_id)
+			print("[SAVELOAD] Zone: ChunkManager init done, state: initialized=%s, zone=%s" % [chunk_mgr._initialized, chunk_mgr.current_zone_id])
 			Debug.info("Zone", "ChunkManager initialized for zone: %s" % zone_id)
+		else:
+			print("[SAVELOAD] Zone: ERROR - ChunkManager not found!")
+	else:
+		print("[SAVELOAD] Zone: Chunk system disabled for this zone")
 
 	# Position player at spawn point
+	print("[SAVELOAD] Zone: Positioning player at spawn...")
 	_position_player_at_spawn()
 
 	# Add starting items from database (only on first zone)
@@ -44,6 +56,9 @@ func _ready() -> void:
 	if spawn_enemies:
 		Debug.warn("Zone", "Using deprecated spawn_enemies - migrate to EnemySpawnPoint nodes")
 		_spawn_zone_enemies()
+
+	print("[SAVELOAD] Zone: NPCManager state: enemies=%d, spawn_points=%d" % [NPCManager.all_enemies.size() if NPCManager else 0, NPCManager.all_spawn_points.size() if NPCManager else 0])
+	print("[SAVELOAD] ====== ZoneBase._ready() END | Frame: %d ======" % Engine.get_process_frames())
 
 
 func _position_player_at_spawn() -> void:
@@ -146,8 +161,18 @@ func get_zone_data() -> Dictionary:
 
 func _exit_tree() -> void:
 	## Clean up when leaving the zone
+	print("[SAVELOAD] ====== ZoneBase._exit_tree() | Frame: %d ======" % Engine.get_process_frames())
+	print("[SAVELOAD] Zone exit: name=%s, id=%s" % [zone_name, zone_id])
+	print("[SAVELOAD] Zone exit: Game.current_state=%s" % (Game.GameState.keys()[Game.current_state] if Game else "null"))
+	print("[SAVELOAD] Zone exit: ChunkManager state BEFORE cleanup: initialized=%s, zone=%s" % [ChunkManager._initialized if ChunkManager else "null", ChunkManager.current_zone_id if ChunkManager else "null"])
+	print("[SAVELOAD] Zone exit: NPCManager BEFORE cleanup: enemies=%d, spawn_points=%d" % [NPCManager.all_enemies.size() if NPCManager else 0, NPCManager.all_spawn_points.size() if NPCManager else 0])
+
 	if use_chunk_system:
 		var chunk_mgr = get_node_or_null("/root/ChunkManager")
 		if chunk_mgr:
+			print("[SAVELOAD] Zone exit: Calling ChunkManager.cleanup_zone()")
 			chunk_mgr.cleanup_zone()
+			print("[SAVELOAD] Zone exit: ChunkManager state AFTER cleanup: initialized=%s, zone=%s" % [chunk_mgr._initialized, chunk_mgr.current_zone_id])
 			Debug.info("Zone", "ChunkManager cleaned up for zone: %s" % zone_id)
+
+	print("[SAVELOAD] ====== ZoneBase._exit_tree() END ======")

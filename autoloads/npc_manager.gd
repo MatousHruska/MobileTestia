@@ -126,19 +126,16 @@ func cleanup_invalid_references() -> void:
 
 func clear_all_tracking() -> void:
 	## Clear all tracking arrays (call on major scene transitions like save load)
-	var counts := {
-		"enemies": all_enemies.size(),
-		"friendlies": all_friendlies.size(),
-		"spawners": all_spawners.size(),
-		"spawn_points": all_spawn_points.size()
-	}
+	print("[SAVELOAD] NPCManager.clear_all_tracking() called | Frame: %d" % Engine.get_process_frames())
+	print("[SAVELOAD] NPC clear: BEFORE: enemies=%d, friendlies=%d, spawners=%d, spawn_points=%d" % [all_enemies.size(), all_friendlies.size(), all_spawners.size(), all_spawn_points.size()])
 
 	all_enemies.clear()
 	all_friendlies.clear()
 	all_spawners.clear()
 	all_spawn_points.clear()
 
-	Debug.info("NPC", "Cleared all NPC tracking", counts)
+	print("[SAVELOAD] NPC clear: AFTER: all arrays cleared")
+	Debug.info("NPC", "Cleared all NPC tracking")
 
 
 ## Registration (called by NPCs on ready)
