@@ -28,8 +28,11 @@ func _ready() -> void:
 
 	Debug.info("System", "Zone loaded: %s (id: %s)" % [zone_name, zone_id])
 
-	# Notify game manager - use zone_id (matches filename) for save/load compatibility
-	Game.current_zone = zone_id
+	# Notify game manager - use scene filename for save/load compatibility
+	# This ensures the save system can reconstruct the correct scene path
+	var scene_filename := scene_file_path.get_file().get_basename()
+	Game.current_zone = scene_filename
+	print("[SAVELOAD] Zone: Set Game.current_zone to scene filename: %s (zone_id=%s)" % [scene_filename, zone_id])
 
 	# Initialize chunk system for this zone
 	if use_chunk_system:
