@@ -8,7 +8,7 @@
 
 [node name="ZoneLDtkTest" type="Node2D"]
 script = ExtResource("4_zone")
-zone_id = "zone_ldtk_test"
+zone_id = "zone_test"
 zone_name = "LDtk Test Zone"
 
 [node name="SpawnPoints" type="Node2D" parent="."]
