@@ -24,6 +24,25 @@ const LOADING_RADIUS: int = 2
 ## Distance threshold for considering enemy "at home"
 const HOME_THRESHOLD: float = 16.0
 
+## Path to chunk tile data directory
+const CHUNK_TILES_DIR := "res://maps/chunk_tiles/"
+
+## Tileset resource for rendering chunks
+const PLACEHOLDER_TILESET_PATH := "res://resources/tilesets/placeholder_tileset.tres"
+
+## Terrain ID to tileset tile mapping (atlas coordinates)
+## Matches the order in generate_placeholder_tileset.gd
+const TERRAIN_TO_TILE := {
+	"terrain_void": Vector2i(0, 0),
+	"terrain_grass": Vector2i(1, 0),
+	"terrain_dirt": Vector2i(2, 0),
+	"terrain_stone": Vector2i(3, 0),
+	"terrain_water": Vector2i(4, 0),
+	"terrain_wall": Vector2i(5, 0),
+	"terrain_sand": Vector2i(6, 0),
+	"terrain_snow": Vector2i(7, 0),
+}
+
 #===============================================================================
 # ENUMS
 #===============================================================================
@@ -93,6 +112,12 @@ var _enemy_temp_storage: Dictionary = {}
 
 ## Debug visualization enabled
 var _debug_borders_enabled: bool = false
+
+## Cached tileset resource for chunk tile rendering
+var _tileset: TileSet = null
+
+## Whether to generate TileMaps for chunks (can be disabled for testing)
+var generate_tilemaps: bool = true
 
 #===============================================================================
 # ENEMY TEMP STATE
@@ -288,6 +313,12 @@ func load_chunk(chunk_id: String, coords: Vector2i = Vector2i.ZERO) -> void:
 		_chunk_root.add_child(chunk_node)
 		chunk_data.node = chunk_node
 
+		# Generate TileMap layers from chunk tile data
+		if generate_tilemaps:
+			var tile_data := _load_chunk_tiles(chunk_id)
+			if not tile_data.is_empty():
+				_create_chunk_tilemap(chunk_id, tile_data, chunk_node)
+
 	# Check for saved enemy states to restore
 	if _enemy_temp_storage.has(chunk_id):
 		chunk_data.enemy_temp_states = _enemy_temp_storage[chunk_id]
@@ -342,6 +373,118 @@ func unload_chunk(chunk_id: String) -> void:
 
 	Debug.log("ChunkManager", "Unloaded chunk: %s" % chunk_id)
 	chunk_unloaded.emit(chunk_id)
+
+
+#===============================================================================
+# TILEMAP GENERATION
+#===============================================================================
+
+## Load tile data for a chunk from JSON file
+func _load_chunk_tiles(chunk_id: String) -> Dictionary:
+	var path := CHUNK_TILES_DIR + chunk_id + ".json"
+
+	if not FileAccess.file_exists(path):
+		Debug.log("ChunkManager", "No tile data found for chunk: %s" % chunk_id)
+		return {}
+
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		Debug.warn("ChunkManager", "Failed to open tile data: %s" % path)
+		return {}
+
+	var json := JSON.new()
+	var error := json.parse(file.get_as_text())
+	file.close()
+
+	if error != OK:
+		Debug.warn("ChunkManager", "JSON parse error in %s: %s" % [path, json.get_error_message()])
+		return {}
+
+	Debug.log("ChunkManager", "Loaded tile data for chunk: %s" % chunk_id)
+	return json.data
+
+
+## Get or load the tileset resource
+func _get_tileset() -> TileSet:
+	if _tileset != null:
+		return _tileset
+
+	if ResourceLoader.exists(PLACEHOLDER_TILESET_PATH):
+		_tileset = load(PLACEHOLDER_TILESET_PATH) as TileSet
+		if _tileset:
+			Debug.log("ChunkManager", "Loaded tileset: %s" % PLACEHOLDER_TILESET_PATH)
+		else:
+			Debug.warn("ChunkManager", "Failed to load tileset: %s" % PLACEHOLDER_TILESET_PATH)
+	else:
+		Debug.warn("ChunkManager", "Tileset not found: %s (run generate_placeholder_tileset.gd)" % PLACEHOLDER_TILESET_PATH)
+
+	return _tileset
+
+
+## Create TileMapLayers for a chunk from tile data
+func _create_chunk_tilemap(chunk_id: String, tile_data: Dictionary, chunk_node: Node2D) -> void:
+	var tileset := _get_tileset()
+	if tileset == null:
+		Debug.warn("ChunkManager", "Cannot create tilemap without tileset")
+		return
+
+	# Create ground layer
+	var ground_tiles: Array = tile_data.get("ground", [])
+	if not ground_tiles.is_empty():
+		var ground_layer := TileMapLayer.new()
+		ground_layer.name = "Ground"
+		ground_layer.tile_set = tileset
+		ground_layer.z_index = 0
+		chunk_node.add_child(ground_layer)
+
+		# Populate ground tiles
+		for tile in ground_tiles:
+			var coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
+			var terrain_id: String = tile.get("terrain_id", "terrain_void")
+			var atlas_coords := TERRAIN_TO_TILE.get(terrain_id, Vector2i(0, 0))
+			ground_layer.set_cell(coords, 0, atlas_coords)
+
+		Debug.log("ChunkManager", "Created ground layer with %d tiles for %s" % [ground_tiles.size(), chunk_id])
+
+	# Create collision layer
+	var collision_tiles: Array = tile_data.get("collision", [])
+	if not collision_tiles.is_empty():
+		var collision_layer := TileMapLayer.new()
+		collision_layer.name = "Collision"
+		collision_layer.tile_set = tileset
+		collision_layer.z_index = 1
+		collision_layer.collision_enabled = true
+		chunk_node.add_child(collision_layer)
+
+		# Populate collision tiles (using wall tile which has collision shape)
+		var wall_atlas := TERRAIN_TO_TILE.get("terrain_wall", Vector2i(5, 0))
+		for tile in collision_tiles:
+			var coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
+			collision_layer.set_cell(coords, 0, wall_atlas)
+
+		Debug.log("ChunkManager", "Created collision layer with %d tiles for %s" % [collision_tiles.size(), chunk_id])
+
+	# Create decoration layer (if present)
+	var decoration_tiles: Array = tile_data.get("decoration", [])
+	if not decoration_tiles.is_empty():
+		var decoration_layer := TileMapLayer.new()
+		decoration_layer.name = "Decoration"
+		decoration_layer.tile_set = tileset
+		decoration_layer.z_index = 2
+		chunk_node.add_child(decoration_layer)
+
+		# Populate decoration tiles
+		for tile in decoration_tiles:
+			var coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
+			var tile_id: int = int(tile.get("tile_id", 0))
+			# Convert tile_id to atlas coords (8 tiles per row)
+			var atlas_x := tile_id % 8
+			var atlas_y := int(tile_id / 8)
+			var atlas_coords := Vector2i(atlas_x, atlas_y)
+			# TODO: Handle flip_x, flip_y with alternative_tile
+			decoration_layer.set_cell(coords, 0, atlas_coords)
+
+		Debug.log("ChunkManager", "Created decoration layer with %d tiles for %s" % [decoration_tiles.size(), chunk_id])
 
 
 #===============================================================================
