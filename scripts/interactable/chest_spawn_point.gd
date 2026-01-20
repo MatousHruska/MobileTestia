@@ -64,27 +64,29 @@ func _try_spawn_chest() -> void:
 		return
 
 	# Check if this spawn point's chest was already looted
+	# Use unique persistence key: database_chest_id@x,y
+	var persistence_key := _get_persistence_key()
 	var can_respawn: bool = _db_data.get("can_respawn", true)
 	var respawn_time: float = float(_db_data.get("respawn_time", 300))
 
-	if Persistence and Persistence.is_chest_opened(database_chest_id):
-		var state := Persistence.load_state("chests", database_chest_id)
+	if Persistence and Persistence.is_chest_opened(persistence_key):
+		var state := Persistence.load_state("chests", persistence_key)
 		var loot_time: float = state.get("looted_at", 0.0)
 		var now: float = Time.get_unix_time_from_system()
 
 		# Check respawn conditions
 		if not can_respawn:
-			Debug.log("ChestSpawn", "Spawn point %s: chest was looted and cannot respawn" % database_chest_id)
+			Debug.log("ChestSpawn", "Spawn point %s: chest was looted and cannot respawn" % persistence_key)
 			return
 
 		if now - loot_time < respawn_time:
 			var remaining := respawn_time - (now - loot_time)
-			Debug.log("ChestSpawn", "Spawn point %s: chest respawn in %.0f seconds" % [database_chest_id, remaining])
+			Debug.log("ChestSpawn", "Spawn point %s: chest respawn in %.0f seconds" % [persistence_key, remaining])
 			return
 
 		# Respawn allowed - clear old state
-		Debug.info("ChestSpawn", "Spawn point %s: chest respawning after %.0f seconds" % [database_chest_id, now - loot_time])
-		Persistence.clear_state("chests", database_chest_id)
+		Debug.info("ChestSpawn", "Spawn point %s: chest respawning after %.0f seconds" % [persistence_key, now - loot_time])
+		Persistence.clear_state("chests", persistence_key)
 
 	# Create appropriate chest type based on database
 	var chest_type: String = _db_data.get("chest_type", "loot")
@@ -108,6 +110,13 @@ func _try_spawn_chest() -> void:
 	])
 
 
+func _get_persistence_key() -> String:
+	## Generate unique persistence key from database_chest_id + position
+	if database_chest_id.is_empty():
+		return ""
+	return "%s@%d,%d" % [database_chest_id, int(global_position.x), int(global_position.y)]
+
+
 func _create_loot_chest(tier: int) -> LootChest:
 	## Create a LootChest with settings from database
 	var chest := LootChest.new()
@@ -115,6 +124,7 @@ func _create_loot_chest(tier: int) -> LootChest:
 	# Core settings
 	chest.chest_tier = tier
 	chest.chest_id = database_chest_id
+	chest.persistence_key = _get_persistence_key()  # Unique per placement
 	chest.display_name = _db_data.get("name", "%s Chest" % ChestBase.TIER_NAMES[tier])
 
 	# Zone level
@@ -143,6 +153,7 @@ func _create_quest_chest(tier: int) -> QuestChest:
 	# Core settings
 	chest.chest_tier = tier
 	chest.chest_id = database_chest_id
+	chest.persistence_key = _get_persistence_key()  # Unique per placement
 	chest.database_chest_id = database_chest_id  # For database loading
 	chest.display_name = _db_data.get("name", "%s Chest" % ChestBase.TIER_NAMES[tier])
 
@@ -212,9 +223,9 @@ func spawn_specific_tier(tier: ChestBase.ChestTier) -> ChestBase:
 	if spawned_chest != null:
 		spawned_chest.queue_free()
 
-	# Clear any existing persistence for this spawn point
+	# Clear any existing persistence for this spawn point (using unique key)
 	if Persistence:
-		Persistence.clear_state("chests", database_chest_id)
+		Persistence.clear_state("chests", _get_persistence_key())
 
 	# Reload database data in case it changed
 	_load_database_data()
