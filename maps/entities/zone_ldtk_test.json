@@ -121,7 +121,7 @@
 			"spawn_group": ""
 		},
 		{
-			"id": "",
+			"id": "sp_test_static",
 			"position": {
 				"x": 264.0,
 				"y": 1848.0

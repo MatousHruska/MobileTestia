@@ -909,7 +909,10 @@
 							"height": 16,
 							"defUid": 10,
 							"px": [264,1848],
-							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "", "__tile": null, "defUid": 11, "realEditorValues": [] }],
+							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
+								"id": "V_String",
+								"params": ["sp_test_static"]
+							}] }],
 							"__worldX": 264,
 							"__worldY": 1848
 						},
