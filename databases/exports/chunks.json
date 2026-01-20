@@ -6,10 +6,10 @@
 			"enemy_density": "medium",
 			"grid_x": 0,
 			"grid_y": 0,
-			"id": "chunk_test_0_0",
+			"id": "chunk_ldtk_test_0_0",
 			"lighting_preset": "default",
 			"spawn_table_id": "",
-			"zone_id": "zone_test"
+			"zone_id": "zone_ldtk_test"
 		},
 		{
 			"ambient_override": "",
@@ -17,10 +17,10 @@
 			"enemy_density": "none",
 			"grid_x": 1,
 			"grid_y": 0,
-			"id": "chunk_test_1_0",
+			"id": "chunk_ldtk_test_1_0",
 			"lighting_preset": "default",
 			"spawn_table_id": "",
-			"zone_id": "zone_test"
+			"zone_id": "zone_ldtk_test"
 		},
 		{
 			"ambient_override": "",
@@ -28,10 +28,10 @@
 			"enemy_density": "none",
 			"grid_x": 0,
 			"grid_y": 1,
-			"id": "chunk_test_0_1",
+			"id": "chunk_ldtk_test_0_1",
 			"lighting_preset": "default",
 			"spawn_table_id": "",
-			"zone_id": "zone_test"
+			"zone_id": "zone_ldtk_test"
 		},
 		{
 			"ambient_override": "",
@@ -39,10 +39,10 @@
 			"enemy_density": "none",
 			"grid_x": 1,
 			"grid_y": 1,
-			"id": "chunk_test_1_1",
+			"id": "chunk_ldtk_test_1_1",
 			"lighting_preset": "default",
 			"spawn_table_id": "",
-			"zone_id": "zone_test"
+			"zone_id": "zone_ldtk_test"
 		}
 	]
 }
