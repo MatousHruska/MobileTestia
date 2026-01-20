@@ -71,7 +71,7 @@
       "description": "Mountain testing area with wolves, archers, and boss"
     },
     {
-      "id": "zone_ldtk_test",
+      "id": "zone_test",
       "name": "LDtk Test Zone",
       "zone_type": "outdoor",
       "min_level": 1,
