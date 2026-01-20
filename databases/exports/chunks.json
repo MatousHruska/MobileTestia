@@ -3,7 +3,7 @@
 		{
 			"ambient_override": "",
 			"biome_type": "dirt",
-			"enemy_density": "high",
+			"enemy_density": "medium",
 			"grid_x": 0,
 			"grid_y": 0,
 			"id": "chunk_test_0_0",
