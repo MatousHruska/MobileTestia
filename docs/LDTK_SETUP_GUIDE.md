@@ -422,3 +422,69 @@ Before importing:
 - [ ] No overlapping location areas
 - [ ] Zone transitions have valid targets
 - [ ] Level dimensions are multiples of 1024px
+
+---
+
+## Critical: Zone ID Naming Requirements
+
+### The Zone Naming Rule
+
+**CRITICAL**: The `zone_id` exported in your Godot scene MUST match the LDTK level identifier exactly.
+
+| Component | Must Match |
+|-----------|------------|
+| LDTK Level Identifier | `zone_ldtk_test` |
+| Scene filename | `zone_ldtk_test.tscn` |
+| ZoneBase `zone_id` export | `zone_ldtk_test` |
+| chunks.json `zone_id` field | `zone_ldtk_test` |
+| Zone entity file | `zone_ldtk_test.json` |
+
+### What Happens If They Don't Match
+
+If your scene has `zone_id = "zone_test"` but LDTK exported with `zone_ldtk_test`:
+
+1. **Save stores**: `zone: "zone_ldtk_test"` (scene filename)
+2. **Load reconstructs**: `res://scenes/world/zone_ldtk_test.tscn` ✓
+3. **ZoneBase calls**: `ChunkManager.initialize_for_zone("zone_test")` ✗
+4. **ChunkManager looks for**: `chunk_test_0_0.json` ✗
+5. **But files are named**: `chunk_ldtk_test_0_0.json`
+6. **Result**: Empty zone after load!
+
+### How to Fix
+
+When creating a new LDTK zone:
+
+1. **In LDTK**: Create level with identifier `zone_yourname`
+2. **Run importer**: Creates `chunk_yourname_*.json` files with `zone_id: "zone_yourname"`
+3. **In Godot scene**: Set `zone_id = "zone_yourname"` (match LDTK exactly!)
+
+### Debug Tools
+
+Press these keys in-game to diagnose zone naming issues:
+
+| Key | Function |
+|-----|----------|
+| **F11** | Full zone naming diagnostic report |
+| **F12** | Step-by-step save/load resolution trace |
+
+The F11 diagnostic shows:
+- All zone name variants in use
+- Expected vs actual chunk file names
+- Whether files exist on disk
+- Automatic mismatch detection with fix suggestions
+
+### Early Warning
+
+ZoneBase now shows a prominent warning on startup if scene filename differs from zone_id:
+
+```
+╔═══════════════════════════════════════════════════════════╗
+║  ⚠️  ZONE NAMING MISMATCH DETECTED!                        ║
+╟───────────────────────────────────────────────────────────╢
+║  Scene filename: zone_ldtk_test                            ║
+║  Zone ID export: zone_test                                 ║
+╟───────────────────────────────────────────────────────────╢
+║  This may cause chunk loading to fail!                    ║
+║  Press F11 to run full diagnostic                         ║
+╚═══════════════════════════════════════════════════════════╝
+```
