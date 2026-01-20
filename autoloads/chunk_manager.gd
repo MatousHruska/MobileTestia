@@ -2507,7 +2507,7 @@ class DebugOverlayDraw extends Node2D:
 
 		# Build info lines
 		var lines: Array[String] = [
-			"[Chunk Debug] F2 to toggle",
+			"[Chunk Debug] Numpad 2 to toggle",
 			"Zone: %s" % summary.zone,
 			"Player Chunk: %s" % str(summary.player_chunk),
 			"Loaded: %d chunks" % summary.loaded,

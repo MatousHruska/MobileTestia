@@ -746,29 +746,29 @@ const CORPSE_DURATION := 2.0  # seconds
 
 ## Debug Tools
 
-### Debug Key Bindings
+### Debug Key Bindings (Numpad)
 
-All debug keys work in debug builds only:
+All debug keys work in debug builds only. Uses **numpad** to avoid Godot editor conflicts:
 
 | Key | Function | Description |
 |-----|----------|-------------|
-| **F1** | ChunkManager State | Print loaded chunks, states, temp storage |
-| **F2** | Debug Overlay | Toggle visual chunk boundary overlay |
-| **F3** | LootManager State | Print tracked loot drops |
-| **F4** | Enemy Summary | Print enemy counts and combat states |
-| **F5** | Performance Metrics | Print chunk load times, peak counts |
-| **F9** | Full Game State | Print comprehensive game state |
-| **F10** | Test Buff System | Debug buff ends_when system |
-| **F11** | Zone Naming Diagnostic | Full save/load naming analysis |
-| **F12** | Zone Resolution Trace | Step-by-step save/load path trace |
+| **Numpad 1** | ChunkManager State | Print loaded chunks, states, temp storage |
+| **Numpad 2** | Debug Overlay | Toggle visual chunk boundary overlay |
+| **Numpad 3** | LootManager State | Print tracked loot drops |
+| **Numpad 4** | Enemy Summary | Print enemy counts and combat states |
+| **Numpad 5** | Performance Metrics | Print chunk load times, peak counts |
+| **Numpad 6** | Zone Naming Diagnostic | Full save/load naming analysis |
+| **Numpad 7** | Zone Resolution Trace | Step-by-step save/load path trace |
+| **Numpad 8** | Full Game State | Print comprehensive game state |
+| **Numpad 9** | Test Buff System | Debug buff ends_when system |
 
-### Debug Overlay (F2)
+### Debug Overlay (Numpad 2)
 
 Toggle visual overlay showing chunk boundaries and states:
 
 ```
-╔════════════════════════════╗
-║ [Chunk Debug] F2 to toggle ║
+╔═══════════════════════════════════╗
+║ [Chunk Debug] Numpad 2 to toggle  ║
 ║ Zone: zone_ldtk_test       ║
 ║ Player Chunk: (1, 0)       ║
 ║ Loaded: 25 chunks          ║
@@ -787,7 +787,7 @@ Chunk colors:
 - Gray = Not loaded
 ```
 
-### Performance Metrics (F5)
+### Performance Metrics (Numpad 5)
 
 ```
 ╔════════════════════════════════════════════════════════════════╗
@@ -811,9 +811,9 @@ Chunk colors:
 Target: < 50ms per chunk load
 ```
 
-### Zone Naming Diagnostic (F11)
+### Zone Naming Diagnostic (Numpad 6)
 
-Press **F11** in-game to run a comprehensive zone naming diagnostic:
+Press **Numpad 6** in-game to run a comprehensive zone naming diagnostic:
 
 ```
 ╔════════════════════════════════════════════════════════════════╗
@@ -834,9 +834,9 @@ Press **F11** in-game to run a comprehensive zone naming diagnostic:
 ╚════════════════════════════════════════════════════════════════╝
 ```
 
-### Zone Resolution Trace (F12)
+### Zone Resolution Trace (Numpad 7)
 
-Press **F12** to trace the save/load zone resolution path:
+Press **Numpad 7** to trace the save/load zone resolution path:
 
 ```
 [ZoneDebug] ========== ZONE RESOLUTION TRACE ==========
@@ -853,11 +853,11 @@ Press **F12** to trace the save/load zone resolution path:
 
 ```gdscript
 # ChunkManager debug functions:
-ChunkManager.debug_print_state()              # F1 equivalent
-ChunkManager.debug_toggle_overlay()           # F2 equivalent
-ChunkManager.debug_print_perf()               # F5 equivalent
-ChunkManager.debug_zone_naming_diagnostic()   # F11 equivalent
-ChunkManager.debug_trace_zone_resolution()    # F12 equivalent
+ChunkManager.debug_print_state()              # Numpad 1 equivalent
+ChunkManager.debug_toggle_overlay()           # Numpad 2 equivalent
+ChunkManager.debug_print_perf()               # Numpad 5 equivalent
+ChunkManager.debug_zone_naming_diagnostic()   # Numpad 6 equivalent
+ChunkManager.debug_trace_zone_resolution()    # Numpad 7 equivalent
 
 # Teleport to specific chunk:
 ChunkManager.debug_teleport_to_chunk(2, 1)    # Teleport to chunk (2,1)
@@ -878,13 +878,13 @@ ChunkManager.debug_print_chunk_id_generation("zone_id", 0, 0)
 
 | Symptom | Debug Action | Likely Cause |
 |---------|--------------|--------------|
-| Empty zone after load | Press F11 | zone_id mismatch |
-| Chunks not loading | Press F11, check section 6 | ChunkManager not initialized |
-| Save/load breaks zone | Press F12 | Scene filename vs zone_id mismatch |
+| Empty zone after load | Press Numpad 6 | zone_id mismatch |
+| Chunks not loading | Press Numpad 6, check section 6 | ChunkManager not initialized |
+| Save/load breaks zone | Press Numpad 7 | Scene filename vs zone_id mismatch |
 | "CHUNK FILE NOT FOUND" spam | Check chunk file names | LDTK level identifier wrong |
-| Chunk stays loaded | Press F2, look for red/orange | Combat or leash lock active |
-| Poor performance | Press F5 | Check avg load time |
-| Enemies not spawning | Press F4 | Check spawn point configs |
+| Chunk stays loaded | Press Numpad 2, look for red/orange | Combat or leash lock active |
+| Poor performance | Press Numpad 5 | Check avg load time |
+| Enemies not spawning | Press Numpad 4 | Check spawn point configs |
 
 ---
 
@@ -892,35 +892,35 @@ ChunkManager.debug_print_chunk_id_generation("zone_id", 0, 0)
 
 ### Chunks Not Loading
 
-1. Press **F11** to run zone naming diagnostic
+1. Press **Numpad 6** to run zone naming diagnostic
 2. Check if `zone_id` matches LDTK level identifier
 3. Verify chunk JSON files exist in `maps/chunk_tiles/`
 4. Check `ChunkManager._initialized` is true
 
 ### Enemies Not Spawning
 
-1. Press **F4** to see enemy summary
+1. Press **Numpad 4** to see enemy summary
 2. Check spawn_point_id matches database entry
 3. Check Persistence - is spawn point cleared?
-4. Press **F2** and look for spawn point positions
+4. Press **Numpad 2** and look for spawn point positions
 
 ### Combat Lock Not Working
 
-1. Press **F2** to see chunk states (should turn red)
+1. Press **Numpad 2** to see chunk states (should turn red)
 2. Verify enemy has behavior component
 3. Check `enemy.behavior.get_context().has_valid_target`
 4. Ensure enemy is within correct chunk bounds
 
 ### Loot Disappearing
 
-1. Press **F3** to see LootManager state
+1. Press **Numpad 3** to see LootManager state
 2. Verify `loot_drop_id` meta is set on pickup nodes
 3. Confirm `chunk_loaded` signal fires on reload
 4. Check that loot timeout hasn't expired
 
 ### Performance Issues
 
-1. Press **F5** to see metrics
+1. Press **Numpad 5** to see metrics
 2. Target: < 50ms per chunk load
 3. Check number of loaded chunks (max ~25)
 4. Reduce enemy count per chunk if needed
@@ -928,7 +928,7 @@ ChunkManager.debug_print_chunk_id_generation("zone_id", 0, 0)
 
 ### Save/Load Issues
 
-1. Press **F12** to trace zone resolution
+1. Press **Numpad 7** to trace zone resolution
 2. Ensure scene filename matches zone_id export
 3. Check that `player_chunk` resets properly (see chunk refresh bug fix)
 4. Verify no errors in save/load debug logs `[SAVELOAD]`
