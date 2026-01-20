@@ -610,10 +610,6 @@ func spawn_enemy() -> EnemyNPC:
 		})
 		return null
 
-	# Set position
-	enemy.global_position = _get_spawn_position()
-	enemy.home_position = enemy.global_position
-
 	# Connect signals
 	enemy.died.connect(_on_enemy_died.bind(enemy))
 
@@ -623,10 +619,16 @@ func spawn_enemy() -> EnemyNPC:
 	else:
 		enemy.set_meta("spawn_point", self)
 
-	# Add to scene
+	# Add to scene FIRST (before setting global_position)
+	# Setting global_position before node is in tree only sets local position
 	var parent := get_parent()
 	if parent:
 		parent.add_child(enemy)
+
+	# NOW set position (after it's in the tree, global_position works correctly)
+	var spawn_pos := _get_spawn_position()
+	enemy.global_position = spawn_pos
+	enemy.home_position = spawn_pos
 
 	alive_enemies.append(enemy)
 	enemy_spawned.emit(enemy)
