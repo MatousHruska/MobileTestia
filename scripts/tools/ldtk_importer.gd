@@ -473,12 +473,13 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 
 			match entity_type:
 				"spawnpoint":
+					var sp_group = fields.get("spawn_group", "")
 					result.spawn_points.append({
 						"id": fields.get("spawn_point_id", ""),
 						"zone_id": zone_id,
 						"position_x": position.x,
 						"position_y": position.y,
-						"spawn_group": fields.get("spawn_group", "")
+						"spawn_group": sp_group if sp_group != null else ""
 					})
 
 				"chestspawn":

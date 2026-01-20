@@ -675,7 +675,8 @@ func _spawn_spawn_point(data: Dictionary, parent: Node2D, chunk_origin: Vector2,
 	if "spawn_point_id" in spawn_point:
 		spawn_point.spawn_point_id = sp_id
 	if "spawn_group" in spawn_point:
-		spawn_point.spawn_group = data.get("spawn_group", "")
+		var group_value = data.get("spawn_group", "")
+		spawn_point.spawn_group = group_value if group_value != null else ""
 
 	# Apply database config if available
 	if not sp_config.is_empty() and DatabaseLoader:
