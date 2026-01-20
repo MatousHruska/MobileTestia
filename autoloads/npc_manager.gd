@@ -32,6 +32,9 @@ func _ready() -> void:
 	Debug.info("NPC", "NPCManager initialized")
 	_setup_debug_overlay()
 
+	# Connect to scene tree signals to clean up on scene changes
+	get_tree().node_removed.connect(_on_node_removed)
+
 
 func _setup_debug_overlay() -> void:
 	# Defer overlay creation to avoid class loading issues
@@ -52,6 +55,90 @@ func _create_debug_overlay() -> void:
 		ai_debug_overlay = ai_overlay_script.new()
 		ai_debug_overlay.name = "AIDebugOverlay"
 		add_child(ai_debug_overlay)
+
+
+func _on_node_removed(node: Node) -> void:
+	## Handle node removal - clean up any references we might have
+	## This ensures we don't keep stale references after scene changes
+	if node in all_enemies:
+		all_enemies.erase(node)
+	if node in all_friendlies:
+		all_friendlies.erase(node)
+	if node in all_spawners:
+		all_spawners.erase(node)
+	if node in all_spawn_points:
+		all_spawn_points.erase(node)
+
+
+func cleanup_invalid_references() -> void:
+	## Remove all invalid references from tracking arrays
+	## Call this on scene change or when you suspect stale references
+	var cleaned_enemies: int = 0
+	var cleaned_friendlies: int = 0
+	var cleaned_spawners: int = 0
+	var cleaned_spawn_points: int = 0
+
+	# Clean up enemies
+	var valid_enemies: Array = []
+	for enemy in all_enemies:
+		if is_instance_valid(enemy):
+			valid_enemies.append(enemy)
+		else:
+			cleaned_enemies += 1
+	all_enemies = valid_enemies
+
+	# Clean up friendlies
+	var valid_friendlies: Array = []
+	for npc in all_friendlies:
+		if is_instance_valid(npc):
+			valid_friendlies.append(npc)
+		else:
+			cleaned_friendlies += 1
+	all_friendlies = valid_friendlies
+
+	# Clean up spawners
+	var valid_spawners: Array = []
+	for spawner in all_spawners:
+		if is_instance_valid(spawner):
+			valid_spawners.append(spawner)
+		else:
+			cleaned_spawners += 1
+	all_spawners = valid_spawners
+
+	# Clean up spawn points
+	var valid_spawn_points: Array = []
+	for spawn_point in all_spawn_points:
+		if is_instance_valid(spawn_point):
+			valid_spawn_points.append(spawn_point)
+		else:
+			cleaned_spawn_points += 1
+	all_spawn_points = valid_spawn_points
+
+	var total := cleaned_enemies + cleaned_friendlies + cleaned_spawners + cleaned_spawn_points
+	if total > 0:
+		Debug.info("NPC", "Cleaned up invalid references", {
+			"enemies": cleaned_enemies,
+			"friendlies": cleaned_friendlies,
+			"spawners": cleaned_spawners,
+			"spawn_points": cleaned_spawn_points
+		})
+
+
+func clear_all_tracking() -> void:
+	## Clear all tracking arrays (call on major scene transitions like save load)
+	var counts := {
+		"enemies": all_enemies.size(),
+		"friendlies": all_friendlies.size(),
+		"spawners": all_spawners.size(),
+		"spawn_points": all_spawn_points.size()
+	}
+
+	all_enemies.clear()
+	all_friendlies.clear()
+	all_spawners.clear()
+	all_spawn_points.clear()
+
+	Debug.info("NPC", "Cleared all NPC tracking", counts)
 
 
 ## Registration (called by NPCs on ready)

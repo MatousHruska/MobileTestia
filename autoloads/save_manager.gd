@@ -530,6 +530,10 @@ func _reset_game_state() -> void:
 	if Persistence:
 		Persistence.clear_all()
 
+	# Clear NPC tracking since old NPCs will be invalidated by scene change
+	if NPCManager:
+		NPCManager.clear_all_tracking()
+
 	# Other managers will be reset when their load_save_data is called
 
 
