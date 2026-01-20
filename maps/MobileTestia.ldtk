@@ -225,43 +225,6 @@
 					"allowedRefsEntityUid": null,
 					"allowedRefTags": [],
 					"tilesetUid": null
-				},
-				{
-					"identifier": "spawn_group",
-					"doc": "Optional group for coordinated spawns",
-					"__type": "String",
-					"uid": 12,
-					"type": "F_String",
-					"isArray": false,
-					"canBeNull": true,
-					"arrayMinLength": null,
-					"arrayMaxLength": null,
-					"editorDisplayMode": "Hidden",
-					"editorDisplayScale": 1,
-					"editorDisplayPos": "Above",
-					"editorLinkStyle": "StraightArrow",
-					"editorDisplayColor": null,
-					"editorAlwaysShow": false,
-					"editorShowInWorld": false,
-					"editorCutLongValues": true,
-					"editorTextSuffix": null,
-					"editorTextPrefix": null,
-					"useForSmartColor": false,
-					"exportToToc": false,
-					"searchable": false,
-					"min": null,
-					"max": null,
-					"regex": null,
-					"acceptFileTypes": null,
-					"defaultOverride": null,
-					"textLanguageMode": null,
-					"symmetricalRef": false,
-					"autoChainRef": true,
-					"allowOutOfLevelRef": true,
-					"allowedRefs": "OnlySame",
-					"allowedRefsEntityUid": null,
-					"allowedRefTags": [],
-					"tilesetUid": null
 				}
 			]
 		},
@@ -824,191 +787,188 @@
 							"__worldY": 1232
 						},
 						{
-							"__identifier": "chestspawn",
-							"__grid": [2,13],
-							"__pivot": [0.5,1],
-							"__tags": ["interactable"],
+							"__identifier": "spawnpoint",
+							"__grid": [49,21],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
 							"__tile": null,
-							"__smartColor": "#FFCC00",
-							"iid": "99175410-d380-11f0-9e89-a9797a522089",
+							"__smartColor": "#FF0000",
+							"iid": "5ba5edf0-d380-11f0-9e89-7b18c3a7d234",
 							"width": 16,
 							"height": 16,
-							"defUid": 20,
-							"px": [40,224],
-							"fieldInstances": [{ "__identifier": "chest_id", "__type": "String", "__value": "chest_forest_01", "__tile": null, "defUid": 21, "realEditorValues": [{
-								"id": "V_String",
-								"params": ["chest_forest_01"]
-							}] }],
-							"__worldX": 40,
-							"__worldY": 224
+							"defUid": 10,
+							"px": [792,344],
+							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "", "__tile": null, "defUid": 11, "realEditorValues": [] }],
+							"__worldX": 792,
+							"__worldY": 344
 						},
 						{
-							"__identifier": "chestspawn",
-							"__grid": [4,13],
-							"__pivot": [0.5,1],
-							"__tags": ["interactable"],
+							"__identifier": "spawnpoint",
+							"__grid": [74,18],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
 							"__tile": null,
-							"__smartColor": "#FFCC00",
-							"iid": "a165f220-d380-11f0-9e89-0f78fc4fd1c9",
+							"__smartColor": "#FF0000",
+							"iid": "60099630-d380-11f0-9e89-5503526250dd",
 							"width": 16,
 							"height": 16,
-							"defUid": 20,
-							"px": [72,224],
-							"fieldInstances": [{ "__identifier": "chest_id", "__type": "String", "__value": "chest_forest_01", "__tile": null, "defUid": 21, "realEditorValues": [{
+							"defUid": 10,
+							"px": [1192,296],
+							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
 								"id": "V_String",
-								"params": ["chest_forest_01"]
+								"params": ["sp_test_static"]
 							}] }],
-							"__worldX": 72,
-							"__worldY": 224
+							"__worldX": 1192,
+							"__worldY": 296
 						},
 						{
-							"__identifier": "chestspawn",
-							"__grid": [6,13],
-							"__pivot": [0.5,1],
-							"__tags": ["interactable"],
+							"__identifier": "spawnpoint",
+							"__grid": [85,28],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
 							"__tile": null,
-							"__smartColor": "#FFCC00",
-							"iid": "a1d073c0-d380-11f0-9e89-ed3a504cdfb5",
+							"__smartColor": "#FF0000",
+							"iid": "618f72e0-d380-11f0-9e89-7378c6d76b49",
 							"width": 16,
 							"height": 16,
-							"defUid": 20,
-							"px": [104,224],
-							"fieldInstances": [{ "__identifier": "chest_id", "__type": "String", "__value": "chest_forest_01", "__tile": null, "defUid": 21, "realEditorValues": [{
+							"defUid": 10,
+							"px": [1368,456],
+							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
 								"id": "V_String",
-								"params": ["chest_forest_01"]
+								"params": ["sp_test_static"]
 							}] }],
-							"__worldX": 104,
-							"__worldY": 224
+							"__worldX": 1368,
+							"__worldY": 456
 						},
 						{
-							"__identifier": "chestspawn",
-							"__grid": [9,13],
-							"__pivot": [0.5,1],
-							"__tags": ["interactable"],
+							"__identifier": "spawnpoint",
+							"__grid": [112,7],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
 							"__tile": null,
-							"__smartColor": "#FFCC00",
-							"iid": "a21285d0-d380-11f0-9e89-e1c2af92e100",
+							"__smartColor": "#FF0000",
+							"iid": "62d671d0-d380-11f0-9e89-a32d2f1666ef",
 							"width": 16,
 							"height": 16,
-							"defUid": 20,
-							"px": [152,224],
-							"fieldInstances": [{ "__identifier": "chest_id", "__type": "String", "__value": "chest_forest_01", "__tile": null, "defUid": 21, "realEditorValues": [{
+							"defUid": 10,
+							"px": [1800,120],
+							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
 								"id": "V_String",
-								"params": ["chest_forest_01"]
+								"params": ["sp_test_static"]
 							}] }],
-							"__worldX": 152,
-							"__worldY": 224
+							"__worldX": 1800,
+							"__worldY": 120
 						},
 						{
-							"__identifier": "chestspawn",
-							"__grid": [12,13],
-							"__pivot": [0.5,1],
-							"__tags": ["interactable"],
+							"__identifier": "spawnpoint",
+							"__grid": [67,50],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
 							"__tile": null,
-							"__smartColor": "#FFCC00",
-							"iid": "a254bef0-d380-11f0-9e89-9957a9872fa5",
+							"__smartColor": "#FF0000",
+							"iid": "653681e0-d380-11f0-9e89-25e365f47bcc",
 							"width": 16,
 							"height": 16,
-							"defUid": 20,
-							"px": [200,224],
-							"fieldInstances": [{ "__identifier": "chest_id", "__type": "String", "__value": "chest_forest_01", "__tile": null, "defUid": 21, "realEditorValues": [{
+							"defUid": 10,
+							"px": [1080,808],
+							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
 								"id": "V_String",
-								"params": ["chest_forest_01"]
+								"params": ["sp_test_static"]
 							}] }],
-							"__worldX": 200,
-							"__worldY": 224
+							"__worldX": 1080,
+							"__worldY": 808
 						},
 						{
-							"__identifier": "chestspawn",
-							"__grid": [13,15],
-							"__pivot": [0.5,1],
-							"__tags": ["interactable"],
+							"__identifier": "spawnpoint",
+							"__grid": [34,73],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
 							"__tile": null,
-							"__smartColor": "#FFCC00",
-							"iid": "a2d5d5d0-d380-11f0-9e89-df3ae1c7fef8",
+							"__smartColor": "#FF0000",
+							"iid": "66d87210-d380-11f0-9e89-2f80ef56b853",
 							"width": 16,
 							"height": 16,
-							"defUid": 20,
-							"px": [216,256],
-							"fieldInstances": [{ "__identifier": "chest_id", "__type": "String", "__value": "", "__tile": null, "defUid": 21, "realEditorValues": [] }],
-							"__worldX": 216,
-							"__worldY": 256
+							"defUid": 10,
+							"px": [552,1176],
+							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
+								"id": "V_String",
+								"params": ["sp_test_static"]
+							}] }],
+							"__worldX": 552,
+							"__worldY": 1176
 						},
 						{
-							"__identifier": "chestspawn",
-							"__grid": [10,15],
-							"__pivot": [0.5,1],
-							"__tags": ["interactable"],
+							"__identifier": "spawnpoint",
+							"__grid": [16,115],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
 							"__tile": null,
-							"__smartColor": "#FFCC00",
-							"iid": "a32a5e70-d380-11f0-9e89-1719624ebfdf",
+							"__smartColor": "#FF0000",
+							"iid": "68d8aee0-d380-11f0-9e89-950a31a3deb4",
 							"width": 16,
 							"height": 16,
-							"defUid": 20,
-							"px": [168,256],
-							"fieldInstances": [{ "__identifier": "chest_id", "__type": "String", "__value": "chest_forest_01", "__tile": null, "defUid": 21, "realEditorValues": [{
-								"id": "V_String",
-								"params": ["chest_forest_01"]
-							}] }],
-							"__worldX": 168,
-							"__worldY": 256
+							"defUid": 10,
+							"px": [264,1848],
+							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "", "__tile": null, "defUid": 11, "realEditorValues": [] }],
+							"__worldX": 264,
+							"__worldY": 1848
 						},
 						{
-							"__identifier": "chestspawn",
-							"__grid": [7,15],
-							"__pivot": [0.5,1],
-							"__tags": ["interactable"],
+							"__identifier": "spawnpoint",
+							"__grid": [18,113],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
 							"__tile": null,
-							"__smartColor": "#FFCC00",
-							"iid": "a3717990-d380-11f0-9e89-791cdddeacc9",
+							"__smartColor": "#FF0000",
+							"iid": "69cd4810-d380-11f0-9e89-af2015d595fa",
 							"width": 16,
 							"height": 16,
-							"defUid": 20,
-							"px": [120,256],
-							"fieldInstances": [{ "__identifier": "chest_id", "__type": "String", "__value": "chest_forest_01", "__tile": null, "defUid": 21, "realEditorValues": [{
+							"defUid": 10,
+							"px": [296,1816],
+							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
 								"id": "V_String",
-								"params": ["chest_forest_01"]
+								"params": ["sp_test_static"]
 							}] }],
-							"__worldX": 120,
-							"__worldY": 256
+							"__worldX": 296,
+							"__worldY": 1816
 						},
 						{
-							"__identifier": "chestspawn",
-							"__grid": [5,15],
-							"__pivot": [0.5,1],
-							"__tags": ["interactable"],
+							"__identifier": "spawnpoint",
+							"__grid": [116,118],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
 							"__tile": null,
-							"__smartColor": "#FFCC00",
-							"iid": "a3ac1190-d380-11f0-9e89-bdced604b906",
+							"__smartColor": "#FF0000",
+							"iid": "6b229ee0-d380-11f0-9e89-9de269808705",
 							"width": 16,
 							"height": 16,
-							"defUid": 20,
-							"px": [88,256],
-							"fieldInstances": [{ "__identifier": "chest_id", "__type": "String", "__value": "chest_forest_01", "__tile": null, "defUid": 21, "realEditorValues": [{
+							"defUid": 10,
+							"px": [1864,1896],
+							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
 								"id": "V_String",
-								"params": ["chest_forest_01"]
+								"params": ["sp_test_static"]
 							}] }],
-							"__worldX": 88,
-							"__worldY": 256
+							"__worldX": 1864,
+							"__worldY": 1896
 						},
 						{
-							"__identifier": "chestspawn",
-							"__grid": [1,15],
-							"__pivot": [0.5,1],
-							"__tags": ["interactable"],
+							"__identifier": "spawnpoint",
+							"__grid": [88,87],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
 							"__tile": null,
-							"__smartColor": "#FFCC00",
-							"iid": "a3eb8b90-d380-11f0-9e89-a186bb849394",
+							"__smartColor": "#FF0000",
+							"iid": "6c465e60-d380-11f0-9e89-cb3454262fd1",
 							"width": 16,
 							"height": 16,
-							"defUid": 20,
-							"px": [24,256],
-							"fieldInstances": [{ "__identifier": "chest_id", "__type": "String", "__value": "chest_forest_01", "__tile": null, "defUid": 21, "realEditorValues": [{
+							"defUid": 10,
+							"px": [1416,1400],
+							"fieldInstances": [{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
 								"id": "V_String",
-								"params": ["chest_forest_01"]
+								"params": ["sp_test_static"]
 							}] }],
-							"__worldX": 24,
-							"__worldY": 256
+							"__worldX": 1416,
+							"__worldY": 1400
 						}
 					]
 				},
