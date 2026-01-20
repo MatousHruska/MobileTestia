@@ -1,48 +1,48 @@
 {
-  "chunks": [
-    {
-      "id": "chunk_forest_0_0",
-      "zone_id": "zone_forest",
-      "grid_x": 0,
-      "grid_y": 0,
-      "biome_type": "forest",
-      "enemy_density": "medium",
-      "spawn_table_id": "",
-      "ambient_override": "",
-      "lighting_preset": "default"
-    },
-    {
-      "id": "chunk_forest_1_0",
-      "zone_id": "zone_forest",
-      "grid_x": 1,
-      "grid_y": 0,
-      "biome_type": "forest",
-      "enemy_density": "medium",
-      "spawn_table_id": "",
-      "ambient_override": "",
-      "lighting_preset": "default"
-    },
-    {
-      "id": "chunk_forest_0_1",
-      "zone_id": "zone_forest",
-      "grid_x": 0,
-      "grid_y": 1,
-      "biome_type": "forest",
-      "enemy_density": "low",
-      "spawn_table_id": "",
-      "ambient_override": "",
-      "lighting_preset": "default"
-    },
-    {
-      "id": "chunk_forest_1_1",
-      "zone_id": "zone_forest",
-      "grid_x": 1,
-      "grid_y": 1,
-      "biome_type": "forest",
-      "enemy_density": "high",
-      "spawn_table_id": "",
-      "ambient_override": "",
-      "lighting_preset": "default"
-    }
-  ]
+	"chunks": [
+		{
+			"ambient_override": "",
+			"biome_type": "grass",
+			"enemy_density": "none",
+			"grid_x": 0,
+			"grid_y": 0,
+			"id": "chunk_test_0_0",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_test"
+		},
+		{
+			"ambient_override": "",
+			"biome_type": "grass",
+			"enemy_density": "none",
+			"grid_x": 1,
+			"grid_y": 0,
+			"id": "chunk_test_1_0",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_test"
+		},
+		{
+			"ambient_override": "",
+			"biome_type": "grass",
+			"enemy_density": "none",
+			"grid_x": 0,
+			"grid_y": 1,
+			"id": "chunk_test_0_1",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_test"
+		},
+		{
+			"ambient_override": "",
+			"biome_type": "grass",
+			"enemy_density": "none",
+			"grid_x": 1,
+			"grid_y": 1,
+			"id": "chunk_test_1_1",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_test"
+		}
+	]
 }
