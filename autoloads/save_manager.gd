@@ -428,26 +428,36 @@ func _apply_save_data(save_data: Dictionary) -> bool:
 	## Apply loaded save data to game systems
 	## Uses auto-discovery for systems in "saveable" group
 
+	print("[SAVELOAD] ========== _apply_save_data START ==========")
+	print("[SAVELOAD] Frame: %d" % Engine.get_process_frames())
+
 	# Reset game state first
+	print("[SAVELOAD] Calling _reset_game_state()")
 	_reset_game_state()
+	print("[SAVELOAD] _reset_game_state() done")
 
 	# Auto-discover and apply to all saveable systems (sorted by priority)
 	var saveables := _get_saveables_sorted()
+	print("[SAVELOAD] Found %d saveables" % saveables.size())
 	for saveable in saveables:
 		var key: String = saveable.get_save_key()
 		if save_data.has(key):
-			Debug.log("Save", "Applying data to: %s" % key)
+			print("[SAVELOAD] Applying data to: %s (priority: %s)" % [key, saveable.get_save_priority() if saveable.has_method("get_save_priority") else "100"])
 			saveable.load_save_data(save_data[key])
+			print("[SAVELOAD] Done applying to: %s" % key)
 
 	# Special cases (not autoloads)
 	if save_data.has("world_state"):
+		print("[SAVELOAD] Applying world_state")
 		if not _apply_world_state(save_data.world_state):
 			Debug.warn("Save", "Failed to apply world state")
 
 	# Load into the correct zone (always last)
 	if save_data.has("location_data"):
+		print("[SAVELOAD] Calling _apply_location_data")
 		_apply_location_data(save_data.location_data)
 
+	print("[SAVELOAD] ========== _apply_save_data END ==========")
 	return true
 
 
@@ -459,6 +469,7 @@ func _apply_world_state(data: Dictionary) -> bool:
 
 
 func _apply_location_data(data: Dictionary) -> void:
+	print("[SAVELOAD] _apply_location_data called | Frame: %d" % Engine.get_process_frames())
 	var zone: String = data.get("zone", "")
 	var spawn_point: String = data.get("spawn_point", "default")
 
@@ -471,34 +482,31 @@ func _apply_location_data(data: Dictionary) -> void:
 	else:
 		_has_pending_position = false
 
-	Debug.info("Save", "_apply_location_data called", {
-		"zone": zone,
-		"spawn_point": spawn_point,
-		"saved_position": _pending_player_position if _has_pending_position else "none",
-		"game_state": Game.GameState.keys()[Game.current_state] if Game else "null",
-		"tree_paused": get_tree().paused
-	})
+	print("[SAVELOAD] Location data: zone=%s, spawn=%s, pos=%s" % [zone, spawn_point, _pending_player_position if _has_pending_position else "none"])
+	print("[SAVELOAD] Game state: %s, tree_paused: %s" % [Game.GameState.keys()[Game.current_state] if Game else "null", get_tree().paused])
 
 	if not zone.is_empty() and Game:
 		# Queue zone change after load completes
 		var zone_path := "res://scenes/world/%s.tscn" % zone
-		Debug.info("Save", "Scheduling _deferred_zone_change", zone_path)
+		print("[SAVELOAD] Scheduling _deferred_zone_change for: %s" % zone_path)
 		call_deferred("_deferred_zone_change", zone_path, spawn_point)
+	else:
+		print("[SAVELOAD] WARNING: Not scheduling zone change - zone empty or Game null")
 
 
 func _deferred_zone_change(zone_path: String, spawn_point: String) -> void:
-	Debug.info("Save", "_deferred_zone_change executing", {
-		"zone_path": zone_path,
-		"spawn_point": spawn_point,
-		"game_state_before": Game.GameState.keys()[Game.current_state] if Game else "null",
-		"tree_paused_before": get_tree().paused
-	})
+	print("[SAVELOAD] >>>>>> _deferred_zone_change EXECUTING | Frame: %d" % Engine.get_process_frames())
+	print("[SAVELOAD] zone_path: %s, spawn_point: %s" % [zone_path, spawn_point])
+	print("[SAVELOAD] Game state BEFORE: %s" % (Game.GameState.keys()[Game.current_state] if Game else "null"))
+	print("[SAVELOAD] ChunkManager state BEFORE: initialized=%s, zone=%s" % [ChunkManager._initialized if ChunkManager else "null", ChunkManager.current_zone_id if ChunkManager else "null"])
+	print("[SAVELOAD] NPCManager BEFORE: enemies=%d, spawn_points=%d" % [NPCManager.all_enemies.size() if NPCManager else 0, NPCManager.all_spawn_points.size() if NPCManager else 0])
+
 	if Game:
 		Game.change_zone(zone_path, spawn_point)
-		Debug.info("Save", "_deferred_zone_change completed", {
-			"game_state_after": Game.GameState.keys()[Game.current_state],
-			"tree_paused_after": get_tree().paused
-		})
+		print("[SAVELOAD] <<<<<< _deferred_zone_change COMPLETED | Frame: %d" % Engine.get_process_frames())
+		print("[SAVELOAD] Game state AFTER: %s" % Game.GameState.keys()[Game.current_state])
+	else:
+		print("[SAVELOAD] ERROR: Game is null!")
 
 
 func _on_player_spawned(player: Node2D) -> void:
