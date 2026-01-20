@@ -199,8 +199,18 @@ func initialize_for_zone(zone_id: String) -> void:
 	# Load zone entity data
 	_load_zone_entities(zone_id)
 
-	# Initial chunk loading around spawn point (will happen on first update_chunks call)
-	player_chunk = Vector2i.MIN  # Force refresh on first update
+	# Check if we have pending save data that matches this zone
+	# If so, restore the player chunk position for proper chunk loading
+	if has_meta("pending_zone_id") and get_meta("pending_zone_id") == zone_id:
+		if has_meta("pending_player_chunk"):
+			player_chunk = get_meta("pending_player_chunk")
+			Debug.info("ChunkManager", "Restored player chunk from save: %s" % player_chunk)
+		# Clear the pending meta data
+		remove_meta("pending_zone_id")
+		remove_meta("pending_player_chunk")
+	else:
+		# Initial chunk loading around spawn point (will happen on first update_chunks call)
+		player_chunk = Vector2i.MIN  # Force refresh on first update
 
 	Debug.info("ChunkManager", "Initialized for zone: %s" % zone_id)
 	zone_initialized.emit(zone_id)
@@ -1308,19 +1318,32 @@ func get_save_data() -> Dictionary:
 
 func load_save_data(data: Dictionary) -> void:
 	## Restore zone and chunk state
-	current_zone_id = data.get("current_zone_id", "")
-	player_chunk = Vector2i(
+	## NOTE: We do NOT restore _initialized here. The zone scene's _ready()
+	## will call initialize_for_zone() which handles proper setup.
+	## We only store the data needed for the zone to use.
+
+	var saved_zone_id: String = data.get("current_zone_id", "")
+	var saved_player_chunk := Vector2i(
 		data.get("player_chunk_x", 0),
 		data.get("player_chunk_y", 0)
 	)
-	_initialized = data.get("initialized", false)
 
-	# Note: Actual chunk loading will happen when player position is set
-	# and update_chunks() is called
+	# Store for reference but don't set as current - let initialize_for_zone() handle it
+	# This prevents race conditions where ChunkManager thinks it's initialized
+	# but _chunk_root is null because the scene hasn't loaded yet
 
-	Debug.info("ChunkManager", "Loaded save data", {
-		"zone": current_zone_id,
-		"chunk": player_chunk
+	# If we're currently initialized for a different zone, clean up first
+	if _initialized:
+		cleanup_zone()
+
+	# Store the expected zone for validation when zone loads
+	# (but don't set _initialized = true - that happens in initialize_for_zone)
+	set_meta("pending_zone_id", saved_zone_id)
+	set_meta("pending_player_chunk", saved_player_chunk)
+
+	Debug.info("ChunkManager", "Loaded save data (pending)", {
+		"zone": saved_zone_id,
+		"chunk": saved_player_chunk
 	})
 
 

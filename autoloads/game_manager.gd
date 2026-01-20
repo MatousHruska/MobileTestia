@@ -228,17 +228,28 @@ func _load_zone(zone_path: String) -> void:
 		"player_valid": is_player_valid()
 	})
 	Debug.perf_start("zone_load")
+
+	# Clear player reference since it will be invalid after scene change
+	# The new scene's player will set this in its _ready()
+	player = null
+
 	var error := get_tree().change_scene_to_file(zone_path)
 	if error != OK:
 		Debug.err("System", "Failed to load zone", [zone_path, "error:", error])
+		Debug.perf_end("zone_load")
 		return
+
+	# Note: change_scene_to_file() queues the scene change for end of frame
+	# The actual scene loads asynchronously, but the function returns OK immediately
+	# perf_end here measures only the time to queue the change, not the actual load
 	current_zone = zone_path.get_file().get_basename()
 	zone_changed.emit(current_zone)
 	Debug.perf_end("zone_load")
-	Debug.info("System", "_load_zone() completed", {
+	Debug.info("System", "_load_zone() queued scene change", {
 		"zone": current_zone,
 		"state_after": GameState.keys()[current_state],
-		"tree_paused_after": get_tree().paused
+		"tree_paused_after": get_tree().paused,
+		"note": "actual scene loads at end of frame"
 	})
 
 
