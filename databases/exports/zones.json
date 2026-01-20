@@ -69,6 +69,20 @@
       "status_effect_id": "",
       "discovery_popup": true,
       "description": "Mountain testing area with wolves, archers, and boss"
+    },
+    {
+      "id": "zone_ldtk_test",
+      "name": "LDtk Test Zone",
+      "zone_type": "outdoor",
+      "min_level": 1,
+      "max_level": 10,
+      "music_track": "",
+      "ambient_sound": "",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": false,
+      "description": "Test zone imported from LDtk"
     }
   ]
 }
