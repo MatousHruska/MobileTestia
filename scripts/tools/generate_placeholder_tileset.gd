@@ -164,7 +164,7 @@ func _create_tileset_resource() -> bool:
 	var tileset := TileSet.new()
 	tileset.tile_size = Vector2i(TILE_SIZE, TILE_SIZE)
 
-	# Add physics layer for collision
+	# Add physics layer for collision FIRST
 	tileset.add_physics_layer()
 	tileset.set_physics_layer_collision_layer(0, 1)  # Layer 1 for terrain collision
 	tileset.set_physics_layer_collision_mask(0, 0)   # No mask needed for terrain
@@ -180,7 +180,7 @@ func _create_tileset_resource() -> bool:
 	source.texture = texture
 	source.texture_region_size = Vector2i(TILE_SIZE, TILE_SIZE)
 
-	# Add tiles for each terrain
+	# First pass: Create all tiles (without collision)
 	var tiles_per_row := 8
 	for terrain_id in TERRAIN_TILE_IDS:
 		var tile_index: int = TERRAIN_TILE_IDS[terrain_id]
@@ -190,25 +190,33 @@ func _create_tileset_resource() -> bool:
 
 		# Create the tile
 		source.create_tile(atlas_coords)
-
-		# Add collision for blocking terrain
-		if terrain_id in COLLISION_TERRAIN:
-			var tile_data := source.get_tile_data(atlas_coords, 0)
-			if tile_data:
-				# Create a full-tile collision polygon
-				var collision_polygon := PackedVector2Array([
-					Vector2(0, 0),
-					Vector2(TILE_SIZE, 0),
-					Vector2(TILE_SIZE, TILE_SIZE),
-					Vector2(0, TILE_SIZE)
-				])
-				tile_data.add_collision_polygon(0)
-				tile_data.set_collision_polygon_points(0, 0, collision_polygon)
-
 		print("  Added tile: %s at (%d, %d)" % [terrain_id, tile_x, tile_y])
 
-	# Add the source to the tileset
+	# Add the source to the tileset BEFORE adding collision
+	# This is required for physics layers to be accessible on tile data
 	tileset.add_source(source, 0)
+
+	# Second pass: Add collision polygons to blocking terrain
+	# Must be done AFTER source is added to tileset
+	print("Adding collision shapes...")
+	for terrain_id in COLLISION_TERRAIN:
+		var tile_index: int = TERRAIN_TILE_IDS[terrain_id]
+		var tile_x := tile_index % tiles_per_row
+		var tile_y := int(tile_index / tiles_per_row)
+		var atlas_coords := Vector2i(tile_x, tile_y)
+
+		var tile_data := source.get_tile_data(atlas_coords, 0)
+		if tile_data:
+			# Create a full-tile collision polygon
+			var collision_polygon := PackedVector2Array([
+				Vector2(0, 0),
+				Vector2(TILE_SIZE, 0),
+				Vector2(TILE_SIZE, TILE_SIZE),
+				Vector2(0, TILE_SIZE)
+			])
+			tile_data.add_collision_polygon(0)
+			tile_data.set_collision_polygon_points(0, 0, collision_polygon)
+			print("  Added collision to: %s" % terrain_id)
 
 	# Save the tileset resource
 	var error := ResourceSaver.save(tileset, TILESET_RESOURCE_PATH)
