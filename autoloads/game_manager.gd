@@ -92,53 +92,53 @@ func _input(event: InputEvent) -> void:
 		return
 
 	match event.keycode:
-		# F1: ChunkManager state snapshot
-		KEY_F1:
+		# Numpad 1: ChunkManager state snapshot
+		KEY_KP_1:
 			if ChunkManager:
 				ChunkManager.debug_print_state()
 
-		# F2: Toggle chunk debug overlay
-		KEY_F2:
+		# Numpad 2: Toggle chunk debug overlay
+		KEY_KP_2:
 			if ChunkManager:
 				ChunkManager.debug_toggle_overlay()
 
-		# F3: LootManager state
-		KEY_F3:
+		# Numpad 3: LootManager state
+		KEY_KP_3:
 			var loot_mgr = get_node_or_null("/root/LootManager")
 			if loot_mgr and loot_mgr.has_method("debug_print_state"):
 				loot_mgr.debug_print_state()
 			else:
 				Debug.info("System", "LootManager not available or has no debug_print_state()")
 
-		# F4: NPCManager/Enemy state
-		KEY_F4:
+		# Numpad 4: NPCManager/Enemy state
+		KEY_KP_4:
 			if NPCManager and NPCManager.has_method("print_state"):
 				NPCManager.print_state()
 			else:
 				_debug_print_enemy_summary()
 
-		# F5: Performance metrics
-		KEY_F5:
+		# Numpad 5: Performance metrics
+		KEY_KP_5:
 			if ChunkManager:
 				ChunkManager.debug_print_perf()
 
-		# F9: Full game state dump
-		KEY_F9:
-			debug_full_state()
-
-		# F10: Test ends_when buff system
-		KEY_F10:
-			debug_test_ends_when_buff()
-
-		# F11: Zone naming diagnostic (for save/load debugging)
-		KEY_F11:
+		# Numpad 6: Zone naming diagnostic (for save/load debugging)
+		KEY_KP_6:
 			if ChunkManager:
 				ChunkManager.debug_zone_naming_diagnostic()
 
-		# F12: Trace zone resolution path
-		KEY_F12:
+		# Numpad 7: Trace zone resolution path
+		KEY_KP_7:
 			if ChunkManager:
 				ChunkManager.debug_trace_zone_resolution()
+
+		# Numpad 8: Full game state dump
+		KEY_KP_8:
+			debug_full_state()
+
+		# Numpad 9: Test ends_when buff system
+		KEY_KP_9:
+			debug_test_ends_when_buff()
 
 
 func _debug_print_enemy_summary() -> void:

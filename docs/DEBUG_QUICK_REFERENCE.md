@@ -4,25 +4,25 @@ Quick reference for all debug tools and commands in MobileTestia.
 
 ---
 
-## Debug Key Bindings
+## Debug Key Bindings (Numpad)
 
-Press these keys during gameplay (debug builds only):
+Press these numpad keys during gameplay (debug builds only). Uses numpad to avoid Godot editor conflicts (F1-F8):
 
 | Key | System | Action |
 |-----|--------|--------|
-| **F1** | ChunkManager | Print state snapshot (loaded chunks, states) |
-| **F2** | ChunkManager | Toggle visual overlay (chunk boundaries, colors) |
-| **F3** | LootManager | Print tracked loot drops |
-| **F4** | NPCManager | Print enemy summary (alive, dead, in combat) |
-| **F5** | ChunkManager | Print performance metrics (load times) |
-| **F9** | GameManager | Full game state dump |
-| **F10** | BuffSystem | Test ends_when buff system |
-| **F11** | ChunkManager | Zone naming diagnostic (save/load debug) |
-| **F12** | ChunkManager | Zone resolution trace |
+| **Numpad 1** | ChunkManager | Print state snapshot (loaded chunks, states) |
+| **Numpad 2** | ChunkManager | Toggle visual overlay (chunk boundaries, colors) |
+| **Numpad 3** | LootManager | Print tracked loot drops |
+| **Numpad 4** | NPCManager | Print enemy summary (alive, dead, in combat) |
+| **Numpad 5** | ChunkManager | Print performance metrics (load times) |
+| **Numpad 6** | ChunkManager | Zone naming diagnostic (save/load debug) |
+| **Numpad 7** | ChunkManager | Zone resolution trace |
+| **Numpad 8** | GameManager | Full game state dump |
+| **Numpad 9** | BuffSystem | Test ends_when buff system |
 
 ---
 
-## Debug Overlay (F2)
+## Debug Overlay (Numpad 2)
 
 Toggle visual chunk boundaries:
 
@@ -110,40 +110,40 @@ Debug.snapshot("Category", "Title", data)   # Log data snapshot
 
 ### "Empty zone after loading save"
 
-1. Press **F11** - Check zone naming
+1. Press **Numpad 6** - Check zone naming
 2. Look for MISMATCH in zone names
 3. Fix: Scene's `zone_id` must match LDTK level identifier
 
 ### "Chunks not loading"
 
-1. Press **F11** - Check section 6 (loaded chunks)
+1. Press **Numpad 6** - Check section 6 (loaded chunks)
 2. If 0 chunks, ChunkManager not initialized
 3. Check zone scene calls `ChunkManager.initialize_for_zone()`
 
 ### "Enemies not appearing"
 
-1. Press **F4** - Check enemy count
-2. Press **F2** - Look for spawn point markers
+1. Press **Numpad 4** - Check enemy count
+2. Press **Numpad 2** - Look for spawn point markers
 3. Check database: spawn_point_id exists
 4. Check Persistence: spawn not cleared
 
 ### "Chunk won't unload"
 
-1. Press **F2** - Look for red (combat) or orange (leash)
+1. Press **Numpad 2** - Look for red (combat) or orange (leash)
 2. Combat lock: Enemy still targeting player
 3. Leash lock: Enemy returning to home position
 4. Kill enemy or wait for it to reach home
 
 ### "Slow chunk loading"
 
-1. Press **F5** - Check avg/max load times
+1. Press **Numpad 5** - Check avg/max load times
 2. Target: < 50ms per chunk
 3. Reduce tilemap complexity or enemy count
 4. Check for resource loading bottlenecks
 
 ### "Save/load breaks game"
 
-1. Press **F12** - Trace resolution path
+1. Press **Numpad 7** - Trace resolution path
 2. Compare: Scene filename vs zone_id vs chunk files
 3. All must derive from same base name
 
@@ -188,7 +188,7 @@ Tests performed:
 
 ## Tips
 
-- **F2 is your friend** - Visual overlay shows most issues at a glance
-- **F11 for save/load issues** - Always run when chunks don't load
-- **F5 for performance** - Check before and after changes
-- **Combine keys** - F2 + F5 = see overlay while checking performance
+- **Numpad 2 is your friend** - Visual overlay shows most issues at a glance
+- **Numpad 6 for save/load issues** - Always run when chunks don't load
+- **Numpad 5 for performance** - Check before and after changes
+- **Combine keys** - Numpad 2 + Numpad 5 = see overlay while checking performance
