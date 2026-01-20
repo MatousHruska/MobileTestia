@@ -245,9 +245,11 @@ func _load_zone(zone_path: String) -> void:
 	var error := get_tree().change_scene_to_file(zone_path)
 	if error != OK:
 		var error_code := int(error)
-		print("[SAVELOAD] GM load: change_scene_to_file returned error: %d (ERR_BUSY=%d, match=%s)" % [error_code, ERR_BUSY, error_code == ERR_BUSY])
-		# ERR_BUSY (19) means scene tree is busy - retry after a short delay
-		if error_code == ERR_BUSY:
+		# Note: In Godot 4.5.x, error codes may vary. Error 19 typically means scene tree busy.
+		var is_busy_error := error_code == 19 or error_code == int(ERR_BUSY)
+		print("[SAVELOAD] GM load: change_scene_to_file returned error: %d (is_busy=%s)" % [error_code, is_busy_error])
+		# Scene tree busy - retry after a short delay
+		if is_busy_error:
 			_zone_load_retry_count += 1
 			if _zone_load_retry_count <= MAX_ZONE_LOAD_RETRIES:
 				print("[SAVELOAD] GM load: ERR_BUSY - scheduling retry %d/%d" % [_zone_load_retry_count, MAX_ZONE_LOAD_RETRIES])
