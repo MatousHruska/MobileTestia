@@ -305,3 +305,18 @@ func get_scaled_respawn_time() -> float:
 		ChestTier.GOLDEN:
 			return base_time * 2.0
 	return base_time
+
+
+## Override to include respawn data in persistence
+func _save_persistence() -> void:
+	if chest_id.is_empty():
+		return
+
+	Persistence.save_state("chests", chest_id, {
+		"looted": true,
+		"looted_at": Time.get_unix_time_from_system(),
+		"tier": chest_tier,
+		"can_respawn": can_respawn,
+		"respawn_time": respawn_time_seconds,
+	})
+	Debug.log("Chest", "Saved looted state with respawn data for: %s" % chest_id)
