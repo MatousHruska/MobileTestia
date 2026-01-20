@@ -148,10 +148,15 @@ func _process_level(level: Dictionary) -> Dictionary:
 
 	var chunks: Array = []
 
+	# Strip "zone_" prefix to match ChunkManager naming convention
+	var zone_name := zone_id
+	if zone_name.begins_with("zone_"):
+		zone_name = zone_name.substr(5)
+
 	# Process each chunk in the grid
 	for cy in range(chunks_y):
 		for cx in range(chunks_x):
-			var chunk_id := "chunk_%s_%d_%d" % [zone_id, cx, cy]
+			var chunk_id := "chunk_%s_%d_%d" % [zone_name, cx, cy]
 			var chunk_bounds := Rect2(
 				cx * CHUNK_SIZE_PX,
 				cy * CHUNK_SIZE_PX,
@@ -194,8 +199,13 @@ func _extract_chunk_metadata(level: Dictionary, bounds: Rect2, zone_id: String, 
 	# Count spawn points to determine enemy density
 	var density := _analyze_density(level, bounds)
 
+	# Strip "zone_" prefix to match ChunkManager naming convention
+	var zone_name := zone_id
+	if zone_name.begins_with("zone_"):
+		zone_name = zone_name.substr(5)
+
 	return {
-		"id": "chunk_%s_%d_%d" % [zone_id, cx, cy],
+		"id": "chunk_%s_%d_%d" % [zone_name, cx, cy],
 		"zone_id": zone_id,
 		"grid_x": cx,
 		"grid_y": cy,
