@@ -37,6 +37,22 @@ func _ready() -> void:
 	# Initialize chunk system for this zone
 	if use_chunk_system:
 		print("[SAVELOAD] Zone: Initializing ChunkManager for zone: %s" % zone_id)
+
+		# ZONE NAMING DEBUG: Check for potential mismatch early
+		if scene_filename != zone_id:
+			print("╔═══════════════════════════════════════════════════════════╗")
+			print("║  ⚠️  ZONE NAMING MISMATCH DETECTED!                        ║")
+			print("╟───────────────────────────────────────────────────────────╢")
+			print("║  Scene filename: %-40s ║" % scene_filename)
+			print("║  Zone ID export: %-40s ║" % zone_id)
+			print("╟───────────────────────────────────────────────────────────╢")
+			print("║  This may cause chunk loading to fail!                    ║")
+			print("║  ChunkManager will look for chunks with zone_id='%s'" % zone_id)
+			print("║  But LDTK likely exported chunks with zone_id='%s'" % scene_filename)
+			print("║  Press F11 to run full diagnostic                         ║")
+			print("╚═══════════════════════════════════════════════════════════╝")
+			Debug.warn("Zone", "ZONE NAMING MISMATCH: scene='%s' vs zone_id='%s'" % [scene_filename, zone_id])
+
 		var chunk_mgr = get_node_or_null("/root/ChunkManager")
 		if chunk_mgr:
 			chunk_mgr.initialize_for_zone(zone_id)

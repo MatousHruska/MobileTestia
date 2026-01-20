@@ -92,6 +92,16 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and event.keycode == KEY_F10:
 		debug_test_ends_when_buff()
 
+	# Debug: Press F11 to run zone naming diagnostic (for save/load debugging)
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F11:
+		if ChunkManager:
+			ChunkManager.debug_zone_naming_diagnostic()
+
+	# Debug: Press F12 to trace zone resolution path
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F12:
+		if ChunkManager:
+			ChunkManager.debug_trace_zone_resolution()
+
 
 ## State management
 func set_playing() -> void:
