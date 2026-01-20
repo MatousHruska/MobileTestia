@@ -443,7 +443,27 @@ func _load_chunk_tiles(chunk_id: String) -> Dictionary:
 	var path := CHUNK_TILES_DIR + chunk_id + ".json"
 
 	if not FileAccess.file_exists(path):
-		Debug.log("ChunkManager", "No tile data found for chunk: %s" % chunk_id)
+		Debug.warn("ChunkManager", "No tile data found for chunk: %s" % chunk_id)
+		# Debug: Show what file we were looking for and suggest alternatives
+		print("[ChunkDebug] CHUNK FILE NOT FOUND:")
+		print("[ChunkDebug]   Looking for: %s" % path)
+		print("[ChunkDebug]   zone_id used: %s" % current_zone_id)
+		# Check if there's a file with a different zone name pattern
+		var chunk_files := _list_chunk_files_for_zone(current_zone_id)
+		if chunk_files.is_empty():
+			print("[ChunkDebug]   No chunk files found matching zone_id='%s'" % current_zone_id)
+			# Try alternate patterns
+			var scene_filename := ""
+			if get_tree() and get_tree().current_scene:
+				scene_filename = get_tree().current_scene.scene_file_path.get_file().get_basename()
+				var alt_files := _list_chunk_files_for_zone(scene_filename)
+				if not alt_files.is_empty():
+					print("[ChunkDebug]   BUT found files matching scene='%s':" % scene_filename)
+					for f in alt_files:
+						print("[ChunkDebug]     - %s" % f)
+					print("[ChunkDebug]   FIX: Change zone_id in scene to '%s'" % scene_filename)
+		else:
+			print("[ChunkDebug]   Files found matching zone: %s" % str(chunk_files))
 		return {}
 
 	var file := FileAccess.open(path, FileAccess.READ)
@@ -1664,3 +1684,310 @@ func debug_print_spawned_entities() -> void:
 		for entity in entities:
 			if is_instance_valid(entity):
 				Debug.info("ChunkManager", "    - %s at %s" % [entity.name, entity.global_position])
+
+
+#===============================================================================
+# ZONE NAMING DIAGNOSTICS (Debug Persistence)
+#===============================================================================
+
+## Comprehensive zone naming diagnostic - call this to diagnose save/load issues
+func debug_zone_naming_diagnostic() -> Dictionary:
+	var diagnostic := {
+		"timestamp": Time.get_datetime_string_from_system(),
+		"frame": Engine.get_process_frames(),
+		"errors": [],
+		"warnings": [],
+		"zone_names": {},
+		"chunk_lookup": {},
+		"file_checks": {}
+	}
+
+	print("")
+	print("╔════════════════════════════════════════════════════════════════╗")
+	print("║            ZONE NAMING DIAGNOSTIC REPORT                       ║")
+	print("╠════════════════════════════════════════════════════════════════╣")
+
+	# 1. Collect all zone name variants
+	var scene_filename := ""
+	var zone_base_id := ""
+	var game_current_zone := Game.current_zone if Game else ""
+
+	# Get scene filename
+	var current_scene := get_tree().current_scene
+	if current_scene:
+		scene_filename = current_scene.scene_file_path.get_file().get_basename()
+		if current_scene.has_method("get") and "zone_id" in current_scene:
+			zone_base_id = current_scene.zone_id
+
+	diagnostic.zone_names = {
+		"scene_filename": scene_filename,
+		"zone_base_zone_id": zone_base_id,
+		"game_current_zone": game_current_zone,
+		"chunk_manager_zone_id": current_zone_id,
+		"chunk_manager_initialized": _initialized
+	}
+
+	print("║ 1. ZONE NAME VALUES                                            ║")
+	print("╟────────────────────────────────────────────────────────────────╢")
+	print("║   Scene Filename:        %-38s ║" % scene_filename)
+	print("║   ZoneBase zone_id:      %-38s ║" % zone_base_id)
+	print("║   Game.current_zone:     %-38s ║" % game_current_zone)
+	print("║   ChunkManager zone_id:  %-38s ║" % current_zone_id)
+	print("║   ChunkManager init:     %-38s ║" % str(_initialized))
+
+	# Check for mismatch
+	var has_mismatch := false
+	if not scene_filename.is_empty() and not zone_base_id.is_empty():
+		# Compare stripped versions
+		var scene_stripped := scene_filename
+		if scene_stripped.begins_with("zone_"):
+			scene_stripped = scene_stripped.substr(5)
+		var zone_id_stripped := zone_base_id
+		if zone_id_stripped.begins_with("zone_"):
+			zone_id_stripped = zone_id_stripped.substr(5)
+
+		if scene_stripped != zone_id_stripped:
+			has_mismatch = true
+			diagnostic.errors.append("MISMATCH: scene_filename '%s' != zone_id '%s'" % [scene_filename, zone_base_id])
+
+	print("╟────────────────────────────────────────────────────────────────╢")
+	if has_mismatch:
+		print("║   ⚠️  MISMATCH DETECTED between scene filename and zone_id!   ║")
+		print("║   This will cause save/load to fail finding chunk files!      ║")
+	else:
+		print("║   ✓ Zone names appear consistent                              ║")
+
+	# 2. Check chunk file resolution
+	print("╠════════════════════════════════════════════════════════════════╣")
+	print("║ 2. CHUNK FILE RESOLUTION                                       ║")
+	print("╟────────────────────────────────────────────────────────────────╢")
+
+	# What chunk IDs would ChunkManager generate?
+	var expected_chunk_id := _make_chunk_id(current_zone_id, 0, 0)
+	var expected_chunk_path := CHUNK_TILES_DIR + expected_chunk_id + ".json"
+	var expected_exists := FileAccess.file_exists(expected_chunk_path)
+
+	diagnostic.chunk_lookup = {
+		"zone_id_used": current_zone_id,
+		"expected_chunk_id": expected_chunk_id,
+		"expected_chunk_path": expected_chunk_path,
+		"expected_file_exists": expected_exists
+	}
+
+	print("║   Zone ID used:          %-38s ║" % current_zone_id)
+	print("║   Expected chunk_0_0:    %-38s ║" % expected_chunk_id)
+	print("║   Expected path:         %-38s ║" % expected_chunk_path.get_file())
+	print("║   File exists:           %-38s ║" % ("YES ✓" if expected_exists else "NO ✗"))
+
+	if not expected_exists:
+		diagnostic.errors.append("Expected chunk file not found: %s" % expected_chunk_path)
+
+	# 3. Check what chunk files actually exist
+	print("╠════════════════════════════════════════════════════════════════╣")
+	print("║ 3. ACTUAL CHUNK FILES IN DATABASE                              ║")
+	print("╟────────────────────────────────────────────────────────────────╢")
+
+	# Search chunks database for this zone
+	var chunks_for_zone := DatabaseLoader.get_chunks_for_zone(current_zone_id) if DatabaseLoader else []
+	diagnostic.file_checks["db_chunks_for_zone_id"] = chunks_for_zone.size()
+	print("║   Chunks with zone_id='%s': %d" % [current_zone_id, chunks_for_zone.size()])
+
+	# Also check with scene filename
+	if scene_filename != current_zone_id:
+		var chunks_for_scene := DatabaseLoader.get_chunks_for_zone(scene_filename) if DatabaseLoader else []
+		diagnostic.file_checks["db_chunks_for_scene_filename"] = chunks_for_scene.size()
+		print("║   Chunks with zone_id='%s': %d" % [scene_filename, chunks_for_scene.size()])
+		if chunks_for_scene.size() > 0 and chunks_for_zone.size() == 0:
+			diagnostic.warnings.append("Chunks exist for '%s' but not for '%s'" % [scene_filename, current_zone_id])
+			print("║   ⚠️  Chunks exist for scene_filename but not zone_id!        ║")
+
+	# 4. List actual chunk files on disk
+	print("╠════════════════════════════════════════════════════════════════╣")
+	print("║ 4. CHUNK FILES ON DISK                                         ║")
+	print("╟────────────────────────────────────────────────────────────────╢")
+
+	var chunk_files := _list_chunk_files_for_zone(scene_filename)
+	var chunk_files_zone_id := _list_chunk_files_for_zone(current_zone_id)
+
+	diagnostic.file_checks["files_matching_scene"] = chunk_files
+	diagnostic.file_checks["files_matching_zone_id"] = chunk_files_zone_id
+
+	print("║   Files matching scene '%s':" % scene_filename)
+	if chunk_files.is_empty():
+		print("║     (none)")
+	else:
+		for f in chunk_files:
+			print("║     - %s" % f)
+
+	if current_zone_id != scene_filename:
+		print("║   Files matching zone_id '%s':" % current_zone_id)
+		if chunk_files_zone_id.is_empty():
+			print("║     (none)")
+		else:
+			for f in chunk_files_zone_id:
+				print("║     - %s" % f)
+
+	# 5. Check zone entity files
+	print("╠════════════════════════════════════════════════════════════════╣")
+	print("║ 5. ZONE ENTITY FILES                                           ║")
+	print("╟────────────────────────────────────────────────────────────────╢")
+
+	var entity_path_zone_id := ZONE_ENTITIES_DIR + current_zone_id + ".json"
+	var entity_path_scene := ZONE_ENTITIES_DIR + scene_filename + ".json"
+	var entity_exists_zone_id := FileAccess.file_exists(entity_path_zone_id)
+	var entity_exists_scene := FileAccess.file_exists(entity_path_scene)
+
+	diagnostic.file_checks["entity_file_zone_id"] = entity_exists_zone_id
+	diagnostic.file_checks["entity_file_scene"] = entity_exists_scene
+
+	print("║   %s: %s" % [entity_path_zone_id.get_file(), "EXISTS ✓" if entity_exists_zone_id else "NOT FOUND ✗"])
+	print("║   %s: %s" % [entity_path_scene.get_file(), "EXISTS ✓" if entity_exists_scene else "NOT FOUND ✗"])
+
+	# 6. Currently loaded chunks
+	print("╠════════════════════════════════════════════════════════════════╣")
+	print("║ 6. CURRENTLY LOADED CHUNKS                                     ║")
+	print("╟────────────────────────────────────────────────────────────────╢")
+
+	diagnostic.file_checks["loaded_chunks"] = loaded_chunks.keys()
+
+	if loaded_chunks.is_empty():
+		print("║   (no chunks loaded)")
+		if _initialized:
+			diagnostic.errors.append("ChunkManager is initialized but no chunks loaded!")
+	else:
+		for chunk_id in loaded_chunks:
+			var chunk_data: ChunkData = loaded_chunks[chunk_id]
+			var state_names := ["UNLOADED", "LOADING", "LOADED", "COMBAT_LOCKED", "LEASH_LOCKED", "UNLOADING"]
+			print("║   - %s (%s) state: %s" % [chunk_id, chunk_data.coords, state_names[chunk_data.state]])
+
+	# 7. Summary
+	print("╠════════════════════════════════════════════════════════════════╣")
+	print("║ SUMMARY                                                        ║")
+	print("╟────────────────────────────────────────────────────────────────╢")
+
+	if diagnostic.errors.is_empty() and diagnostic.warnings.is_empty():
+		print("║   ✓ No issues detected                                        ║")
+	else:
+		for error in diagnostic.errors:
+			print("║   ✗ ERROR: %s" % error)
+		for warning in diagnostic.warnings:
+			print("║   ⚠ WARNING: %s" % warning)
+
+	print("╚════════════════════════════════════════════════════════════════╝")
+	print("")
+
+	# Also output as Debug.snapshot for history
+	Debug.snapshot("ChunkManager", "Zone Naming Diagnostic", diagnostic)
+
+	return diagnostic
+
+
+## List chunk files that match a zone name pattern
+func _list_chunk_files_for_zone(zone_name: String) -> Array[String]:
+	var result: Array[String] = []
+
+	# Strip zone_ prefix for chunk file matching
+	var chunk_prefix := zone_name
+	if chunk_prefix.begins_with("zone_"):
+		chunk_prefix = chunk_prefix.substr(5)
+
+	var search_pattern := "chunk_%s_" % chunk_prefix
+
+	var dir := DirAccess.open(CHUNK_TILES_DIR)
+	if dir == null:
+		return result
+
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if file_name.begins_with(search_pattern) and file_name.ends_with(".json"):
+			result.append(file_name)
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+	result.sort()
+	return result
+
+
+## Quick diagnostic - returns true if zone naming is correct
+func debug_check_zone_naming() -> bool:
+	var current_scene := get_tree().current_scene
+	if not current_scene:
+		print("[ZoneDebug] No current scene")
+		return false
+
+	var scene_filename := current_scene.scene_file_path.get_file().get_basename()
+	var zone_base_id := ""
+	if "zone_id" in current_scene:
+		zone_base_id = current_scene.zone_id
+
+	# Check if they would produce the same chunk IDs
+	var chunk_id_from_scene := _make_chunk_id(scene_filename, 0, 0)
+	var chunk_id_from_zone_id := _make_chunk_id(zone_base_id, 0, 0)
+
+	var match := chunk_id_from_scene == chunk_id_from_zone_id
+
+	print("[ZoneDebug] Quick Check:")
+	print("  scene_filename: %s -> chunk: %s" % [scene_filename, chunk_id_from_scene])
+	print("  zone_id: %s -> chunk: %s" % [zone_base_id, chunk_id_from_zone_id])
+	print("  Match: %s" % ("YES ✓" if match else "NO ✗ - MISMATCH!"))
+
+	return match
+
+
+## Debug: Print what chunk ID would be generated for given zone and coords
+func debug_print_chunk_id_generation(zone_id: String, x: int, y: int) -> void:
+	var chunk_id := _make_chunk_id(zone_id, x, y)
+	var path := CHUNK_TILES_DIR + chunk_id + ".json"
+	var exists := FileAccess.file_exists(path)
+
+	print("[ZoneDebug] Chunk ID Generation:")
+	print("  Input zone_id: %s" % zone_id)
+	print("  Coords: (%d, %d)" % [x, y])
+	print("  Generated chunk_id: %s" % chunk_id)
+	print("  Full path: %s" % path)
+	print("  File exists: %s" % ("YES" if exists else "NO"))
+
+
+## Debug: Trace the full save/load zone resolution path
+func debug_trace_zone_resolution() -> void:
+	print("")
+	print("[ZoneDebug] ========== ZONE RESOLUTION TRACE ==========")
+
+	# 1. What would be saved
+	var save_zone := Game.current_zone if Game else "(no Game)"
+	print("[ZoneDebug] SAVE: Would store zone = '%s'" % save_zone)
+
+	# 2. What path would be reconstructed on load
+	var load_path := "res://scenes/world/%s.tscn" % save_zone
+	print("[ZoneDebug] LOAD: Would reconstruct path = '%s'" % load_path)
+	print("[ZoneDebug] LOAD: Path exists: %s" % FileAccess.file_exists(load_path))
+
+	# 3. What zone_id the scene would use
+	var current_scene := get_tree().current_scene
+	var scene_zone_id := ""
+	if current_scene and "zone_id" in current_scene:
+		scene_zone_id = current_scene.zone_id
+	print("[ZoneDebug] SCENE: zone_id export = '%s'" % scene_zone_id)
+
+	# 4. What ChunkManager would initialize with
+	print("[ZoneDebug] CHUNK: Would initialize_for_zone('%s')" % scene_zone_id)
+
+	# 5. What chunk files would be looked for
+	var expected_chunk := _make_chunk_id(scene_zone_id, 0, 0)
+	var expected_path := CHUNK_TILES_DIR + expected_chunk + ".json"
+	print("[ZoneDebug] CHUNK: Would look for '%s'" % expected_chunk)
+	print("[ZoneDebug] CHUNK: Path = '%s'" % expected_path)
+	print("[ZoneDebug] CHUNK: Exists: %s" % FileAccess.file_exists(expected_path))
+
+	# 6. Show potential fix
+	if not FileAccess.file_exists(expected_path):
+		# Try with save_zone (scene filename)
+		var alt_chunk := _make_chunk_id(save_zone, 0, 0)
+		var alt_path := CHUNK_TILES_DIR + alt_chunk + ".json"
+		if FileAccess.file_exists(alt_path):
+			print("[ZoneDebug] FIX: Chunk files exist with zone_id='%s'" % save_zone)
+			print("[ZoneDebug] FIX: Change scene's zone_id from '%s' to '%s'" % [scene_zone_id, save_zone])
+
+	print("[ZoneDebug] ================================================")
+	print("")

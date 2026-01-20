@@ -55,6 +55,8 @@ var _category_markers: Dictionary = {
 	"Spawner": "[SPN]",
 	"Loot": "[LOT]",
 	"Stats": "[STS]",
+	"Zone": "[ZON]",
+	"ChunkManager": "[CHK]",
 }
 
 ## Level prefixes
