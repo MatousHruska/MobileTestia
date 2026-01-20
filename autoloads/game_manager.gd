@@ -225,6 +225,11 @@ func change_zone(zone_path: String, spawn_id: String = "default") -> void:
 	# Use call_deferred to allow current frame to finish
 	call_deferred("_load_zone", zone_path)
 
+## Pending zone load for retry when scene tree is busy
+var _pending_zone_path: String = ""
+var _zone_load_retry_count: int = 0
+const MAX_ZONE_LOAD_RETRIES: int = 10
+
 func _load_zone(zone_path: String) -> void:
 	print("[SAVELOAD] Game._load_zone() EXECUTING | Frame: %d" % Engine.get_process_frames())
 	print("[SAVELOAD] GM load: zone_path=%s" % zone_path)
@@ -239,8 +244,26 @@ func _load_zone(zone_path: String) -> void:
 	print("[SAVELOAD] GM load: Calling change_scene_to_file()...")
 	var error := get_tree().change_scene_to_file(zone_path)
 	if error != OK:
-		print("[SAVELOAD] GM load: ERROR! change_scene_to_file failed with error: %d" % error)
+		print("[SAVELOAD] GM load: change_scene_to_file returned error: %d" % error)
+		# ERR_BUSY (19) means scene tree is busy - retry after a short delay
+		if error == ERR_BUSY:
+			_zone_load_retry_count += 1
+			if _zone_load_retry_count <= MAX_ZONE_LOAD_RETRIES:
+				print("[SAVELOAD] GM load: ERR_BUSY - scheduling retry %d/%d" % [_zone_load_retry_count, MAX_ZONE_LOAD_RETRIES])
+				_pending_zone_path = zone_path
+				# Use a timer to retry after a short delay
+				get_tree().create_timer(0.05).timeout.connect(_retry_load_zone)
+				return
+			else:
+				print("[SAVELOAD] GM load: ERROR! Max retries exceeded for zone load")
+				Debug.err("System", "Failed to load zone after %d retries" % MAX_ZONE_LOAD_RETRIES, zone_path)
+		else:
+			Debug.err("System", "Failed to load zone", [zone_path, "error:", error])
 		return
+
+	# Success - reset retry counter
+	_zone_load_retry_count = 0
+	_pending_zone_path = ""
 
 	print("[SAVELOAD] GM load: change_scene_to_file() returned OK")
 	# Note: change_scene_to_file() queues the scene change for end of frame
@@ -249,6 +272,14 @@ func _load_zone(zone_path: String) -> void:
 	zone_changed.emit(current_zone)
 	print("[SAVELOAD] GM load: Emitted zone_changed signal for: %s" % current_zone)
 	print("[SAVELOAD] GM load: DONE (scene change queued for end of frame) | Frame: %d" % Engine.get_process_frames())
+
+
+func _retry_load_zone() -> void:
+	print("[SAVELOAD] Game._retry_load_zone() | Frame: %d | Retry: %d" % [Engine.get_process_frames(), _zone_load_retry_count])
+	if _pending_zone_path.is_empty():
+		print("[SAVELOAD] GM retry: No pending zone path!")
+		return
+	_load_zone(_pending_zone_path)
 
 
 ## Utility
