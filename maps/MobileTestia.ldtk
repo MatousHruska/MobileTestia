@@ -704,7 +704,7 @@
 						},
 						{
 							"__identifier": "spawnpoint",
-							"__grid": [32,16],
+							"__grid": [12,14],
 							"__pivot": [0.5,0.5],
 							"__tags": ["enemy"],
 							"__tile": null,
@@ -713,7 +713,7 @@
 							"width": 16,
 							"height": 16,
 							"defUid": 10,
-							"px": [520,264],
+							"px": [200,232],
 							"fieldInstances": [
 								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_ghouls", "__tile": null, "defUid": 11, "realEditorValues": [{
 									"id": "V_String",
@@ -721,12 +721,12 @@
 								}] },
 								{ "__identifier": "spawn_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
 							],
-							"__worldX": 520,
-							"__worldY": 264
+							"__worldX": 200,
+							"__worldY": 232
 						},
 						{
 							"__identifier": "spawnpoint",
-							"__grid": [48,32],
+							"__grid": [1,14],
 							"__pivot": [0.5,0.5],
 							"__tags": ["enemy"],
 							"__tile": null,
@@ -735,7 +735,7 @@
 							"width": 16,
 							"height": 16,
 							"defUid": 10,
-							"px": [776,520],
+							"px": [24,232],
 							"fieldInstances": [
 								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_skeleton", "__tile": null, "defUid": 11, "realEditorValues": [{
 									"id": "V_String",
@@ -743,12 +743,12 @@
 								}] },
 								{ "__identifier": "spawn_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
 							],
-							"__worldX": 776,
-							"__worldY": 520
+							"__worldX": 24,
+							"__worldY": 232
 						},
 						{
 							"__identifier": "chestspawn",
-							"__grid": [24,24],
+							"__grid": [6,2],
 							"__pivot": [0.5,1],
 							"__tags": ["interactable"],
 							"__tile": null,
@@ -757,19 +757,19 @@
 							"width": 16,
 							"height": 16,
 							"defUid": 20,
-							"px": [392,400],
+							"px": [104,48],
 							"fieldInstances": [
-								{ "__identifier": "chest_id", "__type": "String", "__value": "chest_test_common", "__tile": null, "defUid": 21, "realEditorValues": [{
+								{ "__identifier": "chest_id", "__type": "String", "__value": "chest_crypt_01", "__tile": null, "defUid": 21, "realEditorValues": [{
 									"id": "V_String",
-									"params": ["chest_test_common"]
+									"params": ["chest_crypt_01"]
 								}] },
 								{ "__identifier": "chest_type", "__type": "LocalEnum.chesttype", "__value": "common", "__tile": null, "defUid": 22, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["common"]
 								}] }
 							],
-							"__worldX": 392,
-							"__worldY": 400
+							"__worldX": 104,
+							"__worldY": 48
 						},
 						{
 							"__identifier": "locationarea",
@@ -817,26 +817,7 @@
 						},
 						{
 							"__identifier": "spawnpoint",
-							"__grid": [22,10],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "fd04d280-d380-11f0-aea0-4107d52856d5",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [360,168],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "", "__tile": null, "defUid": 11, "realEditorValues": [] },
-								{ "__identifier": "spawn_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 360,
-							"__worldY": 168
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [17,23],
+							"__grid": [27,3],
 							"__pivot": [0.5,0.5],
 							"__tags": ["enemy"],
 							"__tile": null,
@@ -845,13 +826,16 @@
 							"width": 16,
 							"height": 16,
 							"defUid": 10,
-							"px": [280,376],
+							"px": [440,56],
 							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "", "__tile": null, "defUid": 11, "realEditorValues": [] },
+								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_mountain_patrol_right", "__tile": null, "defUid": 11, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["sp_mountain_patrol_right"]
+								}] },
 								{ "__identifier": "spawn_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
 							],
-							"__worldX": 280,
-							"__worldY": 376
+							"__worldX": 440,
+							"__worldY": 56
 						}
 					]
 				},
