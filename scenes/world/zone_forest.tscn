@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://zone_forest_001"]
+[gd_scene load_steps=11 format=3 uid="uid://zone_forest_001"]
 
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -6,7 +6,6 @@
 [ext_resource type="Script" path="res://scripts/world/zone_base.gd" id="4_zone"]
 [ext_resource type="Script" path="res://scripts/world/zone_transition.gd" id="6_transition"]
 [ext_resource type="Script" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
-[ext_resource type="Script" path="res://scripts/interactable/unlockable_door.gd" id="8_door"]
 [ext_resource type="Script" path="res://scripts/npc/spawn_point.gd" id="9_spawn_point"]
 [ext_resource type="Script" path="res://scripts/world/location.gd" id="10_location"]
 [ext_resource type="Script" path="res://scripts/world/wall.gd" id="11_wall"]
@@ -187,15 +186,6 @@ color = Color(0.3, 0.25, 0.15, 1)
 [node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallRight"]
 position = Vector2(0, 16)
 shape = SubResource("RectangleShape2D_wall_v2")
-
-[node name="OldWoodenDoor" type="Node2D" parent="SecretRoom"]
-position = Vector2(50, -44)
-script = ExtResource("8_door")
-door_name = "Old Wooden Door"
-persistence_id = "forest_secret_door"
-required_key_id = "key_old_wooden"
-required_key_name = "Old Wooden Key"
-placeholder_size = Vector2(16, 32)
 
 [node name="SecretChest" type="Marker2D" parent="SecretRoom"]
 position = Vector2(0, 0)

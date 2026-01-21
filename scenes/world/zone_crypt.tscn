@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3 uid="uid://cwve3j0rp30ul"]
+[gd_scene load_steps=9 format=3 uid="uid://cwve3j0rp30ul"]
 
 [ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -6,7 +6,6 @@
 [ext_resource type="Script" uid="uid://vik7jjuuh4ix" path="res://scripts/world/zone_base.gd" id="4_zone"]
 [ext_resource type="Script" uid="uid://cayikglml6hs4" path="res://scripts/world/zone_transition.gd" id="6_transition"]
 [ext_resource type="Script" uid="uid://bxs48qilberw1" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
-[ext_resource type="Script" uid="uid://cgl6l43mlmslk" path="res://scripts/interactable/lever.gd" id="8_lever"]
 [ext_resource type="Script" uid="uid://cn2eonjs20xn1" path="res://scripts/npc/spawn_point.gd" id="9_spawn_point"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
@@ -60,16 +59,6 @@ offset_top = -80.0
 offset_right = 106.0
 offset_bottom = -60.0
 color = Color(0.9, 0.6, 0.2, 1)
-
-[node name="Interactables" type="Node2D" parent="."]
-
-[node name="CryptLever" type="Node2D" parent="Interactables"]
-position = Vector2(90, -60)
-script = ExtResource("8_lever")
-lever_name = "Ancient Lever"
-persistence_id = "crypt_lever_meadows"
-one_shot = true
-linked_door_id = "meadows_lever_door"
 
 [node name="Enemies" type="Node2D" parent="."]
 
