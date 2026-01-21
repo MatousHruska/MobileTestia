@@ -49,6 +49,28 @@
 			"type": "common"
 		}
 	],
+	"doors": [
+		{
+			"id": "door_forest_secret",
+			"position": {
+				"x": 24.0,
+				"y": 208.0
+			},
+			"size": {
+				"h": 32.0,
+				"w": 16.0
+			}
+		}
+	],
+	"levers": [
+		{
+			"id": "lever_crypt_to_meadow",
+			"position": {
+				"x": 72.0,
+				"y": 240.0
+			}
+		}
+	],
 	"locations": [
 		{
 			"id": "loc_test_north",
@@ -62,12 +84,61 @@
 			}
 		}
 	],
+	"lootables": [
+		{
+			"id": "loot_corpse_soldier",
+			"position": {
+				"x": 200.0,
+				"y": 240.0
+			}
+		}
+	],
+	"lore_echoes": [
+		{
+			"id": "echo_crypt_builder",
+			"position": {
+				"x": 136.0,
+				"y": 288.0
+			}
+		}
+	],
+	"npcs": [
+		{
+			"id": "npc_quest_giver_main",
+			"position": {
+				"x": 88.0,
+				"y": 288.0
+			}
+		}
+	],
 	"player_spawns": [
 		{
 			"id": "default",
 			"position": {
 				"x": 136.0,
 				"y": 144.0
+			}
+		}
+	],
+	"pressure_plates": [
+		{
+			"id": "plate_crypt_entrance",
+			"position": {
+				"x": 136.0,
+				"y": 232.0
+			},
+			"size": {
+				"h": 16.0,
+				"w": 16.0
+			}
+		}
+	],
+	"signs": [
+		{
+			"id": "sign_forest_warning",
+			"position": {
+				"x": 200.0,
+				"y": 288.0
 			}
 		}
 	],
@@ -165,6 +236,19 @@
 			},
 			"target_spawn": "from_test",
 			"target_zone": "zone_forest"
+		}
+	],
+	"trigger_areas": [
+		{
+			"id": "trigger_forest_ambush",
+			"position": {
+				"x": 64.0,
+				"y": 320.0
+			},
+			"size": {
+				"h": 48.0,
+				"w": 48.0
+			}
 		}
 	]
 }
