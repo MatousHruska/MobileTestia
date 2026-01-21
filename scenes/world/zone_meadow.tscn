@@ -8,6 +8,8 @@
 [ext_resource type="Script" uid="uid://bxs48qilberw1" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
 [ext_resource type="Script" path="res://scripts/npc/spawn_point.gd" id="9_spawn_point"]
 [ext_resource type="Script" path="res://scripts/world/wall.gd" id="10_wall"]
+[ext_resource type="Script" uid="uid://dycl1axw54emv" path="res://scripts/interactable/unlockable_door.gd" id="11_door"]
+[ext_resource type="Script" uid="uid://dc6rssr8gotxo" path="res://scripts/world/spawn_point.gd" id="12_spawn_point"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
 size = Vector2(80, 40)
@@ -57,6 +59,16 @@ color = Color(0.9, 0.7, 0.2, 1)
 
 [node name="SecretRoom" type="Node2D" parent="."]
 position = Vector2(400, 0)
+
+[node name="MeadowGate" type="Node2D" parent="SecretRoom"]
+position = Vector2(0, 0)
+script = ExtResource("11_door")
+door_name = "Hidden Gate"
+persistence_id = "door_meadow_gate"
+lever_controlled = true
+locked_color = Color(0.4, 0.3, 0.25, 1)
+unlocked_color = Color(0.25, 0.4, 0.2, 1)
+collision_size = Vector2(16, 48)
 
 [node name="Floor" type="ColorRect" parent="SecretRoom"]
 offset_left = -8.0
@@ -173,6 +185,13 @@ database_chest_id = "chest_meadow_01"
 position = Vector2(-280, 150)
 script = ExtResource("7_chest_spawn")
 database_chest_id = "chest_meadow_02"
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="SpawnFromLdtkTest" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(-300, 0)
+script = ExtResource("12_spawn_point")
+spawn_id = "from_ldtk_test"
 
 [node name="TransitionToTest" type="Area2D" parent="."]
 position = Vector2(0, -280)
