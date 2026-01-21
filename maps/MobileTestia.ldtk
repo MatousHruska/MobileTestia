@@ -1251,31 +1251,6 @@
 							"__worldY": 0
 						},
 						{
-							"__identifier": "zonetransition",
-							"__grid": [120,64],
-							"__pivot": [0,0],
-							"__tags": ["trigger"],
-							"__tile": null,
-							"__smartColor": "#FF00FF",
-							"iid": "entity-0006-0001-0001-000000000001",
-							"width": 64,
-							"height": 128,
-							"defUid": 30,
-							"px": [1920,1024],
-							"fieldInstances": [
-								{ "__identifier": "target_zone", "__type": "String", "__value": "zone_forest", "__tile": null, "defUid": 31, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["zone_forest"]
-								}] },
-								{ "__identifier": "target_spawn", "__type": "String", "__value": "from_test", "__tile": null, "defUid": 32, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["from_test"]
-								}] }
-							],
-							"__worldX": 1920,
-							"__worldY": 1024
-						},
-						{
 							"__identifier": "chestspawn",
 							"__grid": [22,36],
 							"__pivot": [0.5,1],
@@ -1708,6 +1683,25 @@
 							}] }],
 							"__worldX": 24,
 							"__worldY": 208
+						},
+						{
+							"__identifier": "zonetransition",
+							"__grid": [0,0],
+							"__pivot": [0,0],
+							"__tags": ["trigger"],
+							"__tile": null,
+							"__smartColor": "#FF00FF",
+							"iid": "1880e310-d380-11f0-a5df-1f3675092bca",
+							"width": 256,
+							"height": 16,
+							"defUid": 30,
+							"px": [0,0],
+							"fieldInstances": [
+								{ "__identifier": "target_zone", "__type": "String", "__value": "", "__tile": null, "defUid": 31, "realEditorValues": [] },
+								{ "__identifier": "target_spawn", "__type": "String", "__value": "", "__tile": null, "defUid": 32, "realEditorValues": [] }
+							],
+							"__worldX": 0,
+							"__worldY": 0
 						}
 					]
 				},
