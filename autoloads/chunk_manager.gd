@@ -457,27 +457,28 @@ func _load_chunk_tiles(chunk_id: String) -> Dictionary:
 	var path := CHUNK_TILES_DIR + chunk_id + ".json"
 
 	if not FileAccess.file_exists(path):
-		Debug.warn("ChunkManager", "No tile data found for chunk: %s" % chunk_id)
-		# Debug: Show what file we were looking for and suggest alternatives
-		print("[ChunkDebug] CHUNK FILE NOT FOUND:")
-		print("[ChunkDebug]   Looking for: %s" % path)
-		print("[ChunkDebug]   zone_id used: %s" % current_zone_id)
-		# Check if there's a file with a different zone name pattern
-		var chunk_files := _list_chunk_files_for_zone(current_zone_id)
-		if chunk_files.is_empty():
-			print("[ChunkDebug]   No chunk files found matching zone_id='%s'" % current_zone_id)
-			# Try alternate patterns
-			var scene_filename := ""
-			if get_tree() and get_tree().current_scene:
-				scene_filename = get_tree().current_scene.scene_file_path.get_file().get_basename()
-				var alt_files := _list_chunk_files_for_zone(scene_filename)
-				if not alt_files.is_empty():
-					print("[ChunkDebug]   BUT found files matching scene='%s':" % scene_filename)
-					for f in alt_files:
-						print("[ChunkDebug]     - %s" % f)
-					print("[ChunkDebug]   FIX: Change zone_id in scene to '%s'" % scene_filename)
-		else:
-			print("[ChunkDebug]   Files found matching zone: %s" % str(chunk_files))
+		# Only show warning once per missing chunk pattern (not every chunk)
+		if Debug.verbose_chunks:
+			Debug.warn("ChunkManager", "No tile data found for chunk: %s" % chunk_id)
+			Debug.print_chunk("[ChunkDebug] CHUNK FILE NOT FOUND:")
+			Debug.print_chunk("[ChunkDebug]   Looking for: %s" % path)
+			Debug.print_chunk("[ChunkDebug]   zone_id used: %s" % current_zone_id)
+			# Check if there's a file with a different zone name pattern
+			var chunk_files := _list_chunk_files_for_zone(current_zone_id)
+			if chunk_files.is_empty():
+				Debug.print_chunk("[ChunkDebug]   No chunk files found matching zone_id='%s'" % current_zone_id)
+				# Try alternate patterns
+				var scene_filename := ""
+				if get_tree() and get_tree().current_scene:
+					scene_filename = get_tree().current_scene.scene_file_path.get_file().get_basename()
+					var alt_files := _list_chunk_files_for_zone(scene_filename)
+					if not alt_files.is_empty():
+						Debug.print_chunk("[ChunkDebug]   BUT found files matching scene='%s':" % scene_filename)
+						for f in alt_files:
+							Debug.print_chunk("[ChunkDebug]     - %s" % f)
+						Debug.print_chunk("[ChunkDebug]   FIX: Change zone_id in scene to '%s'" % scene_filename)
+			else:
+				Debug.print_chunk("[ChunkDebug]   Files found matching zone: %s" % str(chunk_files))
 		return {}
 
 	var file := FileAccess.open(path, FileAccess.READ)
@@ -821,13 +822,13 @@ func _spawn_chest(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 	var persistence_key := "%s@%d,%d" % [chest_id, int(world_pos.x), int(world_pos.y)]
 
 	# Check persistence - is chest already looted? (using unique key)
-	print("[CHEST] Checking persistence for: %s" % persistence_key)
+	Debug.print_spawn("[CHEST] Checking persistence for: %s" % persistence_key)
 	var is_opened := Persistence.is_chest_opened(persistence_key) if Persistence else false
-	print("[CHEST] Persistence.is_chest_opened(%s) = %s" % [persistence_key, is_opened])
+	Debug.print_spawn("[CHEST] Persistence.is_chest_opened(%s) = %s" % [persistence_key, is_opened])
 	if Persistence and is_opened:
 		# Check if can respawn
 		var state := Persistence.load_state("chests", persistence_key)
-		print("[CHEST] Found looted state: %s" % state)
+		Debug.print_spawn("[CHEST] Found looted state: %s" % state)
 		var can_respawn: bool = state.get("can_respawn", true)
 		if not can_respawn:
 			Debug.log("ChunkManager", "Chest already looted (permanent): %s" % persistence_key)

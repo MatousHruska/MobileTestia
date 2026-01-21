@@ -160,18 +160,18 @@ func _ready() -> void:
 	# Generate ID if not set
 	_actual_id = spawn_point_id if not spawn_point_id.is_empty() else str(get_path())
 
-	print("[SAVELOAD] SpawnPoint._ready() called | Frame: %d | ID: %s" % [Engine.get_process_frames(), _actual_id])
-	print("[SAVELOAD] SP: enemy_id=%s, preset_id=%s, enabled=%s" % [enemy_id, preset_id, enabled])
+	Debug.print_saveload("[SAVELOAD] SpawnPoint._ready() called | Frame: %d | ID: %s" % [Engine.get_process_frames(), _actual_id])
+	Debug.print_saveload("[SAVELOAD] SP: enemy_id=%s, preset_id=%s, enabled=%s" % [enemy_id, preset_id, enabled])
 
 	# Check if this was spawned by ChunkManager
 	_is_chunk_spawned = has_meta("chunk_spawned")
 	if _is_chunk_spawned:
 		_chunk_id = get_meta("chunk_id", "")
-		print("[SAVELOAD] SP: Is chunk-spawned, chunk_id=%s" % _chunk_id)
+		Debug.print_saveload("[SAVELOAD] SP: Is chunk-spawned, chunk_id=%s" % _chunk_id)
 
 	# Load preset if specified
 	if not preset_id.is_empty():
-		print("[SAVELOAD] SP: Loading preset: %s" % preset_id)
+		Debug.print_saveload("[SAVELOAD] SP: Loading preset: %s" % preset_id)
 		_load_preset()
 
 	# Check persistence state - was this spawn point cleared?
@@ -179,20 +179,20 @@ func _ready() -> void:
 
 	# Check for temp state restoration from ChunkManager (chunk reload scenario)
 	if _is_chunk_spawned and not _chunk_id.is_empty():
-		print("[SAVELOAD] SP: Checking for temp state restoration...")
+		Debug.print_saveload("[SAVELOAD] SP: Checking for temp state restoration...")
 		_try_restore_from_chunk_state()
 
 	# Register with NPCManager if available
 	if NPCManager:
 		NPCManager.register_spawn_point(self)
-		print("[SAVELOAD] SP: Registered with NPCManager, total spawn_points=%d" % NPCManager.all_spawn_points.size())
+		Debug.print_saveload("[SAVELOAD] SP: Registered with NPCManager, total spawn_points=%d" % NPCManager.all_spawn_points.size())
 
 	# Start active if enabled and conditions met
 	if enabled:
-		print("[SAVELOAD] SP: Calling _check_and_activate()")
+		Debug.print_saveload("[SAVELOAD] SP: Calling _check_and_activate()")
 		_check_and_activate()
 
-	print("[SAVELOAD] SP: _ready() COMPLETE | is_active=%s, alive_enemies=%d" % [is_active, alive_enemies.size()])
+	Debug.print_saveload("[SAVELOAD] SP: _ready() COMPLETE | is_active=%s, alive_enemies=%d" % [is_active, alive_enemies.size()])
 
 
 func _exit_tree() -> void:
@@ -485,11 +485,11 @@ func _check_quest_conditions() -> bool:
 func activate() -> void:
 	## Activate the spawn point
 	if is_active:
-		print("[SAVELOAD] SP activate: SKIP - already active | ID: %s" % _actual_id)
+		Debug.print_saveload("[SAVELOAD] SP activate: SKIP - already active | ID: %s" % _actual_id)
 		return
 
-	print("[SAVELOAD] SpawnPoint.activate() | Frame: %d | ID: %s" % [Engine.get_process_frames(), _actual_id])
-	print("[SAVELOAD] SP activate: check_interval=%s, will spawn immediately=%s" % [check_interval, check_interval <= 0])
+	Debug.print_saveload("[SAVELOAD] SpawnPoint.activate() | Frame: %d | ID: %s" % [Engine.get_process_frames(), _actual_id])
+	Debug.print_saveload("[SAVELOAD] SP activate: check_interval=%s, will spawn immediately=%s" % [check_interval, check_interval <= 0])
 
 	is_active = true
 	_check_timer = 0.0  # Spawn immediately on first activation
@@ -498,10 +498,10 @@ func activate() -> void:
 	# For one-shot spawns (check_interval <= 0), spawn immediately since _process won't
 	# Use call_deferred to avoid spawning during _ready() which causes initialization issues
 	if check_interval <= 0:
-		print("[SAVELOAD] SP activate: Scheduling immediate _try_spawn via call_deferred")
+		Debug.print_saveload("[SAVELOAD] SP activate: Scheduling immediate _try_spawn via call_deferred")
 		call_deferred("_try_spawn")
 	else:
-		print("[SAVELOAD] SP activate: Will spawn on next _process tick (timer=0)")
+		Debug.print_saveload("[SAVELOAD] SP activate: Will spawn on next _process tick (timer=0)")
 
 
 func deactivate() -> void:
@@ -522,13 +522,13 @@ func deactivate() -> void:
 func _try_spawn() -> void:
 	## Attempt to spawn an enemy
 
-	print("[SAVELOAD] SpawnPoint._try_spawn() called | Frame: %d | ID: %s" % [Engine.get_process_frames(), _actual_id])
-	print("[SAVELOAD] SP spawn: alive=%d, killed_persisted=%d, max=%d, is_cleared=%s" % [alive_enemies.size(), _enemies_killed_persisted, max_active_enemies, _is_cleared])
+	Debug.print_saveload("[SAVELOAD] SpawnPoint._try_spawn() called | Frame: %d | ID: %s" % [Engine.get_process_frames(), _actual_id])
+	Debug.print_saveload("[SAVELOAD] SP spawn: alive=%d, killed_persisted=%d, max=%d, is_cleared=%s" % [alive_enemies.size(), _enemies_killed_persisted, max_active_enemies, _is_cleared])
 
 	# Skip initial spawn if we restored from chunk temp state
 	if _restored_from_temp_state:
 		_restored_from_temp_state = false  # Clear flag after first check
-		print("[SAVELOAD] SP spawn: SKIP - restored from chunk state")
+		Debug.print_saveload("[SAVELOAD] SP spawn: SKIP - restored from chunk state")
 		Debug.log("SpawnPoint", "Skipping spawn - restored from chunk state: %s" % _actual_id)
 		return
 
@@ -543,41 +543,41 @@ func _try_spawn() -> void:
 				_cleared_at = 0.0
 				_enemies_killed_persisted = 0
 				Persistence.clear_state("spawn_points", _actual_id)
-				print("[SAVELOAD] SP spawn: RESPAWN ALLOWED after %.1f seconds" % elapsed)
+				Debug.print_saveload("[SAVELOAD] SP spawn: RESPAWN ALLOWED after %.1f seconds" % elapsed)
 				Debug.info("SpawnPoint", "RESPAWN ALLOWED after %.1f seconds: %s" % [elapsed, _actual_id])
 			else:
 				var remaining := respawn_time - elapsed
-				print("[SAVELOAD] SP spawn: SKIP - cleared (%.1fs remaining)" % remaining)
+				Debug.print_saveload("[SAVELOAD] SP spawn: SKIP - cleared (%.1fs remaining)" % remaining)
 				Debug.log("SpawnPoint", "SKIP spawn - cleared (%.1fs remaining): %s" % [remaining, _actual_id])
 				return
 		elif not can_respawn:
-			print("[SAVELOAD] SP spawn: SKIP - cleared forever")
+			Debug.print_saveload("[SAVELOAD] SP spawn: SKIP - cleared forever")
 			Debug.log("SpawnPoint", "SKIP spawn - cleared forever: %s" % _actual_id)
 			return
 		else:
-			print("[SAVELOAD] SP spawn: SKIP - cleared")
+			Debug.print_saveload("[SAVELOAD] SP spawn: SKIP - cleared")
 			Debug.log("SpawnPoint", "SKIP spawn - cleared: %s" % _actual_id)
 			return
 
 	# Check if we can spawn more (accounting for killed enemies waiting to respawn)
 	var total_accounted := alive_enemies.size() + _enemies_killed_persisted
 	if total_accounted >= max_active_enemies:
-		print("[SAVELOAD] SP spawn: SKIP - at max (total_accounted=%d >= max=%d)" % [total_accounted, max_active_enemies])
+		Debug.print_saveload("[SAVELOAD] SP spawn: SKIP - at max (total_accounted=%d >= max=%d)" % [total_accounted, max_active_enemies])
 		return
 
 	# Re-check conditions (quest state may have changed)
 	if not _check_all_conditions():
-		print("[SAVELOAD] SP spawn: SKIP - conditions not met, deactivating")
+		Debug.print_saveload("[SAVELOAD] SP spawn: SKIP - conditions not met, deactivating")
 		deactivate()
 		return
 
 	# Roll spawn chance
 	if spawn_chance < 1.0 and randf() > spawn_chance:
-		print("[SAVELOAD] SP spawn: SKIP - spawn chance failed")
+		Debug.print_saveload("[SAVELOAD] SP spawn: SKIP - spawn chance failed")
 		Debug.info("SpawnPoint", "  SKIP: spawn chance failed")
 		return
 
-	print("[SAVELOAD] SP spawn: *** SPAWNING ENEMY *** | ID: %s" % _actual_id)
+	Debug.print_saveload("[SAVELOAD] SP spawn: *** SPAWNING ENEMY *** | ID: %s" % _actual_id)
 	Debug.info("SpawnPoint", "  SPAWNING enemy...")
 	# Spawn the enemy
 	spawn_enemy()
@@ -585,17 +585,17 @@ func _try_spawn() -> void:
 
 func spawn_enemy() -> EnemyNPC:
 	## Spawn an enemy from the pool
-	print("[SAVELOAD] SpawnPoint.spawn_enemy() called | Frame: %d | ID: %s" % [Engine.get_process_frames(), _actual_id])
+	Debug.print_saveload("[SAVELOAD] SpawnPoint.spawn_enemy() called | Frame: %d | ID: %s" % [Engine.get_process_frames(), _actual_id])
 
 	var selected_enemy_id := _select_enemy_from_pool()
 	if selected_enemy_id.is_empty():
-		print("[SAVELOAD] SP spawn_enemy: FAILED - pool is empty")
+		Debug.print_saveload("[SAVELOAD] SP spawn_enemy: FAILED - pool is empty")
 		Debug.warn("SpawnPoint", "No enemy to spawn - pool is empty", _actual_id)
 		return null
 
 	# Get random level
 	var level := randi_range(min_level, max_level)
-	print("[SAVELOAD] SP spawn_enemy: Creating %s at level %d" % [selected_enemy_id, level])
+	Debug.print_saveload("[SAVELOAD] SP spawn_enemy: Creating %s at level %d" % [selected_enemy_id, level])
 
 	# Prepare spawn configuration (for patrol, ambush, etc.)
 	var spawn_config := _prepare_spawn_config()
@@ -603,7 +603,7 @@ func spawn_enemy() -> EnemyNPC:
 	# Create enemy from database with spawn config
 	var enemy := DatabaseLoader.create_enemy(selected_enemy_id, level, spawn_config)
 	if not enemy:
-		print("[SAVELOAD] SP spawn_enemy: FAILED - DatabaseLoader.create_enemy returned null")
+		Debug.print_saveload("[SAVELOAD] SP spawn_enemy: FAILED - DatabaseLoader.create_enemy returned null")
 		Debug.err("SpawnPoint", "Failed to create enemy", {
 			"id": _actual_id,
 			"enemy_id": selected_enemy_id

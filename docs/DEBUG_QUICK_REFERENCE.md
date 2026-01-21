@@ -4,6 +4,28 @@ Quick reference for all debug tools and commands in MobileTestia.
 
 ---
 
+## Console Verbosity Controls
+
+These keys control how much debug output is printed to the console:
+
+| Key | Action | Description |
+|-----|--------|-------------|
+| **/** | Cycle log level | INFO → DEBUG → TRACE → INFO |
+| **\*** | Toggle all verbose | Turn all verbose modes on/off |
+| **-** | Toggle NPC verbose | NPC movement spam only |
+| **+** or **=** | Print debug settings | Show current log level and verbose flags |
+
+### Default Settings
+- **Log Level**: INFO (hides DEBUG/TRACE messages)
+- **Verbose modes**: All OFF by default (NPC, Chunks, Spawn, SaveLoad)
+
+### When to Enable Verbose Modes
+- **NPC verbose (-)**: Debugging enemy movement, AI decisions
+- **Chunk verbose (\*)**: Debugging chunk loading issues, missing files
+- **All verbose (\*)**: Full trace for save/load debugging
+
+---
+
 ## Debug Key Bindings (Numpad)
 
 Press these numpad keys during gameplay (debug builds only). Uses numpad to avoid Godot editor conflicts (F1-F8):
@@ -100,10 +122,25 @@ NPCManager.print_state()            # Print all NPC info (if available)
 ### Debug System
 
 ```gdscript
-Debug.info("Category", "Message")           # Log info message
+# Standard logging (respects log_level)
+Debug.info("Category", "Message")           # Log info message (always shown at INFO+)
+Debug.log("Category", "Message")            # Log debug message (shown at DEBUG+)
 Debug.warn("Category", "Warning")           # Log warning
 Debug.err("Category", "Error")              # Log error
 Debug.snapshot("Category", "Title", data)   # Log data snapshot
+
+# Verbose logging (respects verbose flags, independent of log_level)
+Debug.log_verbose("npc", "Category", "Msg") # Only if verbose_npc is true
+Debug.print_saveload("[SAVELOAD] ...")      # Only if verbose_saveload is true
+Debug.print_chunk("[ChunkDebug] ...")       # Only if verbose_chunks is true
+Debug.print_spawn("[SPAWN] ...")            # Only if verbose_spawn is true
+
+# Runtime control
+Debug.set_level(Debug.LogLevel.DEBUG)       # Change log level
+Debug.verbose_npc = true                    # Enable NPC movement spam
+Debug.verbose_chunks = true                 # Enable chunk loading details
+Debug.verbose_spawn = true                  # Enable spawn point details
+Debug.verbose_saveload = true               # Enable save/load tracing
 ```
 
 ---

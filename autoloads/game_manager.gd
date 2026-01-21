@@ -25,9 +25,9 @@ var player: Node2D = null:
 	set(value):
 		var old_player := player
 		player = value
-		print("[SAVELOAD] Game.player SETTER | Frame: %d" % Engine.get_process_frames())
-		print("[SAVELOAD] GM player: old=%s, new=%s" % [old_player.name if old_player and is_instance_valid(old_player) else "null", value.name if value else "null"])
-		print("[SAVELOAD] GM player: current_state=%s, tree_paused=%s" % [GameState.keys()[current_state], get_tree().paused])
+		Debug.print_saveload("[SAVELOAD] Game.player SETTER | Frame: %d" % Engine.get_process_frames())
+		Debug.print_saveload("[SAVELOAD] GM player: old=%s, new=%s" % [old_player.name if old_player and is_instance_valid(old_player) else "null", value.name if value else "null"])
+		Debug.print_saveload("[SAVELOAD] GM player: current_state=%s, tree_paused=%s" % [GameState.keys()[current_state], get_tree().paused])
 		Debug.info("Player", "Player setter called", {
 			"old": old_player.name if old_player and is_instance_valid(old_player) else "null",
 			"new": value.name if value else "null",
@@ -35,16 +35,16 @@ var player: Node2D = null:
 			"tree_paused": get_tree().paused
 		})
 		if player:
-			print("[SAVELOAD] GM player: Emitting player_spawned signal")
+			Debug.print_saveload("[SAVELOAD] GM player: Emitting player_spawned signal")
 			player_spawned.emit(player)
 			# Auto-transition to PLAYING when player is ready
 			if current_state == GameState.LOADING:
-				print("[SAVELOAD] GM player: AUTO-TRANSITIONING to PLAYING from LOADING")
+				Debug.print_saveload("[SAVELOAD] GM player: AUTO-TRANSITIONING to PLAYING from LOADING")
 				Debug.info("Player", "Auto-transitioning to PLAYING from LOADING")
 				set_playing()
-				print("[SAVELOAD] GM player: State after set_playing(): %s" % GameState.keys()[current_state])
+				Debug.print_saveload("[SAVELOAD] GM player: State after set_playing(): %s" % GameState.keys()[current_state])
 			else:
-				print("[SAVELOAD] GM player: NOT auto-transitioning - state is not LOADING (is %s)" % GameState.keys()[current_state])
+				Debug.print_saveload("[SAVELOAD] GM player: NOT auto-transitioning - state is not LOADING (is %s)" % GameState.keys()[current_state])
 				Debug.warn("Player", "NOT auto-transitioning - state is not LOADING", GameState.keys()[current_state])
 
 ## Game flags
@@ -320,13 +320,13 @@ func game_over() -> void:
 
 ## Zone management
 func change_zone(zone_path: String, spawn_id: String = "default") -> void:
-	print("[SAVELOAD] Game.change_zone() called | Frame: %d" % Engine.get_process_frames())
-	print("[SAVELOAD] GM: zone_path=%s, spawn_id=%s" % [zone_path, spawn_id])
-	print("[SAVELOAD] GM: state BEFORE: %s, player_valid: %s" % [GameState.keys()[current_state], is_player_valid()])
+	Debug.print_saveload("[SAVELOAD] Game.change_zone() called | Frame: %d" % Engine.get_process_frames())
+	Debug.print_saveload("[SAVELOAD] GM: zone_path=%s, spawn_id=%s" % [zone_path, spawn_id])
+	Debug.print_saveload("[SAVELOAD] GM: state BEFORE: %s, player_valid: %s" % [GameState.keys()[current_state], is_player_valid()])
 
 	spawn_point_id = spawn_id
 	current_state = GameState.LOADING
-	print("[SAVELOAD] GM: Set state to LOADING, scheduling _load_zone via call_deferred")
+	Debug.print_saveload("[SAVELOAD] GM: Set state to LOADING, scheduling _load_zone via call_deferred")
 
 	# Use call_deferred to allow current frame to finish
 	call_deferred("_load_zone", zone_path)
@@ -337,34 +337,34 @@ var _zone_load_retry_count: int = 0
 const MAX_ZONE_LOAD_RETRIES: int = 10
 
 func _load_zone(zone_path: String) -> void:
-	print("[SAVELOAD] Game._load_zone() EXECUTING | Frame: %d" % Engine.get_process_frames())
-	print("[SAVELOAD] GM load: zone_path=%s" % zone_path)
-	print("[SAVELOAD] GM load: state=%s, tree_paused=%s, player_valid=%s" % [GameState.keys()[current_state], get_tree().paused, is_player_valid()])
-	print("[SAVELOAD] GM load: ChunkManager state: initialized=%s, zone=%s" % [ChunkManager._initialized if ChunkManager else "null", ChunkManager.current_zone_id if ChunkManager else "null"])
+	Debug.print_saveload("[SAVELOAD] Game._load_zone() EXECUTING | Frame: %d" % Engine.get_process_frames())
+	Debug.print_saveload("[SAVELOAD] GM load: zone_path=%s" % zone_path)
+	Debug.print_saveload("[SAVELOAD] GM load: state=%s, tree_paused=%s, player_valid=%s" % [GameState.keys()[current_state], get_tree().paused, is_player_valid()])
+	Debug.print_saveload("[SAVELOAD] GM load: ChunkManager state: initialized=%s, zone=%s" % [ChunkManager._initialized if ChunkManager else "null", ChunkManager.current_zone_id if ChunkManager else "null"])
 
 	# Clear player reference since it will be invalid after scene change
 	# The new scene's player will set this in its _ready()
-	print("[SAVELOAD] GM load: Clearing player reference")
+	Debug.print_saveload("[SAVELOAD] GM load: Clearing player reference")
 	player = null
 
-	print("[SAVELOAD] GM load: Calling change_scene_to_file()...")
+	Debug.print_saveload("[SAVELOAD] GM load: Calling change_scene_to_file()...")
 	var error := get_tree().change_scene_to_file(zone_path)
 	if error != OK:
 		var error_code := int(error)
 		# Note: In Godot 4.5.x, error codes may vary. Error 19 typically means scene tree busy.
 		var is_busy_error := error_code == 19 or error_code == int(ERR_BUSY)
-		print("[SAVELOAD] GM load: change_scene_to_file returned error: %d (is_busy=%s)" % [error_code, is_busy_error])
+		Debug.print_saveload("[SAVELOAD] GM load: change_scene_to_file returned error: %d (is_busy=%s)" % [error_code, is_busy_error])
 		# Scene tree busy - retry after a short delay
 		if is_busy_error:
 			_zone_load_retry_count += 1
 			if _zone_load_retry_count <= MAX_ZONE_LOAD_RETRIES:
-				print("[SAVELOAD] GM load: ERR_BUSY - scheduling retry %d/%d" % [_zone_load_retry_count, MAX_ZONE_LOAD_RETRIES])
+				Debug.print_saveload("[SAVELOAD] GM load: ERR_BUSY - scheduling retry %d/%d" % [_zone_load_retry_count, MAX_ZONE_LOAD_RETRIES])
 				_pending_zone_path = zone_path
 				# Use a timer to retry after a short delay
 				get_tree().create_timer(0.05).timeout.connect(_retry_load_zone)
 				return
 			else:
-				print("[SAVELOAD] GM load: ERROR! Max retries exceeded for zone load")
+				Debug.print_saveload("[SAVELOAD] GM load: ERROR! Max retries exceeded for zone load")
 				Debug.err("System", "Failed to load zone after %d retries" % MAX_ZONE_LOAD_RETRIES, zone_path)
 		else:
 			Debug.err("System", "Failed to load zone", [zone_path, "error:", error])
@@ -374,19 +374,19 @@ func _load_zone(zone_path: String) -> void:
 	_zone_load_retry_count = 0
 	_pending_zone_path = ""
 
-	print("[SAVELOAD] GM load: change_scene_to_file() returned OK")
+	Debug.print_saveload("[SAVELOAD] GM load: change_scene_to_file() returned OK")
 	# Note: change_scene_to_file() queues the scene change for end of frame
 	# The actual scene loads asynchronously, but the function returns OK immediately
 	current_zone = zone_path.get_file().get_basename()
 	zone_changed.emit(current_zone)
-	print("[SAVELOAD] GM load: Emitted zone_changed signal for: %s" % current_zone)
-	print("[SAVELOAD] GM load: DONE (scene change queued for end of frame) | Frame: %d" % Engine.get_process_frames())
+	Debug.print_saveload("[SAVELOAD] GM load: Emitted zone_changed signal for: %s" % current_zone)
+	Debug.print_saveload("[SAVELOAD] GM load: DONE (scene change queued for end of frame) | Frame: %d" % Engine.get_process_frames())
 
 
 func _retry_load_zone() -> void:
-	print("[SAVELOAD] Game._retry_load_zone() | Frame: %d | Retry: %d" % [Engine.get_process_frames(), _zone_load_retry_count])
+	Debug.print_saveload("[SAVELOAD] Game._retry_load_zone() | Frame: %d | Retry: %d" % [Engine.get_process_frames(), _zone_load_retry_count])
 	if _pending_zone_path.is_empty():
-		print("[SAVELOAD] GM retry: No pending zone path!")
+		Debug.print_saveload("[SAVELOAD] GM retry: No pending zone path!")
 		return
 	_load_zone(_pending_zone_path)
 
