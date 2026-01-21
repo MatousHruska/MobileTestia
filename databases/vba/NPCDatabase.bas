@@ -22,6 +22,7 @@ Private Const COL_NPC_MIN_LEVEL As Integer = 9
 Private Const COL_NPC_IS_INTERACTABLE As Integer = 10
 Private Const COL_NPC_PORTRAIT_ID As Integer = 11
 Private Const COL_NPC_DIALOGUE_TALK_ID As Integer = 12
+Private Const COL_NPC_SPAWN_CONDITION As Integer = 13
 
 ' Column indices for ShopInventory
 Private Const COL_SI_ID As Integer = 1
@@ -168,7 +169,8 @@ Public Sub ExportNPCs()
         json = json & "      ""min_level"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_NPC_MIN_LEVEL), 1)) & "," & vbCrLf
         json = json & "      ""is_interactable"": " & LCase(CStr(GetDefaultBoolean(ws.Cells(i, COL_NPC_IS_INTERACTABLE), True))) & "," & vbCrLf
         json = json & "      ""portrait_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_PORTRAIT_ID))) & """," & vbCrLf
-        json = json & "      ""dialogue_talk_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_DIALOGUE_TALK_ID))) & """" & vbCrLf
+        json = json & "      ""dialogue_talk_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_DIALOGUE_TALK_ID))) & """," & vbCrLf
+        json = json & "      ""spawn_condition"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_NPC_SPAWN_CONDITION))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
