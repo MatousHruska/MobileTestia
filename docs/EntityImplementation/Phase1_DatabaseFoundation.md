@@ -1,5 +1,60 @@
 # Phase 1: Database Foundation
 
+---
+
+## Session Start Notes
+
+**Opening prompt for this session:**
+
+```
+Please pull [BRANCH_NAME]
+
+This is the newest version of the codebase. Clone it and add [PHASE_NAME] into its name. We will continue our work from here.
+
+Some notes for this session:
+
+CRITICAL: Database Workflow
+NEVER EDIT .json FILES DIRECTLY!
+
+The database is managed through Excel with VBA macros. Direct JSON edits will be overwritten.
+
+Correct workflow:
+
+First: Provide updated .bas VBA files for any schema changes
+Second: Provide Excel-ready data to paste into sheets
+Third: User imports VBA, pastes data, runs ExportAll
+
+When you need to change database structure or data:
+
+Give me the .bas file updates (if schema changes)
+Give me tab-separated or table data ready to paste into Excel
+I will import/paste and export the JSON myself
+
+IMPORTANT: When changing database schema, always update:
+
+The specific database .bas file (e.g., EnemyDatabase.bas)
+MasterExport.bas (ExportAll, ValidateAll, SetupWorkbook functions)
+SharedValidation.bas (named ranges, foreign key validations, enum validations)
+
+VBA Naming Convention: Export functions should be named ExportXxxData where Xxx matches the sheet name (e.g., ExportAbilitiesData, ExportEnemyAbilitiesData).
+
+When writing data for a database, be careful about "," and "." characters. If it is incorrectly written, .json files won't work, so always use ".".
+
+Whenever you make an update to stats, add a new stat, create a new way of implementing it, check the StatDescriptionDatabase, and update the appropriate Stat Description.
+
+When creating any layout design choices always prefer dynamic percentual edits against fixed pixels.
+
+When designing various elements (texts, containers, UI) always read UIThemeDatabase where style classes are defined. No text in the game should be classless. No UI wireframe classless.
+
+When planning new features and systems remember that we already have save/load system and implement these into this framework.
+
+When creating or editing enemies, their behaviour or AI consult ENEMY_REFERENCE.md, ABILITY_SYSTEM_REFERENCE.md and QUICK_REFERENCE.md
+
+When working with maps and LDTK consult LDTK_MAP_REFERENCE.md and ZONE_DESIGN_GUIDE.md
+```
+
+---
+
 **Goal**: Create all VBA database modules and JSON exports for the new entity types.
 
 ---
