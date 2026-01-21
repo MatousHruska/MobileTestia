@@ -808,7 +808,7 @@ func _export_entities_summary(entities: Dictionary) -> void:
 	print("Exported entities for %d zones:" % zones_data.size())
 	for zone_id in zones_data:
 		var zd: Dictionary = zones_data[zone_id]
-		var entity_count := zd.spawn_points.size() + zd.chests.size() + zd.transitions.size() + zd.player_spawns.size()
+		var entity_count: int = zd.spawn_points.size() + zd.chests.size() + zd.transitions.size() + zd.player_spawns.size()
 		entity_count += zd.doors.size() + zd.levers.size() + zd.pressure_plates.size()
 		entity_count += zd.npcs.size() + zd.lootables.size() + zd.signs.size()
 		entity_count += zd.lore_echoes.size() + zd.trigger_areas.size()
