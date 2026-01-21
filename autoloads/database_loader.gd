@@ -41,6 +41,15 @@ var enemy_abilities: Array = []  ## Enemy-to-ability assignments (list of dictio
 var chunks: Dictionary = {}  ## Map chunks for chunk-based loading (keyed by id)
 var terrain_types: Dictionary = {}  ## Terrain types for map system (keyed by id)
 
+## New interactable entity types
+var doors: Dictionary = {}  ## Door definitions (keyed by id)
+var levers: Dictionary = {}  ## Lever definitions (keyed by id)
+var pressure_plates: Dictionary = {}  ## Pressure plate definitions (keyed by id)
+var lootables: Dictionary = {}  ## Lootable container definitions (keyed by id)
+var signs: Dictionary = {}  ## Sign definitions (keyed by id)
+var lore_echoes: Dictionary = {}  ## Lore echo definitions (keyed by id)
+var trigger_areas: Dictionary = {}  ## Trigger area definitions (keyed by id)
+
 ## Lists for iteration
 var item_bases_list: Array = []
 var affixes_list: Array = []
@@ -62,6 +71,15 @@ var enemy_modules_list: Array = []
 var abilities_list: Array = []
 var chunks_list: Array = []
 var terrain_types_list: Array = []
+
+## Lists for new entity types
+var doors_list: Array = []
+var levers_list: Array = []
+var pressure_plates_list: Array = []
+var lootables_list: Array = []
+var signs_list: Array = []
+var lore_echoes_list: Array = []
+var trigger_areas_list: Array = []
 
 ## Signals
 signal databases_loaded
@@ -117,6 +135,13 @@ func load_all_databases() -> void:
 
 	# Interactables
 	success = _load_database("chests.json", "chests", chests, chests_list) and success
+	success = _load_database("doors.json", "doors", doors, doors_list) and success
+	success = _load_database("levers.json", "levers", levers, levers_list) and success
+	success = _load_database("pressure_plates.json", "pressure_plates", pressure_plates, pressure_plates_list) and success
+	success = _load_database("lootables.json", "lootables", lootables, lootables_list) and success
+	success = _load_database("signs.json", "signs", signs, signs_list) and success
+	success = _load_database("lore_echoes.json", "lore_echoes", lore_echoes, lore_echoes_list) and success
+	success = _load_database("trigger_areas.json", "trigger_areas", trigger_areas, trigger_areas_list) and success
 
 	# Spawn points
 	success = _load_database("spawn_points.json", "spawn_points", spawn_points, spawn_points_list) and success
@@ -957,6 +982,167 @@ func get_chests_by_type(chest_type: String) -> Array:
 
 
 #===============================================================================
+# DOOR ACCESS
+#===============================================================================
+
+## Get door by id
+func get_door(id: String) -> Dictionary:
+	return doors.get(id, {})
+
+
+## Get all doors
+func get_all_doors() -> Array:
+	return doors_list
+
+
+## Get doors that require a specific key
+func get_doors_by_key(key_id: String) -> Array:
+	var result: Array = []
+	for door in doors_list:
+		if door.get("required_key_id", "") == key_id:
+			result.append(door)
+	return result
+
+
+## Get lever-controlled doors
+func get_lever_controlled_doors() -> Array:
+	var result: Array = []
+	for door in doors_list:
+		if door.get("lever_controlled", false):
+			result.append(door)
+	return result
+
+
+#===============================================================================
+# LEVER ACCESS
+#===============================================================================
+
+## Get lever by id
+func get_lever(id: String) -> Dictionary:
+	return levers.get(id, {})
+
+
+## Get all levers
+func get_all_levers() -> Array:
+	return levers_list
+
+
+## Get levers that control a specific door
+func get_levers_for_door(door_id: String) -> Array:
+	var result: Array = []
+	for lever in levers_list:
+		if lever.get("linked_door_id", "") == door_id:
+			result.append(lever)
+	return result
+
+
+#===============================================================================
+# PRESSURE PLATE ACCESS
+#===============================================================================
+
+## Get pressure plate by id
+func get_pressure_plate(id: String) -> Dictionary:
+	return pressure_plates.get(id, {})
+
+
+## Get all pressure plates
+func get_all_pressure_plates() -> Array:
+	return pressure_plates_list
+
+
+## Get pressure plates that control a specific door
+func get_pressure_plates_for_door(door_id: String) -> Array:
+	var result: Array = []
+	for plate in pressure_plates_list:
+		if plate.get("linked_door_id", "") == door_id:
+			result.append(plate)
+	return result
+
+
+#===============================================================================
+# LOOTABLE ACCESS
+#===============================================================================
+
+## Get lootable by id
+func get_lootable(id: String) -> Dictionary:
+	return lootables.get(id, {})
+
+
+## Get all lootables
+func get_all_lootables() -> Array:
+	return lootables_list
+
+
+## Get lootables that use a specific loot table
+func get_lootables_by_table(loot_table_id: String) -> Array:
+	var result: Array = []
+	for lootable in lootables_list:
+		if lootable.get("loot_table_id", "") == loot_table_id:
+			result.append(lootable)
+	return result
+
+
+#===============================================================================
+# SIGN ACCESS
+#===============================================================================
+
+## Get sign by id
+func get_sign(id: String) -> Dictionary:
+	return signs.get(id, {})
+
+
+## Get all signs
+func get_all_signs() -> Array:
+	return signs_list
+
+
+#===============================================================================
+# LORE ECHO ACCESS
+#===============================================================================
+
+## Get lore echo by id
+func get_lore_echo(id: String) -> Dictionary:
+	return lore_echoes.get(id, {})
+
+
+## Get all lore echoes
+func get_all_lore_echoes() -> Array:
+	return lore_echoes_list
+
+
+#===============================================================================
+# TRIGGER AREA ACCESS
+#===============================================================================
+
+## Get trigger area by id
+func get_trigger_area(id: String) -> Dictionary:
+	return trigger_areas.get(id, {})
+
+
+## Get all trigger areas
+func get_all_trigger_areas() -> Array:
+	return trigger_areas_list
+
+
+## Get trigger areas by type
+func get_trigger_areas_by_type(trigger_type: String) -> Array:
+	var result: Array = []
+	for area in trigger_areas_list:
+		if area.get("trigger_type", "") == trigger_type:
+			result.append(area)
+	return result
+
+
+## Get trigger areas that require a specific quest state
+func get_trigger_areas_for_quest(quest_id: String) -> Array:
+	var result: Array = []
+	for area in trigger_areas_list:
+		if area.get("require_quest_id", "") == quest_id:
+			result.append(area)
+	return result
+
+
+#===============================================================================
 # SPAWN POINT ACCESS
 #===============================================================================
 
@@ -1379,4 +1565,11 @@ func print_stats() -> void:
 		"popup_messages": popup_messages.size(),
 		"chunks": chunks.size(),
 		"terrain_types": terrain_types.size(),
+		"doors": doors.size(),
+		"levers": levers.size(),
+		"pressure_plates": pressure_plates.size(),
+		"lootables": lootables.size(),
+		"signs": signs.size(),
+		"lore_echoes": lore_echoes.size(),
+		"trigger_areas": trigger_areas.size(),
 	})
