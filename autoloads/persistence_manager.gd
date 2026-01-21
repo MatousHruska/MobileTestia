@@ -11,7 +11,12 @@ signal state_cleared(object_id: String)
 var _states: Dictionary = {
 	"doors": {},
 	"levers": {},
+	"plates": {},  # Pressure plates (triggered state)
 	"chests": {},
+	"lootables": {},  # Quick loot containers (looted state)
+	"signs": {},  # Readable signs (read state)
+	"echoes": {},  # Lore echoes (listened state)
+	"triggers": {},  # Trigger areas (fired state)
 	"enemies": {},  # For boss kill tracking
 	"spawn_points": {},  # For tracking cleared enemy spawn points
 	"quests": {},
@@ -22,7 +27,7 @@ var _states: Dictionary = {
 }
 
 ## Valid categories
-const CATEGORIES := ["doors", "levers", "chests", "enemies", "spawn_points", "quests", "npcs", "escort_npcs", "status_effects", "misc"]
+const CATEGORIES := ["doors", "levers", "plates", "chests", "lootables", "signs", "echoes", "triggers", "enemies", "spawn_points", "quests", "npcs", "escort_npcs", "status_effects", "misc"]
 
 
 func _ready() -> void:

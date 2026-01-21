@@ -1,11 +1,10 @@
-[gd_scene load_steps=11 format=3 uid="uid://bdlovilij0thi"]
+[gd_scene load_steps=10 format=3 uid="uid://bdlovilij0thi"]
 
 [ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
 [ext_resource type="Script" uid="uid://br7g6n3ugvdis" path="res://scripts/camera/game_camera.gd" id="3_camera"]
 [ext_resource type="Script" uid="uid://vo3bhpaiw1r0" path="res://scripts/world/reference_object.gd" id="4_ref"]
 [ext_resource type="Script" uid="uid://vik7jjuuh4ix" path="res://scripts/world/zone_base.gd" id="5_zone"]
-[ext_resource type="PackedScene" path="res://scenes/prefabs/database_npc.tscn" id="8_npc_prefab"]
 [ext_resource type="Script" uid="uid://cayikglml6hs4" path="res://scripts/world/zone_transition.gd" id="9_transition"]
 [ext_resource type="Script" uid="uid://dc6rssr8gotxo" path="res://scripts/world/spawn_point.gd" id="10_spawn"]
 [ext_resource type="Script" uid="uid://bxs48qilberw1" path="res://scripts/interactable/chest_spawn_point.gd" id="11_chest_spawn"]
@@ -178,12 +177,6 @@ database_chest_id = "chest_hub_02"
 position = Vector2(-50, 200)
 script = ExtResource("11_chest_spawn")
 database_chest_id = "chest_hub_03"
-
-[node name="FriendlyNPCs" type="Node2D" parent="."]
-
-[node name="QuestGiver" parent="FriendlyNPCs" instance=ExtResource("8_npc_prefab")]
-position = Vector2(280, 0)
-database_id = "npc_quest_giver_main"
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 

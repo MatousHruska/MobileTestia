@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://b0sxxcsnfjnkf"]
+[gd_scene load_steps=11 format=3 uid="uid://b0sxxcsnfjnkf"]
 
 [ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
@@ -6,7 +6,6 @@
 [ext_resource type="Script" uid="uid://vik7jjuuh4ix" path="res://scripts/world/zone_base.gd" id="4_zone"]
 [ext_resource type="Script" uid="uid://cayikglml6hs4" path="res://scripts/world/zone_transition.gd" id="6_transition"]
 [ext_resource type="Script" uid="uid://bxs48qilberw1" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
-[ext_resource type="Script" path="res://scripts/interactable/unlockable_door.gd" id="8_door"]
 [ext_resource type="Script" path="res://scripts/npc/spawn_point.gd" id="9_spawn_point"]
 [ext_resource type="Script" path="res://scripts/world/wall.gd" id="10_wall"]
 
@@ -136,19 +135,10 @@ color = Color(0.4, 0.35, 0.3, 1)
 [node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallLeftBottom"]
 shape = SubResource("RectangleShape2D_wall_v_small")
 
-[node name="SecretGateDoor" type="Node2D" parent="SecretRoom"]
-position = Vector2(0, 0)
-script = ExtResource("8_door")
-door_name = "Secret Gate"
-persistence_id = "meadows_lever_door"
-lever_controlled = true
-
 [node name="SecretChest" type="Marker2D" parent="SecretRoom"]
 position = Vector2(80, 0)
 script = ExtResource("7_chest_spawn")
 database_chest_id = "chest_meadow_secret"
-
-[node name="Interactables" type="Node2D" parent="."]
 
 [node name="Enemies" type="Node2D" parent="."]
 
