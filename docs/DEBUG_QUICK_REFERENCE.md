@@ -4,31 +4,41 @@ Quick reference for all debug tools and commands in MobileTestia.
 
 ---
 
-## Console Verbosity Controls
+## IMPORTANT: Reserved Keys
 
-These keys control how much debug output is printed to the console:
+**DO NOT use these keys for debug bindings:**
+- **F1-F12**: Reserved by Godot editor (run, pause, step, etc.)
+- **Regular keyboard keys**: May conflict with typing in dialogs/chat
+- **WASD, Space, etc.**: Reserved for game input
+
+**ALL debug keys use NUMPAD ONLY** to avoid conflicts.
+
+---
+
+## Console Verbosity Controls (Numpad)
+
+These numpad keys control how much debug output is printed to the console:
 
 | Key | Action | Description |
 |-----|--------|-------------|
-| **/** | Cycle log level | INFO → DEBUG → TRACE → INFO |
-| **\*** | Toggle all verbose | Turn all verbose modes on/off |
-| **-** | Toggle NPC verbose | NPC movement spam only |
-| **+** or **=** | Print debug settings | Show current log level and verbose flags |
+| **Numpad 0** | Cycle log level | INFO → DEBUG → TRACE → INFO |
+| **Numpad \*** | Toggle all verbose | Turn all verbose modes on/off |
+| **Numpad -** | Toggle NPC verbose | NPC movement spam only |
+| **Numpad +** | Print debug settings | Show current log level and verbose flags |
 
 ### Default Settings
 - **Log Level**: INFO (hides DEBUG/TRACE messages)
 - **Verbose modes**: All OFF by default (NPC, Chunks, Spawn, SaveLoad)
 
 ### When to Enable Verbose Modes
-- **NPC verbose (-)**: Debugging enemy movement, AI decisions
-- **Chunk verbose (\*)**: Debugging chunk loading issues, missing files
-- **All verbose (\*)**: Full trace for save/load debugging
+- **NPC verbose (Numpad -)**: Debugging enemy movement, AI decisions
+- **All verbose (Numpad \*)**: Full trace for chunk loading, spawn, save/load
 
 ---
 
 ## Debug Key Bindings (Numpad)
 
-Press these numpad keys during gameplay (debug builds only). Uses numpad to avoid Godot editor conflicts (F1-F8):
+Press these numpad keys during gameplay (debug builds only):
 
 | Key | System | Action |
 |-----|--------|--------|
