@@ -35,7 +35,7 @@ func _connect_player_signals() -> void:
 		return
 
 	# Check if PlayerStats autoload exists
-0	if not Engine.has_singleton("PlayerStats") and not has_node("/root/PlayerStats"):
+	if not Engine.has_singleton("PlayerStats") and not has_node("/root/PlayerStats"):
 		# Try deferred connection
 		call_deferred("_connect_player_signals")
 		return
