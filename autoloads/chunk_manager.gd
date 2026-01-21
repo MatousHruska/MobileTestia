@@ -694,6 +694,33 @@ func _spawn_chunk_entities(chunk_id: String, chunk_node: Node2D, chunk_coords: V
 			if entity:
 				spawned_entities.append(entity)
 
+	# Spawn doors
+	for door_data in _zone_entities.get("doors", []):
+		var pos: Dictionary = door_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_door(door_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
+	# Spawn levers
+	for lever_data in _zone_entities.get("levers", []):
+		var pos: Dictionary = lever_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_lever(lever_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
+	# Spawn pressure plates
+	for plate_data in _zone_entities.get("pressure_plates", []):
+		var pos: Dictionary = plate_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_pressure_plate(plate_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
 	# Track spawned entities for cleanup
 	if not spawned_entities.is_empty():
 		_chunk_entities[chunk_id] = spawned_entities
@@ -941,6 +968,153 @@ func _spawn_transition(data: Dictionary, parent: Node2D, chunk_origin: Vector2, 
 	Debug.log("ChunkManager", "Spawned transition: -> %s at %s" % [target_zone, world_pos])
 
 	return transition
+
+
+#===============================================================================
+# DOOR SPAWNING
+#===============================================================================
+
+## Spawn a door from entity data
+func _spawn_door(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var door_id: String = data.get("id", "")
+	if door_id.is_empty():
+		Debug.warn("ChunkManager", "Door has no ID, skipping")
+		return null
+
+	# Get position and generate persistence key
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	var persistence_key := "%s@%d,%d" % [door_id, int(world_pos.x), int(world_pos.y)]
+
+	# Create door node
+	var door_script := load("res://scripts/interactable/unlockable_door.gd")
+	if not door_script:
+		Debug.error("ChunkManager", "Could not load unlockable_door.gd script")
+		return null
+
+	var door := Node2D.new()
+	door.set_script(door_script)
+
+	# Configure door
+	door.database_door_id = door_id
+	door.persistence_key = persistence_key
+
+	# Apply size from zone data if present
+	var size_data: Dictionary = data.get("size", {})
+	if not size_data.is_empty():
+		door.collision_size = Vector2(size_data.get("w", 48), size_data.get("h", 16))
+		door.placeholder_size = door.collision_size
+
+	# Set position relative to chunk
+	door.position = world_pos - chunk_origin
+
+	# Mark as chunk-spawned
+	door.set_meta("chunk_spawned", true)
+	door.set_meta("chunk_id", chunk_id)
+	door.set_meta("world_position", world_pos)
+
+	# Add to group for searching
+	door.add_to_group("doors")
+
+	parent.add_child(door)
+	Debug.log("ChunkManager", "Spawned door: %s at %s" % [door_id, world_pos])
+
+	return door
+
+
+#===============================================================================
+# LEVER SPAWNING
+#===============================================================================
+
+## Spawn a lever from entity data
+func _spawn_lever(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var lever_id: String = data.get("id", "")
+	if lever_id.is_empty():
+		Debug.warn("ChunkManager", "Lever has no ID, skipping")
+		return null
+
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	var persistence_key := "%s@%d,%d" % [lever_id, int(world_pos.x), int(world_pos.y)]
+
+	# Create lever node
+	var lever_script := load("res://scripts/interactable/lever.gd")
+	if not lever_script:
+		Debug.error("ChunkManager", "Could not load lever.gd script")
+		return null
+
+	var lever := Node2D.new()
+	lever.set_script(lever_script)
+
+	# Configure lever
+	lever.database_lever_id = lever_id
+	lever.persistence_key = persistence_key
+
+	# Set position relative to chunk
+	lever.position = world_pos - chunk_origin
+
+	# Mark as chunk-spawned
+	lever.set_meta("chunk_spawned", true)
+	lever.set_meta("chunk_id", chunk_id)
+	lever.set_meta("world_position", world_pos)
+
+	# Add to group for searching
+	lever.add_to_group("levers")
+
+	parent.add_child(lever)
+	Debug.log("ChunkManager", "Spawned lever: %s at %s" % [lever_id, world_pos])
+
+	return lever
+
+
+#===============================================================================
+# PRESSURE PLATE SPAWNING
+#===============================================================================
+
+## Spawn a pressure plate from entity data
+func _spawn_pressure_plate(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var plate_id: String = data.get("id", "")
+	if plate_id.is_empty():
+		Debug.warn("ChunkManager", "Pressure plate has no ID, skipping")
+		return null
+
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	var persistence_key := "%s@%d,%d" % [plate_id, int(world_pos.x), int(world_pos.y)]
+
+	# Create pressure plate node
+	var plate_script := load("res://scripts/interactable/pressure_plate.gd")
+	if not plate_script:
+		Debug.error("ChunkManager", "Could not load pressure_plate.gd script")
+		return null
+
+	var plate := Node2D.new()
+	plate.set_script(plate_script)
+
+	# Configure plate
+	plate.database_plate_id = plate_id
+	plate.persistence_key = persistence_key
+
+	# Apply size from zone data if present
+	var size_data: Dictionary = data.get("size", {})
+	if not size_data.is_empty():
+		plate.plate_size = Vector2(size_data.get("w", 32), size_data.get("h", 32))
+
+	# Set position relative to chunk
+	plate.position = world_pos - chunk_origin
+
+	# Mark as chunk-spawned
+	plate.set_meta("chunk_spawned", true)
+	plate.set_meta("chunk_id", chunk_id)
+	plate.set_meta("world_position", world_pos)
+
+	# Add to group for searching
+	plate.add_to_group("plates")
+
+	parent.add_child(plate)
+	Debug.log("ChunkManager", "Spawned pressure plate: %s at %s" % [plate_id, world_pos])
+
+	return plate
 
 
 ## Clean up entities when a chunk unloads
