@@ -1,0 +1,34 @@
+{
+  "pressure_plates": [
+    {
+      "id": "plate_crypt_entrance",
+      "name": "Crypt Entrance Plate",
+      "linked_door_id": "door_crypt_boss",
+      "trigger_mode": "step_on",
+      "reset_delay": 0,
+      "one_shot": true,
+      "sprite_id": "plate_stone",
+      "sound_id": ""
+    },
+    {
+      "id": "plate_puzzle_1",
+      "name": "Puzzle Plate 1",
+      "linked_door_id": "",
+      "trigger_mode": "toggle",
+      "reset_delay": 0,
+      "one_shot": false,
+      "sprite_id": "plate_stone",
+      "sound_id": ""
+    },
+    {
+      "id": "plate_timed_gate",
+      "name": "Timed Gate Plate",
+      "linked_door_id": "door_meadow_gate",
+      "trigger_mode": "step_off",
+      "reset_delay": 5,
+      "one_shot": false,
+      "sprite_id": "plate_metal",
+      "sound_id": ""
+    }
+  ]
+}
