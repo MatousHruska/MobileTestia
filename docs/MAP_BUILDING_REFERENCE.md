@@ -170,6 +170,8 @@ When an enemy has lost the player and is returning home:
 - Chunk stays loaded until enemy reaches home
 - Once at home and idle, chunk can unload
 
+**Important**: LEASH_LOCKED state only applies to enemies that were **previously in combat** and are now returning home (BehaviorState.RETURNING). Enemies that are simply idle or roaming away from their exact spawn point do NOT trigger leash locks.
+
 ### Chunk State Machine
 
 ```
@@ -391,6 +393,24 @@ Entity: SpawnPoint
 └── Position: automatically captured
 ```
 
+### Enemy Spawn Position (Critical Gotcha)
+
+**IMPORTANT**: When spawning enemies at runtime, you MUST add the enemy to the scene tree BEFORE setting `global_position`:
+
+```gdscript
+# CORRECT: Add to tree first, then set position
+var enemy = enemy_scene.instantiate()
+parent.add_child(enemy)
+enemy.global_position = spawn_position  # Works correctly
+
+# WRONG: Setting position before add_child
+var enemy = enemy_scene.instantiate()
+enemy.global_position = spawn_position  # Only sets LOCAL position!
+parent.add_child(enemy)  # Enemy appears at wrong location
+```
+
+This is because `global_position` only works correctly when the node is in the scene tree. Before `add_child()`, setting `global_position` actually just sets `position` (local).
+
 ---
 
 ## Loot Management
@@ -432,6 +452,31 @@ Loot timeout (optional, 10 minutes):
 ├── Loot older than timeout despawns
 ├── Prevents infinite accumulation
 └── Encourages timely collection
+```
+
+### Chest Persistence (Critical)
+
+Chests use unique persistence keys to track their opened state across save/load cycles. The key format is:
+
+```
+{chest_id}@{x},{y}
+```
+
+For example: `chest_forest_01@792,16`
+
+**Why position-based keys?** Multiple chests can share the same `database_chest_id` (e.g., all common forest chests use `chest_forest_01`). Using position ensures each chest instance has a unique persistence key.
+
+**Important**: Always use `_get_persistence_key()` when saving/loading chest state, never use `chest_id` directly:
+
+```gdscript
+# CORRECT: Uses position-qualified key
+func _save_persistence() -> void:
+    var pkey := _get_persistence_key()  # Returns "chest_id@x,y"
+    Persistence.save_state("chests", pkey, {...})
+
+# WRONG: Would affect ALL chests with same database ID
+func _save_persistence() -> void:
+    Persistence.save_state("chests", database_chest_id, {...})
 ```
 
 ### Corpse Handling
@@ -932,3 +977,24 @@ ChunkManager.debug_print_chunk_id_generation("zone_id", 0, 0)
 2. Ensure scene filename matches zone_id export
 3. Check that `player_chunk` resets properly (see chunk refresh bug fix)
 4. Verify no errors in save/load debug logs `[SAVELOAD]`
+
+### Enemies Spawning at Wrong Positions
+
+If enemies appear ~1024px off from where spawn points are placed:
+1. Check spawn_point.gd code order - `add_child()` MUST come before setting `global_position`
+2. Godot requires nodes to be in tree for `global_position` to work correctly
+3. Setting `global_position` before `add_child()` only sets local position
+
+### All Chests Disappearing After Save/Load
+
+If opening one chest causes all similar chests to disappear:
+1. Check that `_save_persistence()` uses `_get_persistence_key()` not `database_chest_id`
+2. Persistence keys must be unique per instance: `chest_id@x,y`
+3. Multiple chests can share the same database ID but need unique persistence keys
+
+### Chunks Showing LEASH When Enemies Are Idle
+
+If debug overlay shows orange LEASH_LOCKED for chunks where enemies haven't been engaged:
+1. LEASH state should only trigger for enemies with `BehaviorState.RETURNING`
+2. Enemies simply at a different position than their home (roaming, etc.) should NOT trigger leash
+3. Check `_is_enemy_returning_home()` function in chunk_manager.gd

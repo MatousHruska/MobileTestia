@@ -30,13 +30,15 @@ Toggle visual chunk boundaries:
 Chunk Colors:
 - GREEN   = Loaded normally
 - RED     = Combat locked (enemy targeting player)
-- ORANGE  = Leash locked (enemy returning home)
+- ORANGE  = Leash locked (enemy returning home FROM combat)
 - YELLOW  = Loading
 - WHITE   = Player's current chunk
 - GRAY    = Not loaded
 
 HUD shows: zone, player chunk, loaded count, enemies, locks, load time
 ```
+
+**Note**: ORANGE (Leash) only appears when an enemy was **previously in combat** and is now returning to its home position. Enemies that are idle or roaming but never engaged do NOT show as leash-locked.
 
 ---
 
@@ -131,8 +133,26 @@ Debug.snapshot("Category", "Title", data)   # Log data snapshot
 
 1. Press **Numpad 2** - Look for red (combat) or orange (leash)
 2. Combat lock: Enemy still targeting player
-3. Leash lock: Enemy returning to home position
+3. Leash lock: Enemy returning to home position (only after being in combat)
 4. Kill enemy or wait for it to reach home
+
+### "All chunks show LEASH even when enemies not engaged"
+
+1. This was a bug - LEASH should only show for enemies returning FROM combat
+2. Check that `_is_enemy_returning_home()` only checks `BehaviorState.RETURNING`
+3. Enemies idle or roaming should NOT trigger leash locks
+
+### "Enemies spawn at wrong position (off by ~1024px)"
+
+1. Check spawn_point.gd: `add_child()` must come BEFORE `global_position = ...`
+2. Godot requires node to be in scene tree for `global_position` to work
+3. Setting position before add_child only sets local position
+
+### "Opening one chest makes all similar chests disappear"
+
+1. Chest persistence must use unique keys: `chest_id@x,y`
+2. Check that `_save_persistence()` uses `_get_persistence_key()` not `database_chest_id`
+3. Multiple chests can share same database ID but need unique persistence keys
 
 ### "Slow chunk loading"
 
