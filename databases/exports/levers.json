@@ -1,0 +1,26 @@
+{
+  "levers": [
+    {
+      "id": "lever_crypt_to_meadow",
+      "name": "Crypt Gate Lever",
+      "display_name": "Rusty Lever",
+      "linked_door_id": "door_meadow_gate",
+      "one_shot": true,
+      "default_on": false,
+      "sprite_id": "lever_wall",
+      "sound_id": "sfx_lever_pull",
+      "description": "A lever covered in cobwebs."
+    },
+    {
+      "id": "lever_forest_bridge",
+      "name": "Bridge Lever",
+      "display_name": "Wooden Lever",
+      "linked_door_id": "",
+      "one_shot": false,
+      "default_on": false,
+      "sprite_id": "lever_floor",
+      "sound_id": "sfx_lever_wood",
+      "description": "This lever controls the old bridge mechanism."
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "lootables": [
+    {
+      "id": "loot_corpse_soldier",
+      "name": "Dead Soldier",
+      "display_name": "Fallen Soldier",
+      "loot_table_id": "loot_table_soldier",
+      "min_gold": 5,
+      "max_gold": 25,
+      "drop_chance": 0.8,
+      "can_respawn": false,
+      "respawn_time": 0,
+      "sprite_id": "corpse_soldier",
+      "interaction_prompt": "Search"
+    },
+    {
+      "id": "loot_urn_ceramic",
+      "name": "Ceramic Urn",
+      "display_name": "Dusty Urn",
+      "loot_table_id": "loot_table_common",
+      "min_gold": 1,
+      "max_gold": 10,
+      "drop_chance": 0.5,
+      "can_respawn": true,
+      "respawn_time": 300,
+      "sprite_id": "urn_ceramic",
+      "interaction_prompt": "Open"
+    },
+    {
+      "id": "loot_barrel_supplies",
+      "name": "Supply Barrel",
+      "display_name": "Wooden Barrel",
+      "loot_table_id": "loot_table_supplies",
+      "min_gold": 0,
+      "max_gold": 5,
+      "drop_chance": 0.7,
+      "can_respawn": true,
+      "respawn_time": 600,
+      "sprite_id": "barrel_wood",
+      "interaction_prompt": "Search"
+    },
+    {
+      "id": "loot_crate_weapons",
+      "name": "Weapons Crate",
+      "display_name": "Weapon Crate",
+      "loot_table_id": "loot_table_weapons",
+      "min_gold": 0,
+      "max_gold": 0,
+      "drop_chance": 1.0,
+      "can_respawn": false,
+      "respawn_time": 0,
+      "sprite_id": "crate_weapons",
+      "interaction_prompt": "Open"
+    }
+  ]
+}

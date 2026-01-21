@@ -53,6 +53,13 @@ Public Sub ExportAll()
 
     ' Interactables
     ExportChests
+    ExportDoorsData
+    ExportLeversData
+    ExportPressurePlatesData
+    ExportLootablesData
+    ExportSignsData
+    ExportLoreEchoesData
+    ExportTriggerAreasData
 
     ' Spawn Points
     ExportSpawnPoints
@@ -117,6 +124,13 @@ Public Sub ValidateAll()
     ValidateZones
     ValidateLocations
     ValidateChests
+    ValidateDoorsData
+    ValidateLeversData
+    ValidatePressurePlatesData
+    ValidateLootablesData
+    ValidateSignsData
+    ValidateLoreEchoesData
+    ValidateTriggerAreasData
     ValidateSpawnPoints
     ValidateCutscenes
     ValidateFloatingDialogues
@@ -172,6 +186,13 @@ Public Sub SetupWorkbook()
     currentSheet = "Zones": SetupZonesSheet
     currentSheet = "Locations": SetupLocationsSheet
     currentSheet = "Chests": SetupChestsSheet
+    currentSheet = "Doors": SetupDoorsSheet
+    currentSheet = "Levers": SetupLeversSheet
+    currentSheet = "PressurePlates": SetupPressurePlatesSheet
+    currentSheet = "Lootables": SetupLootablesSheet
+    currentSheet = "Signs": SetupSignsSheet
+    currentSheet = "LoreEchoes": SetupLoreEchoesSheet
+    currentSheet = "TriggerAreas": SetupTriggerAreasSheet
     currentSheet = "SpawnPoints": SetupSpawnPointsSheet
     currentSheet = "Cutscenes": SetupCutscenesSheet
     currentSheet = "FloatingDialogues": SetupFloatingDialoguesSheet

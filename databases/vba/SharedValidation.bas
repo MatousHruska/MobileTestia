@@ -499,6 +499,15 @@ Private Sub CreateIdNamedRanges()
     CreateNamedRange "Abilities", 1, "ID_Abilities"
     CreateNamedRange "Chunks", 1, "ID_Chunks"
     CreateNamedRange "TerrainTypes", 1, "ID_TerrainTypes"
+
+    ' New interactable entity types
+    CreateNamedRange "Doors", 1, "ID_Doors"
+    CreateNamedRange "Levers", 1, "ID_Levers"
+    CreateNamedRange "PressurePlates", 1, "ID_PressurePlates"
+    CreateNamedRange "Lootables", 1, "ID_Lootables"
+    CreateNamedRange "Signs", 1, "ID_Signs"
+    CreateNamedRange "LoreEchoes", 1, "ID_LoreEchoes"
+    CreateNamedRange "TriggerAreas", 1, "ID_TriggerAreas"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -585,6 +594,25 @@ Private Sub ApplyForeignKeyValidation()
     ' Chunks
     ApplyValidation "Chunks", 2, "ID_Zones"          ' zone_id
     ApplyValidation "Chunks", 7, "ID_SpawnPoints"    ' spawn_table_id (optional)
+
+    ' Doors
+    ApplyValidation "Doors", 4, "ID_ItemBases"       ' required_key_id
+    ApplyValidation "Doors", 7, "ID_Quests"          ' quest_required_id
+
+    ' Levers
+    ApplyValidation "Levers", 4, "ID_Doors"          ' linked_door_id
+
+    ' PressurePlates
+    ApplyValidation "PressurePlates", 3, "ID_Doors"  ' linked_door_id
+
+    ' Lootables
+    ApplyValidation "Lootables", 4, "ID_LootTables"  ' loot_table_id
+
+    ' Signs
+    ApplyValidation "Signs", 3, "ID_FloatingDialogues"  ' floating_dialogue_id
+
+    ' TriggerAreas
+    ApplyValidation "TriggerAreas", 7, "ID_Quests"   ' require_quest_id
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -692,6 +720,30 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "Cutscenes", 6, "TRUE,FALSE"          ' once_only
     ApplyListValidation "Talents", 43, "TRUE,FALSE"           ' can_move_while_casting
     ApplyListValidation "Talents", 44, "TRUE,FALSE"           ' interrupt_on_damage
+
+    ' Doors
+    ApplyListValidation "Doors", 6, "TRUE,FALSE"              ' lever_controlled
+    ApplyListValidation "Doors", 8, "not_started,active,completed"  ' quest_required_state
+    ApplyListValidation "Doors", 9, "TRUE,FALSE"              ' default_locked
+
+    ' Levers
+    ApplyListValidation "Levers", 5, "TRUE,FALSE"             ' one_shot
+    ApplyListValidation "Levers", 6, "TRUE,FALSE"             ' default_on
+
+    ' PressurePlates
+    ApplyListValidation "PressurePlates", 4, "step_on,step_off,toggle"  ' trigger_mode
+    ApplyListValidation "PressurePlates", 6, "TRUE,FALSE"     ' one_shot
+
+    ' Lootables
+    ApplyListValidation "Lootables", 8, "TRUE,FALSE"          ' can_respawn
+
+    ' LoreEchoes
+    ApplyListValidation "LoreEchoes", 6, "TRUE,FALSE"         ' can_replay
+
+    ' TriggerAreas
+    ApplyListValidation "TriggerAreas", 3, "cutscene,quest,spawn,dialogue"  ' trigger_type
+    ApplyListValidation "TriggerAreas", 5, "TRUE,FALSE"       ' one_shot
+    ApplyListValidation "TriggerAreas", 8, "not_started,active,completed"  ' require_quest_state
 End Sub
 
 '-------------------------------------------------------------------------------
