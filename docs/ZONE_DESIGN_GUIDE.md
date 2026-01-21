@@ -467,3 +467,11 @@ Music/Atmosphere:
 Story Beats:
 - [What happens here narratively]
 ```
+
+---
+
+## Related Documentation
+
+- **LDTK_MAP_REFERENCE.md** - Technical reference for implementing zones
+- **ENEMY_REFERENCE.md** - Enemy behavior and AI
+- **ABILITY_SYSTEM_REFERENCE.md** - Combat abilities
