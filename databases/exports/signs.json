@@ -1,0 +1,32 @@
+{
+  "signs": [
+    {
+      "id": "sign_forest_warning",
+      "name": "Forest Warning Sign",
+      "floating_dialogue_id": "fd_forest_warning",
+      "sprite_id": "sign_wood",
+      "interaction_prompt": "Read"
+    },
+    {
+      "id": "sign_crypt_entrance",
+      "name": "Crypt Entrance Sign",
+      "floating_dialogue_id": "fd_crypt_warning",
+      "sprite_id": "sign_stone",
+      "interaction_prompt": "Examine"
+    },
+    {
+      "id": "sign_meadow_directions",
+      "name": "Meadow Directions",
+      "floating_dialogue_id": "fd_meadow_directions",
+      "sprite_id": "sign_wood",
+      "interaction_prompt": "Read"
+    },
+    {
+      "id": "sign_tutorial_combat",
+      "name": "Combat Tutorial",
+      "floating_dialogue_id": "fd_tutorial_combat",
+      "sprite_id": "sign_wood",
+      "interaction_prompt": "Read"
+    }
+  ]
+}
