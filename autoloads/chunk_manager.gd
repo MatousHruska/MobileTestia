@@ -1021,16 +1021,10 @@ func _is_enemy_returning_home(enemy: Node2D) -> bool:
 	if controller and controller.has_method("get_context"):
 		var context = controller.get_context()
 		if context:
-			# Check behavior state for RETURNING
+			# Only check for explicit RETURNING behavior state
+			# This indicates enemy was in combat and is now returning to home
 			if context.behavior_state == EnemyContext.BehaviorState.RETURNING:
 				return true
-
-			# Also check if lost target but not yet at home
-			if not context.has_valid_target:
-				if "home_position" in enemy:
-					var dist_to_home := enemy.global_position.distance_to(enemy.home_position)
-					if dist_to_home > HOME_THRESHOLD:
-						return true
 
 	return false
 
