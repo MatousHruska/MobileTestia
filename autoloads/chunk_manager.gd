@@ -721,6 +721,15 @@ func _spawn_chunk_entities(chunk_id: String, chunk_node: Node2D, chunk_coords: V
 			if entity:
 				spawned_entities.append(entity)
 
+	# Spawn NPCs
+	for npc_data in _zone_entities.get("npcs", []):
+		var pos: Dictionary = npc_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_npc(npc_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
 	# Track spawned entities for cleanup
 	if not spawned_entities.is_empty():
 		_chunk_entities[chunk_id] = spawned_entities
@@ -1115,6 +1124,118 @@ func _spawn_pressure_plate(data: Dictionary, parent: Node2D, chunk_origin: Vecto
 	Debug.log("ChunkManager", "Spawned pressure plate: %s at %s" % [plate_id, world_pos])
 
 	return plate
+
+
+#===============================================================================
+# NPC SPAWNING
+#===============================================================================
+
+## Spawn an NPC from entity data
+func _spawn_npc(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var npc_id: String = data.get("id", "")
+	if npc_id.is_empty():
+		Debug.warn("ChunkManager", "NPC has no ID, skipping")
+		return null
+
+	# Check if NPC should spawn (quest conditions, etc.)
+	if not _should_spawn_npc(npc_id):
+		Debug.log("ChunkManager", "NPC spawn conditions not met: %s" % npc_id)
+		return null
+
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+
+	# Try to load DatabaseNPC scene
+	var npc: Node2D = null
+	var scene_path := "res://scenes/prefabs/database_npc.tscn"
+	if ResourceLoader.exists(scene_path):
+		var scene := load(scene_path) as PackedScene
+		if scene:
+			npc = scene.instantiate()
+
+	if npc == null:
+		# Fallback: create programmatically
+		npc = _create_npc_programmatic(npc_id)
+
+	if npc == null:
+		Debug.warn("ChunkManager", "Could not create NPC: %s" % npc_id)
+		return null
+
+	# Configure NPC
+	if "database_id" in npc:
+		npc.database_id = npc_id
+
+	# Position relative to chunk
+	npc.position = world_pos - chunk_origin
+
+	# Mark as chunk-spawned
+	npc.set_meta("chunk_spawned", true)
+	npc.set_meta("chunk_id", chunk_id)
+	npc.set_meta("world_position", world_pos)
+
+	npc.add_to_group("npcs")
+
+	parent.add_child(npc)
+	Debug.log("ChunkManager", "Spawned NPC: %s at %s" % [npc_id, world_pos])
+
+	return npc
+
+
+## Create NPC node programmatically (fallback if scene doesn't exist)
+func _create_npc_programmatic(npc_id: String) -> Node2D:
+	var npc_script := load("res://scripts/npc/database_npc.gd")
+	if npc_script:
+		var node := CharacterBody2D.new()
+		node.set_script(npc_script)
+		if "database_id" in node:
+			node.database_id = npc_id
+		return node
+	Debug.warn("ChunkManager", "Could not load database_npc.gd script")
+	return null
+
+
+## Check if NPC should spawn based on quest state and other conditions
+func _should_spawn_npc(npc_id: String) -> bool:
+	if not DatabaseLoader:
+		return true
+
+	var config := DatabaseLoader.get_npc(npc_id)
+	if config.is_empty():
+		return true  # No config = always spawn
+
+	# Check spawn conditions from database
+	var spawn_condition: String = config.get("spawn_condition", "")
+	if spawn_condition.is_empty():
+		return true
+
+	# Parse condition (format: "condition_type:value")
+	var parts := spawn_condition.split(":")
+	if parts.size() != 2:
+		Debug.warn("ChunkManager", "Invalid spawn_condition format for NPC %s: %s" % [npc_id, spawn_condition])
+		return true
+
+	var condition_type: String = parts[0]
+	var condition_value: String = parts[1]
+
+	match condition_type:
+		"quest_active":
+			return QuestManager.is_quest_active(condition_value) if QuestManager else true
+		"quest_completed":
+			return QuestManager.is_quest_completed(condition_value) if QuestManager else true
+		"quest_not_started":
+			if not QuestManager:
+				return true
+			var active := QuestManager.is_quest_active(condition_value)
+			var completed := QuestManager.is_quest_completed(condition_value)
+			return not active and not completed
+		"flag_set":
+			# Check global progress flag
+			return GlobalProgress.has_flag(condition_value) if GlobalProgress else true
+		"flag_not_set":
+			return not GlobalProgress.has_flag(condition_value) if GlobalProgress else true
+
+	Debug.warn("ChunkManager", "Unknown spawn condition type: %s" % condition_type)
+	return true
 
 
 ## Clean up entities when a chunk unloads
