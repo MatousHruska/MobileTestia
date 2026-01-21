@@ -442,8 +442,11 @@ Private Sub SetupNPCsSheet()
     Dim headers As Variant
     headers = Array("id", "name", "type", "location", "shop_inventory_id", _
                     "dialogue_greeting", "faction", "sprite_id", "min_level", "is_interactable", _
-                    "portrait_id", "dialogue_talk_id")
+                    "portrait_id", "dialogue_talk_id", "spawn_condition")
     SetHeaders ws, headers
+
+    ' Add comment for spawn_condition format
+    SafeAddComment ws.Cells(1, 13), "Condition for NPC to spawn. Format: type:value. Examples: quest_active:qst_main, quest_completed:qst_tutorial, flag_set:met_king. Leave empty for always spawn."
 End Sub
 
 Private Sub SetupShopInventorySheet()
