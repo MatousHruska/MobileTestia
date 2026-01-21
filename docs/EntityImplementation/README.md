@@ -147,6 +147,24 @@ Implement audio lore objects and event triggers.
 
 ---
 
+### [Phase 7: System Integration & Verification](Phase7_SystemIntegration.md)
+Verify and complete all connections between entities and game systems.
+
+**Key Tasks:**
+- Verify door quest requirements are implemented
+- Add object interaction → quest callbacks
+- Verify TriggerArea → Cutscene/Quest connections
+- Add ability usage → quest tracking
+- End-to-end testing of all integrations
+
+**Files Modified:**
+- `interactable_base.gd` - Add quest notification
+- `unlockable_door.gd` - Verify quest checking
+- `lever.gd` - Add object ID for quest tracking
+- Combat ability handler - Add ability tracking
+
+---
+
 ## Architecture
 
 ### Data Flow
@@ -218,13 +236,13 @@ const CATEGORIES := [
 ## Implementation Order
 
 ```
-Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6
-  |          |          |          |          |          |          |
-Cleanup   Database   LDtk      Access    NPCs    Loot/    Echo/
-Legacy     VBA      Import    Control           Signs   Trigger
+Phase 0 → Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6 → Phase 7
+  |          |          |          |          |          |          |          |
+Cleanup   Database   LDtk      Access    NPCs    Loot/    Echo/    System
+Legacy     VBA      Import    Control           Signs   Trigger   Integration
 ```
 
-**Estimated Sessions:** 4-6 sessions depending on testing thoroughness
+**Estimated Sessions:** 5-7 sessions depending on testing thoroughness
 
 ---
 
