@@ -21,7 +21,7 @@ These numpad keys control how much debug output is printed to the console:
 
 | Key | Action | Description |
 |-----|--------|-------------|
-| **Numpad 0** | Cycle log level | INFO → DEBUG → TRACE → INFO |
+| **Numpad 0** | Cycle log level | INFO ↔ DEBUG (TRACE disabled - too verbose) |
 | **Numpad \*** | Toggle all verbose | Turn all verbose modes on/off |
 | **Numpad -** | Toggle NPC verbose | NPC movement spam only |
 | **Numpad +** | Print debug settings | Show current log level and verbose flags |

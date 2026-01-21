@@ -136,11 +136,11 @@ func _input(event: InputEvent) -> void:
 
 
 func _cycle_log_level() -> void:
+	# Cycle between INFO and DEBUG only
+	# TRACE is too verbose (per-frame output) - enable via code if needed
 	match log_level:
 		LogLevel.INFO:
 			set_level(LogLevel.DEBUG)
-		LogLevel.DEBUG:
-			set_level(LogLevel.TRACE)
 		_:
 			set_level(LogLevel.INFO)
 	print(">>> Debug level: %s <<<" % LogLevel.keys()[log_level])
