@@ -12,7 +12,7 @@ config_version=5
 
 config/name="Heroes of Tesia testinAI"
 config/description="Mobile Action RPG - Pixel Art Top-Down"
-run/main_scene="res://scenes/world/zone_test_hub.tscn"
+run/main_scene="res://scenes/world/zone_ldtk_test.tscn"
 config/features=PackedStringArray("4.5", "Mobile")
 config/icon="res://icon.svg"
 
