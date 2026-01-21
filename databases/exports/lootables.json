@@ -4,7 +4,7 @@
       "id": "loot_corpse_soldier",
       "name": "Soldier Corpse",
       "display_name": "Fallen Soldier",
-      "loot_table_id": "loot_common_gear",
+      "loot_table_id": "loot_vampire_lord",
       "min_gold": 5,
       "max_gold": 20,
       "drop_chance": 0.8,

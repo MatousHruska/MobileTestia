@@ -3,7 +3,7 @@
     {
       "id": "sign_forest_warning",
       "name": "Forest Warning Sign",
-      "floating_dialogue_id": "fd_forest_warning",
+      "floating_dialogue_id": "fld_zone_meadows",
       "sprite_id": "sign_wood",
       "interaction_prompt": "Read"
     },
