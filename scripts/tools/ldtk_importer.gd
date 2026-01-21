@@ -71,7 +71,16 @@ func _run() -> void:
 		"chests": [],
 		"transitions": [],
 		"locations": [],
-		"player_spawns": []
+		"player_spawns": [],
+		# Phase 2 entities
+		"doors": [],
+		"levers": [],
+		"pressure_plates": [],
+		"npcs": [],
+		"lootables": [],
+		"signs": [],
+		"lore_echoes": [],
+		"trigger_areas": []
 	}
 
 	var levels: Array = ldtk_data.get("levels", [])
@@ -179,10 +188,17 @@ func _process_level(level: Dictionary) -> Dictionary:
 	# Extract entities from the entire level
 	var entities := _extract_entities(level, zone_id)
 
-	print("  Extracted %d spawn points, %d chests, %d transitions" % [
+	print("  Extracted %d spawn points, %d chests, %d transitions, %d doors, %d levers, %d npcs, %d lootables, %d signs, %d echoes, %d triggers" % [
 		entities.spawn_points.size(),
 		entities.chests.size(),
-		entities.transitions.size()
+		entities.transitions.size(),
+		entities.doors.size(),
+		entities.levers.size(),
+		entities.npcs.size(),
+		entities.lootables.size(),
+		entities.signs.size(),
+		entities.lore_echoes.size(),
+		entities.trigger_areas.size()
 	])
 
 	return {
@@ -458,7 +474,16 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 		"chests": [],
 		"transitions": [],
 		"locations": [],
-		"player_spawns": []
+		"player_spawns": [],
+		# Phase 2 entities
+		"doors": [],
+		"levers": [],
+		"pressure_plates": [],
+		"npcs": [],
+		"lootables": [],
+		"signs": [],
+		"lore_echoes": [],
+		"trigger_areas": []
 	}
 
 	for layer in level.get("layerInstances", []):
@@ -522,6 +547,77 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 						"zone_id": zone_id,
 						"position_x": position.x,
 						"position_y": position.y
+					})
+
+				# Phase 2 entities
+				"doorspawn":
+					result.doors.append({
+						"id": fields.get("door_id", ""),
+						"zone_id": zone_id,
+						"position_x": position.x,
+						"position_y": position.y,
+						"width": entity.get("width", 16),
+						"height": entity.get("height", 32)
+					})
+
+				"leverspawn":
+					result.levers.append({
+						"id": fields.get("lever_id", ""),
+						"zone_id": zone_id,
+						"position_x": position.x,
+						"position_y": position.y
+					})
+
+				"pressureplatespawn":
+					result.pressure_plates.append({
+						"id": fields.get("plate_id", ""),
+						"zone_id": zone_id,
+						"position_x": position.x,
+						"position_y": position.y,
+						"width": entity.get("width", 32),
+						"height": entity.get("height", 32)
+					})
+
+				"npcspawn":
+					result.npcs.append({
+						"id": fields.get("npc_id", ""),
+						"zone_id": zone_id,
+						"position_x": position.x,
+						"position_y": position.y
+					})
+
+				"lootablespawn":
+					result.lootables.append({
+						"id": fields.get("lootable_id", ""),
+						"zone_id": zone_id,
+						"position_x": position.x,
+						"position_y": position.y
+					})
+
+				"signspawn":
+					result.signs.append({
+						"id": fields.get("sign_id", ""),
+						"zone_id": zone_id,
+						"position_x": position.x,
+						"position_y": position.y
+					})
+
+				"loreechospawn":
+					result.lore_echoes.append({
+						"id": fields.get("echo_id", ""),
+						"zone_id": zone_id,
+						"position_x": position.x,
+						"position_y": position.y
+					})
+
+				"triggerareaspawn":
+					result.trigger_areas.append({
+						"id": fields.get("trigger_id", ""),
+						"zone_id": zone_id,
+						"position_x": position.x,
+						"position_y": position.y,
+						"width": entity.get("width", 64),
+						"height": entity.get("height", 64)
 					})
 
 	return result
@@ -629,6 +725,81 @@ func _export_entities_summary(entities: Dictionary) -> void:
 			"position": {"x": ps.get("position_x", 0), "y": ps.get("position_y", 0)}
 		})
 
+	# Process doors
+	for d in entities.doors:
+		var zone_id: String = d.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].doors.append({
+			"id": d.get("id", ""),
+			"position": {"x": d.get("position_x", 0), "y": d.get("position_y", 0)},
+			"size": {"w": d.get("width", 16), "h": d.get("height", 32)}
+		})
+
+	# Process levers
+	for l in entities.levers:
+		var zone_id: String = l.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].levers.append({
+			"id": l.get("id", ""),
+			"position": {"x": l.get("position_x", 0), "y": l.get("position_y", 0)}
+		})
+
+	# Process pressure plates
+	for pp in entities.pressure_plates:
+		var zone_id: String = pp.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].pressure_plates.append({
+			"id": pp.get("id", ""),
+			"position": {"x": pp.get("position_x", 0), "y": pp.get("position_y", 0)},
+			"size": {"w": pp.get("width", 32), "h": pp.get("height", 32)}
+		})
+
+	# Process NPCs
+	for n in entities.npcs:
+		var zone_id: String = n.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].npcs.append({
+			"id": n.get("id", ""),
+			"position": {"x": n.get("position_x", 0), "y": n.get("position_y", 0)}
+		})
+
+	# Process lootables
+	for lt in entities.lootables:
+		var zone_id: String = lt.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].lootables.append({
+			"id": lt.get("id", ""),
+			"position": {"x": lt.get("position_x", 0), "y": lt.get("position_y", 0)}
+		})
+
+	# Process signs
+	for s in entities.signs:
+		var zone_id: String = s.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].signs.append({
+			"id": s.get("id", ""),
+			"position": {"x": s.get("position_x", 0), "y": s.get("position_y", 0)}
+		})
+
+	# Process lore echoes
+	for le in entities.lore_echoes:
+		var zone_id: String = le.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].lore_echoes.append({
+			"id": le.get("id", ""),
+			"position": {"x": le.get("position_x", 0), "y": le.get("position_y", 0)}
+		})
+
+	# Process trigger areas
+	for ta in entities.trigger_areas:
+		var zone_id: String = ta.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].trigger_areas.append({
+			"id": ta.get("id", ""),
+			"position": {"x": ta.get("position_x", 0), "y": ta.get("position_y", 0)},
+			"size": {"w": ta.get("width", 64), "h": ta.get("height", 64)}
+		})
+
 	# Export each zone's entities to a separate JSON file
 	for zone_id in zones_data:
 		_export_zone_entities(zone_id, zones_data[zone_id])
@@ -637,13 +808,26 @@ func _export_entities_summary(entities: Dictionary) -> void:
 	print("Exported entities for %d zones:" % zones_data.size())
 	for zone_id in zones_data:
 		var zd: Dictionary = zones_data[zone_id]
-		print("  %s: %d spawn_points, %d chests, %d transitions, %d player_spawns" % [
-			zone_id,
-			zd.spawn_points.size(),
-			zd.chests.size(),
-			zd.transitions.size(),
-			zd.player_spawns.size()
+		var entity_count := zd.spawn_points.size() + zd.chests.size() + zd.transitions.size() + zd.player_spawns.size()
+		entity_count += zd.doors.size() + zd.levers.size() + zd.pressure_plates.size()
+		entity_count += zd.npcs.size() + zd.lootables.size() + zd.signs.size()
+		entity_count += zd.lore_echoes.size() + zd.trigger_areas.size()
+		print("  %s: %d total entities" % [zone_id, entity_count])
+		print("    spawns: %d, chests: %d, transitions: %d, player_spawns: %d" % [
+			zd.spawn_points.size(), zd.chests.size(), zd.transitions.size(), zd.player_spawns.size()
 		])
+		if zd.doors.size() > 0 or zd.levers.size() > 0 or zd.pressure_plates.size() > 0:
+			print("    doors: %d, levers: %d, pressure_plates: %d" % [
+				zd.doors.size(), zd.levers.size(), zd.pressure_plates.size()
+			])
+		if zd.npcs.size() > 0 or zd.lootables.size() > 0 or zd.signs.size() > 0:
+			print("    npcs: %d, lootables: %d, signs: %d" % [
+				zd.npcs.size(), zd.lootables.size(), zd.signs.size()
+			])
+		if zd.lore_echoes.size() > 0 or zd.trigger_areas.size() > 0:
+			print("    lore_echoes: %d, trigger_areas: %d" % [
+				zd.lore_echoes.size(), zd.trigger_areas.size()
+			])
 
 
 func _ensure_zone_data(zones_data: Dictionary, zone_id: String) -> void:
@@ -654,7 +838,16 @@ func _ensure_zone_data(zones_data: Dictionary, zone_id: String) -> void:
 			"chests": [],
 			"transitions": [],
 			"locations": [],
-			"player_spawns": []
+			"player_spawns": [],
+			# Phase 2 entities
+			"doors": [],
+			"levers": [],
+			"pressure_plates": [],
+			"npcs": [],
+			"lootables": [],
+			"signs": [],
+			"lore_echoes": [],
+			"trigger_areas": []
 		}
 
 
