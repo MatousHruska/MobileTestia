@@ -126,15 +126,15 @@ func cleanup_invalid_references() -> void:
 
 func clear_all_tracking() -> void:
 	## Clear all tracking arrays (call on major scene transitions like save load)
-	print("[SAVELOAD] NPCManager.clear_all_tracking() called | Frame: %d" % Engine.get_process_frames())
-	print("[SAVELOAD] NPC clear: BEFORE: enemies=%d, friendlies=%d, spawners=%d, spawn_points=%d" % [all_enemies.size(), all_friendlies.size(), all_spawners.size(), all_spawn_points.size()])
+	Debug.print_saveload("[SAVELOAD] NPCManager.clear_all_tracking() called | Frame: %d" % Engine.get_process_frames())
+	Debug.print_saveload("[SAVELOAD] NPC clear: BEFORE: enemies=%d, friendlies=%d, spawners=%d, spawn_points=%d" % [all_enemies.size(), all_friendlies.size(), all_spawners.size(), all_spawn_points.size()])
 
 	all_enemies.clear()
 	all_friendlies.clear()
 	all_spawners.clear()
 	all_spawn_points.clear()
 
-	print("[SAVELOAD] NPC clear: AFTER: all arrays cleared")
+	Debug.print_saveload("[SAVELOAD] NPC clear: AFTER: all arrays cleared")
 	Debug.info("NPC", "Cleared all NPC tracking")
 
 
