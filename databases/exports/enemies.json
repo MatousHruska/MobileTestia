@@ -123,7 +123,7 @@
       "id": "ene_starved_wolf",
       "name": "Starved Wolf",
       "type": "Normal",
-      "base_health": 40,
+      "base_health": 1,
       "base_damage": 8,
       "armor": 0,
       "base_shield": 0,
