@@ -310,8 +310,7 @@ func _create_item_from_database(item_dict: Dictionary) -> ItemData:
 		equip.item_name = item_dict.get("name", "Unknown Equipment")
 		equip.description = item_dict.get("description", "")
 		equip.rarity = item_dict.get("rarity", ItemData.Rarity.COMMON)
-		equip.slot_type = _get_slot_type_from_string(item_type)
-		equip.icon_path = item_dict.get("icon", "")
+		equip.equipment_type = _get_equipment_type_from_string(item_type)
 		# Stats would be applied from equipment-specific data
 		return equip
 	else:
@@ -327,29 +326,25 @@ func _create_item_from_database(item_dict: Dictionary) -> ItemData:
 		return item
 
 
-func _get_slot_type_from_string(type_str: String) -> int:
-	## Convert string type to EquipmentData.SlotType
+func _get_equipment_type_from_string(type_str: String) -> int:
+	## Convert string type to EquipmentType enum
 	match type_str.to_lower():
 		"weapon":
-			return EquipmentData.SlotType.WEAPON
+			return EquipmentType.WEAPON_ONE_HANDED
 		"armor":
-			return EquipmentData.SlotType.ARMOR
+			return EquipmentType.ARMOR
 		"helmet":
-			return EquipmentData.SlotType.HELMET
+			return EquipmentType.HELMET
 		"gloves":
-			return EquipmentData.SlotType.GLOVES
+			return EquipmentType.GLOVES
 		"boots":
-			return EquipmentData.SlotType.BOOTS
+			return EquipmentType.BOOTS
 		"ring":
-			return EquipmentData.SlotType.RING
+			return EquipmentType.RING
 		"amulet":
-			return EquipmentData.SlotType.AMULET
-		"accessory":
-			return EquipmentData.SlotType.ACCESSORY_1
-		"quick_slot":
-			return EquipmentData.SlotType.QUICK_SLOT
+			return EquipmentType.AMULET
 		_:
-			return EquipmentData.SlotType.WEAPON
+			return EquipmentType.NONE
 
 
 func _spawn_item_pickup(item: ItemData) -> void:
