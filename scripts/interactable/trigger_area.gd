@@ -119,7 +119,7 @@ func _setup_collision() -> void:
 
 	# Set collision layer/mask for player only
 	collision_layer = 0
-	collision_mask = 1  # Player layer
+	collision_mask = 2  # Player layer (player is on layer 2)
 
 
 func _connect_signals() -> void:
