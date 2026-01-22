@@ -80,7 +80,9 @@ func _run() -> void:
 		"lootables": [],
 		"signs": [],
 		"lore_echoes": [],
-		"trigger_areas": []
+		"trigger_areas": [],
+		# Patrol system
+		"patrol_waypoints": []
 	}
 
 	var levels: Array = ldtk_data.get("levels", [])
@@ -188,7 +190,7 @@ func _process_level(level: Dictionary) -> Dictionary:
 	# Extract entities from the entire level
 	var entities := _extract_entities(level, zone_id)
 
-	print("  Extracted %d spawn points, %d chests, %d transitions, %d doors, %d levers, %d npcs, %d lootables, %d signs, %d echoes, %d triggers" % [
+	print("  Extracted %d spawn points, %d chests, %d transitions, %d doors, %d levers, %d npcs, %d lootables, %d signs, %d echoes, %d triggers, %d patrol_waypoints" % [
 		entities.spawn_points.size(),
 		entities.chests.size(),
 		entities.transitions.size(),
@@ -198,7 +200,8 @@ func _process_level(level: Dictionary) -> Dictionary:
 		entities.lootables.size(),
 		entities.signs.size(),
 		entities.lore_echoes.size(),
-		entities.trigger_areas.size()
+		entities.trigger_areas.size(),
+		entities.patrol_waypoints.size()
 	])
 
 	return {
@@ -483,7 +486,9 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 		"lootables": [],
 		"signs": [],
 		"lore_echoes": [],
-		"trigger_areas": []
+		"trigger_areas": [],
+		# Patrol system
+		"patrol_waypoints": []
 	}
 
 	for layer in level.get("layerInstances", []):
@@ -499,12 +504,14 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 			match entity_type:
 				"spawnpoint":
 					var sp_group = fields.get("spawn_group", "")
+					var patrol_grp = fields.get("patrol_group", "")
 					result.spawn_points.append({
 						"id": fields.get("spawn_point_id", ""),
 						"zone_id": zone_id,
 						"position_x": position.x,
 						"position_y": position.y,
-						"spawn_group": sp_group if sp_group != null else ""
+						"spawn_group": sp_group if sp_group != null else "",
+						"patrol_group": patrol_grp if patrol_grp != null else ""
 					})
 
 				"chestspawn":
@@ -620,6 +627,17 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 						"height": entity.get("height", 64)
 					})
 
+				# Patrol system
+				"patrolwaypoint":
+					result.patrol_waypoints.append({
+						"patrol_group": fields.get("patrol_group", ""),
+						"order": int(fields.get("order", 0)),
+						"wait_time": float(fields.get("wait_time", 0.0)),
+						"zone_id": zone_id,
+						"position_x": position.x,
+						"position_y": position.y
+					})
+
 	return result
 
 
@@ -682,7 +700,8 @@ func _export_entities_summary(entities: Dictionary) -> void:
 		zones_data[zone_id].spawn_points.append({
 			"id": sp.get("id", ""),
 			"position": {"x": sp.get("position_x", 0), "y": sp.get("position_y", 0)},
-			"spawn_group": sp.get("spawn_group", "")
+			"spawn_group": sp.get("spawn_group", ""),
+			"patrol_group": sp.get("patrol_group", "")
 		})
 
 	# Process chests
@@ -800,6 +819,17 @@ func _export_entities_summary(entities: Dictionary) -> void:
 			"size": {"w": ta.get("width", 64), "h": ta.get("height", 64)}
 		})
 
+	# Process patrol waypoints
+	for wp in entities.patrol_waypoints:
+		var zone_id: String = wp.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].patrol_waypoints.append({
+			"patrol_group": wp.get("patrol_group", ""),
+			"order": wp.get("order", 0),
+			"wait_time": wp.get("wait_time", 0.0),
+			"position": {"x": wp.get("position_x", 0), "y": wp.get("position_y", 0)}
+		})
+
 	# Export each zone's entities to a separate JSON file
 	for zone_id in zones_data:
 		_export_zone_entities(zone_id, zones_data[zone_id])
@@ -811,7 +841,7 @@ func _export_entities_summary(entities: Dictionary) -> void:
 		var entity_count: int = zd.spawn_points.size() + zd.chests.size() + zd.transitions.size() + zd.player_spawns.size()
 		entity_count += zd.doors.size() + zd.levers.size() + zd.pressure_plates.size()
 		entity_count += zd.npcs.size() + zd.lootables.size() + zd.signs.size()
-		entity_count += zd.lore_echoes.size() + zd.trigger_areas.size()
+		entity_count += zd.lore_echoes.size() + zd.trigger_areas.size() + zd.patrol_waypoints.size()
 		print("  %s: %d total entities" % [zone_id, entity_count])
 		print("    spawns: %d, chests: %d, transitions: %d, player_spawns: %d" % [
 			zd.spawn_points.size(), zd.chests.size(), zd.transitions.size(), zd.player_spawns.size()
@@ -824,9 +854,9 @@ func _export_entities_summary(entities: Dictionary) -> void:
 			print("    npcs: %d, lootables: %d, signs: %d" % [
 				zd.npcs.size(), zd.lootables.size(), zd.signs.size()
 			])
-		if zd.lore_echoes.size() > 0 or zd.trigger_areas.size() > 0:
-			print("    lore_echoes: %d, trigger_areas: %d" % [
-				zd.lore_echoes.size(), zd.trigger_areas.size()
+		if zd.lore_echoes.size() > 0 or zd.trigger_areas.size() > 0 or zd.patrol_waypoints.size() > 0:
+			print("    lore_echoes: %d, trigger_areas: %d, patrol_waypoints: %d" % [
+				zd.lore_echoes.size(), zd.trigger_areas.size(), zd.patrol_waypoints.size()
 			])
 
 
@@ -847,7 +877,9 @@ func _ensure_zone_data(zones_data: Dictionary, zone_id: String) -> void:
 			"lootables": [],
 			"signs": [],
 			"lore_echoes": [],
-			"trigger_areas": []
+			"trigger_areas": [],
+			# Patrol system
+			"patrol_waypoints": []
 		}
 
 
