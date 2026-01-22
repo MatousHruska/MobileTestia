@@ -298,7 +298,11 @@ func _spawn_loot_pickup(item_id: String, rarity: int = ItemData.Rarity.COMMON) -
 			ItemData.Rarity.LEGENDARY:
 				affix_count = randi_range(4, 6)
 
-		item = DatabaseLoader.create_equipment_item(item_id, rarity, affix_count)
+		# Use same item creation as EnemyNPC
+		if affix_count == 0:
+			item = DatabaseLoader.create_equipment(item_id, rarity)
+		else:
+			item = DatabaseLoader.create_magic_equipment(item_id, 1, affix_count)
 
 	if not item:
 		Debug.warn("Lootable", "Failed to create item: %s" % item_id)
