@@ -56,11 +56,34 @@ This document describes the collision layer architecture used in MobileTestia.
 | MagicProjectile | Area2D | 0 | 3 (`0b00000011`) | Detects walls (1) + enemies (2) |
 | WallRaycast | RayCast2D | - | 1 | Detects walls for explosion trigger |
 
-### Triggers (Zone Transitions, Interactables)
+### Triggers (Zone Transitions)
 
 | Component | Type | Layer | Mask | Notes |
 |-----------|------|-------|------|-------|
-| Trigger Area | Area2D | 0 | 2 | Detects player only |
+| Zone Transition | Area2D | 0 | 2 | Detects player body (layer 2) |
+
+### Interactables (InteractableBase subclasses)
+
+All interactables extend `InteractableBase` which creates an internal `_interaction_area` Area2D for player detection.
+
+| Component | Type | Layer | Mask | Notes |
+|-----------|------|-------|------|-------|
+| Chest | InteractableBase | 0 | 2 | Detects player for interact prompt |
+| Lootable | InteractableBase | 0 | 2 | Quick-loot container |
+| Sign | InteractableBase | 0 | 2 | Readable sign |
+| Lore Echo | InteractableBase | 0 | 2 | Audio lore object |
+| NPC | InteractableBase | 0 | 2 | Friendly NPC |
+
+### Pressure Plates & Trigger Areas
+
+These detect player entry without requiring interaction button press.
+
+| Component | Type | Layer | Mask | Notes |
+|-----------|------|-------|------|-------|
+| Pressure Plate | Area2D | 0 | 2 | Detects player body (layer 2) |
+| Trigger Area | Area2D | 0 | 2 | Invisible event trigger |
+
+**Important**: Player is on `collision_layer = 2`, so all detection areas must have `collision_mask = 2`.
 
 ---
 
@@ -131,7 +154,18 @@ projectile.collision_mask = 0b00000011  # Walls + Enemies
 ```gdscript
 var trigger = Area2D.new()
 trigger.collision_layer = 0
-trigger.collision_mask = 2  # Player only
+trigger.collision_mask = 2  # Player body is on layer 2
+```
+
+### Creating New Interactables
+```gdscript
+# Extend InteractableBase - collision is handled automatically
+extends InteractableBase
+class_name MyInteractable
+
+# InteractableBase creates _interaction_area with:
+#   collision_layer = 0
+#   collision_mask = 2  # Detects player on layer 2
 ```
 
 ### Creating Enemy Hitboxes
@@ -161,6 +195,11 @@ hitbox.collision_mask = 2   # Detect player
 ### Attacks don't register
 - Player attack: Check hitbox Layer 4, enemy hurtbox Layer 8
 - Enemy attack: Check hitbox detects player Layer 2
+
+### Interactables/Triggers not detecting player
+- Check Area2D has `collision_mask = 2` (player is on layer 2, NOT layer 1)
+- Check player scene has `collision_layer = 2` (see `scenes/player/player.tscn`)
+- Common mistake: Using `collision_mask = 1` (that's walls, not player)
 
 ---
 

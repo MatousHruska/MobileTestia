@@ -189,7 +189,11 @@ Locations should have natural boundaries:
 | Type | Function | Frequency |
 |------|----------|-----------|
 | Landmark | Navigation aid | Every 2-3 chunks |
-| Chest | Loot reward | 1-2 per location |
+| Chest | Loot reward (interact to open) | 1-2 per location |
+| Lootable | Quick-loot container (corpse, barrel) | 2-4 per location |
+| Sign | Readable text/directions | As needed for navigation |
+| Lore Echo | Audio/text lore discovery | 1-2 per zone |
+| Trigger Area | Event activation zone | As needed for scripted events |
 | NPC | Quest/dialogue | As needed |
 | Secret | Hidden reward | 1 per zone |
 | Transition | Zone connection | At zone edges |
@@ -222,6 +226,75 @@ Landmarks should be:
 - Never behind enemies that respawn (frustrating)
 - Clear path to retreat after opening
 - Visual hint that something is there
+
+### Lootable Placement
+
+Lootables are quick-loot containers (corpses, barrels, crates) that drop items on the ground when searched.
+
+| Type | Context | Example Items |
+|------|---------|---------------|
+| Corpse | Battlefield, dungeon | Gold, basic equipment |
+| Barrel/Crate | Towns, camps, cellars | Consumables, gold |
+| Satchel/Bag | Abandoned camps | Gold, keys |
+| Skeleton | Old ruins, crypts | Gold, rare equipment |
+
+**Lootable Placement Rules:**
+- Place near combat areas as post-battle rewards
+- Use environmental context (soldier corpse = soldier gear)
+- Respawning lootables for farming areas
+- Non-respawning for one-time story rewards
+
+### Sign Placement
+
+Signs provide navigation hints, warnings, and environmental storytelling.
+
+| Type | Content | Placement |
+|------|---------|-----------|
+| Directional | "North to Village" | Path intersections |
+| Warning | "Danger Ahead" | Before difficult areas |
+| Lore | Historical information | Points of interest |
+| Notice | Quest hints, announcements | Town squares, camps |
+
+**Sign Placement Rules:**
+- Place at decision points (path splits)
+- Use for zone/location name hints
+- Warn about difficulty spikes
+- Never reveal hidden secrets directly
+
+### Lore Echo Placement
+
+Lore Echoes are discoverable audio/text lore that plays when interacted. They provide backstory and world-building.
+
+| Type | Content | Location |
+|------|---------|----------|
+| Memory | Past events at this location | Battlefields, ruins |
+| Ghost | Departed character's thoughts | Graveyards, tombs |
+| Spirit | Ancient knowledge | Shrines, magical sites |
+| Echo | Environmental memory | Any significant location |
+
+**Lore Echo Placement Rules:**
+- Place at historically significant locations
+- Use sparingly (1-2 per zone max)
+- Make discoverable but not mandatory
+- Reward exploration with deeper story
+
+### Trigger Area Placement
+
+Trigger Areas are invisible zones that fire events when the player enters.
+
+| Type | Use Case | Example |
+|------|----------|---------|
+| Cutscene | Story moment | Boss introduction |
+| Quest | Progress tracking | "Reached the forest" objective |
+| Spawn | Ambush encounter | Enemies appear when entering |
+| Dialogue | NPC reactions | Guard shouts warning |
+
+**Trigger Area Placement Rules:**
+- Size trigger areas larger than expected (player might walk around edge)
+- Use one-shot for story triggers
+- Use cooldown for repeatable events
+- Consider quest requirements (only trigger during specific quest)
+- Test by walking through from all directions
 
 ### Secret Areas
 
@@ -384,6 +457,10 @@ Until final art is created, use colored placeholders that communicate function.
 | Player Spawn | #00ff00 | Circle |
 | Enemy Spawn | #ff0000 | Circle |
 | Chest | #ffcc00 | Square |
+| Lootable | #8B4513 | Square (smaller) |
+| Sign | #D2691E | Square |
+| Lore Echo | #6495ED | Circle (glowing) |
+| Trigger Area | #00ff0030 | Rectangle (transparent) |
 | NPC | #00ccff | Circle |
 | Transition | #ff00ff | Rectangle |
 | Location Area | #ffffff30 | Rectangle (transparent) |
@@ -417,6 +494,10 @@ Until final art is created, use colored placeholders that communicate function.
 - [ ] Landmarks visible from main path
 - [ ] Locations have natural boundaries
 - [ ] Shortcuts loop back to earlier areas
+- [ ] Signs placed at decision points
+- [ ] Lootables placed contextually (corpses near battles)
+- [ ] Lore echoes at significant locations
+- [ ] Trigger areas sized generously
 
 ### After Building
 
