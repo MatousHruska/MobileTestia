@@ -344,6 +344,64 @@ Fields:
   - spawn_id: String (required)
 ```
 
+#### Lootable
+```
+Size: 16x16 px
+Color: #8B4513 (Brown)
+Fields:
+  - lootable_id: String (required) -> links to lootables.json
+```
+
+Quick-loot containers that drop items on ground when interacted. Supports:
+- Gold drops (min_gold, max_gold)
+- Loot tables (same system as enemy drops)
+- Respawning (can_respawn, respawn_time)
+- Persistence (tracks looted state)
+
+#### Sign
+```
+Size: 16x16 px
+Color: #D2691E (Chocolate)
+Fields:
+  - sign_id: String (required) -> links to signs.json
+```
+
+Readable signs that display floating dialogue when interacted. Uses FloatingDialogueManager for text display. Can optionally track "has been read" state.
+
+#### LoreEcho
+```
+Size: 16x16 px
+Color: #6495ED (Ethereal Blue)
+Fields:
+  - echo_id: String (required) -> links to lore_echoes.json
+```
+
+Audio lore objects that play voice/ambient audio. Currently displays subtitle text until audio system exists. Features:
+- Timer-based playback duration
+- Visual feedback (glow effect while playing)
+- Can replay option
+- Persistence (tracks listened state)
+
+#### TriggerArea
+```
+Size: Variable (resizable)
+Color: #00FF00 with 30% opacity (Trigger Green)
+Fields:
+  - trigger_id: String (required) -> links to trigger_areas.json
+  - size: Auto from LDtk bounds
+```
+
+Invisible area that triggers events when player enters. Trigger types:
+- `cutscene` - Starts a cutscene (target_id = cutscene_id)
+- `quest` - Starts/completes quest or objective (target_id = quest_id or quest_id:objective_id)
+- `spawn` - Triggers enemy spawn group (target_id = spawn_group_id)
+- `dialogue` - Shows floating dialogue (target_id = dialogue_id)
+
+Supports:
+- One-shot triggers (triggers once, persisted)
+- Cooldown (retrigger after time)
+- Quest requirements (require_quest_id, require_quest_state)
+
 ---
 
 ## Workflow: Creating Zones
@@ -391,6 +449,10 @@ a. Add zone to zones.json (via Excel)
 b. Add locations to locations.json
 c. Add spawn points to spawn_points.json
 d. Add chests to chests.json
+e. Add lootables to lootables.json
+f. Add signs to signs.json
+g. Add lore echoes to lore_echoes.json
+h. Add trigger areas to trigger_areas.json
 ```
 
 #### 5. Test
@@ -449,7 +511,19 @@ Chunk loads:
 |   +-- Check persistence for opened state
 |   +-- Spawn if not opened
 +-- For each transition:
-    +-- Create Area2D trigger
+|   +-- Create Area2D trigger
++-- For each lootable:
+|   +-- Check persistence for looted state
+|   +-- Check respawn timer if applicable
+|   +-- Spawn if not looted or respawned
++-- For each sign:
+|   +-- Spawn sign (always spawns)
++-- For each lore echo:
+|   +-- Check persistence for listened state
+|   +-- Spawn (may be dimmed if already listened and can't replay)
++-- For each trigger area:
+    +-- Check persistence for triggered state (one-shot)
+    +-- Spawn if not already triggered
 ```
 
 ### Chunk Entity Cleanup
@@ -731,11 +805,13 @@ Chests:     chest_{zone}_{desc}     -> chest_forest_hidden_01
 - [ ] Run ldtk_importer.gd
 - [ ] Create scene `zone_yourname.tscn`
 - [ ] Set `zone_id = "zone_yourname"` (MUST MATCH!)
-- [ ] Add database entries (zones, locations, spawns)
+- [ ] Add database entries (zones, locations, spawns, chests, lootables, signs, echoes, triggers)
 - [ ] Place Location Area2D nodes
 - [ ] Test with Numpad 6 diagnostic
 - [ ] Test chunk loading/unloading
 - [ ] Test save/load cycle
+- [ ] Test interactables (lootables, signs, echoes)
+- [ ] Test trigger areas (walk through to verify)
 
 ---
 
