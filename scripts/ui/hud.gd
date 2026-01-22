@@ -393,6 +393,22 @@ func _update_interact_button() -> void:
 				nearby_npc = lever
 				break
 
+	# Check for lootables
+	if nearby_npc == null:
+		var lootables := get_tree().get_nodes_in_group("lootables")
+		for lootable in lootables:
+			if is_instance_valid(lootable) and lootable.has_method("can_interact") and lootable.can_interact():
+				nearby_npc = lootable
+				break
+
+	# Check for signs
+	if nearby_npc == null:
+		var signs := get_tree().get_nodes_in_group("signs")
+		for sign_node in signs:
+			if is_instance_valid(sign_node) and sign_node.has_method("can_interact") and sign_node.can_interact():
+				nearby_npc = sign_node
+				break
+
 	# Track changes
 	if nearby_npc != _last_nearby_npc:
 		# Disconnect from old pickup if any
