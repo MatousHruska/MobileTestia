@@ -1648,21 +1648,21 @@
 						},
 						{
 							"__identifier": "triggerareaspawn",
-							"__grid": [4,20],
+							"__grid": [0,20],
 							"__pivot": [0,0],
 							"__tags": ["trigger"],
 							"__tile": null,
 							"__smartColor": "#FF6B6B",
 							"iid": "ef4753b0-d380-11f0-b2c7-95d3abf3cbae",
-							"width": 48,
-							"height": 48,
+							"width": 256,
+							"height": 192,
 							"defUid": 130,
-							"px": [64,320],
+							"px": [0,320],
 							"fieldInstances": [{ "__identifier": "trigger_id", "__type": "String", "__value": "trigger_forest_ambush", "__tile": null, "defUid": 131, "realEditorValues": [{
 								"id": "V_String",
 								"params": ["trigger_forest_ambush"]
 							}] }],
-							"__worldX": 64,
+							"__worldX": 0,
 							"__worldY": 320
 						},
 						{
