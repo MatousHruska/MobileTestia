@@ -210,7 +210,7 @@
 	"spawn_points": [
 		{
 			"id": "sp_test_static",
-			"patrol_group": "",
+			"patrol_group": "patrol_north",
 			"position": {
 				"x": 792.0,
 				"y": 344.0
