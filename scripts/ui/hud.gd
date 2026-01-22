@@ -409,6 +409,14 @@ func _update_interact_button() -> void:
 				nearby_npc = sign_node
 				break
 
+	# Check for lore echoes
+	if nearby_npc == null:
+		var echoes := get_tree().get_nodes_in_group("echoes")
+		for echo in echoes:
+			if is_instance_valid(echo) and echo.has_method("can_interact") and echo.can_interact():
+				nearby_npc = echo
+				break
+
 	# Track changes
 	if nearby_npc != _last_nearby_npc:
 		# Disconnect from old pickup if any

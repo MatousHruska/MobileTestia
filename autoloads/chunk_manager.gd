@@ -748,6 +748,24 @@ func _spawn_chunk_entities(chunk_id: String, chunk_node: Node2D, chunk_coords: V
 			if entity:
 				spawned_entities.append(entity)
 
+	# Spawn lore echoes
+	for echo_data in _zone_entities.get("lore_echoes", []):
+		var pos: Dictionary = echo_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_lore_echo(echo_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
+	# Spawn trigger areas
+	for trigger_data in _zone_entities.get("trigger_areas", []):
+		var pos: Dictionary = trigger_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_trigger_area(trigger_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
 	# Track spawned entities for cleanup
 	if not spawned_entities.is_empty():
 		_chunk_entities[chunk_id] = spawned_entities
@@ -1359,6 +1377,116 @@ func _spawn_sign(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_
 	Debug.log("ChunkManager", "Spawned sign: %s at %s" % [sign_id, world_pos])
 
 	return sign_node
+
+
+#===============================================================================
+# LORE ECHO SPAWNING
+#===============================================================================
+
+## Spawn a lore echo from entity data
+func _spawn_lore_echo(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var echo_id: String = data.get("id", "")
+	if echo_id.is_empty():
+		Debug.warn("ChunkManager", "LoreEcho has no ID, skipping")
+		return null
+
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	var persistence_key := "%s@%d,%d" % [echo_id, int(world_pos.x), int(world_pos.y)]
+
+	# Check if already listened and can't replay
+	var config := DatabaseLoader.get_lore_echo(echo_id)
+	if not config.is_empty():
+		var state := Persistence.load_state("echoes", persistence_key)
+		if state.get("has_been_listened", false) and not config.get("can_replay", true):
+			Debug.log("ChunkManager", "LoreEcho already listened (no replay): %s" % persistence_key)
+			return null
+
+	# Create lore echo node
+	var echo_script := load("res://scripts/interactable/lore_echo.gd")
+	if not echo_script:
+		Debug.error("ChunkManager", "Could not load lore_echo.gd script")
+		return null
+
+	var echo := Node2D.new()
+	echo.set_script(echo_script)
+
+	# Configure echo
+	echo.database_echo_id = echo_id
+	echo.persistence_key = persistence_key
+
+	# Set position relative to chunk
+	echo.position = world_pos - chunk_origin
+
+	# Mark as chunk-spawned
+	echo.set_meta("chunk_spawned", true)
+	echo.set_meta("chunk_id", chunk_id)
+	echo.set_meta("world_position", world_pos)
+
+	# Add to group for searching
+	echo.add_to_group("echoes")
+
+	parent.add_child(echo)
+	Debug.log("ChunkManager", "Spawned lore echo: %s at %s" % [echo_id, world_pos])
+
+	return echo
+
+
+#===============================================================================
+# TRIGGER AREA SPAWNING
+#===============================================================================
+
+## Spawn a trigger area from entity data
+func _spawn_trigger_area(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var trigger_id: String = data.get("id", "")
+	if trigger_id.is_empty():
+		Debug.warn("ChunkManager", "TriggerArea has no ID, skipping")
+		return null
+
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	var persistence_key := "%s@%d,%d" % [trigger_id, int(world_pos.x), int(world_pos.y)]
+
+	# Check if already triggered (one-shot)
+	var config := DatabaseLoader.get_trigger_area(trigger_id)
+	if not config.is_empty() and config.get("one_shot", true):
+		var state := Persistence.load_state("triggers", persistence_key)
+		if state.get("has_been_triggered", false):
+			Debug.log("ChunkManager", "TriggerArea already triggered: %s" % persistence_key)
+			return null
+
+	# Create trigger area node
+	var trigger_script := load("res://scripts/interactable/trigger_area.gd")
+	if not trigger_script:
+		Debug.error("ChunkManager", "Could not load trigger_area.gd script")
+		return null
+
+	var trigger := Area2D.new()
+	trigger.set_script(trigger_script)
+
+	# Configure trigger
+	trigger.database_trigger_id = trigger_id
+	trigger.persistence_key = persistence_key
+
+	# Pass size from LDtk data
+	var size: Dictionary = data.get("size", {"w": 64, "h": 64})
+	trigger.set_meta("trigger_size", Vector2(size.get("w", 64), size.get("h", 64)))
+
+	# Set position relative to chunk
+	trigger.position = world_pos - chunk_origin
+
+	# Mark as chunk-spawned
+	trigger.set_meta("chunk_spawned", true)
+	trigger.set_meta("chunk_id", chunk_id)
+	trigger.set_meta("world_position", world_pos)
+
+	# Add to group for searching
+	trigger.add_to_group("triggers")
+
+	parent.add_child(trigger)
+	Debug.log("ChunkManager", "Spawned trigger area: %s at %s" % [trigger_id, world_pos])
+
+	return trigger
 
 
 ## Clean up entities when a chunk unloads
