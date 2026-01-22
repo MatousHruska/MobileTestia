@@ -5,10 +5,11 @@ class_name PatrolModule
 ## Config options:
 ##   waypoints: Array[Vector2] - Absolute positions to visit (set by spawn point)
 ##   waypoints_relative: Array - Relative offsets (converted to absolute by spawn point)
+##   waypoint_wait_times: Array[float] - Per-waypoint wait times (optional, from LDtk)
 ##   loop: bool - Loop back to start when reaching end (default: true)
 ##   ping_pong: bool - Reverse direction at ends instead of looping (default: false)
 ##   patrol_speed_mult: float - Speed multiplier while patrolling (default: 0.6)
-##   waypoint_pause: float - Seconds to pause at each waypoint (default: 2.0)
+##   waypoint_pause: float - Default seconds to pause at each waypoint (default: 2.0)
 ##   waypoint_threshold: float - Distance to consider waypoint "reached" (default: 10.0)
 ##   resume_nearest: bool - After combat, resume from nearest waypoint (default: true)
 
@@ -17,6 +18,7 @@ class_name PatrolModule
 #===============================================================================
 
 var _waypoints: Array[Vector2] = []
+var _waypoint_wait_times: Array = []  # Per-waypoint wait times (optional)
 var _current_index: int = 0
 var _direction: int = 1  # 1 = forward, -1 = backward (for ping_pong)
 var _pause_timer: float = 0.0
@@ -46,6 +48,7 @@ func _on_cleanup() -> void:
 
 func _load_waypoints() -> void:
 	_waypoints.clear()
+	_waypoint_wait_times.clear()
 	var waypoints_raw = config.get("waypoints", [])
 
 	for wp in waypoints_raw:
@@ -53,6 +56,11 @@ func _load_waypoints() -> void:
 			_waypoints.append(wp)
 		elif wp is Array and wp.size() >= 2:
 			_waypoints.append(Vector2(wp[0], wp[1]))
+
+	# Load per-waypoint wait times if provided
+	var wait_times_raw = config.get("waypoint_wait_times", [])
+	for wt in wait_times_raw:
+		_waypoint_wait_times.append(float(wt) if wt != null else 0.0)
 
 	if _waypoints.is_empty():
 		Debug.warn("AI", "PatrolModule: No waypoints configured")
@@ -106,7 +114,7 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	if distance <= threshold:
 		# Reached waypoint - pause
 		_is_paused = true
-		_pause_timer = get_config_float("waypoint_pause", 2.0)
+		_pause_timer = _get_waypoint_pause_time(_current_index)
 		context.should_stop = true
 		context.behavior_state = EnemyContext.BehaviorState.IDLE
 	else:
@@ -139,6 +147,17 @@ func _on_combat_ended(context: EnemyContext) -> void:
 	_current_index = nearest_index
 	_is_paused = false
 	Debug.log("AI", "PatrolModule: Resuming patrol from waypoint %d" % _current_index)
+
+
+func _get_waypoint_pause_time(index: int) -> float:
+	"""Get pause time for a specific waypoint, using per-waypoint time if available"""
+	# Check if we have per-waypoint wait times for this index
+	if not _waypoint_wait_times.is_empty() and index < _waypoint_wait_times.size():
+		var specific_wait: float = _waypoint_wait_times[index]
+		if specific_wait > 0:
+			return specific_wait
+	# Fall back to default waypoint_pause config
+	return get_config_float("waypoint_pause", 2.0)
 
 
 func _advance_waypoint() -> void:

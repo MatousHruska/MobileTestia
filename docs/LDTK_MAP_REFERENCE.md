@@ -307,7 +307,8 @@ Size: 16x16 px
 Color: #ff0000 (Red)
 Fields:
   - spawn_point_id: String (required) -> links to spawn_points.json
-  - spawn_group: String (optional)
+  - spawn_group: String (optional) - batch control tag
+  - patrol_group: String (optional) -> links to PatrolWaypoint entities
 ```
 
 #### ChestSpawn
@@ -401,6 +402,40 @@ Supports:
 - One-shot triggers (triggers once, persisted)
 - Cooldown (retrigger after time)
 - Quest requirements (require_quest_id, require_quest_state)
+
+#### PatrolWaypoint
+```
+Size: 12x12 px (small ellipse)
+Color: #00FFAA (Teal Green)
+Render: Ellipse
+Fields:
+  - patrol_group: String (required) - Links to SpawnPoint via matching patrol_group
+  - order: Int (default: 0) - Order in patrol sequence (0, 1, 2...)
+  - wait_time: Float (default: 0) - Seconds to wait at this waypoint
+```
+
+Visual patrol path editing for enemies. Workflow:
+1. Place SpawnPoint with `patrol_group: "guard_north"`
+2. Place PatrolWaypoint entities with same `patrol_group`
+3. Set `order` on each waypoint (0, 1, 2...)
+4. Optionally set `wait_time` for pauses
+5. Enemy will patrol through waypoints in order
+
+Example layout:
+```
+    [WP:0]----[WP:1]
+    guard_n   guard_n
+       |         |
+   [Spawn]    [WP:2]
+   guard_n    guard_n
+       |         |
+    [WP:4]----[WP:3]
+    guard_n   guard_n
+```
+
+**SpawnPoint patrol_group Field:**
+Add `patrol_group: String` to any SpawnPoint to link it to PatrolWaypoint entities.
+The spawn point will automatically inject the patrol module and configure waypoints.
 
 ---
 

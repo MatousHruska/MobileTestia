@@ -122,6 +122,10 @@ signal spawn_point_deactivated()
 ## Unique ID for persistence (if empty, uses node path)
 @export var spawn_point_id: String = ""
 
+## Patrol group - links to PatrolWaypoint entities from LDtk
+## If set, waypoints will be automatically loaded from ChunkManager
+@export var patrol_group: String = ""
+
 #===============================================================================
 # MODULE OVERRIDE (For patrol, ambush, etc.)
 #===============================================================================
@@ -693,26 +697,57 @@ func _prepare_spawn_config() -> Dictionary:
 	var config: Dictionary = {}
 
 	# Add modules to inject
-	if not modules_to_inject.is_empty():
-		config["modules_to_inject"] = modules_to_inject
+	var modules_str := modules_to_inject
+
+	# If patrol_group is set, automatically inject patrol module
+	if not patrol_group.is_empty():
+		if modules_str.is_empty():
+			modules_str = "mod_patrol"
+		elif "mod_patrol" not in modules_str:
+			modules_str += ",mod_patrol"
+
+	if not modules_str.is_empty():
+		config["modules_to_inject"] = modules_str
 
 	# Process module config override
-	if not module_config_override.is_empty():
-		var processed_config: Dictionary = module_config_override.duplicate(true)
+	var processed_config: Dictionary = module_config_override.duplicate(true) if not module_config_override.is_empty() else {}
 
-		# Convert relative waypoints to absolute for any module that has them
-		for module_id in processed_config:
-			var mod_config = processed_config[module_id]
-			if mod_config is Dictionary and mod_config.has("waypoints_relative"):
-				var absolute_waypoints: Array = []
-				for offset in mod_config.waypoints_relative:
-					if offset is Array and offset.size() >= 2:
-						absolute_waypoints.append(global_position + Vector2(offset[0], offset[1]))
-					elif offset is Vector2:
-						absolute_waypoints.append(global_position + offset)
-				mod_config["waypoints"] = absolute_waypoints
-				mod_config.erase("waypoints_relative")
+	# Convert relative waypoints to absolute for any module that has them
+	for module_id in processed_config:
+		var mod_config = processed_config[module_id]
+		if mod_config is Dictionary and mod_config.has("waypoints_relative"):
+			var absolute_waypoints: Array = []
+			for offset in mod_config.waypoints_relative:
+				if offset is Array and offset.size() >= 2:
+					absolute_waypoints.append(global_position + Vector2(offset[0], offset[1]))
+				elif offset is Vector2:
+					absolute_waypoints.append(global_position + offset)
+			mod_config["waypoints"] = absolute_waypoints
+			mod_config.erase("waypoints_relative")
 
+	# If patrol_group is set, load waypoints from ChunkManager
+	if not patrol_group.is_empty() and ChunkManager:
+		var waypoints := ChunkManager.get_patrol_waypoints(patrol_group)
+		if not waypoints.is_empty():
+			# Initialize mod_patrol config if not exists
+			if not processed_config.has("mod_patrol"):
+				processed_config["mod_patrol"] = {}
+
+			# Build absolute waypoint positions
+			var patrol_positions: Array = []
+			var wait_times: Array = []
+			for wp in waypoints:
+				var pos: Dictionary = wp.get("position", {})
+				patrol_positions.append(Vector2(pos.get("x", 0), pos.get("y", 0)))
+				wait_times.append(wp.get("wait_time", 0.0))
+			processed_config["mod_patrol"]["waypoints"] = patrol_positions
+			processed_config["mod_patrol"]["waypoint_wait_times"] = wait_times
+
+			Debug.log("SpawnPoint", "Loaded %d waypoints for patrol_group: %s" % [patrol_positions.size(), patrol_group])
+		else:
+			Debug.warn("SpawnPoint", "No waypoints found for patrol_group: %s" % patrol_group)
+
+	if not processed_config.is_empty():
 		config["module_config_override"] = processed_config
 
 	return config
