@@ -113,8 +113,24 @@ func interact() -> void:
 
 ## Override in subclasses for custom interaction behavior
 func _on_interact() -> void:
+	# Notify quest system of interaction
+	_notify_quest_system()
 	# Default: just end immediately
 	end_interaction()
+
+
+## Notify quest system of object interaction for INTERACT objectives
+func _notify_quest_system() -> void:
+	var object_id := _get_object_id()
+	if object_id.is_empty():
+		return
+	if QuestManager:
+		QuestManager.on_object_interacted(object_id)
+
+
+## Override in subclasses to return database ID for quest tracking
+func _get_object_id() -> String:
+	return ""
 
 
 ## End the interaction

@@ -146,8 +146,14 @@ func _on_interact() -> void:
 		end_interaction()
 		return
 
+	_notify_quest_system()  # Notify quest system for INTERACT objectives
 	_loot()
 	end_interaction()
+
+
+## Return database ID for quest tracking
+func _get_object_id() -> String:
+	return database_lootable_id
 
 
 #===============================================================================

@@ -645,6 +645,11 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 			ability_slots[slot_index].start_cooldown(talent.cooldown)
 
 	ability_pressed.emit(slot_index, ability_id)
+
+	# Notify quest system for USE_ABILITY objectives
+	if QuestManager:
+		QuestManager.on_ability_used(ability_id)
+
 	Debug.log("Combat", "Skill executed: %s" % talent.talent_name, {
 		"damage": int(damage_result.final_damage),
 		"crit": damage_result.is_critical,
@@ -1016,6 +1021,10 @@ func _fire_magic_projectile_instant(slot_index: int, talent: TalentData) -> void
 	# Fire the projectile
 	_fire_magic_projectile(talent, direction)
 
+	# Notify quest system for USE_ABILITY objectives
+	if QuestManager:
+		QuestManager.on_ability_used(talent.id)
+
 	# Start cooldown
 	if talent.cooldown > 0:
 		if slot_index == -1:
@@ -1118,6 +1127,10 @@ func _apply_self_buff_instant(slot_index: int, talent: TalentData) -> void:
 
 	# Apply the buff
 	_apply_self_buff(talent)
+
+	# Notify quest system for USE_ABILITY objectives
+	if QuestManager:
+		QuestManager.on_ability_used(talent.id)
 
 	# Start cooldown
 	if talent.cooldown > 0:

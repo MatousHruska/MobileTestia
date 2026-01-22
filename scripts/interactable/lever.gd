@@ -150,8 +150,16 @@ func get_interaction_prompt() -> String:
 
 ## Override interaction behavior
 func _on_interact() -> void:
+	_notify_quest_system()  # Notify quest system for INTERACT objectives
 	toggle()
 	end_interaction()
+
+
+## Return database ID for quest tracking
+func _get_object_id() -> String:
+	if not database_lever_id.is_empty():
+		return database_lever_id
+	return persistence_id
 
 
 ## Toggle the lever

@@ -445,6 +445,10 @@ func _complete_cast() -> void:
 	var skill_id := _current_cast_skill
 	_end_cast_state()
 
+	# Notify quest system for USE_ABILITY objectives
+	if QuestManager:
+		QuestManager.on_ability_used(skill_id)
+
 	cast_completed.emit(skill_id)
 	Debug.log("Combat", "Cast completed", {"skill": skill_id})
 
