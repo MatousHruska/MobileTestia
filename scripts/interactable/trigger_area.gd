@@ -216,7 +216,7 @@ func _trigger_cutscene(cutscene_id: String) -> void:
 		return
 
 	if Cutscene:
-		Cutscene.play_cutscene(cutscene_id)
+		Cutscene.play(cutscene_id)
 		Debug.info("TriggerArea", "Started cutscene: %s" % cutscene_id)
 	else:
 		Debug.warn("TriggerArea", "CutsceneManager not available")

@@ -128,11 +128,17 @@ func _loot_chest() -> void:
 	var looted_color: Color = TIER_COLORS[chest_tier]
 	set_visual_color(looted_color.darkened(0.4))
 
+	_notify_quest_system()  # Notify quest system for INTERACT objectives
 	chest_looted.emit()
 	Debug.info("Chest", "Looted %s chest" % TIER_NAMES[chest_tier])
 
 	_on_chest_looted()
 	end_interaction()
+
+
+## Return database ID for quest tracking
+func _get_object_id() -> String:
+	return chest_id
 
 
 ## Override in subclasses - generate loot contents

@@ -221,6 +221,7 @@ func _on_interact() -> void:
 		if key_index >= 0:
 			# Consume the key and unlock
 			Inventory.remove_item_at(key_index)
+			_notify_quest_system()  # Notify quest system for INTERACT objectives
 			unlock()
 			Debug.info("Door", "Unlocked %s with %s" % [door_name, required_key_name])
 		else:
@@ -229,9 +230,17 @@ func _on_interact() -> void:
 			Debug.log("Door", "Cannot unlock %s - missing %s" % [door_name, required_key_name])
 	else:
 		# No key required - just unlock
+		_notify_quest_system()  # Notify quest system for INTERACT objectives
 		unlock()
 
 	end_interaction()
+
+
+## Return database ID for quest tracking
+func _get_object_id() -> String:
+	if not database_door_id.is_empty():
+		return database_door_id
+	return persistence_id
 
 
 #===============================================================================

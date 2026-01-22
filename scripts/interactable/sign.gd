@@ -125,8 +125,14 @@ func get_interaction_prompt() -> String:
 
 
 func _on_interact() -> void:
+	_notify_quest_system()  # Notify quest system for INTERACT objectives
 	_read_sign()
 	end_interaction()
+
+
+## Return database ID for quest tracking
+func _get_object_id() -> String:
+	return database_sign_id
 
 
 #===============================================================================
