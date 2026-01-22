@@ -12,7 +12,8 @@
       "min_level": 1,
       "is_interactable": true,
       "portrait_id": "",
-      "dialogue_talk_id": "dlg_quest_master_talk"
+      "dialogue_talk_id": "dlg_quest_master_talk",
+      "spawn_condition": ""
     }
   ]
 }
