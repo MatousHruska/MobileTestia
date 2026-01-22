@@ -111,6 +111,71 @@
 			}
 		}
 	],
+	"patrol_waypoints": [
+		{
+			"order": 1,
+			"patrol_group": "patrol_north",
+			"position": {
+				"x": 680.0,
+				"y": 392.0
+			},
+			"wait_time": 0.0
+		},
+		{
+			"order": 2,
+			"patrol_group": "patrol_north",
+			"position": {
+				"x": 760.0,
+				"y": 472.0
+			},
+			"wait_time": 0.0
+		},
+		{
+			"order": 3,
+			"patrol_group": "patrol_north",
+			"position": {
+				"x": 904.0,
+				"y": 440.0
+			},
+			"wait_time": 0.0
+		},
+		{
+			"order": 4,
+			"patrol_group": "patrol_north",
+			"position": {
+				"x": 936.0,
+				"y": 328.0
+			},
+			"wait_time": 0.0
+		},
+		{
+			"order": 5,
+			"patrol_group": "patrol_north",
+			"position": {
+				"x": 872.0,
+				"y": 216.0
+			},
+			"wait_time": 0.0
+		},
+		{
+			"order": 5,
+			"patrol_group": "patrol_north",
+			"position": {
+				"x": 744.0,
+				"y": 216.0
+			},
+			"wait_time": 0.0
+		},
+		{
+			"order": 6,
+			"patrol_group": "patrol_north",
+			"position": {
+				"x": 664.0,
+				"y": 296.0
+			},
+			"wait_time": 0.0
+		}
+	],
 	"player_spawns": [
 		{
 			"id": "default",
@@ -144,7 +209,8 @@
 	],
 	"spawn_points": [
 		{
-			"id": "",
+			"id": "sp_test_static",
+			"patrol_group": "",
 			"position": {
 				"x": 792.0,
 				"y": 344.0
@@ -153,6 +219,7 @@
 		},
 		{
 			"id": "sp_test_static",
+			"patrol_group": "",
 			"position": {
 				"x": 1192.0,
 				"y": 296.0
@@ -161,6 +228,7 @@
 		},
 		{
 			"id": "sp_test_static",
+			"patrol_group": "",
 			"position": {
 				"x": 1368.0,
 				"y": 456.0
@@ -169,6 +237,7 @@
 		},
 		{
 			"id": "sp_test_static",
+			"patrol_group": "",
 			"position": {
 				"x": 1800.0,
 				"y": 120.0
@@ -177,6 +246,7 @@
 		},
 		{
 			"id": "sp_test_static",
+			"patrol_group": "",
 			"position": {
 				"x": 1080.0,
 				"y": 808.0
@@ -185,6 +255,7 @@
 		},
 		{
 			"id": "sp_test_static",
+			"patrol_group": "",
 			"position": {
 				"x": 552.0,
 				"y": 1176.0
@@ -193,6 +264,7 @@
 		},
 		{
 			"id": "sp_test_static",
+			"patrol_group": "",
 			"position": {
 				"x": 264.0,
 				"y": 1848.0
@@ -201,6 +273,7 @@
 		},
 		{
 			"id": "sp_test_static",
+			"patrol_group": "",
 			"position": {
 				"x": 296.0,
 				"y": 1816.0
@@ -209,6 +282,7 @@
 		},
 		{
 			"id": "sp_test_static",
+			"patrol_group": "",
 			"position": {
 				"x": 1864.0,
 				"y": 1896.0
@@ -217,6 +291,7 @@
 		},
 		{
 			"id": "sp_test_static",
+			"patrol_group": "",
 			"position": {
 				"x": 1416.0,
 				"y": 1400.0
