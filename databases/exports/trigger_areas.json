@@ -3,8 +3,8 @@
     {
       "id": "trigger_forest_ambush",
       "name": "Forest Ambush Trigger",
-      "trigger_type": "spawn",
-      "target_id": "spawn_group_forest_ambush",
+      "trigger_type": "dialogue",
+      "target_id": "fld_zone_meadows",
       "one_shot": true,
       "cooldown": 0,
       "require_quest_id": "",
