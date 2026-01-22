@@ -184,10 +184,14 @@ func _drop_loot() -> void:
 		if gold_amount > 0:
 			_spawn_gold_pickup(gold_amount)
 
-	# Drop items from loot table
+	# Drop items from loot table (uses same system as EnemyNPC)
 	var loot_table_id: String = _config.get("loot_table_id", "")
 	if not loot_table_id.is_empty():
-		_generate_items_from_table(loot_table_id)
+		var table := DatabaseLoader.get_loot_table(loot_table_id)
+		if not table.is_empty():
+			_drop_from_loot_table(table)
+		else:
+			Debug.warn("Lootable", "Loot table not found: %s" % loot_table_id)
 
 
 func _spawn_gold_pickup(amount: int) -> void:
@@ -202,179 +206,145 @@ func _spawn_gold_pickup(amount: int) -> void:
 		Debug.log("Lootable", "Spawned %d gold" % amount)
 
 
-func _generate_items_from_table(table_id: String) -> void:
-	## Generate items from loot table and spawn as pickups
-	if not DatabaseLoader:
-		return
+func _drop_from_loot_table(table: Dictionary) -> void:
+	## Drop loot using database loot table with rarity weights (same as EnemyNPC)
 
-	var table := DatabaseLoader.get_loot_table(table_id)
-	if table.is_empty():
-		Debug.warn("Lootable", "Loot table not found: %s" % table_id)
-		return
+	# Always drop guaranteed items first
+	var guaranteed: String = table.get("guaranteed_drops", "")
+	if not guaranteed.is_empty():
+		var guaranteed_items := guaranteed.split(",")
+		for item_id in guaranteed_items:
+			item_id = item_id.strip_edges()
+			if not item_id.is_empty():
+				_spawn_loot_pickup(item_id, ItemData.Rarity.RARE)
+				Debug.log("Lootable", "Dropped guaranteed: %s" % item_id)
 
-	# Determine number of drops
-	var min_drops: int = table.get("min_drops", 1)
-	var max_drops: int = table.get("max_drops", 1)
-	var num_drops := randi_range(min_drops, max_drops)
-
-	# Get rarity weights
+	# Roll for additional drops using rarity weights
 	var rarity_weights: Dictionary = table.get("rarity_weights", {})
-	var nothing_weight: float = rarity_weights.get("nothing", 0.0)
-	var total_weight: float = 0.0
-	for rarity in rarity_weights:
-		total_weight += float(rarity_weights[rarity])
+	var min_drops: int = int(table.get("min_drops", 1))
+	var max_drops: int = int(table.get("max_drops", 1))
+	var drop_count := randi_range(min_drops, max_drops)
 
+	for _i in range(drop_count):
+		var rolled_rarity := _roll_rarity_from_weights(rarity_weights)
+		if rolled_rarity == -1:
+			# Rolled "nothing"
+			Debug.log("Lootable", "Drop roll: nothing")
+			continue
+
+		# Get item from pool or generate random
+		var item_pool: String = table.get("item_pool", "")
+		if not item_pool.is_empty():
+			var items := item_pool.split(",")
+			var item_id: String = items[randi() % items.size()].strip_edges()
+			_spawn_loot_pickup(item_id, rolled_rarity)
+			Debug.log("Lootable", "Dropped %s (rarity: %d)" % [item_id, rolled_rarity])
+		else:
+			# No item pool - generate random equipment
+			_spawn_random_loot_pickup(rolled_rarity)
+
+
+func _roll_rarity_from_weights(weights: Dictionary) -> int:
+	## Roll rarity from weights dictionary, returns -1 for "nothing" (same as EnemyNPC)
+	var nothing_weight: int = int(weights.get("nothing", 0))
+	var common_weight: int = int(weights.get("common", 100))
+	var magic_weight: int = int(weights.get("magic", 0))
+	var rare_weight: int = int(weights.get("rare", 0))
+	var unique_weight: int = int(weights.get("unique", 0))
+
+	var total_weight: int = nothing_weight + common_weight + magic_weight + rare_weight + unique_weight
 	if total_weight <= 0:
-		return
+		return -1
 
-	# Roll for each drop
-	for _i in num_drops:
-		var roll := randf() * total_weight
-		var cumulative: float = 0.0
+	var roll: int = randi() % total_weight
+	var cumulative: int = 0
 
-		# Check if we rolled "nothing"
-		cumulative += nothing_weight
-		if roll <= cumulative:
-			continue  # No drop this roll
+	cumulative += nothing_weight
+	if roll < cumulative:
+		return -1  # Nothing drops
 
-		# Determine which rarity we got
-		var selected_rarity: String = ""
-		for rarity in ["common", "magic", "rare", "unique"]:
-			var weight: float = rarity_weights.get(rarity, 0.0)
-			cumulative += weight
-			if roll <= cumulative:
-				selected_rarity = rarity
-				break
+	cumulative += common_weight
+	if roll < cumulative:
+		return ItemData.Rarity.COMMON
 
-		if not selected_rarity.is_empty():
-			var item := _generate_item_of_rarity(selected_rarity)
-			if item:
-				_spawn_item_pickup(item)
+	cumulative += magic_weight
+	if roll < cumulative:
+		return ItemData.Rarity.UNCOMMON  # "magic" = uncommon
+
+	cumulative += rare_weight
+	if roll < cumulative:
+		return ItemData.Rarity.RARE
+
+	return ItemData.Rarity.LEGENDARY  # "unique" = legendary
 
 
-func _generate_item_of_rarity(rarity_name: String) -> ItemData:
-	## Generate a random item of the given rarity
-	# Map loot table rarity names to ItemData.Rarity enum
-	var rarity_map := {
-		"common": ItemData.Rarity.COMMON,
-		"magic": ItemData.Rarity.UNCOMMON,
-		"rare": ItemData.Rarity.RARE,
-		"unique": ItemData.Rarity.LEGENDARY
-	}
+func _spawn_loot_pickup(item_id: String, rarity: int = ItemData.Rarity.COMMON) -> void:
+	## Spawn a loot pickup for a specific item (same pattern as EnemyNPC)
+	var item: ItemData = null
 
-	var rarity: int = rarity_map.get(rarity_name, ItemData.Rarity.COMMON)
-
-	# Get items of this rarity from database
-	var items_of_rarity: Array = []
-	for item_data in DatabaseLoader.items_list:
-		var item_rarity: int = item_data.get("rarity", ItemData.Rarity.COMMON)
-		if item_rarity == rarity:
-			items_of_rarity.append(item_data)
-
-	# Also check equipment
-	for equip_data in DatabaseLoader.equipment_list:
-		var equip_rarity: int = equip_data.get("rarity", ItemData.Rarity.COMMON)
-		if equip_rarity == rarity:
-			items_of_rarity.append(equip_data)
-
-	if items_of_rarity.is_empty():
-		# Fall back to common items if no items of requested rarity
-		for item_data in DatabaseLoader.items_list:
-			var item_rarity: int = item_data.get("rarity", ItemData.Rarity.COMMON)
-			if item_rarity == ItemData.Rarity.COMMON:
-				items_of_rarity.append(item_data)
-
-	if items_of_rarity.is_empty():
-		return null
-
-	# Pick random item from list
-	var selected: Dictionary = items_of_rarity[randi() % items_of_rarity.size()]
-	var item_id: String = selected.get("id", "")
-
-	if item_id.is_empty():
-		return null
-
-	# Create ItemData from database
-	return _create_item_from_database(selected)
-
-
-func _create_item_from_database(item_dict: Dictionary) -> ItemData:
-	## Create an ItemData or EquipmentData from database dictionary
-	var item_id: String = item_dict.get("id", "")
-	var item_type: String = item_dict.get("type", "")
-
-	# Check if it's equipment
-	if item_type in ["weapon", "armor", "accessory", "helmet", "gloves", "boots", "ring", "amulet", "quick_slot"]:
-		var equip := EquipmentData.new()
-		equip.id = item_id
-		equip.item_name = item_dict.get("name", "Unknown Equipment")
-		equip.description = item_dict.get("description", "")
-		equip.rarity = item_dict.get("rarity", ItemData.Rarity.COMMON)
-		equip.equipment_type = _get_equipment_type_from_string(item_type)
-		# Stats would be applied from equipment-specific data
-		return equip
+	# Check if it's a key (starts with "key_")
+	if item_id.begins_with("key_"):
+		item = _create_key_from_id(item_id)
 	else:
-		# Regular item (consumable, key, misc)
-		var item := ItemData.new()
-		item.id = item_id
-		item.item_name = item_dict.get("name", "Unknown Item")
-		item.description = item_dict.get("description", "")
-		item.rarity = item_dict.get("rarity", ItemData.Rarity.COMMON)
-		item.stackable = item_dict.get("stackable", false)
-		item.max_stack = item_dict.get("max_stack", 1)
-		item.icon_path = item_dict.get("icon", "")
-		return item
+		# Create equipment from database with appropriate rarity/affixes
+		var affix_count := 0
+		match rarity:
+			ItemData.Rarity.COMMON:
+				affix_count = 0
+			ItemData.Rarity.UNCOMMON:
+				affix_count = randi_range(1, 2)
+			ItemData.Rarity.RARE:
+				affix_count = randi_range(2, 4)
+			ItemData.Rarity.LEGENDARY:
+				affix_count = randi_range(4, 6)
 
+		item = DatabaseLoader.create_equipment_item(item_id, rarity, affix_count)
 
-func _get_equipment_type_from_string(type_str: String) -> int:
-	## Convert string type to EquipmentType enum
-	match type_str.to_lower():
-		"weapon":
-			return EquipmentType.WEAPON_ONE_HANDED
-		"armor":
-			return EquipmentType.ARMOR
-		"helmet":
-			return EquipmentType.HELMET
-		"gloves":
-			return EquipmentType.GLOVES
-		"boots":
-			return EquipmentType.BOOTS
-		"ring":
-			return EquipmentType.RING
-		"amulet":
-			return EquipmentType.AMULET
-		_:
-			return EquipmentType.NONE
-
-
-func _spawn_item_pickup(item: ItemData) -> void:
-	## Spawn item pickup near this lootable
 	if not item:
+		Debug.warn("Lootable", "Failed to create item: %s" % item_id)
 		return
-
-	var offset := Vector2(randf_range(-20, 20), randf_range(-20, 20))
-	var spawn_pos := global_position + offset
-
-	var parent := get_parent()
-	if not parent:
-		# Fallback: add directly to inventory
-		if Inventory:
-			Inventory.add_item(item)
-		return
-
-	# Create pickup
-	var pickup := LootPickup.create_at(spawn_pos, item)
 
 	# Register with LootManager for chunk persistence
 	var loot_mgr = get_node_or_null("/root/LootManager")
+	var drop_id := ""
 	if loot_mgr:
-		var drop_id: String = loot_mgr.register_item_drop(spawn_pos, item)
-		if not drop_id.is_empty():
-			pickup.set_meta("drop_id", drop_id)
-			pickup.tree_entered.connect(func(): loot_mgr.set_drop_node(drop_id, pickup), CONNECT_ONE_SHOT)
+		drop_id = loot_mgr.register_item_drop(global_position, item)
 
-	parent.add_child(pickup)
-	Debug.log("Lootable", "Spawned item pickup: %s" % item.item_name)
+	# Create and spawn the pickup
+	var pickup := LootPickup.create_at(global_position, item)
+	if not drop_id.is_empty():
+		pickup.set_meta("drop_id", drop_id)
+		loot_mgr.set_drop_node(drop_id, pickup)
+
+	var parent := get_parent()
+	if parent:
+		parent.add_child(pickup)
+	else:
+		get_tree().current_scene.add_child(pickup)
+
+	Debug.info("Lootable", "Spawned loot pickup: %s (drop_id: %s)" % [item.item_name, drop_id])
+
+
+func _spawn_random_loot_pickup(rarity: int) -> void:
+	## Spawn a random equipment piece when no item_pool specified (same as EnemyNPC)
+	if DatabaseLoader.item_bases_list.is_empty():
+		return
+
+	# Pick a random base item
+	var base: Dictionary = DatabaseLoader.item_bases_list[randi() % DatabaseLoader.item_bases_list.size()]
+	var base_id: String = base.get("id", "")
+
+	if base_id.is_empty():
+		return
+
+	_spawn_loot_pickup(base_id, rarity)
+
+
+func _create_key_from_id(key_id: String) -> KeyData:
+	## Create a key from an id like "key_treasury" -> "Treasury Key"
+	var name_part := key_id.substr(4)  # Remove "key_" prefix
+	var key_name := name_part.replace("_", " ").capitalize() + " Key"
+	return KeyData.create(key_id, key_name)
 
 
 #===============================================================================
