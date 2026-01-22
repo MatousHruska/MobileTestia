@@ -352,6 +352,41 @@ Bad: Tank + healer + DPS (MMO cliche)
 - Minibosses: One per major location
 - Bosses: End of dungeon/zone story
 
+### Patrol Path Design (LDtk)
+
+Use PatrolWaypoint entities to create dynamic patrol routes:
+
+**Basic Patrol Setup:**
+1. Place a SpawnPoint with `patrol_group: "guard_01"`
+2. Place PatrolWaypoint entities with same `patrol_group`
+3. Set `order` (0, 1, 2...) for sequence
+4. Optionally set `wait_time` for pauses
+
+**Patrol Pattern Types:**
+
+| Pattern | Description | Use For |
+|---------|-------------|---------|
+| Linear | A → B → C → D | Corridor guards |
+| Loop | A → B → C → D → A | Room patrols |
+| Ping-pong | A ↔ B ↔ C | Back-and-forth |
+| Complex | Multiple branches | Large areas |
+
+**Design Tips:**
+- Start waypoint 0 at or near spawn position
+- Space waypoints 100-200px apart for natural movement
+- Use wait_time at corners/lookout points (2-5 seconds)
+- Create "blind spots" players can exploit
+- Consider sightlines between waypoints
+
+**Example Layout:**
+```
+        [WP:1]───────[WP:2]
+           │           │
+[Spawn]───[WP:0]     [WP:3]  (guard patrols rectangle)
+           │           │
+        [WP:5]───────[WP:4]
+```
+
 ---
 
 ## Navigation Flow

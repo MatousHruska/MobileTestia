@@ -206,14 +206,17 @@ Each module has configurable options via the `module_config` JSON column.
 |-----|---------|-------------|
 | waypoints | [] | Array of absolute Vector2 positions |
 | waypoints_relative | [] | Relative offsets from spawn (converted to absolute) |
+| waypoint_wait_times | [] | Per-waypoint wait times (from LDtk patrol system) |
 | loop | true | Loop back to start when reaching end |
 | ping_pong | false | Reverse direction at ends instead of looping |
 | patrol_speed_mult | 0.6 | Speed multiplier while patrolling |
-| waypoint_pause | 2.0 | Seconds to pause at each waypoint |
+| waypoint_pause | 2.0 | Default seconds to pause at each waypoint |
 | waypoint_threshold | 10.0 | Distance to consider waypoint "reached" |
 | resume_nearest | true | After combat, resume from nearest waypoint |
 
 **Note:** mod_patrol is typically injected via spawn points rather than hardcoded in enemy definitions. This allows the same enemy type to patrol or roam depending on where it spawns.
+
+**LDtk Patrol System:** Spawn points with a `patrol_group` field automatically load waypoints from PatrolWaypoint entities in LDtk. See [LDTK_MAP_REFERENCE.md](LDTK_MAP_REFERENCE.md#patrolwaypoint) for visual patrol path editing.
 
 ---
 
@@ -265,6 +268,37 @@ Spawn points can inject modules and override module configuration for any spawne
 - `waypoints`: Absolute world positions (rarely used in spawn points)
 
 Spawn points automatically convert `waypoints_relative` to absolute `waypoints` at spawn time.
+
+### LDtk Visual Patrol Paths (Recommended)
+
+For visual patrol path editing, use the LDtk patrol system:
+
+1. In LDtk, set `patrol_group` on your SpawnPoint entity (e.g., "guard_north")
+2. Place PatrolWaypoint entities with the same `patrol_group`
+3. Set `order` (0, 1, 2...) on each waypoint
+4. Optionally set `wait_time` for per-waypoint pauses
+
+**Advantages:**
+- Visual editing in LDtk (see patrol paths as you design)
+- No JSON editing required
+- Per-waypoint wait times
+- Waypoints automatically sorted by order
+
+**Example in LDtk:**
+```
+   [WP:0]────[WP:1]
+      │         │
+   [Spawn]   [WP:2]    patrol_group: "courtyard"
+      │         │
+   [WP:4]────[WP:3]
+```
+
+The spawn point automatically:
+- Injects mod_patrol module
+- Loads waypoints from ChunkManager
+- Configures per-waypoint wait times
+
+See [LDTK_MAP_REFERENCE.md](LDTK_MAP_REFERENCE.md#patrolwaypoint) for full documentation.
 
 ---
 

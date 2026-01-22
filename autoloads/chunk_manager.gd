@@ -134,6 +134,9 @@ var _tileset: TileSet = null
 ## Whether to generate TileMaps for chunks (can be disabled for testing)
 var generate_tilemaps: bool = true
 
+## Patrol waypoints by group name: { "group_name": [waypoint_dicts sorted by order] }
+var _patrol_waypoints: Dictionary = {}
+
 #===============================================================================
 # ENEMY TEMP STATE
 #===============================================================================
@@ -626,11 +629,28 @@ func _load_zone_entities(zone_id: String) -> void:
 		var pos: Dictionary = ps.get("position", {})
 		_player_spawns[spawn_id] = Vector2(pos.get("x", 0), pos.get("y", 0))
 
+	# Load patrol waypoints and group by patrol_group
+	_patrol_waypoints.clear()
+	var waypoints: Array = _zone_entities.get("patrol_waypoints", [])
+	for wp in waypoints:
+		var group: String = wp.get("patrol_group", "")
+		if group.is_empty():
+			continue
+		if not _patrol_waypoints.has(group):
+			_patrol_waypoints[group] = []
+		_patrol_waypoints[group].append(wp)
+
+	# Sort each group by order
+	for group in _patrol_waypoints:
+		_patrol_waypoints[group].sort_custom(func(a, b): return a.get("order", 0) < b.get("order", 0))
+
 	Debug.info("ChunkManager", "Loaded zone entities: %s" % path, {
 		"spawn_points": _zone_entities.get("spawn_points", []).size(),
 		"chests": _zone_entities.get("chests", []).size(),
 		"transitions": _zone_entities.get("transitions", []).size(),
-		"player_spawns": player_spawns.size()
+		"player_spawns": player_spawns.size(),
+		"patrol_groups": _patrol_waypoints.size(),
+		"patrol_waypoints": waypoints.size()
 	})
 
 
@@ -651,6 +671,35 @@ func get_player_spawn_position(spawn_id: String = "default") -> Vector2:
 ## Check if player spawn exists
 func has_player_spawn(spawn_id: String) -> bool:
 	return _player_spawns.has(spawn_id)
+
+
+#===============================================================================
+# PATROL WAYPOINTS
+#===============================================================================
+
+## Get patrol path for a group as array of Vector2 positions
+func get_patrol_path(patrol_group: String) -> Array[Vector2]:
+	var path: Array[Vector2] = []
+	if not _patrol_waypoints.has(patrol_group):
+		return path
+
+	for wp in _patrol_waypoints[patrol_group]:
+		var pos: Dictionary = wp.get("position", {})
+		path.append(Vector2(pos.get("x", 0), pos.get("y", 0)))
+
+	return path
+
+
+## Get patrol waypoints with full data (position, wait_time, order)
+func get_patrol_waypoints(patrol_group: String) -> Array:
+	if not _patrol_waypoints.has(patrol_group):
+		return []
+	return _patrol_waypoints[patrol_group].duplicate()
+
+
+## Check if patrol group exists
+func has_patrol_group(patrol_group: String) -> bool:
+	return _patrol_waypoints.has(patrol_group)
 
 
 #===============================================================================
@@ -815,6 +864,9 @@ func _spawn_spawn_point(data: Dictionary, parent: Node2D, chunk_origin: Vector2,
 	if "spawn_group" in spawn_point:
 		var group_value = data.get("spawn_group", "")
 		spawn_point.spawn_group = group_value if group_value != null else ""
+	if "patrol_group" in spawn_point:
+		var patrol_group_value = data.get("patrol_group", "")
+		spawn_point.patrol_group = patrol_group_value if patrol_group_value != null else ""
 
 	# Apply database config if available
 	if not sp_config.is_empty() and DatabaseLoader:
