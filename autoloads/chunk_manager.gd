@@ -730,6 +730,24 @@ func _spawn_chunk_entities(chunk_id: String, chunk_node: Node2D, chunk_coords: V
 			if entity:
 				spawned_entities.append(entity)
 
+	# Spawn lootables
+	for lootable_data in _zone_entities.get("lootables", []):
+		var pos: Dictionary = lootable_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_lootable(lootable_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
+	# Spawn signs
+	for sign_data in _zone_entities.get("signs", []):
+		var pos: Dictionary = sign_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_sign(sign_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
 	# Track spawned entities for cleanup
 	if not spawned_entities.is_empty():
 		_chunk_entities[chunk_id] = spawned_entities
@@ -1236,6 +1254,111 @@ func _should_spawn_npc(npc_id: String) -> bool:
 
 	Debug.warn("ChunkManager", "Unknown spawn condition type: %s" % condition_type)
 	return true
+
+
+#===============================================================================
+# LOOTABLE SPAWNING
+#===============================================================================
+
+## Spawn a lootable from entity data
+func _spawn_lootable(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var lootable_id: String = data.get("id", "")
+	if lootable_id.is_empty():
+		Debug.warn("ChunkManager", "Lootable has no ID, skipping")
+		return null
+
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	var persistence_key := "%s@%d,%d" % [lootable_id, int(world_pos.x), int(world_pos.y)]
+
+	# Check if already looted and can't respawn
+	var state := Persistence.load_state("lootables", persistence_key)
+	if not state.is_empty() and state.get("looted", false):
+		if not state.get("can_respawn", false):
+			Debug.log("ChunkManager", "Lootable already looted (permanent): %s" % persistence_key)
+			return null
+
+		# Check respawn timer
+		var looted_at: float = state.get("looted_at", 0.0)
+		var respawn_time: float = state.get("respawn_time", 300.0)
+		var elapsed := Time.get_unix_time_from_system() - looted_at
+		if elapsed < respawn_time:
+			Debug.log("ChunkManager", "Lootable not respawned yet: %s" % persistence_key)
+			return null
+
+	# Create lootable node
+	var lootable_script := load("res://scripts/interactable/lootable.gd")
+	if not lootable_script:
+		Debug.error("ChunkManager", "Could not load lootable.gd script")
+		return null
+
+	var lootable := Node2D.new()
+	lootable.set_script(lootable_script)
+
+	# Configure lootable
+	lootable.database_lootable_id = lootable_id
+	lootable.persistence_key = persistence_key
+
+	# Set position relative to chunk
+	lootable.position = world_pos - chunk_origin
+
+	# Mark as chunk-spawned
+	lootable.set_meta("chunk_spawned", true)
+	lootable.set_meta("chunk_id", chunk_id)
+	lootable.set_meta("world_position", world_pos)
+
+	# Add to group for searching
+	lootable.add_to_group("lootables")
+
+	parent.add_child(lootable)
+	Debug.log("ChunkManager", "Spawned lootable: %s at %s" % [lootable_id, world_pos])
+
+	return lootable
+
+
+#===============================================================================
+# SIGN SPAWNING
+#===============================================================================
+
+## Spawn a sign from entity data
+func _spawn_sign(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var sign_id: String = data.get("id", "")
+	if sign_id.is_empty():
+		Debug.warn("ChunkManager", "Sign has no ID, skipping")
+		return null
+
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+	var persistence_key := "%s@%d,%d" % [sign_id, int(world_pos.x), int(world_pos.y)]
+
+	# Create sign node
+	var sign_script := load("res://scripts/interactable/sign.gd")
+	if not sign_script:
+		Debug.error("ChunkManager", "Could not load sign.gd script")
+		return null
+
+	var sign_node := Node2D.new()
+	sign_node.set_script(sign_script)
+
+	# Configure sign
+	sign_node.database_sign_id = sign_id
+	sign_node.persistence_key = persistence_key
+
+	# Set position relative to chunk
+	sign_node.position = world_pos - chunk_origin
+
+	# Mark as chunk-spawned
+	sign_node.set_meta("chunk_spawned", true)
+	sign_node.set_meta("chunk_id", chunk_id)
+	sign_node.set_meta("world_position", world_pos)
+
+	# Add to group for searching
+	sign_node.add_to_group("signs")
+
+	parent.add_child(sign_node)
+	Debug.log("ChunkManager", "Spawned sign: %s at %s" % [sign_id, world_pos])
+
+	return sign_node
 
 
 ## Clean up entities when a chunk unloads
