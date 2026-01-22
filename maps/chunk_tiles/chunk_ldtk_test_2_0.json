@@ -299,31 +299,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 0
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 0
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 0
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 0
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 0
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 1
 		},
@@ -615,31 +590,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 1
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 1
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 1
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 1
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 1
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 1
 		},
 		{
@@ -939,31 +889,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 2
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 2
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 2
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 2
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 2
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 3
 		},
@@ -1255,31 +1180,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 3
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 3
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 3
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 3
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 3
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 3
 		},
 		{
@@ -1579,31 +1479,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 4
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 4
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 4
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 4
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 4
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 5
 		},
@@ -1895,31 +1770,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 5
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 5
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 5
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 5
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 5
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 5
 		},
 		{
@@ -2219,31 +2069,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 6
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 6
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 6
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 6
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 6
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 7
 		},
@@ -2535,31 +2360,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 7
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 7
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 7
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 7
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 7
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 7
 		},
 		{
@@ -2859,31 +2659,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 8
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 8
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 8
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 8
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 8
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 9
 		},
@@ -3175,31 +2950,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 9
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 9
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 9
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 9
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 9
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 9
 		},
 		{
@@ -3499,31 +3249,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 10
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 10
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 10
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 10
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 10
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 11
 		},
@@ -3815,31 +3540,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 11
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 11
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 11
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 11
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 11
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 11
 		},
 		{
@@ -4139,31 +3839,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 12
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 12
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 12
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 12
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 12
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 13
 		},
@@ -4455,31 +4130,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 13
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 13
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 13
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 13
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 13
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 13
 		},
 		{
@@ -4779,31 +4429,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 14
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 14
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 14
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 14
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 14
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 15
 		},
@@ -5095,31 +4720,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 15
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 15
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 15
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 15
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 15
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 15
 		},
 		{
@@ -5419,31 +5019,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 16
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 16
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 16
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 16
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 16
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 17
 		},
@@ -5735,31 +5310,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 17
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 17
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 17
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 17
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 17
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 17
 		},
 		{
@@ -6059,31 +5609,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 18
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 18
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 18
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 18
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 18
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 19
 		},
@@ -6375,31 +5900,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 19
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 19
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 19
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 19
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 19
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 19
 		},
 		{
@@ -6699,31 +6199,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 20
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 20
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 20
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 20
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 20
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 21
 		},
@@ -7015,31 +6490,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 21
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 21
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 21
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 21
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 21
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 21
 		},
 		{
@@ -7339,31 +6789,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 22
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 22
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 22
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 22
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 22
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 23
 		},
@@ -7655,31 +7080,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 23
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 23
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 23
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 23
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 23
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 23
 		},
 		{
@@ -7979,31 +7379,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 24
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 24
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 24
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 24
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 24
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 25
 		},
@@ -8295,31 +7670,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 25
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 25
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 25
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 25
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 25
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 25
 		},
 		{
@@ -8619,31 +7969,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 26
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 26
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 26
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 26
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 26
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 27
 		},
@@ -8935,31 +8260,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 27
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 27
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 27
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 27
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 27
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 27
 		},
 		{
@@ -9259,31 +8559,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 28
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 28
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 28
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 28
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 28
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 29
 		},
@@ -9575,31 +8850,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 29
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 29
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 29
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 29
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 29
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 29
 		},
 		{
@@ -9899,31 +9149,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 30
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 30
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 30
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 30
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 30
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 31
 		},
@@ -10215,31 +9440,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 31
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 31
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 31
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 31
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 31
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 31
 		},
 		{
@@ -10539,31 +9739,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 32
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 32
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 32
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 32
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 32
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 33
 		},
@@ -10855,31 +10030,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 33
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 33
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 33
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 33
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 33
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 33
 		},
 		{
@@ -11179,31 +10329,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 34
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 34
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 34
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 34
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 34
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 35
 		},
@@ -11495,31 +10620,6 @@
 		{
 			"terrain_id": "terrain_snow",
 			"x": 58,
-			"y": 35
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 35
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 35
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 35
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 35
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 35
 		},
 		{
@@ -11819,31 +10919,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 36
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 36
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 36
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 36
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 36
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 37
 		},
@@ -12139,76 +11214,51 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 37
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 37
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 37
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 37
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 37
-		},
-		{
-			"terrain_id": "terrain_wall",
 			"x": 0,
 			"y": 38
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 1,
 			"y": 38
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 2,
 			"y": 38
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 3,
 			"y": 38
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 4,
 			"y": 38
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 5,
 			"y": 38
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 6,
 			"y": 38
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 7,
 			"y": 38
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 8,
 			"y": 38
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 9,
 			"y": 38
 		},
@@ -12458,77 +11508,52 @@
 			"y": 38
 		},
 		{
-			"terrain_id": "terrain_wall",
-			"x": 59,
-			"y": 38
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 38
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 38
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 38
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 38
-		},
-		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_stone",
 			"x": 0,
 			"y": 39
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_stone",
 			"x": 1,
 			"y": 39
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 39
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 3,
 			"y": 39
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 4,
 			"y": 39
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 5,
 			"y": 39
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 6,
 			"y": 39
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 7,
 			"y": 39
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 8,
 			"y": 39
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_snow",
 			"x": 9,
 			"y": 39
 		},
@@ -12778,32 +11803,7 @@
 			"y": 39
 		},
 		{
-			"terrain_id": "terrain_wall",
-			"x": 59,
-			"y": 39
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 39
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 39
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 39
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 39
-		},
-		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 0,
 			"y": 40
 		},
@@ -12813,22 +11813,22 @@
 			"y": 40
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 40
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 40
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 40
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 40
 		},
@@ -13098,32 +12098,7 @@
 			"y": 40
 		},
 		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 40
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 40
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 40
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 40
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 40
-		},
-		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 0,
 			"y": 41
 		},
@@ -13133,27 +12108,27 @@
 			"y": 41
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 41
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 41
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 41
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 41
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 41
 		},
@@ -13418,32 +12393,7 @@
 			"y": 41
 		},
 		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 41
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 41
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 41
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 41
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 41
-		},
-		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 0,
 			"y": 42
 		},
@@ -13458,22 +12408,22 @@
 			"y": 42
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 42
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 42
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 42
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 42
 		},
@@ -13739,36 +12689,11 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 42
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 42
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 42
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 42
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 42
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 43
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 1,
 			"y": 43
 		},
@@ -13778,22 +12703,22 @@
 			"y": 43
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 43
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 43
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 43
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 43
 		},
@@ -14059,36 +12984,11 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 43
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 43
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 43
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 43
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 43
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 44
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 1,
 			"y": 44
 		},
@@ -14098,22 +12998,22 @@
 			"y": 44
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 44
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 44
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 44
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 44
 		},
@@ -14379,31 +13279,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 44
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 44
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 44
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 44
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 44
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 45
 		},
@@ -14413,27 +13288,27 @@
 			"y": 45
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 45
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 45
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 45
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 45
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 45
 		},
@@ -14699,31 +13574,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 45
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 45
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 45
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 45
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 45
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 46
 		},
@@ -14733,27 +13583,27 @@
 			"y": 46
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 46
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 46
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 46
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 46
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 46
 		},
@@ -15019,31 +13869,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 46
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 46
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 46
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 46
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 46
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 47
 		},
@@ -15053,27 +13878,27 @@
 			"y": 47
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 47
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 47
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 47
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 47
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 47
 		},
@@ -15339,31 +14164,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 47
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 47
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 47
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 47
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 47
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 48
 		},
@@ -15373,27 +14173,27 @@
 			"y": 48
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 48
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 48
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 48
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 48
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 48
 		},
@@ -15659,31 +14459,6 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 48
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 48
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 48
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 48
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 48
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 49
 		},
@@ -15693,7 +14468,7 @@
 			"y": 49
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 49
 		},
@@ -15703,22 +14478,22 @@
 			"y": 49
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 49
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 49
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 49
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 7,
 			"y": 49
 		},
@@ -15979,56 +14754,31 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 49
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 49
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 49
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 49
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 49
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 50
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 1,
 			"y": 50
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 50
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 50
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 50
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 50
 		},
@@ -16038,7 +14788,7 @@
 			"y": 50
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 7,
 			"y": 50
 		},
@@ -16299,56 +15049,31 @@
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 50
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 50
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 50
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 50
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 50
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 51
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 1,
 			"y": 51
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 51
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 51
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 51
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 51
 		},
@@ -16358,7 +15083,7 @@
 			"y": 51
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 7,
 			"y": 51
 		},
@@ -16618,32 +15343,7 @@
 			"y": 51
 		},
 		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 51
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 51
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 51
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 51
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 51
-		},
-		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 0,
 			"y": 52
 		},
@@ -16653,32 +15353,32 @@
 			"y": 52
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 52
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 52
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 52
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 52
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 52
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 7,
 			"y": 52
 		},
@@ -16938,32 +15638,7 @@
 			"y": 52
 		},
 		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 52
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 52
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 52
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 52
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 52
-		},
-		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 0,
 			"y": 53
 		},
@@ -16973,17 +15648,17 @@
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 53
 		},
@@ -16993,7 +15668,7 @@
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 53
 		},
@@ -17048,242 +15723,217 @@
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 17,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 18,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 19,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 20,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 21,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 22,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 23,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 24,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 25,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 26,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 27,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 28,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 29,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 30,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 31,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 32,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 33,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 34,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 35,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 36,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 37,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 38,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 39,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 40,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 41,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 42,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 43,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 44,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 45,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 46,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 47,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 48,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 49,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 50,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 51,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 52,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 53,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 54,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 55,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 56,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 57,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 58,
 			"y": 53
 		},
 		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 53
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 53
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 53
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 53
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 53
-		},
-		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 0,
 			"y": 54
 		},
@@ -17293,27 +15943,27 @@
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 6,
 			"y": 54
 		},
@@ -17368,242 +16018,217 @@
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 17,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 18,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 19,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 20,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 21,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 22,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 23,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 24,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 25,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 26,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 27,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 28,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 29,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 30,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 31,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 32,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 33,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 34,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 35,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 36,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 37,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 38,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 39,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 40,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 41,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 42,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 43,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 44,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 45,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 46,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 47,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 48,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 49,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 50,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 51,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 52,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 53,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 54,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 55,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 56,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 57,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 58,
 			"y": 54
 		},
 		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 54
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 54
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 54
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 54
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 54
-		},
-		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 0,
 			"y": 55
 		},
@@ -17613,22 +16238,22 @@
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 5,
 			"y": 55
 		},
@@ -17688,238 +16313,213 @@
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 17,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 18,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 19,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 20,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 21,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 22,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 23,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 24,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 25,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 26,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 27,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 28,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 29,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 30,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 31,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 32,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 33,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 34,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 35,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 36,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 37,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 38,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 39,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 40,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 41,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 42,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 43,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 44,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 45,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 46,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 47,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 48,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 49,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 50,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 51,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 52,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 53,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 54,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 55,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 56,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 57,
 			"y": 55
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 58,
-			"y": 55
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 55
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 55
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 55
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 55
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 55
 		},
 		{
@@ -17928,22 +16528,22 @@
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 1,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 4,
 			"y": 56
 		},
@@ -18008,257 +16608,232 @@
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 17,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 18,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 19,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 20,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 21,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 22,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 23,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 24,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 25,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 26,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 27,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 28,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 29,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 30,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 31,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 32,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 33,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 34,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 35,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 36,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 37,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 38,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 39,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 40,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 41,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 42,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 43,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 44,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 45,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 46,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 47,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 48,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 49,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 50,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 51,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 52,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 53,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 54,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 55,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 56,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 57,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 58,
 			"y": 56
 		},
 		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 56
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 56
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 56
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 56
-		},
-		{
 			"terrain_id": "terrain_stone",
-			"x": 63,
-			"y": 56
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 1,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 57
 		},
@@ -18303,282 +16878,257 @@
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 12,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 13,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 14,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 15,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 16,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 17,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 18,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 19,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 20,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 21,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 22,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 23,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 24,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 25,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 26,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 27,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 28,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 29,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 30,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 31,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 32,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 33,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 34,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 35,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 36,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 37,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 38,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 39,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 40,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 41,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 42,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 43,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 44,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 45,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 46,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 47,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 48,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 49,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 50,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 51,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 52,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 53,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 54,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 55,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 56,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 57,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 58,
 			"y": 57
 		},
 		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 57
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 57
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 57
-		},
-		{
 			"terrain_id": "terrain_stone",
-			"x": 62,
-			"y": 57
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 57
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 1,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 3,
 			"y": 58
 		},
@@ -18603,297 +17153,272 @@
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 8,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 9,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 10,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 11,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 12,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 13,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 14,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 15,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 16,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 17,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 18,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 19,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 20,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 21,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 22,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 23,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 24,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 25,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 26,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 27,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 28,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 29,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 30,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 31,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 32,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 33,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 34,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 35,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 36,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 37,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 38,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 39,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 40,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 41,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 42,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 43,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 44,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 45,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 46,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 47,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 48,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 49,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 50,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 51,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 52,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 53,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 54,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 55,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 56,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 57,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 58,
 			"y": 58
 		},
 		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 58
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 58
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 61,
-			"y": 58
-		},
-		{
 			"terrain_id": "terrain_stone",
-			"x": 62,
-			"y": 58
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 63,
-			"y": 58
-		},
-		{
-			"terrain_id": "terrain_snow",
 			"x": 0,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 1,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_stone",
 			"x": 2,
 			"y": 59
 		},
@@ -18903,47 +17428,47 @@
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 4,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 5,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 6,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 7,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 8,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 9,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 10,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 11,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 12,
 			"y": 59
 		},
@@ -18968,238 +17493,213 @@
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 17,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 18,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 19,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 20,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 21,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 22,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 23,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 24,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 25,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 26,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 27,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 28,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 29,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 30,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 31,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 32,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 33,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 34,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 35,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 36,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 37,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 38,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 39,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 40,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 41,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 42,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 43,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 44,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 45,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 46,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 47,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 48,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 49,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 50,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 51,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 52,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 53,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 54,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 55,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 56,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 57,
 			"y": 59
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 58,
-			"y": 59
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 59
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 59
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 61,
-			"y": 59
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 62,
-			"y": 59
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 63,
 			"y": 59
 		},
 		{
@@ -19208,17 +17708,17 @@
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 1,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 2,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 3,
 			"y": 60
 		},
@@ -19233,22 +17733,22 @@
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 6,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 7,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 8,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 9,
 			"y": 60
 		},
@@ -19288,242 +17788,217 @@
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 17,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 18,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 19,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 20,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 21,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 22,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 23,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 24,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 25,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 26,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 27,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 28,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 29,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 30,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 31,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 32,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 33,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 34,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 35,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 36,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 37,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 38,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 39,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 40,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 41,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 42,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 43,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 44,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 45,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 46,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 47,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 48,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 49,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 50,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 51,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 52,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 53,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 54,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 55,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 56,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 57,
 			"y": 60
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 58,
 			"y": 60
 		},
 		{
 			"terrain_id": "terrain_snow",
-			"x": 59,
-			"y": 60
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 60,
-			"y": 60
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 61,
-			"y": 60
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 62,
-			"y": 60
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 63,
-			"y": 60
-		},
-		{
-			"terrain_id": "terrain_stone",
 			"x": 0,
 			"y": 61
 		},
@@ -19543,22 +18018,22 @@
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 4,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 5,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 6,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 7,
 			"y": 61
 		},
@@ -19608,238 +18083,213 @@
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 17,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 18,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 19,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 20,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 21,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 22,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 23,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 24,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 25,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 26,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 27,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 28,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 29,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 30,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 31,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 32,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 33,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 34,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 35,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 36,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 37,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 38,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 39,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 40,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 41,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 42,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 43,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 44,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 45,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 46,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 47,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 48,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 49,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 50,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 51,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 52,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 53,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 54,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 55,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 56,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 57,
 			"y": 61
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 58,
-			"y": 61
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 59,
-			"y": 61
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 60,
-			"y": 61
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 61,
-			"y": 61
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 62,
-			"y": 61
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 63,
 			"y": 61
 		},
 		{
@@ -19858,17 +18308,17 @@
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 3,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 4,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 5,
 			"y": 62
 		},
@@ -19928,262 +18378,237 @@
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 17,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 18,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 19,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 20,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 21,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 22,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 23,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 24,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 25,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 26,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 27,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 28,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 29,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 30,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 31,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 32,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 33,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 34,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 35,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 36,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 37,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 38,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 39,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 40,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 41,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 42,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 43,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 44,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 45,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 46,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 47,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 48,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 49,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 50,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 51,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 52,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 53,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 54,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 55,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 56,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 57,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 58,
 			"y": 62
 		},
 		{
-			"terrain_id": "terrain_stone",
-			"x": 59,
-			"y": 62
-		},
-		{
 			"terrain_id": "terrain_snow",
-			"x": 60,
-			"y": 62
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 61,
-			"y": 62
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 62,
-			"y": 62
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
-			"y": 62
-		},
-		{
-			"terrain_id": "terrain_stone",
 			"x": 0,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 1,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 2,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 3,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_snow",
 			"x": 4,
 			"y": 63
 		},
@@ -20248,238 +18673,213 @@
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 17,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 18,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 19,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 20,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 21,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 22,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 23,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 24,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 25,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 26,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 27,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 28,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 29,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 30,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 31,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 32,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 33,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 34,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 35,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 36,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 37,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 38,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 39,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 40,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 41,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 42,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 43,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 44,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 45,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 46,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 47,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_snow",
+			"terrain_id": "terrain_grass",
 			"x": 48,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 49,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 50,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 51,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 52,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 53,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 54,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 55,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 56,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 57,
 			"y": 63
 		},
 		{
-			"terrain_id": "terrain_stone",
+			"terrain_id": "terrain_grass",
 			"x": 58,
-			"y": 63
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 59,
-			"y": 63
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 60,
-			"y": 63
-		},
-		{
-			"terrain_id": "terrain_stone",
-			"x": 61,
-			"y": 63
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 62,
-			"y": 63
-		},
-		{
-			"terrain_id": "terrain_snow",
-			"x": 63,
 			"y": 63
 		}
 	]

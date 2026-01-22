@@ -1,177 +1,54 @@
 {
 	"chests": [
 		{
-			"id": "chest_crypt_01",
-			"position": {
-				"x": 792.0,
-				"y": 16.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 360.0,
-				"y": 592.0
-			},
-			"type": "common"
-		},
-		{
 			"id": "chest_forest_01",
 			"position": {
 				"x": 760.0,
 				"y": 1808.0
 			},
 			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 1832.0,
-				"y": 64.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 1080.0,
-				"y": 800.0
-			},
-			"type": "common"
-		},
-		{
-			"id": "chest_forest_01",
-			"position": {
-				"x": 584.0,
-				"y": 1232.0
-			},
-			"type": "common"
 		}
 	],
-	"doors": [
-		{
-			"id": "door_forest_secret",
-			"position": {
-				"x": 24.0,
-				"y": 208.0
-			},
-			"size": {
-				"h": 32.0,
-				"w": 16.0
-			}
-		}
-	],
-	"levers": [
-		{
-			"id": "lever_crypt_to_meadow",
-			"position": {
-				"x": 72.0,
-				"y": 240.0
-			}
-		}
-	],
-	"locations": [
-		{
-			"id": "loc_test_north",
-			"position": {
-				"x": 0.0,
-				"y": 0.0
-			},
-			"size": {
-				"h": 1024,
-				"w": 1024
-			}
-		}
-	],
-	"lootables": [
-		{
-			"id": "loot_corpse_soldier",
-			"position": {
-				"x": 200.0,
-				"y": 240.0
-			}
-		}
-	],
-	"lore_echoes": [
-		{
-			"id": "echo_crypt_builder",
-			"position": {
-				"x": 136.0,
-				"y": 288.0
-			}
-		}
-	],
-	"npcs": [
-		{
-			"id": "npc_quest_giver_main",
-			"position": {
-				"x": 88.0,
-				"y": 288.0
-			}
-		}
-	],
+	"doors": [],
+	"levers": [],
+	"locations": [],
+	"lootables": [],
+	"lore_echoes": [],
+	"npcs": [],
 	"patrol_waypoints": [
 		{
 			"order": 1,
-			"patrol_group": "patrol_north",
+			"patrol_group": "south_road",
 			"position": {
-				"x": 680.0,
-				"y": 392.0
+				"x": 1720.0,
+				"y": 2696.0
 			},
 			"wait_time": 0.0
 		},
 		{
 			"order": 2,
-			"patrol_group": "patrol_north",
+			"patrol_group": "south_road",
 			"position": {
-				"x": 760.0,
-				"y": 472.0
+				"x": 1080.0,
+				"y": 2792.0
 			},
 			"wait_time": 0.0
 		},
 		{
 			"order": 3,
-			"patrol_group": "patrol_north",
+			"patrol_group": "south_road",
 			"position": {
-				"x": 904.0,
-				"y": 440.0
+				"x": 472.0,
+				"y": 2712.0
 			},
 			"wait_time": 0.0
 		},
 		{
 			"order": 4,
-			"patrol_group": "patrol_north",
+			"patrol_group": "south_road",
 			"position": {
-				"x": 936.0,
-				"y": 328.0
-			},
-			"wait_time": 0.0
-		},
-		{
-			"order": 5,
-			"patrol_group": "patrol_north",
-			"position": {
-				"x": 872.0,
-				"y": 216.0
-			},
-			"wait_time": 0.0
-		},
-		{
-			"order": 5,
-			"patrol_group": "patrol_north",
-			"position": {
-				"x": 744.0,
-				"y": 216.0
-			},
-			"wait_time": 0.0
-		},
-		{
-			"order": 6,
-			"patrol_group": "patrol_north",
-			"position": {
-				"x": 664.0,
-				"y": 296.0
+				"x": 56.0,
+				"y": 2776.0
 			},
 			"wait_time": 0.0
 		}
@@ -180,43 +57,14 @@
 		{
 			"id": "default",
 			"position": {
-				"x": 136.0,
-				"y": 144.0
+				"x": 152.0,
+				"y": 2848.0
 			}
 		}
 	],
-	"pressure_plates": [
-		{
-			"id": "plate_crypt_entrance",
-			"position": {
-				"x": 136.0,
-				"y": 232.0
-			},
-			"size": {
-				"h": 16.0,
-				"w": 16.0
-			}
-		}
-	],
-	"signs": [
-		{
-			"id": "sign_forest_warning",
-			"position": {
-				"x": 200.0,
-				"y": 288.0
-			}
-		}
-	],
+	"pressure_plates": [],
+	"signs": [],
 	"spawn_points": [
-		{
-			"id": "sp_test_static",
-			"patrol_group": "patrol_north",
-			"position": {
-				"x": 792.0,
-				"y": 344.0
-			},
-			"spawn_group": ""
-		},
 		{
 			"id": "sp_test_static",
 			"patrol_group": "",
@@ -257,8 +105,8 @@
 			"id": "sp_test_static",
 			"patrol_group": "",
 			"position": {
-				"x": 552.0,
-				"y": 1176.0
+				"x": 280.0,
+				"y": 2376.0
 			},
 			"spawn_group": ""
 		},
@@ -266,8 +114,8 @@
 			"id": "sp_test_static",
 			"patrol_group": "",
 			"position": {
-				"x": 264.0,
-				"y": 1848.0
+				"x": 1032.0,
+				"y": 2920.0
 			},
 			"spawn_group": ""
 		},
@@ -275,8 +123,8 @@
 			"id": "sp_test_static",
 			"patrol_group": "",
 			"position": {
-				"x": 296.0,
-				"y": 1816.0
+				"x": 696.0,
+				"y": 2456.0
 			},
 			"spawn_group": ""
 		},
@@ -284,8 +132,8 @@
 			"id": "sp_test_static",
 			"patrol_group": "",
 			"position": {
-				"x": 1864.0,
-				"y": 1896.0
+				"x": 456.0,
+				"y": 2872.0
 			},
 			"spawn_group": ""
 		},
@@ -293,37 +141,57 @@
 			"id": "sp_test_static",
 			"patrol_group": "",
 			"position": {
-				"x": 1416.0,
-				"y": 1400.0
+				"x": 1384.0,
+				"y": 2328.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"patrol_group": "",
+			"position": {
+				"x": 696.0,
+				"y": 2232.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"patrol_group": "",
+			"position": {
+				"x": 1144.0,
+				"y": 2472.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"patrol_group": "",
+			"position": {
+				"x": 1800.0,
+				"y": 2216.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"patrol_group": "",
+			"position": {
+				"x": 1672.0,
+				"y": 2520.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"patrol_group": "south_road",
+			"position": {
+				"x": 2296.0,
+				"y": 2776.0
 			},
 			"spawn_group": ""
 		}
 	],
-	"transitions": [
-		{
-			"position": {
-				"x": 0.0,
-				"y": 0.0
-			},
-			"size": {
-				"h": 16,
-				"w": 256
-			},
-			"target_spawn": "",
-			"target_zone": "zone_meadow"
-		}
-	],
-	"trigger_areas": [
-		{
-			"id": "trigger_forest_ambush",
-			"position": {
-				"x": 0.0,
-				"y": 320.0
-			},
-			"size": {
-				"h": 192.0,
-				"w": 256.0
-			}
-		}
-	]
+	"transitions": [],
+	"trigger_areas": []
 }
