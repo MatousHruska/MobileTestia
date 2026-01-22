@@ -1697,7 +1697,10 @@
 							"defUid": 30,
 							"px": [0,0],
 							"fieldInstances": [
-								{ "__identifier": "target_zone", "__type": "String", "__value": "", "__tile": null, "defUid": 31, "realEditorValues": [] },
+								{ "__identifier": "target_zone", "__type": "String", "__value": "zone_meadow", "__tile": null, "defUid": 31, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["zone_meadow"]
+								}] },
 								{ "__identifier": "target_spawn", "__type": "String", "__value": "", "__tile": null, "defUid": 32, "realEditorValues": [] }
 							],
 							"__worldX": 0,
