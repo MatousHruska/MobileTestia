@@ -1546,7 +1546,10 @@
 									"id": "V_String",
 									"params": ["sp_test_static"]
 								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
+								{ "__identifier": "patrol_group", "__type": "String", "__value": "patrol_north", "__tile": null, "defUid": 12, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["patrol_north"]
+								}] }
 							],
 							"__worldX": 792,
 							"__worldY": 344
