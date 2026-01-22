@@ -699,8 +699,12 @@ func _prepare_spawn_config() -> Dictionary:
 	# Add modules to inject
 	var modules_str := modules_to_inject
 
+	# Debug: Check patrol_group state
+	Debug.log("SpawnPoint", "[%s] _prepare_spawn_config: patrol_group='%s'" % [_actual_id, patrol_group])
+
 	# If patrol_group is set, automatically inject patrol module
 	if not patrol_group.is_empty():
+		Debug.log("SpawnPoint", "[%s] Injecting mod_patrol for patrol_group: %s" % [_actual_id, patrol_group])
 		if modules_str.is_empty():
 			modules_str = "mod_patrol"
 		elif "mod_patrol" not in modules_str:
@@ -708,6 +712,7 @@ func _prepare_spawn_config() -> Dictionary:
 
 	if not modules_str.is_empty():
 		config["modules_to_inject"] = modules_str
+		Debug.log("SpawnPoint", "[%s] modules_to_inject: %s" % [_actual_id, modules_str])
 
 	# Process module config override
 	var processed_config: Dictionary = module_config_override.duplicate(true) if not module_config_override.is_empty() else {}
