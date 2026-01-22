@@ -866,7 +866,14 @@ func _spawn_spawn_point(data: Dictionary, parent: Node2D, chunk_origin: Vector2,
 		spawn_point.spawn_group = group_value if group_value != null else ""
 	if "patrol_group" in spawn_point:
 		var patrol_group_value = data.get("patrol_group", "")
+		Debug.log("ChunkManager", "Setting patrol_group='%s' on spawn point %s (from data: %s)" % [
+			patrol_group_value if patrol_group_value != null else "(null)",
+			sp_id,
+			data.get("patrol_group", "(not in data)")
+		])
 		spawn_point.patrol_group = patrol_group_value if patrol_group_value != null else ""
+	else:
+		Debug.warn("ChunkManager", "spawn_point does not have patrol_group property!")
 
 	# Apply database config if available
 	if not sp_config.is_empty() and DatabaseLoader:
