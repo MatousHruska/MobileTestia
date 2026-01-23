@@ -88,6 +88,8 @@ var _category_markers: Dictionary = {
 	"Global": "[GLO]",
 	"CombatText": "[COM]",
 	"Perf": "[PRF]",
+	"PathfindingService": "[NAV]",
+	"NavigationGrid": "[NAV]",
 }
 
 ## Level prefixes
@@ -103,7 +105,7 @@ var _level_prefixes: Dictionary = {
 func _ready() -> void:
 	_log_internal(LogLevel.INFO, "System", "DebugManager initialized", [])
 	_log_internal(LogLevel.INFO, "System", "Log level set to", [LogLevel.keys()[log_level]])
-	_log_internal(LogLevel.INFO, "System", "Debug hotkeys (Numpad): 0=level, *=verbose, -=NPC, +=settings", [])
+	_log_internal(LogLevel.INFO, "System", "Debug hotkeys (Numpad): 0=level, *=verbose, -=NPC, +=settings, /=pathfinding", [])
 
 
 func _input(event: InputEvent) -> void:
@@ -133,6 +135,9 @@ func _input(event: InputEvent) -> void:
 		KEY_KP_ADD:
 			# Print current debug settings
 			_print_debug_settings()
+		KEY_KP_DIVIDE:
+			# Toggle pathfinding debug visualization
+			_toggle_pathfinding_debug()
 
 
 func _cycle_log_level() -> void:
@@ -161,14 +166,30 @@ func _toggle_npc_verbose() -> void:
 
 
 func _print_debug_settings() -> void:
+	var pathfinding_enabled := false
+	var pathfinding_service = get_node_or_null("/root/PathfindingService")
+	if pathfinding_service:
+		pathfinding_enabled = pathfinding_service.is_debug_enabled()
+
 	print("┌─── DEBUG SETTINGS ───")
 	print("│ Log level: %s" % LogLevel.keys()[log_level])
 	print("│ Verbose NPC: %s" % verbose_npc)
 	print("│ Verbose Chunks: %s" % verbose_chunks)
 	print("│ Verbose Spawn: %s" % verbose_spawn)
 	print("│ Verbose SaveLoad: %s" % verbose_saveload)
+	print("│ Pathfinding debug: %s" % pathfinding_enabled)
 	print("│ Disabled categories: %s" % disabled_categories)
 	print("└──────────────────────")
+
+
+func _toggle_pathfinding_debug() -> void:
+	var pathfinding_service = get_node_or_null("/root/PathfindingService")
+	if pathfinding_service:
+		var new_state := not pathfinding_service.is_debug_enabled()
+		pathfinding_service.set_debug_enabled(new_state)
+		print(">>> Pathfinding debug: %s <<<" % ("ON" if new_state else "OFF"))
+	else:
+		print(">>> PathfindingService not available <<<")
 
 
 ## Check if verbose logging is enabled for a specific type
