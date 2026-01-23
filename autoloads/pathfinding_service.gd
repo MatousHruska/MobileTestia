@@ -42,6 +42,9 @@ var _debug_enabled: bool = false
 ## Deferred rebuild flag (batch multiple chunk loads)
 var _pending_rebuild: bool = false
 
+## Debug drawer instance
+var _debug_drawer: Node2D = null
+
 #===============================================================================
 # LIFECYCLE
 #===============================================================================
@@ -157,7 +160,41 @@ func has_reached_target(from: Vector2, to: Vector2, threshold: float = WAYPOINT_
 func set_debug_enabled(enabled: bool) -> void:
 	_debug_enabled = enabled
 	_nav_grid.debug_enabled = enabled
+
+	# Create or remove debug drawer
+	if enabled:
+		_create_debug_drawer()
+		# Print stats when enabling
+		var stats := get_stats()
+		print("┌─── PATHFINDING DEBUG ───")
+		print("│ Loaded chunks: %d" % stats.loaded_chunks)
+		print("│ Cached paths: %d" % stats.cached_paths)
+		print("│ Grid bounds: %s" % str(stats.bounds))
+		print("└─────────────────────────")
+	else:
+		_remove_debug_drawer()
+
 	debug_toggled.emit(enabled)
+
+## Create debug drawer and add to scene
+func _create_debug_drawer() -> void:
+	if _debug_drawer != null:
+		return
+
+	# Find the current scene root to add drawer to
+	var tree := get_tree()
+	if tree == null or tree.current_scene == null:
+		return
+
+	_debug_drawer = NavigationDebugDrawer.new()
+	_debug_drawer.name = "PathfindingDebugDrawer"
+	tree.current_scene.add_child(_debug_drawer)
+
+## Remove debug drawer from scene
+func _remove_debug_drawer() -> void:
+	if _debug_drawer != null:
+		_debug_drawer.queue_free()
+		_debug_drawer = null
 
 ## Check if debug is enabled
 func is_debug_enabled() -> bool:
@@ -183,6 +220,39 @@ func get_stats() -> Dictionary:
 		"bounds": _nav_grid.get_bounds(),
 		"initialized": _initialized
 	}
+
+## Test pathfinding from player to a nearby point
+func debug_test_path() -> void:
+	var tree := get_tree()
+	if tree == null or tree.current_scene == null:
+		print("[Pathfinding] No scene loaded")
+		return
+
+	# Find player
+	var player = tree.current_scene.get_node_or_null("Player")
+	if player == null:
+		player = tree.get_first_node_in_group("player")
+	if player == null:
+		print("[Pathfinding] Player not found")
+		return
+
+	var player_pos: Vector2 = player.global_position
+
+	# Test path to 200 pixels to the right
+	var target := player_pos + Vector2(200, 0)
+	var path := get_path(player_pos, target)
+
+	print("┌─── PATH TEST ───")
+	print("│ From: %s" % player_pos)
+	print("│ To: %s" % target)
+	print("│ Path points: %d" % path.size())
+	if path.size() > 0:
+		print("│ First waypoint: %s" % path[0])
+		if path.size() > 1:
+			print("│ Second waypoint: %s" % path[1])
+	print("│ Player tile walkable: %s" % is_position_walkable(player_pos))
+	print("│ Target tile walkable: %s" % is_position_walkable(target))
+	print("└──────────────────")
 
 #===============================================================================
 # CHUNK MANAGER CALLBACKS
