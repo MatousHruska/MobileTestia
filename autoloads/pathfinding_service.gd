@@ -84,7 +84,7 @@ func _process(delta: float) -> void:
 
 ## Get full path from start to target
 ## Returns empty array if no path found
-func get_path(from: Vector2, to: Vector2) -> PackedVector2Array:
+func find_path(from: Vector2, to: Vector2) -> PackedVector2Array:
 	if not _initialized:
 		return PackedVector2Array()
 
@@ -102,14 +102,14 @@ func get_next_waypoint(from: Vector2, to: Vector2, entity_id: int = -1) -> Vecto
 
 	# If no caching requested (entity_id = -1), calculate fresh
 	if entity_id < 0:
-		var path := get_path(from, to)
+		var path := find_path(from, to)
 		if path.size() > 1:
 			return path[1]  # Skip first point (current position)
 		return to  # Direct if no path or too close
 
 	# Check if we need to recalculate
 	if _path_cache.should_recalculate(entity_id, from, to):
-		var path := get_path(from, to)
+		var path := find_path(from, to)
 		if path.size() > 0:
 			_path_cache.cache_path(entity_id, path, from, to)
 		else:
@@ -240,7 +240,7 @@ func debug_test_path() -> void:
 
 	# Test path to 200 pixels to the right
 	var target := player_pos + Vector2(200, 0)
-	var path := get_path(player_pos, target)
+	var path := find_path(player_pos, target)
 
 	print("┌─── PATH TEST ───")
 	print("│ From: %s" % player_pos)
