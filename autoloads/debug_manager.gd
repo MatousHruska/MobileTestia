@@ -105,7 +105,7 @@ var _level_prefixes: Dictionary = {
 func _ready() -> void:
 	_log_internal(LogLevel.INFO, "System", "DebugManager initialized", [])
 	_log_internal(LogLevel.INFO, "System", "Log level set to", [LogLevel.keys()[log_level]])
-	_log_internal(LogLevel.INFO, "System", "Debug hotkeys (Numpad): 0=level, *=verbose, -=NPC, +=settings, /=pathfinding", [])
+	_log_internal(LogLevel.INFO, "System", "Debug hotkeys (Numpad): 0=level, *=verbose, -=NPC, +=settings, /=nav, .=navtest", [])
 
 
 func _input(event: InputEvent) -> void:
@@ -138,6 +138,9 @@ func _input(event: InputEvent) -> void:
 		KEY_KP_DIVIDE:
 			# Toggle pathfinding debug visualization
 			_toggle_pathfinding_debug()
+		KEY_KP_PERIOD:
+			# Test pathfinding from player position
+			_test_pathfinding()
 
 
 func _cycle_log_level() -> void:
@@ -188,6 +191,14 @@ func _toggle_pathfinding_debug() -> void:
 		var new_state := not pathfinding_service.is_debug_enabled()
 		pathfinding_service.set_debug_enabled(new_state)
 		print(">>> Pathfinding debug: %s <<<" % ("ON" if new_state else "OFF"))
+	else:
+		print(">>> PathfindingService not available <<<")
+
+
+func _test_pathfinding() -> void:
+	var pathfinding_service = get_node_or_null("/root/PathfindingService")
+	if pathfinding_service:
+		pathfinding_service.debug_test_path()
 	else:
 		print(">>> PathfindingService not available <<<")
 
