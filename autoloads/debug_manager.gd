@@ -169,8 +169,8 @@ func _toggle_npc_verbose() -> void:
 
 
 func _print_debug_settings() -> void:
-	var pathfinding_enabled := false
-	var pathfinding_service = get_node_or_null("/root/PathfindingService")
+	var pathfinding_enabled: bool = false
+	var pathfinding_service: PathfindingServiceClass = get_node_or_null("/root/PathfindingService")
 	if pathfinding_service:
 		pathfinding_enabled = pathfinding_service.is_debug_enabled()
 
@@ -186,9 +186,9 @@ func _print_debug_settings() -> void:
 
 
 func _toggle_pathfinding_debug() -> void:
-	var pathfinding_service = get_node_or_null("/root/PathfindingService")
+	var pathfinding_service: PathfindingServiceClass = get_node_or_null("/root/PathfindingService")
 	if pathfinding_service:
-		var new_state := not pathfinding_service.is_debug_enabled()
+		var new_state: bool = not pathfinding_service.is_debug_enabled()
 		pathfinding_service.set_debug_enabled(new_state)
 		print(">>> Pathfinding debug: %s <<<" % ("ON" if new_state else "OFF"))
 	else:
@@ -196,7 +196,7 @@ func _toggle_pathfinding_debug() -> void:
 
 
 func _test_pathfinding() -> void:
-	var pathfinding_service = get_node_or_null("/root/PathfindingService")
+	var pathfinding_service: PathfindingServiceClass = get_node_or_null("/root/PathfindingService")
 	if pathfinding_service:
 		pathfinding_service.debug_test_path()
 	else:
