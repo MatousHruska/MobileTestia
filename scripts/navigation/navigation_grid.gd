@@ -147,15 +147,9 @@ func get_path(from_world: Vector2, to_world: Vector2) -> PackedVector2Array:
 		if from_tile == Vector2i(-1, -1):
 			return PackedVector2Array()
 
-	# Get path from A*
-	var tile_path := _astar.get_point_path(from_tile, to_tile)
-
-	# Convert to world positions (tile centers)
-	var world_path := PackedVector2Array()
-	for tile in tile_path:
-		world_path.append(tile_to_world_center(tile))
-
-	return world_path
+	# Get path from A* - returns world coordinates (tile centers) directly
+	# AStarGrid2D with cell_size (16,16) returns points already in world space
+	return _astar.get_point_path(from_tile, to_tile)
 
 ## Check if a world position is walkable
 func is_walkable(world_pos: Vector2) -> bool:
