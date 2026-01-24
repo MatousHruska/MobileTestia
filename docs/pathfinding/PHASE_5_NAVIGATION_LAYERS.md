@@ -1,46 +1,36 @@
 # Phase 5: Navigation Layers & Polish
 
-Please pull claude/add-pathfinding4-naming-XXXXX
+## Current State (Updated)
 
-This is the newest version of the codebase. Clone it and add pathfinding5 into the name of the new branch. We will continue our work from here.
+### Simplified AI System
 
-Some notes for this session:
+The AI has been simplified to fit an aRPG rather than a stealth game:
 
-CRITICAL: Database Workflow
-NEVER EDIT .json FILES DIRECTLY!
+1. **Detection**: Enemies detect player by distance only (no LoS requirement)
+2. **Tracking**: Enemies always know where player is - chase directly using pathfinding
+3. **Attacks**: LoS is only checked for ranged/projectile/leap attacks (can't attack through walls)
+4. **Removed Systems**:
+   - SearchModule (deleted)
+   - SEARCHING behavior state (removed)
+   - LoS memory system (los_timer, last_known_target_position, los_just_lost/gained)
 
-The database is managed through Excel with VBA macros. Direct JSON edits will be overwritten.
+### Current EnemyContext State
 
-Correct workflow:
+```gdscript
+# LINE OF SIGHT (simplified)
+var has_line_of_sight: bool = false  # Used for attack validation only
 
-First: Provide updated .bas VBA files for any schema changes
-Second: Provide Excel-ready data to paste into sheets
-Third: User imports VBA, pastes data, runs ExportAll
-When you need to change database structure or data:
+# BEHAVIOR STATE (simplified)
+enum BehaviorState { IDLE, ROAMING, COMBAT, RETURNING, FLEEING, DEAD }
+```
 
-Give me the .bas file updates (if schema changes)
-Give me tab-separated or table data ready to paste into Excel
-I will import/paste and export the JSON myself
-IMPORTANT: When changing database schema, always update:
+### Current Module Files
 
-The specific database .bas file (e.g., EnemyDatabase.bas)
-MasterExport.bas (ExportAll, ValidateAll, SetupWorkbook functions)
-SharedValidation.bas (named ranges, foreign key validations, enum validations)
-VBA Naming Convention: Export functions should be named ExportXxxData where Xxx matches the sheet name (e.g., ExportAbilitiesData, ExportEnemyAbilitiesData).
-
-When writing data for a database, be careful about "," and "." characters. If it is incorrectly written, .json files won't work, so always use ".".
-
-Whenever you make an update to stats, add a new stat, create a new way of implementing it, check the StatDescriptionDatabase, and update the appropriate Stat Description.
-
-When creating any layout design choices always prefer dynamic percentual edits against fixed pixels.
-
-When designing various elements (texts, containers, UI) always read UIThemeDatabase where style classes are defined. No text in the game should be classless. No UI wireframe classless.
-
-When planning new features and systems remember that we already have save/load system and implement these into this framework.
-
-When creating or editing enemies, their behaviour or AI consult ENEMY_REFERENCE.md, ABILITY_SYSTEM_REFERENCE.md and QUICK_REFERENCE.md
-
-When working with maps and LDTK consult LDTK_MAP_REFERENCE.md and ZONE_DESIGN_GUIDE.md
+| Module | Purpose | LoS Usage |
+|--------|---------|-----------|
+| `target_detection_module.gd` | Detect player by distance, compute LoS | Computes `has_line_of_sight` for attack validation |
+| `chase_module.gd` | Chase player directly | None - always chases to target position |
+| `combat_module.gd` | Select and trigger abilities | Checks LoS for ranged/leap attacks |
 
 ---
 
@@ -137,31 +127,7 @@ func is_walkable(world_pos: Vector2, nav_layer: int = NAV_GROUND) -> bool:
     return (tile_layers & nav_layer) != 0
 ```
 
-### Multiple AStarGrid2D Instances (Option A)
-
-One grid per layer for clean separation:
-
-```gdscript
-var _astar_grids: Dictionary = {}  # nav_layer -> AStarGrid2D
-
-func _ensure_grid_for_layer(nav_layer: int) -> AStarGrid2D:
-    if not _astar_grids.has(nav_layer):
-        var grid = AStarGrid2D.new()
-        grid.cell_size = Vector2(TILE_SIZE, TILE_SIZE)
-        grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
-        _astar_grids[nav_layer] = grid
-    return _astar_grids[nav_layer]
-
-func _rebuild_for_layer(nav_layer: int) -> void:
-    if not _is_dirty(nav_layer):
-        return
-
-    var grid = _ensure_grid_for_layer(nav_layer)
-    # Recalculate region and solid tiles for this layer
-    # ...
-```
-
-### Single Grid with Dynamic Marking (Option B)
+### Single Grid with Dynamic Marking (Recommended)
 
 Re-mark tiles when layer changes:
 
@@ -175,7 +141,7 @@ func get_path(from: Vector2, to: Vector2, nav_layer: int = NAV_GROUND) -> Packed
     return _astar.get_point_path(...)
 ```
 
-**Recommendation**: With only 2-5 enemies and likely 1-2 layers in use, either works. Option B uses less memory.
+**Note**: With only 2-5 enemies and likely 1-2 layers in use, single grid with dynamic marking uses less memory.
 
 ---
 
@@ -293,7 +259,7 @@ func is_position_walkable(pos: Vector2, nav_layer: int = NavigationGrid.NAV_GROU
 Ghost enemies can walk through walls. For pathfinding:
 
 ```gdscript
-# Option 1: Don't use pathfinding for ghosts
+# Option 1: Don't use pathfinding for ghosts (RECOMMENDED)
 if context.navigation_layer == NavigationGrid.NAV_GHOST:
     context.desired_direction = context.target_direction  # Direct movement
     return
@@ -360,15 +326,20 @@ func _draw_paths_debug():
             draw_circle(cached.path[cached.current_index], 4.0, Color.CYAN)
 ```
 
-### LOS Visualization
+### LoS Visualization (Attack Validation Only)
 
 ```gdscript
 func _draw_los_debug():
     for enemy in NPCManager.get_all_enemies():
         var context = enemy.get_context()
         if context.has_valid_target:
+            # LoS is used for attack validation, not detection
             var color = Color.GREEN if context.has_line_of_sight else Color.RED
             draw_line(context.global_position, context.current_target.global_position, color, 1.0)
+
+            # Label showing attack status
+            if not context.has_line_of_sight:
+                draw_string(font, context.global_position + Vector2(0, -20), "NO RANGED", Color.RED)
 ```
 
 ---
@@ -432,40 +403,12 @@ func smooth_path(path: PackedVector2Array, nav_layer: int = NAV_GROUND) -> Packe
 
 ---
 
-## Documentation Updates
-
-Update ENEMY_REFERENCE.md with navigation layer info:
-
-```markdown
-## Navigation Layers
-
-Enemies have a `navigation_layer` field that determines how they navigate:
-
-| Layer | Description | Traverses |
-|-------|-------------|-----------|
-| `ground` | Standard movement | Grass, dirt, stone, sand, snow |
-| `flying` | Flying enemies | All ground + water + pits |
-| `jumping` | Jumping enemies | All ground + pits (not water) |
-| `ghost` | Ethereal enemies | Everything (ignores walls) |
-
-### Example Configuration
-
-```json
-{
-    "id": "ene_bat_cave",
-    "navigation_layer": "flying"
-}
-```
-```
-
----
-
 ## Testing Checklist
 
 1. [ ] Ground enemies pathfind normally
 2. [ ] Flying enemies cross water tiles
 3. [ ] Jumping enemies cross pit tiles
-4. [ ] Ghost enemies move through walls
+4. [ ] Ghost enemies move through walls (direct movement)
 5. [ ] Layer-specific grids build correctly
 6. [ ] Debug visualization shows correct layer
 7. [ ] Path smoothing produces cleaner paths
@@ -500,9 +443,8 @@ Provide the complete .bas file updates for the user to import.
 - **Debug visualization**: ~80 lines
 - **Path smoothing**: ~30 lines
 - **VBA changes**: ~20 lines
-- **Documentation**: ~50 lines
 
-**Total**: ~345 lines of changes
+**Total**: ~295 lines of changes
 
 ---
 
@@ -511,12 +453,11 @@ Provide the complete .bas file updates for the user to import.
 Phase 5 is complete when:
 1. Flying enemies can cross water/pits
 2. Jumping enemies can cross pits
-3. Ghost enemies ignore all terrain
+3. Ghost enemies ignore all terrain (direct movement)
 4. Debug visualization shows layers correctly
 5. Path smoothing produces natural-looking movement
 6. Performance remains smooth
 7. Database schema supports navigation_layer
-8. Documentation is updated
 
 ---
 
