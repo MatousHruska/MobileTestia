@@ -3,12 +3,17 @@ class_name FleeModule
 ## FleeModule - Runs away when health is low
 ## Higher priority than chase, so it can override pursuit behavior
 ##
-## NOTE: Intentionally does NOT use pathfinding. Flee behavior is short-term
-## panic movement where direct movement is more natural and responsive.
-## The unpredictable direct flee path is actually preferable for gameplay.
+## Config options:
+##   flee_health_percent: float - Health % to trigger flee (default: 0.2)
+##   flee_speed_mult: float - Speed multiplier while fleeing (default: 1.3)
+##   flee_wobble: float - Random direction variation in radians (default: 0.3)
+##   flee_only_in_combat: bool - Only flee when has target (default: true)
+##   respect_leash_while_fleeing: bool - Blend toward home if beyond leash (default: false)
+##   flee_distance: float - How far ahead to calculate flee target (default: 100.0)
+##   use_pathfinding: bool - Use pathfinding to navigate around obstacles (default: true)
 
-## Current flee direction (persists between frames for smooth fleeing)
-var _flee_direction: Vector2 = Vector2.ZERO
+## Current flee target position
+var _flee_target: Vector2 = Vector2.ZERO
 
 ## Time since last direction change
 var _direction_change_timer: float = 0.0
@@ -42,7 +47,7 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 		should_flee = false
 
 	if not should_flee:
-		_flee_direction = Vector2.ZERO
+		_flee_target = Vector2.ZERO
 		_direction_change_timer = 0.0
 		return
 
@@ -52,38 +57,60 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	# Update direction change timer
 	_direction_change_timer += delta
 
-	# Calculate flee direction (away from target)
+	# Calculate flee target (position to run to)
 	if context.target_direction != Vector2.ZERO:
+		var flee_distance: float = get_config_float("flee_distance", 100.0)
 		var base_flee_direction: Vector2 = -context.target_direction
 
 		# Add wobble periodically to prevent predictable fleeing
-		if _direction_change_timer >= DIRECTION_CHANGE_INTERVAL:
+		if _direction_change_timer >= DIRECTION_CHANGE_INTERVAL or _flee_target == Vector2.ZERO:
 			_direction_change_timer = 0.0
 			var wobble: float = get_config_float("flee_wobble", 0.3)
-			_flee_direction = base_flee_direction.rotated(randf_range(-wobble, wobble))
-			_flee_direction = _flee_direction.normalized()
-		elif _flee_direction == Vector2.ZERO:
-			# First frame of fleeing
-			_flee_direction = base_flee_direction.normalized()
+			var flee_direction: Vector2 = base_flee_direction.rotated(randf_range(-wobble, wobble))
+			_flee_target = context.global_position + flee_direction.normalized() * flee_distance
+
+	# Get movement direction (with pathfinding if enabled)
+	var flee_direction := _get_pathfinding_direction(context, _flee_target)
 
 	# Apply flee movement
-	context.desired_direction = _flee_direction
+	context.desired_direction = flee_direction
 	context.speed_multiplier = get_config_float("flee_speed_mult", 1.3)
-	context.facing_direction = _flee_direction
+	context.facing_direction = flee_direction
 
 	# Optional: check for home/leash while fleeing
 	var respect_leash: bool = get_config_bool("respect_leash_while_fleeing", false)
 	if respect_leash and context.is_beyond_leash:
 		# Try to flee toward home instead
-		var home_direction: Vector2 = (context.home_position - context.global_position).normalized()
+		var home_direction := _get_pathfinding_direction(context, context.home_position)
 		# Blend flee and home direction
-		context.desired_direction = (_flee_direction + home_direction).normalized()
+		context.desired_direction = (flee_direction + home_direction).normalized()
+
+
+func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> Vector2:
+	"""Get movement direction, using pathfinding if enabled"""
+	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
+
+	if not use_pf:
+		return context.global_position.direction_to(target_pos)
+
+	# Get direction from pathfinding service
+	var pf_direction := PathfindingService.get_direction_to(
+		context.global_position,
+		target_pos,
+		context.owner.get_instance_id()
+	)
+
+	# Fallback to direct movement if pathfinding returns zero
+	if pf_direction == Vector2.ZERO:
+		return context.global_position.direction_to(target_pos)
+
+	return pf_direction
 
 
 func get_debug_info() -> Dictionary:
 	var info: Dictionary = super.get_debug_info()
 	info["flee_threshold"] = get_config_float("flee_health_percent", 0.2)
 	info["flee_speed_mult"] = get_config_float("flee_speed_mult", 1.3)
-	info["flee_direction"] = _flee_direction
+	info["flee_target"] = _flee_target
 	info["flee_only_in_combat"] = get_config_bool("flee_only_in_combat", true)
 	return info

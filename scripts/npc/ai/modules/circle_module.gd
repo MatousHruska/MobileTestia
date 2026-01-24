@@ -3,16 +3,14 @@ class_name CircleModule
 ## CircleModule - Orbit around target while waiting for attack cooldown
 ## Used by wolves and similar pack enemies to circle before attacking
 ##
-## NOTE: Intentionally does NOT use pathfinding. Orbiting is local movement
-## that adjusts tangentially around the target. The main navigation to reach
-## the target is handled by ChaseModule which does use pathfinding.
-##
 ## Config options:
 ##   circle_radius: distance to maintain while circling (default 80)
 ##   circle_speed_mult: movement speed multiplier while circling (default 0.7)
 ##   direction_change_interval: seconds between random direction changes (default 3.0)
 ##   only_when_on_cooldown: only circle when attack is on cooldown (default true)
 ##   coordinate_with_allies: try to circle on opposite side from allies (default true)
+##   orbit_step_distance: how far ahead to calculate orbit target (default 50.0)
+##   use_pathfinding: bool - Use pathfinding to navigate around obstacles (default: true)
 
 ## Reference to owning enemy
 var _owner_ref: Node2D = null
@@ -93,13 +91,39 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 			# Too close - move away from target
 			radial_adjustment = -to_target * 0.5
 
-	# Combine tangent movement with radial adjustment
-	var final_direction: Vector2 = (tangent + radial_adjustment).normalized()
+	# Calculate orbit target position
+	var orbit_step: float = get_config_float("orbit_step_distance", 50.0)
+	var combined_direction: Vector2 = (tangent + radial_adjustment).normalized()
+	var orbit_target: Vector2 = context.global_position + combined_direction * orbit_step
+
+	# Get movement direction (with pathfinding if enabled)
+	var final_direction := _get_pathfinding_direction(context, orbit_target)
 
 	# Apply movement
 	context.desired_direction = final_direction
 	context.speed_multiplier = circle_speed_mult
 	context.facing_direction = to_target  # Always face target while circling
+
+
+func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> Vector2:
+	"""Get movement direction, using pathfinding if enabled"""
+	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
+
+	if not use_pf:
+		return context.global_position.direction_to(target_pos)
+
+	# Get direction from pathfinding service
+	var pf_direction := PathfindingService.get_direction_to(
+		context.global_position,
+		target_pos,
+		context.owner.get_instance_id()
+	)
+
+	# Fallback to direct movement if pathfinding returns zero
+	if pf_direction == Vector2.ZERO:
+		return context.global_position.direction_to(target_pos)
+
+	return pf_direction
 
 
 func _coordinate_direction_with_allies(context: EnemyContext) -> void:

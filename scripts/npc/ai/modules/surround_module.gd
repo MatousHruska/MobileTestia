@@ -3,9 +3,10 @@ class_name SurroundModule
 ## SurroundModule - Spread out when multiple enemies chase same target
 ## Prevents enemies from bunching into a ball, creates flanking behavior
 ##
-## NOTE: Intentionally does NOT use pathfinding. This module only adjusts
-## the direction chosen by ChaseModule to add separation from allies.
-## The underlying navigation is handled by ChaseModule which uses pathfinding.
+## MODIFIER MODULE: This module does NOT set a destination. It adjusts the
+## desired_direction already set by ChaseModule (which uses pathfinding).
+## Adding pathfinding here would conflict with the already-pathfound direction.
+## The separation vectors are small adjustments, not full navigation.
 ##
 ## Config options:
 ##   surround_radius: How far to check for allies (default 80)
