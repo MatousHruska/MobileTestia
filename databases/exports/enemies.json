@@ -124,7 +124,7 @@
       "name": "Starved Wolf",
       "type": "Normal",
       "base_health": 1,
-      "base_damage": 8,
+      "base_damage": 1,
       "armor": 0,
       "base_shield": 0,
       "move_speed": 70,

@@ -131,7 +131,7 @@
       "id": "abi_wolf_leap",
       "name": "Wolf Leap",
       "ability_type": "dash",
-      "damage_mult": 2,
+      "damage_mult": 1,
       "damage_type": "physical",
       "range": 100,
       "cooldown": 6,
