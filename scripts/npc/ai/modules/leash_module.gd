@@ -2,6 +2,12 @@ extends BaseModule
 class_name LeashModule
 ## LeashModule - Returns enemy home if too far from spawn
 ## High priority (90) - can override chase to return home
+##
+## Config options:
+##   leash_radius: float - Max distance from home before returning (default: from context)
+##   home_threshold: float - Distance to consider "arrived home" (default: 16.0)
+##   return_speed_mult: float - Speed multiplier while returning (default: 1.0)
+##   use_pathfinding: bool - Use pathfinding when returning home (default: true)
 
 func _init() -> void:
 	module_id = "mod_leash"
@@ -37,10 +43,32 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 			context.should_stop = true
 			Debug.log("AI", "%s arrived home" % context.owner.name)
 		else:
-			# Move toward home
-			context.desired_direction = context.global_position.direction_to(context.home_position)
+			# Move toward home (with pathfinding if enabled)
+			var home_direction := _get_pathfinding_direction(context, context.home_position)
+			context.desired_direction = home_direction
 			context.speed_multiplier = get_config_float("return_speed_mult", 1.0)
-			context.facing_direction = context.desired_direction
+			context.facing_direction = home_direction
+
+
+func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> Vector2:
+	"""Get movement direction, using pathfinding if enabled"""
+	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
+
+	if not use_pf:
+		return context.global_position.direction_to(target_pos)
+
+	# Get direction from pathfinding service
+	var pf_direction := PathfindingService.get_direction_to(
+		context.global_position,
+		target_pos,
+		context.owner.get_instance_id()
+	)
+
+	# Fallback to direct movement if pathfinding returns zero
+	if pf_direction == Vector2.ZERO:
+		return context.global_position.direction_to(target_pos)
+
+	return pf_direction
 
 
 func get_debug_info() -> Dictionary:

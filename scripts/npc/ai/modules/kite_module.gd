@@ -9,6 +9,7 @@ class_name KiteModule
 ##   melee_commit_range: if player gets this close, commit to melee instead of kiting (default 0 = disabled)
 ##   kite_speed_mult: movement speed multiplier when kiting (default 0.8)
 ##   sweet_spot_tolerance: tolerance for preferred range (default 0.1 = 10%)
+##   use_pathfinding: bool - Use pathfinding when retreating (default: true)
 
 func _init() -> void:
 	module_id = "mod_kite"
@@ -47,7 +48,9 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 
 	# Too close (but not committed to melee)? Back away
 	if context.target_distance < too_close_range:
-		context.desired_direction = -context.target_direction
+		# Calculate retreat direction (with pathfinding if enabled)
+		var retreat_direction := _get_retreat_direction(context, preferred_range)
+		context.desired_direction = retreat_direction
 		context.speed_multiplier = kite_speed_mult
 		context.facing_direction = context.target_direction  # Face target while backing
 		return
@@ -69,6 +72,30 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 	# Too far? Let ChaseModule handle approaching (do nothing here)
 	# The lower priority of kite (75) vs chase (80) means chase will already
 	# have set movement. We only override when too close or in sweet spot.
+
+
+func _get_retreat_direction(context: EnemyContext, preferred_range: float) -> Vector2:
+	"""Get retreat direction, using pathfinding if enabled"""
+	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
+
+	if not use_pf:
+		return -context.target_direction
+
+	# Calculate retreat position (behind us, at preferred range from target)
+	var retreat_pos := context.global_position - context.target_direction * preferred_range
+
+	# Get direction from pathfinding service
+	var pf_direction := PathfindingService.get_direction_to(
+		context.global_position,
+		retreat_pos,
+		context.owner.get_instance_id()
+	)
+
+	# Fallback to direct retreat if pathfinding returns zero
+	if pf_direction == Vector2.ZERO:
+		return -context.target_direction
+
+	return pf_direction
 
 
 func get_debug_info() -> Dictionary:
