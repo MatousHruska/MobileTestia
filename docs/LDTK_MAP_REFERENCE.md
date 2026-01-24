@@ -1022,12 +1022,133 @@ When player enters region 2, both region 1 and region 2 roofs hide.
 | Roof fade | 0.25s | Smooth alpha transition |
 | Exterior dim | 0.3s | Slight darkening of outside world |
 
+### Critical: Roof-Region Overlap
+
+**Roof tiles MUST be painted on the same tiles as their interior region for proper association.**
+
+```
+CORRECT - Roofs overlap with regions:
+┌──────────────────┐
+│ Interior Regions │  (InteriorRegions layer)
+│ ▓▓▓▓▓▓▓▓        │  ← region_value = 1
+│ ▓▓▓▓▓▓▓▓        │
+└──────────────────┘
+
+┌──────────────────┐
+│ Roof Tiles       │  (Roofs layer)
+│ ████████         │  ← Painted on SAME tiles
+│ ████████         │
+└──────────────────┘
+
+Result: roof tiles get region_value=1, hide when entering region 1.
+
+WRONG - Roofs don't overlap:
+┌──────────────────┐
+│ Interior Regions │
+│     ▓▓▓▓         │  ← Small interior
+└──────────────────┘
+
+┌──────────────────┐
+│ Roof Tiles       │
+│ ████████████     │  ← Roof extends beyond interior
+│ ████████████     │
+└──────────────────┘
+
+Result: Edge roof tiles get region_value=0, never hide!
+```
+
+### Chunk Data Structure
+
+After running the importer, each chunk file contains:
+
+```json
+{
+  "ground": [...],
+  "collision": [...],
+  "decoration": [...],
+  "interior_regions": [
+    {"x": 25, "y": 0, "region_value": 1},
+    {"x": 26, "y": 0, "region_value": 1}
+  ],
+  "roofs": [
+    {"x": 25, "y": 0, "roof_type": "roof_cave", "region_value": 1},
+    {"x": 26, "y": 0, "roof_type": "roof_cave", "region_value": 1}
+  ]
+}
+```
+
+**Important**: `roofs` entries have `region_value` derived from the overlapping `interior_regions` tile. If a roof tile doesn't overlap an interior region, its `region_value` will be `0` and it won't hide properly.
+
+### Verifying Export
+
+After running the importer, verify your data with:
+
+```bash
+# Check which chunks have interior regions and roofs
+python3 -c "
+import json, os
+for f in sorted(os.listdir('maps/chunk_tiles/')):
+    if f.endswith('.json'):
+        with open(f'maps/chunk_tiles/{f}') as file:
+            data = json.load(file)
+        ir = len(data.get('interior_regions', []))
+        rf = len(data.get('roofs', []))
+        if ir > 0 or rf > 0:
+            print(f'{f}: {ir} regions, {rf} roofs')
+"
+```
+
 ### Debug
 
 Check `InteriorManager.debug_print_state()` to see:
 - Current region value
 - List of revealed regions
 - Exterior dim state
+
+The InteriorManager logs region detection every second when active:
+```
+[InteriorManager] Player at (700, 1600), detected region: 1, current: 1
+```
+
+Press **Numpad 1** (ChunkManager state) to verify interior_region_data is loaded for chunks.
+
+### Troubleshooting Interior Revelation
+
+| Problem | Cause | Solution |
+|---------|-------|----------|
+| Roofs visible but never hide | Roof tiles have `region_value: 0` | Ensure roofs overlap interior regions in LDtk |
+| No debug messages about regions | InteriorManager not active | Check `_active` flag, verify zone_initialized signal |
+| Roofs hide but wrong regions | Wrong region values | Verify LDtk IntGrid values match database |
+| Works in one chunk, not others | Partial export | Re-run importer for all chunks |
+| Player spawn far from interiors | Testing difficulty | Move PlayerSpawn entity near painted regions |
+
+### Finding Your Interior Regions
+
+To find where your painted regions are located in world coordinates:
+
+```python
+# Run in project directory
+python3 -c "
+import json
+with open('maps/MobileTestia.ldtk') as f:
+    data = json.load(f)
+for level in data['levels']:
+    for layer in level['layerInstances']:
+        if layer['__identifier'].lower() == 'interior_regions':
+            csv = layer['intGridCsv']
+            c_wid = layer['__cWid']
+            grid = layer['__gridSize']
+            min_x, max_x = float('inf'), 0
+            min_y, max_y = float('inf'), 0
+            for i, v in enumerate(csv):
+                if v > 0:
+                    px, py = (i % c_wid) * grid, (i // c_wid) * grid
+                    min_x, max_x = min(min_x, px), max(max_x, px)
+                    min_y, max_y = min(min_y, py), max(max_y, py)
+            print(f'Interior regions: ({min_x}, {min_y}) to ({max_x}, {max_y})')
+            print(f'Chunk: ({min_x//1024}, {min_y//1024}) to ({max_x//1024}, {max_y//1024})')
+"
+```
 
 ---
 
