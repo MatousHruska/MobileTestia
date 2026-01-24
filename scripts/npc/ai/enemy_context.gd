@@ -45,6 +45,25 @@ var target_just_lost: bool = false
 var target_just_acquired: bool = false
 
 #===============================================================================
+# LINE OF SIGHT (Written by: DetectionModule)
+#===============================================================================
+
+## Currently has line of sight to target
+var has_line_of_sight: bool = false
+
+## Last position where we saw the target
+var last_known_target_position: Vector2 = Vector2.ZERO
+
+## Time since we lost line of sight (for LOS memory)
+var los_timer: float = 0.0
+
+## LOS was lost this frame
+var los_just_lost: bool = false
+
+## LOS was gained this frame
+var los_just_gained: bool = false
+
+#===============================================================================
 # POSITION & MOVEMENT (Written by: MovementModule)
 #===============================================================================
 
@@ -252,6 +271,9 @@ func reset_frame_flags() -> void:
 	is_in_attack_range = false  # Reset each frame - combat module will set appropriately
 	# Note: pack_alert_received is NOT reset here - it persists until PackAlertModule processes it
 	# This allows alerts sent in one frame to be processed by other enemies in subsequent frames
+	# LOS frame flags
+	los_just_lost = false
+	los_just_gained = false
 
 
 func update_from_owner() -> void:
@@ -369,4 +391,8 @@ func _get_flags_string() -> String:
 		flags.append("INRNG")
 	if attack_in_progress:
 		flags.append("ATKING")
+	if has_line_of_sight:
+		flags.append("LOS")
+	elif has_valid_target:
+		flags.append("NO_LOS")
 	return ",".join(flags) if flags.size() > 0 else "-"

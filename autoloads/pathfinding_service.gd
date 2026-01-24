@@ -179,6 +179,54 @@ func has_reached_target(from: Vector2, to: Vector2, threshold: float = WAYPOINT_
 	return from.distance_to(to) < threshold
 
 #===============================================================================
+# LINE OF SIGHT API
+#===============================================================================
+
+## Check if there's a clear line between two points (no wall blocking)
+## Uses physics raycast against wall collision layer
+func has_line_of_sight(from: Vector2, to: Vector2) -> bool:
+	var tree := get_tree()
+	if tree == null:
+		return true  # Assume clear if can't check
+
+	var space := tree.root.get_world_2d().direct_space_state
+	if space == null:
+		return true
+
+	var query := PhysicsRayQueryParameters2D.create(from, to)
+	query.collision_mask = 1  # Layer 1 = walls only
+	query.hit_from_inside = false
+
+	var result := space.intersect_ray(query)
+	return result.is_empty()
+
+
+## Get the first collision point along a line (for ability range limiting)
+## Returns dictionary with collision info
+func get_los_collision_point(from: Vector2, to: Vector2) -> Dictionary:
+	var tree := get_tree()
+	if tree == null:
+		return {"has_collision": false, "collision_point": to, "collision_normal": Vector2.ZERO}
+
+	var space := tree.root.get_world_2d().direct_space_state
+	if space == null:
+		return {"has_collision": false, "collision_point": to, "collision_normal": Vector2.ZERO}
+
+	var query := PhysicsRayQueryParameters2D.create(from, to)
+	query.collision_mask = 1  # Layer 1 = walls only
+
+	var result := space.intersect_ray(query)
+
+	if result.is_empty():
+		return {"has_collision": false, "collision_point": to, "collision_normal": Vector2.ZERO}
+
+	return {
+		"has_collision": true,
+		"collision_point": result.position,
+		"collision_normal": result.normal
+	}
+
+#===============================================================================
 # DEBUG API
 #===============================================================================
 

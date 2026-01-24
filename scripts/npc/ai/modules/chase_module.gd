@@ -37,18 +37,30 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 	if context.is_dead:
 		return
 
+	# Determine chase target based on LOS
+	var chase_target: Vector2
+	if context.has_line_of_sight:
+		# Can see target - chase directly
+		chase_target = context.current_target.global_position
+	else:
+		# Lost LOS - chase to last known position
+		chase_target = context.last_known_target_position
+
 	# Get movement direction (with pathfinding if enabled)
-	var move_dir := _get_pathfinding_direction(
-		context,
-		context.current_target.global_position
-	)
+	var move_dir := _get_pathfinding_direction(context, chase_target)
 
 	# Set movement toward target
 	context.desired_direction = move_dir
 	context.speed_multiplier = get_config_float("chase_speed_mult", 1.0)
 
-	# Update facing direction (always face target, not movement direction)
-	context.facing_direction = context.target_direction
+	# Update facing direction
+	if context.has_line_of_sight:
+		# Face the actual target
+		context.facing_direction = context.target_direction
+	else:
+		# Face the direction we're moving
+		if move_dir != Vector2.ZERO:
+			context.facing_direction = move_dir
 
 
 func _handle_return_home(context: EnemyContext) -> void:

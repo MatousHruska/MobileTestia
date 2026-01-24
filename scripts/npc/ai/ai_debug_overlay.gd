@@ -17,6 +17,9 @@ var _summary_label: Label
 var _last_update_time: float = 0.0
 const UPDATE_INTERVAL := 0.1  # Update every 100ms
 
+## LOS debug drawer instance
+var _los_drawer: LOSDebugDrawer = null
+
 ## Singleton reference
 static var instance: Node = null
 
@@ -50,8 +53,31 @@ func toggle() -> void:
 	if enabled:
 		Debug.info("AI", "Debug overlay enabled")
 		_update_display()
+		_create_los_drawer()
 	else:
 		Debug.info("AI", "Debug overlay disabled")
+		_remove_los_drawer()
+
+
+func _create_los_drawer() -> void:
+	"""Create LOS debug drawer in the current scene"""
+	if _los_drawer != null:
+		return
+
+	var tree := get_tree()
+	if tree == null or tree.current_scene == null:
+		return
+
+	_los_drawer = LOSDebugDrawer.new()
+	_los_drawer.name = "LOSDebugDrawer"
+	tree.current_scene.add_child(_los_drawer)
+
+
+func _remove_los_drawer() -> void:
+	"""Remove LOS debug drawer"""
+	if _los_drawer != null:
+		_los_drawer.queue_free()
+		_los_drawer = null
 
 
 func _create_ui() -> void:
@@ -232,6 +258,22 @@ func _add_enemy_debug(enemy: Node2D, distance: float) -> void:
 	flags_label.text = "  Flags: %s" % flags_text
 	flags_label.add_theme_color_override("font_color", Color.LIME_GREEN if flags.size() > 0 else Color.GRAY)
 	container.add_child(flags_label)
+
+	# LOS status
+	var los_label := Label.new()
+	var los_text := ""
+	if ctx.has_valid_target:
+		if ctx.has_line_of_sight:
+			los_text = "LOS: CLEAR"
+			los_label.add_theme_color_override("font_color", Color.GREEN)
+		else:
+			los_text = "LOS: BLOCKED (memory: %.1fs)" % ctx.los_timer
+			los_label.add_theme_color_override("font_color", Color.ORANGE)
+	else:
+		los_text = "LOS: N/A"
+		los_label.add_theme_color_override("font_color", Color.GRAY)
+	los_label.text = "  %s" % los_text
+	container.add_child(los_label)
 
 	# Cooldown
 	var cooldown_label := Label.new()
