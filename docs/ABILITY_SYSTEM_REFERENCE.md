@@ -8,7 +8,7 @@ This document describes all hardcoded configurations, logic values, and customiz
 
 ## Ability Types (`ability_type`)
 
-The `ability_type` field in the Abilities database determines how an ability is executed. Handled in `modular_enemy_npc.gd:_execute_ability()`.
+The `ability_type` field in the Abilities database determines how an ability is executed. Handled in `enemy_npc.gd:_execute_ability()`.
 
 | Type | Description | Relevant Fields |
 |------|-------------|-----------------|
@@ -105,7 +105,7 @@ The `extra_config` JSON column in Abilities allows ability-specific parameters. 
 ### Adding New extra_config Keys
 
 1. Add the key to the `extra_config` JSON in the Abilities database
-2. Add code in `modular_enemy_npc.gd` to read and use the value:
+2. Add code in `enemy_npc.gd` to read and use the value:
 ```gdscript
 var extra: Dictionary = ability.get("extra_config", {})
 var my_value: float = float(extra.get("my_key", default_value))
@@ -384,11 +384,11 @@ config_override
 
 | Feature | File | Function/Line |
 |---------|------|---------------|
-| Ability type dispatch | `modular_enemy_npc.gd` | `_execute_ability()` |
+| Ability type dispatch | `enemy_npc.gd` | `_execute_ability()` |
 | Condition checking | `combat_module.gd` | `_check_condition()` |
 | Ability loading & merging | `combat_module.gd` | `_load_abilities_from_database()` |
-| Status effect application | `modular_enemy_npc.gd` | `_apply_ability_status_effect()` |
-| Debug hitbox visualization | `modular_enemy_npc.gd` | `_show_debug_hitbox()` |
+| Status effect application | `enemy_npc.gd` | `_apply_ability_status_effect()` |
+| Debug hitbox visualization | `enemy_npc.gd` | `_show_debug_hitbox()` |
 | Flee behavior | `flee_module.gd` | `_process_module()` |
 | Pack alert broadcasting | `pack_alert_module.gd` | `_alert_nearby_allies()` |
 | Pack alert response | `pack_alert_module.gd` | `_process_module()` |
