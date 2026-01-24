@@ -93,6 +93,9 @@ Each module has configurable options via the `module_config` JSON column.
 |-----|---------|-------------|
 | detection_radius | 120.0 | Range to detect targets (pixels) |
 | prefer_attacker | true | Prioritize who hit us first |
+| los_check_interval | 0.1 | How often to check LoS for attack validation (seconds) |
+
+**Note:** Detection is by distance only - enemies always know where the player is once detected. Line of Sight is computed but only used for attack validation (ranged/leap attacks can't shoot through walls).
 
 #### mod_pack_alert
 | Key | Default | Description |
@@ -162,10 +165,13 @@ Each module has configurable options via the `module_config` JSON column.
 |-----|---------|-------------|
 | cardinal_alignment | true | Require X/Y alignment for melee |
 | alignment_tolerance | 16.0 | Pixels tolerance for alignment |
+| require_los | true | Require LoS for ranged/leap attacks |
 
 **Global Attack Cooldown:** Enforces minimum time between ANY attacks based on `attack_speed` stat. attack_speed of 1.0 = 1 second between attacks.
 
 **Ranged Cooldown Behavior:** When ranged ability is on cooldown and in range, enemy stops and waits instead of chasing into melee. Respects kite module if backing away.
+
+**Line of Sight for Attacks:** Ranged, projectile, and leap attacks require clear line of sight. Enemies cannot shoot or leap through walls. Melee attacks do not require LoS (short range = clear path). Leap attacks (ability_type="dash" with movement_type="dash_to") will cancel if the target hides behind cover during the cast time.
 
 #### mod_idle
 | Key | Default | Description |
@@ -705,6 +711,8 @@ Shows per-enemy information:
 | PACK | Pack alert received |
 | INRNG | In attack range |
 | ATKING | Attack in progress |
+| LOS | Has line of sight to target (can use ranged/leap) |
+| NO_LOS | Has target but no line of sight (ranged/leap blocked) |
 
 ---
 
