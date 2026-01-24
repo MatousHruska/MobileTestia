@@ -85,10 +85,12 @@ func _get_retreat_direction(context: EnemyContext, preferred_range: float) -> Ve
 	var retreat_pos := context.global_position - context.target_direction * preferred_range
 
 	# Get direction from pathfinding service
+	# NOTE: Use entity_id = -1 (no caching) because retreat_pos changes frequently
+	# and would conflict with ChaseModule's cache
 	var pf_direction := PathfindingService.get_direction_to(
 		context.global_position,
 		retreat_pos,
-		context.owner.get_instance_id()
+		-1
 	)
 
 	# Fallback to direct retreat if pathfinding returns zero

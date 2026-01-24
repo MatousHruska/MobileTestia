@@ -85,10 +85,12 @@ func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> V
 		return context.global_position.direction_to(target_pos)
 
 	# Get direction from pathfinding service
+	# NOTE: Use entity_id = -1 (no caching) to avoid cache conflicts with other modules
+	# Only ChaseModule should own the path cache for each entity
 	var pf_direction := PathfindingService.get_direction_to(
 		context.global_position,
 		target_pos,
-		context.owner.get_instance_id()
+		-1
 	)
 
 	# Fallback to direct movement if pathfinding returns zero

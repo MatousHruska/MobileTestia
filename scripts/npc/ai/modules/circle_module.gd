@@ -113,10 +113,12 @@ func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> V
 		return context.global_position.direction_to(target_pos)
 
 	# Get direction from pathfinding service
+	# NOTE: Use entity_id = -1 (no caching) because orbit_target changes every frame
+	# Caching would cause oscillation as the cache constantly invalidates
 	var pf_direction := PathfindingService.get_direction_to(
 		context.global_position,
 		target_pos,
-		context.owner.get_instance_id()
+		-1
 	)
 
 	# Fallback to direct movement if pathfinding returns zero
