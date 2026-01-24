@@ -19,6 +19,11 @@ const CHUNK_TILES_DIR := "res://maps/chunk_tiles/"
 ## Non-walkable terrain types
 const BLOCKED_TERRAINS: Array[String] = ["terrain_water", "terrain_wall", "terrain_void"]
 
+## Wall margin in tiles - expands blocked regions to prevent corner clipping
+## Set to 1 to block tiles adjacent to walls (prevents entities from pathing
+## too close to walls, avoiding corner-stuck issues with collision radius)
+const WALL_MARGIN: int = 1
+
 #===============================================================================
 # STATE
 #===============================================================================
@@ -254,13 +259,16 @@ func _rebuild_grid() -> void:
 	# Note: fill_solid_region sets points as solid, we need opposite approach
 	# The default after update() is all points walkable
 
-	# Mark blocked tiles as solid
+	# Mark blocked tiles as solid (with margin expansion to prevent corner clipping)
 	for chunk_id in _chunk_data:
 		var data: Dictionary = _chunk_data[chunk_id]
 		var blocked: Dictionary = data.get("blocked", {})
 		for tile in blocked.keys():
-			if _is_tile_in_bounds(tile):
-				_astar.set_point_solid(tile, true)
+			# Expand each blocked tile to include margin tiles
+			var expanded := _get_expanded_blocked_tiles(tile)
+			for blocked_tile in expanded:
+				if _is_tile_in_bounds(blocked_tile):
+					_astar.set_point_solid(blocked_tile, true)
 
 	# Also mark tiles outside loaded chunks as solid
 	_mark_unloaded_areas_solid()
@@ -306,6 +314,30 @@ func _mark_unloaded_areas_solid() -> void:
 ## Check if tile is within current grid bounds
 func _is_tile_in_bounds(tile: Vector2i) -> bool:
 	return _grid_bounds.has_point(tile)
+
+## Get tiles that should be blocked due to proximity to a blocked tile
+## Only expands in diagonal directions to prevent corner clipping
+## while still allowing enemies to walk adjacent to walls
+func _get_expanded_blocked_tiles(tile: Vector2i) -> Array[Vector2i]:
+	var expanded: Array[Vector2i] = [tile]  # Always include original
+
+	if WALL_MARGIN <= 0:
+		return expanded
+
+	# Only add DIAGONAL neighbors - this prevents corner clipping
+	# without blocking tiles directly adjacent to walls (which would
+	# make corridors too narrow)
+	var diagonal_offsets: Array[Vector2i] = [
+		Vector2i(-1, -1),  # Top-left
+		Vector2i(1, -1),   # Top-right
+		Vector2i(-1, 1),   # Bottom-left
+		Vector2i(1, 1)     # Bottom-right
+	]
+
+	for offset in diagonal_offsets:
+		expanded.append(tile + offset)
+
+	return expanded
 
 ## Find nearest walkable tile to a given tile
 func _find_nearest_walkable(tile: Vector2i) -> Vector2i:
