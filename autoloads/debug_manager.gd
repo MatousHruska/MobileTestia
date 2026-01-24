@@ -190,7 +190,7 @@ func _toggle_pathfinding_debug() -> void:
 	if pathfinding_service:
 		var new_state: bool = not pathfinding_service.is_debug_enabled()
 		pathfinding_service.set_debug_enabled(new_state)
-		print(">>> Pathfinding debug: %s <<<" % ("ON" if new_state else "OFF"))
+		print("0>>> Pathfinding debug: %s <<<" % ("ON" if new_state else "OFF"))
 	else:
 		print(">>> PathfindingService not available <<<")
 
