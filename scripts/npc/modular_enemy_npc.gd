@@ -3,8 +3,6 @@ class_name ModularEnemyNPC
 ## ModularEnemyNPC - Enemy class that uses the modular AI system
 ## Requires module_ids to be configured in the database
 
-const MovementValidatorClass = preload("res://scripts/navigation/movement_validator.gd")
-
 ## Signals
 signal damage_dealt(target: Node2D, amount: float, ability_id: String)
 
