@@ -352,6 +352,63 @@ See [pathfinding/PHASE_2_MODULE_INTEGRATION.md](pathfinding/PHASE_2_MODULE_INTEG
 
 ---
 
+## Navigation Layers
+
+Different enemy types can traverse different terrain. Set the `navigation_layer` column in the Enemies database to control which terrain an enemy can cross.
+
+### Layer Types
+
+| Layer | Value | Can Traverse | Example Enemies |
+|-------|-------|--------------|-----------------|
+| `ground` | 1 | Normal walkable terrain | Wolf, Skeleton, Bandit |
+| `flying` | 2 | Ground + water + pits | Bat, Wisp, Flying Skull |
+| `jumping` | 4 | Ground + pits (not water) | Frog, Spider |
+| `ghost` | 8 | Everything (ignores walls) | Specter, Wraith |
+
+### Terrain Traversal
+
+| Terrain | Ground | Flying | Jumping | Ghost |
+|---------|--------|--------|---------|-------|
+| Grass/Dirt/Stone/Sand/Snow | ✅ | ✅ | ✅ | ✅ |
+| Water | ❌ | ✅ | ❌ | ✅ |
+| Pit | ❌ | ✅ | ✅ | ✅ |
+| Lava | ❌ | ✅ | ❌ | ✅ |
+| Wall | ❌ | ❌ | ❌ | ✅ |
+
+### Ghost Enemy Special Behavior
+
+Enemies with `navigation_layer: ghost` have unique pathfinding:
+- **Direct movement**: No A* pathfinding - moves straight toward target
+- **Phases through walls**: Can pass through any terrain
+- **Attack validation still applies**: Ranged attacks still require LoS
+
+### Database Example
+
+```
+Enemies Sheet:
+  id: ene_bat_cave
+  name: Cave Bat
+  navigation_layer: flying
+  ...
+
+  id: ene_ghost_ancient
+  name: Ancient Ghost
+  navigation_layer: ghost
+  ...
+```
+
+### Debug Info
+
+The debug overlay (F9) shows `nav: <layer>` for non-ground enemies:
+```
+ene_bat_cave: nav=flying
+ene_ghost: nav=ghost
+```
+
+Ground enemies don't show the nav field (default).
+
+---
+
 ## Spawn Point Module Injection
 
 Spawn points can inject modules and override module configuration for any spawned enemy. This allows the same enemy type to behave differently based on spawn location.
@@ -584,6 +641,7 @@ enemy_id, ability_id, priority, condition, cooldown_override, damage_mult_overri
 | loot_table_id | string | Reference to loot table |
 | module_ids | string | Comma-separated module list |
 | module_config | JSON | Per-enemy module overrides |
+| navigation_layer | enum | Terrain traversal type (ground, flying, jumping, ghost) |
 
 ### Enemy Types
 
