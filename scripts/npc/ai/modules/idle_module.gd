@@ -96,27 +96,11 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
 
 func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> Vector2:
-	"""Get movement direction, using pathfinding if enabled.
-	Falls back to direct movement if pathfinding unavailable (roaming is non-critical)."""
-	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
-
-	if not use_pf:
-		return context.global_position.direction_to(target_pos)
-
-	# Get direction from pathfinding service
-	# NOTE: Use entity_id = -1 (no caching) to avoid cache conflicts with other modules
-	var pf_direction := PathfindingService.get_direction_to(
-		context.global_position,
-		target_pos,
-		-1
-	)
-
-	# If pathfinding fails (out of bounds, no path), fall back to direct movement
-	# Roaming is non-critical - briefly walking toward a wall is acceptable
-	if pf_direction == Vector2.ZERO:
-		return context.global_position.direction_to(target_pos)
-
-	return pf_direction
+	"""Get movement direction for roaming.
+	Uses direct movement since roaming is short-range and non-critical."""
+	# For roaming, always use direct movement - it's only ~50 pixels and
+	# pathfinding can cause oscillation issues when enemy is outside grid bounds
+	return context.global_position.direction_to(target_pos)
 
 
 func _pick_roam_target(context: EnemyContext) -> void:
