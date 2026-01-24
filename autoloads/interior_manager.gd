@@ -68,15 +68,22 @@ func _ready() -> void:
 
 func _connect_to_chunk_manager() -> void:
 	## Connect to ChunkManager signals
-	var chunk_mgr = get_node_or_null("/root/ChunkManager")
-	if chunk_mgr:
-		chunk_mgr.interior_region_changed.connect(_on_interior_region_changed)
-		chunk_mgr.zone_initialized.connect(_on_zone_initialized)
-		chunk_mgr.zone_cleanup.connect(_on_zone_cleanup)
-		Debug.log("InteriorManager", "Connected to ChunkManager")
-	else:
+	if not ChunkManager:
 		Debug.warn("InteriorManager", "ChunkManager not found")
+		return
 
+	ChunkManager.interior_region_changed.connect(_on_interior_region_changed)
+	ChunkManager.zone_initialized.connect(_on_zone_initialized)
+	ChunkManager.zone_cleanup.connect(_on_zone_cleanup)
+	Debug.log("InteriorManager", "Connected to ChunkManager")
+
+	# If a zone is already initialized (we connected late), activate now
+	if not ChunkManager.current_zone_id.is_empty():
+		Debug.log("InteriorManager", "Zone already active, activating now: %s" % ChunkManager.current_zone_id)
+		_active = true
+
+
+var _debug_frame_counter: int = 0
 
 func _process(_delta: float) -> void:
 	if not _active:
@@ -85,6 +92,13 @@ func _process(_delta: float) -> void:
 	# Update player interior region check
 	if Game and Game.is_player_valid():
 		ChunkManager.update_player_interior_region(Game.player.global_position)
+
+		# Debug: periodically log region detection
+		_debug_frame_counter += 1
+		if _debug_frame_counter % 60 == 0:  # Every 60 frames (~1 second)
+			var region := ChunkManager.get_interior_region_at_position(Game.player.global_position)
+			if region > 0 or current_region > 0:
+				Debug.log("InteriorManager", "Player at %s, detected region: %d, current: %d" % [Game.player.global_position, region, current_region])
 
 
 #===============================================================================
