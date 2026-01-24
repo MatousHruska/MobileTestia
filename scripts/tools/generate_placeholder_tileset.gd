@@ -19,7 +19,7 @@ const TILESET_RESOURCE_PATH := "res://resources/tilesets/placeholder_tileset.tre
 ## Tile size in pixels
 const TILE_SIZE := 16
 
-## Terrain colors matching LDtk IntGrid values
+## Terrain colors matching LDtk IntGrid values (row 0)
 ## Format: terrain_id -> hex color
 const TERRAIN_COLORS := {
 	"terrain_void": Color("#1a1a1a"),
@@ -32,19 +32,35 @@ const TERRAIN_COLORS := {
 	"terrain_snow": Color("#e0e8f0"),
 }
 
+## Roof colors for interior revelation system (row 1)
+const ROOF_COLORS := {
+	"roof_cave": Color("#4a4a4a"),
+	"roof_house": Color("#8b4513"),
+	"roof_dungeon": Color("#2f2f2f"),
+	"roof_ruins": Color("#696969"),
+}
+
 ## Terrain types that have collision
 const COLLISION_TERRAIN := ["terrain_water", "terrain_wall"]
 
-## Tile IDs for each terrain type (index in tileset)
+## Tile IDs for each terrain type (atlas coordinates as Vector2i)
 const TERRAIN_TILE_IDS := {
-	"terrain_void": 0,
-	"terrain_grass": 1,
-	"terrain_dirt": 2,
-	"terrain_stone": 3,
-	"terrain_water": 4,
-	"terrain_wall": 5,
-	"terrain_sand": 6,
-	"terrain_snow": 7,
+	"terrain_void": Vector2i(0, 0),
+	"terrain_grass": Vector2i(1, 0),
+	"terrain_dirt": Vector2i(2, 0),
+	"terrain_stone": Vector2i(3, 0),
+	"terrain_water": Vector2i(4, 0),
+	"terrain_wall": Vector2i(5, 0),
+	"terrain_sand": Vector2i(6, 0),
+	"terrain_snow": Vector2i(7, 0),
+}
+
+## Tile IDs for roof types (row 1)
+const ROOF_TILE_IDS := {
+	"roof_cave": Vector2i(0, 1),
+	"roof_house": Vector2i(1, 1),
+	"roof_dungeon": Vector2i(2, 1),
+	"roof_ruins": Vector2i(3, 1),
 }
 
 #===============================================================================
@@ -81,10 +97,9 @@ func _run() -> void:
 
 func _generate_tileset_image() -> Image:
 	## Create a tileset image with colored tiles
-	# Calculate image dimensions (8 tiles wide, enough rows for all terrain)
+	# Calculate image dimensions (8 tiles wide, 2 rows: terrain + roofs)
 	var tiles_per_row := 8
-	var num_terrains := TERRAIN_COLORS.size()
-	var rows := ceili(float(num_terrains) / tiles_per_row)
+	var rows := 2  # Row 0: terrain, Row 1: roofs
 
 	var img_width := tiles_per_row * TILE_SIZE
 	var img_height := rows * TILE_SIZE
@@ -95,7 +110,7 @@ func _generate_tileset_image() -> Image:
 	var image := Image.create(img_width, img_height, false, Image.FORMAT_RGBA8)
 	image.fill(Color.TRANSPARENT)
 
-	# Draw each terrain tile
+	# Draw each terrain tile (row 0)
 	var terrain_index := 0
 	for terrain_id in TERRAIN_COLORS:
 		var color: Color = TERRAIN_COLORS[terrain_id]
@@ -114,8 +129,30 @@ func _generate_tileset_image() -> Image:
 		# Add a subtle border for visibility
 		_draw_tile_border(image, px, py, color.darkened(0.3))
 
-		print("  Tile %d: %s (%s)" % [terrain_index, terrain_id, color.to_html()])
+		print("  Terrain tile %d: %s (%s)" % [terrain_index, terrain_id, color.to_html()])
 		terrain_index += 1
+
+	# Draw roof tiles (row 1)
+	var roof_index := 0
+	for roof_id in ROOF_COLORS:
+		var color: Color = ROOF_COLORS[roof_id]
+
+		# Calculate tile position (row 1)
+		var tile_x := roof_index
+		var tile_y := 1
+		var px := tile_x * TILE_SIZE
+		var py := tile_y * TILE_SIZE
+
+		# Fill the tile with color
+		for x in range(TILE_SIZE):
+			for y in range(TILE_SIZE):
+				image.set_pixel(px + x, py + y, color)
+
+		# Add a subtle border for visibility
+		_draw_tile_border(image, px, py, color.darkened(0.3))
+
+		print("  Roof tile %d: %s (%s)" % [roof_index, roof_id, color.to_html()])
+		roof_index += 1
 
 	return image
 
@@ -180,17 +217,21 @@ func _create_tileset_resource() -> bool:
 	source.texture = texture
 	source.texture_region_size = Vector2i(TILE_SIZE, TILE_SIZE)
 
-	# First pass: Create all tiles (without collision)
-	var tiles_per_row := 8
+	# First pass: Create all terrain tiles (without collision)
 	for terrain_id in TERRAIN_TILE_IDS:
-		var tile_index: int = TERRAIN_TILE_IDS[terrain_id]
-		var tile_x := tile_index % tiles_per_row
-		var tile_y := int(tile_index / tiles_per_row)
-		var atlas_coords := Vector2i(tile_x, tile_y)
+		var atlas_coords: Vector2i = TERRAIN_TILE_IDS[terrain_id]
 
 		# Create the tile
 		source.create_tile(atlas_coords)
-		print("  Added tile: %s at (%d, %d)" % [terrain_id, tile_x, tile_y])
+		print("  Added terrain tile: %s at (%d, %d)" % [terrain_id, atlas_coords.x, atlas_coords.y])
+
+	# Create roof tiles (row 1)
+	for roof_id in ROOF_TILE_IDS:
+		var atlas_coords: Vector2i = ROOF_TILE_IDS[roof_id]
+
+		# Create the tile
+		source.create_tile(atlas_coords)
+		print("  Added roof tile: %s at (%d, %d)" % [roof_id, atlas_coords.x, atlas_coords.y])
 
 	# Add the source to the tileset BEFORE adding collision
 	# This is required for physics layers to be accessible on tile data
@@ -200,10 +241,7 @@ func _create_tileset_resource() -> bool:
 	# Must be done AFTER source is added to tileset
 	print("Adding collision shapes...")
 	for terrain_id in COLLISION_TERRAIN:
-		var tile_index: int = TERRAIN_TILE_IDS[terrain_id]
-		var tile_x := tile_index % tiles_per_row
-		var tile_y := int(tile_index / tiles_per_row)
-		var atlas_coords := Vector2i(tile_x, tile_y)
+		var atlas_coords: Vector2i = TERRAIN_TILE_IDS[terrain_id]
 
 		var tile_data := source.get_tile_data(atlas_coords, 0)
 		if tile_data:

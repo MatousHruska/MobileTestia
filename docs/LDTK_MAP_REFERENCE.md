@@ -277,11 +277,13 @@ zone_ldtk_test.tscn
 
 ### Layer Definitions
 
-Create these layers (order matters for rendering):
+Create these layers (order matters for rendering - top to bottom):
 
 | Layer Name | Type | Purpose | Grid Size |
 |------------|------|---------|-----------|
 | **Entities** | Entity | Spawn points, chests, transitions | 16px |
+| **Roofs** | IntGrid | Roof/ceiling tiles for interior revelation | 16px |
+| **InteriorRegions** | IntGrid | Define interior zones (invisible at runtime) | 16px |
 | **Collision** | IntGrid | Blocking tiles | 16px |
 | **Ground** | IntGrid | Base terrain with auto-tiles | 16px |
 | **Decoration** | Tiles | Manual decorative tiles | 16px |
@@ -911,6 +913,121 @@ Press **Numpad /** to toggle navigation debug overlay:
 - Press **L** to cycle through layers (ground → flying → jumping → ghost)
 - Green = walkable, Red = blocked for current layer
 - Layer indicator shows which layer is being displayed
+
+---
+
+## Interior Revelation System
+
+The interior revelation system allows roof/ceiling tiles to hide when the player enters an interior space (caves, buildings, etc.), revealing the interior while dimming the exterior.
+
+### How It Works
+
+```
+OUTSIDE (roofs visible):
+┌─────────────────────────────┐
+│  trees   🌲  🌲             │
+│     ████████████  ← Roof tiles visible
+│     ████████████            │
+│  🧍 ← Player               │
+└─────────────────────────────┘
+
+INSIDE (roofs hidden, exterior dimmed):
+┌─────────────────────────────┐
+│ ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒  ← Exterior dimmed
+│     ┌──────────┐            │
+│     │ 🦇  💎   │  ← Interior revealed
+│     │   🧍     │  ← Player inside
+│     └──────────┘            │
+└─────────────────────────────┘
+```
+
+### LDtk Setup
+
+#### InteriorRegions Layer (IntGrid)
+
+Paint region IDs to define interior spaces:
+
+| Value | ID | Color | Description |
+|-------|---------|-----------|-------------|
+| 0 | (empty) | - | Outside, no interior |
+| 1 | region_1 | #FF0000 | First interior region |
+| 2 | region_2 | #00FF00 | Second interior region |
+| 3 | region_3 | #0000FF | Third interior region |
+| 4-8 | region_4-8 | Various | Additional regions |
+
+#### Roofs Layer (IntGrid)
+
+Paint roof tiles that will hide when player enters the interior:
+
+| Value | ID | Color | Description |
+|-------|---------|-----------|-------------|
+| 1 | roof_cave | #4A4A4A | Dark stone cave ceiling |
+| 2 | roof_house | #8B4513 | Wooden house roof |
+| 3 | roof_dungeon | #2F2F2F | Dark dungeon ceiling |
+| 4 | roof_ruins | #696969 | Crumbled stone ruins |
+
+### Workflow
+
+1. **Paint Interior Region**: On the `InteriorRegions` layer, paint the area that defines "inside" the structure using a region value (1-8).
+
+2. **Paint Roof Tiles**: On the `Roofs` layer, paint the roof/ceiling tiles that should hide. Make sure roof tiles overlap with their corresponding interior region.
+
+3. **Add Database Entry**: Add the region to `interior_regions.json` via Excel:
+   - `id`: Unique ID (e.g., `int_cave_north`)
+   - `zone_id`: Zone this interior belongs to
+   - `region_value`: Must match LDtk IntGrid value (1-8)
+   - `parent_region_value`: For nested interiors, parent's value (0 = none)
+   - `ambient_light`: Interior brightness (0.0-1.0)
+   - `ambient_color`: Interior tint (#RRGGBB)
+
+4. **Run Importer**: Run `ldtk_importer.gd` to export the new layer data.
+
+### Nested Interiors
+
+For a cave within a cave, use parent regions:
+
+```
+┌─────────────────────────────┐
+│  Outside (0)                │
+│   ┌─────────────────────┐   │
+│   │ Cave Outer (1)      │   │
+│   │   ┌─────────────┐   │   │
+│   │   │ Cave Inner  │   │   │
+│   │   │    (2)      │   │   │
+│   │   └─────────────┘   │   │
+│   └─────────────────────┘   │
+└─────────────────────────────┘
+```
+
+In `interior_regions.json`:
+```json
+{
+  "id": "int_cave_outer",
+  "region_value": 1,
+  "parent_region_value": 0
+},
+{
+  "id": "int_cave_inner",
+  "region_value": 2,
+  "parent_region_value": 1
+}
+```
+
+When player enters region 2, both region 1 and region 2 roofs hide.
+
+### Visual Effects
+
+| Effect | Duration | Description |
+|--------|----------|-------------|
+| Roof fade | 0.25s | Smooth alpha transition |
+| Exterior dim | 0.3s | Slight darkening of outside world |
+
+### Debug
+
+Check `InteriorManager.debug_print_state()` to see:
+- Current region value
+- List of revealed regions
+- Exterior dim state
 
 ---
 

@@ -46,6 +46,15 @@ const TERRAIN_TO_TILE := {
 	"terrain_snow": Vector2i(7, 0),
 }
 
+## Roof type to tileset tile mapping (row 1 of tileset)
+const ROOF_TO_TILE := {
+	"roof_none": Vector2i(0, 1),
+	"roof_cave": Vector2i(0, 1),
+	"roof_house": Vector2i(1, 1),
+	"roof_dungeon": Vector2i(2, 1),
+	"roof_ruins": Vector2i(3, 1),
+}
+
 #===============================================================================
 # ENUMS
 #===============================================================================
@@ -71,6 +80,7 @@ signal chunk_unloaded(chunk_id: String)
 signal chunk_state_changed(chunk_id: String, old_state: ChunkState, new_state: ChunkState)
 signal zone_initialized(zone_id: String)
 signal zone_cleanup()
+signal interior_region_changed(old_region: int, new_region: int)
 
 #===============================================================================
 # CHUNK DATA CLASS
@@ -136,6 +146,15 @@ var generate_tilemaps: bool = true
 
 ## Patrol waypoints by group name: { "group_name": [waypoint_dicts sorted by order] }
 var _patrol_waypoints: Dictionary = {}
+
+## Interior region data per chunk: { chunk_id: Array of {x, y, region_value} }
+var _interior_region_data: Dictionary = {}
+
+## Roof TileMapLayers per chunk per region: { chunk_id: { region_value: TileMapLayer } }
+var _roof_layers: Dictionary = {}
+
+## Current interior region the player is in (0 = outside)
+var _current_interior_region: int = 0
 
 #===============================================================================
 # ENEMY TEMP STATE
@@ -406,6 +425,77 @@ func load_chunk(chunk_id: String, coords: Vector2i = Vector2i.ZERO) -> void:
 	chunk_loaded.emit(chunk_id)
 
 
+#===============================================================================
+# PUBLIC API - Interior Region Management
+#===============================================================================
+
+## Get the interior region value at a world position
+## Returns 0 if outside (no interior region)
+func get_interior_region_at_position(world_pos: Vector2) -> int:
+	# Determine which chunk this position is in
+	var chunk_coords := world_to_chunk(world_pos)
+	var zone_name := current_zone_id
+	if zone_name.begins_with("zone_"):
+		zone_name = zone_name.substr(5)
+	var chunk_id := "chunk_%s_%d_%d" % [zone_name, chunk_coords.x, chunk_coords.y]
+
+	# Check if chunk has interior region data
+	if not _interior_region_data.has(chunk_id):
+		return 0
+
+	# Convert world position to local tile coordinates within chunk
+	var chunk_origin := chunk_to_world(chunk_coords)
+	var local_pos := world_pos - chunk_origin
+	var tile_x := int(local_pos.x / TILE_SIZE)
+	var tile_y := int(local_pos.y / TILE_SIZE)
+
+	# Search for region at this tile
+	for region_data in _interior_region_data[chunk_id]:
+		if int(region_data.get("x", -1)) == tile_x and int(region_data.get("y", -1)) == tile_y:
+			return int(region_data.get("region_value", 0))
+
+	return 0
+
+
+## Update the player's current interior region and emit signal if changed
+## Should be called by InteriorManager each frame
+func update_player_interior_region(player_pos: Vector2) -> void:
+	var new_region := get_interior_region_at_position(player_pos)
+
+	if new_region != _current_interior_region:
+		var old_region := _current_interior_region
+		_current_interior_region = new_region
+		interior_region_changed.emit(old_region, new_region)
+		Debug.log("ChunkManager", "Interior region changed: %d -> %d" % [old_region, new_region])
+
+
+## Get the current interior region the player is in
+func get_current_interior_region() -> int:
+	return _current_interior_region
+
+
+## Set roof visibility for a specific region across all loaded chunks
+## alpha: 0.0 = fully hidden, 1.0 = fully visible
+func set_roof_alpha_for_region(region_value: int, alpha: float) -> void:
+	for chunk_id in _roof_layers:
+		var regions: Dictionary = _roof_layers[chunk_id]
+		if regions.has(region_value):
+			var roof_layer: TileMapLayer = regions[region_value]
+			if is_instance_valid(roof_layer):
+				roof_layer.modulate.a = alpha
+
+
+## Get all unique interior region values in currently loaded chunks
+func get_loaded_interior_regions() -> Array[int]:
+	var regions: Array[int] = []
+	for chunk_id in _interior_region_data:
+		for region_data in _interior_region_data[chunk_id]:
+			var value: int = int(region_data.get("region_value", 0))
+			if value > 0 and value not in regions:
+				regions.append(value)
+	return regions
+
+
 ## Unload a specific chunk by ID
 func unload_chunk(chunk_id: String) -> void:
 	if not loaded_chunks.has(chunk_id):
@@ -582,6 +672,65 @@ func _create_chunk_tilemap(chunk_id: String, tile_data: Dictionary, chunk_node: 
 			decoration_layer.set_cell(coords, 0, atlas_coords)
 
 		Debug.log("ChunkManager", "Created decoration layer with %d tiles for %s" % [decoration_tiles.size(), chunk_id])
+
+	# Store interior region data for this chunk (used by InteriorManager)
+	var interior_regions: Array = tile_data.get("interior_regions", [])
+	if not interior_regions.is_empty():
+		_interior_region_data[chunk_id] = interior_regions
+		Debug.log("ChunkManager", "Stored %d interior region tiles for %s" % [interior_regions.size(), chunk_id])
+
+	# Create roof layers (z_index +10 so roofs render above player/entities)
+	# Group roof tiles by region_value for independent visibility control
+	var roof_tiles: Array = tile_data.get("roofs", [])
+	if not roof_tiles.is_empty():
+		# Group tiles by region
+		var tiles_by_region: Dictionary = {}  # region_value -> Array of tiles
+		for tile in roof_tiles:
+			var region_value: int = int(tile.get("region_value", 0))
+			if region_value not in tiles_by_region:
+				tiles_by_region[region_value] = []
+			tiles_by_region[region_value].append(tile)
+
+		# Create a TileMapLayer for each region's roof tiles
+		_roof_layers[chunk_id] = {}
+		for region_value in tiles_by_region:
+			var region_tiles: Array = tiles_by_region[region_value]
+			var roof_layer := TileMapLayer.new()
+			roof_layer.name = "Roof_Region_%d" % region_value
+			roof_layer.tile_set = tileset
+			roof_layer.z_index = 10  # Above player (player is typically at z=0)
+			chunk_node.add_child(roof_layer)
+
+			# Populate roof tiles
+			for tile in region_tiles:
+				var coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
+				var roof_type: String = tile.get("roof_type", "roof_cave")
+				var atlas_coords: Vector2i = ROOF_TO_TILE.get(roof_type, Vector2i(0, 1))
+				roof_layer.set_cell(coords, 0, atlas_coords)
+
+			_roof_layers[chunk_id][region_value] = roof_layer
+
+			# Apply current visibility state (if player is already in this region, hide roof)
+			if _current_interior_region == region_value or _is_region_ancestor(_current_interior_region, region_value):
+				roof_layer.modulate.a = 0.0
+
+		Debug.log("ChunkManager", "Created %d roof layers with %d tiles for %s" % [tiles_by_region.size(), roof_tiles.size(), chunk_id])
+
+
+## Check if target_region is an ancestor of current_region (for nested interiors)
+func _is_region_ancestor(current_region: int, target_region: int) -> bool:
+	# Get parent chain from database
+	if not DatabaseLoader:
+		return false
+	var region_data: Dictionary = DatabaseLoader.get_interior_region_by_value(current_zone_id, current_region)
+	while not region_data.is_empty():
+		var parent_value: int = region_data.get("parent_region_value", 0)
+		if parent_value == 0:
+			break
+		if parent_value == target_region:
+			return true
+		region_data = DatabaseLoader.get_interior_region_by_value(current_zone_id, parent_value)
+	return false
 
 
 #===============================================================================
@@ -1559,6 +1708,11 @@ func _cleanup_chunk_entities(chunk_id: String) -> void:
 			entity.queue_free()
 
 	_chunk_entities.erase(chunk_id)
+
+	# Clean up interior region and roof layer tracking
+	_interior_region_data.erase(chunk_id)
+	_roof_layers.erase(chunk_id)
+
 	Debug.log("ChunkManager", "Cleaned up entities for chunk: %s" % chunk_id)
 
 

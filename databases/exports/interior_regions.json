@@ -1,0 +1,13 @@
+{
+	"interior_regions": [
+		{
+			"id": "int_example_cave",
+			"zone_id": "zone_ldtk_test",
+			"name": "Example Cave",
+			"region_value": 1,
+			"parent_region_value": 0,
+			"ambient_light": 0.6,
+			"ambient_color": "#1a1a2e"
+		}
+	]
+}
