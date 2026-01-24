@@ -218,10 +218,21 @@ func _execute_ability(ability: Dictionary) -> void:
 		# Show we're preparing (could add visual indicator here)
 		Debug.log("AI", "%s preparing %s (%.1fs)" % [enemy_name, ability.get("id", "?"), cast_time])
 
-		# Wait for cast time, then execute
+		# Wait for cast time, then execute (with LoS validation for leap attacks)
 		get_tree().create_timer(cast_time).timeout.connect(func():
 			if is_dead:
 				return
+			# For leap/dash attacks, re-check LoS before executing
+			# If target went behind cover, cancel the attack
+			var is_leap_attack: bool = (ability_type == "dash" and ability.get("movement_type", "") == "dash_to")
+			if is_leap_attack and module_controller:
+				var ctx_check = module_controller.get_context()
+				if not ctx_check.has_line_of_sight:
+					Debug.log("AI", "%s cancelled %s - target moved out of sight during cast" % [
+						enemy_name, ability.get("id", "?")
+					])
+					ctx_check.attack_in_progress = false
+					return
 			_do_execute_ability(ability, ability_type)
 		)
 
