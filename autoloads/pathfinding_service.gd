@@ -169,10 +169,34 @@ func clear_all_caches() -> void:
 	_path_cache.clear_all()
 
 ## Get direct movement direction, falling back if no path
+## Returns Vector2.ZERO if entity is outside navigation grid bounds
 func get_direction_to(from: Vector2, to: Vector2, entity_id: int = -1) -> Vector2:
+	# Check if entity position is within navigation grid bounds
+	# If not, return zero to signal pathfinding unavailable (modules should fall back to direct movement)
+	if not is_position_in_bounds(from):
+		return Vector2.ZERO
+
 	var waypoint := get_next_waypoint(from, to, entity_id)
 	var direction := (waypoint - from).normalized()
 	return direction if direction.length() > 0.01 else Vector2.ZERO
+
+
+## Check if a position is within the navigation grid bounds
+## This is useful for determining if pathfinding can be used at this location
+func is_position_in_bounds(pos: Vector2) -> bool:
+	if not _initialized:
+		return false
+
+	var bounds := _nav_grid.get_bounds()
+	if bounds.size.x <= 0 or bounds.size.y <= 0:
+		return false  # No grid loaded
+
+	# Convert world position to tile and check bounds
+	var tile := Vector2i(
+		int(floor(pos.x / 16.0)),  # TILE_SIZE = 16
+		int(floor(pos.y / 16.0))
+	)
+	return bounds.has_point(tile)
 
 ## Check if entity has reached its target
 func has_reached_target(from: Vector2, to: Vector2, threshold: float = WAYPOINT_REACH_DISTANCE) -> bool:
