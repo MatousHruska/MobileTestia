@@ -88,7 +88,7 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
 func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> Vector2:
 	"""Get movement direction, using pathfinding if enabled.
-	Returns Vector2.ZERO if no path exists (caller should handle this case)."""
+	Falls back to direct movement if pathfinding unavailable (roaming is non-critical)."""
 	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
 
 	if not use_pf:
@@ -102,8 +102,11 @@ func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> V
 		-1
 	)
 
-	# Return Vector2.ZERO if no path found - caller handles fallback
-	# (For roaming, we pick a new target; ChaseModule might use direct movement)
+	# If pathfinding fails (out of bounds, no path), fall back to direct movement
+	# Roaming is non-critical - briefly walking toward a wall is acceptable
+	if pf_direction == Vector2.ZERO:
+		return context.global_position.direction_to(target_pos)
+
 	return pf_direction
 
 
@@ -112,23 +115,22 @@ func _pick_roam_target(context: EnemyContext) -> void:
 	var roam_radius := get_config_float("roam_radius", 50.0)
 	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
 
-	# Try up to 5 times to find a reachable target
-	for _attempt in range(5):
-		var angle := randf() * TAU
-		var distance := randf_range(roam_radius * 0.3, roam_radius)
-		var candidate := context.home_position + Vector2(cos(angle), sin(angle)) * distance
+	# If pathfinding enabled, try to find a reachable target
+	if use_pf:
+		for _attempt in range(5):
+			var angle := randf() * TAU
+			var distance := randf_range(roam_radius * 0.3, roam_radius)
+			var candidate := context.home_position + Vector2(cos(angle), sin(angle)) * distance
 
-		# If pathfinding enabled, verify we can actually path to target
-		if use_pf:
 			if PathfindingService.has_path(context.global_position, candidate):
 				_roam_target = candidate
 				return
-		else:
-			_roam_target = candidate
-			return
 
-	# Fallback: stay at current position if no reachable target found
-	_roam_target = context.global_position
+	# Pathfinding disabled, failed, or enemy outside grid bounds
+	# Fall back to direct movement roaming (non-critical behavior)
+	var angle := randf() * TAU
+	var distance := randf_range(roam_radius * 0.3, roam_radius)
+	_roam_target = context.home_position + Vector2(cos(angle), sin(angle)) * distance
 
 
 func _start_pause() -> void:
