@@ -125,7 +125,10 @@ func get_next_waypoint(from: Vector2, to: Vector2, entity_id: int = -1) -> Vecto
 			_debug_paths[debug_key] = {"path": path, "age": 0.0}
 		if path.size() > 1:
 			return path[1]  # Skip first point (current position)
-		return to  # Direct if no path or too close
+		elif path.size() == 1:
+			return to  # Already at/near target
+		else:
+			return from  # No path found - return current pos (makes direction zero)
 
 	# Check if we need to recalculate
 	if _path_cache.should_recalculate(entity_id, from, to):
@@ -136,9 +139,9 @@ func get_next_waypoint(from: Vector2, to: Vector2, entity_id: int = -1) -> Vecto
 			if _debug_enabled:
 				_debug_paths[entity_id] = {"path": path, "age": 0.0}
 		else:
-			# No path found - clear cache and return direct
+			# No path found - clear cache and return current pos (makes direction zero)
 			_path_cache.clear(entity_id)
-			return to
+			return from
 
 	# Get next waypoint from cache
 	return _path_cache.get_next_waypoint(entity_id, from)

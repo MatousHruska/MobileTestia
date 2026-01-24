@@ -72,13 +72,23 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
 	# Move toward roam target (with pathfinding if enabled)
 	var roam_direction := _get_pathfinding_direction(context, _roam_target)
+
+	# If no valid path to roam target, pick a new one and pause briefly
+	if roam_direction == Vector2.ZERO:
+		_pick_roam_target(context)
+		_pause_timer = randf_range(0.5, 1.0)  # Short pause before trying new target
+		_is_paused = true
+		context.should_stop = true
+		return
+
 	context.desired_direction = roam_direction
 	context.speed_multiplier = get_config_float("roam_speed_mult", 0.5)
 	context.facing_direction = roam_direction
 
 
 func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> Vector2:
-	"""Get movement direction, using pathfinding if enabled"""
+	"""Get movement direction, using pathfinding if enabled.
+	Returns Vector2.ZERO if no path exists (caller should handle this case)."""
 	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
 
 	if not use_pf:
@@ -86,42 +96,39 @@ func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> V
 
 	# Get direction from pathfinding service
 	# NOTE: Use entity_id = -1 (no caching) to avoid cache conflicts with other modules
-	# Only ChaseModule should own the path cache for each entity
 	var pf_direction := PathfindingService.get_direction_to(
 		context.global_position,
 		target_pos,
 		-1
 	)
 
-	# Fallback to direct movement if pathfinding returns zero
-	if pf_direction == Vector2.ZERO:
-		return context.global_position.direction_to(target_pos)
-
+	# Return Vector2.ZERO if no path found - caller handles fallback
+	# (For roaming, we pick a new target; ChaseModule might use direct movement)
 	return pf_direction
 
 
 func _pick_roam_target(context: EnemyContext) -> void:
-	"""Pick a new random roam target near home (must be walkable)"""
+	"""Pick a new random roam target near home (must be reachable via pathfinding)"""
 	var roam_radius := get_config_float("roam_radius", 50.0)
 	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
 
-	# Try up to 5 times to find a walkable target
+	# Try up to 5 times to find a reachable target
 	for _attempt in range(5):
 		var angle := randf() * TAU
 		var distance := randf_range(roam_radius * 0.3, roam_radius)
 		var candidate := context.home_position + Vector2(cos(angle), sin(angle)) * distance
 
-		# If pathfinding enabled, verify target is walkable
+		# If pathfinding enabled, verify we can actually path to target
 		if use_pf:
-			if PathfindingService.is_position_walkable(candidate):
+			if PathfindingService.has_path(context.global_position, candidate):
 				_roam_target = candidate
 				return
 		else:
 			_roam_target = candidate
 			return
 
-	# Fallback: stay near home if no walkable target found
-	_roam_target = context.home_position
+	# Fallback: stay at current position if no reachable target found
+	_roam_target = context.global_position
 
 
 func _start_pause() -> void:
