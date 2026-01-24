@@ -115,7 +115,7 @@ func _pick_roam_target(context: EnemyContext) -> void:
 	var roam_radius := get_config_float("roam_radius", 50.0)
 	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
 
-	# If pathfinding enabled, try to find a reachable target
+	# If pathfinding enabled, try to find a reachable target relative to home
 	if use_pf:
 		for _attempt in range(5):
 			var angle := randf() * TAU
@@ -127,10 +127,18 @@ func _pick_roam_target(context: EnemyContext) -> void:
 				return
 
 	# Pathfinding disabled, failed, or enemy outside grid bounds
-	# Fall back to direct movement roaming (non-critical behavior)
+	# Pick target relative to CURRENT position for natural wandering
+	# (picking relative to home causes ping-pong oscillation when outside grid)
 	var angle := randf() * TAU
 	var distance := randf_range(roam_radius * 0.3, roam_radius)
-	_roam_target = context.home_position + Vector2(cos(angle), sin(angle)) * distance
+	var candidate := context.global_position + Vector2(cos(angle), sin(angle)) * distance
+
+	# Clamp to stay within roam_radius of home (prevent drifting too far)
+	var to_home := context.home_position - candidate
+	if to_home.length() > roam_radius:
+		candidate = context.home_position + (-to_home.normalized() * roam_radius)
+
+	_roam_target = candidate
 
 
 func _start_pause() -> void:
