@@ -66,12 +66,21 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	# Check if reached roam target
 	var dist = context.global_position.distance_to(_roam_target)
 	if dist < 8.0:
+		Debug.log("AI", "IdleModule %s: Reached roam target (dist=%.1f), pausing" % [
+			context.owner.name if context.owner else "?", dist])
 		_start_pause()
 		context.should_stop = true
 		return
 
 	# Move toward roam target (with pathfinding if enabled)
 	var roam_direction := _get_pathfinding_direction(context, _roam_target)
+	Debug.log("AI", "IdleModule %s: Moving - pos=%s target=%s dist=%.1f dir=%s" % [
+		context.owner.name if context.owner else "?",
+		context.global_position,
+		_roam_target,
+		dist,
+		roam_direction
+	])
 
 	# If no valid path to roam target, pick a new one and pause briefly
 	if roam_direction == Vector2.ZERO:
@@ -117,28 +126,41 @@ func _pick_roam_target(context: EnemyContext) -> void:
 
 	# If pathfinding enabled, try to find a reachable target relative to home
 	if use_pf:
-		for _attempt in range(5):
+		for attempt in range(5):
 			var angle := randf() * TAU
 			var distance := randf_range(roam_radius * 0.3, roam_radius)
 			var candidate := context.home_position + Vector2(cos(angle), sin(angle)) * distance
 
 			if PathfindingService.has_path(context.global_position, candidate):
 				_roam_target = candidate
+				Debug.log("AI", "IdleModule %s: PF roam target picked (attempt %d): %s" % [
+					context.owner.name if context.owner else "?", attempt, _roam_target])
 				return
 
 	# Pathfinding disabled, failed, or enemy outside grid bounds
 	# Pick target relative to CURRENT position for natural wandering
-	# (picking relative to home causes ping-pong oscillation when outside grid)
 	var angle := randf() * TAU
 	var distance := randf_range(roam_radius * 0.3, roam_radius)
 	var candidate := context.global_position + Vector2(cos(angle), sin(angle)) * distance
+	var original_candidate := candidate
 
 	# Clamp to stay within roam_radius of home (prevent drifting too far)
-	var to_home := context.home_position - candidate
-	if to_home.length() > roam_radius:
-		candidate = context.home_position + (-to_home.normalized() * roam_radius)
+	var dist_from_home := candidate.distance_to(context.home_position)
+	if dist_from_home > roam_radius:
+		# Project candidate onto the roam circle around home
+		var dir_from_home := (candidate - context.home_position).normalized()
+		candidate = context.home_position + dir_from_home * roam_radius
 
 	_roam_target = candidate
+	Debug.log("AI", "IdleModule %s: Direct roam - pos=%s home=%s orig=%s final=%s dist_home=%.1f clamped=%s" % [
+		context.owner.name if context.owner else "?",
+		context.global_position,
+		context.home_position,
+		original_candidate,
+		_roam_target,
+		dist_from_home,
+		str(dist_from_home > roam_radius)
+	])
 
 
 func _start_pause() -> void:
