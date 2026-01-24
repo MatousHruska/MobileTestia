@@ -7,7 +7,7 @@
       "description": "Detects and tracks combat targets within detection radius",
       "script_path": "res://scripts/npc/ai/modules/target_detection_module.gd",
       "priority": 100,
-      "default_config": {"detection_radius": 300}
+      "default_config": {"detection_radius": 300, "require_los": true, "los_memory_time": 3.0, "los_check_interval": 0.1}
     },
     {
       "id": "mod_pack_alert",
@@ -16,7 +16,7 @@
       "description": "Alert nearby allies when acquiring target",
       "script_path": "res://scripts/npc/ai/modules/pack_alert_module.gd",
       "priority": 95,
-      "default_config": {"alert_radius": 300, "pack_group": ""}
+      "default_config": {"alert_radius": 300, "pack_group": "", "alert_require_los": true}
     },
     {
       "id": "mod_leash",
@@ -97,7 +97,7 @@
       "description": "Database-driven ability system",
       "script_path": "res://scripts/npc/ai/modules/combat_module.gd",
       "priority": 60,
-      "default_config": {"cardinal_alignment": true, "alignment_tolerance": 16.0}
+      "default_config": {"cardinal_alignment": true, "alignment_tolerance": 16.0, "ranged_require_los": true}
     },
     {
       "id": "mod_idle",
