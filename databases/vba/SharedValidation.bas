@@ -508,6 +508,7 @@ Private Sub CreateIdNamedRanges()
     CreateNamedRange "Signs", 1, "ID_Signs"
     CreateNamedRange "LoreEchoes", 1, "ID_LoreEchoes"
     CreateNamedRange "TriggerAreas", 1, "ID_TriggerAreas"
+    CreateNamedRange "InteriorRegions", 1, "ID_InteriorRegions"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -613,6 +614,9 @@ Private Sub ApplyForeignKeyValidation()
 
     ' TriggerAreas
     ApplyValidation "TriggerAreas", 7, "ID_Quests"   ' require_quest_id
+
+    ' InteriorRegions
+    ApplyValidation "InteriorRegions", 2, "ID_Zones"  ' zone_id
 End Sub
 
 '-------------------------------------------------------------------------------
