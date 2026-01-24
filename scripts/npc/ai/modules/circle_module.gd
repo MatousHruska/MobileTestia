@@ -121,12 +121,17 @@ func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> V
 	if not use_pf:
 		return context.global_position.direction_to(target_pos)
 
-	# Get direction from pathfinding service
+	# Ghost enemies move directly through walls - no pathfinding needed
+	if context.is_ghost():
+		return context.global_position.direction_to(target_pos)
+
+	# Get direction from pathfinding service with navigation layer
 	# NOTE: Use entity_id = -1 (no caching) because orbit_target changes every frame
 	var pf_direction := PathfindingService.get_direction_to(
 		context.global_position,
 		target_pos,
-		-1
+		-1,
+		context.navigation_layer
 	)
 
 	# Fall back to direct movement if pathfinding fails (out of bounds, no path)

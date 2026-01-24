@@ -26,7 +26,8 @@ Private Const COL_EN_XP_REWARD As Integer = 11
 Private Const COL_EN_LOOT_TABLE_ID As Integer = 12
 Private Const COL_EN_MODULE_IDS As Integer = 13    ' Modular AI module IDs (comma-separated)
 Private Const COL_EN_MODULE_CONFIG As Integer = 14 ' Per-enemy module config overrides (JSON)
-Private Const COL_EN_DESCRIPTION As Integer = 15
+Private Const COL_EN_NAVIGATION_LAYER As Integer = 15 ' Navigation layer (ground, flying, jumping, ghost)
+Private Const COL_EN_DESCRIPTION As Integer = 16
 
 ' Column indices for EnemyVariants
 Private Const COL_EV_ID As Integer = 1
@@ -193,6 +194,9 @@ Public Sub ExportEnemies()
             json = json & "      ""module_config"": " & moduleConfig & "," & vbCrLf
         End If
 
+        ' Navigation layer - default to "ground" if empty
+        json = json & "      ""navigation_layer"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_NAVIGATION_LAYER), "ground")) & """," & vbCrLf
+
         json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_EN_DESCRIPTION))) & """" & vbCrLf
         json = json & "    }"
 
@@ -296,7 +300,7 @@ Public Sub SetupEnemiesSheet()
     Dim headers As Variant
     headers = Array("id", "name", "type", "base_health", "base_damage", "armor", "base_shield", _
                     "move_speed", "attack_speed", "detection_range", _
-                    "xp_reward", "loot_table_id", "module_ids", "module_config", "description")
+                    "xp_reward", "loot_table_id", "module_ids", "module_config", "navigation_layer", "description")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -312,6 +316,7 @@ Public Sub SetupEnemiesSheet()
     SafeAddComment ws.Cells(1, 12), "Reference to LootTables id"
     SafeAddComment ws.Cells(1, 13), "Comma-separated module IDs for AI (e.g., mod_target_detection,mod_chase,mod_combat)"
     SafeAddComment ws.Cells(1, 14), "Per-enemy module config overrides as JSON. Format: {""mod_idle"": {""can_roam"": false}}"
+    SafeAddComment ws.Cells(1, 15), "Navigation layer: ground, flying, jumping, ghost. Determines what terrain the enemy can traverse."
 End Sub
 
 '-------------------------------------------------------------------------------

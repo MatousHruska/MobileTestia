@@ -16,13 +16,39 @@ const CHUNK_TILES: int = 64
 ## Path to chunk tile data
 const CHUNK_TILES_DIR := "res://maps/chunk_tiles/"
 
-## Non-walkable terrain types
-const BLOCKED_TERRAINS: Array[String] = ["terrain_water", "terrain_wall", "terrain_void"]
-
 ## Wall margin in tiles - expands blocked regions to prevent corner clipping
 ## Set to 1 to block tiles adjacent to walls (prevents entities from pathing
 ## too close to walls, avoiding corner-stuck issues with collision radius)
 const WALL_MARGIN: int = 1
+
+#===============================================================================
+# NAVIGATION LAYER CONSTANTS
+#===============================================================================
+
+## Navigation layer flags (bitmask)
+const NAV_GROUND: int = 1    # 0001 - Normal ground enemies
+const NAV_FLYING: int = 2    # 0010 - Flying enemies (can cross water/pits)
+const NAV_JUMPING: int = 4   # 0100 - Jumping enemies (can cross pits, not water)
+const NAV_GHOST: int = 8     # 1000 - Ghost enemies (ignore all terrain)
+const NAV_ALL: int = 15      # 1111 - All layers combined
+
+## Terrain to navigation layer mapping
+## Each terrain type has a bitmask of which layers can traverse it
+const TERRAIN_NAV_LAYERS: Dictionary = {
+	"terrain_void": 0,                              # Nothing can traverse
+	"terrain_grass": NAV_ALL,                       # All can traverse
+	"terrain_dirt": NAV_ALL,                        # All can traverse
+	"terrain_stone": NAV_ALL,                       # All can traverse
+	"terrain_water": NAV_FLYING | NAV_GHOST,        # Only flying/ghost
+	"terrain_wall": NAV_GHOST,                      # Only ghost
+	"terrain_sand": NAV_ALL,                        # All can traverse
+	"terrain_snow": NAV_ALL,                        # All can traverse
+	"terrain_pit": NAV_FLYING | NAV_JUMPING | NAV_GHOST,  # Flying, jumping, ghost
+	"terrain_lava": NAV_FLYING | NAV_GHOST,         # Only flying/ghost (dangerous)
+}
+
+## Default layer for unrecognized terrain (treat as blocked for ground)
+const DEFAULT_NAV_LAYER: int = 0
 
 #===============================================================================
 # STATE
@@ -31,7 +57,8 @@ const WALL_MARGIN: int = 1
 ## The Godot A* grid for pathfinding
 var _astar: AStarGrid2D
 
-## Loaded chunk data: chunk_id -> { collision: Set, water: Set, bounds: Rect2i }
+## Loaded chunk data: chunk_id -> { coords: Vector2i, nav_layers: Dictionary[Vector2i, int] }
+## nav_layers maps tile position to layer bitmask (which layers can traverse this tile)
 var _chunk_data: Dictionary = {}
 
 ## Track which chunk coords are loaded (for bounds calculation)
@@ -42,6 +69,12 @@ var _region_dirty: bool = true
 
 ## Current grid bounds (in tiles)
 var _grid_bounds: Rect2i = Rect2i()
+
+## Current navigation layer the grid is built for
+var _current_layer: int = NAV_GROUND
+
+## Track if we need to rebuild for a different layer
+var _layer_dirty: bool = true
 
 ## Debug mode
 var debug_enabled: bool = false
@@ -70,36 +103,57 @@ func load_chunk(chunk_id: String, chunk_coords: Vector2i) -> void:
 	# Load tile data from JSON
 	var tile_data := _load_chunk_tiles(chunk_id)
 
-	# Extract blocked tiles
-	var blocked_tiles: Dictionary = {}  # Vector2i -> true
+	# Store nav layer bitmask per tile
+	# Key: Vector2i (world tile coords), Value: int (bitmask of traversable layers)
+	var nav_layers: Dictionary = {}
 
-	# Process collision layer (walls)
+	# First, set all tiles to walkable by all (NAV_ALL)
+	# We'll restrict based on terrain and collision
+	for y in range(CHUNK_TILES):
+		for x in range(CHUNK_TILES):
+			var local_coords := Vector2i(x, y)
+			var world_tile := _local_to_world_tile(local_coords, chunk_coords)
+			nav_layers[world_tile] = NAV_ALL
+
+	# Process collision layer (walls) - only ghosts can traverse
 	var collision_tiles: Array = tile_data.get("collision", [])
 	for tile in collision_tiles:
 		var local_coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
 		var world_tile := _local_to_world_tile(local_coords, chunk_coords)
-		blocked_tiles[world_tile] = true
+		nav_layers[world_tile] = NAV_GHOST  # Only ghosts traverse walls
 
-	# Process ground layer for water/void
+	# Process ground layer for terrain types
 	var ground_tiles: Array = tile_data.get("ground", [])
 	for tile in ground_tiles:
 		var terrain_id: String = tile.get("terrain_id", "")
-		if terrain_id in BLOCKED_TERRAINS:
-			var local_coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
-			var world_tile := _local_to_world_tile(local_coords, chunk_coords)
-			blocked_tiles[world_tile] = true
+		if terrain_id.is_empty():
+			continue
+		var local_coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
+		var world_tile := _local_to_world_tile(local_coords, chunk_coords)
+		var layer_mask: int = TERRAIN_NAV_LAYERS.get(terrain_id, DEFAULT_NAV_LAYER)
+		# Only restrict if terrain is more restrictive than collision
+		# (collision may have already set it to NAV_GHOST)
+		if nav_layers.has(world_tile):
+			nav_layers[world_tile] = nav_layers[world_tile] & layer_mask
+		else:
+			nav_layers[world_tile] = layer_mask
 
 	# Store chunk data
 	_chunk_data[chunk_id] = {
 		"coords": chunk_coords,
-		"blocked": blocked_tiles
+		"nav_layers": nav_layers
 	}
 	_loaded_chunk_coords.append(chunk_coords)
 	_region_dirty = true
+	_layer_dirty = true  # Need to rebuild for current layer
 
 	if debug_enabled:
-		print("[NavigationGrid] Loaded chunk %s at %s, %d blocked tiles" % [
-			chunk_id, chunk_coords, blocked_tiles.size()
+		var blocked_count := 0
+		for t in nav_layers.keys():
+			if (nav_layers[t] & NAV_GROUND) == 0:
+				blocked_count += 1
+		print("[NavigationGrid] Loaded chunk %s at %s, %d ground-blocked tiles" % [
+			chunk_id, chunk_coords, blocked_count
 		])
 
 ## Unload navigation data for a chunk
@@ -113,26 +167,36 @@ func unload_chunk(chunk_id: String) -> void:
 	_chunk_data.erase(chunk_id)
 	_loaded_chunk_coords.erase(coords)
 	_region_dirty = true
+	_layer_dirty = true
 
 	if debug_enabled:
 		print("[NavigationGrid] Unloaded chunk %s" % chunk_id)
 
-## Rebuild the A* grid if dirty
+## Rebuild the A* grid if dirty (for the current layer)
 func rebuild_if_dirty() -> void:
-	if not _region_dirty:
+	if not _region_dirty and not _layer_dirty:
 		return
 
 	_rebuild_grid()
 	_region_dirty = false
+	_layer_dirty = false
+
+## Rebuild for a specific navigation layer if needed
+func rebuild_for_layer(nav_layer: int) -> void:
+	if nav_layer != _current_layer:
+		_current_layer = nav_layer
+		_layer_dirty = true
+	rebuild_if_dirty()
 
 #===============================================================================
 # PATHFINDING
 #===============================================================================
 
-## Get path between two world positions
+## Get path between two world positions for a specific navigation layer
 ## Returns empty array if path not found or positions outside loaded area
-func get_path(from_world: Vector2, to_world: Vector2) -> PackedVector2Array:
-	rebuild_if_dirty()
+func get_path(from_world: Vector2, to_world: Vector2, nav_layer: int = NAV_GROUND) -> PackedVector2Array:
+	# Rebuild grid for this layer if needed
+	rebuild_for_layer(nav_layer)
 
 	var from_tile := world_to_tile(from_world)
 	var to_tile := world_to_tile(to_world)
@@ -156,21 +220,44 @@ func get_path(from_world: Vector2, to_world: Vector2) -> PackedVector2Array:
 	# AStarGrid2D with cell_size (16,16) returns points already in world space
 	return _astar.get_point_path(from_tile, to_tile)
 
-## Check if a world position is walkable
-func is_walkable(world_pos: Vector2) -> bool:
-	rebuild_if_dirty()
-
+## Check if a world position is walkable for a specific navigation layer
+func is_walkable(world_pos: Vector2, nav_layer: int = NAV_GROUND) -> bool:
 	var tile := world_to_tile(world_pos)
 
 	if not _is_tile_in_bounds(tile):
 		return false
 
-	return not _astar.is_point_solid(tile)
+	# Check the tile's layer bitmask directly (faster than rebuilding)
+	return _is_tile_walkable_for_layer(tile, nav_layer)
 
 ## Check if path exists between two positions (cheaper than get_path)
-func has_path(from_world: Vector2, to_world: Vector2) -> bool:
-	var path := get_path(from_world, to_world)
+func has_path(from_world: Vector2, to_world: Vector2, nav_layer: int = NAV_GROUND) -> bool:
+	var path := get_path(from_world, to_world, nav_layer)
 	return path.size() > 0
+
+## Check if a tile is walkable for a specific layer (direct bitmask check)
+func _is_tile_walkable_for_layer(tile: Vector2i, nav_layer: int) -> bool:
+	# Find which chunk this tile belongs to
+	var chunk_coords := Vector2i(
+		int(floor(float(tile.x) / CHUNK_TILES)),
+		int(floor(float(tile.y) / CHUNK_TILES))
+	)
+
+	# Check if chunk is loaded
+	if not chunk_coords in _loaded_chunk_coords:
+		return false
+
+	# Find the chunk data
+	for chunk_id in _chunk_data:
+		var data: Dictionary = _chunk_data[chunk_id]
+		if data.get("coords") == chunk_coords:
+			var nav_layers: Dictionary = data.get("nav_layers", {})
+			if nav_layers.has(tile):
+				return (nav_layers[tile] & nav_layer) != 0
+			else:
+				return true  # Default to walkable if not in nav_layers
+
+	return false
 
 #===============================================================================
 # COORDINATE CONVERSION
@@ -225,7 +312,7 @@ func _load_chunk_tiles(chunk_id: String) -> Dictionary:
 
 	return json.data
 
-## Rebuild the A* grid from loaded chunks
+## Rebuild the A* grid from loaded chunks for the current navigation layer
 func _rebuild_grid() -> void:
 	if _loaded_chunk_coords.is_empty():
 		_grid_bounds = Rect2i()
@@ -259,23 +346,26 @@ func _rebuild_grid() -> void:
 	# Note: fill_solid_region sets points as solid, we need opposite approach
 	# The default after update() is all points walkable
 
-	# Mark blocked tiles as solid (with margin expansion to prevent corner clipping)
+	# Mark tiles as solid based on current navigation layer
 	for chunk_id in _chunk_data:
 		var data: Dictionary = _chunk_data[chunk_id]
-		var blocked: Dictionary = data.get("blocked", {})
-		for tile in blocked.keys():
-			# Expand each blocked tile to include margin tiles
-			var expanded := _get_expanded_blocked_tiles(tile)
-			for blocked_tile in expanded:
-				if _is_tile_in_bounds(blocked_tile):
-					_astar.set_point_solid(blocked_tile, true)
+		var nav_layers: Dictionary = data.get("nav_layers", {})
+		for tile in nav_layers.keys():
+			var tile_mask: int = nav_layers[tile]
+			# If current layer cannot traverse this tile, mark it solid
+			if (tile_mask & _current_layer) == 0:
+				# Expand blocked tiles to include margin tiles (prevent corner clipping)
+				var expanded := _get_expanded_blocked_tiles(tile)
+				for blocked_tile in expanded:
+					if _is_tile_in_bounds(blocked_tile):
+						_astar.set_point_solid(blocked_tile, true)
 
 	# Also mark tiles outside loaded chunks as solid
 	_mark_unloaded_areas_solid()
 
 	if debug_enabled:
-		print("[NavigationGrid] Rebuilt grid: bounds=%s, chunks=%d" % [
-			_grid_bounds, _loaded_chunk_coords.size()
+		print("[NavigationGrid] Rebuilt grid for layer %d: bounds=%s, chunks=%d" % [
+			_current_layer, _grid_bounds, _loaded_chunk_coords.size()
 		])
 
 ## Mark tiles in unloaded chunk areas as solid
@@ -356,14 +446,21 @@ func _find_nearest_walkable(tile: Vector2i) -> Vector2i:
 # DEBUG METHODS
 #===============================================================================
 
-## Get all blocked tile positions (for debug visualization)
+## Get all blocked tile positions for the current navigation layer (for debug visualization)
 func get_blocked_tiles() -> Array[Vector2i]:
+	return get_blocked_tiles_for_layer(_current_layer)
+
+## Get blocked tile positions for a specific navigation layer
+func get_blocked_tiles_for_layer(nav_layer: int) -> Array[Vector2i]:
 	var blocked: Array[Vector2i] = []
 	for chunk_id in _chunk_data:
 		var data: Dictionary = _chunk_data[chunk_id]
-		var chunk_blocked: Dictionary = data.get("blocked", {})
-		for tile in chunk_blocked.keys():
-			blocked.append(tile)
+		var nav_layers: Dictionary = data.get("nav_layers", {})
+		for tile in nav_layers.keys():
+			var tile_mask: int = nav_layers[tile]
+			# If this layer cannot traverse this tile, it's blocked
+			if (tile_mask & nav_layer) == 0:
+				blocked.append(tile)
 	return blocked
 
 ## Get current grid bounds
@@ -373,3 +470,25 @@ func get_bounds() -> Rect2i:
 ## Get number of loaded chunks
 func get_loaded_chunk_count() -> int:
 	return _loaded_chunk_coords.size()
+
+## Get the current navigation layer the grid is built for
+func get_current_layer() -> int:
+	return _current_layer
+
+## Convert layer bitmask to human-readable name
+static func layer_to_name(nav_layer: int) -> String:
+	match nav_layer:
+		NAV_GROUND: return "ground"
+		NAV_FLYING: return "flying"
+		NAV_JUMPING: return "jumping"
+		NAV_GHOST: return "ghost"
+		_: return "unknown"
+
+## Convert layer name to bitmask
+static func name_to_layer(name: String) -> int:
+	match name:
+		"ground": return NAV_GROUND
+		"flying": return NAV_FLYING
+		"jumping": return NAV_JUMPING
+		"ghost": return NAV_GHOST
+		_: return NAV_GROUND  # Default to ground

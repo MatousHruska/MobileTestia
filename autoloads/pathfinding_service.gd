@@ -98,9 +98,9 @@ func _process(delta: float) -> void:
 # PUBLIC API
 #===============================================================================
 
-## Get full path from start to target
+## Get full path from start to target for a specific navigation layer
 ## Returns empty array if no path found
-func find_path(from: Vector2, to: Vector2) -> PackedVector2Array:
+func find_path(from: Vector2, to: Vector2, nav_layer: int = NavigationGrid.NAV_GROUND) -> PackedVector2Array:
 	if not _initialized:
 		return PackedVector2Array()
 
@@ -108,17 +108,18 @@ func find_path(from: Vector2, to: Vector2) -> PackedVector2Array:
 	if from.distance_to(to) > MAX_PATH_DISTANCE:
 		return PackedVector2Array()
 
-	return _nav_grid.get_path(from, to)
+	return _nav_grid.get_path(from, to, nav_layer)
 
 ## Get next waypoint for an entity moving toward target
 ## Uses caching for efficiency - call this every frame for smooth movement
-func get_next_waypoint(from: Vector2, to: Vector2, entity_id: int = -1) -> Vector2:
+## nav_layer specifies which navigation layer to use (ground, flying, etc.)
+func get_next_waypoint(from: Vector2, to: Vector2, entity_id: int = -1, nav_layer: int = NavigationGrid.NAV_GROUND) -> Vector2:
 	if not _initialized:
 		return to  # Fallback to direct movement
 
 	# If no caching requested (entity_id = -1), calculate fresh
 	if entity_id < 0:
-		var path := find_path(from, to)
+		var path := find_path(from, to, nav_layer)
 		# Store for debug visualization (use hash of from+to as key)
 		if _debug_enabled and path.size() > 0:
 			var debug_key := hash(from) ^ hash(to)
@@ -132,7 +133,7 @@ func get_next_waypoint(from: Vector2, to: Vector2, entity_id: int = -1) -> Vecto
 
 	# Check if we need to recalculate
 	if _path_cache.should_recalculate(entity_id, from, to):
-		var path := find_path(from, to)
+		var path := find_path(from, to, nav_layer)
 		if path.size() > 0:
 			_path_cache.cache_path(entity_id, path, from, to)
 			# Store for debug visualization
@@ -146,19 +147,19 @@ func get_next_waypoint(from: Vector2, to: Vector2, entity_id: int = -1) -> Vecto
 	# Get next waypoint from cache
 	return _path_cache.get_next_waypoint(entity_id, from)
 
-## Check if a position is walkable
-func is_position_walkable(pos: Vector2) -> bool:
+## Check if a position is walkable for a specific navigation layer
+func is_position_walkable(pos: Vector2, nav_layer: int = NavigationGrid.NAV_GROUND) -> bool:
 	if not _initialized:
 		return true  # Assume walkable when not initialized
 
-	return _nav_grid.is_walkable(pos)
+	return _nav_grid.is_walkable(pos, nav_layer)
 
 ## Check if path exists between two positions (cheaper than getting full path)
-func has_path(from: Vector2, to: Vector2) -> bool:
+func has_path(from: Vector2, to: Vector2, nav_layer: int = NavigationGrid.NAV_GROUND) -> bool:
 	if not _initialized:
 		return false
 
-	return _nav_grid.has_path(from, to)
+	return _nav_grid.has_path(from, to, nav_layer)
 
 ## Clear cached path for an entity (call when target changes significantly)
 func clear_cache(entity_id: int) -> void:
@@ -170,13 +171,14 @@ func clear_all_caches() -> void:
 
 ## Get direct movement direction, falling back if no path
 ## Returns Vector2.ZERO if entity is outside navigation grid bounds
-func get_direction_to(from: Vector2, to: Vector2, entity_id: int = -1) -> Vector2:
+## nav_layer specifies which navigation layer to use (ground, flying, etc.)
+func get_direction_to(from: Vector2, to: Vector2, entity_id: int = -1, nav_layer: int = NavigationGrid.NAV_GROUND) -> Vector2:
 	# Check if entity position is within navigation grid bounds
 	# If not, return zero to signal pathfinding unavailable (modules should fall back to direct movement)
 	if not is_position_in_bounds(from):
 		return Vector2.ZERO
 
-	var waypoint := get_next_waypoint(from, to, entity_id)
+	var waypoint := get_next_waypoint(from, to, entity_id, nav_layer)
 	var direction := (waypoint - from).normalized()
 	return direction if direction.length() > 0.01 else Vector2.ZERO
 
@@ -299,9 +301,17 @@ func _remove_debug_drawer() -> void:
 func is_debug_enabled() -> bool:
 	return _debug_enabled
 
-## Get blocked tiles for debug visualization
+## Get blocked tiles for debug visualization (for current layer)
 func get_blocked_tiles() -> Array[Vector2i]:
 	return _nav_grid.get_blocked_tiles()
+
+## Get blocked tiles for a specific navigation layer
+func get_blocked_tiles_for_layer(nav_layer: int) -> Array[Vector2i]:
+	return _nav_grid.get_blocked_tiles_for_layer(nav_layer)
+
+## Get the current navigation layer the grid is built for
+func get_current_layer() -> int:
+	return _nav_grid.get_current_layer()
 
 ## Get all paths for debug visualization (includes debug-tracked paths)
 func get_cached_paths() -> Array[PackedVector2Array]:

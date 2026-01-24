@@ -676,6 +676,7 @@ Private Sub ApplyEnumValidation()
 
     ' Enemies
     ApplyListValidation "Enemies", 3, "Normal,Miniboss,Boss"  ' type
+    ApplyListValidation "Enemies", 15, "ground,flying,jumping,ghost"  ' navigation_layer
 
     ' EnemyModules
     ApplyListValidation "EnemyModules", 3, "detection,movement,combat,social,special,utility"  ' module_type

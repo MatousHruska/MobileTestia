@@ -57,13 +57,18 @@ func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> V
 	if not use_pf:
 		return context.global_position.direction_to(target_pos)
 
-	# Get direction from pathfinding service
+	# Ghost enemies move directly through walls - no pathfinding needed
+	if context.is_ghost():
+		return context.global_position.direction_to(target_pos)
+
+	# Get direction from pathfinding service with navigation layer
 	# NOTE: Use entity_id = -1 (no caching) to avoid potential conflicts
 	# LeashModule only runs when returning, but safer to not share cache
 	var pf_direction := PathfindingService.get_direction_to(
 		context.global_position,
 		target_pos,
-		-1
+		-1,
+		context.navigation_layer
 	)
 
 	# Fallback to direct movement if pathfinding returns zero
