@@ -118,6 +118,9 @@ Ability-specific params:
 |-----|---------|-------------|
 | detection_radius | 120.0 | Range to detect targets |
 | prefer_attacker | true | Target who hit us first |
+| los_check_interval | 0.1 | LoS check frequency (for attack validation) |
+
+**Note:** Detection is by distance only. LoS is computed but only used for attack validation (ranged/leap).
 
 ### mod_pack_alert
 | Key | Default | Description |
@@ -169,10 +172,13 @@ Ability-specific params:
 |-----|---------|-------------|
 | cardinal_alignment | true | Require X/Y alignment for melee attacks |
 | alignment_tolerance | 16.0 | Pixels tolerance for cardinal alignment |
+| require_los | true | Require LoS for ranged/leap attacks |
 
 **Global Attack Cooldown**: Combat module enforces a minimum time between ANY attacks based on the enemy's `attack_speed` stat. An attack_speed of 1.0 = 1 second minimum between attacks.
 
 **Ranged Cooldown Behavior**: When a ranged ability is on cooldown and the enemy is within range, they will stop and wait instead of chasing into melee. However, if the kite module wants them to back away (player too close), they will respect that and continue kiting.
+
+**Line of Sight for Attacks**: Ranged, projectile, and leap attacks require clear LoS - enemies can't attack through walls. Leap attacks cancel if target hides during cast time.
 
 ### mod_idle
 | Key | Default | Description |
@@ -415,7 +421,7 @@ The debug overlay shows:
 - **health**: Health percentage
 - **home_dist**: Distance from spawn point
 - **cooldown**: Attack cooldown remaining
-- **flags**: Active flags (ATK, STOP, LEASH, PACK, INRNG, ATKING)
+- **flags**: Active flags (ATK, STOP, LEASH, PACK, INRNG, ATKING, LOS, NO_LOS)
 
 ## See Also
 
