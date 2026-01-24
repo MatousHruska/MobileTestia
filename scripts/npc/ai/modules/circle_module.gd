@@ -99,6 +99,14 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	# Get movement direction (with pathfinding if enabled)
 	var final_direction := _get_pathfinding_direction(context, orbit_target)
 
+	# If no valid path, try opposite circle direction
+	if final_direction == Vector2.ZERO:
+		_circle_direction *= -1  # Flip direction
+		_direction_change_timer = 0.5  # Brief delay before next change
+		context.should_stop = true
+		context.facing_direction = to_target  # Still face target
+		return
+
 	# Apply movement
 	context.desired_direction = final_direction
 	context.speed_multiplier = circle_speed_mult
@@ -106,7 +114,8 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
 
 func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> Vector2:
-	"""Get movement direction, using pathfinding if enabled"""
+	"""Get movement direction, using pathfinding if enabled.
+	Returns Vector2.ZERO if no path exists (caller should handle this case)."""
 	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
 
 	if not use_pf:
@@ -114,17 +123,13 @@ func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> V
 
 	# Get direction from pathfinding service
 	# NOTE: Use entity_id = -1 (no caching) because orbit_target changes every frame
-	# Caching would cause oscillation as the cache constantly invalidates
 	var pf_direction := PathfindingService.get_direction_to(
 		context.global_position,
 		target_pos,
 		-1
 	)
 
-	# Fallback to direct movement if pathfinding returns zero
-	if pf_direction == Vector2.ZERO:
-		return context.global_position.direction_to(target_pos)
-
+	# Return Vector2.ZERO if no path found - caller will try opposite direction
 	return pf_direction
 
 
