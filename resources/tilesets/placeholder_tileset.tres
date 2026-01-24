@@ -4,6 +4,7 @@
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_sryhn"]
 texture = ExtResource("1_dyu7k")
+; Row 0: Terrain tiles
 0:0/0 = 0
 1:0/0 = 0
 2:0/0 = 0
@@ -14,6 +15,11 @@ texture = ExtResource("1_dyu7k")
 5:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(0, 0, 16, 0, 16, 16, 0, 16)
 6:0/0 = 0
 7:0/0 = 0
+; Row 1: Roof tiles
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+3:1/0 = 0
 
 [resource]
 physics_layer_0/collision_layer = 1
