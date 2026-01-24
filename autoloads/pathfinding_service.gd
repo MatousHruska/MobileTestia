@@ -45,6 +45,12 @@ var _pending_rebuild: bool = false
 ## Debug drawer instance
 var _debug_drawer: Node2D = null
 
+## Debug path tracking (stores recent paths for visualization regardless of caching)
+var _debug_paths: Dictionary = {}  # entity_id or hash -> {path: PackedVector2Array, age: float}
+
+## Max age for debug paths before cleanup
+const DEBUG_PATH_MAX_AGE: float = 1.0
+
 #===============================================================================
 # LIFECYCLE
 #===============================================================================
@@ -71,6 +77,16 @@ func _connect_signals() -> void:
 func _process(delta: float) -> void:
 	# Update path cache (age entries)
 	_path_cache.update(delta)
+
+	# Age and cleanup debug paths
+	if _debug_enabled:
+		var to_remove: Array = []
+		for key in _debug_paths:
+			_debug_paths[key].age += delta
+			if _debug_paths[key].age > DEBUG_PATH_MAX_AGE:
+				to_remove.append(key)
+		for key in to_remove:
+			_debug_paths.erase(key)
 
 	# Perform deferred grid rebuild at end of frame
 	if _pending_rebuild:
@@ -103,6 +119,10 @@ func get_next_waypoint(from: Vector2, to: Vector2, entity_id: int = -1) -> Vecto
 	# If no caching requested (entity_id = -1), calculate fresh
 	if entity_id < 0:
 		var path := find_path(from, to)
+		# Store for debug visualization (use hash of from+to as key)
+		if _debug_enabled and path.size() > 0:
+			var debug_key := hash(from) ^ hash(to)
+			_debug_paths[debug_key] = {"path": path, "age": 0.0}
 		if path.size() > 1:
 			return path[1]  # Skip first point (current position)
 		return to  # Direct if no path or too close
@@ -112,6 +132,9 @@ func get_next_waypoint(from: Vector2, to: Vector2, entity_id: int = -1) -> Vecto
 		var path := find_path(from, to)
 		if path.size() > 0:
 			_path_cache.cache_path(entity_id, path, from, to)
+			# Store for debug visualization
+			if _debug_enabled:
+				_debug_paths[entity_id] = {"path": path, "age": 0.0}
 		else:
 			# No path found - clear cache and return direct
 			_path_cache.clear(entity_id)
@@ -173,6 +196,7 @@ func set_debug_enabled(enabled: bool) -> void:
 		print("└─────────────────────────")
 	else:
 		_remove_debug_drawer()
+		_debug_paths.clear()  # Clear debug path tracking
 
 	debug_toggled.emit(enabled)
 
@@ -204,9 +228,20 @@ func is_debug_enabled() -> bool:
 func get_blocked_tiles() -> Array[Vector2i]:
 	return _nav_grid.get_blocked_tiles()
 
-## Get all cached paths for debug visualization
+## Get all paths for debug visualization (includes debug-tracked paths)
 func get_cached_paths() -> Array[PackedVector2Array]:
-	return _path_cache.get_all_cached_paths()
+	var paths: Array[PackedVector2Array] = []
+
+	# Add paths from regular cache
+	paths.append_array(_path_cache.get_all_cached_paths())
+
+	# Add paths from debug tracking (for uncached paths)
+	for key in _debug_paths:
+		var data: Dictionary = _debug_paths[key]
+		if data.has("path") and data.path.size() > 0:
+			paths.append(data.path)
+
+	return paths
 
 ## Get navigation grid bounds
 func get_nav_bounds() -> Rect2i:
@@ -280,6 +315,7 @@ func _on_chunk_unloaded(chunk_id: String) -> void:
 func _on_zone_cleanup() -> void:
 	# Clear all navigation data on zone change
 	_path_cache.clear_all()
+	_debug_paths.clear()
 
 	# Unload all chunks from nav grid
 	for chunk_id in _nav_grid._chunk_data.keys():
