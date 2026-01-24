@@ -51,6 +51,7 @@ Press these numpad keys during gameplay (debug builds only):
 | **Numpad 7** | ChunkManager | Zone resolution trace |
 | **Numpad 8** | GameManager | Full game state dump |
 | **Numpad 9** | BuffSystem | Test ends_when buff system |
+| **Numpad /** | Pathfinding | Toggle pathfinding debug overlay |
 
 ---
 
@@ -71,6 +72,33 @@ HUD shows: zone, player chunk, loaded count, enemies, locks, load time
 ```
 
 **Note**: ORANGE (Leash) only appears when an enemy was **previously in combat** and is now returning to its home position. Enemies that are idle or roaming but never engaged do NOT show as leash-locked.
+
+---
+
+## Pathfinding Debug (Numpad /)
+
+Toggle the pathfinding overlay to visualize navigation grid and blocked tiles.
+
+| Key | Action |
+|-----|--------|
+| **Numpad /** | Toggle pathfinding overlay on/off |
+| **L** | Cycle navigation layer view (All → Ground → Flying → Jumping → Ghost) |
+
+```
+Layer Colors (blocked tiles):
+- ALL LAYERS: Shows walkability for all movement types
+- GROUND:     Red = blocked for ground enemies
+- FLYING:     Blue = blocked for flying enemies
+- JUMPING:    Green = blocked for jumping enemies
+- GHOST:      Purple = blocked for ghost enemies (only walls)
+
+Grid shows 16x16 tile cells with blocked tiles highlighted.
+```
+
+**When to use:**
+- Debugging enemy pathfinding issues
+- Verifying terrain is set up correctly
+- Checking which tiles specific enemy types can traverse
 
 ---
 

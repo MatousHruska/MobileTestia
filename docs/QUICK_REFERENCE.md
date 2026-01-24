@@ -432,6 +432,50 @@ The debug overlay shows:
 
 ---
 
+# Pathfinding Quick Reference
+
+## PathfindingService API
+
+All movement modules use PathfindingService (autoload) for navigation:
+
+```gdscript
+# Find path from A to B
+var path: Array = PathfindingService.find_path(from_pos, to_pos, nav_layer)
+
+# Get next waypoint along path (handles caching)
+var waypoint: Vector2 = PathfindingService.get_next_waypoint(entity, from_pos, to_pos, nav_layer)
+
+# Get direction to move (simplest API)
+var dir: Vector2 = PathfindingService.get_direction_to(entity, from_pos, to_pos, nav_layer)
+
+# Check if position is walkable
+var walkable: bool = PathfindingService.is_position_walkable(world_pos, nav_layer)
+
+# Check if path exists
+var reachable: bool = PathfindingService.has_path(from_pos, to_pos, nav_layer)
+```
+
+## Navigation Layers
+
+| Layer | Value | Traverses |
+|-------|-------|-----------|
+| NAV_GROUND | 1 | Grass, dirt, stone |
+| NAV_FLYING | 2 | All except walls |
+| NAV_JUMPING | 4 | Can cross pits |
+| NAV_GHOST | 8 | Everything (direct movement, no pathfinding) |
+
+## Enemy Navigation Layer
+
+Set in enemy database `navigation_layer` column:
+- `ground` (default) - Standard pathfinding
+- `flying` - Can fly over water, pits
+- `jumping` - Can jump over pits
+- `ghost` - Moves directly to target (no A* pathfinding)
+
+See `docs/ENEMY_REFERENCE.md` for detailed navigation layer documentation.
+
+---
+
 # Map Building Quick Reference
 
 > **Note:** For complete documentation, see `docs/MAP_BUILDING_REFERENCE.md` and `docs/ZONE_DESIGN_GUIDE.md`
