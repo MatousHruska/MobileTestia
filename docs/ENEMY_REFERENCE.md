@@ -7,13 +7,14 @@ Complete reference for the database-driven modular enemy AI system.
 ## Table of Contents
 
 1. [Quick Start](#quick-start)
-2. [Module System](#module-system)
-3. [Ability System](#ability-system)
-4. [Enemy Configuration](#enemy-configuration)
-5. [Behavior Examples](#behavior-examples)
-6. [Detailed Behaviors](#detailed-behaviors)
-7. [Debug Tools](#debug-tools)
-8. [Code Reference](#code-reference)
+2. [Architecture](#architecture)
+3. [Module System](#module-system)
+4. [Ability System](#ability-system)
+5. [Enemy Configuration](#enemy-configuration)
+6. [Behavior Examples](#behavior-examples)
+7. [Detailed Behaviors](#detailed-behaviors)
+8. [Debug Tools](#debug-tools)
+9. [Code Reference](#code-reference)
 
 ---
 
@@ -42,6 +43,53 @@ EnemyAbilities Sheet:
   ability_id: abi_melee_strike
   priority: 50
   condition: default
+```
+
+---
+
+## Architecture
+
+### Single Class Design
+
+All enemies use the `EnemyNPC` class (`scripts/npc/enemy_npc.gd`). The modular AI system is an **optional feature** that activates automatically when `module_ids` is configured in the database.
+
+**How it works:**
+```gdscript
+# In EnemyNPC._ready():
+func _setup_module_system() -> void:
+    var enemy_data = DatabaseLoader.get_enemy(enemy_id)
+    var module_ids_str = enemy_data.get("module_ids", "")
+
+    if module_ids_str.is_empty():
+        _using_modules = false  # Static enemy - no AI
+        return
+
+    _using_modules = true
+    # Initialize ModuleController and load modules...
+```
+
+**Enemy States Based on Configuration:**
+
+| Configuration | Behavior |
+|---------------|----------|
+| `module_ids` empty | Static enemy - no AI, stands still |
+| `module_ids` set | Modular AI - modules control behavior |
+
+### Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `_using_modules` | bool | True if modular AI is active |
+| `module_controller` | ModuleController | Manages and processes modules |
+| `enemy_id` | String | Links to database entry |
+
+### Creating Enemies
+
+All enemies are created through `DatabaseLoader.create_enemy()`:
+
+```gdscript
+# Always returns EnemyNPC - module system activates based on database config
+var enemy = DatabaseLoader.create_enemy("ene_zombie", level)
 ```
 
 ---
@@ -411,6 +459,42 @@ Status effects applied by abilities can use `ends_when` for automatic removal ba
 - `dash_away` - Dash away from target (escape)
 - `teleport` - Instant position change
 
+#### Movement Validation (Wall Collision)
+
+Movement abilities (dash, lunge, charge) are automatically validated against walls before execution. The `MovementValidator` class handles this:
+
+**How it works:**
+1. Before a dash executes, the path is checked for wall collisions
+2. If blocked, the ability stops at a safe position (4px margin from wall)
+3. Duration is adjusted proportionally for shortened movements
+4. If movement would be less than 8px, the dash is cancelled entirely
+
+**Validation Methods:**
+| Method | Use Case |
+|--------|----------|
+| `validate_dash_directional()` | Dash with direction + distance |
+| `validate_dash()` | Dash to specific position |
+| `validate_teleport()` | Check if destination is walkable |
+| `validate_knockback()` | Knockback with wall stopping |
+| `get_safe_target_precise()` | Raycast-based precise collision |
+
+**Debug Visualization:**
+- **Orange line**: Valid dash path taken
+- **Red line**: Blocked portion that was prevented
+
+**Example - Wall blocks partial dash:**
+```
+Enemy wants to dash 100px toward player
+Wall is 60px away
+Result: Enemy dashes 56px (60 - 4px margin), duration adjusted proportionally
+```
+
+**Leap Attack LoS Validation:**
+For leap attacks (`ability_type="dash"` with `movement_type="dash_to"`):
+- Line of Sight is checked before initiating
+- If target hides during cast time (2s wind-up), leap is cancelled
+- Prevents leaping through walls at moving targets
+
 ### Ability Conditions
 
 Conditions determine when an ability can be used. Checked in priority order.
@@ -735,6 +819,7 @@ Shows per-enemy information:
 | Flee Module | `scripts/npc/ai/modules/flee_module.gd` |
 | Patrol Module | `scripts/npc/ai/modules/patrol_module.gd` |
 | Enemy NPC | `scripts/npc/enemy_npc.gd` |
+| Movement Validator | `scripts/navigation/movement_validator.gd` |
 | Spawn Point | `scripts/npc/spawn_point.gd` |
 | Status Effect Component | `scripts/combat/status_effect_component.gd` |
 | Database Loader | `autoloads/database_loader.gd` |
