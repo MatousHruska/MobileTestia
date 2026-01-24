@@ -3,6 +3,8 @@ class_name EnemyNPC
 ## EnemyNPC - Hostile NPCs with health, combat stats, loot, and AI
 ## AI is handled by ModuleController (see ModularEnemyNPC or module system)
 
+const MovementValidatorClass = preload("res://scripts/navigation/movement_validator.gd")
+
 ## Signals
 signal health_changed(current: float, maximum: float)
 signal damaged(amount: float, attacker: Node2D)
@@ -406,7 +408,7 @@ func apply_knockback(source_pos: Vector2, force: float, duration: float = 0.2) -
 	var knockback_distance: float = force * duration
 
 	# Validate against walls
-	var validation := MovementValidator.validate_knockback(global_position, direction, knockback_distance)
+	var validation := MovementValidatorClass.validate_knockback(global_position, direction, knockback_distance)
 
 	if validation.cancelled:
 		Debug.log("Combat", "%s knockback cancelled - too close to wall" % enemy_name)

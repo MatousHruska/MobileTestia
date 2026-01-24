@@ -3,6 +3,8 @@ class_name ModularEnemyNPC
 ## ModularEnemyNPC - Enemy class that uses the modular AI system
 ## Requires module_ids to be configured in the database
 
+const MovementValidatorClass = preload("res://scripts/navigation/movement_validator.gd")
+
 ## Signals
 signal damage_dealt(target: Node2D, amount: float, ability_id: String)
 
@@ -341,19 +343,19 @@ func _execute_dash_attack(ability: Dictionary) -> void:
 	var validation: Dictionary
 	if movement_type == "teleport":
 		var intended_pos: Vector2 = start_pos + direction * distance
-		validation = MovementValidator.validate_teleport(intended_pos)
+		validation = MovementValidatorClass.validate_teleport(intended_pos)
 		if not validation.valid:
 			Debug.log("AI", "%s teleport blocked - destination not walkable" % enemy_name)
 			# Try to find safe position along path instead
-			validation = MovementValidator.get_safe_target_precise(start_pos, direction, distance)
+			validation = MovementValidatorClass.get_safe_target_precise(start_pos, direction, distance)
 	else:
-		validation = MovementValidator.get_safe_target_precise(start_pos, direction, distance)
+		validation = MovementValidatorClass.get_safe_target_precise(start_pos, direction, distance)
 
 	var end_pos: Vector2 = validation.position
 	var actual_distance: float = validation.distance
 
 	# Check if movement is meaningful
-	if not MovementValidator.is_movement_meaningful(validation):
+	if not MovementValidatorClass.is_movement_meaningful(validation):
 		Debug.log("AI", "%s dash cancelled - path blocked (dist=%.0f)" % [enemy_name, actual_distance])
 		# Still do melee attack if we're close enough
 		if movement_type == "dash_to":
@@ -363,7 +365,7 @@ func _execute_dash_attack(ability: Dictionary) -> void:
 	# Adjust duration proportionally if movement was shortened
 	var adjusted_duration: float = dash_duration
 	if validation.blocked and distance > 0 and actual_distance < distance:
-		adjusted_duration = MovementValidator.calculate_adjusted_duration(distance, actual_distance, dash_duration)
+		adjusted_duration = MovementValidatorClass.calculate_adjusted_duration(distance, actual_distance, dash_duration)
 		Debug.log("AI", "%s dash shortened: %.0f -> %.0f (blocked)" % [enemy_name, distance, actual_distance])
 
 	# Show debug line for dash path (orange = original, red = blocked portion)
