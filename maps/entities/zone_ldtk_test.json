@@ -69,8 +69,8 @@
 			"id": "sp_test_static",
 			"patrol_group": "",
 			"position": {
-				"x": 1192.0,
-				"y": 296.0
+				"x": 1640.0,
+				"y": 232.0
 			},
 			"spawn_group": ""
 		},
@@ -78,116 +78,8 @@
 			"id": "sp_test_static",
 			"patrol_group": "",
 			"position": {
-				"x": 1368.0,
-				"y": 456.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "",
-			"position": {
-				"x": 1800.0,
-				"y": 120.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "",
-			"position": {
-				"x": 1080.0,
-				"y": 808.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "",
-			"position": {
-				"x": 280.0,
-				"y": 2376.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "",
-			"position": {
-				"x": 1032.0,
-				"y": 2920.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "",
-			"position": {
-				"x": 696.0,
-				"y": 2456.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "",
-			"position": {
-				"x": 456.0,
-				"y": 2872.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "",
-			"position": {
-				"x": 1384.0,
-				"y": 2328.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "",
-			"position": {
-				"x": 696.0,
-				"y": 2232.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "",
-			"position": {
-				"x": 1144.0,
-				"y": 2472.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "",
-			"position": {
-				"x": 1800.0,
-				"y": 2216.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "",
-			"position": {
-				"x": 1672.0,
-				"y": 2520.0
-			},
-			"spawn_group": ""
-		},
-		{
-			"id": "sp_test_static",
-			"patrol_group": "south_road",
-			"position": {
-				"x": 2296.0,
-				"y": 2776.0
+				"x": 1256.0,
+				"y": 328.0
 			},
 			"spawn_group": ""
 		}
