@@ -1417,7 +1417,7 @@
 						},
 						{
 							"__identifier": "spawnpoint",
-							"__grid": [74,18],
+							"__grid": [102,14],
 							"__pivot": [0.5,0.5],
 							"__tags": ["enemy"],
 							"__tile": null,
@@ -1426,7 +1426,7 @@
 							"width": 16,
 							"height": 16,
 							"defUid": 10,
-							"px": [1192,296],
+							"px": [1640,232],
 							"fieldInstances": [
 								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
 									"id": "V_String",
@@ -1434,297 +1434,8 @@
 								}] },
 								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
 							],
-							"__worldX": 1192,
-							"__worldY": 296
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [85,28],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "618f72e0-d380-11f0-9e89-7378c6d76b49",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [1368,456],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 1368,
-							"__worldY": 456
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [112,7],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "62d671d0-d380-11f0-9e89-a32d2f1666ef",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [1800,120],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 1800,
-							"__worldY": 120
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [67,50],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "653681e0-d380-11f0-9e89-25e365f47bcc",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [1080,808],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 1080,
-							"__worldY": 808
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [17,148],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "66d87210-d380-11f0-9e89-2f80ef56b853",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [280,2376],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 280,
-							"__worldY": 2376
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [64,182],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "68d8aee0-d380-11f0-9e89-950a31a3deb4",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [1032,2920],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 1032,
-							"__worldY": 2920
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [43,153],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "69cd4810-d380-11f0-9e89-af2015d595fa",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [696,2456],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 696,
-							"__worldY": 2456
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [28,179],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "6b229ee0-d380-11f0-9e89-9de269808705",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [456,2872],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 456,
-							"__worldY": 2872
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [86,145],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "6c465e60-d380-11f0-9e89-cb3454262fd1",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [1384,2328],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 1384,
-							"__worldY": 2328
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [43,139],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "0ad2a920-d380-11f0-8443-2b87dc520619",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [696,2232],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 696,
-							"__worldY": 2232
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [71,154],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "17a1c640-d380-11f0-8443-dfbca4b5f621",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [1144,2472],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 1144,
-							"__worldY": 2472
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [112,138],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "1a8c6310-d380-11f0-8443-d59126409dc7",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [1800,2216],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 1800,
-							"__worldY": 2216
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [104,157],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "1c6b8350-d380-11f0-8443-15a4e3c909ef",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [1672,2520],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
-							],
-							"__worldX": 1672,
-							"__worldY": 2520
-						},
-						{
-							"__identifier": "spawnpoint",
-							"__grid": [143,173],
-							"__pivot": [0.5,0.5],
-							"__tags": ["enemy"],
-							"__tile": null,
-							"__smartColor": "#FF0000",
-							"iid": "256d44c0-d380-11f0-8443-219b71960658",
-							"width": 16,
-							"height": 16,
-							"defUid": 10,
-							"px": [2296,2776],
-							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["sp_test_static"]
-								}] },
-								{ "__identifier": "patrol_group", "__type": "String", "__value": "south_road", "__tile": null, "defUid": 12, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["south_road"]
-								}] }
-							],
-							"__worldX": 2296,
-							"__worldY": 2776
+							"__worldX": 1640,
+							"__worldY": 232
 						},
 						{
 							"__identifier": "patrolwaypoint",
@@ -1817,6 +1528,28 @@
 							],
 							"__worldX": 56,
 							"__worldY": 2776
+						},
+						{
+							"__identifier": "spawnpoint",
+							"__grid": [78,20],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
+							"__tile": null,
+							"__smartColor": "#FF0000",
+							"iid": "836cd8e0-d380-11f0-88e8-2d9aad15aaf8",
+							"width": 16,
+							"height": 16,
+							"defUid": 10,
+							"px": [1256,328],
+							"fieldInstances": [
+								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["sp_test_static"]
+								}] },
+								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
+							],
+							"__worldX": 1256,
+							"__worldY": 328
 						}
 					]
 				},

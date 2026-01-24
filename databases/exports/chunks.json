@@ -14,7 +14,7 @@
 		{
 			"ambient_override": "",
 			"biome_type": "snow",
-			"enemy_density": "high",
+			"enemy_density": "medium",
 			"grid_x": 1,
 			"grid_y": 0,
 			"id": "chunk_ldtk_test_1_0",
@@ -69,7 +69,7 @@
 		{
 			"ambient_override": "",
 			"biome_type": "grass",
-			"enemy_density": "high",
+			"enemy_density": "none",
 			"grid_x": 0,
 			"grid_y": 2,
 			"id": "chunk_ldtk_test_0_2",
@@ -80,7 +80,7 @@
 		{
 			"ambient_override": "",
 			"biome_type": "grass",
-			"enemy_density": "high",
+			"enemy_density": "none",
 			"grid_x": 1,
 			"grid_y": 2,
 			"id": "chunk_ldtk_test_1_2",
@@ -91,7 +91,7 @@
 		{
 			"ambient_override": "",
 			"biome_type": "snow",
-			"enemy_density": "low",
+			"enemy_density": "none",
 			"grid_x": 2,
 			"grid_y": 2,
 			"id": "chunk_ldtk_test_2_2",
