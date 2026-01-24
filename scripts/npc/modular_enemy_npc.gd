@@ -336,12 +336,43 @@ func _execute_dash_attack(ability: Dictionary) -> void:
 		direction = -direction
 
 	var start_pos: Vector2 = global_position
-	var end_pos: Vector2 = global_position + direction * distance
 
-	# Show debug line for dash path
-	_show_debug_line(start_pos, end_pos, Color.ORANGE, dash_duration + 0.3)
+	# VALIDATE: Check if path is clear and get safe end position
+	var validation: Dictionary
+	if movement_type == "teleport":
+		var intended_pos: Vector2 = start_pos + direction * distance
+		validation = MovementValidator.validate_teleport(intended_pos)
+		if not validation.valid:
+			Debug.log("AI", "%s teleport blocked - destination not walkable" % enemy_name)
+			# Try to find safe position along path instead
+			validation = MovementValidator.get_safe_target_precise(start_pos, direction, distance)
+	else:
+		validation = MovementValidator.get_safe_target_precise(start_pos, direction, distance)
 
-	if movement_type == "teleport" or dash_duration <= 0:
+	var end_pos: Vector2 = validation.position
+	var actual_distance: float = validation.distance
+
+	# Check if movement is meaningful
+	if not MovementValidator.is_movement_meaningful(validation):
+		Debug.log("AI", "%s dash cancelled - path blocked (dist=%.0f)" % [enemy_name, actual_distance])
+		# Still do melee attack if we're close enough
+		if movement_type == "dash_to":
+			_execute_melee_attack(ability)
+		return
+
+	# Adjust duration proportionally if movement was shortened
+	var adjusted_duration: float = dash_duration
+	if validation.blocked and distance > 0 and actual_distance < distance:
+		adjusted_duration = MovementValidator.calculate_adjusted_duration(distance, actual_distance, dash_duration)
+		Debug.log("AI", "%s dash shortened: %.0f -> %.0f (blocked)" % [enemy_name, distance, actual_distance])
+
+	# Show debug line for dash path (orange = original, red = blocked portion)
+	if validation.blocked:
+		var intended_end: Vector2 = start_pos + direction * distance
+		_show_debug_line(end_pos, intended_end, Color.RED, adjusted_duration + 0.5)  # Blocked portion
+	_show_debug_line(start_pos, end_pos, Color.ORANGE, adjusted_duration + 0.3)
+
+	if movement_type == "teleport" or adjusted_duration <= 0:
 		# Instant teleport
 		global_position = end_pos
 		play_attack()
@@ -351,7 +382,7 @@ func _execute_dash_attack(ability: Dictionary) -> void:
 		# Smooth dash with tween
 		play_attack()
 		var tween = create_tween()
-		tween.tween_property(self, "global_position", end_pos, dash_duration)
+		tween.tween_property(self, "global_position", end_pos, adjusted_duration)
 		tween.tween_callback(func():
 			if movement_type == "dash_to":
 				_execute_melee_attack(ability)
