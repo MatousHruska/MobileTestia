@@ -12,6 +12,7 @@ class_name PatrolModule
 ##   waypoint_pause: float - Default seconds to pause at each waypoint (default: 2.0)
 ##   waypoint_threshold: float - Distance to consider waypoint "reached" (default: 10.0)
 ##   resume_nearest: bool - After combat, resume from nearest waypoint (default: true)
+##   use_pathfinding: bool - Use pathfinding to navigate around obstacles (default: true)
 
 #===============================================================================
 # STATE
@@ -118,12 +119,33 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 		context.should_stop = true
 		context.behavior_state = EnemyContext.BehaviorState.IDLE
 	else:
-		# Move toward waypoint
-		var direction: Vector2 = (target_pos - context.global_position).normalized()
+		# Move toward waypoint (with pathfinding if enabled)
+		var direction := _get_pathfinding_direction(context, target_pos)
 		context.desired_direction = direction
 		context.speed_multiplier = get_config_float("patrol_speed_mult", 0.6)
 		context.behavior_state = EnemyContext.BehaviorState.ROAMING
 		context.facing_direction = direction
+
+
+func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> Vector2:
+	"""Get movement direction, using pathfinding if enabled"""
+	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
+
+	if not use_pf:
+		return context.global_position.direction_to(target_pos)
+
+	# Get direction from pathfinding service (no entity_id for patrol - no caching needed)
+	var pf_direction := PathfindingService.get_direction_to(
+		context.global_position,
+		target_pos,
+		context.owner.get_instance_id()
+	)
+
+	# Fallback to direct movement if pathfinding returns zero
+	if pf_direction == Vector2.ZERO:
+		return context.global_position.direction_to(target_pos)
+
+	return pf_direction
 
 
 func _on_combat_ended(context: EnemyContext) -> void:

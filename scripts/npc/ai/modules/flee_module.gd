@@ -2,6 +2,10 @@ extends BaseModule
 class_name FleeModule
 ## FleeModule - Runs away when health is low
 ## Higher priority than chase, so it can override pursuit behavior
+##
+## NOTE: Intentionally does NOT use pathfinding. Flee behavior is short-term
+## panic movement where direct movement is more natural and responsive.
+## The unpredictable direct flee path is actually preferable for gameplay.
 
 ## Current flee direction (persists between frames for smooth fleeing)
 var _flee_direction: Vector2 = Vector2.ZERO

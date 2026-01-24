@@ -75,6 +75,9 @@ var buff_speed_multiplier: float = 1.0
 ## Should stop moving this frame
 var should_stop: bool = false
 
+## Whether to use pathfinding (can be disabled per-enemy in config)
+var use_pathfinding: bool = true
+
 #===============================================================================
 # COMBAT STATE (Written by: CombatModule)
 #===============================================================================

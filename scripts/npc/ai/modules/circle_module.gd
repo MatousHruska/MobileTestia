@@ -3,6 +3,10 @@ class_name CircleModule
 ## CircleModule - Orbit around target while waiting for attack cooldown
 ## Used by wolves and similar pack enemies to circle before attacking
 ##
+## NOTE: Intentionally does NOT use pathfinding. Orbiting is local movement
+## that adjusts tangentially around the target. The main navigation to reach
+## the target is handled by ChaseModule which does use pathfinding.
+##
 ## Config options:
 ##   circle_radius: distance to maintain while circling (default 80)
 ##   circle_speed_mult: movement speed multiplier while circling (default 0.7)
