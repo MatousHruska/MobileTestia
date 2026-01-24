@@ -1,401 +1,185 @@
 # Phase 2: Module Integration
 
-Please pull claude/add-pathfinding1-naming-XXXXX
+**Status: COMPLETE**
 
-This is the newest version of the codebase. Clone it and add pathfinding2 into the name of the new branch. We will continue our work from here.
-
-Some notes for this session:
-
-CRITICAL: Database Workflow
-NEVER EDIT .json FILES DIRECTLY!
-
-The database is managed through Excel with VBA macros. Direct JSON edits will be overwritten.
-
-Correct workflow:
-
-First: Provide updated .bas VBA files for any schema changes
-Second: Provide Excel-ready data to paste into sheets
-Third: User imports VBA, pastes data, runs ExportAll
-When you need to change database structure or data:
-
-Give me the .bas file updates (if schema changes)
-Give me tab-separated or table data ready to paste into Excel
-I will import/paste and export the JSON myself
-IMPORTANT: When changing database schema, always update:
-
-The specific database .bas file (e.g., EnemyDatabase.bas)
-MasterExport.bas (ExportAll, ValidateAll, SetupWorkbook functions)
-SharedValidation.bas (named ranges, foreign key validations, enum validations)
-VBA Naming Convention: Export functions should be named ExportXxxData where Xxx matches the sheet name (e.g., ExportAbilitiesData, ExportEnemyAbilitiesData).
-
-When writing data for a database, be careful about "," and "." characters. If it is incorrectly written, .json files won't work, so always use ".".
-
-Whenever you make an update to stats, add a new stat, create a new way of implementing it, check the StatDescriptionDatabase, and update the appropriate Stat Description.
-
-When creating any layout design choices always prefer dynamic percentual edits against fixed pixels.
-
-When designing various elements (texts, containers, UI) always read UIThemeDatabase where style classes are defined. No text in the game should be classless. No UI wireframe classless.
-
-When planning new features and systems remember that we already have save/load system and implement these into this framework.
-
-When creating or editing enemies, their behaviour or AI consult ENEMY_REFERENCE.md, ABILITY_SYSTEM_REFERENCE.md and QUICK_REFERENCE.md
-
-When working with maps and LDTK consult LDTK_MAP_REFERENCE.md and ZONE_DESIGN_GUIDE.md
+This phase integrated the pathfinding service with the existing AI module system. Movement modules now use pathfinding to navigate around obstacles.
 
 ---
 
-## Phase 2 Overview
+## Implementation Summary
 
-This phase integrates the pathfinding service with the existing AI module system. We update movement modules to use pathfinding instead of direct vector movement.
+### What Was Implemented
 
-**Goal**: Enemies navigate around obstacles using the pathfinding service.
+1. **EnemyContext** - Added `use_pathfinding: bool = true` field to allow per-enemy pathfinding toggle
 
-**Prerequisites**: Phase 1 complete (PathfindingService and NavigationGrid working)
+2. **Movement Modules Updated**:
+   - ChaseModule - Pathfinds to target, falls back to direct movement
+   - PatrolModule - Pathfinds between waypoints, skips unreachable waypoints
+   - LeashModule - Pathfinds when returning home
+   - KiteModule - Pathfinds to retreat positions
+   - IdleModule - Pathfinds to roam targets, validates reachability
+   - FleeModule - Pathfinds to flee target, tries new directions if blocked
+   - CircleModule - Pathfinds to orbit positions, flips direction if blocked
 
----
+3. **NavigationGrid** - Added wall margin expansion to prevent corner clipping
 
-## What We're Modifying
-
-### 1. ChaseModule (`scripts/npc/ai/modules/chase_module.gd`)
-
-Currently:
-```gdscript
-context.desired_direction = context.target_direction  # Direct line to target
-```
-
-After:
-```gdscript
-var next_point = PathfindingService.get_next_waypoint(
-    context.global_position,
-    context.current_target.global_position,
-    context.owner.get_instance_id()
-)
-if next_point != Vector2.ZERO:
-    context.desired_direction = (next_point - context.global_position).normalized()
-else:
-    # Fallback to direct movement if no path found
-    context.desired_direction = context.target_direction
-```
-
-### 2. PatrolModule (`scripts/npc/ai/modules/patrol_module.gd`)
-
-Currently:
-```gdscript
-var direction: Vector2 = (target_pos - context.global_position).normalized()
-context.desired_direction = direction
-```
-
-After:
-```gdscript
-var next_point = PathfindingService.get_next_waypoint(
-    context.global_position,
-    target_pos
-)
-if next_point != Vector2.ZERO:
-    context.desired_direction = (next_point - context.global_position).normalized()
-else:
-    context.desired_direction = (target_pos - context.global_position).normalized()
-```
-
-### 3. LeashModule (`scripts/npc/ai/modules/leash_module.gd`)
-
-When returning home, use pathfinding:
-```gdscript
-var next_point = PathfindingService.get_next_waypoint(
-    context.global_position,
-    context.home_position
-)
-```
-
-### 4. FleeModule (`scripts/npc/ai/modules/flee_module.gd`)
-
-Fleeing is trickier - we need to pathfind AWAY from target. Options:
-- Option A: Pick a point in the opposite direction and pathfind there
-- Option B: Keep direct flee movement (simple, works for most cases)
-
-Recommend **Option B** for now - flee behavior is short-term panic movement, doesn't need perfect pathing.
-
-### 5. KiteModule (`scripts/npc/ai/modules/kite_module.gd`)
-
-When backing away, pathfind to a point behind the enemy:
-```gdscript
-var retreat_pos = context.global_position - context.target_direction * preferred_range
-var next_point = PathfindingService.get_next_waypoint(
-    context.global_position,
-    retreat_pos
-)
-```
+4. **PathfindingService** - Fixed to return `Vector2.ZERO` when no path exists
 
 ---
 
-## EnemyContext Additions
+## Key Design Decisions
 
-Add pathfinding-related fields to `EnemyContext`:
+### Module Pathfinding Behavior
 
-```gdscript
-#===============================================================================
-# PATHFINDING (Written by: Movement Modules)
-#===============================================================================
+| Module | Pathfinding Fail Behavior | Reason |
+|--------|---------------------------|--------|
+| **IdleModule** | Pick new roam target | Roaming is optional; better to stay still than walk into walls |
+| **PatrolModule** | Skip to next waypoint | Level-designed waypoints should be reachable; skip bad ones |
+| **FleeModule** | Try new flee direction | Fleeing direction is arbitrary; try another escape route |
+| **CircleModule** | Flip circle direction | Orbit direction is arbitrary; try going the other way |
+| **ChaseModule** | Direct movement (kept) | Must reach player; direct movement is acceptable fallback |
+| **LeashModule** | Direct movement (kept) | Must reach home; direct movement is acceptable fallback |
+| **KiteModule** | Direct movement (kept) | Must retreat; direct movement is acceptable fallback |
+| **SurroundModule** | N/A (modifier only) | Doesn't set movement direction, only adjusts existing direction |
 
-## Current cached path
-var current_path: PackedVector2Array = PackedVector2Array()
+### Why No Path Caching Between Modules
 
-## Current waypoint index in path
-var path_index: int = 0
+Each module uses `entity_id = -1` (no caching) when calling PathfindingService. This prevents cache conflicts where:
+- ChaseModule requests path to player position A
+- IdleModule requests path to roam position B
+- Both use same entity_id, causing cache to constantly invalidate
 
-## Time since last path recalculation
-var path_age: float = 0.0
+With 2-5 enemies, fresh path calculation each frame is fine for performance.
 
-## Whether to use pathfinding (can be disabled per-enemy)
-var use_pathfinding: bool = true
+### Wall Margin for Corner Clipping
+
+Enemies have an 8px collision radius, while tiles are 16x16. When pathfinding returns waypoints near corners, the enemy's physical body can clip walls.
+
+**Solution**: NavigationGrid expands blocked tiles to include diagonal neighbors:
+```
+Wall at (10,10) blocks: (10,10), (9,9), (11,9), (9,11), (11,11)
+Cardinal neighbors (10,9), (9,10), etc. remain walkable
 ```
 
-And in `reset_frame_flags()`:
-```gdscript
-path_age += delta  # Age the path each frame
-```
+This prevents paths from cutting corners while still allowing movement along walls.
 
 ---
 
-## Path Following Logic
+## Module Configuration
 
-Create a utility class for consistent path following:
+All movement modules support these pathfinding-related config options:
 
-### PathFollower (`scripts/navigation/path_follower.gd`)
+| Key | Default | Description |
+|-----|---------|-------------|
+| `use_pathfinding` | true | Enable/disable pathfinding for this module |
 
-```gdscript
-class_name PathFollower
-extends RefCounted
+### ChaseModule Additional Config
+| Key | Default | Description |
+|-----|---------|-------------|
+| `direct_distance_threshold` | 48.0 | Skip pathfinding if closer than this (optimization) |
 
-## Get the next waypoint to move toward
-## Returns Vector2.ZERO if no valid path
-static func get_next_waypoint(
-    current_pos: Vector2,
-    target_pos: Vector2,
-    path: PackedVector2Array,
-    path_index: int,
-    waypoint_threshold: float = 16.0
-) -> Dictionary:
-    """
-    Returns {
-        "waypoint": Vector2,      # Next point to move toward
-        "new_index": int,         # Updated path index
-        "path_complete": bool     # True if reached end of path
-    }
-    """
-    if path.is_empty():
-        return {"waypoint": Vector2.ZERO, "new_index": 0, "path_complete": true}
+### IdleModule Pathfinding Behavior
+- Uses `has_path()` to verify roam targets are reachable before selecting
+- If pathfinding fails during movement, picks a new roam target
+- Short pause (0.5-1.0s) before retrying to prevent rapid target switching
 
-    # Skip waypoints we've passed
-    var idx = path_index
-    while idx < path.size() - 1:
-        var wp = path[idx]
-        if current_pos.distance_to(wp) <= waypoint_threshold:
-            idx += 1
-        else:
-            break
+### PatrolModule Pathfinding Behavior
+- If waypoint is unreachable, logs warning and skips to next waypoint
+- Useful for detecting level design issues (waypoints in blocked areas)
 
-    if idx >= path.size():
-        return {"waypoint": path[-1], "new_index": idx, "path_complete": true}
+### FleeModule Pathfinding Behavior
+- Calculates flee target position opposite from threat
+- If path blocked, resets direction timer to try new flee angle next frame
+- Prevents getting stuck when cornered
 
-    return {"waypoint": path[idx], "new_index": idx, "path_complete": false}
-```
+### CircleModule Pathfinding Behavior
+- Calculates orbit target position based on tangent + radial adjustment
+- If path blocked, flips circle direction (CW ↔ CCW)
+- Brief pause before continuing to prevent oscillation
 
 ---
 
-## Path Caching Strategy
+## Debug Tools
 
-With 2-5 enemies, we can cache aggressively:
+### Pathfinding Debug (Numpad /)
 
-### In PathfindingService:
+Toggle pathfinding visualization:
+- Green lines: Current active paths
+- Red squares: Blocked tiles
+- Blue dots: Path waypoints
 
-```gdscript
-class CachedPath:
-    var path: PackedVector2Array
-    var target_pos: Vector2
-    var age: float = 0.0
-    var current_index: int = 0
-
-var _cache: Dictionary = {}  # enemy_instance_id -> CachedPath
-
-const CACHE_LIFETIME: float = 0.5  # Recalculate every 500ms
-const TARGET_MOVE_THRESHOLD: float = 32.0  # Recalc if target moved 2 tiles
-
-func get_next_waypoint(from: Vector2, to: Vector2, enemy_id: int = -1) -> Vector2:
-    if enemy_id >= 0:
-        var cached = _cache.get(enemy_id)
-        if cached and not _is_cache_stale(cached, to):
-            var result = PathFollower.get_next_waypoint(from, to, cached.path, cached.current_index)
-            cached.current_index = result.new_index
-            return result.waypoint
-
-    # Calculate new path
-    var path = get_path(from, to)
-
-    if enemy_id >= 0:
-        var new_cache = CachedPath.new()
-        new_cache.path = path
-        new_cache.target_pos = to
-        new_cache.age = 0.0
-        _cache[enemy_id] = new_cache
-
-    if path.is_empty():
-        return Vector2.ZERO
-
-    return path[0] if path.size() == 1 else path[1]  # Skip starting point
-
-func _is_cache_stale(cached: CachedPath, current_target: Vector2) -> bool:
-    if cached.age > CACHE_LIFETIME:
-        return true
-    if cached.target_pos.distance_to(current_target) > TARGET_MOVE_THRESHOLD:
-        return true
-    if cached.path.is_empty():
-        return true
-    return false
-
-func _process(delta: float):
-    # Age all cached paths
-    for cached in _cache.values():
-        cached.age += delta
+Debug output shows:
 ```
+┌─── PATHFINDING DEBUG ───
+│ Loaded chunks: 25
+│ Cached paths: 0
+│ Grid bounds: [P: (-64, 0), S: (320, 320)]
+└─────────────────────────
+```
+
+### Debug Paths Without Caching
+
+Since modules use `entity_id = -1` (no caching), debug visualization tracks paths separately:
+- `_debug_paths` dictionary stores recent paths for 1 second
+- Paths are stored regardless of caching settings
+- `get_cached_paths()` returns both cached and debug-tracked paths
 
 ---
 
-## Fallback Behavior
+## Files Modified
 
-If pathfinding fails (no path found), modules should fall back gracefully:
+### Core Changes
+| File | Changes |
+|------|---------|
+| `scripts/npc/ai/enemy_context.gd` | Added `use_pathfinding` field |
+| `autoloads/pathfinding_service.gd` | Fixed no-path return value, added debug path tracking |
+| `scripts/navigation/navigation_grid.gd` | Added wall margin expansion |
 
-```gdscript
-func _get_movement_direction(context: EnemyContext, target_pos: Vector2) -> Vector2:
-    if not context.use_pathfinding:
-        return context.global_position.direction_to(target_pos)
-
-    var next_point = PathfindingService.get_next_waypoint(
-        context.global_position,
-        target_pos,
-        context.owner.get_instance_id()
-    )
-
-    if next_point == Vector2.ZERO:
-        # No path found - fall back to direct movement
-        # This handles cases like target on unwalkable tile
-        return context.global_position.direction_to(target_pos)
-
-    return context.global_position.direction_to(next_point)
-```
-
----
-
-## Config Options
-
-Add to enemy/module configuration:
-
-```json
-{
-    "mod_chase": {
-        "use_pathfinding": true,
-        "path_recalc_interval": 0.5,
-        "direct_distance_threshold": 48
-    }
-}
-```
-
-- `use_pathfinding`: Enable/disable pathfinding for this enemy
-- `path_recalc_interval`: How often to recalculate path (seconds)
-- `direct_distance_threshold`: If closer than this, use direct movement (optimization)
-
----
-
-## Module Updates Summary
-
-| Module | Change |
-|--------|--------|
-| ChaseModule | Use pathfinding to reach target |
-| PatrolModule | Use pathfinding between waypoints |
-| LeashModule | Use pathfinding to return home |
-| FleeModule | Keep direct movement (intentional) |
-| KiteModule | Pathfind to retreat position |
-| CircleModule | Keep direct movement (orbiting is local) |
-| SurroundModule | Keep direct movement (local positioning) |
-| IdleModule | Use pathfinding to roam target |
+### Module Updates
+| File | Changes |
+|------|---------|
+| `scripts/npc/ai/modules/chase_module.gd` | Added `_get_pathfinding_direction()` with direct fallback |
+| `scripts/npc/ai/modules/patrol_module.gd` | Added pathfinding, skip unreachable waypoints |
+| `scripts/npc/ai/modules/leash_module.gd` | Added pathfinding with direct fallback |
+| `scripts/npc/ai/modules/kite_module.gd` | Added pathfinding for retreat positions |
+| `scripts/npc/ai/modules/idle_module.gd` | Added pathfinding, validates roam target reachability |
+| `scripts/npc/ai/modules/flee_module.gd` | Added pathfinding, tries new direction if blocked |
+| `scripts/npc/ai/modules/circle_module.gd` | Added pathfinding, flips direction if blocked |
+| `scripts/npc/ai/modules/surround_module.gd` | NOT using pathfinding (modifier module only) |
 
 ---
 
 ## Testing Checklist
 
-1. [ ] ChaseModule navigates around walls to reach player
-2. [ ] PatrolModule follows waypoints, navigating around obstacles
-3. [ ] LeashModule returns home via path, not through walls
-4. [ ] KiteModule backs away avoiding obstacles
-5. [ ] FleeModule still works (direct movement)
-6. [ ] CircleModule still works (direct movement)
-7. [ ] Path caching reduces redundant calculations
-8. [ ] Fallback to direct movement works when no path found
-9. [ ] Enemy doesn't get stuck on corners
-10. [ ] Multiple enemies pathfind independently
+- [x] ChaseModule navigates around walls to reach player
+- [x] PatrolModule follows waypoints, navigating around obstacles
+- [x] LeashModule returns home via path, not through walls
+- [x] KiteModule backs away avoiding obstacles
+- [x] FleeModule still works (pathfinding + direction retry)
+- [x] CircleModule still works (pathfinding + direction flip)
+- [x] Path caching disabled to avoid module conflicts
+- [x] Fallback behavior works when paths fail
+- [x] Enemy doesn't get stuck on corners (wall margin fix)
+- [x] Multiple enemies pathfind independently
+- [x] Debug visualization shows paths (Numpad /)
 
 ---
 
-## Path Smoothing (Optional Enhancement)
+## Known Limitations
 
-Raw A* paths can look robotic. Simple string-pulling smoothing:
+1. **No Path Smoothing**: Raw A* paths can look robotic. String-pulling smoothing is planned for Phase 3+.
 
-```gdscript
-func smooth_path(path: PackedVector2Array) -> PackedVector2Array:
-    if path.size() < 3:
-        return path
+2. **No Dynamic Obstacles**: Pathfinding uses static tile data. Moving obstacles aren't avoided.
 
-    var smoothed: PackedVector2Array = [path[0]]
-    var current = 0
+3. **Narrow Corridors**: 2-tile wide corridors may become impassable due to wall margin. This is acceptable for most level designs.
 
-    while current < path.size() - 1:
-        # Find furthest visible point
-        var furthest = current + 1
-        for i in range(path.size() - 1, current, -1):
-            if _has_clear_line(path[current], path[i]):
-                furthest = i
-                break
-        smoothed.append(path[furthest])
-        current = furthest
-
-    return smoothed
-
-func _has_clear_line(from: Vector2, to: Vector2) -> bool:
-    # Use Bresenham or simple step check
-    var steps = int(from.distance_to(to) / TILE_SIZE)
-    for i in range(steps):
-        var t = float(i) / steps
-        var pos = from.lerp(to, t)
-        if not is_walkable(pos):
-            return false
-    return true
-```
-
-This is optional for Phase 2 but recommended.
+4. **Performance**: Each module calculates paths independently (no caching). Acceptable for 2-5 enemies but may need optimization for larger numbers.
 
 ---
 
-## Estimated Scope
+## See Also
 
-- **ChaseModule changes**: ~20 lines
-- **PatrolModule changes**: ~15 lines
-- **LeashModule changes**: ~15 lines
-- **KiteModule changes**: ~15 lines
-- **IdleModule changes**: ~15 lines
-- **PathFollower utility**: ~50 lines
-- **PathfindingService caching**: ~60 lines (may be in Phase 1)
-- **EnemyContext additions**: ~10 lines
-
-**Total**: ~200 lines of changes
-
----
-
-## Success Criteria
-
-Phase 2 is complete when:
-1. Enemies navigate around walls to chase player
-2. Enemies don't get stuck on obstacles
-3. Patrol routes work around terrain
-4. Return-to-home paths avoid obstacles
-5. Performance remains smooth with 5 enemies pathfinding
-6. Fallback behavior works when paths fail
+- [PATHFINDING_OVERVIEW.md](PATHFINDING_OVERVIEW.md) - System overview
+- [PHASE_1_CORE_NAVIGATION.md](PHASE_1_CORE_NAVIGATION.md) - Core navigation system
+- [PHASE_3_LINE_OF_SIGHT.md](PHASE_3_LINE_OF_SIGHT.md) - Next phase: LOS checks
+- [../ENEMY_REFERENCE.md](../ENEMY_REFERENCE.md) - Enemy module configuration
