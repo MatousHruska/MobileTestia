@@ -37,6 +37,10 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 	if context.is_dead:
 		return
 
+	# Don't chase if searching (SearchModule handles this state)
+	if context.is_searching:
+		return
+
 	# Determine chase target based on LOS
 	var chase_target: Vector2
 	if context.has_line_of_sight:
@@ -45,6 +49,13 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 	else:
 		# Lost LOS - chase to last known position
 		chase_target = context.last_known_target_position
+
+		# If we're close enough to last known position, let SearchModule take over
+		var search_threshold: float = get_config_float("search_arrival_threshold", 32.0)
+		if context.global_position.distance_to(chase_target) < search_threshold:
+			# We've arrived - stop and let search module handle it
+			context.should_stop = true
+			return
 
 	# Get movement direction (with pathfinding if enabled)
 	var move_dir := _get_pathfinding_direction(context, chase_target)

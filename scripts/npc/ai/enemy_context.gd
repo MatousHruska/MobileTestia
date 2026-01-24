@@ -63,6 +63,15 @@ var los_just_lost: bool = false
 ## LOS was gained this frame
 var los_just_gained: bool = false
 
+## Search state: arrived at last known position and searching
+var is_searching: bool = false
+
+## Search timer (how long we've been searching)
+var search_timer: float = 0.0
+
+## Current search direction index (for cycling through look directions)
+var search_direction_index: int = 0
+
 #===============================================================================
 # POSITION & MOVEMENT (Written by: MovementModule)
 #===============================================================================
@@ -190,7 +199,7 @@ var slow_amount: float = 0.0
 #===============================================================================
 
 ## Current high-level state
-enum BehaviorState { IDLE, ROAMING, COMBAT, RETURNING, FLEEING, DEAD }
+enum BehaviorState { IDLE, ROAMING, COMBAT, RETURNING, FLEEING, SEARCHING, DEAD }
 var behavior_state: BehaviorState = BehaviorState.IDLE
 
 ## Idle sub-state
