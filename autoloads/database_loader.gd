@@ -49,6 +49,7 @@ var lootables: Dictionary = {}  ## Lootable container definitions (keyed by id)
 var signs: Dictionary = {}  ## Sign definitions (keyed by id)
 var lore_echoes: Dictionary = {}  ## Lore echo definitions (keyed by id)
 var trigger_areas: Dictionary = {}  ## Trigger area definitions (keyed by id)
+var interior_regions: Dictionary = {}  ## Interior region definitions (keyed by id)
 
 ## Lists for iteration
 var item_bases_list: Array = []
@@ -80,6 +81,7 @@ var lootables_list: Array = []
 var signs_list: Array = []
 var lore_echoes_list: Array = []
 var trigger_areas_list: Array = []
+var interior_regions_list: Array = []
 
 ## Signals
 signal databases_loaded
@@ -142,6 +144,9 @@ func load_all_databases() -> void:
 	success = _load_database("signs.json", "signs", signs, signs_list) and success
 	success = _load_database("lore_echoes.json", "lore_echoes", lore_echoes, lore_echoes_list) and success
 	success = _load_database("trigger_areas.json", "trigger_areas", trigger_areas, trigger_areas_list) and success
+
+	# Interior Regions (for roof hiding system)
+	success = _load_database("interior_regions.json", "interior_regions", interior_regions, interior_regions_list) and success
 
 	# Spawn points
 	success = _load_database("spawn_points.json", "spawn_points", spawn_points, spawn_points_list) and success
@@ -952,6 +957,40 @@ func get_location_music(location_id: String) -> String:
 ## Get ambient sound for location (or zone)
 func get_location_ambient(location_id: String) -> String:
 	return get_effective_setting(location_id, "ambient_sound", "")
+
+
+#===============================================================================
+# INTERIOR REGION ACCESS
+#===============================================================================
+
+## Get interior region by id
+func get_interior_region(id: String) -> Dictionary:
+	return interior_regions.get(id, {})
+
+
+## Get all interior regions for a zone
+func get_interior_regions_for_zone(zone_id: String) -> Array:
+	var result: Array = []
+	for region in interior_regions_list:
+		if region.get("zone_id", "") == zone_id:
+			result.append(region)
+	return result
+
+
+## Get interior region by zone and region_value (IntGrid value)
+func get_interior_region_by_value(zone_id: String, region_value: int) -> Dictionary:
+	for region in interior_regions_list:
+		if region.get("zone_id", "") == zone_id and int(region.get("region_value", 0)) == region_value:
+			return region
+	return {}
+
+
+## Get parent region value for a given region (for nested interiors)
+func get_interior_region_parent_value(zone_id: String, region_value: int) -> int:
+	var region := get_interior_region_by_value(zone_id, region_value)
+	if region.is_empty():
+		return 0
+	return int(region.get("parent_region_value", 0))
 
 
 #===============================================================================

@@ -50,6 +50,15 @@ const INTGRID_TERRAIN_MAP := {
 ## Terrain types with collision
 const COLLISION_TERRAIN := ["terrain_water", "terrain_wall"]
 
+## Maps LDtk roof IntGrid values to roof type IDs
+const INTGRID_ROOF_MAP := {
+	0: "roof_none",
+	1: "roof_cave",
+	2: "roof_house",
+	3: "roof_dungeon",
+	4: "roof_ruins",
+}
+
 #===============================================================================
 # MAIN ENTRY POINT
 #===============================================================================
@@ -322,13 +331,28 @@ func _analyze_density(level: Dictionary, bounds: Rect2) -> String:
 func _extract_chunk_tiles(level: Dictionary, bounds: Rect2) -> Dictionary:
 	## Extract tile data for a single chunk
 	var result := {
-		"ground": [],      # Array of {x, y, terrain_id}
-		"collision": [],   # Array of {x, y}
-		"decoration": []   # Array of {x, y, tile_id, tileset_id}
+		"ground": [],           # Array of {x, y, terrain_id}
+		"collision": [],        # Array of {x, y}
+		"decoration": [],       # Array of {x, y, tile_id, tileset_id}
+		"interior_regions": [], # Array of {x, y, region_value}
+		"roofs": []             # Array of {x, y, roof_type, region_value}
 	}
 
+	# First pass: extract interior regions to build region lookup
+	var region_grid := {}  # Maps "x,y" to region_value for roof association
+
 	for layer in level.get("layerInstances", []):
-		var layer_type: String = layer.get("__type", "")
+		var layer_id: String = layer.get("__identifier", "").to_lower()
+		if layer_id == "interior_regions":
+			var regions := _extract_interior_regions(layer, bounds)
+			result.interior_regions = regions
+			# Build lookup grid for roof association
+			for r in regions:
+				var key := "%d,%d" % [r.x, r.y]
+				region_grid[key] = r.region_value
+
+	# Second pass: extract other layers (roofs need region_grid)
+	for layer in level.get("layerInstances", []):
 		var layer_id: String = layer.get("__identifier", "").to_lower()
 
 		match layer_id:
@@ -338,6 +362,8 @@ func _extract_chunk_tiles(level: Dictionary, bounds: Rect2) -> Dictionary:
 				result.collision = _extract_collision_tiles(layer, bounds)
 			"decoration":
 				result.decoration = _extract_tile_layer_tiles(layer, bounds)
+			"roofs":
+				result.roofs = _extract_roof_tiles(layer, bounds, region_grid)
 
 	return result
 
@@ -463,6 +489,86 @@ func _extract_tile_layer_tiles(layer: Dictionary, bounds: Rect2) -> Array:
 			"tile_id": tile_id,
 			"flip_x": tile.get("f", 0) & 1 == 1,
 			"flip_y": tile.get("f", 0) & 2 == 2
+		})
+
+	return tiles
+
+
+func _extract_interior_regions(layer: Dictionary, bounds: Rect2) -> Array:
+	## Extract interior region tiles within bounds
+	## Each tile has a region_value (1-8) indicating which interior it belongs to
+	var tiles: Array = []
+	var grid_size: int = layer.get("__gridSize", 16)
+	var c_wid: int = layer.get("__cWid", 0)
+	var csv: Array = layer.get("intGridCsv", [])
+
+	for i in range(csv.size()):
+		var value: int = csv[i]
+		if value == 0:
+			continue  # No region (outside)
+
+		# Calculate world pixel position
+		var gx: int = i % c_wid
+		var gy: int = int(i / c_wid)
+		var px: float = gx * grid_size
+		var py: float = gy * grid_size
+
+		# Check if tile is within chunk bounds
+		if not bounds.has_point(Vector2(px, py)):
+			continue
+
+		# Convert to chunk-local tile coordinates
+		var local_x: int = int((px - bounds.position.x) / grid_size)
+		var local_y: int = int((py - bounds.position.y) / grid_size)
+
+		tiles.append({
+			"x": local_x,
+			"y": local_y,
+			"region_value": value
+		})
+
+	return tiles
+
+
+func _extract_roof_tiles(layer: Dictionary, bounds: Rect2, region_grid: Dictionary) -> Array:
+	## Extract roof tiles within bounds, associating each with its region
+	## Roof tiles are associated with the interior region they overlap
+	var tiles: Array = []
+	var grid_size: int = layer.get("__gridSize", 16)
+	var c_wid: int = layer.get("__cWid", 0)
+	var csv: Array = layer.get("intGridCsv", [])
+
+	for i in range(csv.size()):
+		var value: int = csv[i]
+		if value == 0:
+			continue  # No roof tile
+
+		# Calculate world pixel position
+		var gx: int = i % c_wid
+		var gy: int = int(i / c_wid)
+		var px: float = gx * grid_size
+		var py: float = gy * grid_size
+
+		# Check if tile is within chunk bounds
+		if not bounds.has_point(Vector2(px, py)):
+			continue
+
+		# Convert to chunk-local tile coordinates
+		var local_x: int = int((px - bounds.position.x) / grid_size)
+		var local_y: int = int((py - bounds.position.y) / grid_size)
+
+		# Look up which interior region this roof tile belongs to
+		var key := "%d,%d" % [local_x, local_y]
+		var region_value: int = region_grid.get(key, 0)
+
+		# Map IntGrid value to roof type
+		var roof_type: String = INTGRID_ROOF_MAP.get(value, "roof_cave")
+
+		tiles.append({
+			"x": local_x,
+			"y": local_y,
+			"roof_type": roof_type,
+			"region_value": region_value
 		})
 
 	return tiles

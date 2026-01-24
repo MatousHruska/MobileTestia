@@ -50,6 +50,7 @@ Public Sub ExportAll()
     ExportGameplaySettings
     ExportZones
     ExportLocations
+    ExportInteriorRegionsData
 
     ' Interactables
     ExportChests
@@ -123,6 +124,7 @@ Public Sub ValidateAll()
     ValidateStatusEffects
     ValidateZones
     ValidateLocations
+    ValidateInteriorRegions
     ValidateChests
     ValidateDoorsData
     ValidateLeversData
@@ -185,6 +187,7 @@ Public Sub SetupWorkbook()
     currentSheet = "GameplaySettings": SetupGameplaySettingsSheet
     currentSheet = "Zones": SetupZonesSheet
     currentSheet = "Locations": SetupLocationsSheet
+    currentSheet = "InteriorRegions": SetupInteriorRegionsSheet
     currentSheet = "Chests": SetupChestsSheet
     currentSheet = "Doors": SetupDoorsSheet
     currentSheet = "Levers": SetupLeversSheet
