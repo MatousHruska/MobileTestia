@@ -1,50 +1,56 @@
 # Phase 3: Line of Sight & Detection
 
-Please pull claude/add-pathfinding2-naming-XXXXX
+## Current State (Updated - SIMPLIFIED)
 
-This is the newest version of the codebase. Clone it and add pathfinding3 into the name of the new branch. We will continue our work from here.
+### What Was Implemented vs Simplified
 
-Some notes for this session:
+This phase was originally designed for stealth-like detection. It has since been **simplified for aRPG gameplay**:
 
-CRITICAL: Database Workflow
-NEVER EDIT .json FILES DIRECTLY!
+**IMPLEMENTED (still active):**
+- `PathfindingService.has_line_of_sight()` - raycast-based LoS checking
+- LoS check in CombatModule for ranged/projectile/leap attacks
+- Cast-time cancellation for leap attacks if target hides
 
-The database is managed through Excel with VBA macros. Direct JSON edits will be overwritten.
+**REMOVED/SIMPLIFIED:**
+- ~~LoS requirement for detection~~ - Enemies detect by distance only
+- ~~LOS memory system~~ - No los_timer, no last_known_target_position
+- ~~SearchModule~~ - Deleted entirely
+- ~~SEARCHING behavior state~~ - Removed from enum
+- ~~los_just_lost/los_just_gained flags~~ - Removed
 
-Correct workflow:
+### Current Simple Behavior
 
-First: Provide updated .bas VBA files for any schema changes
-Second: Provide Excel-ready data to paste into sheets
-Third: User imports VBA, pastes data, runs ExportAll
-When you need to change database structure or data:
+```
+Player in detection range:
+  - Enemy detects and acquires target (no LoS check)
+  - Enemy chases player using pathfinding
+  - Enemy always knows where player is
 
-Give me the .bas file updates (if schema changes)
-Give me tab-separated or table data ready to paste into Excel
-I will import/paste and export the JSON myself
-IMPORTANT: When changing database schema, always update:
+Combat:
+  - Melee attacks: No LoS requirement
+  - Ranged/Projectile attacks: Require LoS (can't shoot through walls)
+  - Leap attacks (dash_to): Require LoS, cancel if target hides during cast
+```
 
-The specific database .bas file (e.g., EnemyDatabase.bas)
-MasterExport.bas (ExportAll, ValidateAll, SetupWorkbook functions)
-SharedValidation.bas (named ranges, foreign key validations, enum validations)
-VBA Naming Convention: Export functions should be named ExportXxxData where Xxx matches the sheet name (e.g., ExportAbilitiesData, ExportEnemyAbilitiesData).
+### Current EnemyContext (Simplified)
 
-When writing data for a database, be careful about "," and "." characters. If it is incorrectly written, .json files won't work, so always use ".".
+```gdscript
+# Only has_line_of_sight remains (for attack validation)
+var has_line_of_sight: bool = false
 
-Whenever you make an update to stats, add a new stat, create a new way of implementing it, check the StatDescriptionDatabase, and update the appropriate Stat Description.
-
-When creating any layout design choices always prefer dynamic percentual edits against fixed pixels.
-
-When designing various elements (texts, containers, UI) always read UIThemeDatabase where style classes are defined. No text in the game should be classless. No UI wireframe classless.
-
-When planning new features and systems remember that we already have save/load system and implement these into this framework.
-
-When creating or editing enemies, their behaviour or AI consult ENEMY_REFERENCE.md, ABILITY_SYSTEM_REFERENCE.md and QUICK_REFERENCE.md
-
-When working with maps and LDTK consult LDTK_MAP_REFERENCE.md and ZONE_DESIGN_GUIDE.md
+# BehaviorState simplified
+enum BehaviorState { IDLE, ROAMING, COMBAT, RETURNING, FLEEING, DEAD }
+```
 
 ---
 
-## Phase 3 Overview
+## Original Phase 3 Design (Historical Reference)
+
+The documentation below describes the original stealth-oriented design. Most of this was **NOT implemented** due to simplification.
+
+---
+
+## Phase 3 Overview (Original)
 
 This phase adds Line of Sight (LOS) checking to the game. Enemies will only detect and attack players they can actually see - no more seeing through walls.
 
