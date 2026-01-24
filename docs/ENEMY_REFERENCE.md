@@ -106,6 +106,9 @@ Each module has configurable options via the `module_config` JSON column.
 | leash_radius | 300.0 | Max distance from spawn point |
 | home_threshold | 16.0 | Distance to consider "home" |
 | return_speed_mult | 1.0 | Speed multiplier when returning |
+| use_pathfinding | true | Use A* pathfinding when returning home |
+
+**Pathfinding Behavior:** Uses pathfinding to return home around obstacles. Falls back to direct movement if no path found (enemy must reach home).
 
 #### mod_flee
 | Key | Default | Description |
@@ -115,11 +118,19 @@ Each module has configurable options via the `module_config` JSON column.
 | flee_wobble | 0.3 | Direction randomness (0-1) |
 | flee_only_in_combat | true | Only flee if has valid target |
 | respect_leash_while_fleeing | false | Try to flee toward home |
+| flee_distance | 100.0 | How far to flee from threat |
+| use_pathfinding | true | Use A* pathfinding when fleeing |
+
+**Pathfinding Behavior:** Calculates flee target opposite from threat. If path is blocked, tries a new flee direction next frame. Prevents getting stuck when cornered.
 
 #### mod_chase
 | Key | Default | Description |
 |-----|---------|-------------|
 | chase_speed_mult | 1.0 | Speed multiplier when chasing |
+| use_pathfinding | true | Use A* pathfinding around obstacles |
+| direct_distance_threshold | 48.0 | Skip pathfinding if closer than this (pixels) |
+
+**Pathfinding Behavior:** Uses pathfinding to navigate around walls. Falls back to direct movement if no path found (enemy must reach player).
 
 #### mod_surround
 | Key | Default | Description |
@@ -132,6 +143,8 @@ Each module has configurable options via the `module_config` JSON column.
 - If too close to ally, adds separation force (pushes apart)
 - If on same side as ally cluster, offsets approach angle to flank
 
+**Pathfinding:** Does NOT use pathfinding. This is a MODIFIER module that adjusts the direction set by ChaseModule - it doesn't set movement direction itself.
+
 #### mod_kite
 | Key | Default | Description |
 |-----|---------|-------------|
@@ -140,6 +153,9 @@ Each module has configurable options via the `module_config` JSON column.
 | melee_commit_range | 0.0 | Commit to melee if player this close (0 = disabled) |
 | kite_speed_mult | 0.8 | Speed when backing away |
 | sweet_spot_tolerance | 0.1 | Tolerance for preferred range (10%) |
+| use_pathfinding | true | Use A* pathfinding when retreating |
+
+**Pathfinding Behavior:** Uses pathfinding to find retreat positions. Falls back to direct movement if no path found (enemy must retreat).
 
 #### mod_combat
 | Key | Default | Description |
@@ -158,6 +174,10 @@ Each module has configurable options via the `module_config` JSON column.
 | roam_radius | 50.0 | Max roam distance from home |
 | roam_interval_min | 2.0 | Min seconds between roams |
 | roam_interval_max | 5.0 | Max seconds between roams |
+| roam_speed_mult | 0.5 | Speed multiplier while roaming |
+| use_pathfinding | true | Use A* pathfinding when roaming |
+
+**Pathfinding Behavior:** Validates roam targets using `has_path()` before selecting. If pathfinding fails during movement, picks a new roam target with brief pause. Prevents walking into walls.
 
 #### mod_circle
 | Key | Default | Description |
@@ -166,8 +186,13 @@ Each module has configurable options via the `module_config` JSON column.
 | circle_speed_mult | 0.7 | Speed multiplier while circling |
 | only_when_on_cooldown | true | Only circle when attack on cooldown |
 | coordinate_with_allies | true | Spread out from other circling allies |
+| direction_change_interval | 3.0 | Seconds between random direction changes |
+| orbit_step_distance | 50.0 | How far ahead to calculate orbit target |
+| use_pathfinding | true | Use A* pathfinding when orbiting |
 
 **Behavior:** Enemy orbits around target at specified radius. Useful for predatory behavior (wolves circling prey before striking).
+
+**Pathfinding Behavior:** If path to orbit position is blocked, flips circle direction (CW ↔ CCW) and tries again. Brief pause before continuing to prevent oscillation.
 
 #### mod_conditional_cast
 | Key | Default | Description |
@@ -213,10 +238,63 @@ Each module has configurable options via the `module_config` JSON column.
 | waypoint_pause | 2.0 | Default seconds to pause at each waypoint |
 | waypoint_threshold | 10.0 | Distance to consider waypoint "reached" |
 | resume_nearest | true | After combat, resume from nearest waypoint |
+| use_pathfinding | true | Use A* pathfinding between waypoints |
 
 **Note:** mod_patrol is typically injected via spawn points rather than hardcoded in enemy definitions. This allows the same enemy type to patrol or roam depending on where it spawns.
 
+**Pathfinding Behavior:** If a waypoint is unreachable (no path found), logs a warning and skips to the next waypoint. Useful for detecting level design issues.
+
 **LDtk Patrol System:** Spawn points with a `patrol_group` field automatically load waypoints from PatrolWaypoint entities in LDtk. See [LDTK_MAP_REFERENCE.md](LDTK_MAP_REFERENCE.md#patrolwaypoint) for visual patrol path editing.
+
+---
+
+## Pathfinding System
+
+Movement modules use A* pathfinding to navigate around obstacles. This is enabled by default but can be disabled per-enemy or per-module.
+
+### Global Toggle
+
+Set `use_pathfinding: false` in EnemyContext to disable pathfinding for an enemy:
+```json
+{
+  "module_config": {
+    "use_pathfinding": false
+  }
+}
+```
+
+### Per-Module Toggle
+
+Each movement module has its own `use_pathfinding` config:
+```json
+{
+  "mod_chase": { "use_pathfinding": false },
+  "mod_idle": { "use_pathfinding": true }
+}
+```
+
+### Module Pathfinding Summary
+
+| Module | Uses Pathfinding | Fail Behavior |
+|--------|-----------------|---------------|
+| mod_chase | Yes | Direct movement fallback |
+| mod_patrol | Yes | Skip to next waypoint |
+| mod_leash | Yes | Direct movement fallback |
+| mod_kite | Yes | Direct movement fallback |
+| mod_idle | Yes | Pick new roam target |
+| mod_flee | Yes | Try new flee direction |
+| mod_circle | Yes | Flip orbit direction |
+| mod_surround | No | Modifier only (adjusts direction) |
+| mod_combat | No | Combat actions, not movement |
+
+### Debug Visualization
+
+Press **Numpad /** to toggle pathfinding debug:
+- Green lines show current paths
+- Red squares show blocked tiles
+- Shows grid bounds and loaded chunk count
+
+See [pathfinding/PHASE_2_MODULE_INTEGRATION.md](pathfinding/PHASE_2_MODULE_INTEGRATION.md) for detailed pathfinding documentation.
 
 ---
 
