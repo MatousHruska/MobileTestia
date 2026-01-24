@@ -149,6 +149,7 @@ func _physics_process(delta: float) -> void:
 
 	_process_timers(delta)
 	_process_health_regen(delta)
+	_process_knockback(delta)
 	# Status effects are processed by StatusEffectComponent
 	if status_effects:
 		status_effects.process_effects(delta)
@@ -379,6 +380,110 @@ func is_stun_immune() -> bool:
 ## Returns true if enemy is immune to crowd control effects
 func is_cc_immune() -> bool:
 	return shield and shield.is_cc_immune()
+
+
+#===============================================================================
+# KNOCKBACK
+#===============================================================================
+
+## Active knockback state
+var _knockback_velocity: Vector2 = Vector2.ZERO
+var _knockback_duration: float = 0.0
+var _knockback_elapsed: float = 0.0
+
+## Apply knockback to this enemy (with wall collision validation)
+## source_pos: Position the knockback originates from
+## force: Knockback force in pixels/second
+## duration: How long the knockback lasts (default 0.2s)
+func apply_knockback(source_pos: Vector2, force: float, duration: float = 0.2) -> void:
+	# Check immunity
+	if is_knockback_immune():
+		Debug.log("Combat", "%s immune to knockback (shielded)" % enemy_name)
+		return
+
+	# Calculate knockback direction (away from source)
+	var direction: Vector2 = source_pos.direction_to(global_position)
+	var knockback_distance: float = force * duration
+
+	# Validate against walls
+	var validation := MovementValidator.validate_knockback(global_position, direction, knockback_distance)
+
+	if validation.cancelled:
+		Debug.log("Combat", "%s knockback cancelled - too close to wall" % enemy_name)
+		return
+
+	# Adjust force if blocked
+	var actual_distance: float = validation.distance
+	var adjusted_force: float = force
+	if validation.blocked and knockback_distance > 0:
+		adjusted_force = actual_distance / duration if duration > 0 else force
+		Debug.log("Combat", "%s knockback shortened: %.0f -> %.0f (wall)" % [
+			enemy_name, knockback_distance, actual_distance
+		])
+
+	# Apply knockback
+	_knockback_velocity = direction * adjusted_force
+	_knockback_duration = duration
+	_knockback_elapsed = 0.0
+
+	# Debug visualization
+	if OS.is_debug_build():
+		_show_knockback_debug(global_position, validation, direction, knockback_distance, duration)
+
+	Debug.log("Combat", "%s knocked back (force=%.0f, dur=%.2f)" % [
+		enemy_name, adjusted_force, duration
+	])
+
+
+## Process knockback movement (call this in _physics_process)
+func _process_knockback(delta: float) -> void:
+	if _knockback_elapsed >= _knockback_duration:
+		_knockback_velocity = Vector2.ZERO
+		return
+
+	_knockback_elapsed += delta
+
+	# Apply knockback velocity
+	velocity += _knockback_velocity
+
+
+## Check if currently being knocked back
+func is_being_knocked_back() -> bool:
+	return _knockback_elapsed < _knockback_duration and not _knockback_velocity.is_zero_approx()
+
+
+## Show debug visualization for knockback
+func _show_knockback_debug(start_pos: Vector2, validation: Dictionary, direction: Vector2, intended_distance: float, duration: float) -> void:
+	var end_pos: Vector2 = validation.position
+	var actual_distance: float = validation.distance
+
+	# Create debug line for knockback path
+	var line := Line2D.new()
+	line.width = 2.0
+	line.default_color = Color.CYAN
+	line.add_point(start_pos)
+	line.add_point(end_pos)
+	get_tree().current_scene.add_child(line)
+
+	# If blocked, show blocked portion in red
+	if validation.blocked:
+		var intended_end: Vector2 = start_pos + direction * intended_distance
+		var blocked_line := Line2D.new()
+		blocked_line.width = 2.0
+		blocked_line.default_color = Color.RED
+		blocked_line.add_point(end_pos)
+		blocked_line.add_point(intended_end)
+		get_tree().current_scene.add_child(blocked_line)
+
+		# Fade and remove blocked line
+		var blocked_tween := blocked_line.create_tween()
+		blocked_tween.tween_property(blocked_line, "modulate:a", 0.0, duration + 0.3)
+		blocked_tween.tween_callback(blocked_line.queue_free)
+
+	# Fade and remove main line
+	var tween := line.create_tween()
+	tween.tween_property(line, "modulate:a", 0.0, duration + 0.3)
+	tween.tween_callback(line.queue_free)
 
 
 func _get_damage_type_for_effect(effect_type: String) -> String:
