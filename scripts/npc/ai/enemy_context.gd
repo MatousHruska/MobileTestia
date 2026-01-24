@@ -110,10 +110,10 @@ var last_ability_id: String = ""
 ## Attack cooldown remaining (seconds)
 var attack_cooldown_remaining: float = 0.0
 
-## Current ability being used (set by CombatModule, read by ModularEnemyNPC)
+## Current ability being used (set by CombatModule, read by EnemyNPC)
 var current_ability: Dictionary = {}
 
-## Is this a ranged attack? (for ModularEnemyNPC to know what to spawn)
+## Is this a ranged attack? (for EnemyNPC to know what to spawn)
 var is_ranged_attack: bool = false
 
 #===============================================================================
@@ -254,7 +254,7 @@ func reset_frame_flags() -> void:
 	should_stop = false
 	desired_direction = Vector2.ZERO
 	speed_multiplier = 1.0
-	# Note: current_ability is NOT reset here - it persists until cleared by ModularEnemyNPC
+	# Note: current_ability is NOT reset here - it persists until cleared by EnemyNPC
 	is_ranged_attack = false
 	is_in_attack_range = false  # Reset each frame - combat module will set appropriately
 	# Note: pack_alert_received is NOT reset here - it persists until PackAlertModule processes it

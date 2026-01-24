@@ -450,7 +450,7 @@ For each module (by priority, highest first):
         ↓
   Each module reads/writes to EnemyContext
         ↓
-  ModularEnemyNPC applies context (movement, attacks)
+  EnemyNPC applies context (movement, attacks)
 ```
 
 ### Ability Types

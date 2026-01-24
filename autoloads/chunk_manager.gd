@@ -1637,10 +1637,10 @@ func _is_enemy_returning_home(enemy: Node2D) -> bool:
 
 ## Get the AI controller from an enemy (supports multiple property names)
 func _get_enemy_controller(enemy: Node2D) -> Node:
-	# Check for 'behavior' property (EnemyNPC)
+	# Check for 'behavior' property (legacy)
 	if "behavior" in enemy and enemy.behavior:
 		return enemy.behavior
-	# Check for 'module_controller' property (ModularEnemyNPC)
+	# Check for 'module_controller' property (EnemyNPC with modular AI)
 	if "module_controller" in enemy and enemy.module_controller:
 		return enemy.module_controller
 	return null

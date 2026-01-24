@@ -1,7 +1,7 @@
 extends Node2D
 class_name TestModularZombie
 ## Phase 1 Integration Test: Modular Zombie
-## Tests DetectionModule, ChaseModule, MeleeAttackModule and ModularEnemyNPC
+## Tests DetectionModule, ChaseModule, MeleeAttackModule and EnemyNPC with modular AI
 ## Run this scene with F6 to verify Phase 1 implementation
 
 ## Set to true to see verbose output
@@ -37,8 +37,8 @@ func run_all_tests() -> void:
 	test_database_modules_loaded()
 	test_database_modular_zombie_entry()
 
-	# Test ModularEnemyNPC (if Game.player available)
-	await test_modular_enemy_npc_creation()
+	# Test EnemyNPC with modules (if Game.player available)
+	await test_enemy_npc_with_modules()
 
 	# Print summary
 	print("")
@@ -230,12 +230,12 @@ func test_database_modular_zombie_entry() -> void:
 
 
 #===============================================================================
-# MODULAR ENEMY NPC TESTS
+# ENEMY NPC WITH MODULES TESTS
 #===============================================================================
 
-func test_modular_enemy_npc_creation() -> void:
-	# Create a modular zombie directly
-	var zombie = ModularEnemyNPC.new()
+func test_enemy_npc_with_modules() -> void:
+	# Create an EnemyNPC with modular AI
+	var zombie = EnemyNPC.new()
 	zombie.enemy_id = "ene_zombie_modular"
 	zombie.enemy_name = "Test Modular Zombie"
 
@@ -245,18 +245,18 @@ func test_modular_enemy_npc_creation() -> void:
 	await get_tree().process_frame
 	await get_tree().process_frame
 
-	_assert(zombie != null, "ModularEnemyNPC - instance created")
-	_assert(zombie._using_modules == true, "ModularEnemyNPC - using modules")
-	_assert(zombie.module_controller != null, "ModularEnemyNPC - has module controller")
+	_assert(zombie != null, "EnemyNPC - instance created")
+	_assert(zombie._using_modules == true, "EnemyNPC - using modules")
+	_assert(zombie.module_controller != null, "EnemyNPC - has module controller")
 
 	if zombie.module_controller:
 		var modules = zombie.module_controller.get_all_modules()
-		_assert(modules.size() == 3, "ModularEnemyNPC - 3 modules loaded")
+		_assert(modules.size() == 3, "EnemyNPC - 3 modules loaded")
 
 		# Check modules are sorted by priority
 		if modules.size() >= 3:
-			_assert(modules[0].priority >= modules[1].priority, "ModularEnemyNPC - modules sorted by priority")
-			_assert(modules[1].priority >= modules[2].priority, "ModularEnemyNPC - modules sorted by priority (2)")
+			_assert(modules[0].priority >= modules[1].priority, "EnemyNPC - modules sorted by priority")
+			_assert(modules[1].priority >= modules[2].priority, "EnemyNPC - modules sorted by priority (2)")
 
 	# Clean up
 	zombie.queue_free()
@@ -271,18 +271,17 @@ func spawn_comparison_zombies() -> void:
 	print("")
 	print("=== Spawning Comparison Zombies ===")
 
-	# Create legacy zombie
-	var legacy = DatabaseLoader.create_enemy("ene_zombie_basic")
-	if legacy:
-		legacy.global_position = Vector2(100, 100)
-		legacy.name = "LegacyZombie"
-		get_tree().current_scene.add_child(legacy)
-		print("Legacy zombie spawned at (100, 100)")
-	else:
-		print("ERROR: Could not create legacy zombie")
+	# Create legacy zombie (no modules)
+	var legacy = EnemyNPC.new()
+	legacy.enemy_id = "ene_zombie_basic"
+	legacy.enemy_name = "Basic Zombie"
+	legacy.global_position = Vector2(100, 100)
+	legacy.name = "BasicZombie"
+	get_tree().current_scene.add_child(legacy)
+	print("Basic zombie spawned at (100, 100) - no AI modules")
 
-	# Create modular zombie
-	var modular = ModularEnemyNPC.new()
+	# Create modular zombie (with modules)
+	var modular = EnemyNPC.new()
 	modular.enemy_id = "ene_zombie_modular"
 	modular.enemy_name = "Modular Zombie"
 	modular.global_position = Vector2(100, 150)
@@ -298,10 +297,9 @@ func spawn_comparison_zombies() -> void:
 		modular.detection_radius = float(data.get("detection_range", 120))
 
 	get_tree().current_scene.add_child(modular)
-	print("Modular zombie spawned at (100, 150)")
+	print("Modular zombie spawned at (100, 150) - with AI modules")
 
 	print("")
-	print("Watch both zombies - they should behave identically!")
-	print("- Both detect player at same range (120px)")
-	print("- Both chase at same speed (80)")
-	print("- Both attack at same range (25px)")
+	print("Watch both zombies:")
+	print("- Basic zombie: static (no modules)")
+	print("- Modular zombie: chases and attacks player")
