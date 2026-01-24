@@ -58,6 +58,7 @@ func _alert_nearby_allies(context: EnemyContext) -> void:
 	"""Send alert to nearby allies about our target"""
 	var alert_radius: float = get_config_float("alert_radius", 150.0)
 	var pack_group: String = get_config_string("pack_group", "")
+	var alert_require_los: bool = get_config_bool("alert_require_los", true)
 	var alert_count: int = 0
 
 	# Find nearby enemies
@@ -83,6 +84,19 @@ func _alert_nearby_allies(context: EnemyContext) -> void:
 		if not pack_group.is_empty():
 			if not _has_matching_pack_group(enemy, pack_group):
 				continue
+
+		# Check LOS if required - ally must see either us or the target
+		if alert_require_los:
+			var can_see_us: bool = PathfindingService.has_line_of_sight(
+				enemy.global_position,
+				context.global_position
+			)
+			var can_see_target: bool = PathfindingService.has_line_of_sight(
+				enemy.global_position,
+				context.current_target.global_position
+			)
+			if not can_see_us and not can_see_target:
+				continue  # Ally can't see us or target - no alert
 
 		# Alert this ally
 		if _send_alert_to(enemy, context.current_target):
