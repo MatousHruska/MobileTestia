@@ -13,7 +13,8 @@ class_name SpawnPoint
 
 
 func _ready() -> void:
-	# Register with zone if needed
+	# Add to group for easy lookup
+	add_to_group("spawn_points")
 	Debug.log("Zone", "Spawn point ready: %s at %s" % [spawn_id, global_position])
 
 

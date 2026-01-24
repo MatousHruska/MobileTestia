@@ -82,17 +82,43 @@ func _ready() -> void:
 
 func _position_player_at_spawn() -> void:
 	## Position player at the correct spawn point based on Game.spawn_point_id
+	## Priority: 1. ChunkManager (LDtk data), 2. SpawnPoint nodes in scene
 	var spawn_id: String = Game.spawn_point_id
 	if spawn_id.is_empty():
 		spawn_id = "default"
 
-	# Find spawn point with matching ID
+	# First try ChunkManager which has LDtk-exported player spawn positions
+	if use_chunk_system and ChunkManager and ChunkManager.has_player_spawn(spawn_id):
+		var spawn_pos := ChunkManager.get_player_spawn_position(spawn_id)
+		if Game.player:
+			Game.player.global_position = spawn_pos
+			Debug.log("Zone", "Player spawned at LDtk spawn: %s (%s)" % [spawn_id, spawn_pos])
+		return
+
+	# Fallback: try ChunkManager with "default" spawn if specific one not found
+	if use_chunk_system and ChunkManager and spawn_id != "default" and ChunkManager.has_player_spawn("default"):
+		var spawn_pos := ChunkManager.get_player_spawn_position("default")
+		if Game.player:
+			Game.player.global_position = spawn_pos
+			Debug.log("Zone", "Player spawned at LDtk default spawn: (%s)" % spawn_pos)
+		return
+
+	# Fallback: try any available LDtk spawn
+	if use_chunk_system and ChunkManager:
+		var spawn_pos := ChunkManager.get_player_spawn_position(spawn_id)
+		if spawn_pos != Vector2.ZERO:
+			if Game.player:
+				Game.player.global_position = spawn_pos
+				Debug.log("Zone", "Player spawned at first available LDtk spawn: (%s)" % spawn_pos)
+			return
+
+	# Legacy fallback: Find spawn point nodes in scene with matching ID
 	var spawn_points := get_tree().get_nodes_in_group("spawn_points")
 	for sp in spawn_points:
 		if sp is SpawnPoint and sp.spawn_id == spawn_id:
 			if Game.player:
 				Game.player.global_position = sp.global_position
-				Debug.log("Zone", "Player spawned at: %s (%s)" % [spawn_id, sp.global_position])
+				Debug.log("Zone", "Player spawned at scene SpawnPoint: %s (%s)" % [spawn_id, sp.global_position])
 			return
 
 	# Also check for SpawnPoint nodes directly in scene
@@ -100,7 +126,7 @@ func _position_player_at_spawn() -> void:
 		if child is SpawnPoint and child.spawn_id == spawn_id:
 			if Game.player:
 				Game.player.global_position = child.global_position
-				Debug.log("Zone", "Player spawned at: %s (%s)" % [spawn_id, child.global_position])
+				Debug.log("Zone", "Player spawned at child SpawnPoint: %s (%s)" % [spawn_id, child.global_position])
 			return
 
 	Debug.log("Zone", "No spawn point '%s' found, using default position" % spawn_id)
