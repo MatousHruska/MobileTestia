@@ -28,7 +28,7 @@ var _look_timer: float = 0.0
 func _init() -> void:
 	module_id = "mod_search"
 	module_name = "Search"
-	module_type = ModuleType.BEHAVIOR
+	module_type = ModuleType.MOVEMENT
 	priority = 75  # Between chase (80) and combat (60)
 
 
