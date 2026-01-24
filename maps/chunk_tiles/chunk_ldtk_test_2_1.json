@@ -18883,4468 +18883,7 @@
 			"y": 63
 		}
 	],
-	"interior_regions": [
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 35,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 36,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 37,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 38,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 39,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 40,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 36
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 36
-		},
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 35,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 36,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 37,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 38,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 39,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 40,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 37
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 37
-		},
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 35,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 36,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 37,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 38,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 39,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 40,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 38
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 38
-		},
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 35,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 36,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 37,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 38,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 39,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 40,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 39
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 39
-		},
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 35,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 36,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 37,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 38,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 40
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 40
-		},
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 35,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 36,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 37,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 41
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 41
-		},
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 35,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 36,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 37,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 42
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 42
-		},
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 35,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 36,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 37,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 43
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 43
-		},
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 35,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 36,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 44
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 44
-		},
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 35,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 36,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 45
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 45
-		},
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 35,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 36,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 46
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 46
-		},
-		{
-			"region_value": 4,
-			"x": 25,
-			"y": 47
-		},
-		{
-			"region_value": 4,
-			"x": 26,
-			"y": 47
-		},
-		{
-			"region_value": 4,
-			"x": 27,
-			"y": 47
-		},
-		{
-			"region_value": 4,
-			"x": 28,
-			"y": 47
-		},
-		{
-			"region_value": 4,
-			"x": 29,
-			"y": 47
-		},
-		{
-			"region_value": 4,
-			"x": 30,
-			"y": 47
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 47
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 47
-		},
-		{
-			"region_value": 4,
-			"x": 33,
-			"y": 47
-		},
-		{
-			"region_value": 4,
-			"x": 34,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 47
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 47
-		},
-		{
-			"region_value": 4,
-			"x": 31,
-			"y": 48
-		},
-		{
-			"region_value": 4,
-			"x": 32,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 48
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 49
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 50
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 51
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 52
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 53
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 54
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 55
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 56
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 57
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 58
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 59
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 60
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 61
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 28,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 29,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 30,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 31,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 32,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 33,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 62
-		},
-		{
-			"region_value": 3,
-			"x": 25,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 26,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 27,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 34,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 35,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 36,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 37,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 38,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 39,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 40,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 41,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 42,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 43,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 44,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 45,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 46,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 47,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 48,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 49,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 50,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 51,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 52,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 53,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 54,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 55,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 56,
-			"y": 63
-		},
-		{
-			"region_value": 3,
-			"x": 57,
-			"y": 63
-		}
-	],
+	"interior_regions": [],
 	"roofs": [
 		{
 			"region_value": 0,
@@ -23563,199 +19102,199 @@
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 36
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 36
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 36
@@ -23773,199 +19312,199 @@
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 37
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 37
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 37
@@ -23983,199 +19522,199 @@
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 38
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 38
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 38
@@ -24193,199 +19732,199 @@
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 39
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 39
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 39
@@ -24403,85 +19942,85 @@
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 40
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 40
@@ -24499,103 +20038,103 @@
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 40
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 40
@@ -24613,79 +20152,79 @@
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 41
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 41
@@ -24703,109 +20242,109 @@
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 41
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 41
@@ -24823,79 +20362,79 @@
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 42
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 42
@@ -24907,115 +20446,115 @@
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 42
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 42
@@ -25033,79 +20572,79 @@
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 43
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 43
@@ -25117,115 +20656,115 @@
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 43
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 43
@@ -25243,73 +20782,73 @@
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 44
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 44
@@ -25327,115 +20866,115 @@
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 44
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 44
@@ -25453,73 +20992,73 @@
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 45
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 45
@@ -25537,115 +21076,115 @@
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 45
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 45
@@ -25663,73 +21202,73 @@
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 46
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 46
@@ -25741,121 +21280,121 @@
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 46
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 46
@@ -25873,61 +21412,61 @@
 			"y": 47
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 47
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 47
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 47
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 47
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 47
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 47
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 47
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 47
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 47
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 47
@@ -25951,121 +21490,121 @@
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 47
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 47
@@ -26119,13 +21658,13 @@
 			"y": 48
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 48
 		},
 		{
-			"region_value": 4,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 48
@@ -26149,133 +21688,133 @@
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 48
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 48
@@ -26293,37 +21832,37 @@
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 49
@@ -26347,145 +21886,145 @@
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 49
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 49
@@ -26503,199 +22042,199 @@
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 50
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 50
@@ -26713,199 +22252,199 @@
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 51
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 51
@@ -26923,199 +22462,199 @@
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 52
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 52
@@ -27133,199 +22672,199 @@
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 53
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 53
@@ -27343,199 +22882,199 @@
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 54
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 54
@@ -27553,199 +23092,199 @@
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 55
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 55
@@ -27763,199 +23302,199 @@
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 56
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 56
@@ -27973,199 +23512,199 @@
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 57
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 57
@@ -28183,199 +23722,199 @@
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 58
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 58
@@ -28393,199 +23932,199 @@
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 59
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 59
@@ -28603,199 +24142,199 @@
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 60
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 60
@@ -28813,199 +24352,199 @@
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 61
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 61
@@ -29023,199 +24562,199 @@
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 28,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 29,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 30,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 31,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 32,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 33,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 62
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 62
@@ -29233,19 +24772,19 @@
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 25,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 26,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 27,
 			"y": 63
@@ -29287,145 +24826,145 @@
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 34,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 35,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 36,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 37,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 38,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 39,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 40,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 41,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 42,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 43,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 44,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 45,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 46,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 47,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 48,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 49,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 50,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 51,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 52,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 53,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 54,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 55,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 56,
 			"y": 63
 		},
 		{
-			"region_value": 3,
+			"region_value": 0,
 			"roof_type": "roof_cave",
 			"x": 57,
 			"y": 63
