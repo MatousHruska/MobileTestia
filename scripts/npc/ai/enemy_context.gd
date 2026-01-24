@@ -48,29 +48,8 @@ var target_just_acquired: bool = false
 # LINE OF SIGHT (Written by: DetectionModule)
 #===============================================================================
 
-## Currently has line of sight to target
+## Currently has line of sight to target (used for attack validation only)
 var has_line_of_sight: bool = false
-
-## Last position where we saw the target
-var last_known_target_position: Vector2 = Vector2.ZERO
-
-## Time since we lost line of sight (for LOS memory)
-var los_timer: float = 0.0
-
-## LOS was lost this frame
-var los_just_lost: bool = false
-
-## LOS was gained this frame
-var los_just_gained: bool = false
-
-## Search state: arrived at last known position and searching
-var is_searching: bool = false
-
-## Search timer (how long we've been searching)
-var search_timer: float = 0.0
-
-## Current search direction index (for cycling through look directions)
-var search_direction_index: int = 0
 
 #===============================================================================
 # POSITION & MOVEMENT (Written by: MovementModule)
@@ -199,7 +178,7 @@ var slow_amount: float = 0.0
 #===============================================================================
 
 ## Current high-level state
-enum BehaviorState { IDLE, ROAMING, COMBAT, RETURNING, FLEEING, SEARCHING, DEAD }
+enum BehaviorState { IDLE, ROAMING, COMBAT, RETURNING, FLEEING, DEAD }
 var behavior_state: BehaviorState = BehaviorState.IDLE
 
 ## Idle sub-state
@@ -280,9 +259,6 @@ func reset_frame_flags() -> void:
 	is_in_attack_range = false  # Reset each frame - combat module will set appropriately
 	# Note: pack_alert_received is NOT reset here - it persists until PackAlertModule processes it
 	# This allows alerts sent in one frame to be processed by other enemies in subsequent frames
-	# LOS frame flags
-	los_just_lost = false
-	los_just_gained = false
 
 
 func update_from_owner() -> void:
