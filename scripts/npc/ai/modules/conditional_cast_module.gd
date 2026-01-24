@@ -20,7 +20,7 @@ class_name ConditionalCastModule
 # STATE
 #===============================================================================
 
-var _owner_ref: ModularEnemyNPC = null
+var _owner_ref: EnemyNPC = null
 var _cooldown_remaining: float = 0.0
 var _check_timer: float = 0.0
 var _is_casting: bool = false
@@ -36,7 +36,7 @@ func _init() -> void:
 
 
 func _on_setup(owner: Node2D) -> void:
-	if owner is ModularEnemyNPC:
+	if owner is EnemyNPC:
 		_owner_ref = owner
 		Debug.info("AI", "ConditionalCast module setup for %s (ability: %s)" % [
 			_owner_ref.enemy_name,

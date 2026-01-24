@@ -348,7 +348,7 @@ func _execute_ability(context: EnemyContext, ability: Dictionary) -> void:
 	context.should_attack = true
 	context.behavior_state = EnemyContext.BehaviorState.COMBAT
 
-	# Store ability info for ModularEnemyNPC to execute
+	# Store ability info for EnemyNPC to execute
 	context.current_ability = ability
 	context.last_ability_id = ability_id
 

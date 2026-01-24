@@ -163,7 +163,7 @@ static func get_safe_target(...) -> Dictionary:
 
 ---
 
-## ModularEnemyNPC Dash Attack Updates
+## EnemyNPC Dash Attack Updates
 
 Update `_execute_dash_attack` to validate the path:
 
@@ -291,7 +291,7 @@ static func validate_teleport(to: Vector2) -> Dictionary:
 ## Estimated Scope
 
 - **MovementValidator class**: ~80 lines
-- **ModularEnemyNPC dash updates**: ~30 lines
+- **EnemyNPC dash updates**: ~30 lines
 - **Knockback validation**: ~20 lines
 
 **Total**: ~130 lines of changes (reduced because LoS checks are done)

@@ -734,13 +734,13 @@ Shows per-enemy information:
 | Pack Alert Module | `scripts/npc/ai/modules/pack_alert_module.gd` |
 | Flee Module | `scripts/npc/ai/modules/flee_module.gd` |
 | Patrol Module | `scripts/npc/ai/modules/patrol_module.gd` |
-| Modular Enemy NPC | `scripts/npc/modular_enemy_npc.gd` |
+| Enemy NPC | `scripts/npc/enemy_npc.gd` |
 | Spawn Point | `scripts/npc/spawn_point.gd` |
 | Status Effect Component | `scripts/combat/status_effect_component.gd` |
 | Database Loader | `autoloads/database_loader.gd` |
-| Ability Execution | `scripts/npc/modular_enemy_npc.gd:_execute_ability()` |
+| Ability Execution | `scripts/npc/enemy_npc.gd:_execute_ability()` |
 | Condition Check | `scripts/npc/ai/modules/combat_module.gd:_check_condition()` |
-| Spawn Config Apply | `scripts/npc/modular_enemy_npc.gd:_setup_module_system()` |
+| Spawn Config Apply | `scripts/npc/enemy_npc.gd:_setup_module_system()` |
 
 ### Adding a New Module
 

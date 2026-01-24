@@ -117,13 +117,13 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 	if show_health_bars and not enemy.is_dead:
 		_draw_health_bar(screen_pos + Vector2(-20, -30), 40, 6, enemy.get_health_percent())
 
-	# AI State label - check for ModularEnemyNPC module system
+	# AI State label - check for module system
 	if show_ai_states:
 		var state_name := "STATIC"
 		var state_color: Color = ai_state_colors.get("idle", Color.WHITE) as Color
 
-		# Check if using module system (ModularEnemyNPC)
-		if enemy is ModularEnemyNPC and enemy.module_controller:
+		# Check if using module system
+		if enemy.module_controller:
 			var ctx: EnemyContext = enemy.module_controller.get_context()
 			state_name = EnemyContext.BehaviorState.keys()[ctx.behavior_state]
 			match ctx.behavior_state:
@@ -136,8 +136,8 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 
 		_draw_label(screen_pos + Vector2(0, -40), state_name, state_color)
 
-	# Target line - check for ModularEnemyNPC
-	if show_target_lines and enemy is ModularEnemyNPC and enemy.module_controller:
+	# Target line - check for module system
+	if show_target_lines and enemy.module_controller:
 		var ctx: EnemyContext = enemy.module_controller.get_context()
 		if ctx.current_target and is_instance_valid(ctx.current_target):
 			var target_pos: Vector2 = _world_to_screen(ctx.current_target.global_position, camera)
@@ -161,12 +161,12 @@ func _draw_enemy(enemy: Node2D, camera: Camera2D) -> void:
 		var leash_radius: float = enemy.leash_radius * camera.zoom.x
 		draw_node.draw_arc(leash_screen, leash_radius, 0, TAU, 32, Color(0.5, 0.3, 0.3, 0.2), 1.5)
 
-	# Module info for ModularEnemyNPC
-	if show_module_info and enemy is ModularEnemyNPC and enemy.module_controller:
+	# Module info for enemies with modular AI
+	if show_module_info and enemy.module_controller:
 		_draw_module_info(enemy, screen_pos)
 
 
-func _draw_module_info(enemy: ModularEnemyNPC, screen_pos: Vector2) -> void:
+func _draw_module_info(enemy: EnemyNPC, screen_pos: Vector2) -> void:
 	## Draw module system debug info
 	var y_offset := 15.0
 	var x_offset := 50.0
