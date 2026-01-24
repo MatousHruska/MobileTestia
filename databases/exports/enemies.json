@@ -15,6 +15,7 @@
       "loot_table_id": "loot_zombie",
       "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle",
       "module_config": {},
+      "navigation_layer": "ground",
       "description": ""
     },
     {
@@ -32,6 +33,7 @@
       "loot_table_id": "loot_ghoul",
       "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle",
       "module_config": {},
+      "navigation_layer": "ground",
       "description": ""
     },
     {
@@ -49,6 +51,7 @@
       "loot_table_id": "loot_vampire",
       "module_ids": "mod_target_detection,mod_leash,mod_chase,mod_combat,mod_idle",
       "module_config": {},
+      "navigation_layer": "ground",
       "description": ""
     },
     {
@@ -66,6 +69,7 @@
       "loot_table_id": "loot_vampire_lord",
       "module_ids": "mod_target_detection,mod_flee,mod_chase,mod_combat",
       "module_config": {},
+      "navigation_layer": "ground",
       "description": ""
     },
     {
@@ -83,6 +87,7 @@
       "loot_table_id": "loot_wolf",
       "module_ids": "mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_surround,mod_combat,mod_idle",
       "module_config": {"mod_surround": {"surround_radius": 100, "spread_strength": 0.6, "min_ally_distance": 50}},
+      "navigation_layer": "ground",
       "description": ""
     },
     {
@@ -100,6 +105,7 @@
       "loot_table_id": "loot_skeleton",
       "module_ids": "mod_target_detection,mod_leash,mod_kite,mod_chase,mod_combat,mod_idle",
       "module_config": {"mod_kite": {"preferred_range": 300, "too_close_range": 200, "melee_commit_range": 40}},
+      "navigation_layer": "ground",
       "description": ""
     },
     {
@@ -117,6 +123,7 @@
       "loot_table_id": "loot_skeleton_king",
       "module_ids": "mod_target_detection,mod_chase,mod_combat",
       "module_config": {},
+      "navigation_layer": "ground",
       "description": ""
     },
     {
@@ -134,6 +141,7 @@
       "loot_table_id": "loot_starved_wolf",
       "module_ids": "mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_search,mod_surround,mod_circle,mod_combat,mod_idle",
       "module_config": {"mod_conditional_cast": {"ability_id": "abi_blood_howl", "conditions": ["player_damaged_recently:10", "self_not_buffed:status_blood_frenzy"], "cooldown": 30.0, "additional_status_effects": ["status_blood_frenzy_cdr"]}, "mod_circle": {"circle_radius": 140, "circle_speed_mult": 0.8}},
+      "navigation_layer": "ground",
       "description": "A desperate, hungry wolf. Circles prey before leaping."
     }
   ]
