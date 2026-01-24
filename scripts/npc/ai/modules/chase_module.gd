@@ -69,19 +69,24 @@ func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> V
 	if not use_pf:
 		return context.global_position.direction_to(target_pos)
 
+	# Ghost enemies move directly through walls - no pathfinding needed
+	if context.is_ghost():
+		return context.global_position.direction_to(target_pos)
+
 	# Use direct movement if very close (optimization)
 	var direct_threshold := get_config_float("direct_distance_threshold", 48.0)
 	if context.global_position.distance_to(target_pos) < direct_threshold:
 		return context.global_position.direction_to(target_pos)
 
-	# Get direction from pathfinding service
+	# Get direction from pathfinding service with navigation layer
 	# NOTE: Use entity_id = -1 (no caching) to avoid cache conflicts when
 	# switching between chasing player and returning home. With 2-5 enemies,
 	# fresh path calculation each frame is fine performance-wise.
 	var pf_direction := PathfindingService.get_direction_to(
 		context.global_position,
 		target_pos,
-		-1
+		-1,
+		context.navigation_layer
 	)
 
 	# Fallback to direct movement if pathfinding returns zero

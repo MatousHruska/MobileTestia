@@ -310,13 +310,14 @@ Private Sub SetupEnemiesSheet()
     Dim headers As Variant
     headers = Array("id", "name", "type", "base_health", "base_damage", "armor", "base_shield", _
                     "move_speed", "attack_speed", "detection_range", _
-                    "xp_reward", "loot_table_id", "module_ids", "module_config", "description")
+                    "xp_reward", "loot_table_id", "module_ids", "module_config", "navigation_layer", "description")
     SetHeaders ws, headers
 
     ' Add column notes
     SafeAddComment ws.Cells(1, 7), "Shield absorbs damage before health (0 = no shield)"
     SafeAddComment ws.Cells(1, 13), "Comma-separated module IDs for AI (e.g., mod_target_detection,mod_chase,mod_combat)"
     SafeAddComment ws.Cells(1, 14), "Per-enemy module config overrides as JSON. Format: {""mod_idle"": {""can_roam"": false}}"
+    SafeAddComment ws.Cells(1, 15), "Navigation layer: ground, flying, jumping, ghost. Determines terrain traversal."
 End Sub
 
 Private Sub SetupEnemyVariantsSheet()

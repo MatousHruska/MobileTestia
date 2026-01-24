@@ -85,6 +85,13 @@ var should_stop: bool = false
 ## Whether to use pathfinding (can be disabled per-enemy in config)
 var use_pathfinding: bool = true
 
+## Navigation layer for pathfinding (determines which terrain types can be traversed)
+## See NavigationGrid.NAV_* constants
+var navigation_layer: int = 1  # NAV_GROUND by default
+
+## Navigation layer name (for debugging)
+var navigation_layer_name: String = "ground"
+
 #===============================================================================
 # COMBAT STATE (Written by: CombatModule)
 #===============================================================================
@@ -316,6 +323,11 @@ func update_from_owner() -> void:
 		distance_from_home = global_position.distance_to(home_position)
 		is_beyond_leash = distance_from_home > leash_radius
 
+	# Navigation layer (from enemy database)
+	if "navigation_layer" in owner:
+		navigation_layer_name = owner.navigation_layer
+		navigation_layer = _name_to_nav_layer(navigation_layer_name)
+
 	# Read buff stat modifiers from StatusEffectComponent (may be named "StatusEffects")
 	buff_speed_multiplier = 1.0
 	var status_comp: Node = null
@@ -358,6 +370,9 @@ func get_debug_dict() -> Dictionary:
 	# Show buff speed multiplier if not 1.0
 	if buff_speed_multiplier != 1.0:
 		debug_dict["buff_spd"] = "%.0f%%" % (buff_speed_multiplier * 100)
+	# Show navigation layer if not ground (default)
+	if navigation_layer_name != "ground":
+		debug_dict["nav"] = navigation_layer_name
 	return debug_dict
 
 
@@ -381,3 +396,18 @@ func _get_flags_string() -> String:
 	elif has_valid_target:
 		flags.append("NO_LOS")
 	return ",".join(flags) if flags.size() > 0 else "-"
+
+
+## Convert navigation layer name to bitmask value
+func _name_to_nav_layer(name: String) -> int:
+	match name:
+		"ground": return 1   # NavigationGrid.NAV_GROUND
+		"flying": return 2   # NavigationGrid.NAV_FLYING
+		"jumping": return 4  # NavigationGrid.NAV_JUMPING
+		"ghost": return 8    # NavigationGrid.NAV_GHOST
+		_: return 1          # Default to ground
+
+
+## Check if this enemy is a ghost (can pass through walls)
+func is_ghost() -> bool:
+	return navigation_layer == 8  # NavigationGrid.NAV_GHOST

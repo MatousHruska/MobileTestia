@@ -81,16 +81,21 @@ func _get_retreat_direction(context: EnemyContext, preferred_range: float) -> Ve
 	if not use_pf:
 		return -context.target_direction
 
+	# Ghost enemies move directly through walls - no pathfinding needed
+	if context.is_ghost():
+		return -context.target_direction
+
 	# Calculate retreat position (behind us, at preferred range from target)
 	var retreat_pos := context.global_position - context.target_direction * preferred_range
 
-	# Get direction from pathfinding service
+	# Get direction from pathfinding service with navigation layer
 	# NOTE: Use entity_id = -1 (no caching) because retreat_pos changes frequently
 	# and would conflict with ChaseModule's cache
 	var pf_direction := PathfindingService.get_direction_to(
 		context.global_position,
 		retreat_pos,
-		-1
+		-1,
+		context.navigation_layer
 	)
 
 	# Fallback to direct retreat if pathfinding returns zero
