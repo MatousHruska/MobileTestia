@@ -43,6 +43,8 @@ const INTGRID_TERRAIN_MAP := {
 	5: "terrain_wall",
 	6: "terrain_sand",
 	7: "terrain_snow",
+	8: "terrain_pit",
+	9: "terrain_lava",
 }
 
 ## Terrain types with collision

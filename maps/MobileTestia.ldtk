@@ -144,7 +144,9 @@
 				{ "value": 4, "identifier": "water", "color": "#334D99", "tile": null, "groupUid": 0 },
 				{ "value": 5, "identifier": "wall", "color": "#4D4033", "tile": null, "groupUid": 0 },
 				{ "value": 6, "identifier": "sand", "color": "#C4A35A", "tile": null, "groupUid": 0 },
-				{ "value": 7, "identifier": "snow", "color": "#E0E8F0", "tile": null, "groupUid": 0 }
+				{ "value": 7, "identifier": "snow", "color": "#E0E8F0", "tile": null, "groupUid": 0 },
+				{ "value": 8, "identifier": "pit", "color": "#1A1A2E", "tile": null, "groupUid": 0 },
+				{ "value": 9, "identifier": "lava", "color": "#FF4500", "tile": null, "groupUid": 0 }
 			],
 			"intGridValuesGroups": [],
 			"autoRuleGroups": [],
