@@ -288,16 +288,24 @@ Create these layers (order matters for rendering):
 
 ### IntGrid Values (Terrain)
 
-| Value | Name | Hex Color | Collision | Can Spawn |
-|-------|------|-----------|-----------|-----------|
-| 0 | Empty | #1a1a1a | No | No |
-| 1 | Grass | #3d6e3d | No | Yes |
-| 2 | Dirt | #6b5344 | No | Yes |
-| 3 | Stone | #666673 | No | Yes |
-| 4 | Water | #334d99 | Yes | No |
-| 5 | Wall | #4d4033 | Yes | No |
-| 6 | Sand | #c4a35a | No | Yes |
-| 7 | Snow | #e0e8f0 | No | Yes |
+| Value | Name | Hex Color | Collision | Can Spawn | Nav Layers |
+|-------|------|-----------|-----------|-----------|------------|
+| 0 | Empty | #1a1a1a | No | No | None |
+| 1 | Grass | #3d6e3d | No | Yes | All |
+| 2 | Dirt | #6b5344 | No | Yes | All |
+| 3 | Stone | #666673 | No | Yes | All |
+| 4 | Water | #334d99 | Yes | No | Flying, Ghost |
+| 5 | Wall | #4d4033 | Yes | No | Ghost only |
+| 6 | Sand | #c4a35a | No | Yes | All |
+| 7 | Snow | #e0e8f0 | No | Yes | All |
+| 8 | Pit | #1a1a2e | Yes | No | Flying, Jumping, Ghost |
+| 9 | Lava | #ff4500 | Yes | No | Flying, Ghost |
+
+**Nav Layers** determine which enemy types can traverse each terrain:
+- **Ground**: Normal enemies (wolves, skeletons, bandits)
+- **Flying**: Enemies that fly over obstacles (bats, wisps)
+- **Jumping**: Enemies that can leap over gaps (frogs, spiders)
+- **Ghost**: Ethereal enemies that phase through everything (specters, wraiths)
 
 ### Entity Definitions
 
@@ -850,9 +858,65 @@ Chests:     chest_{zone}_{desc}     -> chest_forest_hidden_01
 
 ---
 
+---
+
+## Navigation Layers
+
+The pathfinding system supports different navigation layers for different enemy movement types. Each terrain type has a bitmask defining which layers can traverse it.
+
+### Layer Types
+
+| Layer | Bitmask | Description | Example Enemies |
+|-------|---------|-------------|-----------------|
+| Ground | 1 | Normal walking enemies | Wolf, Skeleton, Bandit |
+| Flying | 2 | Can cross water and pits | Bat, Wisp, Flying Skull |
+| Jumping | 4 | Can cross pits (not water) | Frog, Spider |
+| Ghost | 8 | Phases through everything | Specter, Wraith |
+
+### Terrain Traversal Matrix
+
+| Terrain | Ground | Flying | Jumping | Ghost |
+|---------|--------|--------|---------|-------|
+| Grass/Dirt/Stone/Sand/Snow | ✅ | ✅ | ✅ | ✅ |
+| Water | ❌ | ✅ | ❌ | ✅ |
+| Pit | ❌ | ✅ | ✅ | ✅ |
+| Lava | ❌ | ✅ | ❌ | ✅ |
+| Wall | ❌ | ❌ | ❌ | ✅ |
+| Void | ❌ | ❌ | ❌ | ❌ |
+
+### Setting Enemy Navigation Layer
+
+In the **Enemies** database sheet, set the `navigation_layer` column:
+
+| Enemy | navigation_layer |
+|-------|------------------|
+| ene_wolf_starved | ground |
+| ene_bat_cave | flying |
+| ene_frog_swamp | jumping |
+| ene_ghost_ancient | ghost |
+
+Default is `ground` if not specified.
+
+### Ghost Enemy Behavior
+
+Ghost enemies (`navigation_layer: ghost`) have special handling:
+- **No pathfinding**: They move directly toward the target
+- **Phase through walls**: Collision detection still applies for attacks
+- **Can traverse any terrain**: Including walls and void
+
+### Debug Visualization
+
+Press **Numpad /** to toggle navigation debug overlay:
+- Shows blocked tiles for the currently selected layer
+- Press **L** to cycle through layers (ground → flying → jumping → ghost)
+- Green = walkable, Red = blocked for current layer
+- Layer indicator shows which layer is being displayed
+
+---
+
 ## Related Documentation
 
 - **ZONE_DESIGN_GUIDE.md** - Creative design guidelines for zones
-- **ENEMY_REFERENCE.md** - Enemy behavior and AI
+- **ENEMY_REFERENCE.md** - Enemy behavior and AI (includes navigation_layer config)
 - **ABILITY_SYSTEM_REFERENCE.md** - Combat abilities
 - **QUICK_REFERENCE.md** - General game reference
