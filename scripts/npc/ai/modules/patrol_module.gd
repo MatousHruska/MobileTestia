@@ -121,6 +121,14 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	else:
 		# Move toward waypoint (with pathfinding if enabled)
 		var direction := _get_pathfinding_direction(context, target_pos)
+
+		# If no valid path to waypoint, skip to next one
+		if direction == Vector2.ZERO:
+			Debug.log("AI", "PatrolModule: Can't reach waypoint %d, skipping" % _current_index)
+			_advance_waypoint()
+			context.should_stop = true
+			return
+
 		context.desired_direction = direction
 		context.speed_multiplier = get_config_float("patrol_speed_mult", 0.6)
 		context.behavior_state = EnemyContext.BehaviorState.ROAMING
@@ -128,7 +136,8 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
 
 func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> Vector2:
-	"""Get movement direction, using pathfinding if enabled"""
+	"""Get movement direction, using pathfinding if enabled.
+	Returns Vector2.ZERO if no path exists (caller should handle this case)."""
 	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
 
 	if not use_pf:
@@ -136,17 +145,13 @@ func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> V
 
 	# Get direction from pathfinding service
 	# NOTE: Use entity_id = -1 (no caching) to avoid conflicts with ChaseModule
-	# PatrolModule only runs when idle, but safer to not share cache
 	var pf_direction := PathfindingService.get_direction_to(
 		context.global_position,
 		target_pos,
 		-1
 	)
 
-	# Fallback to direct movement if pathfinding returns zero
-	if pf_direction == Vector2.ZERO:
-		return context.global_position.direction_to(target_pos)
-
+	# Return Vector2.ZERO if no path found - caller handles fallback
 	return pf_direction
 
 
