@@ -556,6 +556,56 @@ while action.is_active():
 
 ---
 
+### MovementValidator (Wall Collision)
+
+**File:** `scripts/navigation/movement_validator.gd`
+
+Validates movement abilities against walls before execution. Prevents characters from clipping through walls during dashes, lunges, charges, and knockback.
+
+**Features:**
+- Path validation using raycast
+- Safe target calculation with 4px wall margin
+- Proportional duration adjustment for shortened movements
+- Minimum distance threshold (8px) - cancels if too short
+
+**Usage:**
+```gdscript
+# Validate a dash
+var validation = MovementValidator.validate_dash_directional(start_pos, direction, distance)
+if validation.blocked:
+    # Movement was shortened - use adjusted values
+    var safe_end = validation.position
+    var safe_distance = validation.distance
+
+# Validate knockback on enemies
+func apply_knockback(source_pos: Vector2, force: float, duration: float = 0.2) -> void:
+    var direction = source_pos.direction_to(global_position)
+    var knockback_distance = force * duration
+
+    var validation = MovementValidator.validate_knockback(global_position, direction, knockback_distance)
+    if validation.cancelled:
+        return  # Too close to wall
+
+    # Apply with adjusted force if blocked
+    var adjusted_force = validation.distance / duration if validation.blocked else force
+    _knockback_velocity = direction * adjusted_force
+```
+
+**Validation Results:**
+| Field | Type | Description |
+|-------|------|-------------|
+| `position` | Vector2 | Safe end position |
+| `distance` | float | Achievable distance |
+| `blocked` | bool | True if wall was hit |
+| `block_point` | Vector2 | Where collision occurred |
+| `cancelled` | bool | (knockback only) True if <8px movement |
+
+**Debug Visualization:**
+- Orange/Cyan line: Actual movement path
+- Red line: Blocked portion that was prevented
+
+---
+
 ### DamageCalculator (Unified Damage Math)
 
 **File:** `autoloads/damage_calculator.gd`
