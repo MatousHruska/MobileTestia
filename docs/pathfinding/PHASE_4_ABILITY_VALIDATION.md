@@ -16,7 +16,7 @@
            return  # Can't attack through walls
    ```
 
-2. **Cast-Time Cancellation** (`scripts/npc/modular_enemy_npc.gd:221-236`)
+2. **Cast-Time Cancellation** (`scripts/npc/enemy_npc.gd:_execute_ability()`)
    - If player hides during cast time, leap attack is cancelled
    ```gdscript
    if is_leap_attack and module_controller:
