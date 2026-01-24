@@ -115,7 +115,7 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
 func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> Vector2:
 	"""Get movement direction, using pathfinding if enabled.
-	Returns Vector2.ZERO if no path exists (caller should handle this case)."""
+	Falls back to direct movement if pathfinding unavailable."""
 	var use_pf: bool = get_config_bool("use_pathfinding", true) and context.use_pathfinding
 
 	if not use_pf:
@@ -129,7 +129,10 @@ func _get_pathfinding_direction(context: EnemyContext, target_pos: Vector2) -> V
 		-1
 	)
 
-	# Return Vector2.ZERO if no path found - caller will try opposite direction
+	# Fall back to direct movement if pathfinding fails (out of bounds, no path)
+	if pf_direction == Vector2.ZERO:
+		return context.global_position.direction_to(target_pos)
+
 	return pf_direction
 
 
