@@ -37,25 +37,8 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 	if context.is_dead:
 		return
 
-	# Don't chase if searching (SearchModule handles this state)
-	if context.is_searching:
-		return
-
-	# Determine chase target based on LOS
-	var chase_target: Vector2
-	if context.has_line_of_sight:
-		# Can see target - chase directly
-		chase_target = context.current_target.global_position
-	else:
-		# Lost LOS - chase to last known position
-		chase_target = context.last_known_target_position
-
-		# If we're close enough to last known position, let SearchModule take over
-		var search_threshold: float = get_config_float("search_arrival_threshold", 32.0)
-		if context.global_position.distance_to(chase_target) < search_threshold:
-			# We've arrived - stop and let search module handle it
-			context.should_stop = true
-			return
+	# Always chase directly to target (enemies always know where player is)
+	var chase_target: Vector2 = context.current_target.global_position
 
 	# Get movement direction (with pathfinding if enabled)
 	var move_dir := _get_pathfinding_direction(context, chase_target)
@@ -64,14 +47,8 @@ func _process_module(context: EnemyContext, _delta: float) -> void:
 	context.desired_direction = move_dir
 	context.speed_multiplier = get_config_float("chase_speed_mult", 1.0)
 
-	# Update facing direction
-	if context.has_line_of_sight:
-		# Face the actual target
-		context.facing_direction = context.target_direction
-	else:
-		# Face the direction we're moving
-		if move_dir != Vector2.ZERO:
-			context.facing_direction = move_dir
+	# Face the actual target
+	context.facing_direction = context.target_direction
 
 
 func _handle_return_home(context: EnemyContext) -> void:

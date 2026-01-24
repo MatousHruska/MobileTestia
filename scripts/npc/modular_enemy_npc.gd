@@ -137,7 +137,7 @@ func _create_module_instance(module_id: String, _module_data: Dictionary) -> Bas
 			return LeashModule.new()
 		"mod_patrol":
 			return PatrolModule.new()
-		"mod_search", "mod_pack_alert", "mod_kite":
+		"mod_pack_alert", "mod_kite":
 			# Load these from script_path (avoids class name resolution issues)
 			return _load_module_from_script(_module_data)
 		_:
