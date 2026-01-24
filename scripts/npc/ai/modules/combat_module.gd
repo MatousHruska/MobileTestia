@@ -186,9 +186,9 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 				_do_align_for_attack(context)
 				return
 
-	# Check LOS for ranged attacks (can't shoot through walls)
-	if ability_type in ["ranged", "projectile"]:
-		var require_los: bool = get_config_bool("ranged_require_los", true)
+	# Check LOS for ranged and leap attacks (can't shoot/leap through walls)
+	if ability_type in ["ranged", "projectile", "leap"]:
+		var require_los: bool = get_config_bool("require_los", true)
 		if require_los and not context.has_line_of_sight:
 			# No LOS - can't attack
 			# Will try to chase/reposition to get LOS
