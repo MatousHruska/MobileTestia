@@ -7358,7 +7358,7 @@
 			"y": 22
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_lava",
 			"x": 63,
 			"y": 22
 		},
@@ -7678,7 +7678,7 @@
 			"y": 23
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_lava",
 			"x": 63,
 			"y": 23
 		},
@@ -7998,7 +7998,7 @@
 			"y": 24
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_lava",
 			"x": 63,
 			"y": 24
 		},
@@ -8318,7 +8318,7 @@
 			"y": 25
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_lava",
 			"x": 63,
 			"y": 25
 		},
@@ -8638,7 +8638,7 @@
 			"y": 26
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_lava",
 			"x": 63,
 			"y": 26
 		},
@@ -8958,7 +8958,7 @@
 			"y": 27
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_lava",
 			"x": 63,
 			"y": 27
 		},
@@ -9273,12 +9273,12 @@
 			"y": 28
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_lava",
 			"x": 62,
 			"y": 28
 		},
 		{
-			"terrain_id": "terrain_wall",
+			"terrain_id": "terrain_lava",
 			"x": 63,
 			"y": 28
 		},
