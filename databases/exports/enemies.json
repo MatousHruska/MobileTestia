@@ -132,7 +132,7 @@
       "detection_range": 250,
       "xp_reward": 15,
       "loot_table_id": "loot_starved_wolf",
-      "module_ids": "mod_target_detection,mod_pack_alert,mod_conditional_cast,mod_leash,mod_chase,mod_surround,mod_circle,mod_combat,mod_idle",
+      "module_ids": "mod_target_detection,mod_pack_alert,mod_leash,mod_chase,mod_search,mod_surround,mod_circle,mod_combat,mod_idle",
       "module_config": {"mod_conditional_cast": {"ability_id": "abi_blood_howl", "conditions": ["player_damaged_recently:10", "self_not_buffed:status_blood_frenzy"], "cooldown": 30.0, "additional_status_effects": ["status_blood_frenzy_cdr"]}, "mod_circle": {"circle_radius": 140, "circle_speed_mult": 0.8}},
       "description": "A desperate, hungry wolf. Circles prey before leaping."
     }
