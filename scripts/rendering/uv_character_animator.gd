@@ -14,6 +14,9 @@ var sprite: Sprite2D
 # Shader material
 var _material: ShaderMaterial
 
+# Cached reference to VisualAssets autoload
+var _visual_assets: Node
+
 # Current animation state
 var _current_motion_base: String = "humanoid"  # Base name without state
 var _current_state: String = "idle"            # idle, walk, attack, etc.
@@ -37,10 +40,19 @@ var _is_flipped: bool = false
 
 
 func _ready() -> void:
+	_cache_visual_assets()
 	_setup_sprite()
 	_setup_material()
 	_load_motion_map("idle")
 	play("idle", "down")
+
+
+func _cache_visual_assets() -> void:
+	## Cache reference to VisualAssets autoload
+	## Using get_node instead of direct reference for load-order safety
+	_visual_assets = get_node_or_null("/root/VisualAssets")
+	if not _visual_assets:
+		push_error("UVCharacterAnimator: VisualAssets autoload not found!")
 
 
 func _setup_sprite() -> void:
@@ -64,15 +76,21 @@ func _setup_material() -> void:
 
 
 func _load_motion_map(state: String) -> void:
+	if not _visual_assets:
+		return
+
 	var motion_id = _current_motion_base + "_" + state
-	sprite.texture = VisualAssets.get_motion_map(motion_id)
-	_sprite_meta = VisualAssets.get_sprite_meta(motion_id)
+	sprite.texture = _visual_assets.get_motion_map(motion_id)
+	_sprite_meta = _visual_assets.get_sprite_meta(motion_id)
 
 	Debug.trace("UVAnimator", "Loaded motion map", motion_id)
 
 
 func _update_skin() -> void:
-	var skin_tex = VisualAssets.get_skin(skin_id)
+	if not _visual_assets:
+		return
+
+	var skin_tex = _visual_assets.get_skin(skin_id)
 	_material.set_shader_parameter("skin", skin_tex)
 
 
@@ -165,9 +183,12 @@ func play(state: String, direction: String = "") -> void:
 		_load_motion_map(state)
 
 	_current_direction = direction
-	_anim_data = VisualAssets.get_animation_data(
-		_current_motion_base + "_" + state, state, effective_direction
-	)
+	if _visual_assets:
+		_anim_data = _visual_assets.get_animation_data(
+			_current_motion_base + "_" + state, state, effective_direction
+		)
+	else:
+		_anim_data = { "start": 0, "end": 3, "fps": 10.0, "loop": true }
 
 	_current_frame = _anim_data.get("start", 0)
 	_animation_timer = 0.0
