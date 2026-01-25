@@ -4,7 +4,7 @@ extends EditorScript
 ## Body-Part UV Motion Map Generator
 ## Creates motion maps where each body part maps to a specific region of the skin texture
 ##
-## SKIN TEXTURE LAYOUT (64x64, divided into 16x16 regions):
+## SKIN TEXTURE LAYOUT (32x32, divided into 8x8 regions):
 ## ┌────────┬────────┬────────┬────────┐
 ## │ HEAD   │ HEAD   │ TORSO  │ TORSO  │
 ## │ FRONT  │ BACK   │ FRONT  │ BACK   │  Row 0
@@ -22,8 +22,8 @@ extends EditorScript
 ## Run: Script > Run (Ctrl+Shift+X)
 
 const FRAME_SIZE = 32
-const SKIN_SIZE = 64
-const REGION_SIZE = 16  # Each body part region in skin
+const SKIN_SIZE = 32
+const REGION_SIZE = 8  # Each body part region in skin
 const OUTPUT_MOTION = "res://assets/sprites/characters/player/motion/"
 const OUTPUT_SKIN = "res://assets/sprites/characters/player/skins/"
 
@@ -90,8 +90,8 @@ func _run() -> void:
 
 
 func _generate_skin_template() -> void:
-	## Generate a 64x64 skin template as a visual "paper doll"
-	## Each 16x16 region shows the actual body part appearance
+	## Generate a 32x32 skin template as a visual "paper doll"
+	## Each 8x8 region shows the actual body part appearance
 	var img = Image.create(SKIN_SIZE, SKIN_SIZE, false, Image.FORMAT_RGBA8)
 
 	# Fill with transparent background
@@ -109,198 +109,143 @@ func _generate_skin_template() -> void:
 	var boot_color = Color(0.28, 0.22, 0.18)
 	var boot_highlight = Color(0.35, 0.28, 0.22)
 
-	# Draw each body part region with actual visuals
+	# Draw each body part region with actual visuals (8x8 each)
 	# Row 0: HEAD_FRONT, HEAD_BACK, TORSO_FRONT, TORSO_BACK
 	_draw_head_front(img, 0, 0, skin_color, hair_color)
-	_draw_head_back(img, 16, 0, hair_color, hair_highlight)
-	_draw_torso_front(img, 32, 0, shirt_color, skin_color)
-	_draw_torso_back(img, 48, 0, shirt_shadow)
+	_draw_head_back(img, 8, 0, hair_color, hair_highlight)
+	_draw_torso_front(img, 16, 0, shirt_color, skin_color)
+	_draw_torso_back(img, 24, 0, shirt_shadow)
 
 	# Row 1: L-ARM_FRONT, L-ARM_BACK, R-ARM_FRONT, R-ARM_BACK
-	_draw_arm(img, 0, 16, skin_color, shirt_color, false)   # L-arm front
-	_draw_arm(img, 16, 16, skin_shadow, shirt_shadow, false)  # L-arm back
-	_draw_arm(img, 32, 16, skin_color, shirt_color, true)   # R-arm front (mirrored)
-	_draw_arm(img, 48, 16, skin_shadow, shirt_shadow, true)   # R-arm back (mirrored)
+	_draw_arm(img, 0, 8, skin_color, shirt_color, false)   # L-arm front
+	_draw_arm(img, 8, 8, skin_shadow, shirt_shadow, false)  # L-arm back
+	_draw_arm(img, 16, 8, skin_color, shirt_color, true)   # R-arm front (mirrored)
+	_draw_arm(img, 24, 8, skin_shadow, shirt_shadow, true)   # R-arm back (mirrored)
 
 	# Row 2: L-LEG_FRONT, L-LEG_BACK, R-LEG_FRONT, R-LEG_BACK
-	_draw_leg(img, 0, 32, pants_color, false)   # L-leg front
-	_draw_leg(img, 16, 32, pants_shadow, false)  # L-leg back
-	_draw_leg(img, 32, 32, pants_color, true)   # R-leg front (mirrored)
-	_draw_leg(img, 48, 32, pants_shadow, true)   # R-leg back (mirrored)
+	_draw_leg(img, 0, 16, pants_color, false)   # L-leg front
+	_draw_leg(img, 8, 16, pants_shadow, false)  # L-leg back
+	_draw_leg(img, 16, 16, pants_color, true)   # R-leg front (mirrored)
+	_draw_leg(img, 24, 16, pants_shadow, true)   # R-leg back (mirrored)
 
 	# Row 3: FEET, HANDS, EXTRA, EXTRA
-	_draw_feet(img, 0, 48, boot_color, boot_highlight)
-	_draw_hands(img, 16, 48, skin_color)
+	_draw_feet(img, 0, 24, boot_color, boot_highlight)
+	_draw_hands(img, 8, 24, skin_color)
 	# Extra regions left as dark gray for future use
 
 	var path = OUTPUT_SKIN + "body_default.png"
 	img.save_png(path)
-	print("Created: body_default.png (64x64 paper doll skin template)")
+	print("Created: body_default.png (32x32 paper doll skin template)")
 
 
 func _draw_head_front(img: Image, rx: int, ry: int, skin: Color, hair: Color) -> void:
-	## Draw front-facing head with face details
-	# Face oval shape (slightly wider at top)
-	for y in range(4, 15):
-		var width = 5 if y < 6 else (6 if y < 12 else 5)
-		var start_x = 8 - width
-		for x in range(start_x, 8 + width):
-			if x >= 0 and x < 16:
+	## Draw front-facing head with face details (8x8 region)
+	# Face shape - fill most of the region
+	for y in range(2, 8):
+		var width = 2 if y < 3 else 3
+		for x in range(4 - width, 4 + width):
+			if x >= 0 and x < 8:
 				img.set_pixel(rx + x, ry + y, skin)
 
 	# Hair at top
-	for y in range(1, 6):
-		var width = 6 if y > 2 else 5
-		for x in range(8 - width, 8 + width):
-			if x >= 0 and x < 16 and y < 5:
-				img.set_pixel(rx + x, ry + y, hair)
+	for y in range(0, 3):
+		for x in range(1, 7):
+			img.set_pixel(rx + x, ry + y, hair)
 
-	# Side hair
-	for y in range(4, 9):
-		img.set_pixel(rx + 2, ry + y, hair)
-		img.set_pixel(rx + 13, ry + y, hair)
-
-	# Eyes (2x1 each)
-	img.set_pixel(rx + 5, ry + 8, Color(0.1, 0.1, 0.1))
-	img.set_pixel(rx + 6, ry + 8, Color(0.1, 0.1, 0.1))
-	img.set_pixel(rx + 9, ry + 8, Color(0.1, 0.1, 0.1))
-	img.set_pixel(rx + 10, ry + 8, Color(0.1, 0.1, 0.1))
-
-	# Nose hint
-	img.set_pixel(rx + 8, ry + 10, skin.darkened(0.1))
+	# Eyes
+	img.set_pixel(rx + 2, ry + 4, Color(0.1, 0.1, 0.1))
+	img.set_pixel(rx + 5, ry + 4, Color(0.1, 0.1, 0.1))
 
 	# Mouth
-	for x in range(6, 10):
-		img.set_pixel(rx + x, ry + 12, Color(0.7, 0.45, 0.45))
+	img.set_pixel(rx + 3, ry + 6, Color(0.7, 0.45, 0.45))
+	img.set_pixel(rx + 4, ry + 6, Color(0.7, 0.45, 0.45))
 
 
 func _draw_head_back(img: Image, rx: int, ry: int, hair: Color, highlight: Color) -> void:
-	## Draw back of head (mostly hair)
-	for y in range(2, 15):
-		var width = 5 if y < 4 else (6 if y < 13 else 5)
-		for x in range(8 - width, 8 + width):
-			if x >= 0 and x < 16:
-				# Add some hair texture variation
-				var c = hair if ((x + y) % 3 != 0) else highlight
+	## Draw back of head (8x8 region - mostly hair)
+	for y in range(1, 8):
+		var width = 2 if y < 2 else 3
+		for x in range(4 - width, 4 + width):
+			if x >= 0 and x < 8:
+				var c = hair if ((x + y) % 2 != 0) else highlight
 				img.set_pixel(rx + x, ry + y, c)
 
 
 func _draw_torso_front(img: Image, rx: int, ry: int, shirt: Color, skin: Color) -> void:
-	## Draw front torso with shirt and neckline
+	## Draw front torso with shirt (8x8 region)
 	# Main shirt body
-	for y in range(2, 16):
-		var width = 6 if y < 4 else 7
-		for x in range(8 - width, 8 + width):
-			if x >= 0 and x < 16:
-				img.set_pixel(rx + x, ry + y, shirt)
+	for y in range(1, 8):
+		for x in range(1, 7):
+			img.set_pixel(rx + x, ry + y, shirt)
 
 	# Neckline (V-neck showing skin)
-	for y in range(0, 5):
-		var neck_width = y
-		for x in range(8 - neck_width, 8 + neck_width):
-			if x >= 0 and x < 16:
-				img.set_pixel(rx + x, ry + y, skin)
+	img.set_pixel(rx + 3, ry + 0, skin)
+	img.set_pixel(rx + 4, ry + 0, skin)
+	img.set_pixel(rx + 3, ry + 1, skin)
+	img.set_pixel(rx + 4, ry + 1, skin)
 
-	# Shirt details - collar lines
-	for y in range(2, 6):
-		img.set_pixel(rx + 8 - y, ry + y, shirt.darkened(0.15))
-		img.set_pixel(rx + 7 + y, ry + y, shirt.darkened(0.15))
-
-	# Center seam hint
-	for y in range(6, 15):
-		img.set_pixel(rx + 8, ry + y, shirt.darkened(0.08))
+	# Center seam
+	for y in range(3, 7):
+		img.set_pixel(rx + 4, ry + y, shirt.darkened(0.1))
 
 
 func _draw_torso_back(img: Image, rx: int, ry: int, shirt: Color) -> void:
-	## Draw back torso (simpler, no neckline detail)
-	for y in range(1, 16):
-		var width = 6 if y < 3 else 7
-		for x in range(8 - width, 8 + width):
-			if x >= 0 and x < 16:
-				img.set_pixel(rx + x, ry + y, shirt)
-
-	# Shoulder seam hints
-	for x in range(2, 6):
-		img.set_pixel(rx + x, ry + 2, shirt.darkened(0.1))
-		img.set_pixel(rx + 15 - x, ry + 2, shirt.darkened(0.1))
+	## Draw back torso (8x8 region)
+	for y in range(0, 8):
+		for x in range(1, 7):
+			img.set_pixel(rx + x, ry + y, shirt)
 
 
-func _draw_arm(img: Image, rx: int, ry: int, skin: Color, sleeve: Color, mirror: bool) -> void:
-	## Draw arm with sleeve at top, skin below
+func _draw_arm(img: Image, rx: int, ry: int, skin: Color, sleeve: Color, _mirror: bool) -> void:
+	## Draw arm with sleeve at top (8x8 region)
 	# Sleeve (top portion)
-	for y in range(1, 6):
-		var width = 4 if y < 3 else 3
-		var cx = 8 if not mirror else 7
-		for x in range(cx - width, cx + width):
-			if x >= 0 and x < 16:
-				img.set_pixel(rx + x, ry + y, sleeve)
+	for y in range(0, 3):
+		for x in range(2, 6):
+			img.set_pixel(rx + x, ry + y, sleeve)
 
-	# Arm skin (middle and lower portion)
-	for y in range(5, 15):
-		var width = 3 if y < 10 else 2
-		var cx = 8 if not mirror else 7
-		for x in range(cx - width, cx + width):
-			if x >= 0 and x < 16:
-				img.set_pixel(rx + x, ry + y, skin)
+	# Arm skin (lower portion)
+	for y in range(3, 8):
+		for x in range(3, 6):
+			img.set_pixel(rx + x, ry + y, skin)
 
 
-func _draw_leg(img: Image, rx: int, ry: int, pants: Color, mirror: bool) -> void:
-	## Draw leg (pants)
-	for y in range(0, 16):
-		var width = 4 if y < 2 else (5 if y < 10 else 4)
-		var cx = 8 if not mirror else 7
-		for x in range(cx - width, cx + width):
-			if x >= 0 and x < 16:
-				img.set_pixel(rx + x, ry + y, pants)
+func _draw_leg(img: Image, rx: int, ry: int, pants: Color, _mirror: bool) -> void:
+	## Draw leg (8x8 region)
+	for y in range(0, 8):
+		for x in range(2, 6):
+			img.set_pixel(rx + x, ry + y, pants)
 
 	# Inseam shadow
-	var seam_x = 11 if not mirror else 4
-	for y in range(0, 14):
-		img.set_pixel(rx + seam_x, ry + y, pants.darkened(0.12))
+	for y in range(0, 7):
+		img.set_pixel(rx + 5, ry + y, pants.darkened(0.15))
 
 
 func _draw_feet(img: Image, rx: int, ry: int, boot: Color, highlight: Color) -> void:
-	## Draw two boots side by side
-	# Left boot (positions 1-7)
-	for y in range(2, 14):
-		for x in range(1, 7):
-			var c = boot if y > 4 else highlight
-			img.set_pixel(rx + x, ry + y, c)
-	# Boot toe
-	for x in range(2, 6):
-		img.set_pixel(rx + x, ry + 13, boot.lightened(0.1))
+	## Draw boots (8x8 region - two boots side by side)
+	# Left boot
+	for y in range(1, 7):
+		var c = boot if y > 2 else highlight
+		img.set_pixel(rx + 1, ry + y, c)
+		img.set_pixel(rx + 2, ry + y, c)
 
-	# Right boot (positions 9-15)
-	for y in range(2, 14):
-		for x in range(9, 15):
-			var c = boot if y > 4 else highlight
-			img.set_pixel(rx + x, ry + y, c)
-	# Boot toe
-	for x in range(10, 14):
-		img.set_pixel(rx + x, ry + 13, boot.lightened(0.1))
+	# Right boot
+	for y in range(1, 7):
+		var c = boot if y > 2 else highlight
+		img.set_pixel(rx + 5, ry + y, c)
+		img.set_pixel(rx + 6, ry + y, c)
 
 
 func _draw_hands(img: Image, rx: int, ry: int, skin: Color) -> void:
-	## Draw two hands side by side
-	# Left hand (positions 1-7)
-	for y in range(4, 13):
-		var width = 2 if y < 6 else 3
-		for x in range(4 - width, 4 + width):
-			if x >= 0 and x < 8:
-				img.set_pixel(rx + x, ry + y, skin)
-	# Fingers hint
-	for x in range(2, 6):
-		img.set_pixel(rx + x, ry + 12, skin.darkened(0.05))
+	## Draw hands (8x8 region - two hands side by side)
+	# Left hand
+	for y in range(2, 7):
+		img.set_pixel(rx + 1, ry + y, skin)
+		img.set_pixel(rx + 2, ry + y, skin)
 
-	# Right hand (positions 8-15)
-	for y in range(4, 13):
-		var width = 2 if y < 6 else 3
-		for x in range(12 - width, 12 + width):
-			if x >= 8 and x < 16:
-				img.set_pixel(rx + x, ry + y, skin)
-	# Fingers hint
-	for x in range(10, 14):
-		img.set_pixel(rx + x, ry + 12, skin.darkened(0.05))
+	# Right hand
+	for y in range(2, 7):
+		img.set_pixel(rx + 5, ry + y, skin)
+		img.set_pixel(rx + 6, ry + y, skin)
 
 
 func _generate_idle_motion_map() -> void:
