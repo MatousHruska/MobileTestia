@@ -31,6 +31,10 @@ enum Facing { DOWN = 0, UP = 1, LEFT = 2, RIGHT = 3 }
 @export var dodge_duration: float = 0.3
 @export var dodge_stamina_cost: float = 25.0
 
+## Visual settings
+@export_group("Visuals")
+@export var use_uv_animator: bool = true  ## Use UV lookup shader animator
+
 ## State
 var input_direction: Vector2 = Vector2.ZERO
 var current_facing: Facing = Facing.DOWN
@@ -41,7 +45,11 @@ var is_casting: bool = false  ## Currently channeling a cast
 
 ## Components
 @onready var character_animator: CharacterAnimator = $CharacterAnimator
+@onready var uv_animator: UVCharacterAnimator = $UVCharacterAnimator
 @onready var hitbox_pivot: Node2D = $HitboxPivot
+
+## Active animator reference (points to whichever animator is in use)
+var _active_animator: Node
 
 ## Level up effect
 var _level_up_effect: LevelUpEffect
@@ -72,6 +80,7 @@ func _ready() -> void:
 	Game.player = self
 	Debug.print_saveload("[SAVELOAD] Player: Set Game.player = self, Game.current_state AFTER: %s" % (Game.GameState.keys()[Game.current_state] if Game else "null"))
 	_load_settings_from_database()
+	_setup_animator()
 	_update_facing(Facing.DOWN)
 	_setup_level_up_effect()
 	_setup_status_effect_manager()
@@ -105,6 +114,43 @@ func _load_settings_from_database() -> void:
 	})
 
 
+func _setup_animator() -> void:
+	## Configure which animator to use based on settings
+	if use_uv_animator and uv_animator:
+		_active_animator = uv_animator
+		if character_animator:
+			character_animator.visible = false
+		uv_animator.visible = true
+		Debug.info("Player", "Using UV lookup shader animator")
+	elif character_animator:
+		_active_animator = character_animator
+		character_animator.visible = true
+		if uv_animator:
+			uv_animator.visible = false
+		Debug.info("Player", "Using traditional spritesheet animator")
+	else:
+		Debug.warning("Player", "No animator found!")
+
+	# Connect attack hit signal from active animator
+	if _active_animator and _active_animator.has_signal("attack_hit_frame"):
+		if not _active_animator.attack_hit_frame.is_connected(_on_attack_hit_frame):
+			_active_animator.attack_hit_frame.connect(_on_attack_hit_frame)
+
+
+func _on_attack_hit_frame() -> void:
+	## Called when attack animation reaches impact frame
+	## Enable hitbox for a brief moment
+	if hitbox_pivot and hitbox_pivot.has_node("AttackHitbox/HitboxShape"):
+		var hitbox_shape = hitbox_pivot.get_node("AttackHitbox/HitboxShape") as CollisionShape2D
+		if hitbox_shape:
+			hitbox_shape.disabled = false
+			# Re-disable after brief moment
+			get_tree().create_timer(0.1).timeout.connect(func():
+				if hitbox_shape:
+					hitbox_shape.disabled = true
+			)
+
+
 func _setup_level_up_effect() -> void:
 	## Create and add level up effect
 	_level_up_effect = LevelUpEffect.new()
@@ -126,11 +172,13 @@ func _physics_process(delta: float) -> void:
 	if not Game.can_player_move:
 		velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
 		move_and_slide()
+		_update_animator()
 		return
 
 	_process_timers(delta)
 	_process_movement(delta)
 	move_and_slide()
+	_update_animator()
 
 	Debug.trace("Movement", "Velocity", velocity)
 
@@ -217,8 +265,8 @@ func request_attack() -> void:
 	Debug.log("Combat", "Attack started", ["facing:", Facing.keys()[current_facing]])
 
 	# Animator handles attack animation and timing
-	if character_animator:
-		character_animator.play_attack()
+	if _active_animator and _active_animator.has_method("play_attack"):
+		_active_animator.play_attack()
 
 
 func request_dodge() -> void:
@@ -243,8 +291,8 @@ func request_dodge() -> void:
 	dodge_started.emit()
 	Debug.log("Combat", "Dodge started", ["direction:", _dodge_direction])
 
-	if character_animator:
-		character_animator.play_dodge()
+	if _active_animator and _active_animator.has_method("play_dodge"):
+		_active_animator.play_dodge()
 
 
 func end_attack() -> void:
@@ -280,6 +328,15 @@ func _end_recovery_lockout() -> void:
 
 
 ## Facing logic
+func _update_animator() -> void:
+	## Update the active animator based on velocity and state
+	if not _active_animator:
+		return
+
+	if _active_animator.has_method("update_movement"):
+		_active_animator.update_movement(velocity)
+
+
 func _update_facing_from_input(direction: Vector2) -> void:
 	if direction == Vector2.ZERO:
 		return
@@ -329,6 +386,10 @@ func _update_facing(new_facing: Facing) -> void:
 	# Update hitbox pivot rotation
 	if hitbox_pivot:
 		hitbox_pivot.rotation = _facing_to_rotation(current_facing)
+
+	# Update animator facing
+	if _active_animator and _active_animator.has_method("set_facing"):
+		_active_animator.set_facing(current_facing)
 
 	Debug.trace("Player", "Facing changed", Facing.keys()[current_facing])
 
