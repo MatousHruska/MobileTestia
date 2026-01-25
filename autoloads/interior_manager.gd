@@ -109,7 +109,7 @@ func _create_dim_overlay() -> void:
 	## Create the CanvasLayer and ColorRect for exterior dimming
 	_dim_canvas = CanvasLayer.new()
 	_dim_canvas.name = "ExteriorDimCanvas"
-	_dim_canvas.layer = -1  # Below UI but affects world
+	_dim_canvas.layer = 5  # Above world (0) but below UI (typically 10+)
 	add_child(_dim_canvas)
 
 	_dim_overlay = ColorRect.new()
