@@ -1,8 +1,7 @@
-[gd_scene load_steps=6 format=3 uid="uid://player001"]
+[gd_scene load_steps=5 format=3 uid="uid://player001"]
 
 [ext_resource type="Script" path="res://scripts/player/player_controller.gd" id="1_player"]
-[ext_resource type="Script" path="res://scripts/player/character_animator.gd" id="2_animator"]
-[ext_resource type="Script" path="res://scripts/rendering/uv_character_animator.gd" id="3_uv_animator"]
+[ext_resource type="Script" path="res://scripts/rendering/uv_character_animator.gd" id="2_uv_animator"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_collision"]
 size = Vector2(20, 12)
@@ -14,29 +13,13 @@ size = Vector2(24, 16)
 collision_layer = 2
 collision_mask = 1
 script = ExtResource("1_player")
-use_uv_animator = true
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2(0, 8)
 shape = SubResource("RectangleShape2D_collision")
 
-[node name="CharacterAnimator" type="Node2D" parent="."]
-visible = false
-script = ExtResource("2_animator")
-
-[node name="Body" type="Sprite2D" parent="CharacterAnimator"]
-z_index = 0
-
-[node name="Head" type="Sprite2D" parent="CharacterAnimator"]
-position = Vector2(0, -12)
-z_index = 1
-
-[node name="Weapon" type="Sprite2D" parent="CharacterAnimator"]
-position = Vector2(12, 0)
-z_index = 1
-
 [node name="UVCharacterAnimator" type="Node2D" parent="."]
-script = ExtResource("3_uv_animator")
+script = ExtResource("2_uv_animator")
 
 [node name="Sprite2D" type="Sprite2D" parent="UVCharacterAnimator"]
 texture_filter = 1
