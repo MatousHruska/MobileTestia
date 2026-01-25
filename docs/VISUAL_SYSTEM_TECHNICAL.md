@@ -63,7 +63,7 @@
 | Concept | Description |
 |---------|-------------|
 | **Motion Map** | Spritesheet where RGB values encode UV coordinates into skin texture using **body-part mapping** |
-| **Skin** | Static 64x64 "paper doll" texture divided into body-part regions (head, torso, arms, legs) |
+| **Skin** | Static 32x32 "paper doll" texture divided into 8x8 body-part regions (head, torso, arms, legs) |
 | **Body-Part Mapping** | Each body part in motion map samples from its dedicated region in skin texture |
 | **Anchor** | Position data for attaching weapons to animation frames |
 | **Normal Map** | Per-sprite depth information for dynamic lighting |
@@ -73,22 +73,22 @@
 Unlike simple gradient UV mapping (where R=X, G=Y), our system uses **body-part mapping**:
 
 ```
-MOTION MAP FRAME                    SKIN TEXTURE (64x64)
-┌────────────────┐                  ┌────────┬────────┬────────┬────────┐
-│    ┌─────┐     │                  │ HEAD   │ HEAD   │ TORSO  │ TORSO  │
-│    │HEAD │────────UV──────────────│ FRONT  │ BACK   │ FRONT  │ BACK   │
-│    └─────┘     │                  ├────────┼────────┼────────┼────────┤
-│    ┌─────┐     │                  │ L-ARM  │ L-ARM  │ R-ARM  │ R-ARM  │
-│    │TORSO│────────UV──────────────│ FRONT  │ BACK   │ FRONT  │ BACK   │
-│    └─────┘     │                  ├────────┼────────┼────────┼────────┤
-│   ┌┴┐   ┌┴┐    │                  │ L-LEG  │ L-LEG  │ R-LEG  │ R-LEG  │
-│   │L│   │R│─────UV────────────────│ FRONT  │ BACK   │ FRONT  │ BACK   │
-│   └─┘   └─┘    │                  ├────────┼────────┼────────┼────────┤
-└────────────────┘                  │ FEET   │ HANDS  │ EXTRA  │ EXTRA  │
-                                    └────────┴────────┴────────┴────────┘
+MOTION MAP FRAME (32x32)            SKIN TEXTURE (32x32)
+┌────────────────┐                  ┌────┬────┬────┬────┐
+│    ┌─────┐     │                  │HEAD│HEAD│TRSO│TRSO│
+│    │HEAD │────────UV──────────────│FRNT│BACK│FRNT│BACK│
+│    └─────┘     │                  ├────┼────┼────┼────┤
+│    ┌─────┐     │                  │LARM│LARM│RARM│RARM│
+│    │TORSO│────────UV──────────────│FRNT│BACK│FRNT│BACK│
+│    └─────┘     │                  ├────┼────┼────┼────┤
+│   ┌┴┐   ┌┴┐    │                  │LLEG│LLEG│RLEG│RLEG│
+│   │L│   │R│─────UV────────────────│FRNT│BACK│FRNT│BACK│
+│   └─┘   └─┘    │                  ├────┼────┼────┼────┤
+└────────────────┘                  │FEET│HAND│XTRA│XTRA│
+                                    └────┴────┴────┴────┘
 
 Each body part's pixels in the motion map have UV values that sample
-from that part's specific 16x16 region in the skin texture.
+from that part's specific 8x8 region in the skin texture.
 ```
 
 **Benefits:**
@@ -1426,32 +1426,32 @@ End Sub
 
 ### Body-Part Skin Texture Layout
 
-The skin texture is a 64x64 "paper doll" divided into 16x16 regions:
+The skin texture is a 32x32 "paper doll" divided into 8x8 regions (matches rendered resolution):
 
 ```
-SKIN TEXTURE LAYOUT (64x64, 4x4 grid of 16x16 regions):
-┌────────┬────────┬────────┬────────┐
-│ HEAD   │ HEAD   │ TORSO  │ TORSO  │
-│ FRONT  │ BACK   │ FRONT  │ BACK   │  Row 0 (y: 0-15)
-│(0,0)   │(16,0)  │(32,0)  │(48,0)  │
-├────────┼────────┼────────┼────────┤
-│ L-ARM  │ L-ARM  │ R-ARM  │ R-ARM  │
-│ FRONT  │ BACK   │ FRONT  │ BACK   │  Row 1 (y: 16-31)
-│(0,16)  │(16,16) │(32,16) │(48,16) │
-├────────┼────────┼────────┼────────┤
-│ L-LEG  │ L-LEG  │ R-LEG  │ R-LEG  │
-│ FRONT  │ BACK   │ FRONT  │ BACK   │  Row 2 (y: 32-47)
-│(0,32)  │(16,32) │(32,32) │(48,32) │
-├────────┼────────┼────────┼────────┤
-│ FEET   │ HANDS  │ EXTRA  │ EXTRA  │
-│        │        │        │        │  Row 3 (y: 48-63)
-│(0,48)  │(16,48) │(32,48) │(48,48) │
-└────────┴────────┴────────┴────────┘
+SKIN TEXTURE LAYOUT (32x32, 4x4 grid of 8x8 regions):
+┌────┬────┬────┬────┐
+│HEAD│HEAD│TRSO│TRSO│
+│FRNT│BACK│FRNT│BACK│  Row 0 (y: 0-7)
+│(0,0)│(8,0)│(16,0)│(24,0)│
+├────┼────┼────┼────┤
+│LARM│LARM│RARM│RARM│
+│FRNT│BACK│FRNT│BACK│  Row 1 (y: 8-15)
+│(0,8)│(8,8)│(16,8)│(24,8)│
+├────┼────┼────┼────┤
+│LLEG│LLEG│RLEG│RLEG│
+│FRNT│BACK│FRNT│BACK│  Row 2 (y: 16-23)
+│(0,16)│(8,16)│(16,16)│(24,16)│
+├────┼────┼────┼────┤
+│FEET│HAND│XTRA│XTRA│
+│    │    │    │    │  Row 3 (y: 24-31)
+│(0,24)│(8,24)│(16,24)│(24,24)│
+└────┴────┴────┴────┘
 ```
 
 **Creating Skins:**
 1. Start with the generated template (`body_default.png`)
-2. Paint each 16x16 region with that body part's appearance
+2. Paint each 8x8 region with that body part's appearance
 3. Use FRONT regions for what's visible when facing DOWN
 4. Use BACK regions for what's visible when facing UP (can be darker for depth)
 5. Side views use a mix (near arm = front, far arm = back)
@@ -1529,9 +1529,9 @@ Located at: `scripts/tools/motion_map_generator.gd`
 2. Script > Run (Ctrl+Shift+X)
 
 **Generates:**
-- `assets/sprites/characters/player/skins/body_default.png` - 64x64 skin template
-- `assets/sprites/characters/player/motion/humanoid_idle.png` - 128x128 idle animation
-- `assets/sprites/characters/player/motion/humanoid_walk.png` - 192x128 walk animation
+- `assets/sprites/characters/player/skins/body_default.png` - 32x32 skin template (matches render resolution)
+- `assets/sprites/characters/player/motion/humanoid_idle.png` - 128x128 idle animation (4x4 frames)
+- `assets/sprites/characters/player/motion/humanoid_walk.png` - 192x128 walk animation (6x4 frames)
 
 **Customization:**
 Edit the generator to adjust:
