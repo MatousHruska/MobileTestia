@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Debug="*res://autoloads/debug_manager.gd"
+VisualAssets="*res://autoloads/visual_asset_manager.gd"
 DatabaseLoader="*res://autoloads/database_loader.gd"
 ChunkManager="*res://autoloads/chunk_manager.gd"
 PathfindingService="*res://autoloads/pathfinding_service.gd"
