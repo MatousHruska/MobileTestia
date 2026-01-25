@@ -19,6 +19,9 @@ const EXTERIOR_DIM_ALPHA: float = 0.7
 ## Color of the exterior dimming overlay
 const EXTERIOR_DIM_COLOR: Color = Color(0.0, 0.0, 0.0, 0.3)
 
+## Whether to use exterior dimming (disabled - dims interior too with simple overlay)
+const USE_EXTERIOR_DIM: bool = false
+
 #===============================================================================
 # SIGNALS
 #===============================================================================
@@ -200,11 +203,12 @@ func _apply_region_visibility(old_region: int, new_region: int, instant: bool) -
 	# Update revealed regions list
 	_revealed_regions = new_revealed
 
-	# Apply exterior dimming
-	if new_region > 0:
-		_fade_exterior_dim(EXTERIOR_DIM_COLOR.a, instant)
-	else:
-		_fade_exterior_dim(0.0, instant)
+	# Apply exterior dimming (disabled by default - simple overlay dims interior too)
+	if USE_EXTERIOR_DIM:
+		if new_region > 0:
+			_fade_exterior_dim(EXTERIOR_DIM_COLOR.a, instant)
+		else:
+			_fade_exterior_dim(0.0, instant)
 
 
 func _get_region_chain(region_value: int) -> Array[int]:
