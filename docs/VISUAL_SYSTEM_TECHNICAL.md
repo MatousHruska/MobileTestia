@@ -62,10 +62,40 @@
 
 | Concept | Description |
 |---------|-------------|
-| **Motion Map** | Spritesheet where RGB values encode UV coordinates into skin texture |
-| **Skin** | Static texture containing actual visual appearance |
+| **Motion Map** | Spritesheet where RGB values encode UV coordinates into skin texture using **body-part mapping** |
+| **Skin** | Static 64x64 "paper doll" texture divided into body-part regions (head, torso, arms, legs) |
+| **Body-Part Mapping** | Each body part in motion map samples from its dedicated region in skin texture |
 | **Anchor** | Position data for attaching weapons to animation frames |
 | **Normal Map** | Per-sprite depth information for dynamic lighting |
+
+### Body-Part UV Mapping System
+
+Unlike simple gradient UV mapping (where R=X, G=Y), our system uses **body-part mapping**:
+
+```
+MOTION MAP FRAME                    SKIN TEXTURE (64x64)
+┌────────────────┐                  ┌────────┬────────┬────────┬────────┐
+│    ┌─────┐     │                  │ HEAD   │ HEAD   │ TORSO  │ TORSO  │
+│    │HEAD │────────UV──────────────│ FRONT  │ BACK   │ FRONT  │ BACK   │
+│    └─────┘     │                  ├────────┼────────┼────────┼────────┤
+│    ┌─────┐     │                  │ L-ARM  │ L-ARM  │ R-ARM  │ R-ARM  │
+│    │TORSO│────────UV──────────────│ FRONT  │ BACK   │ FRONT  │ BACK   │
+│    └─────┘     │                  ├────────┼────────┼────────┼────────┤
+│   ┌┴┐   ┌┴┐    │                  │ L-LEG  │ L-LEG  │ R-LEG  │ R-LEG  │
+│   │L│   │R│─────UV────────────────│ FRONT  │ BACK   │ FRONT  │ BACK   │
+│   └─┘   └─┘    │                  ├────────┼────────┼────────┼────────┤
+└────────────────┘                  │ FEET   │ HANDS  │ EXTRA  │ EXTRA  │
+                                    └────────┴────────┴────────┴────────┘
+
+Each body part's pixels in the motion map have UV values that sample
+from that part's specific 16x16 region in the skin texture.
+```
+
+**Benefits:**
+- Different body parts can have different appearances (front arm vs back arm)
+- Enables 3D-like depth effects (back arm darker than front arm)
+- Single skin texture controls entire character appearance
+- Easy to create character variants by swapping skins
 
 ---
 
@@ -1394,19 +1424,92 @@ End Sub
 
 ## NOTES FOR ARTISTS
 
+### Body-Part Skin Texture Layout
+
+The skin texture is a 64x64 "paper doll" divided into 16x16 regions:
+
+```
+SKIN TEXTURE LAYOUT (64x64, 4x4 grid of 16x16 regions):
+┌────────┬────────┬────────┬────────┐
+│ HEAD   │ HEAD   │ TORSO  │ TORSO  │
+│ FRONT  │ BACK   │ FRONT  │ BACK   │  Row 0 (y: 0-15)
+│(0,0)   │(16,0)  │(32,0)  │(48,0)  │
+├────────┼────────┼────────┼────────┤
+│ L-ARM  │ L-ARM  │ R-ARM  │ R-ARM  │
+│ FRONT  │ BACK   │ FRONT  │ BACK   │  Row 1 (y: 16-31)
+│(0,16)  │(16,16) │(32,16) │(48,16) │
+├────────┼────────┼────────┼────────┤
+│ L-LEG  │ L-LEG  │ R-LEG  │ R-LEG  │
+│ FRONT  │ BACK   │ FRONT  │ BACK   │  Row 2 (y: 32-47)
+│(0,32)  │(16,32) │(32,32) │(48,32) │
+├────────┼────────┼────────┼────────┤
+│ FEET   │ HANDS  │ EXTRA  │ EXTRA  │
+│        │        │        │        │  Row 3 (y: 48-63)
+│(0,48)  │(16,48) │(32,48) │(48,48) │
+└────────┴────────┴────────┴────────┘
+```
+
+**Creating Skins:**
+1. Start with the generated template (`body_default.png`)
+2. Paint each 16x16 region with that body part's appearance
+3. Use FRONT regions for what's visible when facing DOWN
+4. Use BACK regions for what's visible when facing UP (can be darker for depth)
+5. Side views use a mix (near arm = front, far arm = back)
+
 ### Creating Motion Maps
 
-1. Draw animation normally first (for reference)
-2. Create new file same size
-3. For each pixel, set RGB to the UV coordinate of where that pixel's color lives on the skin texture
-4. Use tool/script to automate this conversion
+Motion maps define the CHARACTER SILHOUETTE and UV MAPPING to skin regions.
 
-### Creating Skin Textures
+**Method 1: Use the Generator (Recommended)**
+1. Open the project in Godot editor
+2. Go to `scripts/tools/motion_map_generator.gd`
+3. Run: Script > Run (Ctrl+Shift+X)
+4. Edit the generated files to adjust silhouette shapes
 
-1. Skin texture is a "flattened" view of the character
-2. Layout should match what the motion map expects
-3. Think of it like a paper craft template
-4. Armor/helmet/boots are overlays - transparent where they don't cover
+**Method 2: Manual Creation**
+1. Create a spritesheet (e.g., 128x128 for 4x4 grid of 32x32 frames)
+2. For each pixel in a body part:
+   - R channel = U coordinate (0-255 mapped to 0.0-1.0)
+   - G channel = V coordinate (0-255 mapped to 0.0-1.0)
+   - B channel = unused (set to 0)
+   - A channel = silhouette (255 = visible, 0 = transparent)
+3. Body part regions map as follows:
+   - Head front:  UV (0.00-0.25, 0.00-0.25)
+   - Head back:   UV (0.25-0.50, 0.00-0.25)
+   - Torso front: UV (0.50-0.75, 0.00-0.25)
+   - Torso back:  UV (0.75-1.00, 0.00-0.25)
+   - etc.
+
+**Editing Motion Maps:**
+- Adjust ALPHA to change character silhouette shape
+- Don't change R/G values unless you want to remap body parts
+- Back arm/leg should be drawn FIRST (behind body)
+- Front arm/leg drawn LAST (in front of body)
+
+### Animation Frame Layout
+
+Motion maps use this standard frame layout:
+
+```
+IDLE (4x4 = 16 frames):          WALK (6x4 = 24 frames):
+┌───┬───┬───┬───┐                ┌───┬───┬───┬───┬───┬───┐
+│ D │ D │ D │ D │ Row 0: DOWN    │ D │ D │ D │ D │ D │ D │
+├───┼───┼───┼───┤                ├───┼───┼───┼───┼───┼───┤
+│ U │ U │ U │ U │ Row 1: UP      │ U │ U │ U │ U │ U │ U │
+├───┼───┼───┼───┤                ├───┼───┼───┼───┼───┼───┤
+│ L │ L │ L │ L │ Row 2: LEFT    │ L │ L │ L │ L │ L │ L │
+├───┼───┼───┼───┤                ├───┼───┼───┼───┼───┼───┤
+│ R │ R │ R │ R │ Row 3: RIGHT   │ R │ R │ R │ R │ R │ R │
+└───┴───┴───┴───┘                └───┴───┴───┴───┴───┴───┘
+```
+
+### Quick Start Workflow
+
+1. **Run the generator** to create template assets
+2. **Edit `body_default.png`** in your image editor - paint each body part region
+3. **Test in-game** - character should show your painted skin
+4. **Refine motion maps** if needed - adjust alpha for better silhouettes
+5. **Create skin variants** - copy `body_default.png` and repaint for different characters
 
 ### Normal Map Guidelines
 
@@ -1417,5 +1520,26 @@ End Sub
 
 ---
 
-*Document Version: 1.0*
+## MOTION MAP GENERATOR TOOL
+
+Located at: `scripts/tools/motion_map_generator.gd`
+
+**Usage:**
+1. Open in Godot editor
+2. Script > Run (Ctrl+Shift+X)
+
+**Generates:**
+- `assets/sprites/characters/player/skins/body_default.png` - 64x64 skin template
+- `assets/sprites/characters/player/motion/humanoid_idle.png` - 128x128 idle animation
+- `assets/sprites/characters/player/motion/humanoid_walk.png` - 192x128 walk animation
+
+**Customization:**
+Edit the generator to adjust:
+- `FRAME_SIZE` - size of each animation frame (default: 32)
+- `_get_*_bounds()` functions - body part positions and sizes
+- Walk cycle offsets in `_draw_character_frame()`
+
+---
+
+*Document Version: 2.0 - Updated for body-part mapping system*
 *Companion to: ART_DIRECTION.md*
