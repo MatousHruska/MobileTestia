@@ -548,8 +548,8 @@ func debug_test_ends_when_buff() -> void:
 
 
 func debug_toggle_test_shader() -> void:
-	## Toggle between normal humanoid and test UV shader animations
-	## Call from debug console or bind to a key for testing custom UV textures
+	## Toggle between test and humanoid motion bases
+	## Call from debug console or Numpad 9 for testing custom UV textures
 	if not animator:
 		Debug.warn("Debug", "No animator to toggle")
 		return
@@ -557,8 +557,8 @@ func debug_toggle_test_shader() -> void:
 	var current_base = animator._current_motion_base
 	if current_base == "test":
 		animator.set_motion_base("humanoid")
-		Debug.info("Debug", "Switched to humanoid (standard UV shader)")
+		Debug.info("Debug", "Switched to humanoid motion base")
 	else:
 		animator.set_motion_base("test")
-		Debug.info("Debug", "Switched to test (color-lookup UV shader)")
+		Debug.info("Debug", "Switched to test motion base (your custom textures)")
 	animator.print_state()

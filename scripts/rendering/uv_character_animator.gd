@@ -1,8 +1,12 @@
 class_name UVCharacterAnimator
 extends Node2D
-## UVCharacterAnimator - UV lookup shader-based character animation
+## UVCharacterAnimator - UV color-lookup shader-based character animation
 ## Handles spritesheet frame switching and shader parameter updates
-## Uses motion maps (UV-encoded) + skin textures for rendering
+##
+## Uses the UV color-lookup system:
+## - Motion map: Animation spritesheet with colors referencing UV map
+## - UV map: Reference texture mapping colors to body parts
+## - Skin: Actual appearance texture (pixel-perfect overlay with UV map)
 
 signal animation_finished(anim_name: String)
 signal frame_changed(frame: int)
@@ -18,9 +22,9 @@ var _material: ShaderMaterial
 var _visual_assets: Node
 
 # Current animation state
-var _current_motion_base: String = "humanoid"  # Base name without state
-var _current_state: String = "idle"            # idle, walk, attack, etc.
-var _current_direction: String = "down"        # down, up, left, right
+var _current_motion_base: String = "test"  # Default to test for UV shader testing
+var _current_state: String = "idle"        # idle, walk, attack, etc.
+var _current_direction: String = "down"    # down, up, left, right
 var _current_frame: int = 0
 var _animation_timer: float = 0.0
 var _is_playing: bool = true
@@ -29,14 +33,11 @@ var _is_playing: bool = true
 var _anim_data: Dictionary = {}
 var _sprite_meta: Dictionary = {}
 
-# Shader type tracking
-var _uses_color_lookup: bool = false
-
 # Attack timing (for compatibility with existing combat system)
 var attack_hit_frame_index: int = 2
 
-# Skin configuration
-var skin_id: String = "body_default"
+# Skin configuration (for future skin swapping)
+var skin_id: String = "default"
 
 # Flipping for left direction (can share same art as right)
 var _is_flipped: bool = false
@@ -46,13 +47,12 @@ func _ready() -> void:
 	_cache_visual_assets()
 	_setup_sprite()
 	_setup_material()
-	_load_motion_map("idle")
+	_load_textures()
 	play("idle", "down")
 
 
 func _cache_visual_assets() -> void:
 	## Cache reference to VisualAssets autoload
-	## Using get_node instead of direct reference for load-order safety
 	_visual_assets = get_node_or_null("/root/VisualAssets")
 	if not _visual_assets:
 		push_error("UVCharacterAnimator: VisualAssets autoload not found!")
@@ -73,61 +73,33 @@ func _setup_sprite() -> void:
 
 func _setup_material() -> void:
 	_material = ShaderMaterial.new()
-	_select_shader_for_motion_base()
+	_material.shader = load("res://shaders/uv_color_lookup.gdshader")
 	sprite.material = _material
-	_update_skin()
 
 
-func _select_shader_for_motion_base() -> void:
-	## Select appropriate shader based on motion base type
-	if _visual_assets and _visual_assets.uses_color_lookup_shader(_current_motion_base):
-		_uses_color_lookup = true
-		_material.shader = load("res://shaders/uv_color_lookup.gdshader")
-		Debug.log("UVAnimator", "Using color-lookup shader for", _current_motion_base)
-	else:
-		_uses_color_lookup = false
-		_material.shader = load("res://shaders/uv_lookup.gdshader")
-		Debug.trace("UVAnimator", "Using standard UV shader for", _current_motion_base)
-
-
-func _load_motion_map(state: String) -> void:
+func _load_textures() -> void:
+	## Load all textures for current motion base
 	if not _visual_assets:
 		return
 
-	var motion_id = _current_motion_base + "_" + state
+	# Load motion map (animation spritesheet)
+	sprite.texture = _visual_assets.get_motion_map(_current_motion_base, _current_state)
 
-	# For test motion base, use special loading path
-	if _current_motion_base == "test":
-		sprite.texture = _visual_assets.get_test_motion_map(state)
-		_sprite_meta = _visual_assets.get_sprite_meta(motion_id)
+	# Load UV map and set shader parameter
+	var uv_map = _visual_assets.get_uv_map(_current_motion_base)
+	if uv_map:
+		_material.set_shader_parameter("uv_map", uv_map)
+		_material.set_shader_parameter("uv_map_size", Vector2(uv_map.get_width(), uv_map.get_height()))
 
-		# Also set up color-lookup shader uniforms
-		if _uses_color_lookup:
-			var uv_map = _visual_assets.get_uv_map_for_base(_current_motion_base)
-			var lookup_tex = _visual_assets.get_lookup_texture_for_base(_current_motion_base)
-			if uv_map:
-				_material.set_shader_parameter("uv_map", uv_map)
-				_material.set_shader_parameter("uv_map_size", Vector2(uv_map.get_width(), uv_map.get_height()))
-			if lookup_tex:
-				_material.set_shader_parameter("skin", lookup_tex)
+	# Load skin/lookup texture
+	var skin_tex = _visual_assets.get_skin(_current_motion_base, skin_id)
+	if skin_tex:
+		_material.set_shader_parameter("skin", skin_tex)
 
-		Debug.log("UVAnimator", "Loaded test motion map for state", state)
-	else:
-		sprite.texture = _visual_assets.get_motion_map(motion_id)
-		_sprite_meta = _visual_assets.get_sprite_meta(motion_id)
-		Debug.trace("UVAnimator", "Loaded motion map", motion_id)
+	# Load sprite metadata
+	_sprite_meta = _visual_assets.get_sprite_meta(_current_motion_base, _current_state)
 
-
-func _update_skin() -> void:
-	if not _visual_assets:
-		return
-
-	# For color-lookup shader, skin is managed by _load_motion_map
-	if _uses_color_lookup:
-		return
-
-	var skin_tex = _visual_assets.get_skin(skin_id)
-	_material.set_shader_parameter("skin", skin_tex)
+	Debug.log("UVAnimator", "Loaded textures for", _current_motion_base)
 
 
 func _process(delta: float) -> void:
@@ -147,7 +119,6 @@ func _advance_frame() -> void:
 	var end_frame = _anim_data.get("end", 0)
 	var should_loop = _anim_data.get("loop", true)
 
-	var prev_frame = _current_frame
 	_current_frame += 1
 
 	# Check for attack hit frame
@@ -213,15 +184,17 @@ func play(state: String, direction: String = "") -> void:
 	if direction == "left":
 		effective_direction = "right"
 
-	# Only reload motion map if state changed
+	# Reload motion map if state changed
 	if state != _current_state:
 		_current_state = state
-		_load_motion_map(state)
+		if _visual_assets:
+			sprite.texture = _visual_assets.get_motion_map(_current_motion_base, state)
+			_sprite_meta = _visual_assets.get_sprite_meta(_current_motion_base, state)
 
 	_current_direction = direction
 	if _visual_assets:
 		_anim_data = _visual_assets.get_animation_data(
-			_current_motion_base + "_" + state, state, effective_direction
+			_current_motion_base, state, effective_direction
 		)
 	else:
 		_anim_data = { "start": 0, "end": 3, "fps": 10.0, "loop": true }
@@ -264,25 +237,22 @@ func is_playing() -> bool:
 	return _is_playing
 
 
-## Set the motion base name (e.g., "humanoid", "slime", "test")
+## Set the motion base name (e.g., "test", "humanoid", "slime")
 func set_motion_base(base: String) -> void:
 	var old_base = _current_motion_base
 	_current_motion_base = base
-
-	# Check if shader needs to change
-	if _visual_assets:
-		var needs_color_lookup = _visual_assets.uses_color_lookup_shader(base)
-		if needs_color_lookup != _uses_color_lookup:
-			_select_shader_for_motion_base()
-
-	_load_motion_map(_current_state)
+	_load_textures()
+	play(_current_state, _current_direction)
 	Debug.log("UVAnimator", "Motion base changed", {"from": old_base, "to": base})
 
 
 ## Set skin and update shader
 func set_skin(new_skin_id: String) -> void:
 	skin_id = new_skin_id
-	_update_skin()
+	if _visual_assets:
+		var skin_tex = _visual_assets.get_skin(_current_motion_base, skin_id)
+		if skin_tex:
+			_material.set_shader_parameter("skin", skin_tex)
 
 
 ## Trigger hit flash effect
@@ -365,5 +335,4 @@ func print_state() -> void:
 		"is_flipped": _is_flipped,
 		"playing": _is_playing,
 		"skin": skin_id,
-		"uses_color_lookup": _uses_color_lookup,
 	})
