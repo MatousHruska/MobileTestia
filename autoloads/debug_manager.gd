@@ -105,7 +105,7 @@ var _level_prefixes: Dictionary = {
 func _ready() -> void:
 	_log_internal(LogLevel.INFO, "System", "DebugManager initialized", [])
 	_log_internal(LogLevel.INFO, "System", "Log level set to", [LogLevel.keys()[log_level]])
-	_log_internal(LogLevel.INFO, "System", "Debug hotkeys (Numpad): 0=level, *=verbose, -=NPC, +=settings, /=nav, .=navtest", [])
+	_log_internal(LogLevel.INFO, "System", "Debug hotkeys (Numpad): 0=level, *=verbose, -=NPC, +=settings, /=nav, .=navtest, 9=testshader", [])
 
 
 func _input(event: InputEvent) -> void:
@@ -141,6 +141,9 @@ func _input(event: InputEvent) -> void:
 		KEY_KP_PERIOD:
 			# Test pathfinding from player position
 			_test_pathfinding()
+		KEY_KP_9:
+			# Toggle test UV shader on player
+			_toggle_test_shader()
 
 
 func _cycle_log_level() -> void:
@@ -201,6 +204,22 @@ func _test_pathfinding() -> void:
 		pathfinding_service.debug_test_path()
 	else:
 		print(">>> PathfindingService not available <<<")
+
+
+func _toggle_test_shader() -> void:
+	## Toggle test UV shader on player character
+	var game: Node = get_node_or_null("/root/Game")
+	if game and game.has_method("get"):
+		var player = game.get("player")
+		if player and player.has_method("debug_toggle_test_shader"):
+			player.debug_toggle_test_shader()
+			return
+
+	# Alternative: Try direct access via Game autoload
+	if Game and Game.player and Game.player.has_method("debug_toggle_test_shader"):
+		Game.player.debug_toggle_test_shader()
+	else:
+		print(">>> Player not available for shader toggle <<<")
 
 
 ## Check if verbose logging is enabled for a specific type

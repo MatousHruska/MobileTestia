@@ -29,6 +29,13 @@ var _animations: Dictionary = {
 		"left":  { "start": 8,  "end": 11, "fps": 12.0, "loop": false },
 		"right": { "start": 12, "end": 15, "fps": 12.0, "loop": false },
 	},
+	# Test animations - user's custom UV shader test
+	"test_idle": {
+		"down":  { "start": 0,  "end": 4,  "fps": 6.0, "loop": true },
+		"up":    { "start": 0,  "end": 4,  "fps": 6.0, "loop": true },
+		"left":  { "start": 0,  "end": 4,  "fps": 6.0, "loop": true },
+		"right": { "start": 0,  "end": 4,  "fps": 6.0, "loop": true },
+	},
 }
 
 # Spritesheet metadata (hardcoded for now)
@@ -36,6 +43,8 @@ var _sprite_meta: Dictionary = {
 	"humanoid_idle": { "frame_width": 32, "frame_height": 32, "columns": 4, "rows": 4 },
 	"humanoid_walk": { "frame_width": 32, "frame_height": 32, "columns": 6, "rows": 4 },
 	"humanoid_attack": { "frame_width": 32, "frame_height": 32, "columns": 4, "rows": 4 },
+	# Test animation meta - 5 frames in horizontal strip
+	"test_idle": { "frame_width": 32, "frame_height": 32, "columns": 5, "rows": 1 },
 }
 
 
@@ -66,6 +75,41 @@ func get_motion_map(id: String) -> Texture2D:
 ## Get skin texture for player
 func get_skin(id: String) -> Texture2D:
 	return get_texture("sprites/characters/player/skins/" + id + ".png")
+
+
+## Get UV map texture for color-lookup shader (test system)
+func get_uv_map(id: String) -> Texture2D:
+	return get_texture("sprites/characters/player/Tests/" + id + ".png")
+
+
+## Get test motion map (for test animations)
+func get_test_motion_map(state: String) -> Texture2D:
+	# Maps state to test texture
+	match state:
+		"idle":
+			return get_texture("sprites/characters/player/Tests/TestIdle-Sheet.png")
+		_:
+			# Fall back to idle for all states during testing
+			return get_texture("sprites/characters/player/Tests/TestIdle-Sheet.png")
+
+
+## Check if a motion base uses color-lookup shader
+func uses_color_lookup_shader(motion_base: String) -> bool:
+	return motion_base == "test"
+
+
+## Get the UV map for a motion base (for color-lookup shader)
+func get_uv_map_for_base(motion_base: String) -> Texture2D:
+	if motion_base == "test":
+		return get_texture("sprites/characters/player/Tests/TestUVMap.png")
+	return null
+
+
+## Get the lookup/skin texture for a motion base (for color-lookup shader)
+func get_lookup_texture_for_base(motion_base: String) -> Texture2D:
+	if motion_base == "test":
+		return get_texture("sprites/characters/player/Tests/TestLookupTexture.png")
+	return null
 
 
 ## Get animation data for a motion map
