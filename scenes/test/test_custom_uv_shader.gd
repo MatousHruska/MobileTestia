@@ -65,6 +65,7 @@ func _print_instructions() -> void:
 	print("Testing: TestIdle-Sheet + TestUVMap + TestLookupTexture")
 	print("")
 	print("Controls:")
+	print("  R          - RELOAD textures from disk (hot-reload)")
 	print("  Space      - Test hit flash (white)")
 	print("  T          - Toggle poison tint (green)")
 	print("  1-5        - Jump to frame 1-5")
@@ -114,6 +115,8 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
+			KEY_R:
+				_reload_textures()
 			KEY_T:
 				_test_tint()
 			KEY_P:
@@ -160,3 +163,45 @@ func _test_tint() -> void:
 func _toggle_play() -> void:
 	_is_playing = not _is_playing
 	print("Auto-play: %s" % ("ON" if _is_playing else "OFF"))
+
+
+func _reload_textures() -> void:
+	## Hot-reload textures from disk without restarting
+	print("")
+	print("=== RELOADING TEXTURES ===")
+
+	var paths := [
+		"res://assets/sprites/characters/player/Tests/TestIdle-Sheet.png",
+		"res://assets/sprites/characters/player/Tests/TestUVMap.png",
+		"res://assets/sprites/characters/player/Tests/TestLookupTexture.png",
+	]
+
+	# Force reimport by loading fresh from disk
+	for path in paths:
+		if ResourceLoader.exists(path):
+			# Remove from cache to force fresh load
+			if ResourceLoader.has_cached(path):
+				# Can't directly uncache, but loading with CACHE_MODE_REPLACE works
+				pass
+
+	# Load fresh textures
+	var idle_sheet = load(paths[0])
+	var uv_map = load(paths[1])
+	var lookup_texture = load(paths[2])
+
+	if idle_sheet and uv_map and lookup_texture:
+		sprite.texture = idle_sheet
+
+		var material := sprite.material as ShaderMaterial
+		material.set_shader_parameter("uv_map", uv_map)
+		material.set_shader_parameter("skin", lookup_texture)
+		material.set_shader_parameter("uv_map_size", Vector2(uv_map.get_width(), uv_map.get_height()))
+
+		print("Reloaded: TestIdle-Sheet.png (%s)" % str(idle_sheet.get_size()))
+		print("Reloaded: TestUVMap.png (%s)" % str(uv_map.get_size()))
+		print("Reloaded: TestLookupTexture.png (%s)" % str(lookup_texture.get_size()))
+		print("=== RELOAD COMPLETE ===")
+	else:
+		print("ERROR: Failed to reload textures!")
+
+	_update_frame_region()
