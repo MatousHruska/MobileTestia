@@ -16,11 +16,18 @@ const FRAME_HEIGHT := 32
 const FRAME_COUNT := 5
 const ANIMATION_FPS := 6.0
 
+# Available lookup textures (skins) to cycle through
+const LOOKUP_TEXTURES := [
+	"res://assets/sprites/characters/player/Tests/TestLookupTexture.png",
+	"res://assets/sprites/characters/player/Tests/TestLookupTexture2.png",
+]
+
 @onready var sprite: Sprite2D = $Sprite2D
 
 var _current_frame: int = 0
 var _animation_timer: float = 0.0
 var _is_playing: bool = true
+var _current_skin_index: int = 0
 
 
 func _ready() -> void:
@@ -66,6 +73,7 @@ func _print_instructions() -> void:
 	print("")
 	print("Controls:")
 	print("  R          - RELOAD textures from disk (hot-reload)")
+	print("  S          - SWAP skin/lookup texture (cycle through skins)")
 	print("  Space      - Test hit flash (white)")
 	print("  T          - Toggle poison tint (green)")
 	print("  1-5        - Jump to frame 1-5")
@@ -117,6 +125,8 @@ func _input(event: InputEvent) -> void:
 		match event.keycode:
 			KEY_R:
 				_reload_textures()
+			KEY_S:
+				_swap_skin()
 			KEY_T:
 				_test_tint()
 			KEY_P:
@@ -163,6 +173,26 @@ func _test_tint() -> void:
 func _toggle_play() -> void:
 	_is_playing = not _is_playing
 	print("Auto-play: %s" % ("ON" if _is_playing else "OFF"))
+
+
+func _swap_skin() -> void:
+	## Cycle through available lookup textures (skins)
+	_current_skin_index = (_current_skin_index + 1) % LOOKUP_TEXTURES.size()
+	var skin_path = LOOKUP_TEXTURES[_current_skin_index]
+
+	if ResourceLoader.exists(skin_path):
+		var lookup_texture = load(skin_path)
+		if lookup_texture:
+			var material := sprite.material as ShaderMaterial
+			material.set_shader_parameter("skin", lookup_texture)
+			print("Swapped to skin %d: %s" % [_current_skin_index + 1, skin_path.get_file()])
+		else:
+			print("ERROR: Failed to load skin: %s" % skin_path)
+	else:
+		print("Skin not found: %s (skipping)" % skin_path)
+		# Try next one if this doesn't exist
+		if LOOKUP_TEXTURES.size() > 1:
+			_swap_skin()
 
 
 func _reload_textures() -> void:
