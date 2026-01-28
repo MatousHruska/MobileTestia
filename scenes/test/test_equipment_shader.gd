@@ -55,7 +55,7 @@ func _ready() -> void:
 func _load_all_textures() -> void:
 	_tex_idle_sheet = load(BASE_PATH + "TestIdle-Sheet.png")
 	_tex_uv_map = load(BASE_PATH + "TestUVMap.png")
-	_tex_base = load(BASE_PATH + "TestLookupTexture.png")  # Base skin
+	_tex_base = load(BASE_PATH + "TestLookupTexture2.png")  # Base skin
 	_tex_head = load(BASE_PATH + "LookupTextureHead.png")
 	_tex_body = load(BASE_PATH + "LookupTextureBody.png")
 	_tex_hands = load(BASE_PATH + "LookupTextureHands.png")
