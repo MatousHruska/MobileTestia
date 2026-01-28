@@ -545,3 +545,20 @@ func debug_test_ends_when_buff() -> void:
 		_status_effect_manager.apply_buff("test_frenzy", 60.0, true, "player_full_health")
 		Debug.info("Debug", "Applied test_frenzy buff (ends when player heals to full)")
 		Debug.info("Debug", "Heal to full health to see buff disappear!")
+
+
+func debug_toggle_test_shader() -> void:
+	## Toggle between normal humanoid and test UV shader animations
+	## Call from debug console or bind to a key for testing custom UV textures
+	if not animator:
+		Debug.warn("Debug", "No animator to toggle")
+		return
+
+	var current_base = animator._current_motion_base
+	if current_base == "test":
+		animator.set_motion_base("humanoid")
+		Debug.info("Debug", "Switched to humanoid (standard UV shader)")
+	else:
+		animator.set_motion_base("test")
+		Debug.info("Debug", "Switched to test (color-lookup UV shader)")
+	animator.print_state()
