@@ -69,33 +69,53 @@
 | UI Icons | 32×32 | Abilities, inventory |
 | Portraits | 64×64 | NPC dialogue |
 
-### UV Lookup System
+### UV Color-Lookup System
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    RENDERING ARCHITECTURE                    │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  PLAYER CHARACTER                                            │
-│  ├── Motion Map (animation frames with UV coordinates)       │
-│  ├── Skin Layers:                                            │
-│  │   ├── Body Skin (base character, includes limbs)         │
-│  │   ├── Armor Skin (chest piece overlay)                   │
-│  │   ├── Helmet Skin (head gear overlay)                    │
-│  │   └── Boots Skin (footwear overlay)                      │
-│  └── Weapon (separate sprite with anchor system)            │
-│      ├── Sheathed: Rendered as part of body skin            │
-│      └── Active: Separate sprite, positioned by anchors     │
+│  COLOR-LOOKUP SHADER WORKFLOW:                               │
 │                                                              │
-│  ENEMIES                                                     │
-│  ├── Motion Map (per enemy type: wolf, skeleton, etc.)      │
-│  └── Single Skin (variants = different skins, same motion)  │
+│  1. Animation Sprite → Contains unique colors per pixel      │
+│  2. UV Map → Same unique colors at same positions (32x32)    │
+│  3. Shader searches UV map for matching color                │
+│  4. Found position → samples Lookup/Skin texture at that UV  │
 │                                                              │
-│  NPCS                                                        │
-│  ├── Motion Map (humanoid shared or unique)                 │
-│  └── Single Skin (unique appearance per NPC)                │
+│  ┌──────────┐      ┌──────────┐      ┌──────────┐           │
+│  │ Animation│ RGB  │  UV Map  │ pos  │  Lookup  │           │
+│  │  Frame   │ ───► │ (search) │ ───► │ Texture  │ → Output  │
+│  └──────────┘      └──────────┘      └──────────┘           │
+│                                                              │
+│  PLAYER CHARACTER (Equipment Shader)                         │
+│  ├── Animation Sheet (colored silhouettes)                   │
+│  ├── UV Map (unique color per pixel, 32x32)                  │
+│  ├── Base Skin (fallback for all body parts)                 │
+│  └── Equipment Slots (sector-based):                         │
+│      ├── Head Skin (top sector: Y < 0.25)                    │
+│      ├── Body Skin (middle-left: Y 0.25-0.75, X < 0.5)       │
+│      ├── Hands Skin (middle-right: Y 0.25-0.75, X >= 0.5)    │
+│      └── Feet Skin (bottom sector: Y >= 0.75)                │
+│                                                              │
+│  ENEMIES / NPCS (Single Skin Shader)                         │
+│  ├── Animation Sheet (unique colors matching UV map)         │
+│  ├── UV Map (shared with player or unique per type)          │
+│  └── Single Lookup Texture (swappable for variants)          │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**How Color-Lookup Works:**
+1. Each pixel in the animation sprite has a unique RGB color
+2. The UV Map texture has the same colors at corresponding positions
+3. The shader scans the UV map to find where the color appears
+4. That found position becomes the UV coordinate to sample the skin
+
+**Benefits:**
+- Full RGB available for visual art workflow (no channel encoding)
+- Pixel-perfect mapping between animation and skin textures
+- Easy to create variants by swapping lookup textures
+- Equipment slots determined by position, not color channels
 
 ### Weapon Categories
 | Category | Examples | Animation Set |
@@ -476,17 +496,23 @@ MAGENTAS (Signature) (4)
 
 ## IMPLEMENTATION PRIORITY
 
-### Phase 1: Core Foundation
-1. UV Lookup shader
-2. VisualAssetManager singleton
-3. Skin/Animation database structure
-4. Basic normal map lighting
+### Phase 1: Core Foundation ✓
+1. UV Color-Lookup shader (searches UV map for color match)
+2. Test scene with hot-reload capability
+3. Basic shader parameters (tint, flash)
+4. Single lookup texture swapping
 
 ### Phase 2: Player Character
-5. Player motion map (idle, walk, attack_1h)
-6. Player body skin
-7. One armor skin variant
-8. Weapon anchor system
+5. Player animation sheet (unique colors per pixel)
+6. UV Map (32x32, pixel-perfect overlay with animation)
+7. Multiple lookup textures (skin variants)
+8. Integration with player controller
+
+### Phase 3: Equipment System ✓
+9. Sector-based equipment shader (position determines slot)
+10. Head/Body/Hands/Feet lookup textures
+11. Per-slot texture swapping
+12. Equipment test scene with slot toggles
 
 ### Phase 3: Basic World
 9. Terrain tileset (grass, stone, snow)
@@ -540,5 +566,6 @@ MAGENTAS (Signature) (4)
 
 ---
 
-*Document Version: 1.0*
-*Last Updated: Session claude/add-ldtk-layers-detection-testinAI-Q45r4*
+*Document Version: 2.0*
+*Last Updated: Session claude/phase-1-TestingShaders-spp2s*
+*Major Update: Replaced R/G UV encoding with Color-Lookup shader system*
