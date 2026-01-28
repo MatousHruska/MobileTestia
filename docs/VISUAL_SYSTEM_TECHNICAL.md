@@ -62,40 +62,40 @@
 
 | Concept | Description |
 |---------|-------------|
-| **Motion Map** | Spritesheet where RGB values encode UV coordinates into skin texture using **body-part mapping** |
-| **Skin** | Static 32x32 "paper doll" texture divided into 8x8 body-part regions (head, torso, arms, legs) |
-| **Body-Part Mapping** | Each body part in motion map samples from its dedicated region in skin texture |
+| **Animation Sheet** | Spritesheet where each pixel has a unique RGB color that matches a position in the UV Map |
+| **UV Map** | 32x32 texture with unique colors per pixel - shader searches this to find UV coordinates |
+| **Lookup Texture** | The actual appearance (skin) - sampled at the position found in the UV Map |
+| **Color-Lookup** | Shader technique: find animation pixel's color in UV map → use found position to sample skin |
+| **Sector-Based Slots** | Equipment system: position in UV map determines which equipment slot texture to use |
 | **Anchor** | Position data for attaching weapons to animation frames |
-| **Normal Map** | Per-sprite depth information for dynamic lighting |
 
-### Body-Part UV Mapping System
+### Color-Lookup UV System
 
-Unlike simple gradient UV mapping (where R=X, G=Y), our system uses **body-part mapping**:
+Our system uses **color matching** instead of encoding UV in R/G channels:
 
 ```
-MOTION MAP FRAME (32x32)            SKIN TEXTURE (32x32)
-┌────────────────┐                  ┌────┬────┬────┬────┐
-│    ┌─────┐     │                  │HEAD│HEAD│TRSO│TRSO│
-│    │HEAD │────────UV──────────────│FRNT│BACK│FRNT│BACK│
-│    └─────┘     │                  ├────┼────┼────┼────┤
-│    ┌─────┐     │                  │LARM│LARM│RARM│RARM│
-│    │TORSO│────────UV──────────────│FRNT│BACK│FRNT│BACK│
-│    └─────┘     │                  ├────┼────┼────┼────┤
-│   ┌┴┐   ┌┴┐    │                  │LLEG│LLEG│RLEG│RLEG│
-│   │L│   │R│─────UV────────────────│FRNT│BACK│FRNT│BACK│
-│   └─┘   └─┘    │                  ├────┼────┼────┼────┤
-└────────────────┘                  │FEET│HAND│XTRA│XTRA│
-                                    └────┴────┴────┴────┘
+ANIMATION FRAME                      UV MAP (32x32)                    LOOKUP TEXTURE
+┌────────────────┐                   ┌────────────────┐                ┌────────────────┐
+│  Pixel at (5,3)│                   │                │                │                │
+│  Color: #A4B2C3│ ──color match──►  │  #A4B2C3 found │ ──position──►  │  Sample at     │
+│                │                   │  at pos (12,8) │                │  UV (12/32,    │
+└────────────────┘                   └────────────────┘                │     8/32)      │
+                                                                       └────────────────┘
 
-Each body part's pixels in the motion map have UV values that sample
-from that part's specific 8x8 region in the skin texture.
+WORKFLOW:
+1. Animation sprite pixel has unique RGB color (e.g., #A4B2C3)
+2. Shader searches UV Map for that exact color
+3. Found at position (12, 8) in UV Map
+4. Convert to UV: (12/32, 8/32) = (0.375, 0.25)
+5. Sample Lookup Texture at that UV coordinate
+6. Output: skin color with animation's alpha as mask
 ```
 
 **Benefits:**
-- Different body parts can have different appearances (front arm vs back arm)
-- Enables 3D-like depth effects (back arm darker than front arm)
-- Single skin texture controls entire character appearance
-- Easy to create character variants by swapping skins
+- Full RGB available for artist workflow (no channel restrictions)
+- Animation and UV Map are pixel-perfect overlays
+- Easy variant creation: same animation + different lookup texture = different skin
+- Equipment slots determined by POSITION in UV map, not color encoding
 
 ---
 
@@ -367,177 +367,215 @@ anchor_attack_1h_down       | anim_humanoid_attack_1h_down | 3  | 4        | 0  
 
 ---
 
-## UV LOOKUP SHADER
+## UV COLOR-LOOKUP SHADERS
 
-### Core Shader: `uv_lookup.gdshader`
+### Basic Shader: `uv_color_lookup.gdshader`
 
-```glsl
-shader_type canvas_item;
-render_mode blend_mix;
-
-// Skin texture layers
-uniform sampler2D skin_body : hint_default_white, filter_nearest;
-uniform sampler2D skin_armor : hint_default_white, filter_nearest;
-uniform sampler2D skin_helmet : hint_default_white, filter_nearest;
-uniform sampler2D skin_boots : hint_default_white, filter_nearest;
-
-// Visual modifiers
-uniform vec4 tint : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform float flash_amount : hint_range(0.0, 1.0) = 0.0;
-uniform vec4 flash_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-
-void fragment() {
-    // Sample the motion map (the sprite's TEXTURE)
-    vec4 motion_data = texture(TEXTURE, UV);
-
-    // If alpha is 0, discard (transparent pixel in motion map)
-    if (motion_data.a < 0.01) {
-        discard;
-    }
-
-    // R and G channels encode UV coordinates into skin texture
-    // Motion map uses 0-255 mapped to 0.0-1.0
-    vec2 skin_uv = vec2(motion_data.r, motion_data.g);
-
-    // Sample all skin layers
-    vec4 body_color = texture(skin_body, skin_uv);
-    vec4 armor_color = texture(skin_armor, skin_uv);
-    vec4 helmet_color = texture(skin_helmet, skin_uv);
-    vec4 boots_color = texture(skin_boots, skin_uv);
-
-    // Composite layers (armor over body, helmet over that, etc.)
-    vec4 final_color = body_color;
-    final_color = mix(final_color, armor_color, armor_color.a);
-    final_color = mix(final_color, helmet_color, helmet_color.a);
-    final_color = mix(final_color, boots_color, boots_color.a);
-
-    // Apply tint (for status effects like poison)
-    final_color.rgb *= tint.rgb;
-
-    // Apply hit flash
-    final_color.rgb = mix(final_color.rgb, flash_color.rgb, flash_amount);
-
-    // Output with motion map's alpha controlling shape
-    COLOR = vec4(final_color.rgb, motion_data.a * final_color.a);
-}
-```
-
-### Lit Version: `uv_lookup_lit.gdshader`
-
-```glsl
-shader_type canvas_item;
-render_mode blend_mix, light_only;
-
-// Skin textures
-uniform sampler2D skin_body : hint_default_white, filter_nearest;
-uniform sampler2D skin_armor : hint_default_white, filter_nearest;
-uniform sampler2D skin_helmet : hint_default_white, filter_nearest;
-uniform sampler2D skin_boots : hint_default_white, filter_nearest;
-
-// Normal maps for each layer
-uniform sampler2D normal_body : hint_normal, filter_nearest;
-uniform sampler2D normal_armor : hint_normal, filter_nearest;
-uniform sampler2D normal_helmet : hint_normal, filter_nearest;
-uniform sampler2D normal_boots : hint_normal, filter_nearest;
-
-// Visual modifiers
-uniform vec4 tint : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform float flash_amount : hint_range(0.0, 1.0) = 0.0;
-uniform vec4 flash_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-
-// Ambient light (so sprites aren't pure black without lights)
-uniform vec4 ambient_color : source_color = vec4(0.3, 0.3, 0.4, 1.0);
-
-varying vec2 skin_uv_varying;
-
-void vertex() {
-    // Pass through
-}
-
-void fragment() {
-    vec4 motion_data = texture(TEXTURE, UV);
-
-    if (motion_data.a < 0.01) {
-        discard;
-    }
-
-    vec2 skin_uv = vec2(motion_data.r, motion_data.g);
-    skin_uv_varying = skin_uv;
-
-    // Sample colors
-    vec4 body_color = texture(skin_body, skin_uv);
-    vec4 armor_color = texture(skin_armor, skin_uv);
-    vec4 helmet_color = texture(skin_helmet, skin_uv);
-    vec4 boots_color = texture(skin_boots, skin_uv);
-
-    // Composite
-    vec4 final_color = body_color;
-    final_color = mix(final_color, armor_color, armor_color.a);
-    final_color = mix(final_color, helmet_color, helmet_color.a);
-    final_color = mix(final_color, boots_color, boots_color.a);
-
-    // Apply tint and flash
-    final_color.rgb *= tint.rgb;
-    final_color.rgb = mix(final_color.rgb, flash_color.rgb, flash_amount);
-
-    // Add ambient
-    final_color.rgb += ambient_color.rgb * ambient_color.a;
-
-    COLOR = vec4(final_color.rgb, motion_data.a * final_color.a);
-
-    // Composite normal maps for lighting
-    vec3 body_normal = texture(normal_body, skin_uv).rgb;
-    vec3 armor_normal = texture(normal_armor, skin_uv).rgb;
-    vec3 helmet_normal = texture(normal_helmet, skin_uv).rgb;
-    vec3 boots_normal = texture(normal_boots, skin_uv).rgb;
-
-    // Blend normals based on alpha (simplified)
-    vec3 final_normal = body_normal;
-    final_normal = mix(final_normal, armor_normal, armor_color.a);
-    final_normal = mix(final_normal, helmet_normal, helmet_color.a);
-    final_normal = mix(final_normal, boots_normal, boots_color.a);
-
-    NORMAL_MAP = vec4(final_normal, 1.0);
-}
-
-void light() {
-    // Godot's built-in 2D lighting will use NORMAL_MAP
-    LIGHT = LIGHT_COLOR.rgb * LIGHT_ENERGY * max(dot(NORMAL, LIGHT_DIRECTION), 0.0);
-}
-```
-
-### Enemy Shader (Simplified): `uv_lookup_enemy.gdshader`
+For single-skin characters (enemies, NPCs, testing):
 
 ```glsl
 shader_type canvas_item;
 render_mode blend_mix;
 
-// Single skin for enemies
+// UV Color-Lookup Shader
+// Searches UV map for matching color, samples skin at found position
+
+// The UV reference map - contains unique colors per pixel position
+uniform sampler2D uv_map : hint_default_white, filter_nearest;
+
+// The appearance texture (skin/lookup)
 uniform sampler2D skin : hint_default_white, filter_nearest;
 
+// Size of the UV map for searching
+uniform vec2 uv_map_size = vec2(32.0, 32.0);
+
+// Color matching tolerance (for anti-aliasing/compression artifacts)
+uniform float color_tolerance : hint_range(0.0, 0.1) = 0.01;
+
 // Visual modifiers
 uniform vec4 tint : source_color = vec4(1.0, 1.0, 1.0, 1.0);
 uniform float flash_amount : hint_range(0.0, 1.0) = 0.0;
 uniform vec4 flash_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
 
-void fragment() {
-    vec4 motion_data = texture(TEXTURE, UV);
+// Find UV coordinates by matching color in the UV map
+vec2 find_color_in_uvmap(vec3 target_color) {
+    for (float y = 0.0; y < uv_map_size.y; y += 1.0) {
+        for (float x = 0.0; x < uv_map_size.x; x += 1.0) {
+            vec2 sample_uv = vec2(x + 0.5, y + 0.5) / uv_map_size;
+            vec4 map_color = texture(uv_map, sample_uv);
 
-    if (motion_data.a < 0.01) {
+            // Only check non-transparent pixels
+            if (map_color.a > 0.5) {
+                vec3 diff = abs(map_color.rgb - target_color);
+                if (diff.r < color_tolerance && diff.g < color_tolerance && diff.b < color_tolerance) {
+                    return sample_uv;
+                }
+            }
+        }
+    }
+    return vec2(0.5, 0.5); // Fallback to center
+}
+
+void fragment() {
+    // Sample the animation sprite (TEXTURE)
+    vec4 anim_color = texture(TEXTURE, UV);
+
+    if (anim_color.a < 0.01) {
         discard;
     }
 
-    vec2 skin_uv = vec2(motion_data.r, motion_data.g);
+    // Find where this color appears in the UV map
+    vec2 skin_uv = find_color_in_uvmap(anim_color.rgb);
+
+    // Sample the skin texture at found position
     vec4 skin_color = texture(skin, skin_uv);
 
-    // Apply modifiers
+    // Apply tint and flash
     vec4 final_color = skin_color;
     final_color.rgb *= tint.rgb;
     final_color.rgb = mix(final_color.rgb, flash_color.rgb, flash_amount);
 
-    COLOR = vec4(final_color.rgb, motion_data.a * skin_color.a);
+    COLOR = vec4(final_color.rgb, anim_color.a * skin_color.a);
 }
 ```
+
+### Equipment Shader: `uv_equipment_lookup.gdshader`
+
+For player character with equipment slots (sector-based):
+
+```glsl
+shader_type canvas_item;
+render_mode blend_mix;
+
+// UV Equipment Lookup Shader
+// Uses POSITION in UV map to determine equipment slot (sector-based)
+
+uniform sampler2D uv_map : hint_default_white, filter_nearest;
+
+// Equipment slot textures (pixel-perfect overlays with uv_map)
+uniform sampler2D skin_base : hint_default_white, filter_nearest;
+uniform sampler2D skin_head : hint_default_transparent, filter_nearest;
+uniform sampler2D skin_body : hint_default_transparent, filter_nearest;
+uniform sampler2D skin_hands : hint_default_transparent, filter_nearest;
+uniform sampler2D skin_feet : hint_default_transparent, filter_nearest;
+
+uniform vec2 uv_map_size = vec2(32.0, 32.0);
+uniform float color_tolerance : hint_range(0.0, 0.1) = 0.01;
+
+// Sector boundaries (configurable per character)
+// Default: Head=top, Feet=bottom, Body=middle-left, Hands=middle-right
+uniform float sector_head_max_y : hint_range(0.0, 1.0) = 0.25;
+uniform float sector_feet_min_y : hint_range(0.0, 1.0) = 0.75;
+uniform float sector_hands_min_x : hint_range(0.0, 1.0) = 0.5;
+
+uniform vec4 tint : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+uniform float flash_amount : hint_range(0.0, 1.0) = 0.0;
+uniform vec4 flash_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+
+// Determine body part based on UV position (sector-based)
+int get_body_part_from_position(vec2 uv) {
+    if (uv.y < sector_head_max_y) return 1; // Head
+    if (uv.y >= sector_feet_min_y) return 4; // Feet
+    if (uv.x >= sector_hands_min_x) return 3; // Hands
+    return 2; // Body
+}
+
+vec2 find_color_in_uvmap(vec3 target_color) {
+    for (float y = 0.0; y < uv_map_size.y; y += 1.0) {
+        for (float x = 0.0; x < uv_map_size.x; x += 1.0) {
+            vec2 sample_uv = vec2(x + 0.5, y + 0.5) / uv_map_size;
+            vec4 map_color = texture(uv_map, sample_uv);
+            if (map_color.a > 0.5) {
+                vec3 diff = abs(map_color.rgb - target_color);
+                if (diff.r < color_tolerance && diff.g < color_tolerance && diff.b < color_tolerance) {
+                    return sample_uv;
+                }
+            }
+        }
+    }
+    return vec2(0.5, 0.5);
+}
+
+vec4 sample_equipment(vec2 uv, int body_part) {
+    vec4 equip;
+    if (body_part == 1) {
+        equip = texture(skin_head, uv);
+        if (equip.a > 0.01) return equip;
+    } else if (body_part == 2) {
+        equip = texture(skin_body, uv);
+        if (equip.a > 0.01) return equip;
+    } else if (body_part == 3) {
+        equip = texture(skin_hands, uv);
+        if (equip.a > 0.01) return equip;
+    } else if (body_part == 4) {
+        equip = texture(skin_feet, uv);
+        if (equip.a > 0.01) return equip;
+    }
+    return texture(skin_base, uv); // Fallback to base skin
+}
+
+void fragment() {
+    vec4 anim_color = texture(TEXTURE, UV);
+    if (anim_color.a < 0.01) discard;
+
+    vec2 skin_uv = find_color_in_uvmap(anim_color.rgb);
+    int body_part = get_body_part_from_position(skin_uv);
+    vec4 skin_color = sample_equipment(skin_uv, body_part);
+
+    vec4 final_color = skin_color;
+    final_color.rgb *= tint.rgb;
+    final_color.rgb = mix(final_color.rgb, flash_color.rgb, flash_amount);
+
+    COLOR = vec4(final_color.rgb, anim_color.a * skin_color.a);
+}
+```
+
+### Sector Layout for Equipment
+
+```
+UV MAP SECTORS (32x32 texture):
+┌────────────────────────────────┐
+│                                │
+│        HEAD SECTOR             │  Y: 0.00 - 0.25
+│        (skin_head)             │
+│                                │
+├────────────────┬───────────────┤
+│                │               │
+│  BODY SECTOR   │ HANDS SECTOR  │  Y: 0.25 - 0.75
+│  (skin_body)   │ (skin_hands)  │
+│                │               │
+│   X: 0 - 0.5   │  X: 0.5 - 1   │
+├────────────────┴───────────────┤
+│                                │
+│        FEET SECTOR             │  Y: 0.75 - 1.00
+│        (skin_feet)             │
+│                                │
+└────────────────────────────────┘
+
+Each sector's pixels sample from the corresponding equipment texture.
+If equipment texture is transparent at that position, falls back to skin_base.
+```
+
+### Future: Lit Version (Phase 7)
+
+When implementing lighting with normal maps, extend the color-lookup shader to include:
+- Normal map sampling at found UV position
+- Ambient light parameter
+- Light response calculations
+
+This will be documented in PHASE_7_LIGHTING_ATMOSPHERE.md when implemented.
+
+### Test Scenes
+
+Two test scenes are available for shader development:
+
+**`scenes/test/test_custom_uv_shader.tscn`** - Basic color-lookup testing
+- Uses `uv_color_lookup.gdshader`
+- Controls: R=reload textures, S=swap skin, Space=flash, T=tint, 1-5=frames
+
+**`scenes/test/test_equipment_shader.tscn`** - Equipment slot testing
+- Uses `uv_equipment_lookup.gdshader`
+- Controls: H=head, B=body, A=arms/hands, L=legs/feet (toggle slots)
 
 ---
 
@@ -1424,122 +1462,151 @@ End Sub
 
 ## NOTES FOR ARTISTS
 
-### Body-Part Skin Texture Layout
+### Color-Lookup System Asset Creation
 
-The skin texture is a 32x32 "paper doll" divided into 8x8 regions (matches rendered resolution):
+The color-lookup system requires three types of textures that work together:
 
-```
-SKIN TEXTURE LAYOUT (32x32, 4x4 grid of 8x8 regions):
-┌────┬────┬────┬────┐
-│HEAD│HEAD│TRSO│TRSO│
-│FRNT│BACK│FRNT│BACK│  Row 0 (y: 0-7)
-│(0,0)│(8,0)│(16,0)│(24,0)│
-├────┼────┼────┼────┤
-│LARM│LARM│RARM│RARM│
-│FRNT│BACK│FRNT│BACK│  Row 1 (y: 8-15)
-│(0,8)│(8,8)│(16,8)│(24,8)│
-├────┼────┼────┼────┤
-│LLEG│LLEG│RLEG│RLEG│
-│FRNT│BACK│FRNT│BACK│  Row 2 (y: 16-23)
-│(0,16)│(8,16)│(16,16)│(24,16)│
-├────┼────┼────┼────┤
-│FEET│HAND│XTRA│XTRA│
-│    │    │    │    │  Row 3 (y: 24-31)
-│(0,24)│(8,24)│(16,24)│(24,24)│
-└────┴────┴────┴────┘
-```
+#### 1. Animation Sheet
+- Contains colored silhouettes of the character
+- Each pixel has a unique RGB color
+- Colors must match exactly with the UV Map
+- Alpha channel defines the visible silhouette
 
-**Creating Skins:**
-1. Start with the generated template (`body_default.png`)
-2. Paint each 8x8 region with that body part's appearance
-3. Use FRONT regions for what's visible when facing DOWN
-4. Use BACK regions for what's visible when facing UP (can be darker for depth)
-5. Side views use a mix (near arm = front, far arm = back)
+#### 2. UV Map (32x32)
+- Contains unique colors at specific positions
+- Pixel-perfect overlay with the lookup textures
+- The shader searches this to find UV coordinates
+- Typically created once and shared across skins
 
-### Creating Motion Maps
+#### 3. Lookup Texture (Skin)
+- The actual character appearance
+- Same size as UV Map (32x32)
+- Pixel-perfect overlay - position X,Y in skin = position X,Y in UV map
+- Swap this texture to change character appearance
 
-Motion maps define the CHARACTER SILHOUETTE and UV MAPPING to skin regions.
-
-**Method 1: Use the Generator (Recommended)**
-1. Open the project in Godot editor
-2. Go to `scripts/tools/motion_map_generator.gd`
-3. Run: Script > Run (Ctrl+Shift+X)
-4. Edit the generated files to adjust silhouette shapes
-
-**Method 2: Manual Creation**
-1. Create a spritesheet (e.g., 128x128 for 4x4 grid of 32x32 frames)
-2. For each pixel in a body part:
-   - R channel = U coordinate (0-255 mapped to 0.0-1.0)
-   - G channel = V coordinate (0-255 mapped to 0.0-1.0)
-   - B channel = unused (set to 0)
-   - A channel = silhouette (255 = visible, 0 = transparent)
-3. Body part regions map as follows:
-   - Head front:  UV (0.00-0.25, 0.00-0.25)
-   - Head back:   UV (0.25-0.50, 0.00-0.25)
-   - Torso front: UV (0.50-0.75, 0.00-0.25)
-   - Torso back:  UV (0.75-1.00, 0.00-0.25)
-   - etc.
-
-**Editing Motion Maps:**
-- Adjust ALPHA to change character silhouette shape
-- Don't change R/G values unless you want to remap body parts
-- Back arm/leg should be drawn FIRST (behind body)
-- Front arm/leg drawn LAST (in front of body)
-
-### Animation Frame Layout
-
-Motion maps use this standard frame layout:
+### Creating Assets - Workflow
 
 ```
-IDLE (4x4 = 16 frames):          WALK (6x4 = 24 frames):
-┌───┬───┬───┬───┐                ┌───┬───┬───┬───┬───┬───┐
-│ D │ D │ D │ D │ Row 0: DOWN    │ D │ D │ D │ D │ D │ D │
-├───┼───┼───┼───┤                ├───┼───┼───┼───┼───┼───┤
-│ U │ U │ U │ U │ Row 1: UP      │ U │ U │ U │ U │ U │ U │
-├───┼───┼───┼───┤                ├───┼───┼───┼───┼───┼───┤
-│ L │ L │ L │ L │ Row 2: LEFT    │ L │ L │ L │ L │ L │ L │
-├───┼───┼───┼───┤                ├───┼───┼───┼───┼───┼───┤
-│ R │ R │ R │ R │ Row 3: RIGHT   │ R │ R │ R │ R │ R │ R │
-└───┴───┴───┴───┘                └───┴───┴───┴───┴───┴───┘
+STEP 1: Create UV Map (32x32)
+┌────────────────────────────────┐
+│ Each pixel = unique RGB color  │
+│ Position matters!              │
+│ This is your "palette key"     │
+└────────────────────────────────┘
+
+STEP 2: Create Lookup Texture (32x32)
+┌────────────────────────────────┐
+│ Draw character appearance      │
+│ Same size, same pixel grid     │
+│ Pixel (5,3) here = pixel (5,3) │
+│ in UV Map                      │
+└────────────────────────────────┘
+
+STEP 3: Create Animation Sheet
+┌────────────────────────────────┐
+│ Draw animation frames          │
+│ Color each pixel to MATCH      │
+│ the UV Map color at the        │
+│ position you want to sample    │
+└────────────────────────────────┘
 ```
+
+### Equipment Texture Creation
+
+For the equipment system, you need sector-aligned textures:
+
+```
+LOOKUP TEXTURE SECTORS (32x32):
+┌────────────────────────────────┐
+│       HEAD SECTOR              │  Y: 0-8 pixels (top)
+│    (LookupTextureHead.png)     │
+├────────────────┬───────────────┤
+│  BODY SECTOR   │ HANDS SECTOR  │  Y: 8-24 pixels (middle)
+│  (LookupBody)  │ (LookupHands) │
+│  X: 0-16       │  X: 16-32     │
+├────────────────┴───────────────┤
+│       FEET SECTOR              │  Y: 24-32 pixels (bottom)
+│    (LookupTextureLegs.png)     │
+└────────────────────────────────┘
+
+Create separate lookup textures for each slot:
+- LookupTextureHead.png - only draws in head sector region
+- LookupTextureBody.png - only draws in body sector region
+- LookupTextureHands.png - only draws in hands sector region
+- LookupTextureLegs.png - only draws in feet sector region
+
+Transparent pixels in equipment textures fall back to base skin.
+```
+
+### Test Assets Location
+
+Test assets are located at:
+`assets/sprites/characters/player/Tests/`
+
+- `TestIdle-Sheet.png` - Animation frames with unique colors
+- `TestUVMap.png` - 32x32 UV reference map
+- `TestLookupTexture.png` - Base skin appearance
+- `TestLookupTexture2.png` - Alternate skin appearance
+- `LookupTextureHead.png` - Head equipment slot
+- `LookupTextureBody.png` - Body equipment slot
+- `LookupTextureHands.png` - Hands equipment slot
+- `LookupTextureLegs.png` - Feet equipment slot
 
 ### Quick Start Workflow
 
-1. **Run the generator** to create template assets
-2. **Edit `body_default.png`** in your image editor - paint each body part region
-3. **Test in-game** - character should show your painted skin
-4. **Refine motion maps** if needed - adjust alpha for better silhouettes
-5. **Create skin variants** - copy `body_default.png` and repaint for different characters
+1. **Study the test assets** in the Tests folder
+2. **Copy TestUVMap.png** as your base UV reference
+3. **Create a new lookup texture** - paint your character appearance
+4. **Test in-game** using the test scenes (R to reload textures)
+5. **Iterate** - edit textures, press R, see changes immediately
 
-### Normal Map Guidelines
+### Important Guidelines
 
-1. Use 128,128,255 (flat blue) as neutral
-2. Red channel: left(-) / right(+)
-3. Green channel: down(-) / up(+)
-4. Keep consistent light direction (top-left recommended)
-
----
-
-## MOTION MAP GENERATOR TOOL
-
-Located at: `scripts/tools/motion_map_generator.gd`
-
-**Usage:**
-1. Open in Godot editor
-2. Script > Run (Ctrl+Shift+X)
-
-**Generates:**
-- `assets/sprites/characters/player/skins/body_default.png` - 32x32 skin template (matches render resolution)
-- `assets/sprites/characters/player/motion/humanoid_idle.png` - 128x128 idle animation (4x4 frames)
-- `assets/sprites/characters/player/motion/humanoid_walk.png` - 192x128 walk animation (6x4 frames)
-
-**Customization:**
-Edit the generator to adjust:
-- `FRAME_SIZE` - size of each animation frame (default: 32)
-- `_get_*_bounds()` functions - body part positions and sizes
-- Walk cycle offsets in `_draw_character_frame()`
+- **All textures must be 32x32** (or match your UV map size)
+- **Use Nearest filtering** - never Linear (causes blurring)
+- **Colors must match exactly** - tolerance is ~0.02 (about 5 RGB values)
+- **Pixel positions matter** - UV map position = lookup texture position
+- **Transparent pixels** work correctly in both UV map and lookup textures
 
 ---
 
-*Document Version: 2.0 - Updated for body-part mapping system*
+## TEST SCENES
+
+### Basic Shader Test: `test_custom_uv_shader.tscn`
+
+Tests the single-skin color-lookup shader.
+
+**Location:** `scenes/test/test_custom_uv_shader.tscn`
+
+**Controls:**
+- `R` - Reload all textures from disk (hot-reload for iteration)
+- `S` - Swap/cycle between lookup textures (skins)
+- `Space` - Test hit flash effect
+- `T` - Toggle poison tint (green)
+- `1-5` - Jump to specific animation frame
+- `Left/Right` - Step through frames manually
+- `P` - Toggle auto-play animation
+
+### Equipment Shader Test: `test_equipment_shader.tscn`
+
+Tests the sector-based equipment shader with slot toggling.
+
+**Location:** `scenes/test/test_equipment_shader.tscn`
+
+**Controls:**
+- `H` - Toggle HEAD slot (on/off)
+- `B` - Toggle BODY slot (on/off)
+- `A` - Toggle ARMS/HANDS slot (on/off)
+- `L` - Toggle LEGS/FEET slot (on/off)
+- `R` - Reload all textures from disk
+- `S` - Cycle base skin
+- `Space` - Test hit flash
+- `T` - Toggle poison tint
+- `1-5` - Jump to animation frame
+- `P` - Toggle auto-play
+
+---
+
+*Document Version: 3.0 - Updated for Color-Lookup shader system*
 *Companion to: ART_DIRECTION.md*
+*Last Updated: Session claude/phase-1-TestingShaders-spp2s*

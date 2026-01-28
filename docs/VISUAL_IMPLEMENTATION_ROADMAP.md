@@ -20,142 +20,75 @@ PHASE 8: Polish & Effects              █████████████�
 
 ---
 
-## PHASE 1: SEE SOMETHING RENDER
-> **Goal**: UV lookup shader works. See a colored shape that isn't a placeholder rectangle.
+## PHASE 1: SEE SOMETHING RENDER ✓ COMPLETED
+> **Goal**: UV color-lookup shader works. See a colored character that isn't a placeholder rectangle.
+> **Status**: COMPLETE - Test scenes functional
 
-### Step 1.1: Create Basic Shader
-**Code to write:**
-- `shaders/uv_lookup.gdshader` (simplified version, single skin)
+### Step 1.1: Create Color-Lookup Shader ✓
+**Files created:**
+- `shaders/uv_color_lookup.gdshader` (single skin version)
+- `shaders/uv_equipment_lookup.gdshader` (multi-slot version)
 
-**What to implement:**
+**How it works:**
 ```
-shaders/
-└── uv_lookup.gdshader    ← Basic version, just body skin
-```
-
-**Shader (simplified starter):**
-```glsl
-shader_type canvas_item;
-
-uniform sampler2D skin : hint_default_white, filter_nearest;
-
-void fragment() {
-    vec4 motion_data = texture(TEXTURE, UV);
-    if (motion_data.a < 0.01) { discard; }
-
-    vec2 skin_uv = vec2(motion_data.r, motion_data.g);
-    vec4 skin_color = texture(skin, skin_uv);
-
-    COLOR = vec4(skin_color.rgb, motion_data.a * skin_color.a);
-}
+1. Animation sprite pixel has unique RGB color
+2. Shader searches UV Map for that color
+3. Found position becomes UV coordinate
+4. Sample lookup texture at that UV
+5. Output: skin color with animation's alpha as mask
 ```
 
 ---
 
-### Step 1.2: Create Test Scene
-**Code to write:**
-- Simple test scene with Sprite2D using the shader
+### Step 1.2: Create Test Scenes ✓
+**Files created:**
+- `scenes/test/test_custom_uv_shader.tscn` - Basic color-lookup testing
+- `scenes/test/test_equipment_shader.tscn` - Equipment slot testing
 
 **Scene structure:**
 ```
-test_uv_shader.tscn
+test_custom_uv_shader.tscn
 ├── Node2D (root)
-│   └── Sprite2D
-│       ├── texture: [motion map]
-│       └── material: ShaderMaterial (uv_lookup.gdshader)
-│           └── skin: [skin texture]
+│   ├── Camera2D
+│   ├── ColorRect (light background)
+│   └── Sprite2D (test sprite, 8x scale)
+│       ├── texture: [animation sheet]
+│       └── material: ShaderMaterial (uv_color_lookup.gdshader)
+│           ├── uv_map: [UV reference map]
+│           └── skin: [lookup texture]
 ```
 
 ---
 
-### Step 1.3: Create First Test Assets
-**YOUR FIRST ART TASK:**
+### Step 1.3: Test Assets ✓
+**Located at:** `assets/sprites/characters/player/Tests/`
 
-You need TWO tiny images to test the system:
+#### Asset 1: Animation Sheet
+**File**: `TestIdle-Sheet.png`
+**Size**: 160x32 pixels (5 frames × 32x32)
+**Content**: Character silhouettes colored with unique RGB values matching UV Map
 
-#### Asset 1: Test Motion Map (32x32 PNG)
-**File**: `assets/test/test_motion_map.png`
+#### Asset 2: UV Map
+**File**: `TestUVMap.png`
 **Size**: 32x32 pixels
-**What to draw**:
+**Content**: Unique color per pixel - this is the "key" the shader searches
 
-This is NOT a character drawing. It's a UV coordinate map.
-Each pixel's RED value = X position in skin (0-255 → 0.0-1.0)
-Each pixel's GREEN value = Y position in skin (0-255 → 0.0-1.0)
-
-**Easiest approach - gradient fill:**
-```
-For a 32x32 image:
-- Pixel at (0,0): Color RGB(0, 0, 0)
-- Pixel at (31,0): Color RGB(255, 0, 0)
-- Pixel at (0,31): Color RGB(0, 255, 0)
-- Pixel at (31,31): Color RGB(255, 255, 0)
-
-It's a gradient from black→red horizontally, black→green vertically.
-```
-
-**Or use this Python script:**
-```python
-from PIL import Image
-
-size = 32
-img = Image.new('RGBA', (size, size))
-
-for y in range(size):
-    for x in range(size):
-        r = int((x / (size-1)) * 255)
-        g = int((y / (size-1)) * 255)
-        img.putpixel((x, y), (r, g, 0, 255))
-
-# Cut out a simple shape (circle/diamond) by setting alpha=0 outside
-# For now, leave as full square
-
-img.save('test_motion_map.png')
-```
-
-#### Asset 2: Test Skin (32x32 PNG)
-**File**: `assets/test/test_skin.png`
+#### Asset 3: Lookup Textures (Skins)
+**Files**: `TestLookupTexture.png`, `TestLookupTexture2.png`
 **Size**: 32x32 pixels
-**What to draw**:
-
-This IS a character drawing - your actual art!
-Draw a simple character facing down (idle pose).
-The motion map will sample colors from this based on UV coordinates.
-
-**Simple test approach:**
-- Draw a stick figure
-- Or a colored circle with face
-- Or just colored regions to verify mapping works
-
-```
-┌────────────────────────────────┐
-│         ████████               │  ← Hair (dark)
-│        ██████████              │
-│       ████░░░░████             │  ← Face (skin tone)
-│       ███░●░░●░███             │  ← Eyes
-│       ████░░░░████             │
-│        ████████                │
-│       ████████████             │  ← Body (shirt color)
-│      ██████████████            │
-│       ████████████             │
-│        ██░░░░░░██              │  ← Legs (pants color)
-│        ██░░░░░░██              │
-│        ██      ██              │  ← Feet
-└────────────────────────────────┘
-```
+**Content**: Character appearance - pixel positions match UV Map
 
 ---
 
-### Step 1.3 Validation
-**What you should see:**
-- The skin texture appears on screen
-- It's displayed in the shape of the motion map's alpha channel
-- If motion map is a square, you see the whole skin
-- Colors match what you drew in the skin
-
-**If it doesn't work:**
-- Check shader is applied to material
-- Check both textures are assigned
-- Check textures are set to "Nearest" filtering (not linear)
+### Step 1.4 Validation ✓
+**All working:**
+- ✓ Shader searches UV map for color matches
+- ✓ Character renders with correct skin colors
+- ✓ Pressing R reloads textures from disk (hot-reload)
+- ✓ Pressing S swaps lookup textures
+- ✓ Pressing Space triggers white flash
+- ✓ Pressing T toggles green poison tint
+- ✓ Animation frames play correctly
 
 ---
 
@@ -320,112 +253,76 @@ Frame 6: Pass (feet pass each other)
 
 ---
 
-## PHASE 3: EQUIPMENT SHOWS
-> **Goal**: Changing armor/helmet/boots updates character appearance
+## PHASE 3: EQUIPMENT SHOWS ✓ COMPLETED
+> **Goal**: Changing equipment visually updates the character appearance
+> **Status**: COMPLETE - Sector-based equipment system working
 
-### Step 3.1: Upgrade Shader to Multi-Layer
-**Code to modify:**
-- `shaders/uv_lookup.gdshader` - add armor, helmet, boots layers
+### Step 3.1: Create Equipment Shader ✓
+**File created:** `shaders/uv_equipment_lookup.gdshader`
 
+Uses POSITION in UV map to determine which equipment slot to sample:
+```
+SECTOR LAYOUT (32x32 UV Map):
+┌─────────────────────────────┐
+│       HEAD (Y < 0.25)       │  → skin_head texture
+├──────────────┬──────────────┤
+│  BODY        │    HANDS     │  → skin_body / skin_hands
+│  X < 0.5     │    X >= 0.5  │     (Y: 0.25-0.75)
+├──────────────┴──────────────┤
+│       FEET (Y >= 0.75)      │  → skin_feet texture
+└─────────────────────────────┘
+```
+
+**Shader uniforms:**
 ```glsl
-uniform sampler2D skin_body : hint_default_white, filter_nearest;
-uniform sampler2D skin_armor : hint_default_white, filter_nearest;
-uniform sampler2D skin_helmet : hint_default_white, filter_nearest;
-uniform sampler2D skin_boots : hint_default_white, filter_nearest;
+uniform sampler2D skin_base;   // Fallback for all slots
+uniform sampler2D skin_head;   // Head equipment
+uniform sampler2D skin_body;   // Body equipment
+uniform sampler2D skin_hands;  // Hands equipment
+uniform sampler2D skin_feet;   // Feet equipment
 ```
 
 ---
 
-### Step 3.2: Create Equipment Skin Assets
-**YOUR FOURTH ART TASK:**
+### Step 3.2: Create Equipment Skin Assets ✓
+**Located at:** `assets/sprites/characters/player/Tests/`
 
-#### Armor Skin
-**File**: `assets/sprites/characters/player/skins/armor/armor_leather.png`
-**Size**: Same as body skin (32x32 or 64x64)
-**What to draw**:
-- Only the armor parts (chest, shoulders, arms)
-- Transparent everywhere else
-- This overlays on top of body
+#### Equipment Lookup Textures
+- `LookupTextureHead.png` - Head slot appearance
+- `LookupTextureBody.png` - Body slot appearance
+- `LookupTextureHands.png` - Hands slot appearance
+- `LookupTextureLegs.png` - Feet slot appearance
 
-```
-┌────────────────────────────────┐
-│          (transparent)         │
-│        ████████████            │  ← Shoulder/collar area
-│       ██████████████           │  ← Chest armor
-│       ██████████████           │
-│        ████████████            │
-│          ████████              │  ← Belt area
-│          (transparent)         │
-└────────────────────────────────┘
-```
-
-#### Helmet Skin
-**File**: `assets/sprites/characters/player/skins/helmet/helmet_leather.png`
-**Size**: Same as body skin
-**What to draw**:
-- Only the helmet area
-- Transparent everywhere else
-
-#### Boots Skin
-**File**: `assets/sprites/characters/player/skins/boots/boots_leather.png`
-**Size**: Same as body skin
-**What to draw**:
-- Only the feet/boot area
-- Transparent everywhere else
-
-#### "None" Skins (Required!)
-**Files**:
-- `armor_none.png` - fully transparent 32x32
-- `helmet_none.png` - fully transparent 32x32
-- `boots_none.png` - fully transparent 32x32
-
-These are used when no equipment is worn.
+#### How They Work
+Each texture is 32x32, pixel-perfect overlay with UV Map.
+- Draw appearance only in the relevant sector region
+- Transparent pixels fall back to base skin
+- Swap textures to change equipment appearance
 
 ---
 
-### Step 3.3: Create Equipment Renderer Component
-**Code to write:**
-- `scripts/rendering/equipment_renderer.gd`
+### Step 3.3: Create Equipment Test Scene ✓
+**File created:** `scenes/test/test_equipment_shader.tscn`
 
-**What it does:**
-- Holds references to current equipment skins
-- Updates shader parameters when equipment changes
-- Connects to inventory/equipment events
-
----
-
-### Step 3.4: Connect to Inventory System
-**Code to modify:**
-- Connect equipment changes to renderer updates
-
-```gdscript
-# When equipment changes:
-func _on_equipment_changed(slot: String, item_id: String) -> void:
-    match slot:
-        "armor":
-            var skin = VisualAssetManager.get_skin("armor/" + item_id)
-            _material.set_shader_parameter("skin_armor", skin)
-        "helmet":
-            # etc...
-```
+**Controls:**
+- `H` - Toggle HEAD slot (on/off)
+- `B` - Toggle BODY slot (on/off)
+- `A` - Toggle ARMS/HANDS slot (on/off)
+- `L` - Toggle LEGS/FEET slot (on/off)
+- `R` - Reload all textures from disk
 
 ---
 
-### Step 3.4 Validation
-**What you should see:**
-- Character renders with base body
-- Equipping leather armor shows armor overlay
-- Equipping helmet shows helmet
-- Unequipping returns to base appearance
-- Multiple equipment pieces combine correctly
-
-**Test checklist:**
-- [ ] Body renders alone (no equipment)
-- [ ] Armor overlays correctly
-- [ ] Helmet overlays correctly
-- [ ] Boots overlay correctly
-- [ ] All three combined look right
-- [ ] Unequipping removes overlay
+### Step 3.4 Validation ✓
+**All working:**
+- ✓ Character renders with base skin
+- ✓ Pressing H toggles head equipment
+- ✓ Pressing B toggles body equipment
+- ✓ Pressing A toggles hands equipment
+- ✓ Pressing L toggles feet equipment
+- ✓ Multiple slots can be toggled independently
+- ✓ Turning off slot shows base skin in that region
+- ✓ Equipment persists through animation frames
 
 ---
 
@@ -927,22 +824,23 @@ Size: 20x15 tiles (320x240 pixels)
 
 ## ASSET CHECKLIST SUMMARY
 
-### Phase 1 (Minimal)
-- [ ] `test/test_motion_map.png` (32x32)
-- [ ] `test/test_skin.png` (32x32)
+### Phase 1 (Minimal) ✓ COMPLETE
+- [x] `Tests/TestIdle-Sheet.png` (160x32, 5 frames)
+- [x] `Tests/TestUVMap.png` (32x32)
+- [x] `Tests/TestLookupTexture.png` (32x32)
+- [x] `Tests/TestLookupTexture2.png` (32x32)
 
 ### Phase 2 (Player Movement)
-- [ ] `player/motion/humanoid_idle.png` (128x128, 16 frames)
-- [ ] `player/motion/humanoid_walk.png` (192x128, 24 frames)
-- [ ] `player/skins/body_default.png` (32x32 or 64x64)
+- [ ] `player/motion/humanoid_idle.png` (animation with unique colors)
+- [ ] `player/motion/humanoid_walk.png` (animation with unique colors)
+- [ ] `player/uv_map.png` (32x32 UV reference)
+- [ ] `player/skins/body_default.png` (32x32 lookup texture)
 
-### Phase 3 (Equipment)
-- [ ] `player/skins/armor/armor_leather.png`
-- [ ] `player/skins/armor/armor_none.png` (transparent)
-- [ ] `player/skins/helmet/helmet_leather.png`
-- [ ] `player/skins/helmet/helmet_none.png`
-- [ ] `player/skins/boots/boots_leather.png`
-- [ ] `player/skins/boots/boots_none.png`
+### Phase 3 (Equipment) ✓ COMPLETE
+- [x] `Tests/LookupTextureHead.png` (32x32, head sector)
+- [x] `Tests/LookupTextureBody.png` (32x32, body sector)
+- [x] `Tests/LookupTextureHands.png` (32x32, hands sector)
+- [x] `Tests/LookupTextureLegs.png` (32x32, feet sector)
 
 ### Phase 4 (Combat)
 - [ ] `player/motion/humanoid_attack_1h.png` (128x128, 16 frames)
@@ -978,18 +876,32 @@ Size: 20x15 tiles (320x240 pixels)
 - **GraphicsGale** - Free, good for spritesheets
 - **Photoshop/GIMP** - Work but not specialized
 
-### UV Motion Map Workflow
-1. Draw your character animation normally first (reference)
-2. Create new file, same size
-3. Fill with UV gradient (R=X position, G=Y position)
-4. Use your reference to mask out the character shape in alpha
-5. The UV data inside the shape maps to skin texture
+### Color-Lookup Asset Workflow
 
-### Skin Texture Workflow
-1. Think of it as a "paper craft template"
-2. All angles/views flattened onto one texture
-3. Motion map's UV data points to locations on this texture
-4. Start simple (front view only), expand later
+**Creating UV Map:**
+1. Create 32x32 image
+2. Make each pixel a unique RGB color
+3. Position matters! Pixel (5,3) in UV map = pixel (5,3) in lookup texture
+4. Save as PNG with full alpha (transparent areas are ignored by shader)
+
+**Creating Lookup Texture (Skin):**
+1. Create 32x32 image (same size as UV map)
+2. Draw your character appearance
+3. Pixel positions must align with UV map
+4. This is what the character looks like!
+
+**Creating Animation Sheet:**
+1. Draw character silhouette for each frame
+2. Color each pixel to MATCH the UV map color at the desired position
+3. Alpha channel defines the visible shape
+4. Colors must match within tolerance (~5 RGB values)
+
+### Hot-Reload Development Workflow
+1. Open test scene (`test_custom_uv_shader.tscn` or `test_equipment_shader.tscn`)
+2. Edit textures in your image editor
+3. Save the texture
+4. Press `R` in the test scene to reload
+5. See changes immediately without restarting!
 
 ### Quick Placeholder Strategy
 If you're stuck on an asset:
@@ -1001,26 +913,28 @@ If you're stuck on an asset:
 
 ## WHEN YOU'RE STUCK
 
-**Can't figure out UV mapping?**
-→ Use the Python script to generate a test motion map
-→ Or create identity mapping (pixel 0,0 maps to 0,0 on skin)
+**Shader shows wrong colors?**
+→ Colors in animation must EXACTLY match UV map (within tolerance)
+→ Check textures are 32x32 and aligned
+→ Ensure texture filter is "Nearest" not "Linear"
 
-**Art looks bad?**
-→ Keep it simple - fewer details = cleaner look
-→ Use reference from HLD screenshots
-→ Solid colors with 1px outlines = clean pixel art
+**Character is invisible?**
+→ Check animation sheet has alpha > 0 where character should be
+→ Check UV map has matching colors at non-transparent pixels
+→ Check lookup texture isn't fully transparent
 
-**Shader not working?**
-→ Check texture filter is "Nearest" not "Linear"
-→ Check both textures are assigned
-→ Check alpha channel exists in motion map
+**Equipment not showing?**
+→ Check texture is assigned to correct shader parameter
+→ Check equipment texture has pixels in the correct sector region
+→ Verify sector boundaries match your UV map layout
 
-**Animation looks wrong?**
-→ Check frame order and frame size
-→ Check FPS isn't too fast/slow
-→ Reduce frames - quality over quantity
+**Hot-reload not working?**
+→ Press R in the test scene
+→ Check texture paths in the GDScript match actual files
+→ Godot may cache textures - try restarting if needed
 
 ---
 
-*Document Version: 1.0*
+*Document Version: 2.0 - Updated for Color-Lookup shader system*
+*Last Updated: Session claude/phase-1-TestingShaders-spp2s*
 *This is your guided path from nothing to a fully rendered visual system.*
