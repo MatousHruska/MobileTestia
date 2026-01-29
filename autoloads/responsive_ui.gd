@@ -11,13 +11,13 @@ class_name ResponsiveUIManager
 ## Screen size categories
 enum ScreenCategory { SMALL, NORMAL, LARGE }
 
-## Base design dimensions (720p)
-const BASE_WIDTH := 1280.0
-const BASE_HEIGHT := 720.0
+## Base design dimensions (480x270 pixel art viewport)
+const BASE_WIDTH := 480.0
+const BASE_HEIGHT := 270.0
 
-## Scale limits
-const MIN_SCALE := 0.7
-const MAX_SCALE := 1.4
+## Scale limits (1.0 = native, higher = larger displays)
+const MIN_SCALE := 1.0
+const MAX_SCALE := 4.0
 
 ## Cached values (updated on resize)
 var viewport_size: Vector2 = Vector2(BASE_WIDTH, BASE_HEIGHT)
@@ -43,10 +43,10 @@ func _update_viewport_info() -> void:
 	viewport_size = get_viewport().get_visible_rect().size
 	scale_factor = clampf(viewport_size.y / BASE_HEIGHT, MIN_SCALE, MAX_SCALE)
 
-	# Determine screen category
-	if viewport_size.y < 500:
+	# Determine screen category (based on 270p base)
+	if viewport_size.y < 270:
 		screen_category = ScreenCategory.SMALL
-	elif viewport_size.y > 900:
+	elif viewport_size.y > 540:
 		screen_category = ScreenCategory.LARGE
 	else:
 		screen_category = ScreenCategory.NORMAL

@@ -6,6 +6,13 @@ extends Node
 const DATABASE_PATH := "res://databases/exports/ui_theme.json"
 
 #===============================================================================
+# UI SCALE - Adjusts all pixel values for viewport size
+#===============================================================================
+# Base design was ~424p height, now using 270p viewport
+# Scale factor: 270/424 ≈ 0.64
+const UI_SCALE: float = 0.6
+
+#===============================================================================
 # INTERNAL DATA
 #===============================================================================
 
@@ -173,9 +180,22 @@ func get_color(key: String) -> Color:
 	return color
 
 
-## Get an integer value from theme
-func get_int(key: String) -> int:
+## Get an integer value from theme (raw, unscaled)
+func get_int_raw(key: String) -> int:
 	return int(_settings.get(key, DEFAULTS.get(key, 0)))
+
+
+## Get an integer value from theme, scaled for current viewport
+## Used for: font sizes, margins, border widths, corner radii, separations
+func get_int(key: String) -> int:
+	var raw := int(_settings.get(key, DEFAULTS.get(key, 0)))
+	# Apply scale to pixel-based values
+	if key.begins_with("font_size") or key.begins_with("margin") or \
+	   key.begins_with("border") or key.begins_with("corner") or \
+	   key.begins_with("separation") or key.ends_with("_height") or \
+	   key.ends_with("_width"):
+		return maxi(1, int(raw * UI_SCALE))
+	return raw
 
 
 ## Get a float value from theme
