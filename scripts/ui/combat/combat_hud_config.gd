@@ -13,7 +13,7 @@ class_name CombatHUDConfig
 
 #region Primary Controls - Attack + Ability Wheel
 @export_group("Primary Controls: Attack Button")
-@export var attack_radius: float = 81.0
+@export var attack_radius: float = 30.0
 @export var attack_color: Color = Color(0.98, 0.6, 0.6, 0.85)
 @export var attack_pressed_color: Color = Color(1.0, 0.8, 0.8, 0.95)
 ## Offset from bottom-right corner as percentage of screen (x=width%, y=height%)
@@ -21,7 +21,7 @@ class_name CombatHUDConfig
 
 @export_group("Primary Controls: Ability Wheel")
 @export var ability_count: int = 5
-@export var ability_radius: float = 32.0
+@export var ability_radius: float = 12.0
 @export var ability_color: Color = Color(0.55, 1.0, 0.98, 0.85)
 @export var ability_pressed_color: Color = Color(0.75, 1.0, 1.0, 0.95)
 @export var ability_no_mana_color: Color = Color(0.3, 0.3, 0.5, 0.7)
@@ -35,7 +35,7 @@ class_name CombatHUDConfig
 
 #region Secondary Controls - Dodge + Quick Slot
 @export_group("Secondary Controls: Dodge Button")
-@export var dodge_radius: float = 42.0
+@export var dodge_radius: float = 16.0
 @export var dodge_color: Color = Color(0.38, 0.27, 1.0, 0.85)
 @export var dodge_pressed_color: Color = Color(0.55, 0.45, 1.0, 0.95)
 @export var dodge_no_stamina_color: Color = Color(0.3, 0.3, 0.4, 0.7)
@@ -43,7 +43,7 @@ class_name CombatHUDConfig
 @export var dodge_offset_pct: Vector2 = Vector2(0.35, 0.12)
 
 @export_group("Secondary Controls: Quick Slot")
-@export var quick_slot_radius: float = 42.0
+@export var quick_slot_radius: float = 16.0
 @export var quick_slot_color: Color = Color(0.51, 1.0, 0.37, 0.85)
 @export var quick_slot_pressed_color: Color = Color(0.7, 1.0, 0.6, 0.95)
 @export var quick_slot_empty_color: Color = Color(0.3, 0.4, 0.3, 0.5)
@@ -55,7 +55,7 @@ class_name CombatHUDConfig
 @export_group("Interact Button")
 ## Offset from bottom-right corner as percentage
 @export var interact_offset_pct: Vector2 = Vector2(0.18, 0.45)
-@export var interact_size: Vector2 = Vector2(84, 35)
+@export var interact_size: Vector2 = Vector2(32, 13)
 #endregion
 
 @export_group("Visual Feedback")
@@ -64,14 +64,14 @@ class_name CombatHUDConfig
 ## Duration of press animation in seconds
 @export var press_animation_duration: float = 0.08
 ## Border/outline width
-@export var button_border_width: float = 1.4
+@export var button_border_width: float = 0.5
 @export var button_border_color: Color = Color(1.0, 1.0, 1.0, 0.4)
 
-@export_group("Scaling (Stubs)")
-## Reference screen height for scaling calculations
-@export var base_screen_height: float = 720.0
-@export var min_scale: float = 0.7
-@export var max_scale: float = 1.4
+@export_group("Scaling")
+## Reference screen height for scaling calculations (270p pixel art viewport)
+@export var base_screen_height: float = 270.0
+@export var min_scale: float = 1.0
+@export var max_scale: float = 4.0
 ## User-adjustable scale multiplier (1.0 = default)
 @export var user_scale: float = 1.0
 

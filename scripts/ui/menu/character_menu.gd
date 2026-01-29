@@ -64,9 +64,9 @@ var _quest_log_instance = null  # QuestLogPanel
 ## Skills panel instance (created dynamically)
 var _skills_panel_instance: SkillsPanel = null
 
-## Design size for responsive scaling (840x550 from .tscn)
-const DESIGN_WIDTH := 840.0
-const DESIGN_HEIGHT := 550.0
+## Design size for responsive scaling (315x206 for 270p viewport)
+const DESIGN_WIDTH := 315.0
+const DESIGN_HEIGHT := 206.0
 
 
 func _ready() -> void:
