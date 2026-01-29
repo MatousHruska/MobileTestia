@@ -33,16 +33,16 @@ const SKILLBOOK_CELL_PCT := 0.065      ## Skillbook cell ~6.5% of panel width
 const SKILLBOOK_COLS := 6              ## Columns in skillbook grid
 const SKILLBOOK_MIN_SLOTS := 30        ## Total slots (5 rows x 6 columns)
 
-## Minimum pixel sizes (for accessibility)
-const MIN_TALENT_SIZE := 40            ## Minimum touch target
-const MIN_CELL_SIZE := 40              ## Minimum touch target
+## Minimum pixel sizes (for accessibility) - 30% larger for native 720p
+const MIN_TALENT_SIZE := 52            ## Minimum touch target
+const MIN_CELL_SIZE := 52              ## Minimum touch target
 
 ## Bind slot sizing
 const BIND_MAIN_SLOT_PCT := 0.08       ## Main bind slot ~8% of panel width
 const BIND_SLOT_PCT := 0.065           ## Secondary bind slot ~6.5% of panel width
-const MIN_BIND_SIZE := 36              ## Minimum bind slot size
+const MIN_BIND_SIZE := 47              ## Minimum bind slot size (30% larger)
 const BIND_PANEL_HEIGHT_PCT := 0.18    ## Active Skills panel ~18% of panel height
-const MIN_BIND_PANEL_HEIGHT := 70      ## Minimum height for Active Skills panel
+const MIN_BIND_PANEL_HEIGHT := 91      ## Minimum height for Active Skills panel (30% larger)
 
 #===============================================================================
 # COMPUTED SIZES (call these functions to get actual pixel values)
@@ -210,12 +210,12 @@ func _build_ui() -> void:
 
 func _create_percentage_margin() -> MarginContainer:
 	var margin := MarginContainer.new()
-	# Use ~2% of typical screen width (around 8-12 pixels)
-	var side_margin := 10
+	# Use ~2% of typical screen width (30% larger for native 720p)
+	var side_margin := 13
 	margin.add_theme_constant_override("margin_left", side_margin)
 	margin.add_theme_constant_override("margin_right", side_margin)
-	margin.add_theme_constant_override("margin_top", 4)
-	margin.add_theme_constant_override("margin_bottom", 4)
+	margin.add_theme_constant_override("margin_top", 5)
+	margin.add_theme_constant_override("margin_bottom", 5)
 	return margin
 
 
@@ -272,7 +272,7 @@ func _build_talent_tree_panel(parent: Control) -> void:
 	# VBoxContainer for talent rows
 	_tree_rows = VBoxContainer.new()
 	_tree_rows.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_tree_rows.add_theme_constant_override("separation", 20)  # Prominent row padding
+	_tree_rows.add_theme_constant_override("separation", 26)  # Prominent row padding (30% larger)
 	_tree_rows.resized.connect(_on_tree_rows_resized)
 	_tree_content.add_child(_tree_rows)
 
@@ -479,7 +479,7 @@ func _build_tree_tabs() -> void:
 		tab.button_pressed = (tree_data.get("id", "") == current_tree_id)
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tab.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		tab.custom_minimum_size = UITheme.scale_size(Vector2(0, 20))  # Taller for two-line text
+		tab.custom_minimum_size = Vector2(0, 26)  # Taller for two-line text (30% larger)
 		tab.clip_text = false
 		tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 		tab.pressed.connect(_on_tree_tab_pressed.bind(tree_data.get("id", "")))
@@ -1144,7 +1144,7 @@ func _create_drag_preview(talent: TalentData) -> void:
 	stylebox.set_corner_radius_all(UITheme.CORNER_RADIUS_POPUP)
 	_drag_preview.add_theme_stylebox_override("panel", stylebox)
 
-	var drag_size := UITheme.scale_size(Vector2(28, 28))
+	var drag_size := Vector2(36, 36)  # 30% larger for native 720p
 	var label := Label.new()
 	label.text = talent.talent_name.substr(0, 3).to_upper()
 	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
@@ -1161,7 +1161,7 @@ func _create_drag_preview(talent: TalentData) -> void:
 ## Update drag preview position
 func _update_drag_position(pos: Vector2) -> void:
 	if _drag_preview:
-		var offset := UITheme.scale_size(Vector2(14, 14))
+		var offset := Vector2(18, 18)  # 30% larger for native 720p
 		_drag_preview.global_position = pos - offset
 
 
