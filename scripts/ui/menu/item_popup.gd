@@ -6,10 +6,10 @@ class_name ItemPopup
 # CONSTANTS
 #===============================================================================
 
-const POPUP_WIDTH := 280
+const BASE_POPUP_WIDTH := 100  # Base width for 270p, scaled to native
 const POPUP_MIN_HEIGHT_PCT := 0.40  # 40% of viewport - ensures decent size
 const POPUP_MAX_HEIGHT_PCT := 0.75  # 75% of viewport
-const ICON_SIZE := 48
+const BASE_ICON_SIZE := 18  # Base icon size for 270p, scaled to native
 
 ## Colors - use UITheme for consistency
 
@@ -39,7 +39,7 @@ var _hint_label: Label
 #===============================================================================
 
 func _get_popup_width() -> int:
-	return POPUP_WIDTH
+	return UITheme.scale_px_i(BASE_POPUP_WIDTH)
 
 
 func _get_popup_min_height_pct() -> float:
@@ -51,16 +51,18 @@ func _get_popup_max_height_pct() -> float:
 
 
 func _create_icon_container() -> Control:
+	var icon_size := UITheme.scale_size(Vector2(BASE_ICON_SIZE, BASE_ICON_SIZE))
 	var icon_bg := ColorRect.new()
-	icon_bg.custom_minimum_size = Vector2(ICON_SIZE, ICON_SIZE)
+	icon_bg.custom_minimum_size = icon_size
 	icon_bg.color = UITheme.COLOR_BUTTON_BG
 
+	var icon_margin := UITheme.scale_px(1)
 	_icon = TextureRect.new()
 	_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_icon.offset_left = 4
-	_icon.offset_top = 4
-	_icon.offset_right = -4
-	_icon.offset_bottom = -4
+	_icon.offset_left = icon_margin
+	_icon.offset_top = icon_margin
+	_icon.offset_right = -icon_margin
+	_icon.offset_bottom = -icon_margin
 	_icon.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon_bg.add_child(_icon)

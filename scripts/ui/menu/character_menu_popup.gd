@@ -25,11 +25,10 @@ signal closed
 # CONSTANTS (can be overridden by subclasses)
 #===============================================================================
 
-const DEFAULT_POPUP_WIDTH := 280
+const BASE_POPUP_WIDTH := 100  # Base width for 270p, scaled to native
 const DEFAULT_POPUP_MIN_HEIGHT_PCT := 0.35  # 35% of viewport height
 const DEFAULT_POPUP_MAX_HEIGHT_PCT := 0.75  # 75% of viewport height
-const MARGIN := 8
-const SCREEN_PADDING := 10
+const BASE_SCREEN_PADDING := 4  # Base padding for 270p, scaled to native
 const DIMMER_ALPHA := 0.3
 
 #===============================================================================
@@ -73,9 +72,9 @@ func _update_size() -> void:
 # VIRTUAL METHODS FOR SUBCLASSES
 #===============================================================================
 
-## Override to set custom popup width (in pixels)
+## Override to set custom popup width (in base 270p pixels, will be scaled)
 func _get_popup_width() -> int:
-	return DEFAULT_POPUP_WIDTH
+	return UITheme.scale_px_i(BASE_POPUP_WIDTH)
 
 
 ## Override to set custom minimum height (as percentage of viewport, 0.0-1.0)
@@ -163,7 +162,7 @@ func _build_ui() -> void:
 
 func _build_header(parent: VBoxContainer) -> void:
 	_header = HBoxContainer.new()
-	_header.add_theme_constant_override("separation", 8)
+	_header.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	parent.add_child(_header)
 
 	# Icon area (optional, controlled by _has_icon)
@@ -178,7 +177,7 @@ func _build_header(parent: VBoxContainer) -> void:
 	# Close button
 	_close_button = Button.new()
 	_close_button.text = "X"
-	_close_button.custom_minimum_size = Vector2(28, 28)
+	_close_button.custom_minimum_size = UITheme.scale_size(Vector2(10, 10))  # Base 10px scaled
 	_close_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_close_button.pressed.connect(_on_close_pressed)
 	_header.add_child(_close_button)
@@ -199,13 +198,13 @@ func _build_header(parent: VBoxContainer) -> void:
 func _create_icon_container() -> Control:
 	var icon := TextureRect.new()
 	icon.name = "Icon"
-	icon.custom_minimum_size = Vector2(40, 40)
+	icon.custom_minimum_size = UITheme.scale_size(Vector2(15, 15))  # Base 15px scaled
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 
 	# Icon placeholder background
 	var icon_bg := ColorRect.new()
-	icon_bg.custom_minimum_size = Vector2(40, 40)
+	icon_bg.custom_minimum_size = UITheme.scale_size(Vector2(15, 15))  # Base 15px scaled
 	icon_bg.color = UITheme.COLOR_BUTTON_BG
 	icon.add_child(icon_bg)
 	icon_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -261,9 +260,10 @@ func _position_popup(tap_pos: Vector2) -> void:
 	# Start position: slightly to the right and vertically centered on tap
 	var pos := tap_pos + Vector2(10, -panel_size.y / 2)
 
-	# Clamp to screen bounds
-	pos.x = clampf(pos.x, SCREEN_PADDING, viewport_size.x - panel_size.x - SCREEN_PADDING)
-	pos.y = clampf(pos.y, SCREEN_PADDING, viewport_size.y - panel_size.y - SCREEN_PADDING)
+	# Clamp to screen bounds (scale padding for native resolution)
+	var screen_padding := UITheme.scale_px(BASE_SCREEN_PADDING)
+	pos.x = clampf(pos.x, screen_padding, viewport_size.x - panel_size.x - screen_padding)
+	pos.y = clampf(pos.y, screen_padding, viewport_size.y - panel_size.y - screen_padding)
 
 	_panel.position = pos
 
