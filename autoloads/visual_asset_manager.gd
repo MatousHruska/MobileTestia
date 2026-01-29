@@ -99,20 +99,27 @@ var _sprite_meta: Dictionary = {
 var _character_configs: Dictionary = {
 	"player": {
 		"base_path": "sprites/characters/player/",
-		"uv_map": "TestUVMap.png",
-		"default_skin": "TestLookupTexture2.png",
+		"uv_map": "player_uv.png",
+		"default_skin": "player_skin.png",
 		"skins": {
-			"default": "TestLookupTexture2.png",
-			"alt": "TestLookupTexture.png",
+			"default": "player_skin.png",
+			"alt": "player_skin_alt.png",
+		},
+		# Equipment slot textures (for Phase 3)
+		"equipment": {
+			"head": "player_equip_head.png",
+			"body": "player_equip_body.png",
+			"hands": "player_equip_hands.png",
+			"legs": "player_equip_legs.png",
 		},
 		# Animation sheet filenames (state -> filename)
 		"animations": {
-			"idle": "TestIdle-Sheet.png",
-			"walk": "player_walk.png",      # TO CREATE
-			"attack": "player_attack.png",  # TO CREATE
-			"dodge": "player_dodge.png",    # TO CREATE
-			"hit": "player_hit.png",        # TO CREATE
-			"die": "player_die.png",        # TO CREATE
+			"idle": "player_idle.png",
+			"walk": "player_walk.png",
+			"attack": "player_attack.png",
+			"dodge": "player_dodge.png",
+			"hit": "player_hit.png",
+			"die": "player_die.png",
 		},
 	},
 }
