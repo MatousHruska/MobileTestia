@@ -10,7 +10,7 @@ const DATABASE_PATH := "res://databases/exports/ui_theme.json"
 #===============================================================================
 # Base design was ~424p height, now using 270p viewport
 # Adjust this value to fine-tune UI element sizes
-const UI_SCALE: float = 0.8
+const UI_SCALE: float = 0.9
 
 #===============================================================================
 # INTERNAL DATA
