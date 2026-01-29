@@ -153,8 +153,8 @@ func _update_scale_factor() -> void:
 		return
 
 	_cached_screen_size = screen_size
-	# Scale factor: how many times larger the screen is than the base design
-	ui_scale = float(screen_size.y) / BASE_DESIGN_HEIGHT
+	# Set to 1.0 for now - no automatic scaling, elements sized for native resolution
+	ui_scale = 1.0
 
 	Debug.log("UITheme", "UI scale updated: %.2f (screen: %s)" % [ui_scale, screen_size])
 

@@ -64,9 +64,9 @@ var _quest_log_instance = null  # QuestLogPanel
 ## Skills panel instance (created dynamically)
 var _skills_panel_instance: SkillsPanel = null
 
-## Design size for responsive scaling (315x206 for 270p viewport)
-const DESIGN_WIDTH := 315.0
-const DESIGN_HEIGHT := 206.0
+## Design size for native 720p resolution (no scaling)
+const DESIGN_WIDTH := 640.0
+const DESIGN_HEIGHT := 500.0
 
 
 func _ready() -> void:
@@ -443,8 +443,8 @@ func _show_save_load_panel(mode: SaveLoadPanel.Mode) -> void:
 	_save_load_panel.name = "SaveLoadPanel"
 	_save_load_panel.set_mode(mode)
 
-	# Size and position (scaled for native resolution)
-	var panel_size := UITheme.scale_size(Vector2(240, 250))
+	# Size and position for native 720p resolution
+	var panel_size := Vector2(300, 320)
 	_save_load_panel.custom_minimum_size = panel_size
 	_save_load_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_save_load_panel.size = panel_size
