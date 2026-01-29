@@ -328,8 +328,13 @@ func change_zone(zone_path: String, spawn_id: String = "default") -> void:
 	current_state = GameState.LOADING
 	Debug.print_saveload("[SAVELOAD] GM: Set state to LOADING, scheduling _load_zone via call_deferred")
 
-	# Use call_deferred to allow current frame to finish
-	call_deferred("_load_zone", zone_path)
+	# Check if we're using the dual viewport system
+	if DualViewport and DualViewport.is_initialized():
+		Debug.print_saveload("[SAVELOAD] GM: Using DualViewport zone loading")
+		call_deferred("_load_zone_dual_viewport", zone_path)
+	else:
+		# Use call_deferred to allow current frame to finish
+		call_deferred("_load_zone", zone_path)
 
 ## Pending zone load for retry when scene tree is busy
 var _pending_zone_path: String = ""
@@ -389,6 +394,31 @@ func _retry_load_zone() -> void:
 		Debug.print_saveload("[SAVELOAD] GM retry: No pending zone path!")
 		return
 	_load_zone(_pending_zone_path)
+
+
+func _load_zone_dual_viewport(zone_path: String) -> void:
+	## Load zone using the dual viewport system (zone loads into SubViewport)
+	Debug.print_saveload("[SAVELOAD] Game._load_zone_dual_viewport() | Frame: %d" % Engine.get_process_frames())
+	Debug.print_saveload("[SAVELOAD] GM dual: zone_path=%s" % zone_path)
+
+	# Clear player reference since it will be invalid after zone change
+	Debug.print_saveload("[SAVELOAD] GM dual: Clearing player reference")
+	player = null
+
+	# Get the MainGame node which manages zone loading
+	var main_game := get_tree().root.get_node_or_null("MainGame")
+	if main_game and main_game.has_method("load_zone"):
+		var zone := await main_game.load_zone(zone_path)
+		if zone:
+			current_zone = zone_path.get_file().get_basename()
+			zone_changed.emit(current_zone)
+			Debug.print_saveload("[SAVELOAD] GM dual: Zone loaded: %s" % current_zone)
+		else:
+			Debug.err("System", "Failed to load zone via DualViewport", zone_path)
+	else:
+		Debug.err("System", "MainGame not found or missing load_zone method")
+		# Fall back to traditional loading
+		_load_zone(zone_path)
 
 
 ## Utility

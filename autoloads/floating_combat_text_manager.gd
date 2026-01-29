@@ -409,10 +409,16 @@ func _show_tick(target: Node2D, amount: float, category_id: String, color: Color
 
 func _build_config(_target: Node2D, amount: float, category: Dictionary, _is_crit: bool = false) -> Dictionary:
 	var lifetime_mult: float = category.get("lifetime_mult", 1.0)
-	var font_size: int = int(category.get("font_size", 12))
+	var base_font_size: int = int(category.get("font_size", 12))
 	var anim_str: String = category.get("animation", "float_up")
 	var color := _parse_color(category.get("color", "1.0,1.0,1.0,1.0"))
 	var show_sign: bool = category.get("show_sign", true)
+
+	# Scale font size for dual viewport (native resolution rendering)
+	# Base values are designed for 270p, scale up for current screen resolution
+	var font_size: int = base_font_size
+	if UITheme:
+		font_size = int(base_font_size * UITheme.ui_scale)
 
 	# Calculate scale based on damage
 	var scale_factor := 1.0
@@ -424,6 +430,15 @@ func _build_config(_target: Node2D, amount: float, category: Dictionary, _is_cri
 			var scale_progress := clampf(amount / threshold, 0.0, 1.0)
 			scale_factor = lerpf(min_scale, max_scale, scale_progress)
 
+	# Scale rise speed and spread for screen resolution
+	var rise_speed := _rise_speed
+	var spread_x := _spread_x
+	var spread_y := _spread_y
+	if UITheme:
+		rise_speed *= UITheme.ui_scale
+		spread_x *= UITheme.ui_scale
+		spread_y *= UITheme.ui_scale
+
 	return {
 		"category_id": category.get("id", ""),
 		"text": "",
@@ -434,9 +449,9 @@ func _build_config(_target: Node2D, amount: float, category: Dictionary, _is_cri
 		"show_sign": show_sign,
 		"scale": scale_factor,
 		"fade_start": _fade_start,
-		"rise_speed": _rise_speed,
-		"spread_x": _spread_x,
-		"spread_y": _spread_y
+		"rise_speed": rise_speed,
+		"spread_x": spread_x,
+		"spread_y": spread_y
 	}
 
 
@@ -469,21 +484,41 @@ func _display_text(target: Node2D, config: Dictionary) -> void:
 
 
 func _get_target_head_position(target: Node2D) -> Vector2:
-	# Try to get head position from target
+	# Get the target's position in game world space
+	var world_pos: Vector2
 	if target.has_method("get_head_position"):
-		return target.get_head_position()
+		world_pos = target.get_head_position()
+	else:
+		# Default: above center
+		var offset_y := -30.0
+		if target.has_node("CollisionShape2D"):
+			var collision: CollisionShape2D = target.get_node("CollisionShape2D")
+			if collision.shape is CapsuleShape2D:
+				offset_y = -collision.shape.height / 2 - 10
+		elif target.has_node("Sprite2D"):
+			var sprite: Sprite2D = target.get_node("Sprite2D")
+			offset_y = -sprite.texture.get_height() / 2 - 5 if sprite.texture else -30.0
+		world_pos = target.global_position + Vector2(0, offset_y)
 
-	# Default: above center
-	var offset_y := -30.0
-	if target.has_node("CollisionShape2D"):
-		var collision: CollisionShape2D = target.get_node("CollisionShape2D")
-		if collision.shape is CapsuleShape2D:
-			offset_y = -collision.shape.height / 2 - 10
-	elif target.has_node("Sprite2D"):
-		var sprite: Sprite2D = target.get_node("Sprite2D")
-		offset_y = -sprite.texture.get_height() / 2 - 5 if sprite.texture else -30.0
+	# Convert to screen position for dual viewport rendering
+	return _world_to_screen(world_pos, target)
 
-	return target.global_position + Vector2(0, offset_y)
+
+func _world_to_screen(world_pos: Vector2, target: Node2D) -> Vector2:
+	## Convert game world position to screen position for combat text rendering
+	## Handles both dual viewport and legacy single viewport modes
+
+	# Check if using dual viewport system
+	if DualViewport and DualViewport.is_initialized():
+		return DualViewport.world_to_screen(world_pos)
+
+	# Legacy mode: get viewport transform from target's viewport
+	var viewport := target.get_viewport()
+	if viewport:
+		var canvas_transform := viewport.canvas_transform
+		return canvas_transform * world_pos
+
+	return world_pos
 
 
 func _calculate_stack_offset(target: Node2D) -> Vector2:
@@ -499,7 +534,12 @@ func _calculate_stack_offset(target: Node2D) -> Vector2:
 	# Limit stacking
 	active_count = mini(active_count, _max_visible_per_target)
 
-	return Vector2(0, -_stack_offset_y * active_count)
+	# Scale offset for screen resolution
+	var offset_y := _stack_offset_y
+	if UITheme:
+		offset_y *= UITheme.ui_scale
+
+	return Vector2(0, -offset_y * active_count)
 
 
 func _recycle_oldest() -> void:

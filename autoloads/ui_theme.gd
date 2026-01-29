@@ -6,11 +6,16 @@ extends Node
 const DATABASE_PATH := "res://databases/exports/ui_theme.json"
 
 #===============================================================================
-# UI SCALE - Adjusts all pixel values for viewport size
+# UI SCALE - Dynamic scaling for native resolution rendering
 #===============================================================================
-# Base design was ~424p height, now using 270p viewport
-# Adjust this value to fine-tune UI element sizes
-const UI_SCALE: float = 0.9
+# Base design height (the original pixel art viewport)
+const BASE_DESIGN_HEIGHT: float = 270.0
+
+# Current scale factor (calculated dynamically based on screen size)
+var ui_scale: float = 1.0
+
+# Cached screen size for change detection
+var _cached_screen_size: Vector2i = Vector2i.ZERO
 
 #===============================================================================
 # INTERNAL DATA
@@ -131,6 +136,26 @@ const DEFAULTS := {
 
 func _ready() -> void:
 	_load_theme_settings()
+	_update_scale_factor()
+	# Connect to screen resize
+	get_tree().root.size_changed.connect(_on_screen_resized)
+
+
+func _on_screen_resized() -> void:
+	_update_scale_factor()
+
+
+func _update_scale_factor() -> void:
+	## Calculate UI scale based on current screen size
+	var screen_size := get_tree().root.size
+	if screen_size == _cached_screen_size:
+		return
+
+	_cached_screen_size = screen_size
+	# Scale factor: how many times larger the screen is than the base design
+	ui_scale = float(screen_size.y) / BASE_DESIGN_HEIGHT
+
+	Debug.log("UITheme", "UI scale updated: %.2f (screen: %s)" % [ui_scale, screen_size])
 
 
 func _load_theme_settings() -> void:
@@ -189,12 +214,12 @@ func get_int_raw(key: String) -> int:
 ## Used for: font sizes, margins, border widths, corner radii, separations
 func get_int(key: String) -> int:
 	var raw := int(_settings.get(key, DEFAULTS.get(key, 0)))
-	# Apply scale to pixel-based values
+	# Apply dynamic scale to pixel-based values for native resolution rendering
 	if key.begins_with("font_size") or key.begins_with("margin") or \
 	   key.begins_with("border") or key.begins_with("corner") or \
 	   key.begins_with("separation") or key.ends_with("_height") or \
 	   key.ends_with("_width"):
-		return maxi(1, int(raw * UI_SCALE))
+		return maxi(1, int(raw * ui_scale))
 	return raw
 
 
