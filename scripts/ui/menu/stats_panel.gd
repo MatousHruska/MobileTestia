@@ -245,7 +245,7 @@ func _create_header() -> Control:
 	# XP bar
 	var xp_bar := ProgressBar.new()
 	xp_bar.name = "XPBar"
-	xp_bar.custom_minimum_size = Vector2(0, 14)
+	xp_bar.custom_minimum_size = UITheme.scale_size(Vector2(0, 8))
 	xp_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	xp_bar.show_percentage = false
 
@@ -297,7 +297,7 @@ func _create_attribute_row(abbrev: String, stat_name: String) -> Array:
 	label.name = abbrev + "Label"
 	label.flat = true
 	label.text = abbrev + ":"
-	label.custom_minimum_size = Vector2(40, 0)
+	label.custom_minimum_size = UITheme.scale_size(Vector2(24, 0))
 	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_LABEL)
 	label.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
@@ -307,7 +307,7 @@ func _create_attribute_row(abbrev: String, stat_name: String) -> Array:
 	var value := Label.new()
 	value.name = abbrev + "Value"
 	value.text = "10"
-	value.custom_minimum_size = Vector2(30, 0)
+	value.custom_minimum_size = UITheme.scale_size(Vector2(18, 0))
 	value.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	value.add_theme_color_override("font_color", UITheme.COLOR_TEXT_VALUE)
 
@@ -315,7 +315,7 @@ func _create_attribute_row(abbrev: String, stat_name: String) -> Array:
 	var plus_btn := Button.new()
 	plus_btn.name = abbrev + "Plus"
 	plus_btn.text = "+"
-	plus_btn.custom_minimum_size = Vector2(28, 28)
+	plus_btn.custom_minimum_size = UITheme.scale_size(Vector2(16, 16))
 	plus_btn.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	plus_btn.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
 	plus_btn.pressed.connect(_on_allocate_pressed.bind(stat_name))
@@ -389,7 +389,7 @@ func _create_subtab_bar() -> Control:
 		btn.text = tabs[i]
 		btn.toggle_mode = true
 		btn.button_pressed = (i == 0)
-		btn.custom_minimum_size = Vector2(80, 28)
+		btn.custom_minimum_size = UITheme.scale_size(Vector2(48, 16))
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 		btn.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
@@ -485,7 +485,7 @@ func _create_effects_section() -> Control:
 
 func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button:
 	var btn := Button.new()
-	btn.custom_minimum_size = Vector2(40, 40)
+	btn.custom_minimum_size = UITheme.scale_size(Vector2(24, 24))
 	btn.flat = true
 	btn.gui_input.connect(_on_effect_button_input.bind(effect_type, btn))
 
@@ -504,12 +504,14 @@ func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button
 	icon_container.add_child(background)
 
 	# Icon inner (colored based on effect type)
+	var border := UITheme.scale_px(1)
+	var bar_height := UITheme.scale_px(6)
 	var icon_inner := ColorRect.new()
 	icon_inner.set_anchors_preset(Control.PRESET_FULL_RECT)
-	icon_inner.offset_left = 2
-	icon_inner.offset_top = 2
-	icon_inner.offset_right = -2
-	icon_inner.offset_bottom = -10  # Leave room for timer bar
+	icon_inner.offset_left = border
+	icon_inner.offset_top = border
+	icon_inner.offset_right = -border
+	icon_inner.offset_bottom = -bar_height  # Leave room for timer bar
 	icon_inner.color = _get_effect_color(effect_type)
 	icon_inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon_container.add_child(icon_inner)
@@ -521,10 +523,10 @@ func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button
 	var duration_bar := ProgressBar.new()
 	duration_bar.name = "DurationBar"
 	duration_bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	duration_bar.offset_top = -8
-	duration_bar.offset_left = 2
-	duration_bar.offset_right = -2
-	duration_bar.custom_minimum_size.y = 6
+	duration_bar.offset_top = -bar_height
+	duration_bar.offset_left = border
+	duration_bar.offset_right = -border
+	duration_bar.custom_minimum_size.y = UITheme.scale_px(4)
 	duration_bar.max_value = max_duration if max_duration > 0 else 1.0
 	duration_bar.value = duration
 	duration_bar.show_percentage = false
@@ -548,14 +550,14 @@ func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button
 	var timer_label := Label.new()
 	timer_label.name = "TimerLabel"
 	timer_label.set_anchors_preset(Control.PRESET_CENTER)
-	timer_label.offset_top = -4  # Adjust for duration bar
+	timer_label.offset_top = -UITheme.scale_px(2)  # Adjust for duration bar
 	timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	timer_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 	timer_label.add_theme_color_override("font_color", UITheme.COLOR_SELECTED)
 	timer_label.add_theme_color_override("font_shadow_color", UITheme.COLOR_PANEL_DARK_BG)
-	timer_label.add_theme_constant_override("shadow_offset_x", 1)
-	timer_label.add_theme_constant_override("shadow_offset_y", 1)
+	timer_label.add_theme_constant_override("shadow_offset_x", UITheme.scale_px_i(1))
+	timer_label.add_theme_constant_override("shadow_offset_y", UITheme.scale_px_i(1))
 	timer_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 	if max_duration > 0:
@@ -697,7 +699,7 @@ func _create_derived_stat_row(stat_name: String, display_name: String) -> Array:
 	var value := Label.new()
 	value.name = stat_name + "_value"
 	value.text = "0"
-	value.custom_minimum_size = Vector2(60, 0)
+	value.custom_minimum_size = UITheme.scale_size(Vector2(36, 0))
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	value.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	value.add_theme_color_override("font_color", UITheme.COLOR_TEXT_VALUE)
