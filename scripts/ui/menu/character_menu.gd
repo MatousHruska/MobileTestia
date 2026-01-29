@@ -98,6 +98,7 @@ func _on_viewport_resized() -> void:
 
 func _apply_responsive_size() -> void:
 	## Constrain panel size to fit viewport on small screens
+	## ResponsiveUI handles scaling from 270p base to native resolution
 	if not panel_container:
 		return
 

@@ -283,20 +283,42 @@ func cleanup_zone() -> void:
 
 func _create_chunk_root() -> void:
 	## Create or find chunk root node
+	## With dual viewport system, chunks must be added inside the SubViewport
 	if _chunk_root and is_instance_valid(_chunk_root):
 		return
 
-	var scene_root := get_tree().current_scene
-	if not scene_root:
-		Debug.warn("ChunkManager", "No current scene for chunk root")
-		return
+	# Find the correct parent for chunks
+	var chunk_parent: Node = null
+
+	# Check if using dual viewport system
+	var dual_viewport = get_node_or_null("/root/DualViewport")
+	if dual_viewport and dual_viewport.is_initialized():
+		# Get the world root inside the SubViewport
+		var world_root = dual_viewport.get_world_root()
+		if world_root:
+			# Find the zone node (first child that is a ZoneBase or has zone_id)
+			for child in world_root.get_children():
+				if child is ZoneBase or (child.has_method("get") and "zone_id" in child):
+					chunk_parent = child
+					break
+			# Fallback to world_root if no zone found
+			if not chunk_parent:
+				chunk_parent = world_root
+			Debug.log("ChunkManager", "Using dual viewport chunk parent: %s" % chunk_parent.name)
+
+	# Fallback to current_scene (legacy mode)
+	if not chunk_parent:
+		chunk_parent = get_tree().current_scene
+		if not chunk_parent:
+			Debug.warn("ChunkManager", "No scene root for chunk root")
+			return
 
 	# Check if ChunkRoot already exists
-	_chunk_root = scene_root.get_node_or_null("ChunkRoot")
+	_chunk_root = chunk_parent.get_node_or_null("ChunkRoot")
 	if not _chunk_root:
 		_chunk_root = Node2D.new()
 		_chunk_root.name = "ChunkRoot"
-		scene_root.add_child(_chunk_root)
+		chunk_parent.add_child(_chunk_root)
 
 
 #===============================================================================

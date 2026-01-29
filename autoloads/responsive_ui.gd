@@ -55,25 +55,31 @@ func _update_viewport_info() -> void:
 #region Panel Size Utilities
 
 ## Get constrained panel size for modal dialogs
-## Ensures panel fits on screen with margins while respecting design size
+## Design sizes are assumed to be for 270p base resolution and will be scaled up
+## Ensures panel fits on screen with margins while respecting scaled design size
 func get_constrained_panel_size(design_size: Vector2, margin_pct: float = 0.05) -> Vector2:
+	# Scale design size for native resolution
+	var scaled_size := design_size * scale_factor
+
 	var max_width := viewport_size.x * (1.0 - margin_pct * 2)
 	var max_height := viewport_size.y * (1.0 - margin_pct * 2)
 
 	return Vector2(
-		minf(design_size.x, max_width),
-		minf(design_size.y, max_height)
+		minf(scaled_size.x, max_width),
+		minf(scaled_size.y, max_height)
 	)
 
 
-## Check if panel needs constraining (viewport too small for design)
+## Check if panel needs constraining (viewport too small for scaled design)
 func panel_needs_constraining(design_size: Vector2, margin_pct: float = 0.05) -> bool:
+	var scaled_size := design_size * scale_factor
 	var max_width := viewport_size.x * (1.0 - margin_pct * 2)
 	var max_height := viewport_size.y * (1.0 - margin_pct * 2)
-	return design_size.x > max_width or design_size.y > max_height
+	return scaled_size.x > max_width or scaled_size.y > max_height
 
 
 ## Apply size constraints to a centered panel (modifies offsets)
+## Design dimensions are for 270p base and will be scaled automatically
 func constrain_centered_panel(panel: Control, design_width: float, design_height: float, margin_pct: float = 0.05) -> void:
 	var constrained := get_constrained_panel_size(Vector2(design_width, design_height), margin_pct)
 	var half_width := constrained.x / 2.0
