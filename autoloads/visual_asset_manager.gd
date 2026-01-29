@@ -33,6 +33,24 @@ var _animations: Dictionary = {
 		"left":  { "start": 8,  "end": 11, "fps": 12.0, "loop": false },
 		"right": { "start": 12, "end": 15, "fps": 12.0, "loop": false },
 	},
+	"humanoid_dodge": {
+		"down":  { "start": 0,  "end": 3,  "fps": 12.0, "loop": false },
+		"up":    { "start": 4,  "end": 7,  "fps": 12.0, "loop": false },
+		"left":  { "start": 8,  "end": 11, "fps": 12.0, "loop": false },
+		"right": { "start": 12, "end": 15, "fps": 12.0, "loop": false },
+	},
+	"humanoid_hit": {
+		"down":  { "start": 0,  "end": 2,  "fps": 10.0, "loop": false },
+		"up":    { "start": 3,  "end": 5,  "fps": 10.0, "loop": false },
+		"left":  { "start": 6,  "end": 8,  "fps": 10.0, "loop": false },
+		"right": { "start": 9, "end": 11, "fps": 10.0, "loop": false },
+	},
+	"humanoid_die": {
+		"down":  { "start": 0,  "end": 4,  "fps": 8.0, "loop": false },
+		"up":    { "start": 5,  "end": 9,  "fps": 8.0, "loop": false },
+		"left":  { "start": 10, "end": 14, "fps": 8.0, "loop": false },
+		"right": { "start": 15, "end": 19, "fps": 8.0, "loop": false },
+	},
 	# Test animations - user's custom UV shader test
 	"test_idle": {
 		"down":  { "start": 0,  "end": 4,  "fps": 6.0, "loop": true },
@@ -47,6 +65,9 @@ var _sprite_meta: Dictionary = {
 	"humanoid_idle": { "frame_width": 32, "frame_height": 32, "columns": 4, "rows": 4 },
 	"humanoid_walk": { "frame_width": 32, "frame_height": 32, "columns": 6, "rows": 4 },
 	"humanoid_attack": { "frame_width": 32, "frame_height": 32, "columns": 4, "rows": 4 },
+	"humanoid_dodge": { "frame_width": 32, "frame_height": 32, "columns": 4, "rows": 4 },
+	"humanoid_hit": { "frame_width": 32, "frame_height": 32, "columns": 3, "rows": 4 },
+	"humanoid_die": { "frame_width": 32, "frame_height": 32, "columns": 5, "rows": 4 },
 	# Test animation meta - 5 frames in horizontal strip
 	"test_idle": { "frame_width": 32, "frame_height": 32, "columns": 5, "rows": 1 },
 }
@@ -59,12 +80,13 @@ var _character_configs: Dictionary = {
 		"uv_map_path": "sprites/characters/player/Tests/TestUVMap.png",
 		"skin_path": "sprites/characters/player/Tests/TestLookupTexture.png",
 	},
-	# Add more character configs here as they're created
-	# "humanoid": {
-	#     "motion_path": "sprites/characters/player/motion/humanoid_idle.png",
-	#     "uv_map_path": "sprites/characters/player/uv_maps/humanoid.png",
-	#     "skin_path": "sprites/characters/player/skins/body_default.png",
-	# },
+	# Humanoid player character - uses color-lookup UV system
+	# Motion maps are in motion/, UV map shared across animations
+	"humanoid": {
+		"motion_path": "sprites/characters/player/motion/humanoid_idle.png",
+		"uv_map_path": "sprites/characters/player/uv_maps/humanoid_uv.png",
+		"skin_path": "sprites/characters/player/skins/body_default.png",
+	},
 }
 
 
