@@ -43,7 +43,7 @@ var skin_id: String = "default"
 var _is_flipped: bool = false
 
 # Character scale (1.0 = 32px sprite at native size)
-@export var character_scale: float = 1.2  # 20% larger
+@export var character_scale: float = 2.0  # Double size
 
 
 func _ready() -> void:
