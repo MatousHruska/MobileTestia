@@ -42,8 +42,8 @@ var skin_id: String = "default"
 # Flipping for left direction (can share same art as right)
 var _is_flipped: bool = false
 
-# Character scale (1.0 = 32px sprite at native size)
-@export var character_scale: float = 2.0  # Double size
+# Character scale (1.0 = native sprite size, change via camera zoom instead)
+@export var character_scale: float = 1.0
 
 
 func _ready() -> void:
