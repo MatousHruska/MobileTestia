@@ -11,9 +11,9 @@ class_name ResponsiveUIManager
 ## Screen size categories
 enum ScreenCategory { SMALL, NORMAL, LARGE }
 
-## Base design dimensions (480x270 pixel art viewport)
-const BASE_WIDTH := 480.0
-const BASE_HEIGHT := 270.0
+## Base design dimensions (720p UI design resolution)
+const BASE_WIDTH := 1280.0
+const BASE_HEIGHT := 720.0
 
 ## Scale limits (1.0 = native, higher = larger displays)
 const MIN_SCALE := 1.0
@@ -41,13 +41,15 @@ func _on_viewport_resized() -> void:
 
 func _update_viewport_info() -> void:
 	viewport_size = get_viewport().get_visible_rect().size
-	# Set to 1.0 for now - no automatic scaling, elements sized for native resolution
-	scale_factor = 1.0
 
-	# Determine screen category (based on 270p base)
-	if viewport_size.y < 270:
+	# Calculate scale factor based on viewport height relative to base design (720p)
+	# This ensures UI scales proportionally across different resolutions
+	scale_factor = clampf(viewport_size.y / BASE_HEIGHT, MIN_SCALE * 0.5, MAX_SCALE)
+
+	# Determine screen category (based on 720p base)
+	if viewport_size.y < 540:
 		screen_category = ScreenCategory.SMALL
-	elif viewport_size.y > 540:
+	elif viewport_size.y > 1080:
 		screen_category = ScreenCategory.LARGE
 	else:
 		screen_category = ScreenCategory.NORMAL
@@ -56,33 +58,29 @@ func _update_viewport_info() -> void:
 #region Panel Size Utilities
 
 ## Get constrained panel size for modal dialogs
-## Design sizes are assumed to be for 270p base resolution and will be scaled up
-## Ensures panel fits on screen with margins while respecting scaled design size
-func get_constrained_panel_size(design_size: Vector2, margin_pct: float = 0.05) -> Vector2:
-	# Scale design size for native resolution
-	var scaled_size := design_size * scale_factor
-
+## target_size is in actual pixels (e.g., from UITheme percentage-based properties)
+## Ensures panel fits on screen with margins
+func get_constrained_panel_size(target_size: Vector2, margin_pct: float = 0.05) -> Vector2:
 	var max_width := viewport_size.x * (1.0 - margin_pct * 2)
 	var max_height := viewport_size.y * (1.0 - margin_pct * 2)
 
 	return Vector2(
-		minf(scaled_size.x, max_width),
-		minf(scaled_size.y, max_height)
+		minf(target_size.x, max_width),
+		minf(target_size.y, max_height)
 	)
 
 
-## Check if panel needs constraining (viewport too small for scaled design)
-func panel_needs_constraining(design_size: Vector2, margin_pct: float = 0.05) -> bool:
-	var scaled_size := design_size * scale_factor
+## Check if panel needs constraining (viewport too small for target size)
+func panel_needs_constraining(target_size: Vector2, margin_pct: float = 0.05) -> bool:
 	var max_width := viewport_size.x * (1.0 - margin_pct * 2)
 	var max_height := viewport_size.y * (1.0 - margin_pct * 2)
-	return scaled_size.x > max_width or scaled_size.y > max_height
+	return target_size.x > max_width or target_size.y > max_height
 
 
 ## Apply size constraints to a centered panel (modifies offsets)
-## Design dimensions are for 270p base and will be scaled automatically
-func constrain_centered_panel(panel: Control, design_width: float, design_height: float, margin_pct: float = 0.05) -> void:
-	var constrained := get_constrained_panel_size(Vector2(design_width, design_height), margin_pct)
+## target_width/height are in actual pixels (e.g., from UITheme)
+func constrain_centered_panel(panel: Control, target_width: float, target_height: float, margin_pct: float = 0.05) -> void:
+	var constrained := get_constrained_panel_size(Vector2(target_width, target_height), margin_pct)
 	var half_width := constrained.x / 2.0
 	var half_height := constrained.y / 2.0
 
