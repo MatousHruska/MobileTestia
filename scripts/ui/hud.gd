@@ -164,7 +164,7 @@ func _setup_resource_bars() -> void:
 	# Status effect display (DoTs, buffs, debuffs)
 	status_effect_display = StatusEffectDisplay.new()
 	status_effect_display.name = "StatusEffectDisplay"
-	status_effect_display.custom_minimum_size = Vector2(0, 32)
+	status_effect_display.custom_minimum_size = UITheme.scale_size(Vector2(0, 12))  # Base 12px scaled
 	bars_container.add_child(status_effect_display)
 
 
@@ -198,7 +198,7 @@ func _position_cast_bar() -> void:
 func _create_resource_bar(bar_name: String, fill_color: Color, bg_color: Color) -> ProgressBar:
 	var bar := ProgressBar.new()
 	bar.name = bar_name + "Bar"
-	bar.custom_minimum_size = Vector2(0, 18)
+	bar.custom_minimum_size = UITheme.scale_size(Vector2(0, 7))  # Base 7px scaled for native resolution
 	bar.max_value = 100.0
 	bar.value = 100.0
 	bar.show_percentage = false

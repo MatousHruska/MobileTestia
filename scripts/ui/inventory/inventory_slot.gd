@@ -274,7 +274,7 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	# Create drag preview (a copy of the item icon)
 	var preview := TextureRect.new()
 	preview.texture = current_item.icon
-	preview.custom_minimum_size = Vector2(48, 48)
+	preview.custom_minimum_size = UITheme.scale_size(Vector2(18, 18))  # Base 18px scaled
 	preview.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	preview.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	preview.modulate = Color(1, 1, 1, 0.8)

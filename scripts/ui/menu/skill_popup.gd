@@ -6,7 +6,7 @@ class_name SkillPopup
 # CONSTANTS
 #===============================================================================
 
-const POPUP_WIDTH := 280
+const BASE_POPUP_WIDTH := 100  # Base width for 270p, scaled to native
 const POPUP_MIN_HEIGHT_PCT := 0.55  # 55% of viewport (increased from 45%)
 const POPUP_MAX_HEIGHT_PCT := 0.90  # 90% of viewport (increased from 75%)
 
@@ -34,7 +34,7 @@ var _learn_button: Button
 #===============================================================================
 
 func _get_popup_width() -> int:
-	return POPUP_WIDTH
+	return UITheme.scale_px_i(BASE_POPUP_WIDTH)
 
 
 func _get_popup_min_height_pct() -> float:
@@ -64,13 +64,14 @@ func _build_header_content() -> VBoxContainer:
 
 
 func _create_icon_container() -> Control:
+	var icon_size := UITheme.scale_size(Vector2(15, 15))  # Base 15px scaled
 	_icon = TextureRect.new()
-	_icon.custom_minimum_size = Vector2(40, 40)
+	_icon.custom_minimum_size = icon_size
 	_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 
 	var icon_bg := ColorRect.new()
-	icon_bg.custom_minimum_size = Vector2(40, 40)
+	icon_bg.custom_minimum_size = icon_size
 	icon_bg.color = UITheme.COLOR_BUTTON_BG
 	_icon.add_child(icon_bg)
 	icon_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
