@@ -12,13 +12,14 @@ config_version=5
 
 config/name="Heroes of Tesia testinAI"
 config/description="Mobile Action RPG - Pixel Art Top-Down"
-run/main_scene="res://scenes/world/zone_ldtk_test.tscn"
+run/main_scene="res://scenes/main_game.tscn"
 config/features=PackedStringArray("4.5", "Mobile")
 config/icon="res://icon.svg"
 
 [autoload]
 
 Debug="*res://autoloads/debug_manager.gd"
+DualViewport="*res://autoloads/dual_viewport_manager.gd"
 VisualAssets="*res://autoloads/visual_asset_manager.gd"
 DatabaseLoader="*res://autoloads/database_loader.gd"
 ChunkManager="*res://autoloads/chunk_manager.gd"
@@ -46,9 +47,9 @@ CombatText="*res://autoloads/floating_combat_text_manager.gd"
 
 [display]
 
-window/size/viewport_width=480
-window/size/viewport_height=270
-window/stretch/mode="viewport"
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
 [input_devices]
