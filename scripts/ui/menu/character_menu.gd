@@ -64,11 +64,11 @@ var _quest_log_instance = null  # QuestLogPanel
 ## Skills panel instance (created dynamically)
 var _skills_panel_instance: SkillsPanel = null
 
-## Design size for native 720p resolution (from UITheme database)
-func _get_design_width() -> float:
+## Menu size (percentage-based, calculated from viewport by UITheme)
+func _get_menu_width() -> float:
 	return float(UITheme.MENU_WIDTH)
 
-func _get_design_height() -> float:
+func _get_menu_height() -> float:
 	return float(UITheme.MENU_HEIGHT)
 
 
@@ -107,14 +107,14 @@ func _apply_responsive_size() -> void:
 
 	var responsive_ui := get_node_or_null("/root/ResponsiveUI")
 	if responsive_ui:
-		responsive_ui.constrain_centered_panel(panel_container, _get_design_width(), _get_design_height(), 0.02)
+		responsive_ui.constrain_centered_panel(panel_container, _get_menu_width(), _get_menu_height(), 0.02)
 	else:
 		# Fallback if ResponsiveUI not loaded yet
 		var vp_size := get_viewport().get_visible_rect().size
 		var max_width := vp_size.x * 0.96
 		var max_height := vp_size.y * 0.96
-		var width := minf(_get_design_width(), max_width)
-		var height := minf(_get_design_height(), max_height)
+		var width := minf(_get_menu_width(), max_width)
+		var height := minf(_get_menu_height(), max_height)
 		panel_container.offset_left = -width / 2.0
 		panel_container.offset_right = width / 2.0
 		panel_container.offset_top = -height / 2.0
