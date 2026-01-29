@@ -121,6 +121,11 @@ const DEFAULTS := {
 	"label_width_large": 47,
 	"row_height_normal": 26,
 	"row_height_large": 36,
+	# Menu/panel sizes (native 720p pixel values)
+	"menu_width": 832,
+	"menu_height": 650,
+	"save_panel_width": 390,
+	"save_panel_height": 416,
 	# Cast bar
 	"color_cast_bar_bg": "0.1,0.1,0.12,0.9",
 	"color_cast_bar_fill": "0.8,0.6,0.2,1.0",
@@ -508,6 +513,22 @@ var ROW_HEIGHT_NORMAL: int:
 
 var ROW_HEIGHT_LARGE: int:
 	get: return get_int("row_height_large")
+
+#===============================================================================
+# MENU/PANEL SIZE PROPERTIES
+#===============================================================================
+
+var MENU_WIDTH: int:
+	get: return get_int("menu_width")
+
+var MENU_HEIGHT: int:
+	get: return get_int("menu_height")
+
+var SAVE_PANEL_WIDTH: int:
+	get: return get_int("save_panel_width")
+
+var SAVE_PANEL_HEIGHT: int:
+	get: return get_int("save_panel_height")
 
 
 #===============================================================================
