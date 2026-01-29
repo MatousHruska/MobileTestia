@@ -22,7 +22,7 @@ var _material: ShaderMaterial
 var _visual_assets: Node
 
 # Current animation state
-var _current_motion_base: String = "humanoid"  # Default to humanoid player character
+var _current_motion_base: String = "player"  # Main player character
 var _current_state: String = "idle"        # idle, walk, attack, etc.
 var _current_direction: String = "down"    # down, up, left, right
 var _current_frame: int = 0
