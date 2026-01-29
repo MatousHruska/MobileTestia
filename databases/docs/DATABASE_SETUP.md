@@ -86,6 +86,7 @@ This guide explains how to set up and use the Excel database system for MobileTe
 - **Cutscenes** - Scripted cutscene sequences
 - **GameplaySettings** - Global numeric constants (base stats, regen rates)
 - **StatDescriptions** - Stat names and descriptions for UI tooltips
+- **UITheme** - UI colors, sizes, and responsive layout percentages
 
 ---
 
@@ -620,6 +621,82 @@ stat_life_regen  Life Regen     utility    Health recovered per second. Base: 1/
 
 ---
 
+### UITheme (Responsive UI Configuration)
+
+The UITheme sheet stores all UI styling values including colors, sizes, and responsive layout percentages. Values are loaded by `autoloads/ui_theme.gd`.
+
+| Column | Type | Required | Example |
+|--------|------|----------|---------|
+| key | string | Yes | `button_height_normal` |
+| value | string/number | Yes | `29` or `0.65` or `0.12,0.12,0.14,0.9` |
+| description | string | No | `Normal button height (base 720p pixels)` |
+
+**Value Types:**
+
+| Type | Format | Example | Description |
+|------|--------|---------|-------------|
+| Color | `R,G,B,A` (0.0-1.0) | `0.12,0.12,0.14,0.9` | RGBA color |
+| Percentage | `0.0-1.0` | `0.65` | Percentage of viewport |
+| Base pixels | integer | `29` | Base 720p pixels (auto-scaled) |
+
+**Key Categories:**
+
+**Colors** (no scaling):
+```
+color_panel_bg          0.12,0.12,0.14,0.9    Panel background
+color_popup_bg          0.1,0.1,0.12,0.95     Popup background
+color_button_bg         0.2,0.2,0.25,0.8      Button background
+color_gold              1.0,0.85,0.0,1.0      Gold text
+color_life              0.9,0.3,0.3,1.0       Health resource
+color_mana              0.4,0.6,1.0,1.0       Mana resource
+```
+
+**Layout Percentages** (% of viewport):
+```
+menu_width_pct          0.65    Character menu width (65%)
+menu_height_pct         0.90    Character menu height (90%)
+save_panel_width_pct    0.30    Save/Load panel width (30%)
+save_panel_height_pct   0.58    Save/Load panel height (58%)
+```
+
+**Element Sizes** (base 720p, auto-scaled by ui_scale):
+```
+button_height_small     21      Small button height
+button_height_normal    29      Normal button height
+button_height_large     36      Large button height
+slot_size_small         52      Small inventory slot
+slot_size_normal        56      Normal inventory slot
+slot_size_large         64      Large inventory slot
+icon_size_normal        31      Normal icon size
+min_touch_target        36      Minimum touch target
+```
+
+**Font Sizes** (base 720p, auto-scaled):
+```
+font_size_title         22      Title text
+font_size_header        18      Section headers
+font_size_label         16      Normal labels
+font_size_small         14      Small text
+```
+
+**Margins & Spacing** (base 720p, auto-scaled):
+```
+margin_standard         10      Standard margin
+margin_small            8       Small margin
+separation_normal       10      Normal separation
+separation_small        6       Small separation
+```
+
+**Scaling Behavior:**
+- `ui_scale = viewport_height / 720`
+- Element sizes and fonts are multiplied by ui_scale at runtime
+- Layout percentages are applied directly to viewport dimensions
+- Colors are used as-is with no scaling
+
+See `docs/RESPONSIVE_UI_PLAN.md` for complete responsive UI documentation.
+
+---
+
 ## Data Validation (Dropdowns)
 
 To prevent typos, add Data Validation to these columns:
@@ -807,6 +884,7 @@ After running `ExportAll`, you should have these files:
 - `cutscenes.json`
 - `stat_descriptions.json`
 - `gameplay_settings.json`
+- `ui_theme.json`
 
 ---
 
