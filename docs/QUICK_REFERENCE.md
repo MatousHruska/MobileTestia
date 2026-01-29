@@ -12,6 +12,7 @@
 | Maps & Zones | [Below](#map-building-quick-reference) | `docs/MAP_BUILDING_REFERENCE.md` |
 | Zone Design | - | `docs/ZONE_DESIGN_GUIDE.md` |
 | Database | - | `databases/docs/DATABASE_SETUP.md` |
+| **Responsive UI** | [Below](#responsive-ui-quick-reference) | `docs/RESPONSIVE_UI_PLAN.md` |
 
 ---
 
@@ -598,3 +599,64 @@ func get_chunk_coords(world_pos: Vector2) -> Vector2i:
 | Medium | 2-4 |
 | High | 4-6 |
 | Very High | 6-8 |
+
+---
+
+# Responsive UI Quick Reference
+
+> **Full Documentation:** `docs/RESPONSIVE_UI_PLAN.md`
+
+## Architecture
+
+- **Dual Viewport**: Pixel art at 480x270, UI at native resolution
+- **Percentage Layout**: Menus/panels sized as % of viewport
+- **Scaled Elements**: Buttons, fonts, icons scale with `ui_scale`
+
+## Scale Factor
+
+```gdscript
+ui_scale = viewport_height / 720.0
+```
+
+| Resolution | ui_scale |
+|------------|----------|
+| 480p | 0.67 |
+| 720p | 1.0 |
+| 1080p | 1.5 |
+| 4K | 3.0 |
+
+## Using UITheme
+
+```gdscript
+# Scaled element sizes
+var btn_height := UITheme.BUTTON_HEIGHT_NORMAL
+var slot_size := UITheme.SLOT_SIZE_NORMAL
+
+# Percentage-based panel sizes
+var menu_width := UITheme.MENU_WIDTH   # viewport.x × 0.65
+var menu_height := UITheme.MENU_HEIGHT # viewport.y × 0.90
+
+# Colors (no scaling)
+var bg := UITheme.COLOR_PANEL_BG
+
+# Manual scaling
+var custom := UITheme.scale_px(100.0)
+```
+
+## Key Database Values
+
+| Key | Type | Value | Description |
+|-----|------|-------|-------------|
+| `menu_width_pct` | % | 0.65 | Menu width (65% viewport) |
+| `menu_height_pct` | % | 0.90 | Menu height (90% viewport) |
+| `button_height_normal` | base px | 29 | Button height (×ui_scale) |
+| `slot_size_normal` | base px | 56 | Inventory slot (×ui_scale) |
+| `font_size_header` | base px | 18 | Header font (×ui_scale) |
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `autoloads/ui_theme.gd` | Central theme singleton |
+| `autoloads/responsive_ui.gd` | Screen detection utilities |
+| `databases/exports/ui_theme.json` | Theme database values |
