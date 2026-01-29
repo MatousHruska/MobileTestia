@@ -13,14 +13,14 @@ signal menu_button_pressed
 @onready var player_frame: Control = $PlayerFrame
 @onready var menu_button: Button = $MenuButton/Button
 
-## Base sizes (designed for 720p)
-const BASE_SCREEN_HEIGHT := 720.0
-const BASE_PLAYER_FRAME_SIZE := Vector2(200, 130)
-const BASE_JOYSTICK_AREA_SIZE := Vector2(200, 184)
-const BASE_JOYSTICK_RADIUS := 80.0
-const BASE_KNOB_RADIUS := 40.0
-const MIN_SCALE := 0.7
-const MAX_SCALE := 1.4
+## Base sizes (designed for 270p pixel art viewport)
+const BASE_SCREEN_HEIGHT := 270.0
+const BASE_PLAYER_FRAME_SIZE := Vector2(75, 49)
+const BASE_JOYSTICK_AREA_SIZE := Vector2(75, 69)
+const BASE_JOYSTICK_RADIUS := 30.0
+const BASE_KNOB_RADIUS := 15.0
+const MIN_SCALE := 1.0
+const MAX_SCALE := 4.0
 
 ## Resource bars (created dynamically)
 var health_bar: ProgressBar

@@ -9,8 +9,8 @@ const DATABASE_PATH := "res://databases/exports/ui_theme.json"
 # UI SCALE - Adjusts all pixel values for viewport size
 #===============================================================================
 # Base design was ~424p height, now using 270p viewport
-# Scale factor: 270/424 ≈ 0.64
-const UI_SCALE: float = 0.6
+# Adjust this value to fine-tune UI element sizes
+const UI_SCALE: float = 0.8
 
 #===============================================================================
 # INTERNAL DATA
