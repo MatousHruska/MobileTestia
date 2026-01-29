@@ -1,239 +1,255 @@
 # PHASE 2: PLAYER MOVEMENT ANIMATION
 
-> **Goal**: Animated player character with 4-directional movement (idle + walk)
+> **Goal**: Animated player character with 4-directional movement
 > **Prerequisites**: Phase 1 complete (UV color-lookup shader working)
-> **Status**: CODE COMPLETE - Awaiting humanoid UV map asset
+> **Status**: CODE COMPLETE - Animation sheets needed
 
 ---
 
-## IMPLEMENTATION STATUS
+## CURRENT STATE
 
-### Code Components - COMPLETE
+### What's Working
+- **TestIdle-Sheet.png** - 5 frame idle animation (horizontal strip)
+- **TestUVMap.png** - UV reference map for color-lookup
+- **TestLookupTexture.png / TestLookupTexture2.png** - Skins (swap with S in-game)
+- Full animation system integrated with player controller
 
-| Component | Status | File |
-|-----------|--------|------|
-| VisualAssetManager | Complete | `autoloads/visual_asset_manager.gd` |
-| UVCharacterAnimator | Complete | `scripts/rendering/uv_character_animator.gd` |
-| Animator Scene | Complete | `scenes/rendering/uv_character_animator.tscn` |
-| Player Integration | Complete | `scripts/player/player_controller.gd` |
-| Humanoid Config | Complete | In VisualAssetManager |
-
-### Asset Components - PARTIAL
-
-| Asset | Status | Path |
-|-------|--------|------|
-| humanoid_idle.png | Exists | `assets/sprites/characters/player/motion/` |
-| humanoid_walk.png | Exists | `assets/sprites/characters/player/motion/` |
-| body_default.png | Exists | `assets/sprites/characters/player/skins/` |
-| humanoid_uv.png | **NEEDED** | `assets/sprites/characters/player/uv_maps/` |
+### Files Location
+All player assets are in: `assets/sprites/characters/player/`
+- Animation sheets go directly in this folder
+- Keep the Test*.png files as your working assets
 
 ---
 
-## WHAT'S WORKING
+## ANIMATION SHEETS TO CREATE
 
-The full animation system is implemented and integrated:
+Create these files in `assets/sprites/characters/player/`:
 
-1. **VisualAssetManager** manages texture loading with configs for "test" and "humanoid"
-2. **UVCharacterAnimator** handles 4-directional animation with state machine
-3. **Player Controller** updates animator based on movement
-4. **Animation data** defined for: idle, walk, attack, dodge, hit, die
+### 1. player_walk.png
+**Size**: 192×128 pixels (6 columns × 4 rows)
+**Frames per direction**: 6
+**FPS**: 10
+**Looping**: Yes
 
-### Switching Between Test and Humanoid
+```
+┌─────┬─────┬─────┬─────┬─────┬─────┐
+│ D1  │ D2  │ D3  │ D4  │ D5  │ D6  │  Row 0: DOWN walk (frames 0-5)
+├─────┼─────┼─────┼─────┼─────┼─────┤
+│ U1  │ U2  │ U3  │ U4  │ U5  │ U6  │  Row 1: UP walk (frames 6-11)
+├─────┼─────┼─────┼─────┼─────┼─────┤
+│ L1  │ L2  │ L3  │ L4  │ L5  │ L6  │  Row 2: LEFT walk (frames 12-17)
+├─────┼─────┼─────┼─────┼─────┼─────┤
+│ R1  │ R2  │ R3  │ R4  │ R5  │ R6  │  Row 3: RIGHT walk (frames 18-23)
+└─────┴─────┴─────┴─────┴─────┴─────┘
+```
 
-The player has a debug method to toggle between motion bases:
-- Press **Numpad 9** in-game to toggle between "test" and "humanoid"
-- "test" uses the Phase 1 test assets (working)
-- "humanoid" uses the humanoid assets (needs UV map)
+**Walk cycle keyframes** (6 frames):
+1. Contact (right foot forward)
+2. Down (weight shifts to right)
+3. Passing (legs cross)
+4. Contact (left foot forward)
+5. Down (weight shifts to left)
+6. Passing (legs cross)
 
 ---
 
-## USER TASK: Create Humanoid UV Map
+### 2. player_attack.png
+**Size**: 128×128 pixels (4 columns × 4 rows)
+**Frames per direction**: 4
+**FPS**: 12
+**Looping**: No (returns to idle)
 
-To complete Phase 2, create the UV map that matches your humanoid animation sheets.
-
-### File Details
-
-**File**: `assets/sprites/characters/player/uv_maps/humanoid_uv.png`
-**Size**: 32x32 pixels
-
-### How to Create
-
-The UV map is a reference texture where:
-- Each pixel has a unique RGB color
-- Position matters: pixel at (x,y) corresponds to UV coordinate (x/32, y/32)
-- Animation frames use these colors to reference body parts
-
-**Option 1: Copy Test UV Map**
 ```
-cp assets/sprites/characters/player/Tests/TestUVMap.png \
-   assets/sprites/characters/player/uv_maps/humanoid_uv.png
+┌─────┬─────┬─────┬─────┐
+│ D1  │ D2  │ D3  │ D4  │  Row 0: DOWN attack (frames 0-3)
+├─────┼─────┼─────┼─────┤
+│ U1  │ U2  │ U3  │ U4  │  Row 1: UP attack (frames 4-7)
+├─────┼─────┼─────┼─────┤
+│ L1  │ L2  │ L3  │ L4  │  Row 2: LEFT attack (frames 8-11)
+├─────┼─────┼─────┼─────┤
+│ R1  │ R2  │ R3  │ R4  │  Row 3: RIGHT attack (frames 12-15)
+└─────┴─────┴─────┴─────┘
 ```
-Then modify to match your humanoid art style.
 
-**Option 2: Create from Scratch**
-1. Create 32x32 image with unique colors per pixel
-2. Organize colors by body region (head top, body middle, feet bottom)
-3. Match colors to those used in your animation sheets
-
-### Verify Your Assets Work Together
-
-1. Animation sheet pixel color must match UV map pixel color
-2. UV map position corresponds to lookup texture (skin) position
-3. Use test scenes to verify: `scenes/test/test_custom_uv_shader.tscn`
+**Attack keyframes** (4 frames):
+1. Wind-up (arm raised)
+2. Swing start
+3. **Hit frame** (frame 3, index 2) - hitbox activates here
+4. Follow-through
 
 ---
 
-## ANIMATION DATA REFERENCE
+### 3. player_dodge.png
+**Size**: 128×128 pixels (4 columns × 4 rows)
+**Frames per direction**: 4
+**FPS**: 12
+**Looping**: No (returns to idle)
 
-Current animation definitions in VisualAssetManager:
-
-### Idle Animation (6 FPS, looping)
 ```
-Layout: 4 columns x 4 rows (128x128 total)
-- Row 0: DOWN  frames 0-3
-- Row 1: UP    frames 4-7
-- Row 2: LEFT  frames 8-11
-- Row 3: RIGHT frames 12-15
-```
-
-### Walk Animation (10 FPS, looping)
-```
-Layout: 6 columns x 4 rows (192x128 total)
-- Row 0: DOWN  frames 0-5
-- Row 1: UP    frames 6-11
-- Row 2: LEFT  frames 12-17
-- Row 3: RIGHT frames 18-23
+┌─────┬─────┬─────┬─────┐
+│ D1  │ D2  │ D3  │ D4  │  Row 0: DOWN dodge
+├─────┼─────┼─────┼─────┤
+│ U1  │ U2  │ U3  │ U4  │  Row 1: UP dodge
+├─────┼─────┼─────┼─────┤
+│ L1  │ L2  │ L3  │ L4  │  Row 2: LEFT dodge
+├─────┼─────┼─────┼─────┤
+│ R1  │ R2  │ R3  │ R4  │  Row 3: RIGHT dodge
+└─────┴─────┴─────┴─────┘
 ```
 
-### Attack Animation (12 FPS, non-looping)
-```
-Layout: 4 columns x 4 rows (128x128 total)
-- Row 0: DOWN  frames 0-3
-- Row 1: UP    frames 4-7
-- Row 2: LEFT  frames 8-11
-- Row 3: RIGHT frames 12-15
-```
-
-### Additional Animations Defined
-
-- **dodge**: 4 frames per direction, 12 FPS
-- **hit**: 3 frames per direction, 10 FPS
-- **die**: 5 frames per direction, 8 FPS
+**Dodge keyframes** (4 frames):
+1. Crouch/lean into roll
+2. Mid-roll (blur/stretch)
+3. Coming out of roll
+4. Recovery stance
 
 ---
 
-## VALIDATION CHECKLIST
+### 4. player_hit.png
+**Size**: 64×128 pixels (2 columns × 4 rows)
+**Frames per direction**: 2
+**FPS**: 10
+**Looping**: No (returns to idle)
 
-After creating the humanoid UV map:
+```
+┌─────┬─────┐
+│ D1  │ D2  │  Row 0: DOWN hit
+├─────┼─────┤
+│ U1  │ U2  │  Row 1: UP hit
+├─────┼─────┤
+│ L1  │ L2  │  Row 2: LEFT hit
+├─────┼─────┤
+│ R1  │ R2  │  Row 3: RIGHT hit
+└─────┴─────┘
+```
 
-- [ ] Player spawns with UV-rendered character (not placeholder)
-- [ ] Character shows colors from body_default.png skin
-- [ ] Idle animation plays when standing still
+**Hit keyframes** (2 frames):
+1. Impact (recoil from hit)
+2. Recovery
+
+---
+
+### 5. player_die.png
+**Size**: 160×128 pixels (5 columns × 4 rows)
+**Frames per direction**: 5
+**FPS**: 8
+**Looping**: No (stays on last frame)
+
+```
+┌─────┬─────┬─────┬─────┬─────┐
+│ D1  │ D2  │ D3  │ D4  │ D5  │  Row 0: DOWN die
+├─────┼─────┼─────┼─────┼─────┤
+│ U1  │ U2  │ U3  │ U4  │ U5  │  Row 1: UP die
+├─────┼─────┼─────┼─────┼─────┤
+│ L1  │ L2  │ L3  │ L4  │ L5  │  Row 2: LEFT die
+├─────┼─────┼─────┼─────┼─────┤
+│ R1  │ R2  │ R3  │ R4  │ R5  │  Row 3: RIGHT die
+└─────┴─────┴─────┴─────┴─────┘
+```
+
+**Death keyframes** (5 frames):
+1. Hit reaction
+2. Stagger
+3. Falling
+4. Hitting ground
+5. Lying still (final pose)
+
+---
+
+## CREATING ANIMATION SHEETS
+
+### Color-Lookup Reminder
+Each pixel in your animation sheet must use colors from your UV map:
+1. Open TestUVMap.png for reference
+2. For each body part in your animation frame, pick the color from the corresponding position in the UV map
+3. The shader will then sample TestLookupTexture at that UV position
+
+### Quick Workflow
+1. Create animation in Aseprite (or your preferred tool)
+2. For each frame, color pixels using UV map colors
+3. Export as PNG with the exact dimensions specified above
+4. Test in-game - character should show your skin colors through the animation
+
+### LEFT Direction Note
+Currently, LEFT animations use RIGHT frames flipped horizontally. You can:
+- **Option A**: Create identical LEFT row (will be flipped anyway)
+- **Option B**: Create unique LEFT poses if asymmetric details matter
+
+---
+
+## PRIORITY ORDER
+
+Create animations in this order (most important first):
+
+1. **player_walk.png** - Essential for movement
+2. **player_attack.png** - Essential for combat
+3. **player_dodge.png** - Core combat mechanic
+4. **player_hit.png** - Damage feedback
+5. **player_die.png** - Death state
+
+Until each animation exists, the system falls back to idle animation.
+
+---
+
+## TESTING
+
+### In-Game Testing
+- Move around to test walk/idle transitions
+- Attack (default key) to test attack animation
+- Dodge (default key) to test dodge animation
+
+### Debug Keys
+- **Numpad 9**: Cycle between available skins (default/alt)
+
+### Verify Checklist
 - [ ] Walk animation plays when moving
+- [ ] Idle animation plays when stopped
+- [ ] Attack animation plays and returns to idle
+- [ ] Dodge animation plays and returns to idle
 - [ ] All 4 directions render correctly
-- [ ] Direction changes are smooth
-- [ ] Stopping returns to idle facing last direction
-- [ ] Flash effect works (Space in test scene)
-- [ ] Tint effect works (T in test scene)
-
-**Test each direction**:
-```
-Press DOWN  -> Character faces down, walks down
-Press UP    -> Character faces up, walks up
-Press LEFT  -> Character faces left, walks left
-Press RIGHT -> Character faces right, walks right
-Stop moving -> Returns to idle facing last direction
-```
+- [ ] Skin colors appear correctly (not UV map colors)
 
 ---
 
-## TROUBLESHOOTING
+## QUICK REFERENCE TABLE
 
-| Problem | Likely Cause | Solution |
-|---------|--------------|----------|
-| Black/invisible character | UV map not found | Create humanoid_uv.png |
-| Wrong colors | Colors don't match | Ensure animation colors match UV map |
-| Placeholder texture | Missing asset | Check console for path errors |
-| Animation not changing | State machine issue | Check _current_state in animator |
-
-### Debug Commands
-
-In-game debug options:
-- **Numpad 9**: Toggle between test/humanoid motion base
-- **Test Scene (R)**: Hot-reload textures
-- **Test Scene (S)**: Cycle skins
+| Animation | File | Size | Cols×Rows | Frames/Dir | FPS | Loop |
+|-----------|------|------|-----------|------------|-----|------|
+| Idle | TestIdle-Sheet.png | 160×32 | 5×1 | 5 | 6 | Yes |
+| Walk | player_walk.png | 192×128 | 6×4 | 6 | 10 | Yes |
+| Attack | player_attack.png | 128×128 | 4×4 | 4 | 12 | No |
+| Dodge | player_dodge.png | 128×128 | 4×4 | 4 | 12 | No |
+| Hit | player_hit.png | 64×128 | 2×4 | 2 | 10 | No |
+| Die | player_die.png | 160×128 | 5×4 | 5 | 8 | No |
 
 ---
 
-## FILES FOR THIS PHASE
+## FILES SUMMARY
 
-### Created by Code (Complete)
-
-```
-autoloads/
-  visual_asset_manager.gd     <- Manages assets and configs
-
-scripts/
-  rendering/
-    uv_character_animator.gd  <- Animation controller
-
-scenes/
-  rendering/
-    uv_character_animator.tscn <- Animator scene template
-```
-
-### User-Created Assets
-
+### Existing (Working)
 ```
 assets/sprites/characters/player/
-  uv_maps/
-    humanoid_uv.png           <- NEEDED: UV reference map
-  motion/
-    humanoid_idle.png         <- EXISTS: Idle animation sheet
-    humanoid_walk.png         <- EXISTS: Walk animation sheet
-  skins/
-    body_default.png          <- EXISTS: Character skin
+├── TestIdle-Sheet.png      # Current idle animation
+├── TestUVMap.png           # UV reference map
+├── TestLookupTexture.png   # Skin/lookup texture
+├── TestLookupTexture2.png  # Alt skin (default)
+├── LookupTextureHead.png   # Equipment slot (Phase 3)
+├── LookupTextureBody.png   # Equipment slot (Phase 3)
+├── LookupTextureHands.png  # Equipment slot (Phase 3)
+└── LookupTextureLegs.png   # Equipment slot (Phase 3)
+```
+
+### To Create
+```
+assets/sprites/characters/player/
+├── player_walk.png         # 192×128
+├── player_attack.png       # 128×128
+├── player_dodge.png        # 128×128
+├── player_hit.png          # 64×128
+└── player_die.png          # 160×128
 ```
 
 ---
 
-## NEXT PHASE
-
-Once humanoid UV map is created and validated, proceed to `PHASE_3_EQUIPMENT_VISUALS.md`:
-- Sector-based equipment shader (already implemented)
-- Equipment slot textures (head, body, hands, feet)
-- Connection to inventory system
-- Visual equipment changes
-
----
-
-## TECHNICAL NOTES
-
-### Left Direction Flipping
-
-The animator reuses RIGHT animation frames for LEFT direction by flipping:
-- `sprite.flip_h = true` for left direction
-- This reduces art requirements by 25%
-- Can be disabled by creating dedicated LEFT animations
-
-### Motion Base System
-
-Characters can have different motion bases:
-- "test" - Phase 1 test character
-- "humanoid" - Player character (default)
-
-Each motion base has its own:
-- Animation sheets (motion maps)
-- UV map for color-lookup
-- Skin/lookup texture
-
-### State Machine
-
-Animation states: `idle`, `walk`, `attack`, `dodge`, `hit`, `die`
-- Looping states: idle, walk
-- One-shot states: attack, dodge, hit, die (auto-return to idle)
-
----
-
-*Document Version: 3.0 - Implementation Complete*
+*Document Version: 4.0 - Cleaned up for actual implementation*
 *Last Updated: Session claude/phase-2-player-movement-B3STv*

@@ -547,18 +547,19 @@ func debug_test_ends_when_buff() -> void:
 		Debug.info("Debug", "Heal to full health to see buff disappear!")
 
 
-func debug_toggle_test_shader() -> void:
-	## Toggle between test and humanoid motion bases
-	## Call from debug console or Numpad 9 for testing custom UV textures
+func debug_cycle_skin() -> void:
+	## Cycle through available skins for the player character
+	## Call from debug console or Numpad 9
 	if not animator:
-		Debug.warn("Debug", "No animator to toggle")
+		Debug.warn("Debug", "No animator to cycle skin")
 		return
 
-	var current_base = animator._current_motion_base
-	if current_base == "test":
-		animator.set_motion_base("humanoid")
-		Debug.info("Debug", "Switched to humanoid motion base")
-	else:
-		animator.set_motion_base("test")
-		Debug.info("Debug", "Switched to test motion base (your custom textures)")
+	var skins = VisualAssets.get_available_skins("player")
+	if skins.is_empty():
+		return
+
+	var current_index = skins.find(animator.skin_id)
+	var next_index = (current_index + 1) % skins.size()
+	animator.set_skin(skins[next_index])
+	Debug.info("Debug", "Switched skin to: " + skins[next_index])
 	animator.print_state()
