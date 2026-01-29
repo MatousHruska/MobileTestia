@@ -168,7 +168,7 @@ func _apply_flip() -> void:
 
 
 ## Set character display scale
-func set_scale(new_scale: float) -> void:
+func set_character_scale(new_scale: float) -> void:
 	character_scale = new_scale
 	if sprite:
 		sprite.scale = Vector2(character_scale, character_scale)
