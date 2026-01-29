@@ -25,7 +25,11 @@ func _ready() -> void:
 	Debug.info("MainGame", "Initializing dual viewport system")
 
 	# Register viewports with DualViewportManager
-	DualViewport.register_viewports(game_viewport, game_viewport_container, world_root)
+	var dual_viewport = get_node_or_null("/root/DualViewport")
+	if dual_viewport:
+		dual_viewport.register_viewports(game_viewport, game_viewport_container, world_root)
+	else:
+		Debug.warn("MainGame", "DualViewport autoload not found")
 
 	# Load the starting zone
 	if not starting_zone_path.is_empty():

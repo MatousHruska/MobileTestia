@@ -329,7 +329,8 @@ func change_zone(zone_path: String, spawn_id: String = "default") -> void:
 	Debug.print_saveload("[SAVELOAD] GM: Set state to LOADING, scheduling _load_zone via call_deferred")
 
 	# Check if we're using the dual viewport system
-	if DualViewport and DualViewport.is_initialized():
+	var dual_viewport = get_node_or_null("/root/DualViewport")
+	if dual_viewport and dual_viewport.is_initialized():
 		Debug.print_saveload("[SAVELOAD] GM: Using DualViewport zone loading")
 		call_deferred("_load_zone_dual_viewport", zone_path)
 	else:
@@ -406,9 +407,9 @@ func _load_zone_dual_viewport(zone_path: String) -> void:
 	player = null
 
 	# Get the MainGame node which manages zone loading
-	var main_game := get_tree().root.get_node_or_null("MainGame")
+	var main_game = get_tree().root.get_node_or_null("MainGame")
 	if main_game and main_game.has_method("load_zone"):
-		var zone := await main_game.load_zone(zone_path)
+		var zone = await main_game.load_zone(zone_path)
 		if zone:
 			current_zone = zone_path.get_file().get_basename()
 			zone_changed.emit(current_zone)
