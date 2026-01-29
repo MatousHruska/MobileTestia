@@ -228,6 +228,22 @@ func get_float(key: String) -> float:
 	return float(_settings.get(key, DEFAULTS.get(key, 0.0)))
 
 
+## Scale a pixel value for native resolution rendering
+## Use this for custom_minimum_size, offsets, and other hardcoded pixel values
+func scale_px(value: float) -> float:
+	return value * ui_scale
+
+
+## Scale a pixel value and return as integer
+func scale_px_i(value: int) -> int:
+	return maxi(1, int(value * ui_scale))
+
+
+## Scale a Vector2 for native resolution rendering
+func scale_size(size: Vector2) -> Vector2:
+	return size * ui_scale
+
+
 #===============================================================================
 # COLOR PROPERTIES (for easy access)
 #===============================================================================

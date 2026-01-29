@@ -443,11 +443,12 @@ func _show_save_load_panel(mode: SaveLoadPanel.Mode) -> void:
 	_save_load_panel.name = "SaveLoadPanel"
 	_save_load_panel.set_mode(mode)
 
-	# Size and position
-	_save_load_panel.custom_minimum_size = Vector2(400, 420)
+	# Size and position (scaled for native resolution)
+	var panel_size := UITheme.scale_size(Vector2(240, 250))
+	_save_load_panel.custom_minimum_size = panel_size
 	_save_load_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_save_load_panel.size = Vector2(400, 420)
-	_save_load_panel.position = -_save_load_panel.size / 2.0
+	_save_load_panel.size = panel_size
+	_save_load_panel.position = -panel_size / 2.0
 
 	# Connect signals
 	_save_load_panel.slot_selected.connect(_on_save_load_slot_selected)

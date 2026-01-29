@@ -479,7 +479,7 @@ func _build_tree_tabs() -> void:
 		tab.button_pressed = (tree_data.get("id", "") == current_tree_id)
 		tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tab.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		tab.custom_minimum_size = Vector2(0, 36)  # Taller for two-line text
+		tab.custom_minimum_size = UITheme.scale_size(Vector2(0, 20))  # Taller for two-line text
 		tab.clip_text = false
 		tab.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
 		tab.pressed.connect(_on_tree_tab_pressed.bind(tree_data.get("id", "")))
@@ -1144,23 +1144,25 @@ func _create_drag_preview(talent: TalentData) -> void:
 	stylebox.set_corner_radius_all(UITheme.CORNER_RADIUS_POPUP)
 	_drag_preview.add_theme_stylebox_override("panel", stylebox)
 
+	var drag_size := UITheme.scale_size(Vector2(28, 28))
 	var label := Label.new()
 	label.text = talent.talent_name.substr(0, 3).to_upper()
 	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.custom_minimum_size = Vector2(48, 48)
+	label.custom_minimum_size = drag_size
 	_drag_preview.add_child(label)
 
 	# Add to root so it's not clipped
 	get_tree().root.add_child(_drag_preview)
-	_drag_preview.global_position = _drag_start_pos - Vector2(24, 24)
+	_drag_preview.global_position = _drag_start_pos - drag_size / 2
 
 
 ## Update drag preview position
 func _update_drag_position(pos: Vector2) -> void:
 	if _drag_preview:
-		_drag_preview.global_position = pos - Vector2(24, 24)
+		var offset := UITheme.scale_size(Vector2(14, 14))
+		_drag_preview.global_position = pos - offset
 
 
 ## End drag and check for drop target
