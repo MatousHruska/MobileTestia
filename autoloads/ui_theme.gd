@@ -96,6 +96,31 @@ const DEFAULTS := {
 	"separation_small": 6,
 	"separation_tiny": 4,
 	"separation_grid": 6,
+	# Element sizes (native 720p pixel values)
+	"button_height_small": 21,
+	"button_height_normal": 29,
+	"button_height_large": 36,
+	"button_width_small": 62,
+	"button_width_normal": 94,
+	"button_width_large": 130,
+	"icon_size_small": 20,
+	"icon_size_normal": 31,
+	"icon_size_large": 47,
+	"slot_size_small": 52,
+	"slot_size_normal": 56,
+	"slot_size_large": 64,
+	"bar_height_thin": 5,
+	"bar_height_normal": 10,
+	"bar_height_thick": 16,
+	"min_touch_target": 36,
+	"popup_width_small": 200,
+	"popup_width_normal": 280,
+	"popup_width_large": 390,
+	"label_width_small": 24,
+	"label_width_normal": 31,
+	"label_width_large": 47,
+	"row_height_normal": 26,
+	"row_height_large": 36,
 	# Cast bar
 	"color_cast_bar_bg": "0.1,0.1,0.12,0.9",
 	"color_cast_bar_fill": "0.8,0.6,0.2,1.0",
@@ -407,6 +432,82 @@ var SEPARATION_TINY: int:
 
 var SEPARATION_GRID: int:
 	get: return get_int("separation_grid")
+
+#===============================================================================
+# ELEMENT SIZE PROPERTIES
+#===============================================================================
+
+var BUTTON_HEIGHT_SMALL: int:
+	get: return get_int("button_height_small")
+
+var BUTTON_HEIGHT_NORMAL: int:
+	get: return get_int("button_height_normal")
+
+var BUTTON_HEIGHT_LARGE: int:
+	get: return get_int("button_height_large")
+
+var BUTTON_WIDTH_SMALL: int:
+	get: return get_int("button_width_small")
+
+var BUTTON_WIDTH_NORMAL: int:
+	get: return get_int("button_width_normal")
+
+var BUTTON_WIDTH_LARGE: int:
+	get: return get_int("button_width_large")
+
+var ICON_SIZE_SMALL: int:
+	get: return get_int("icon_size_small")
+
+var ICON_SIZE_NORMAL: int:
+	get: return get_int("icon_size_normal")
+
+var ICON_SIZE_LARGE: int:
+	get: return get_int("icon_size_large")
+
+var SLOT_SIZE_SMALL: int:
+	get: return get_int("slot_size_small")
+
+var SLOT_SIZE_NORMAL: int:
+	get: return get_int("slot_size_normal")
+
+var SLOT_SIZE_LARGE: int:
+	get: return get_int("slot_size_large")
+
+var BAR_HEIGHT_THIN: int:
+	get: return get_int("bar_height_thin")
+
+var BAR_HEIGHT_NORMAL: int:
+	get: return get_int("bar_height_normal")
+
+var BAR_HEIGHT_THICK: int:
+	get: return get_int("bar_height_thick")
+
+var MIN_TOUCH_TARGET: int:
+	get: return get_int("min_touch_target")
+
+var POPUP_WIDTH_SMALL: int:
+	get: return get_int("popup_width_small")
+
+var POPUP_WIDTH_NORMAL: int:
+	get: return get_int("popup_width_normal")
+
+var POPUP_WIDTH_LARGE: int:
+	get: return get_int("popup_width_large")
+
+var LABEL_WIDTH_SMALL: int:
+	get: return get_int("label_width_small")
+
+var LABEL_WIDTH_NORMAL: int:
+	get: return get_int("label_width_normal")
+
+var LABEL_WIDTH_LARGE: int:
+	get: return get_int("label_width_large")
+
+var ROW_HEIGHT_NORMAL: int:
+	get: return get_int("row_height_normal")
+
+var ROW_HEIGHT_LARGE: int:
+	get: return get_int("row_height_large")
 
 
 #===============================================================================
