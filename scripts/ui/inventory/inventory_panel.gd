@@ -42,10 +42,15 @@ const MARGIN_TOP_PCT := 0.02      # 2% top margin
 const MARGIN_BOTTOM_PCT := 0.03   # 3% bottom margin
 const COLUMN_GAP_PCT := 0.04      # 4% gap between main columns (~32px)
 
-## Slot sizing (responsive) - increased 30% for native 720p
-const SLOT_SIZE_SMALL := 52.0   # For screens < 500px height
-const SLOT_SIZE_NORMAL := 56.0  # For screens 500-900px
-const SLOT_SIZE_LARGE := 64.0   # For screens > 900px
+## Slot sizing (responsive) - use UITheme for values
+func _get_slot_size_small() -> float:
+	return float(UITheme.SLOT_SIZE_SMALL)
+
+func _get_slot_size_normal() -> float:
+	return float(UITheme.SLOT_SIZE_NORMAL)
+
+func _get_slot_size_large() -> float:
+	return float(UITheme.SLOT_SIZE_LARGE)
 
 ## Responsive spacing (percentages)
 const VBOX_SEPARATION_PCT := 0.015      # 1.5% of panel height
@@ -54,9 +59,12 @@ const SLOT_SEPARATION_PCT := 0.015      # 1.5% slot separation
 const GRID_SEPARATION_PCT := 0.008      # 0.8% grid separation
 const BUTTON_SIZE_PCT := 0.05           # 5% button size
 
-## Minimum pixel values (30% larger for native 720p)
-const MIN_SEPARATION := 5
-const MIN_BUTTON_SIZE := 36
+## Minimum pixel values - use UITheme for values
+func _get_min_separation() -> int:
+	return UITheme.SEPARATION_SMALL
+
+func _get_min_button_size() -> int:
+	return UITheme.MIN_TOUCH_TARGET
 
 ## UI References (set up in _ready)
 var equipment_container: VBoxContainer
@@ -85,7 +93,7 @@ var equipment_slots: Dictionary = {}  # EquipSlot -> InventorySlot
 var backpack_slots: Array[InventorySlot] = []
 
 ## Current slot size (set based on screen)
-var current_slot_size: float = SLOT_SIZE_NORMAL
+var current_slot_size: float = 56.0  # Will be updated in _update_slot_size()
 
 
 func _ready() -> void:
@@ -99,19 +107,19 @@ func _ready() -> void:
 
 func _calculate_slot_size() -> void:
 	if ResponsiveUI and ResponsiveUI.is_small_screen():
-		current_slot_size = SLOT_SIZE_SMALL
+		current_slot_size = _get_slot_size_small()
 	elif ResponsiveUI and ResponsiveUI.is_large_screen():
-		current_slot_size = SLOT_SIZE_LARGE
+		current_slot_size = _get_slot_size_large()
 	else:
-		current_slot_size = SLOT_SIZE_NORMAL
+		current_slot_size = _get_slot_size_normal()
 
 
 ## Computed responsive sizes
 func _get_vbox_separation() -> int:
-	return maxi(MIN_SEPARATION, int(size.y * VBOX_SEPARATION_PCT))
+	return maxi(_get_min_separation(), int(size.y * VBOX_SEPARATION_PCT))
 
 func _get_slot_separation() -> int:
-	return maxi(MIN_SEPARATION, int(size.x * SLOT_SEPARATION_PCT))
+	return maxi(_get_min_separation(), int(size.x * SLOT_SEPARATION_PCT))
 
 func _get_equipment_col_gap() -> int:
 	return maxi(12, int(size.x * EQUIPMENT_COL_GAP_PCT))
@@ -120,7 +128,7 @@ func _get_grid_separation() -> int:
 	return maxi(2, int(size.x * GRID_SEPARATION_PCT))
 
 func _get_button_size() -> int:
-	return maxi(MIN_BUTTON_SIZE, int(size.x * BUTTON_SIZE_PCT))
+	return maxi(_get_min_button_size(), int(size.x * BUTTON_SIZE_PCT))
 
 
 func _build_ui() -> void:
