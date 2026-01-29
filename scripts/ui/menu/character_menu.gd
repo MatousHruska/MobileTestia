@@ -64,10 +64,12 @@ var _quest_log_instance = null  # QuestLogPanel
 ## Skills panel instance (created dynamically)
 var _skills_panel_instance: SkillsPanel = null
 
-## Design size for native 720p resolution (no scaling)
-## Increased by 30% from base 640x500
-const DESIGN_WIDTH := 832.0
-const DESIGN_HEIGHT := 650.0
+## Design size for native 720p resolution (from UITheme database)
+func _get_design_width() -> float:
+	return float(UITheme.MENU_WIDTH)
+
+func _get_design_height() -> float:
+	return float(UITheme.MENU_HEIGHT)
 
 
 func _ready() -> void:
@@ -105,14 +107,14 @@ func _apply_responsive_size() -> void:
 
 	var responsive_ui := get_node_or_null("/root/ResponsiveUI")
 	if responsive_ui:
-		responsive_ui.constrain_centered_panel(panel_container, DESIGN_WIDTH, DESIGN_HEIGHT, 0.02)
+		responsive_ui.constrain_centered_panel(panel_container, _get_design_width(), _get_design_height(), 0.02)
 	else:
 		# Fallback if ResponsiveUI not loaded yet
 		var vp_size := get_viewport().get_visible_rect().size
 		var max_width := vp_size.x * 0.96
 		var max_height := vp_size.y * 0.96
-		var width := minf(DESIGN_WIDTH, max_width)
-		var height := minf(DESIGN_HEIGHT, max_height)
+		var width := minf(_get_design_width(), max_width)
+		var height := minf(_get_design_height(), max_height)
 		panel_container.offset_left = -width / 2.0
 		panel_container.offset_right = width / 2.0
 		panel_container.offset_top = -height / 2.0
@@ -444,8 +446,8 @@ func _show_save_load_panel(mode: SaveLoadPanel.Mode) -> void:
 	_save_load_panel.name = "SaveLoadPanel"
 	_save_load_panel.set_mode(mode)
 
-	# Size and position for native 720p resolution (30% larger)
-	var panel_size := Vector2(390, 416)
+	# Size and position from UITheme database
+	var panel_size := Vector2(UITheme.SAVE_PANEL_WIDTH, UITheme.SAVE_PANEL_HEIGHT)
 	_save_load_panel.custom_minimum_size = panel_size
 	_save_load_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_save_load_panel.size = panel_size
