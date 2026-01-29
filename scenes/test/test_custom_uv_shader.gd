@@ -2,7 +2,7 @@
 extends Node2D
 
 ## Test scene for custom UV lookup shader validation
-## Tests the user's own textures: TestIdle-Sheet, TestUVMap, TestLookupTexture
+## Tests the player character textures: player_idle, player_uv, player_skin
 ##
 ## Controls:
 ##   Space - Test hit flash (white)
@@ -10,16 +10,21 @@ extends Node2D
 ##   1-5 - Jump to specific animation frame
 ##   Left/Right arrows - Manual frame stepping
 ##   P - Toggle auto-play animation
+##   S - Swap skin
+##   R - Reload textures
 
 const FRAME_WIDTH := 32
 const FRAME_HEIGHT := 32
 const FRAME_COUNT := 5
 const ANIMATION_FPS := 6.0
 
-# Available lookup textures (skins) to cycle through
-const LOOKUP_TEXTURES := [
-	"res://assets/sprites/characters/player/Tests/TestLookupTexture.png",
-	"res://assets/sprites/characters/player/Tests/TestLookupTexture2.png",
+# Base path for player assets
+const BASE_PATH := "res://assets/sprites/characters/player/"
+
+# Available skins to cycle through
+const SKINS := [
+	"player_skin.png",
+	"player_skin_alt.png",
 ]
 
 @onready var sprite: Sprite2D = $Sprite2D
@@ -37,13 +42,13 @@ func _ready() -> void:
 
 
 func _setup_textures() -> void:
-	# Load the custom test textures
-	var idle_sheet = load("res://assets/sprites/characters/player/Tests/TestIdle-Sheet.png")
-	var uv_map = load("res://assets/sprites/characters/player/Tests/TestUVMap.png")
-	var lookup_texture = load("res://assets/sprites/characters/player/Tests/TestLookupTexture.png")
+	# Load player textures
+	var idle_sheet = load(BASE_PATH + "player_idle.png")
+	var uv_map = load(BASE_PATH + "player_uv.png")
+	var skin = load(BASE_PATH + SKINS[_current_skin_index])
 
-	if not idle_sheet or not uv_map or not lookup_texture:
-		push_error("Failed to load test textures!")
+	if not idle_sheet or not uv_map or not skin:
+		push_error("Failed to load player textures!")
 		return
 
 	# Set the animation sprite sheet as main texture
@@ -55,33 +60,33 @@ func _setup_textures() -> void:
 	# Get the shader material and set parameters
 	var material := sprite.material as ShaderMaterial
 	material.set_shader_parameter("uv_map", uv_map)
-	material.set_shader_parameter("skin", lookup_texture)
+	material.set_shader_parameter("skin", skin)
 	material.set_shader_parameter("uv_map_size", Vector2(32.0, 32.0))
 	material.set_shader_parameter("color_tolerance", 0.02)
 
 	print("=== Textures Loaded ===")
 	print("Idle Sheet: ", idle_sheet.get_size())
 	print("UV Map: ", uv_map.get_size())
-	print("Lookup Texture: ", lookup_texture.get_size())
+	print("Skin: ", skin.get_size())
 
 
 func _print_instructions() -> void:
 	print("")
-	print("=== Custom UV Shader Test Scene ===")
+	print("=== Player UV Shader Test Scene ===")
 	print("")
-	print("Testing: TestIdle-Sheet + TestUVMap + TestLookupTexture")
+	print("Testing: player_idle + player_uv + player_skin")
 	print("")
 	print("Controls:")
 	print("  R          - RELOAD textures from disk (hot-reload)")
-	print("  S          - SWAP skin/lookup texture (cycle through skins)")
+	print("  S          - SWAP skin (cycle through skins)")
 	print("  Space      - Test hit flash (white)")
 	print("  T          - Toggle poison tint (green)")
 	print("  1-5        - Jump to frame 1-5")
 	print("  Left/Right - Step through frames")
 	print("  P          - Toggle auto-play")
 	print("")
-	print("Expected: Character with skin colors from LookupTexture")
-	print("Animation should show idle_down animation")
+	print("Expected: Character with skin colors from player_skin.png")
+	print("Animation should show idle animation")
 	print("")
 	print("Current: Frame %d/%d, Playing: %s" % [_current_frame + 1, FRAME_COUNT, _is_playing])
 
@@ -176,23 +181,20 @@ func _toggle_play() -> void:
 
 
 func _swap_skin() -> void:
-	## Cycle through available lookup textures (skins)
-	_current_skin_index = (_current_skin_index + 1) % LOOKUP_TEXTURES.size()
-	var skin_path = LOOKUP_TEXTURES[_current_skin_index]
+	## Cycle through available skins
+	_current_skin_index = (_current_skin_index + 1) % SKINS.size()
+	var skin_path = BASE_PATH + SKINS[_current_skin_index]
 
 	if ResourceLoader.exists(skin_path):
-		var lookup_texture = load(skin_path)
-		if lookup_texture:
+		var skin = load(skin_path)
+		if skin:
 			var material := sprite.material as ShaderMaterial
-			material.set_shader_parameter("skin", lookup_texture)
-			print("Swapped to skin %d: %s" % [_current_skin_index + 1, skin_path.get_file()])
+			material.set_shader_parameter("skin", skin)
+			print("Swapped to: %s" % SKINS[_current_skin_index])
 		else:
 			print("ERROR: Failed to load skin: %s" % skin_path)
 	else:
-		print("Skin not found: %s (skipping)" % skin_path)
-		# Try next one if this doesn't exist
-		if LOOKUP_TEXTURES.size() > 1:
-			_swap_skin()
+		print("Skin not found: %s" % skin_path)
 
 
 func _reload_textures() -> void:
@@ -200,36 +202,22 @@ func _reload_textures() -> void:
 	print("")
 	print("=== RELOADING TEXTURES ===")
 
-	var paths := [
-		"res://assets/sprites/characters/player/Tests/TestIdle-Sheet.png",
-		"res://assets/sprites/characters/player/Tests/TestUVMap.png",
-		"res://assets/sprites/characters/player/Tests/TestLookupTexture.png",
-	]
-
-	# Force reimport by loading fresh from disk
-	for path in paths:
-		if ResourceLoader.exists(path):
-			# Remove from cache to force fresh load
-			if ResourceLoader.has_cached(path):
-				# Can't directly uncache, but loading with CACHE_MODE_REPLACE works
-				pass
-
 	# Load fresh textures
-	var idle_sheet = load(paths[0])
-	var uv_map = load(paths[1])
-	var lookup_texture = load(paths[2])
+	var idle_sheet = load(BASE_PATH + "player_idle.png")
+	var uv_map = load(BASE_PATH + "player_uv.png")
+	var skin = load(BASE_PATH + SKINS[_current_skin_index])
 
-	if idle_sheet and uv_map and lookup_texture:
+	if idle_sheet and uv_map and skin:
 		sprite.texture = idle_sheet
 
 		var material := sprite.material as ShaderMaterial
 		material.set_shader_parameter("uv_map", uv_map)
-		material.set_shader_parameter("skin", lookup_texture)
+		material.set_shader_parameter("skin", skin)
 		material.set_shader_parameter("uv_map_size", Vector2(uv_map.get_width(), uv_map.get_height()))
 
-		print("Reloaded: TestIdle-Sheet.png (%s)" % str(idle_sheet.get_size()))
-		print("Reloaded: TestUVMap.png (%s)" % str(uv_map.get_size()))
-		print("Reloaded: TestLookupTexture.png (%s)" % str(lookup_texture.get_size()))
+		print("Reloaded: player_idle.png (%s)" % str(idle_sheet.get_size()))
+		print("Reloaded: player_uv.png (%s)" % str(uv_map.get_size()))
+		print("Reloaded: %s (%s)" % [SKINS[_current_skin_index], str(skin.get_size())])
 		print("=== RELOAD COMPLETE ===")
 	else:
 		print("ERROR: Failed to reload textures!")
