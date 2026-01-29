@@ -509,8 +509,9 @@ func _world_to_screen(world_pos: Vector2, target: Node2D) -> Vector2:
 	## Handles both dual viewport and legacy single viewport modes
 
 	# Check if using dual viewport system
-	if DualViewport and DualViewport.is_initialized():
-		return DualViewport.world_to_screen(world_pos)
+	var dual_viewport = get_node_or_null("/root/DualViewport")
+	if dual_viewport and dual_viewport.is_initialized():
+		return dual_viewport.world_to_screen(world_pos)
 
 	# Legacy mode: get viewport transform from target's viewport
 	var viewport := target.get_viewport()

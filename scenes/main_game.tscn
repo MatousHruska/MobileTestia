@@ -1,6 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://maingame001"]
+[gd_scene load_steps=3 format=3]
 
-[ext_resource type="Script" uid="uid://maingame_script" path="res://scripts/main_game.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/main_game.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
 
 [node name="MainGame" type="Control"]
