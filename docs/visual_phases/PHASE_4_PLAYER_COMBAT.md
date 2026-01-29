@@ -1,7 +1,7 @@
 # PHASE 4: PLAYER COMBAT ANIMATION
 
 > **Goal**: Attack animation with weapon sprite positioned via anchor system
-> **Prerequisites**: Phase 3 complete (equipment visuals working)
+> **Prerequisites**: Phase 3 complete (equipment visuals working with sector-based shader)
 > **Estimated Scope**: Medium-Large - attack animations + weapon sprites + anchor data + combat integration
 
 ---
@@ -10,9 +10,9 @@
 
 Before implementing, consult these documents:
 - `docs/ART_DIRECTION.md` - Animation philosophy, hit feedback specs
-- `docs/VISUAL_SYSTEM_TECHNICAL.md` - Weapon anchor system details
+- `docs/VISUAL_SYSTEM_TECHNICAL.md` - Color-lookup shader and weapon anchor system
 - `docs/VISUAL_IMPLEMENTATION_ROADMAP.md` - Attack animation specs
-- `docs/visual_phases/PHASE_3_EQUIPMENT_VISUALS.md` - What was built in Phase 3
+- `docs/visual_phases/PHASE_3_EQUIPMENT_VISUALS.md` - Sector-based equipment shader
 
 **Key decisions from Art Direction:**
 - 3 weapon categories: 1-handed, 2-handed, Bow
@@ -20,6 +20,7 @@ Before implementing, consult these documents:
 - Attack animation: 4 frames (wind-up, apex, follow-through, recovery)
 - Weapon is separate sprite positioned by anchor data per frame
 - Weapon is hidden during idle/walk (sheathed on body skin)
+- **Color-Lookup System**: Attack animations use same color-lookup as idle/walk
 
 ---
 
@@ -440,13 +441,23 @@ Frame 4: RECOVERY
 └────────────────┘
 ```
 
-**UV data**: Same principle as idle/walk - R,G encode coordinates, alpha is character silhouette.
+**Color-Lookup data**: Same principle as idle/walk:
+1. Each pixel in the animation is colored to match the UV Map
+2. The shader searches for that color in the UV Map
+3. Found position is used to sample the Lookup Texture (skin)
+4. Alpha channel defines the character silhouette
 
 **Important**: Body pose changes between frames! The silhouette should show:
 - Frame 1: Character leaning back, arm raised
 - Frame 2: Character lunging forward, arm extended
 - Frame 3: Character following through
 - Frame 4: Character returning to neutral
+
+**Creating attack animation frames:**
+1. Draw the character pose for each frame (defines alpha channel silhouette)
+2. Color each visible pixel using colors from your UV Map
+3. Body parts use colors from corresponding UV Map regions
+4. Same UV Map and Lookup Texture as idle/walk animations
 
 #### Asset 2: Weapon Sprite (Iron Sword)
 
@@ -605,6 +616,7 @@ Once validated, proceed to `PHASE_5_ENEMIES.md` which adds:
 - The attack animation doesn't include the hitbox logic - that's your existing combat system
 - 2-handed and bow attacks will need different anchor sets (Phase 4 is 1h only)
 - Consider adding attack "trails" or "swoosh" effects later (Phase 8 polish)
+- **Color-Lookup Note**: Attack animations use the same UV Map and skin as idle/walk
 
 ---
 
@@ -621,3 +633,8 @@ player_animator.flash(0.1, Color.WHITE)
 ```
 
 Screen shake and hitstop come in Phase 8 (Polish).
+
+---
+
+*Document Version: 2.0 - Updated for Color-Lookup System*
+*Last Updated: Session claude/phase-1-TestingShaders-spp2s*

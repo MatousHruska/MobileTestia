@@ -1,8 +1,8 @@
 # PHASE 5: ENEMIES
 
-> **Goal**: Enemy characters using UV lookup system with skin variants
+> **Goal**: Enemy characters using UV color-lookup system with skin variants
 > **Prerequisites**: Phase 4 complete (player combat working)
-> **Estimated Scope**: Medium - enemy shader + motion maps + skin variants + spawner integration
+> **Estimated Scope**: Medium - enemy shader + animation sheets + skin variants + spawner integration
 
 ---
 
@@ -10,17 +10,18 @@
 
 Before implementing, consult these documents:
 - `docs/ART_DIRECTION.md` - Enemy silhouette philosophy, variant approach
-- `docs/VISUAL_SYSTEM_TECHNICAL.md` - Enemy shader (simplified single-skin)
+- `docs/VISUAL_SYSTEM_TECHNICAL.md` - Color-lookup shader architecture
 - `docs/VISUAL_IMPLEMENTATION_ROADMAP.md` - Enemy asset specifications
 - `docs/visual_phases/PHASE_4_PLAYER_COMBAT.md` - What was built in Phase 4
 - `docs/ENEMY_REFERENCE.md` - Existing enemy system documentation
 
 **Key decisions from Art Direction:**
-- Enemies use UV lookup but with SINGLE skin (not layered like player)
-- Same motion map + different skins = enemy variants
+- Enemies use color-lookup with SINGLE skin (not sector-based like player equipment)
+- Same animation sheet + different skins = enemy variants
 - Silhouettes should be distinct per enemy TYPE (wolf ≠ skeleton ≠ slime)
 - COLOR differentiates variants within a type (green slime vs red slime)
 - Enemy animations: idle, walk, attack, hit, die (minimum set)
+- **Color-Lookup System**: Animation pixels match UV Map, shader finds position, samples skin
 
 ---
 
@@ -28,16 +29,26 @@ Before implementing, consult these documents:
 
 ### Step 5.1: Create Enemy UV Shader
 
-**File**: `shaders/uv_lookup_enemy.gdshader`
+**File**: `shaders/uv_color_lookup_enemy.gdshader`
 
-Simplified single-skin version for enemies:
+Enemies use the same color-lookup approach as the player, but simplified (single skin, no equipment slots):
 
 ```glsl
 shader_type canvas_item;
 render_mode blend_mix;
 
+// UV Color-Lookup Shader for Enemies
+// Same principle as player shader, but simplified (no equipment slots)
+
+// UV reference map - contains unique colors per pixel position
+uniform sampler2D uv_map : hint_default_white, filter_nearest;
+
 // Single skin texture for enemy appearance
 uniform sampler2D skin : hint_default_white, filter_nearest;
+
+// UV map size for searching
+uniform vec2 uv_map_size = vec2(24.0, 24.0);  // Enemies may use smaller textures
+uniform float color_tolerance : hint_range(0.0, 0.1) = 0.01;
 
 // Visual modifiers
 uniform vec4 tint : source_color = vec4(1.0, 1.0, 1.0, 1.0);
@@ -48,16 +59,33 @@ uniform vec4 flash_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
 uniform float dissolve_amount : hint_range(0.0, 1.0) = 0.0;
 uniform float hurt_desaturate : hint_range(0.0, 1.0) = 0.0;
 
-void fragment() {
-    // Sample motion map
-    vec4 motion_data = texture(TEXTURE, UV);
+// Find UV coordinates by matching color in the UV map
+vec2 find_color_in_uvmap(vec3 target_color) {
+    for (float y = 0.0; y < uv_map_size.y; y += 1.0) {
+        for (float x = 0.0; x < uv_map_size.x; x += 1.0) {
+            vec2 sample_uv = vec2(x + 0.5, y + 0.5) / uv_map_size;
+            vec4 map_color = texture(uv_map, sample_uv);
+            if (map_color.a > 0.5) {
+                vec3 diff = abs(map_color.rgb - target_color);
+                if (diff.r < color_tolerance && diff.g < color_tolerance && diff.b < color_tolerance) {
+                    return sample_uv;
+                }
+            }
+        }
+    }
+    return vec2(0.5, 0.5);
+}
 
-    if (motion_data.a < 0.01) {
+void fragment() {
+    // Sample animation frame
+    vec4 anim_color = texture(TEXTURE, UV);
+
+    if (anim_color.a < 0.01) {
         discard;
     }
 
-    // UV lookup into skin
-    vec2 skin_uv = vec2(motion_data.r, motion_data.g);
+    // Find color in UV map and sample skin at found position
+    vec2 skin_uv = find_color_in_uvmap(anim_color.rgb);
     vec4 skin_color = texture(skin, skin_uv);
 
     vec4 final_color = skin_color;
@@ -74,10 +102,9 @@ void fragment() {
     // Hit flash
     final_color.rgb = mix(final_color.rgb, flash_color.rgb, flash_amount);
 
-    // Dissolve effect (for death)
+    // Dissolve effect (for death) - uses blue channel of animation as noise
     if (dissolve_amount > 0.0) {
-        // Use motion map blue channel or noise for dissolve pattern
-        float dissolve_threshold = motion_data.b;
+        float dissolve_threshold = anim_color.b;
         if (dissolve_threshold < dissolve_amount) {
             discard;
         }
@@ -87,9 +114,11 @@ void fragment() {
         }
     }
 
-    COLOR = vec4(final_color.rgb, motion_data.a * skin_color.a);
+    COLOR = vec4(final_color.rgb, anim_color.a * skin_color.a);
 }
 ```
+
+**Note**: Enemies can also use the basic `uv_color_lookup.gdshader` from Phase 1 if they don't need dissolve/desaturate effects.
 
 ---
 
@@ -647,9 +676,22 @@ Frame 5: Dissolving
 Frame 6: Nearly gone
 ```
 
-**UV encoding**: Same as player - R,G channels are UV coordinates.
+**Color-Lookup encoding**: Same as player:
+1. Create a UV Map (24x24) with unique colors per pixel
+2. Create Skin textures (24x24) - the actual slime appearance
+3. Color animation pixels to MATCH the UV Map colors
+4. Shader finds colors in UV Map and samples Skin at found positions
 
-#### Asset 2: Slime Skins (3 variants)
+**The key benefit**: Same animation sheet + different skin = different slime variant!
+
+#### Asset 2: Slime UV Map
+
+**File**: `assets/sprites/characters/enemies/slime/uv_map.png`
+**Size**: 24×24 pixels
+
+Create a UV map with unique colors for the slime's body regions. Since slimes are simple, you can use a circular gradient or simple color blocks.
+
+#### Asset 3: Slime Skins (3 variants)
 
 **Files**:
 - `assets/sprites/characters/enemies/slime/skins/slime_green.png`
@@ -777,7 +819,14 @@ Once validated, proceed to `PHASE_6_WORLD_OBJECTS.md` which adds:
 
 - Slimes are chosen because they're direction-agnostic (look same from all angles)
 - For directional enemies (wolf, skeleton), you'll need more frames per animation
-- The dissolve effect uses the blue channel of motion map as a noise pattern
-- Enemy variant system is key for content scaling - same animations, many looks
-- Database integration assumes `visual_type` and `skin_id` fields exist on enemies
+- The dissolve effect uses the blue channel of animation frame as a noise pattern
+- **Color-Lookup Variant System**: Same UV Map + same animation + different skin = different variant
+- This is the key to content scaling - create one set of animations, many skin variants
+- Database integration assumes `visual_type`, `skin_id`, and `uv_map_id` fields exist on enemies
 - Consider adding enemy-specific animation callbacks for attack timing (hitbox spawning)
+- Enemies can share UV Maps if they have the same size/shape (all slimes share one UV Map)
+
+---
+
+*Document Version: 2.0 - Updated for Color-Lookup System*
+*Last Updated: Session claude/phase-1-TestingShaders-spp2s*
