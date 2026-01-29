@@ -6,16 +6,21 @@ extends Node
 const DATABASE_PATH := "res://databases/exports/ui_theme.json"
 
 #===============================================================================
-# UI SCALE - Dynamic scaling for native resolution rendering
+# UI SCALE - Dynamic scaling for responsive UI across screen sizes
 #===============================================================================
-# Base design height (the original pixel art viewport)
-const BASE_DESIGN_HEIGHT: float = 270.0
+# Base design resolution (element sizes defined for this resolution)
+const BASE_DESIGN_WIDTH: float = 1280.0
+const BASE_DESIGN_HEIGHT: float = 720.0
 
 # Current scale factor (calculated dynamically based on screen size)
+# ui_scale = viewport_height / BASE_DESIGN_HEIGHT
 var ui_scale: float = 1.0
 
 # Cached screen size for change detection
 var _cached_screen_size: Vector2i = Vector2i.ZERO
+
+# Cached viewport size for percentage calculations
+var _viewport_size: Vector2 = Vector2(1280, 720)
 
 #===============================================================================
 # INTERNAL DATA
@@ -121,11 +126,11 @@ const DEFAULTS := {
 	"label_width_large": 47,
 	"row_height_normal": 26,
 	"row_height_large": 36,
-	# Menu/panel sizes (native 720p pixel values)
-	"menu_width": 832,
-	"menu_height": 650,
-	"save_panel_width": 390,
-	"save_panel_height": 416,
+	# Menu/panel sizes (as percentage of viewport)
+	"menu_width_pct": 0.65,      # 65% of viewport width
+	"menu_height_pct": 0.90,     # 90% of viewport height
+	"save_panel_width_pct": 0.30,  # 30% of viewport width
+	"save_panel_height_pct": 0.58, # 58% of viewport height
 	# Cast bar
 	"color_cast_bar_bg": "0.1,0.1,0.12,0.9",
 	"color_cast_bar_fill": "0.8,0.6,0.2,1.0",
@@ -182,8 +187,11 @@ func _update_scale_factor() -> void:
 		return
 
 	_cached_screen_size = screen_size
-	# Set to 1.0 for now - no automatic scaling, elements sized for native resolution
-	ui_scale = 1.0
+	_viewport_size = Vector2(screen_size)
+
+	# Calculate scale factor based on viewport height relative to base design
+	# This ensures UI elements scale proportionally across different resolutions
+	ui_scale = maxf(0.5, _viewport_size.y / BASE_DESIGN_HEIGHT)
 
 	Debug.log("UITheme", "UI scale updated: %.2f (screen: %s)" % [ui_scale, screen_size])
 
@@ -267,6 +275,13 @@ func scale_px(value: float) -> float:
 ## Scale a pixel value and return as integer
 func scale_px_i(value: int) -> int:
 	return maxi(1, int(value * ui_scale))
+
+
+## Get an integer value from theme, explicitly scaled by ui_scale
+## Used for element sizes (buttons, icons, slots, etc.)
+func _scaled_int(key: String) -> int:
+	var raw := int(_settings.get(key, DEFAULTS.get(key, 0)))
+	return maxi(1, int(raw * ui_scale))
 
 
 ## Scale a Vector2 for native resolution rendering
@@ -439,96 +454,96 @@ var SEPARATION_GRID: int:
 	get: return get_int("separation_grid")
 
 #===============================================================================
-# ELEMENT SIZE PROPERTIES
+# ELEMENT SIZE PROPERTIES (base values × ui_scale for responsive sizing)
 #===============================================================================
 
 var BUTTON_HEIGHT_SMALL: int:
-	get: return get_int("button_height_small")
+	get: return _scaled_int("button_height_small")
 
 var BUTTON_HEIGHT_NORMAL: int:
-	get: return get_int("button_height_normal")
+	get: return _scaled_int("button_height_normal")
 
 var BUTTON_HEIGHT_LARGE: int:
-	get: return get_int("button_height_large")
+	get: return _scaled_int("button_height_large")
 
 var BUTTON_WIDTH_SMALL: int:
-	get: return get_int("button_width_small")
+	get: return _scaled_int("button_width_small")
 
 var BUTTON_WIDTH_NORMAL: int:
-	get: return get_int("button_width_normal")
+	get: return _scaled_int("button_width_normal")
 
 var BUTTON_WIDTH_LARGE: int:
-	get: return get_int("button_width_large")
+	get: return _scaled_int("button_width_large")
 
 var ICON_SIZE_SMALL: int:
-	get: return get_int("icon_size_small")
+	get: return _scaled_int("icon_size_small")
 
 var ICON_SIZE_NORMAL: int:
-	get: return get_int("icon_size_normal")
+	get: return _scaled_int("icon_size_normal")
 
 var ICON_SIZE_LARGE: int:
-	get: return get_int("icon_size_large")
+	get: return _scaled_int("icon_size_large")
 
 var SLOT_SIZE_SMALL: int:
-	get: return get_int("slot_size_small")
+	get: return _scaled_int("slot_size_small")
 
 var SLOT_SIZE_NORMAL: int:
-	get: return get_int("slot_size_normal")
+	get: return _scaled_int("slot_size_normal")
 
 var SLOT_SIZE_LARGE: int:
-	get: return get_int("slot_size_large")
+	get: return _scaled_int("slot_size_large")
 
 var BAR_HEIGHT_THIN: int:
-	get: return get_int("bar_height_thin")
+	get: return _scaled_int("bar_height_thin")
 
 var BAR_HEIGHT_NORMAL: int:
-	get: return get_int("bar_height_normal")
+	get: return _scaled_int("bar_height_normal")
 
 var BAR_HEIGHT_THICK: int:
-	get: return get_int("bar_height_thick")
+	get: return _scaled_int("bar_height_thick")
 
 var MIN_TOUCH_TARGET: int:
-	get: return get_int("min_touch_target")
+	get: return _scaled_int("min_touch_target")
 
 var POPUP_WIDTH_SMALL: int:
-	get: return get_int("popup_width_small")
+	get: return _scaled_int("popup_width_small")
 
 var POPUP_WIDTH_NORMAL: int:
-	get: return get_int("popup_width_normal")
+	get: return _scaled_int("popup_width_normal")
 
 var POPUP_WIDTH_LARGE: int:
-	get: return get_int("popup_width_large")
+	get: return _scaled_int("popup_width_large")
 
 var LABEL_WIDTH_SMALL: int:
-	get: return get_int("label_width_small")
+	get: return _scaled_int("label_width_small")
 
 var LABEL_WIDTH_NORMAL: int:
-	get: return get_int("label_width_normal")
+	get: return _scaled_int("label_width_normal")
 
 var LABEL_WIDTH_LARGE: int:
-	get: return get_int("label_width_large")
+	get: return _scaled_int("label_width_large")
 
 var ROW_HEIGHT_NORMAL: int:
-	get: return get_int("row_height_normal")
+	get: return _scaled_int("row_height_normal")
 
 var ROW_HEIGHT_LARGE: int:
-	get: return get_int("row_height_large")
+	get: return _scaled_int("row_height_large")
 
 #===============================================================================
-# MENU/PANEL SIZE PROPERTIES
+# MENU/PANEL SIZE PROPERTIES (percentage-based, returns actual pixels)
 #===============================================================================
 
 var MENU_WIDTH: int:
-	get: return get_int("menu_width")
+	get: return int(_viewport_size.x * get_float("menu_width_pct"))
 
 var MENU_HEIGHT: int:
-	get: return get_int("menu_height")
+	get: return int(_viewport_size.y * get_float("menu_height_pct"))
 
 var SAVE_PANEL_WIDTH: int:
-	get: return get_int("save_panel_width")
+	get: return int(_viewport_size.x * get_float("save_panel_width_pct"))
 
 var SAVE_PANEL_HEIGHT: int:
-	get: return get_int("save_panel_height")
+	get: return int(_viewport_size.y * get_float("save_panel_height_pct"))
 
 
 #===============================================================================
