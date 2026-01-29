@@ -41,7 +41,8 @@ func _on_viewport_resized() -> void:
 
 func _update_viewport_info() -> void:
 	viewport_size = get_viewport().get_visible_rect().size
-	scale_factor = clampf(viewport_size.y / BASE_HEIGHT, MIN_SCALE, MAX_SCALE)
+	# Set to 1.0 for now - no automatic scaling, elements sized for native resolution
+	scale_factor = 1.0
 
 	# Determine screen category (based on 270p base)
 	if viewport_size.y < 270:
