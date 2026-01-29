@@ -42,6 +42,9 @@ var skin_id: String = "default"
 # Flipping for left direction (can share same art as right)
 var _is_flipped: bool = false
 
+# Character scale (1.0 = 32px sprite at native size)
+@export var character_scale: float = 1.2  # 20% larger
+
 
 func _ready() -> void:
 	_cache_visual_assets()
@@ -69,6 +72,7 @@ func _setup_sprite() -> void:
 	sprite.centered = true
 	sprite.region_enabled = true
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.scale = Vector2(character_scale, character_scale)
 
 
 func _setup_material() -> void:
@@ -161,6 +165,13 @@ func _update_sprite_region() -> void:
 
 func _apply_flip() -> void:
 	sprite.flip_h = _is_flipped
+
+
+## Set character display scale
+func set_scale(new_scale: float) -> void:
+	character_scale = new_scale
+	if sprite:
+		sprite.scale = Vector2(character_scale, character_scale)
 
 
 # =============================================================================
