@@ -42,10 +42,10 @@ const MARGIN_TOP_PCT := 0.02      # 2% top margin
 const MARGIN_BOTTOM_PCT := 0.03   # 3% bottom margin
 const COLUMN_GAP_PCT := 0.04      # 4% gap between main columns (~32px)
 
-## Slot sizing (responsive)
-const SLOT_SIZE_SMALL := 44.0   # For screens < 500px height
-const SLOT_SIZE_NORMAL := 48.0  # For screens 500-900px
-const SLOT_SIZE_LARGE := 56.0   # For screens > 900px
+## Slot sizing (responsive) - increased 30% for native 720p
+const SLOT_SIZE_SMALL := 52.0   # For screens < 500px height
+const SLOT_SIZE_NORMAL := 56.0  # For screens 500-900px
+const SLOT_SIZE_LARGE := 64.0   # For screens > 900px
 
 ## Responsive spacing (percentages)
 const VBOX_SEPARATION_PCT := 0.015      # 1.5% of panel height
@@ -54,9 +54,9 @@ const SLOT_SEPARATION_PCT := 0.015      # 1.5% slot separation
 const GRID_SEPARATION_PCT := 0.008      # 0.8% grid separation
 const BUTTON_SIZE_PCT := 0.05           # 5% button size
 
-## Minimum pixel values
-const MIN_SEPARATION := 4
-const MIN_BUTTON_SIZE := 28
+## Minimum pixel values (30% larger for native 720p)
+const MIN_SEPARATION := 5
+const MIN_BUTTON_SIZE := 36
 
 ## UI References (set up in _ready)
 var equipment_container: VBoxContainer

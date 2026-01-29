@@ -65,8 +65,9 @@ var _quest_log_instance = null  # QuestLogPanel
 var _skills_panel_instance: SkillsPanel = null
 
 ## Design size for native 720p resolution (no scaling)
-const DESIGN_WIDTH := 640.0
-const DESIGN_HEIGHT := 500.0
+## Increased by 30% from base 640x500
+const DESIGN_WIDTH := 832.0
+const DESIGN_HEIGHT := 650.0
 
 
 func _ready() -> void:
@@ -443,8 +444,8 @@ func _show_save_load_panel(mode: SaveLoadPanel.Mode) -> void:
 	_save_load_panel.name = "SaveLoadPanel"
 	_save_load_panel.set_mode(mode)
 
-	# Size and position for native 720p resolution
-	var panel_size := Vector2(300, 320)
+	# Size and position for native 720p resolution (30% larger)
+	var panel_size := Vector2(390, 416)
 	_save_load_panel.custom_minimum_size = panel_size
 	_save_load_panel.set_anchors_preset(Control.PRESET_CENTER)
 	_save_load_panel.size = panel_size

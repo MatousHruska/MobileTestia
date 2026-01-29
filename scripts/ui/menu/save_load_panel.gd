@@ -18,18 +18,18 @@ var _slots_container: VBoxContainer
 var _cancel_button: Button
 var _slot_buttons: Array[Control] = []
 
-## Design constants (base values for 270p, will be scaled)
-const BASE_SLOT_HEIGHT := 48
+## Design constants (30% larger for native 720p)
+const BASE_SLOT_HEIGHT := 62
 const MAX_HEIGHT_PCT := 0.85  # 85% of viewport height
-const BASE_PANEL_WIDTH := 190
+const BASE_PANEL_WIDTH := 247
 
-## Get scaled slot height
+## Get slot height (native resolution)
 func _get_slot_height() -> int:
-	return UITheme.scale_px_i(BASE_SLOT_HEIGHT)
+	return BASE_SLOT_HEIGHT
 
-## Get scaled panel width
+## Get panel width (native resolution)
 func _get_panel_width() -> int:
-	return UITheme.scale_px_i(BASE_PANEL_WIDTH)
+	return BASE_PANEL_WIDTH
 
 
 func _init() -> void:
@@ -52,7 +52,7 @@ func _update_size() -> void:
 	var max_height := int(viewport_size.y * MAX_HEIGHT_PCT)
 
 	var slot_h := _get_slot_height()
-	var header_footer := UITheme.scale_px_i(70)  # Title, separator, button
+	var header_footer := 91  # Title, separator, button (30% larger)
 
 	# Calculate content height needed
 	var content_height := slot_h * 4 + header_footer  # 4 slots + header/footer
@@ -60,7 +60,7 @@ func _update_size() -> void:
 
 	# Update scroll container size
 	if _scroll:
-		var scroll_height := target_height - UITheme.scale_px_i(60)  # Account for title, separator, button
+		var scroll_height := target_height - 78  # Account for title, separator, button (30% larger)
 		_scroll.custom_minimum_size.y = scroll_height
 
 	custom_minimum_size = Vector2(_get_panel_width(), 0)
@@ -114,7 +114,7 @@ func _setup_ui() -> void:
 
 	_cancel_button = Button.new()
 	_cancel_button.text = "Cancel"
-	_cancel_button.custom_minimum_size = UITheme.scale_size(Vector2(72, 22))
+	_cancel_button.custom_minimum_size = Vector2(94, 29)  # 30% larger for native 720p
 	_cancel_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	_cancel_button.add_theme_color_override("font_color", UITheme.COLOR_TEXT_HEADER)
 	_cancel_button.pressed.connect(_on_cancel_pressed)
@@ -186,7 +186,7 @@ func _create_slot_button(slot_data: Dictionary) -> Control:
 		slot_icon.text = "Slot %d" % (slot + 1)
 		slot_icon.add_theme_color_override("font_color", UITheme.COLOR_TEXT_VALUE)
 	slot_icon.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-	slot_icon.custom_minimum_size = UITheme.scale_size(Vector2(36, 0))
+	slot_icon.custom_minimum_size = Vector2(47, 0)  # 30% larger for native 720p
 	hbox.add_child(slot_icon)
 
 	# Vertical separator
