@@ -9,15 +9,13 @@
 ## CURRENT STATE
 
 ### What's Working
-- **TestIdle-Sheet.png** - 5 frame idle animation (horizontal strip)
-- **TestUVMap.png** - UV reference map for color-lookup
-- **TestLookupTexture.png / TestLookupTexture2.png** - Skins (swap with S in-game)
+- **player_idle.png** - 5 frame idle animation (horizontal strip)
+- **player_uv.png** - UV reference map for color-lookup
+- **player_skin.png / player_skin_alt.png** - Skins (cycle with Numpad 9)
 - Full animation system integrated with player controller
 
 ### Files Location
 All player assets are in: `assets/sprites/characters/player/`
-- Animation sheets go directly in this folder
-- Keep the Test*.png files as your working assets
 
 ---
 
@@ -215,7 +213,7 @@ Until each animation exists, the system falls back to idle animation.
 
 | Animation | File | Size | Cols×Rows | Frames/Dir | FPS | Loop |
 |-----------|------|------|-----------|------------|-----|------|
-| Idle | TestIdle-Sheet.png | 160×32 | 5×1 | 5 | 6 | Yes |
+| Idle | player_idle.png | 160×32 | 5×1 | 5 | 6 | Yes |
 | Walk | player_walk.png | 192×128 | 6×4 | 6 | 10 | Yes |
 | Attack | player_attack.png | 128×128 | 4×4 | 4 | 12 | No |
 | Dodge | player_dodge.png | 128×128 | 4×4 | 4 | 12 | No |
@@ -229,24 +227,24 @@ Until each animation exists, the system falls back to idle animation.
 ### Existing (Working)
 ```
 assets/sprites/characters/player/
-├── TestIdle-Sheet.png      # Current idle animation
-├── TestUVMap.png           # UV reference map
-├── TestLookupTexture.png   # Skin/lookup texture
-├── TestLookupTexture2.png  # Alt skin (default)
-├── LookupTextureHead.png   # Equipment slot (Phase 3)
-├── LookupTextureBody.png   # Equipment slot (Phase 3)
-├── LookupTextureHands.png  # Equipment slot (Phase 3)
-└── LookupTextureLegs.png   # Equipment slot (Phase 3)
+├── player_idle.png         # Idle animation (160×32)
+├── player_uv.png           # UV reference map (32×32)
+├── player_skin.png         # Default skin (32×32)
+├── player_skin_alt.png     # Alt skin (32×32)
+├── player_equip_head.png   # Equipment slot (Phase 3)
+├── player_equip_body.png   # Equipment slot (Phase 3)
+├── player_equip_hands.png  # Equipment slot (Phase 3)
+└── player_equip_legs.png   # Equipment slot (Phase 3)
 ```
 
 ### To Create
 ```
 assets/sprites/characters/player/
-├── player_walk.png         # 192×128
-├── player_attack.png       # 128×128
-├── player_dodge.png        # 128×128
-├── player_hit.png          # 64×128
-└── player_die.png          # 160×128
+├── player_walk.png         # 192×128 (6 cols × 4 rows)
+├── player_attack.png       # 128×128 (4 cols × 4 rows)
+├── player_dodge.png        # 128×128 (4 cols × 4 rows)
+├── player_hit.png          # 64×128  (2 cols × 4 rows)
+└── player_die.png          # 160×128 (5 cols × 4 rows)
 ```
 
 ---
