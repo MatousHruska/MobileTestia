@@ -40,7 +40,12 @@ const BACKPACK_H_SEPARATION: int = 4
 const MARGIN_SIDE_PCT := 0.02      # 2% side margins
 const MARGIN_TOP_PCT := 0.02      # 2% top margin
 const MARGIN_BOTTOM_PCT := 0.03   # 3% bottom margin
-const COLUMN_GAP_PCT := 0.04      # 4% gap between main columns (~32px)
+const COLUMN_GAP_PCT := 0.01      # 1% gap between main columns (reduced from 4%)
+
+## Backpack margin percentages (relative to panel width/height)
+const BACKPACK_MARGIN_SIDE_PCT := 0.03   # 3% side margins
+const BACKPACK_MARGIN_TOP_PCT := 0.02    # 2% top margin
+const BACKPACK_MARGIN_BOTTOM_PCT := 0.02 # 2% bottom margin
 
 ## Slot sizing (responsive) - use UITheme for values
 func _get_slot_size_small() -> float:
@@ -332,6 +337,9 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	# Apply margins and calculate slot sizes after layout is ready
 	backpack_panel.ready.connect(_on_backpack_ready.bind(backpack_panel, backpack_margin, scroll_container))
 
+	# Update margins when panel resizes
+	backpack_panel.resized.connect(_on_panel_resized.bind(backpack_panel, backpack_margin, backpack_vbox, true))
+
 
 func _on_backpack_ready(_panel: PanelContainer, _margin: MarginContainer, scroll: ScrollContainer) -> void:
 	# Wait one frame for layout to settle
@@ -351,7 +359,7 @@ func _on_backpack_ready(_panel: PanelContainer, _margin: MarginContainer, scroll
 
 
 func _on_main_hbox_resized() -> void:
-	var gap := maxi(16, int(main_hbox.size.x * COLUMN_GAP_PCT))
+	var gap := maxi(4, int(main_hbox.size.x * COLUMN_GAP_PCT))
 	main_hbox.add_theme_constant_override("separation", gap)
 
 
@@ -474,12 +482,16 @@ func _on_panel_resized(panel: PanelContainer, margin_container: MarginContainer,
 	var panel_height := panel.size.y
 
 	if is_backpack:
-		# No margins/padding on backpack for now
-		margin_container.add_theme_constant_override("margin_left", 0)
-		margin_container.add_theme_constant_override("margin_right", 0)
-		margin_container.add_theme_constant_override("margin_top", 0)
-		margin_container.add_theme_constant_override("margin_bottom", 0)
-		content.add_theme_constant_override("separation", 0)
+		# Calculate proportional margins for backpack (minimum 6px for readability)
+		var side_margin := maxi(6, int(panel_width * BACKPACK_MARGIN_SIDE_PCT))
+		var top_margin := maxi(4, int(panel_height * BACKPACK_MARGIN_TOP_PCT))
+		var bottom_margin := maxi(4, int(panel_height * BACKPACK_MARGIN_BOTTOM_PCT))
+
+		margin_container.add_theme_constant_override("margin_left", side_margin)
+		margin_container.add_theme_constant_override("margin_right", side_margin)
+		margin_container.add_theme_constant_override("margin_top", top_margin)
+		margin_container.add_theme_constant_override("margin_bottom", bottom_margin)
+		content.add_theme_constant_override("separation", _get_vbox_separation())
 	else:
 		# Calculate proportional margins for equipment (minimum 8px for readability)
 		var side_margin := maxi(8, int(panel_width * MARGIN_SIDE_PCT))
