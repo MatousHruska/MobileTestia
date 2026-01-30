@@ -55,8 +55,9 @@ func _ready() -> void:
 
 
 func _setup_visuals() -> void:
-	# Main button styling
-	custom_minimum_size = Vector2(60, 60)
+	# Main button styling - use UITheme slot size (don't hardcode!)
+	# Parent may override this with custom_minimum_size after _ready()
+	custom_minimum_size = Vector2(UITheme.SLOT_SIZE_NORMAL, UITheme.SLOT_SIZE_NORMAL)
 
 	# Rarity border (behind everything)
 	rarity_border = ColorRect.new()
