@@ -33,7 +33,11 @@ var _description_label: Label
 #===============================================================================
 
 func _get_popup_width() -> int:
-	return UITheme.POPUP_STAT_BASE_WIDTH
+	var width := UITheme.POPUP_STAT_BASE_WIDTH
+	print("[StatPopup] _get_popup_width called, returning: ", width)
+	print("[StatPopup] ui_scale: ", UITheme.ui_scale)
+	print("[StatPopup] raw setting: ", UITheme.get_int_raw("popup_stat_base_width"))
+	return width
 
 
 func _get_popup_min_height_pct() -> float:
