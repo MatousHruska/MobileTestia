@@ -224,7 +224,10 @@ func show_at(screen_pos: Vector2) -> void:
 	# Update panel width from current UITheme values (allows live reload)
 	var viewport_height := get_viewport().get_visible_rect().size.y
 	var min_height := int(viewport_height * _get_popup_min_height_pct())
-	_panel.custom_minimum_size = Vector2(_get_popup_width(), min_height)
+	var popup_width := _get_popup_width()
+	_panel.custom_minimum_size = Vector2(popup_width, min_height)
+	# Force panel to use minimum width (don't shrink to content)
+	_panel.size.x = popup_width
 	_position_popup(screen_pos)
 	visible = true
 
