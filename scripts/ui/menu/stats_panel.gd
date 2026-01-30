@@ -301,7 +301,9 @@ func _create_attribute_row(abbrev: String, stat_name: String) -> Array:
 	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_LABEL)
 	label.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
-	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
+	# Use button_down/button_up instead of gui_input for flat buttons
+	label.button_down.connect(_on_stat_button_down.bind(stat_name, label))
+	label.button_up.connect(_on_stat_button_up.bind(stat_name, label))
 
 	# Value - Level 4: Value
 	var value := Label.new()
@@ -361,7 +363,9 @@ func _create_resource_column(stat_name: String, display_name: String) -> Control
 	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_LABEL)
 	label.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
-	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
+	# Use button_down/button_up instead of gui_input for flat buttons
+	label.button_down.connect(_on_stat_button_down.bind(stat_name, label))
+	label.button_up.connect(_on_stat_button_up.bind(stat_name, label))
 	col.add_child(label)
 
 	# Value - Level 4: Value
@@ -487,7 +491,9 @@ func _create_effect_icon(effect_type: String, effect_data: Dictionary) -> Button
 	var btn := Button.new()
 	btn.custom_minimum_size = Vector2(UITheme.ICON_SIZE_NORMAL, UITheme.ICON_SIZE_NORMAL)
 	btn.flat = true
-	btn.gui_input.connect(_on_effect_button_input.bind(effect_type, btn))
+	# Use button_down/button_up instead of gui_input for flat buttons
+	btn.button_down.connect(_on_effect_button_down.bind(effect_type, btn))
+	btn.button_up.connect(_on_effect_button_up.bind(effect_type, btn))
 
 	# Container for icon visuals
 	var icon_container := Control.new()
@@ -693,10 +699,9 @@ func _create_derived_stat_row(stat_name: String, display_name: String) -> Array:
 	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 	label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_LABEL)
 	label.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
-	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
-	# Debug: also connect pressed signal to verify button works
-	label.pressed.connect(func(): print("[StatsPanel] Button PRESSED signal for: ", stat_name))
-	print("[StatsPanel] Created derived stat button for: ", stat_name)
+	# Use button_down/button_up instead of gui_input for flat buttons in ScrollContainers
+	label.button_down.connect(_on_stat_button_down.bind(stat_name, label))
+	label.button_up.connect(_on_stat_button_up.bind(stat_name, label))
 
 	# Value - Level 4: Value
 	var value := Label.new()
@@ -934,33 +939,27 @@ func _on_allocate_pressed(stat_name: String) -> void:
 			PlayerStats.allocate_luck()
 
 
-## Stat button input handling (tap vs hold)
-func _on_stat_button_input(event: InputEvent, stat_name: String, _button: Button) -> void:
-	print("[StatsPanel] _on_stat_button_input called for: ", stat_name, " event: ", event)
-	if event is InputEventMouseButton:
-		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_LEFT:
-			if mb.pressed:
-				print("[StatsPanel] Mouse pressed on: ", stat_name)
-				# Start hold detection
-				_pending_stat = stat_name
-				_pending_position = mb.global_position
-				_is_holding = false
-				_hold_timer.start()
-			else:
-				print("[StatsPanel] Mouse released on: ", stat_name, " _is_holding: ", _is_holding, " _pending_stat: ", _pending_stat)
-				# Button released
-				_hold_timer.stop()
-				if _is_holding:
-					# Was holding - release the popup
-					if _stat_popup:
-						_stat_popup.release_hold()
-					_is_holding = false
-				elif not _pending_stat.is_empty():
-					# Quick tap - show popup (tap mode)
-					print("[StatsPanel] Quick tap detected, calling _show_stat_popup")
-					_show_stat_popup(stat_name, _pending_position, false)
-				_pending_stat = ""
+## Stat button input handling (tap vs hold) using button_down/button_up signals
+func _on_stat_button_down(stat_name: String, button: Button) -> void:
+	# Start hold detection
+	_pending_stat = stat_name
+	_pending_position = button.get_global_rect().get_center()
+	_is_holding = false
+	_hold_timer.start()
+
+
+func _on_stat_button_up(stat_name: String, _button: Button) -> void:
+	# Button released
+	_hold_timer.stop()
+	if _is_holding:
+		# Was holding - release the popup
+		if _stat_popup:
+			_stat_popup.release_hold()
+		_is_holding = false
+	elif not _pending_stat.is_empty():
+		# Quick tap - show popup (tap mode)
+		_show_stat_popup(stat_name, _pending_position, false)
+	_pending_stat = ""
 
 
 func _on_hold_timer_timeout() -> void:
@@ -1143,29 +1142,27 @@ func _on_effect_removed(_effect_type: String) -> void:
 	_update_effects()
 
 
-## Effect button input handling (tap vs hold)
-func _on_effect_button_input(event: InputEvent, effect_type: String, _button: Button) -> void:
-	if event is InputEventMouseButton:
-		var mb := event as InputEventMouseButton
-		if mb.button_index == MOUSE_BUTTON_LEFT:
-			if mb.pressed:
-				# Start hold detection (reusing the same timer)
-				_pending_stat = "effect:" + effect_type
-				_pending_position = mb.global_position
-				_is_holding = false
-				_hold_timer.start()
-			else:
-				# Button released
-				_hold_timer.stop()
-				if _is_holding:
-					# Was holding - release the popup
-					if _stat_popup:
-						_stat_popup.release_hold()
-					_is_holding = false
-				elif _pending_stat == "effect:" + effect_type:
-					# Quick tap - show popup (tap mode)
-					_show_effect_popup(effect_type, _pending_position, false)
-				_pending_stat = ""
+## Effect button input handling (tap vs hold) using button_down/button_up signals
+func _on_effect_button_down(effect_type: String, button: Button) -> void:
+	# Start hold detection (reusing the same timer)
+	_pending_stat = "effect:" + effect_type
+	_pending_position = button.get_global_rect().get_center()
+	_is_holding = false
+	_hold_timer.start()
+
+
+func _on_effect_button_up(effect_type: String, _button: Button) -> void:
+	# Button released
+	_hold_timer.stop()
+	if _is_holding:
+		# Was holding - release the popup
+		if _stat_popup:
+			_stat_popup.release_hold()
+		_is_holding = false
+	elif _pending_stat == "effect:" + effect_type:
+		# Quick tap - show popup (tap mode)
+		_show_effect_popup(effect_type, _pending_position, false)
+	_pending_stat = ""
 
 
 func _show_effect_popup(effect_type: String, position: Vector2, hold_mode: bool) -> void:
