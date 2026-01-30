@@ -229,6 +229,9 @@ func _update_scale_factor() -> void:
 
 
 func _load_theme_settings() -> void:
+	Debug.info("UITheme", "=== LOADING THEME SETTINGS ===")
+	Debug.info("UITheme", "Database path: %s" % DATABASE_PATH)
+
 	if not FileAccess.file_exists(DATABASE_PATH):
 		Debug.warn("UITheme", "ui_theme.json not found (using defaults)")
 		_settings = DEFAULTS.duplicate()
@@ -251,7 +254,12 @@ func _load_theme_settings() -> void:
 		return
 
 	_settings = json.data
-	Debug.log("UITheme", "Loaded %d theme settings" % _settings.size())
+	Debug.info("UITheme", "Loaded %d theme settings from JSON" % _settings.size())
+	# Log key values to verify database is being read correctly
+	Debug.info("UITheme", "  slot_size_small: %s (default: %s)" % [_settings.get("slot_size_small", "MISSING"), DEFAULTS.get("slot_size_small")])
+	Debug.info("UITheme", "  slot_size_normal: %s (default: %s)" % [_settings.get("slot_size_normal", "MISSING"), DEFAULTS.get("slot_size_normal")])
+	Debug.info("UITheme", "  font_size_label: %s (default: %s)" % [_settings.get("font_size_label", "MISSING"), DEFAULTS.get("font_size_label")])
+	Debug.info("UITheme", "=== THEME SETTINGS LOADED ===")
 
 
 #===============================================================================
