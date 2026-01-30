@@ -974,9 +974,7 @@ func _on_hold_timer_timeout() -> void:
 
 
 func _show_stat_popup(stat_name: String, position: Vector2, hold_mode: bool) -> void:
-	print("[StatsPanel] _show_stat_popup called for: ", stat_name, " _stat_popup valid: ", _stat_popup != null)
 	if not _stat_popup:
-		print("[StatsPanel] ERROR: _stat_popup is null!")
 		return
 
 	# Get stat value
