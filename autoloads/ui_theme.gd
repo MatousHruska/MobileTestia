@@ -2,6 +2,10 @@ extends Node
 ## Global UI theme loaded from database
 ## Use this singleton to maintain consistent styling across the entire game UI
 ## Access via the 'UITheme' autoload singleton
+## Press F6 to reload theme dynamically for live editing
+
+## Emitted when theme is reloaded via F6 (UI can connect to refresh)
+signal theme_reloaded
 
 const DATABASE_PATH := "res://databases/exports/ui_theme.json"
 
@@ -174,6 +178,34 @@ func _ready() -> void:
 	_update_scale_factor()
 	# Connect to screen resize
 	get_tree().root.size_changed.connect(_on_screen_resized)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	# F6 to reload theme database (for live editing)
+	if event is InputEventKey and event.pressed and event.keycode == KEY_F6:
+		reload_theme()
+		get_viewport().set_input_as_handled()
+
+
+## Reload theme from database without restarting (for live editing)
+func reload_theme() -> void:
+	Debug.info("UITheme", "=== RELOADING THEME ===")
+
+	# Clear color cache
+	_color_cache.clear()
+
+	# Reload from JSON
+	_load_theme_settings()
+
+	# Log some key values to verify
+	Debug.info("UITheme", "slot_size_small: %s" % _settings.get("slot_size_small", "NOT FOUND"))
+	Debug.info("UITheme", "slot_size_normal: %s" % _settings.get("slot_size_normal", "NOT FOUND"))
+	Debug.info("UITheme", "font_size_label: %s" % _settings.get("font_size_label", "NOT FOUND"))
+	Debug.info("UITheme", "button_height_normal: %s" % _settings.get("button_height_normal", "NOT FOUND"))
+	Debug.info("UITheme", "=== THEME RELOADED (ui_scale: %.2f) ===" % ui_scale)
+
+	# Emit signal so UI can refresh if needed
+	theme_reloaded.emit()
 
 
 func _on_screen_resized() -> void:
