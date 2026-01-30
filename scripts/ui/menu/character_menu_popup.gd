@@ -225,12 +225,9 @@ func show_at(screen_pos: Vector2) -> void:
 	var viewport_height := get_viewport().get_visible_rect().size.y
 	var min_height := int(viewport_height * _get_popup_min_height_pct())
 	var popup_width := _get_popup_width()
-	print("[CharacterMenuPopup] show_at - popup_width: ", popup_width, " min_height: ", min_height)
 	_panel.custom_minimum_size = Vector2(popup_width, min_height)
 	# Force panel to use minimum width (don't shrink to content)
 	_panel.size.x = popup_width
-	print("[CharacterMenuPopup] panel.custom_minimum_size: ", _panel.custom_minimum_size)
-	print("[CharacterMenuPopup] panel.size: ", _panel.size)
 	_position_popup(screen_pos)
 	visible = true
 

@@ -33,11 +33,7 @@ var _description_label: Label
 #===============================================================================
 
 func _get_popup_width() -> int:
-	var width := UITheme.POPUP_STAT_BASE_WIDTH
-	print("[StatPopup] _get_popup_width called, returning: ", width)
-	print("[StatPopup] ui_scale: ", UITheme.ui_scale)
-	print("[StatPopup] raw setting: ", UITheme.get_int_raw("popup_stat_base_width"))
-	return width
+	return UITheme.POPUP_STAT_BASE_WIDTH
 
 
 func _get_popup_min_height_pct() -> float:
@@ -83,20 +79,17 @@ func _build_content(content: VBoxContainer) -> void:
 
 ## Show popup for a stat (tap mode - stays open until dismissed)
 func show_stat(stat_name: String, stat_value: String, description: String, screen_pos: Vector2) -> void:
-	print("[StatPopup] show_stat called for: ", stat_name)
 	_is_hold_mode = false
 	_show_internal(stat_name, stat_value, description, screen_pos)
 
 
 ## Show popup for a stat (hold mode - closes when released)
 func show_stat_hold(stat_name: String, stat_value: String, description: String, screen_pos: Vector2) -> void:
-	print("[StatPopup] show_stat_hold called for: ", stat_name)
 	_is_hold_mode = true
 	_show_internal(stat_name, stat_value, description, screen_pos)
 
 
 func _show_internal(stat_name: String, stat_value: String, description: String, screen_pos: Vector2) -> void:
-	print("[StatPopup] _show_internal called, about to call show_at")
 	current_stat_name = stat_name
 	current_stat_value = stat_value
 
