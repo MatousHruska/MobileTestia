@@ -180,7 +180,7 @@ func _build_header(parent: VBoxContainer) -> void:
 
 	close_button = Button.new()
 	close_button.name = "CloseButton"
-	close_button.custom_minimum_size = Vector2(36, 36)
+	close_button.custom_minimum_size = Vector2(UITheme.CLOSE_BUTTON_SIZE, UITheme.CLOSE_BUTTON_SIZE)
 	close_button.text = "X"
 	close_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	close_button.pressed.connect(_on_close_pressed)
@@ -236,7 +236,7 @@ func _build_chest_column(parent: HBoxContainer) -> void:
 		var slot := InventorySlot.new()
 		slot.slot_type = InventorySlot.SlotType.BACKPACK
 		slot.backpack_index = i
-		slot.custom_minimum_size = Vector2(56, 56)
+		slot.custom_minimum_size = Vector2(UITheme.SLOT_SIZE_NORMAL, UITheme.SLOT_SIZE_NORMAL)
 		slot.slot_pressed.connect(_on_chest_slot_pressed)
 		slot.item_dropped.connect(_on_item_dropped_to_chest)
 		slot.drag_started.connect(_on_drag_started)
@@ -322,7 +322,7 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 		var slot := InventorySlot.new()
 		slot.slot_type = InventorySlot.SlotType.BACKPACK
 		slot.backpack_index = i
-		slot.custom_minimum_size = Vector2(48, 48)
+		slot.custom_minimum_size = Vector2(UITheme.SLOT_SIZE_SMALL, UITheme.SLOT_SIZE_SMALL)
 		slot.slot_pressed.connect(_on_backpack_slot_pressed)
 		slot.item_dropped.connect(_on_item_dropped_to_backpack)
 		slot.drag_started.connect(_on_drag_started)

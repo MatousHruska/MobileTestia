@@ -130,6 +130,17 @@ const DEFAULTS := {
 	"label_width_large": 47,
 	"row_height_normal": 26,
 	"row_height_large": 36,
+	# Additional element sizes
+	"close_button_size": 36,
+	"status_effect_icon_size": 32,
+	"scroll_min_height": 40,
+	"popup_height_small": 150,
+	"popup_height_normal": 200,
+	"popup_height_large": 300,
+	"padding_element_small": 2,
+	"padding_element_medium": 4,
+	"quest_item_min_height": 24,
+	"quest_desc_min_height": 40,
 	# Menu/panel sizes (as percentage of viewport)
 	"menu_width_pct": 0.65,      # 65% of viewport width
 	"menu_height_pct": 0.90,     # 90% of viewport height
@@ -568,6 +579,36 @@ var ROW_HEIGHT_NORMAL: int:
 
 var ROW_HEIGHT_LARGE: int:
 	get: return _scaled_int("row_height_large")
+
+var CLOSE_BUTTON_SIZE: int:
+	get: return _scaled_int("close_button_size")
+
+var STATUS_EFFECT_ICON_SIZE: int:
+	get: return _scaled_int("status_effect_icon_size")
+
+var SCROLL_MIN_HEIGHT: int:
+	get: return _scaled_int("scroll_min_height")
+
+var POPUP_HEIGHT_SMALL: int:
+	get: return _scaled_int("popup_height_small")
+
+var POPUP_HEIGHT_NORMAL: int:
+	get: return _scaled_int("popup_height_normal")
+
+var POPUP_HEIGHT_LARGE: int:
+	get: return _scaled_int("popup_height_large")
+
+var PADDING_ELEMENT_SMALL: int:
+	get: return _scaled_int("padding_element_small")
+
+var PADDING_ELEMENT_MEDIUM: int:
+	get: return _scaled_int("padding_element_medium")
+
+var QUEST_ITEM_MIN_HEIGHT: int:
+	get: return _scaled_int("quest_item_min_height")
+
+var QUEST_DESC_MIN_HEIGHT: int:
+	get: return _scaled_int("quest_desc_min_height")
 
 #===============================================================================
 # MENU/PANEL SIZE PROPERTIES (percentage-based, returns actual pixels)
