@@ -6,7 +6,6 @@ class_name StatPopup
 # CONSTANTS
 #===============================================================================
 
-const POPUP_WIDTH := 260
 const POPUP_MIN_HEIGHT_PCT := 0.30  # 30% of viewport - ensures decent size
 const POPUP_MAX_HEIGHT_PCT := 0.55  # 55% of viewport
 
@@ -34,7 +33,7 @@ var _description_label: Label
 #===============================================================================
 
 func _get_popup_width() -> int:
-	return POPUP_WIDTH
+	return UITheme.POPUP_STAT_BASE_WIDTH
 
 
 func _get_popup_min_height_pct() -> float:
