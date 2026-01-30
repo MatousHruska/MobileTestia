@@ -221,6 +221,10 @@ func _create_icon_container() -> Control:
 func show_at(screen_pos: Vector2) -> void:
 	_is_closing = false
 	_update_size()
+	# Update panel width from current UITheme values (allows live reload)
+	var viewport_height := get_viewport().get_visible_rect().size.y
+	var min_height := int(viewport_height * _get_popup_min_height_pct())
+	_panel.custom_minimum_size = Vector2(_get_popup_width(), min_height)
 	_position_popup(screen_pos)
 	visible = true
 
