@@ -113,12 +113,22 @@ func _ready() -> void:
 
 
 func _calculate_slot_size() -> void:
+	Debug.info("UI", "=== _calculate_slot_size ===")
+	Debug.info("UI", "  UITheme.SLOT_SIZE_SMALL: %s" % UITheme.SLOT_SIZE_SMALL)
+	Debug.info("UI", "  UITheme.SLOT_SIZE_NORMAL: %s" % UITheme.SLOT_SIZE_NORMAL)
+	Debug.info("UI", "  UITheme.SLOT_SIZE_LARGE: %s" % UITheme.SLOT_SIZE_LARGE)
+	Debug.info("UI", "  ResponsiveUI.is_small_screen(): %s" % ResponsiveUI.is_small_screen())
+	Debug.info("UI", "  ResponsiveUI.is_large_screen(): %s" % ResponsiveUI.is_large_screen())
+
 	if ResponsiveUI and ResponsiveUI.is_small_screen():
 		current_slot_size = _get_slot_size_small()
+		Debug.info("UI", "  Using SMALL: %s" % current_slot_size)
 	elif ResponsiveUI and ResponsiveUI.is_large_screen():
 		current_slot_size = _get_slot_size_large()
+		Debug.info("UI", "  Using LARGE: %s" % current_slot_size)
 	else:
 		current_slot_size = _get_slot_size_normal()
+		Debug.info("UI", "  Using NORMAL: %s" % current_slot_size)
 
 
 func _on_theme_reloaded() -> void:
