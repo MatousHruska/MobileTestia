@@ -365,21 +365,14 @@ func _build_backpack_column(parent: HBoxContainer) -> void:
 	backpack_panel.resized.connect(_on_panel_resized.bind(backpack_panel, backpack_margin, backpack_vbox, true))
 
 
-func _on_backpack_ready(_panel: PanelContainer, _margin: MarginContainer, scroll: ScrollContainer) -> void:
+func _on_backpack_ready(_panel: PanelContainer, _margin: MarginContainer, _scroll: ScrollContainer) -> void:
 	# Wait one frame for layout to settle
 	await get_tree().process_frame
 
-	# No side margins for now (can be adjusted in Godot Inspector on BackpackMargin node)
-
-	# Calculate slot size to fill width with 7 columns
-	var available_width := scroll.size.x
-	var columns := 7
-	var total_separation := (columns - 1) * 4  # 4px separation
-	var slot_size := floori((available_width - total_separation) / columns)
-
-	# Apply size to all slots
+	# Apply slot size from UITheme (respects database values)
+	_calculate_slot_size()
 	for slot in backpack_slots:
-		slot.custom_minimum_size = Vector2(slot_size, slot_size)
+		slot.custom_minimum_size = Vector2(current_slot_size, current_slot_size)
 
 
 func _on_main_hbox_resized() -> void:
