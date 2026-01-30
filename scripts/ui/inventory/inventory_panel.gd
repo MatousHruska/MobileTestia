@@ -155,6 +155,9 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 	# Outer container with outline (PanelContainer provides the outline)
 	var equip_panel := PanelContainer.new()
 	equip_panel.name = "EquipmentPanel"
+	# Set equipment panel to 30% width (stretch ratio 0.30 vs 0.70 for backpack = 30%/70%)
+	equip_panel.size_flags_horizontal = SIZE_EXPAND_FILL
+	equip_panel.size_flags_stretch_ratio = 0.30
 	parent.add_child(equip_panel)
 
 	# Inner margin for padding (will be updated dynamically)
@@ -229,11 +232,12 @@ func _build_equipment_column(parent: HBoxContainer) -> void:
 
 
 func _build_backpack_column(parent: HBoxContainer) -> void:
-	# Panel that expands to fill available space
+	# Panel that expands to fill available space (70% width to complement equipment's 30%)
 	var backpack_panel := PanelContainer.new()
 	backpack_panel.name = "BackpackPanel"
 	backpack_panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	backpack_panel.size_flags_vertical = SIZE_EXPAND_FILL
+	backpack_panel.size_flags_stretch_ratio = 0.70
 	parent.add_child(backpack_panel)
 
 	# Margin container for 10% side margins
