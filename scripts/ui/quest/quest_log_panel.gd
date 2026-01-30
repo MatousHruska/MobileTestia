@@ -67,14 +67,16 @@ func _build_ui() -> void:
 	hbox.add_theme_constant_override("separation", UITheme.SEPARATION_NORMAL)
 	add_child(hbox)
 
-	# LEFT: Quest list
+	# LEFT: Quest list (25% width)
 	var left_panel := _build_quest_list_panel()
-	left_panel.custom_minimum_size.x = UITheme.scale_px(100)  # Base 100px scaled for native resolution
+	left_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	left_panel.size_flags_stretch_ratio = 0.25
 	hbox.add_child(left_panel)
 
-	# RIGHT: Quest details
+	# RIGHT: Quest details (75% width)
 	var right_panel := _build_details_panel()
 	right_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	right_panel.size_flags_stretch_ratio = 0.75
 	hbox.add_child(right_panel)
 
 
