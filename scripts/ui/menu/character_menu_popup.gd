@@ -146,7 +146,7 @@ func _build_ui() -> void:
 
 	# Scrollable content area
 	_scroll = ScrollContainer.new()
-	_scroll.custom_minimum_size = Vector2(0, 40)
+	_scroll.custom_minimum_size = Vector2(0, UITheme.SCROLL_MIN_HEIGHT)
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	vbox.add_child(_scroll)
@@ -177,7 +177,7 @@ func _build_header(parent: VBoxContainer) -> void:
 	# Close button
 	_close_button = Button.new()
 	_close_button.text = "X"
-	_close_button.custom_minimum_size = UITheme.scale_size(Vector2(10, 10))  # Base 10px scaled
+	_close_button.custom_minimum_size = Vector2(UITheme.BUTTON_HEIGHT_SMALL, UITheme.BUTTON_HEIGHT_SMALL)
 	_close_button.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	_close_button.pressed.connect(_on_close_pressed)
 	_header.add_child(_close_button)
@@ -198,13 +198,13 @@ func _build_header(parent: VBoxContainer) -> void:
 func _create_icon_container() -> Control:
 	var icon := TextureRect.new()
 	icon.name = "Icon"
-	icon.custom_minimum_size = UITheme.scale_size(Vector2(15, 15))  # Base 15px scaled
+	icon.custom_minimum_size = Vector2(UITheme.ICON_SIZE_SMALL, UITheme.ICON_SIZE_SMALL)
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 
 	# Icon placeholder background
 	var icon_bg := ColorRect.new()
-	icon_bg.custom_minimum_size = UITheme.scale_size(Vector2(15, 15))  # Base 15px scaled
+	icon_bg.custom_minimum_size = Vector2(UITheme.ICON_SIZE_SMALL, UITheme.ICON_SIZE_SMALL)
 	icon_bg.color = UITheme.COLOR_BUTTON_BG
 	icon.add_child(icon_bg)
 	icon_bg.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -254,7 +254,9 @@ func _position_popup(tap_pos: Vector2) -> void:
 	var max_height := int(viewport_size.y * _get_popup_max_height_pct())
 	if panel_size.y > max_height:
 		_panel.custom_minimum_size.y = max_height
-		_scroll.custom_minimum_size.y = max_height - 80
+		# Reserve space for header (margins + header row + separator)
+		var header_space := UITheme.MARGIN_STANDARD * 4 + UITheme.ROW_HEIGHT_NORMAL + UITheme.SEPARATION_NORMAL
+		_scroll.custom_minimum_size.y = max_height - header_space
 		panel_size.y = max_height
 
 	# Start position: slightly to the right and vertically centered on tap

@@ -17,12 +17,8 @@ var _icon: ColorRect
 var _timer_label: Label
 var _duration_bar: ProgressBar
 
-## Icon size
-const ICON_SIZE := Vector2(32, 32)
-
-
 func _ready() -> void:
-	custom_minimum_size = ICON_SIZE
+	custom_minimum_size = Vector2(UITheme.STATUS_EFFECT_ICON_SIZE, UITheme.STATUS_EFFECT_ICON_SIZE)
 	_setup_visuals()
 
 
@@ -49,20 +45,21 @@ func _setup_visuals() -> void:
 	# Icon placeholder (inner colored square)
 	_icon = ColorRect.new()
 	_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_icon.offset_left = 2
-	_icon.offset_top = 2
-	_icon.offset_right = -2
-	_icon.offset_bottom = -8  # Leave room for timer
+	var pad := UITheme.PADDING_ELEMENT_SMALL
+	_icon.offset_left = pad
+	_icon.offset_top = pad
+	_icon.offset_right = -pad
+	_icon.offset_bottom = -UITheme.BAR_HEIGHT_THIN - pad * 2  # Leave room for timer
 	_icon.color = _get_effect_color()
 	add_child(_icon)
 
 	# Duration bar at bottom
 	_duration_bar = ProgressBar.new()
 	_duration_bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	_duration_bar.offset_top = -6
-	_duration_bar.offset_left = 2
-	_duration_bar.offset_right = -2
-	_duration_bar.custom_minimum_size.y = 4
+	_duration_bar.offset_top = -UITheme.BAR_HEIGHT_THIN - pad
+	_duration_bar.offset_left = pad
+	_duration_bar.offset_right = -pad
+	_duration_bar.custom_minimum_size.y = UITheme.BAR_HEIGHT_THIN
 	_duration_bar.show_percentage = false
 
 	if is_permanent:

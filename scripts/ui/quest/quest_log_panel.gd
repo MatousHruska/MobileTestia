@@ -329,7 +329,7 @@ func _create_quest_item(quest_id: String, is_tracked: bool, is_completed: bool =
 	button.text = quest_name
 	button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	button.custom_minimum_size.y = UITheme.scale_px(12)  # Base 12px scaled
+	button.custom_minimum_size.y = UITheme.QUEST_ITEM_MIN_HEIGHT
 	button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
 
 	# Styling
@@ -401,7 +401,7 @@ func _show_quest_details(quest_id: String) -> void:
 	desc_label.bbcode_enabled = true
 	desc_label.fit_content = true
 	desc_label.text = quest_data.get("description", "No description available.")
-	desc_label.custom_minimum_size.y = UITheme.scale_px(22)  # Base 22px scaled
+	desc_label.custom_minimum_size.y = UITheme.QUEST_DESC_MIN_HEIGHT
 	_details_panel.add_child(desc_label)
 
 	# Separator

@@ -47,7 +47,7 @@ func _build_ui() -> void:
 
 	_panel = PanelContainer.new()
 	_panel.name = "RewardPanel"
-	_panel.custom_minimum_size = Vector2(300, 200)
+	_panel.custom_minimum_size = Vector2(UITheme.POPUP_WIDTH_LARGE, UITheme.POPUP_HEIGHT_NORMAL)
 	_panel.add_theme_stylebox_override("panel", UITheme.create_popup_style())
 	center_container.add_child(_panel)
 
@@ -138,7 +138,7 @@ func show_rewards(quest_id: String, rewards: Dictionary) -> void:
 	# Continue button
 	_continue_button = Button.new()
 	_continue_button.text = "Continue"
-	_continue_button.custom_minimum_size.y = 40
+	_continue_button.custom_minimum_size.y = UITheme.BUTTON_HEIGHT_LARGE
 	_continue_button.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
 	_continue_button.pressed.connect(_on_continue_pressed)
 	_content.add_child(_continue_button)
