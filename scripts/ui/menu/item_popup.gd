@@ -6,7 +6,6 @@ class_name ItemPopup
 # CONSTANTS
 #===============================================================================
 
-const ITEM_POPUP_BASE_WIDTH := 100  # Base width for 270p, scaled to native
 const POPUP_MIN_HEIGHT_PCT := 0.40  # 40% of viewport - ensures decent size
 const POPUP_MAX_HEIGHT_PCT := 0.75  # 75% of viewport
 const BASE_ICON_SIZE := 18  # Base icon size for 270p, scaled to native
@@ -39,7 +38,7 @@ var _hint_label: Label
 #===============================================================================
 
 func _get_popup_width() -> int:
-	return UITheme.scale_px_i(ITEM_POPUP_BASE_WIDTH)
+	return UITheme.POPUP_ITEM_BASE_WIDTH
 
 
 func _get_popup_min_height_pct() -> float:

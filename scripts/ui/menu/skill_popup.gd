@@ -6,7 +6,6 @@ class_name SkillPopup
 # CONSTANTS
 #===============================================================================
 
-const SKILL_POPUP_BASE_WIDTH := 100  # Base width for 270p, scaled to native
 const POPUP_MIN_HEIGHT_PCT := 0.55  # 55% of viewport (increased from 45%)
 const POPUP_MAX_HEIGHT_PCT := 0.90  # 90% of viewport (increased from 75%)
 
@@ -34,7 +33,7 @@ var _learn_button: Button
 #===============================================================================
 
 func _get_popup_width() -> int:
-	return UITheme.scale_px_i(SKILL_POPUP_BASE_WIDTH)
+	return UITheme.POPUP_SKILL_BASE_WIDTH
 
 
 func _get_popup_min_height_pct() -> float:

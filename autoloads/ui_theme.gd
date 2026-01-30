@@ -141,6 +141,10 @@ const DEFAULTS := {
 	"padding_element_medium": 4,
 	"quest_item_min_height": 24,
 	"quest_desc_min_height": 40,
+	# Popup base widths (720p base, scaled by ui_scale)
+	"popup_stat_base_width": 260,
+	"popup_skill_base_width": 100,
+	"popup_item_base_width": 100,
 	# Menu/panel sizes (as percentage of viewport)
 	"menu_width_pct": 0.65,      # 65% of viewport width
 	"menu_height_pct": 0.90,     # 90% of viewport height
@@ -609,6 +613,15 @@ var QUEST_ITEM_MIN_HEIGHT: int:
 
 var QUEST_DESC_MIN_HEIGHT: int:
 	get: return _scaled_int("quest_desc_min_height")
+
+var POPUP_STAT_BASE_WIDTH: int:
+	get: return _scaled_int("popup_stat_base_width")
+
+var POPUP_SKILL_BASE_WIDTH: int:
+	get: return _scaled_int("popup_skill_base_width")
+
+var POPUP_ITEM_BASE_WIDTH: int:
+	get: return _scaled_int("popup_item_base_width")
 
 #===============================================================================
 # MENU/PANEL SIZE PROPERTIES (percentage-based, returns actual pixels)
