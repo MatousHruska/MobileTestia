@@ -190,6 +190,21 @@ func _connect_signals() -> void:
 	else:
 		Debug.warn("Quest", "QuestLogPanel: QuestManager not found for signal connection")
 
+	# Connect to theme reload for live editing
+	UITheme.theme_reloaded.connect(_on_theme_reloaded)
+
+
+func _on_theme_reloaded() -> void:
+	## Rebuild UI when theme is reloaded (R hotkey)
+	Debug.info("Quest", "QuestLogPanel: Rebuilding from reloaded theme")
+	# Clear and rebuild UI
+	for child in get_children():
+		child.queue_free()
+	# Wait a frame for cleanup then rebuild
+	await get_tree().process_frame
+	_build_ui()
+	refresh()
+
 
 func _on_quest_changed(_quest_id: String) -> void:
 	refresh()

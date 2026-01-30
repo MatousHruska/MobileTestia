@@ -107,6 +107,8 @@ func _ready() -> void:
 	_connect_signals()
 	_refresh_all()
 	resized.connect(_on_panel_size_changed)
+	# Connect to theme reload for live editing
+	UITheme.theme_reloaded.connect(_on_theme_reloaded)
 	Debug.info("UI", "InventoryPanel initialized (2-column mobile layout)")
 
 
@@ -117,6 +119,28 @@ func _calculate_slot_size() -> void:
 		current_slot_size = _get_slot_size_large()
 	else:
 		current_slot_size = _get_slot_size_normal()
+
+
+func _on_theme_reloaded() -> void:
+	## Update all UI elements when theme is reloaded (F6 hotkey)
+	Debug.info("UI", "InventoryPanel: Updating sizes from reloaded theme")
+
+	# Recalculate slot size
+	_calculate_slot_size()
+
+	# Update equipment slots
+	for slot in equipment_slots.values():
+		slot.custom_minimum_size = Vector2(current_slot_size, current_slot_size)
+
+	# Update backpack slots
+	for slot in backpack_slots:
+		slot.custom_minimum_size = Vector2(current_slot_size, current_slot_size)
+
+	# Update spacing
+	_on_panel_size_changed()
+
+	# Force layout update
+	queue_sort()
 
 
 ## Computed responsive sizes
