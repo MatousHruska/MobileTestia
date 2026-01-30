@@ -140,7 +140,7 @@ func _on_theme_reloaded() -> void:
 	_on_panel_size_changed()
 
 	# Force layout update
-	queue_sort()
+	queue_redraw()
 
 
 ## Computed responsive sizes
