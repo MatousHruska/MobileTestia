@@ -933,16 +933,19 @@ func _on_allocate_pressed(stat_name: String) -> void:
 
 ## Stat button input handling (tap vs hold)
 func _on_stat_button_input(event: InputEvent, stat_name: String, _button: Button) -> void:
+	print("[StatsPanel] _on_stat_button_input called for: ", stat_name, " event: ", event)
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
+				print("[StatsPanel] Mouse pressed on: ", stat_name)
 				# Start hold detection
 				_pending_stat = stat_name
 				_pending_position = mb.global_position
 				_is_holding = false
 				_hold_timer.start()
 			else:
+				print("[StatsPanel] Mouse released on: ", stat_name, " _is_holding: ", _is_holding, " _pending_stat: ", _pending_stat)
 				# Button released
 				_hold_timer.stop()
 				if _is_holding:
@@ -952,6 +955,7 @@ func _on_stat_button_input(event: InputEvent, stat_name: String, _button: Button
 					_is_holding = false
 				elif not _pending_stat.is_empty():
 					# Quick tap - show popup (tap mode)
+					print("[StatsPanel] Quick tap detected, calling _show_stat_popup")
 					_show_stat_popup(stat_name, _pending_position, false)
 				_pending_stat = ""
 
@@ -968,7 +972,9 @@ func _on_hold_timer_timeout() -> void:
 
 
 func _show_stat_popup(stat_name: String, position: Vector2, hold_mode: bool) -> void:
+	print("[StatsPanel] _show_stat_popup called for: ", stat_name, " _stat_popup valid: ", _stat_popup != null)
 	if not _stat_popup:
+		print("[StatsPanel] ERROR: _stat_popup is null!")
 		return
 
 	# Get stat value
