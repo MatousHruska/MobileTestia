@@ -2,7 +2,7 @@ extends Node
 ## Global UI theme loaded from database
 ## Use this singleton to maintain consistent styling across the entire game UI
 ## Access via the 'UITheme' autoload singleton
-## Press F6 to reload theme dynamically for live editing
+## Press R to reload theme dynamically for live editing
 
 ## Emitted when theme is reloaded via F6 (UI can connect to refresh)
 signal theme_reloaded
@@ -181,8 +181,8 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	# F6 to reload theme database (for live editing)
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F6:
+	# R to reload theme database (for live editing)
+	if event is InputEventKey and event.pressed and event.keycode == KEY_R:
 		reload_theme()
 		get_viewport().set_input_as_handled()
 
