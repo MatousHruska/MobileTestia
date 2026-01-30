@@ -694,6 +694,9 @@ func _create_derived_stat_row(stat_name: String, display_name: String) -> Array:
 	label.add_theme_color_override("font_color", UITheme.COLOR_TEXT_LABEL)
 	label.add_theme_color_override("font_hover_color", UITheme.COLOR_TEXT_NAV)
 	label.gui_input.connect(_on_stat_button_input.bind(stat_name, label))
+	# Debug: also connect pressed signal to verify button works
+	label.pressed.connect(func(): print("[StatsPanel] Button PRESSED signal for: ", stat_name))
+	print("[StatsPanel] Created derived stat button for: ", stat_name)
 
 	# Value - Level 4: Value
 	var value := Label.new()
