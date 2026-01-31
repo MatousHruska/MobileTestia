@@ -3,14 +3,14 @@ class_name CombatHUD
 ## CombatHUD - Layout manager for combat action buttons
 ##
 ## Structure:
-##   Combat HUD
-##   ├── Primary Controls (Attack button + Ability Wheel)
-##   │   ├── Attack Button - Main attack, can have skill bound
-##   │   └── Ability Slots [1-5] - Skills bound in arc around attack
-##   ├── Secondary Controls
-##   │   ├── Dodge Button - Evasion/roll
-##   │   └── Quick Slot Button - Consumable items
-##   └── Interact Button - Context-sensitive (Talk, Loot, Open)
+##   CombatHUD
+##   ├── AbilityWheel (Control) - Main combat actions in arc layout
+##   │   ├── AttackButton - Main attack (slot 0), can have skill bound
+##   │   └── AbilitySlot[1-5] - Skills bound in arc around attack
+##   ├── UtilityBar (Control) - Support/utility actions
+##   │   ├── DodgeButton - Evasion/roll
+##   │   └── QuickSlotButton - Consumable items
+##   └── InteractButton - Context-sensitive (Talk, Loot, Open)
 
 ## Preload combat classes (needed until Godot generates .uid files)
 const AimIndicatorClass = preload("res://scripts/combat/aim_indicator.gd")
@@ -25,16 +25,24 @@ signal quick_slot_pressed
 ## Configuration
 @export var config: CombatHUDConfig
 
+#region Container References
+## AbilityWheel - Groups Attack Button + Ability Slots for unified manipulation
+var ability_wheel: Control
+
+## UtilityBar - Groups Dodge + Quick Slot for unified manipulation
+var utility_bar: Control
+#endregion
+
 #region Button References
-## Primary Controls - Attack + Ability Wheel
+## AbilityWheel children
 var attack_button: AbilitySlot
 var ability_slots: Array[AbilitySlot] = []
 
-## Secondary Controls - Dodge + Quick Slot
+## UtilityBar children
 var dodge_button: AbilitySlot
 var quick_slot_button: AbilitySlot
 
-## Interact Button - Context-sensitive action
+## Interact Button - Context-sensitive action (standalone)
 var interact_button: Button
 #endregion
 
@@ -321,7 +329,19 @@ func _load_or_create_config() -> void:
 
 
 func _create_buttons() -> void:
-	# Attack button
+	# Create AbilityWheel container (Attack + Ability Slots)
+	ability_wheel = Control.new()
+	ability_wheel.name = "AbilityWheel"
+	ability_wheel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(ability_wheel)
+
+	# Create UtilityBar container (Dodge + Quick Slot)
+	utility_bar = Control.new()
+	utility_bar.name = "UtilityBar"
+	utility_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(utility_bar)
+
+	# Attack button (child of AbilityWheel)
 	attack_button = AbilitySlot.new()
 	attack_button.name = "AttackButton"
 	attack_button.slot_type = AbilitySlot.SlotType.ATTACK
@@ -335,7 +355,7 @@ func _create_buttons() -> void:
 	attack_button.border_color = config.button_border_color
 	attack_button.set_icon("⚔")
 	attack_button.ability_activated.connect(_on_attack_activated)
-	add_child(attack_button)
+	ability_wheel.add_child(attack_button)
 
 	# Ability slots
 	for i in config.ability_count:
@@ -356,7 +376,7 @@ func _create_buttons() -> void:
 		slot.ability_hold_started.connect(_on_ability_hold_started)
 		slot.ability_released.connect(_on_ability_released)
 		slot.ability_ready.connect(_on_ability_ready)
-		add_child(slot)
+		ability_wheel.add_child(slot)
 		ability_slots.append(slot)
 
 	# Dodge button
@@ -374,7 +394,7 @@ func _create_buttons() -> void:
 	dodge_button.border_color = config.button_border_color
 	dodge_button.set_icon("💨")
 	dodge_button.ability_activated.connect(_on_dodge_activated)
-	add_child(dodge_button)
+	utility_bar.add_child(dodge_button)
 
 	# Quick slot button
 	quick_slot_button = AbilitySlot.new()
@@ -391,7 +411,7 @@ func _create_buttons() -> void:
 	quick_slot_button.border_color = config.button_border_color
 	quick_slot_button.set_icon("🧪")
 	quick_slot_button.ability_activated.connect(_on_quick_slot_activated)
-	add_child(quick_slot_button)
+	utility_bar.add_child(quick_slot_button)
 
 	# Interact button (standard Button, hidden by default) - Level 2 Header
 	# Uses anchor-based layout for dynamic scaling (Center Right preset)
