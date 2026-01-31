@@ -3,11 +3,14 @@ class_name HUD
 ## HUD - Main game HUD controller
 ## Manages player stats display and mobile controls
 
+## Preload config class (needed until Godot generates .uid files)
+const PlayerFrameConfigClass = preload("res://scripts/ui/player_frame_config.gd")
+
 ## Signals
 signal menu_button_pressed
 
 ## Configuration
-@export var player_frame_config: PlayerFrameConfig
+@export var player_frame_config: Resource  # PlayerFrameConfig
 
 ## References (set in scene or found automatically)
 @onready var joystick: VirtualJoystick = $Controls/JoystickArea/VirtualJoystick
@@ -67,9 +70,9 @@ func _ready() -> void:
 func _load_or_create_config() -> void:
 	if player_frame_config == null:
 		if ResourceLoader.exists(DEFAULT_CONFIG_PATH):
-			player_frame_config = load(DEFAULT_CONFIG_PATH) as PlayerFrameConfig
+			player_frame_config = load(DEFAULT_CONFIG_PATH)
 		else:
-			player_frame_config = PlayerFrameConfig.new()
+			player_frame_config = PlayerFrameConfigClass.new()
 			Debug.info("UI", "Using default PlayerFrameConfig")
 
 
@@ -87,8 +90,8 @@ func _apply_hud_layout() -> void:
 	# Position and size from config percentages
 	#===========================================================================
 	if player_frame and player_frame_config:
-		var frame_pos := player_frame_config.get_position(screen_size)
-		var frame_size := player_frame_config.get_size(screen_size)
+		var frame_pos: Vector2 = player_frame_config.get_position(screen_size)
+		var frame_size: Vector2 = player_frame_config.get_size(screen_size)
 
 		player_frame.position = frame_pos
 		player_frame.custom_minimum_size = frame_size
@@ -133,14 +136,14 @@ func _update_player_frame_layout(frame_size: Vector2) -> void:
 	if not player_frame_config:
 		return
 
-	var padding := player_frame_config.get_padding(frame_size)
-	var bar_height := player_frame_config.get_bar_height(frame_size.y)
-	var bar_gap := player_frame_config.get_bar_gap(frame_size.y)
-	var bar_corner_radius := player_frame_config.get_bar_corner_radius(bar_height)
-	var bar_font_size := player_frame_config.get_bar_font_size(bar_height)
-	var level_font_size := player_frame_config.get_level_font_size(frame_size.y)
-	var status_icon_size := player_frame_config.get_status_icon_size(frame_size.y)
-	var corner_radius := player_frame_config.get_corner_radius(frame_size.y)
+	var padding: float = player_frame_config.get_padding(frame_size)
+	var bar_height: float = player_frame_config.get_bar_height(frame_size.y)
+	var bar_gap: float = player_frame_config.get_bar_gap(frame_size.y)
+	var bar_corner_radius: int = player_frame_config.get_bar_corner_radius(bar_height)
+	var bar_font_size: int = player_frame_config.get_bar_font_size(bar_height)
+	var level_font_size: int = player_frame_config.get_level_font_size(frame_size.y)
+	var status_icon_size: float = player_frame_config.get_status_icon_size(frame_size.y)
+	var corner_radius: int = player_frame_config.get_corner_radius(frame_size.y)
 
 	# Update background
 	var bg := player_frame.get_node_or_null("Background")
