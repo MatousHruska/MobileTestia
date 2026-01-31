@@ -164,13 +164,15 @@ func _update_player_frame_layout(frame_size: Vector2) -> void:
 	_update_bar_style(mana_bar, bar_height, bar_corner_radius, bar_font_size)
 	_update_bar_style(stamina_bar, bar_height, bar_corner_radius, bar_font_size)
 
-	# Position status effect display below the frame
+	# Position status effect display below the frame, aligned with bars (includes padding)
 	if status_effect_display:
 		var screen_size: Vector2 = get_viewport().get_visible_rect().size
 		var frame_pos: Vector2 = player_frame_config.get_position(screen_size)
 		var gap_below: float = player_frame_config.get_bar_gap(frame_size.y)
-		status_effect_display.position = Vector2(frame_pos.x, frame_pos.y + frame_size.y + gap_below)
-		status_effect_display.custom_minimum_size = Vector2(frame_size.x, status_icon_size)
+		# Offset X by padding * 1.5 to align with bars inside the frame
+		var status_x: float = frame_pos.x + (padding * 1.5)
+		status_effect_display.position = Vector2(status_x, frame_pos.y + frame_size.y + gap_below)
+		status_effect_display.custom_minimum_size = Vector2(frame_size.x - (padding * 3.0), status_icon_size)
 
 
 func _update_bar_style(bar: ProgressBar, height: float, corner_radius: int, font_size: int) -> void:
