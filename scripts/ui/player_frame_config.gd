@@ -20,7 +20,8 @@ class_name PlayerFrameConfig
 ## Anchor point for PlayerFrame top-left corner, as percentage from top-left corner
 @export var anchor_pct: Vector2 = Vector2(0.01, 0.01)
 ## Size of PlayerFrame as percentage of screen dimensions (width%, height%)
-@export var size_pct: Vector2 = Vector2(0.22, 0.18)
+## Height reduced to fit only 3 resource bars (no level label)
+@export var size_pct: Vector2 = Vector2(0.22, 0.10)
 #endregion
 
 #region Visual Style
@@ -59,10 +60,6 @@ class_name PlayerFrameConfig
 @export_group("Text")
 ## Font size as percentage of bar height
 @export var bar_font_size_pct: float = 0.7
-## Level label font size as percentage of frame height
-@export var level_font_size_pct: float = 0.12
-## Level label color
-@export var level_color: Color = Color(1.0, 0.84, 0.0)
 ## Bar text color
 @export var bar_text_color: Color = Color(1.0, 1.0, 1.0)
 ## Bar text shadow color
@@ -120,11 +117,6 @@ func get_corner_radius(frame_height: float) -> int:
 ## Get bar font size in pixels
 func get_bar_font_size(bar_height: float) -> int:
 	return int(bar_font_size_pct * bar_height)
-
-
-## Get level label font size in pixels
-func get_level_font_size(frame_height: float) -> int:
-	return int(level_font_size_pct * frame_height)
 
 
 ## Get status effect icon size in pixels
