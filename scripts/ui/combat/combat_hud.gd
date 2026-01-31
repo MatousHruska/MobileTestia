@@ -478,7 +478,7 @@ func _layout_buttons() -> void:
 	# Layout: [QuickSlot] --gap-- [Dodge]  (QuickSlot on left, Dodge on right)
 	#===========================================================================
 	var utility_center := config.get_utility_bar_center(screen_size)
-	var utility_gap := config.get_utility_bar_gap(scale_factor)
+	var utility_gap := config.get_utility_bar_gap(screen_size.x)
 
 	# Calculate total width of UtilityBar: both buttons + gap between them
 	var utility_total_width := (scaled_dodge_radius * 2) + utility_gap + (scaled_quick_slot_radius * 2)
