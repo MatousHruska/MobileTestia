@@ -23,20 +23,17 @@ func _ready() -> void:
 ## Set initial icon size before node is in tree (prevents default 32.0 being used)
 ## Called by HUD before add_child() to ensure correct size when effects sync in _ready()
 func set_initial_icon_size(size: float) -> void:
-	print("[StatusEffectDisplay] set_initial_icon_size: %s" % size)
 	_icon_size = size
 
 
 ## Set icon size (called by HUD with calculated size from config)
 func set_icon_size(size: float) -> void:
-	print("[StatusEffectDisplay] set_icon_size: %s (was %s)" % [size, _icon_size])
 	_icon_size = size
 	_update_spacing()
 	# Update existing icons
 	for effect_type in _effect_icons:
 		var icon: StatusEffectIcon = _effect_icons[effect_type]
 		if is_instance_valid(icon):
-			print("[StatusEffectDisplay] Updating existing icon '%s' to size %s" % [effect_type, _icon_size])
 			icon.set_size_dynamic(_icon_size)
 
 
@@ -109,7 +106,6 @@ func _on_effect_tick(_effect_type: String, _damage: float) -> void:
 
 
 func _add_effect_icon(effect_type: String, duration: float, is_debuff: bool) -> void:
-	print("[StatusEffectDisplay] Adding icon '%s' with size=%s" % [effect_type, _icon_size])
 	var icon := StatusEffectIcon.new()
 	icon.setup(effect_type, duration, is_debuff, _icon_size)
 	add_child(icon)

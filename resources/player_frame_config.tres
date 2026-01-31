@@ -21,4 +21,4 @@ stamina_bg_color = Color(0.1, 0.35, 0.15, 1)
 bar_font_size_pct = 0.7
 bar_text_color = Color(1, 1, 1, 1)
 bar_text_shadow_color = Color(0, 0, 0, 0.5)
-status_icon_size_pct = 0.80
+status_icon_size_pct = 0.35

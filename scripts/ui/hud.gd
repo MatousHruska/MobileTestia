@@ -174,7 +174,6 @@ func _update_player_frame_layout(frame_size: Vector2) -> void:
 		status_effect_display.position = Vector2(status_x, frame_pos.y + frame_size.y + gap_below)
 		status_effect_display.custom_minimum_size = Vector2(frame_size.x - (padding * 3.0), status_icon_size)
 		# Set icon size for dynamic scaling
-		print("[HUD] Layout icon size: frame_h=%s, icon_size_pct=%s, icon_size=%s" % [frame_size.y, player_frame_config.status_icon_size_pct, status_icon_size])
 		status_effect_display.set_icon_size(status_icon_size)
 
 
@@ -261,7 +260,6 @@ func _setup_resource_bars() -> void:
 	var screen_size := get_viewport().get_visible_rect().size
 	var frame_size: Vector2 = player_frame_config.get_size(screen_size)
 	var initial_icon_size: float = player_frame_config.get_status_icon_size(frame_size.y)
-	print("[HUD] Initial icon size calc: screen=%s, frame=%s, icon_size_pct=%s, icon_size=%s" % [screen_size, frame_size, player_frame_config.status_icon_size_pct, initial_icon_size])
 	status_effect_display.set_initial_icon_size(initial_icon_size)
 	add_child(status_effect_display)  # Add to HUD, not player_frame
 
