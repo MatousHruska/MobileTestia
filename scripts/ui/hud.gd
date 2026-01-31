@@ -255,6 +255,12 @@ func _setup_resource_bars() -> void:
 	status_effect_display = StatusEffectDisplay.new()
 	status_effect_display.name = "StatusEffectDisplay"
 	status_effect_display.alignment = BoxContainer.ALIGNMENT_BEGIN  # Left-align icons
+	# Pre-set icon size BEFORE adding to tree to prevent default 32.0 being used
+	# when effects are synced during _ready()
+	var screen_size := get_viewport().get_visible_rect().size
+	var frame_size: Vector2 = player_frame_config.get_size(screen_size)
+	var initial_icon_size: float = player_frame_config.get_status_icon_size(frame_size.y)
+	status_effect_display.set_initial_icon_size(initial_icon_size)
 	add_child(status_effect_display)  # Add to HUD, not player_frame
 
 
