@@ -500,20 +500,21 @@ func _layout_buttons() -> void:
 	var interact_pos := config.get_position_from_pct(config.interact_offset_pct, screen_size)
 	interact_pos = config.apply_handedness(interact_pos, screen_size.x)
 
-	# Calculate scaled size from config
-	var scaled_interact_size := config.interact_size * scale_factor
-
 	interact_button.anchor_left = 1.0
 	interact_button.anchor_top = 0.5
 	interact_button.anchor_right = 1.0
 	interact_button.anchor_bottom = 0.5
 
-	# Use config size for offsets (button grows left from right edge, centered vertically)
-	interact_button.offset_left = -scaled_interact_size.x
-	interact_button.offset_top = -scaled_interact_size.y / 2.0
-	interact_button.offset_right = 0.0
-	interact_button.offset_bottom = scaled_interact_size.y / 2.0
-	interact_button.custom_minimum_size = scaled_interact_size
+	var interact_offset_left := -147.0 * scale_factor
+	var interact_offset_top := -17.0 * scale_factor
+	var interact_offset_right := 0.0
+	var interact_offset_bottom := 18.0 * scale_factor
+
+	interact_button.offset_left = interact_offset_left
+	interact_button.offset_top = interact_offset_top
+	interact_button.offset_right = interact_offset_right
+	interact_button.offset_bottom = interact_offset_bottom
+	interact_button.custom_minimum_size = config.interact_size * scale_factor
 
 
 func _notification(what: int) -> void:
