@@ -8,13 +8,32 @@ class_name StatusEffectDisplay
 ## Active effect icons - keyed by effect_type
 var _effect_icons: Dictionary = {}
 
-## Spacing between icons
-const ICON_SPACING := 4
+## Icon size in pixels (set dynamically by HUD based on config percentage)
+var _icon_size: float = 32.0
+
+## Spacing between icons as percentage of icon size
+const ICON_SPACING_PCT := 0.15
 
 
 func _ready() -> void:
-	add_theme_constant_override("separation", ICON_SPACING)
+	_update_spacing()
 	_connect_to_player()
+
+
+## Set icon size (called by HUD with calculated size from config)
+func set_icon_size(size: float) -> void:
+	_icon_size = size
+	_update_spacing()
+	# Update existing icons
+	for effect_type in _effect_icons:
+		var icon: StatusEffectIcon = _effect_icons[effect_type]
+		if is_instance_valid(icon):
+			icon.set_size_dynamic(_icon_size)
+
+
+func _update_spacing() -> void:
+	var spacing := int(_icon_size * ICON_SPACING_PCT)
+	add_theme_constant_override("separation", spacing)
 
 
 func _connect_to_player() -> void:
@@ -82,7 +101,7 @@ func _on_effect_tick(_effect_type: String, _damage: float) -> void:
 
 func _add_effect_icon(effect_type: String, duration: float, is_debuff: bool) -> void:
 	var icon := StatusEffectIcon.new()
-	icon.setup(effect_type, duration, is_debuff)
+	icon.setup(effect_type, duration, is_debuff, _icon_size)
 	add_child(icon)
 	_effect_icons[effect_type] = icon
 
