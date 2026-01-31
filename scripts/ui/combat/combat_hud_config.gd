@@ -3,23 +3,33 @@ class_name CombatHUDConfig
 ## CombatHUDConfig - Configuration resource for combat HUD layout
 ##
 ## Structure:
-##   Combat HUD
-##   ├── Primary Controls (Attack button + Ability Wheel)
-##   ├── Secondary Controls (Dodge + Quick Slot)
-##   └── Interact Button
+##   CombatHUD
+##   ├── AbilityWheel (positioned via ability_wheel_anchor_pct)
+##   │   ├── AttackButton (center of wheel)
+##   │   └── AbilitySlots[1-5] (arc around attack)
+##   ├── UtilityBar (positioned via utility_bar_anchor_pct)
+##   │   ├── DodgeButton (right side)
+##   │   └── QuickSlotButton (left side, with gap)
+##   └── InteractButton
+##
+## Positioning hierarchy:
+##   1. Groups (AbilityWheel, UtilityBar) positioned relative to screen via anchor_pct
+##   2. Buttons within groups positioned relative to each other
 ##
 ## Uses percentage-based positioning for multi-device support
-## All offset values are percentages (0.0 to 1.0) of screen dimensions
+## All anchor values are percentages (0.0 to 1.0) from bottom-right corner
 
-#region Primary Controls - Attack + Ability Wheel
-@export_group("Primary Controls: Attack Button")
+#region AbilityWheel Group
+@export_group("AbilityWheel: Group Position")
+## Anchor point for AbilityWheel center, as percentage from bottom-right corner
+@export var ability_wheel_anchor_pct: Vector2 = Vector2(0.12, 0.18)
+
+@export_group("AbilityWheel: Attack Button")
 @export var attack_radius: float = 30.0
 @export var attack_color: Color = Color(0.98, 0.6, 0.6, 0.85)
 @export var attack_pressed_color: Color = Color(1.0, 0.8, 0.8, 0.95)
-## Offset from bottom-right corner as percentage of screen (x=width%, y=height%)
-@export var attack_offset_pct: Vector2 = Vector2(0.12, 0.18)
 
-@export_group("Primary Controls: Ability Wheel")
+@export_group("AbilityWheel: Ability Slots")
 @export var ability_count: int = 5
 @export var ability_radius: float = 12.0
 @export var ability_color: Color = Color(0.55, 1.0, 0.98, 0.85)
@@ -33,22 +43,24 @@ class_name CombatHUDConfig
 @export var arc_end_angle: float = 295.0
 #endregion
 
-#region Secondary Controls - Dodge + Quick Slot
-@export_group("Secondary Controls: Dodge Button")
+#region UtilityBar Group
+@export_group("UtilityBar: Group Position")
+## Anchor point for UtilityBar center, as percentage from bottom-right corner
+@export var utility_bar_anchor_pct: Vector2 = Vector2(0.41, 0.12)
+## Gap between Dodge and QuickSlot buttons (in base pixels, will be scaled)
+@export var utility_bar_gap: float = 8.0
+
+@export_group("UtilityBar: Dodge Button")
 @export var dodge_radius: float = 16.0
 @export var dodge_color: Color = Color(0.38, 0.27, 1.0, 0.85)
 @export var dodge_pressed_color: Color = Color(0.55, 0.45, 1.0, 0.95)
 @export var dodge_no_stamina_color: Color = Color(0.3, 0.3, 0.4, 0.7)
-## Offset from bottom-right corner as percentage
-@export var dodge_offset_pct: Vector2 = Vector2(0.35, 0.12)
 
-@export_group("Secondary Controls: Quick Slot")
+@export_group("UtilityBar: Quick Slot")
 @export var quick_slot_radius: float = 16.0
 @export var quick_slot_color: Color = Color(0.51, 1.0, 0.37, 0.85)
 @export var quick_slot_pressed_color: Color = Color(0.7, 1.0, 0.6, 0.95)
 @export var quick_slot_empty_color: Color = Color(0.3, 0.4, 0.3, 0.5)
-## Offset from bottom-right corner as percentage
-@export var quick_slot_offset_pct: Vector2 = Vector2(0.47, 0.12)
 #endregion
 
 #region Interact Button
@@ -132,3 +144,20 @@ func apply_handedness(pos: Vector2, screen_width: float) -> Vector2:
 		# Mirror horizontally
 		return Vector2(screen_width - pos.x, pos.y)
 	return pos
+
+
+## Get AbilityWheel center position in screen coordinates
+func get_ability_wheel_center(screen_size: Vector2) -> Vector2:
+	var pos := get_position_from_pct(ability_wheel_anchor_pct, screen_size)
+	return apply_handedness(pos, screen_size.x)
+
+
+## Get UtilityBar center position in screen coordinates
+func get_utility_bar_center(screen_size: Vector2) -> Vector2:
+	var pos := get_position_from_pct(utility_bar_anchor_pct, screen_size)
+	return apply_handedness(pos, screen_size.x)
+
+
+## Get scaled gap for UtilityBar buttons
+func get_utility_bar_gap(scale_factor: float) -> float:
+	return utility_bar_gap * scale_factor

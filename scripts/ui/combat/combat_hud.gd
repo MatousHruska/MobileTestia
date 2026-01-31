@@ -429,15 +429,17 @@ func _create_buttons() -> void:
 
 
 func _layout_buttons() -> void:
-	# Get screen size
+	## Layout all combat buttons using hierarchical positioning:
+	## 1. Groups positioned relative to screen via anchor percentages
+	## 2. Buttons within groups positioned relative to each other
+
 	var screen_size := get_viewport_rect().size
 
 	# Calculate scale factor for button sizes based on screen height
-	# Base design is 720p - scale buttons proportionally for other resolutions
 	var scale_factor := screen_size.y / config.base_screen_height
 	scale_factor = clampf(scale_factor * config.user_scale, config.min_scale, config.max_scale)
 
-	# Apply scaled radii to buttons
+	# Scale button radii
 	var scaled_attack_radius := config.attack_radius * scale_factor
 	var scaled_ability_radius := config.ability_radius * scale_factor
 	var scaled_dodge_radius := config.dodge_radius * scale_factor
@@ -450,93 +452,59 @@ func _layout_buttons() -> void:
 	dodge_button.set_radius(scaled_dodge_radius)
 	quick_slot_button.set_radius(scaled_quick_slot_radius)
 
-	# Calculate attack button position
-	# Use fixed pixel margins from edges (same margin on right and bottom)
-	var edge_margin := 24.0 * scale_factor  # Consistent margin from edges
-	var attack_pos := Vector2(
-		screen_size.x - edge_margin - scaled_attack_radius,
-		screen_size.y - edge_margin - scaled_attack_radius
-	)
-	attack_button.position = attack_pos - Vector2(scaled_attack_radius, scaled_attack_radius)
+	#===========================================================================
+	# ABILITY WHEEL LAYOUT
+	# Group anchor determines center, buttons positioned relative to center
+	#===========================================================================
+	var wheel_center := config.get_ability_wheel_center(screen_size)
 
-	# Calculate attack button center for arc positioning
-	var attack_center := attack_pos
+	# Attack button at center of AbilityWheel
+	attack_button.position = wheel_center - Vector2(scaled_attack_radius, scaled_attack_radius)
 
-	# Position ability slots in arc around attack button
-	# Ensure minimum arc distance to prevent overlap with attack button
+	# Ability slots in arc around attack button center
 	var min_arc_distance := scaled_attack_radius + scaled_ability_radius + (8.0 * scale_factor)
 	var config_arc_distance := config.get_arc_distance(screen_size.y)
 	var actual_arc_distance := maxf(min_arc_distance, config_arc_distance)
 
-	# Position dodge and quick slot FIRST so we can check ability collisions against them
-	var min_gap := 8.0 * scale_factor  # Minimum gap between buttons
-
-	# Calculate attack button boundaries
-	var attack_left := attack_pos.x - scaled_attack_radius
-
-	# Helper function to ensure button doesn't overlap with attack button
-	var _adjust_secondary_pos = func(pos: Vector2, radius: float) -> Vector2:
-		var distance := pos.distance_to(attack_pos)
-		var min_distance := scaled_attack_radius + radius + min_gap
-		if distance < min_distance:
-			pos.x = attack_left - min_gap - radius
-			pos.y = min(pos.y, screen_size.y - radius - min_gap)
-		return pos
-
-	# Position dodge button - relative to attack button, left and below
-	# Base offset from attack center (in base 720p pixels, then scaled)
-	var dodge_offset := Vector2(-210.0, 45.0) * scale_factor  # Left of Primary Controls
-	var dodge_pos := attack_pos + dodge_offset
-	# Keep on screen
-	dodge_pos.y = min(dodge_pos.y, screen_size.y - scaled_dodge_radius - min_gap)
-	dodge_pos = _adjust_secondary_pos.call(dodge_pos, scaled_dodge_radius)
-
-	# Position quick slot button - left of dodge
-	var quick_slot_offset := Vector2(-100.0, 0.0) * scale_factor  # Left of dodge
-	var quick_slot_pos := dodge_pos + quick_slot_offset
-	quick_slot_pos = _adjust_secondary_pos.call(quick_slot_pos, scaled_quick_slot_radius)
-	# Ensure quick slot doesn't overlap with dodge
-	var dodge_distance := quick_slot_pos.distance_to(dodge_pos)
-	var min_dodge_distance := scaled_dodge_radius + scaled_quick_slot_radius + min_gap
-	if dodge_distance < min_dodge_distance:
-		quick_slot_pos.x = dodge_pos.x - scaled_dodge_radius - min_gap - scaled_quick_slot_radius
-
-	# Get ability positions with adjusted arc distance
-	var ability_positions := _get_ability_positions_with_distance(attack_center, actual_arc_distance)
-
-	# Position ability slots, checking for collision with dodge/quick slot
+	var ability_positions := _get_ability_positions_with_distance(wheel_center, actual_arc_distance)
 	for i in ability_slots.size():
 		if i < ability_positions.size():
 			var pos := ability_positions[i]
-
-			# Check collision with dodge button
-			var dist_to_dodge := pos.distance_to(dodge_pos)
-			var min_dist_dodge := scaled_ability_radius + scaled_dodge_radius + min_gap
-			if dist_to_dodge < min_dist_dodge:
-				# Push ability away from dodge
-				pos = dodge_pos + (pos - dodge_pos).normalized() * min_dist_dodge
-
-			# Check collision with quick slot button
-			var dist_to_quick := pos.distance_to(quick_slot_pos)
-			var min_dist_quick := scaled_ability_radius + scaled_quick_slot_radius + min_gap
-			if dist_to_quick < min_dist_quick:
-				# Push ability away from quick slot
-				pos = quick_slot_pos + (pos - quick_slot_pos).normalized() * min_dist_quick
-
 			ability_slots[i].position = pos - Vector2(scaled_ability_radius, scaled_ability_radius)
 
-	# Apply dodge and quick slot positions
+	#===========================================================================
+	# UTILITY BAR LAYOUT
+	# Group anchor determines center, Dodge and QuickSlot arranged horizontally
+	# Layout: [QuickSlot] --gap-- [Dodge]  (QuickSlot on left, Dodge on right)
+	#===========================================================================
+	var utility_center := config.get_utility_bar_center(screen_size)
+	var utility_gap := config.get_utility_bar_gap(scale_factor)
+
+	# Calculate total width of UtilityBar: both buttons + gap between them
+	var utility_total_width := (scaled_dodge_radius * 2) + utility_gap + (scaled_quick_slot_radius * 2)
+
+	# Dodge button on the right side of UtilityBar center
+	var dodge_offset_x := (utility_total_width / 2.0) - scaled_dodge_radius
+	var dodge_pos := Vector2(utility_center.x + dodge_offset_x, utility_center.y)
 	dodge_button.position = dodge_pos - Vector2(scaled_dodge_radius, scaled_dodge_radius)
+
+	# QuickSlot button on the left side of UtilityBar center
+	var quick_slot_offset_x := (utility_total_width / 2.0) - scaled_quick_slot_radius
+	var quick_slot_pos := Vector2(utility_center.x - quick_slot_offset_x, utility_center.y)
 	quick_slot_button.position = quick_slot_pos - Vector2(scaled_quick_slot_radius, scaled_quick_slot_radius)
 
-	# Position interact button using anchors (Center Right preset with dynamic offsets)
-	# Anchors: right edge of screen, vertically centered relative to primary controls
+	#===========================================================================
+	# INTERACT BUTTON
+	# Positioned using anchor-based layout from config
+	#===========================================================================
+	var interact_pos := config.get_position_from_pct(config.interact_offset_pct, screen_size)
+	interact_pos = config.apply_handedness(interact_pos, screen_size.x)
+
 	interact_button.anchor_left = 1.0
 	interact_button.anchor_top = 0.5
 	interact_button.anchor_right = 1.0
 	interact_button.anchor_bottom = 0.5
 
-	# Scale offsets dynamically (base values at 720p: left=-147, top=-17, right=0, bottom=18)
 	var interact_offset_left := -147.0 * scale_factor
 	var interact_offset_top := -17.0 * scale_factor
 	var interact_offset_right := 0.0
@@ -546,8 +514,6 @@ func _layout_buttons() -> void:
 	interact_button.offset_top = interact_offset_top
 	interact_button.offset_right = interact_offset_right
 	interact_button.offset_bottom = interact_offset_bottom
-
-	# Scale minimum size
 	interact_button.custom_minimum_size = config.interact_size * scale_factor
 
 
