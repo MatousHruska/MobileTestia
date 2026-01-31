@@ -124,10 +124,10 @@ func _apply_hud_layout() -> void:
 		# Update center based on new control size (after layout settles)
 		await get_tree().process_frame
 		if joystick:
-			# Position visual in bottom-left with 15% offset from edges
+			# Position visual in bottom-left with 10% offset from edges
 			var radius := joystick.joystick_radius
-			var offset_x := joystick.size.x * 0.15
-			var offset_y := joystick.size.y * 0.15
+			var offset_x := joystick.size.x * 0.10
+			var offset_y := joystick.size.y * 0.10
 			joystick.joystick_center = Vector2(radius + offset_x, joystick.size.y - radius - offset_y)
 			if not joystick.is_active:
 				joystick.knob_position = joystick.joystick_center
