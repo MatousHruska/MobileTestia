@@ -20,6 +20,12 @@ func _ready() -> void:
 	_connect_to_player()
 
 
+## Set initial icon size before node is in tree (prevents default 32.0 being used)
+## Called by HUD before add_child() to ensure correct size when effects sync in _ready()
+func set_initial_icon_size(size: float) -> void:
+	_icon_size = size
+
+
 ## Set icon size (called by HUD with calculated size from config)
 func set_icon_size(size: float) -> void:
 	_icon_size = size
