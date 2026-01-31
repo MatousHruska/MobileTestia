@@ -19,12 +19,12 @@ signal menu_button_pressed
 @onready var player_frame: Control = $PlayerFrame
 @onready var menu_button: Button = $MenuButton/Button
 
-## Joystick base sizes (percentage-based)
-const JOYSTICK_AREA_WIDTH_PCT := 0.15
-const JOYSTICK_AREA_HEIGHT_PCT := 0.25
+## Joystick base sizes (percentage-based) - 60% larger than original
+const JOYSTICK_AREA_WIDTH_PCT := 0.24   ## Was 0.15
+const JOYSTICK_AREA_HEIGHT_PCT := 0.40  ## Was 0.25
 const JOYSTICK_MARGIN_PCT := 0.02
-const JOYSTICK_RADIUS_PCT := 0.04  ## Percentage of screen height
-const KNOB_RADIUS_PCT := 0.02  ## Percentage of screen height
+const JOYSTICK_RADIUS_PCT := 0.064  ## Percentage of screen height (was 0.04)
+const KNOB_RADIUS_PCT := 0.032  ## Percentage of screen height (was 0.02)
 
 ## Default config path
 const DEFAULT_CONFIG_PATH := "res://resources/player_frame_config.tres"
@@ -36,7 +36,6 @@ var stamina_bar: ProgressBar
 var health_label: Label
 var mana_label: Label
 var stamina_label: Label
-var level_label: Label
 
 ## Status effect display
 var status_effect_display: StatusEffectDisplay
@@ -141,9 +140,7 @@ func _update_player_frame_layout(frame_size: Vector2) -> void:
 	var bar_gap: float = player_frame_config.get_bar_gap(frame_size.y)
 	var bar_corner_radius: int = player_frame_config.get_bar_corner_radius(bar_height)
 	var bar_font_size: int = player_frame_config.get_bar_font_size(bar_height)
-	var level_font_size: int = player_frame_config.get_level_font_size(frame_size.y)
 	var status_icon_size: float = player_frame_config.get_status_icon_size(frame_size.y)
-	var corner_radius: int = player_frame_config.get_corner_radius(frame_size.y)
 
 	# Update background
 	var bg := player_frame.get_node_or_null("Background")
@@ -167,13 +164,13 @@ func _update_player_frame_layout(frame_size: Vector2) -> void:
 	_update_bar_style(mana_bar, bar_height, bar_corner_radius, bar_font_size)
 	_update_bar_style(stamina_bar, bar_height, bar_corner_radius, bar_font_size)
 
-	# Update level label
-	if level_label:
-		level_label.add_theme_font_size_override("font_size", level_font_size)
-
-	# Update status effect display
+	# Position status effect display below the frame
 	if status_effect_display:
-		status_effect_display.custom_minimum_size = Vector2(0, status_icon_size)
+		var screen_size: Vector2 = get_viewport().get_visible_rect().size
+		var frame_pos: Vector2 = player_frame_config.get_position(screen_size)
+		var gap_below: float = player_frame_config.get_bar_gap(frame_size.y)
+		status_effect_display.position = Vector2(frame_pos.x, frame_pos.y + frame_size.y + gap_below)
+		status_effect_display.custom_minimum_size = Vector2(frame_size.x, status_icon_size)
 
 
 func _update_bar_style(bar: ProgressBar, height: float, corner_radius: int, font_size: int) -> void:
@@ -250,17 +247,10 @@ func _setup_resource_bars() -> void:
 	stamina_label = stamina_bar.get_node("Label")
 	bars_container.add_child(stamina_bar)
 
-	# Level label
-	level_label = Label.new()
-	level_label.name = "LevelLabel"
-	level_label.text = "Lv. 1"
-	level_label.add_theme_color_override("font_color", player_frame_config.level_color)
-	bars_container.add_child(level_label)
-
-	# Status effect display (DoTs, buffs, debuffs)
+	# Status effect display (DoTs, buffs, debuffs) - positioned below frame
 	status_effect_display = StatusEffectDisplay.new()
 	status_effect_display.name = "StatusEffectDisplay"
-	bars_container.add_child(status_effect_display)
+	add_child(status_effect_display)  # Add to HUD, not player_frame
 
 
 func _setup_cast_bar() -> void:
@@ -335,7 +325,6 @@ func _refresh_all_resources() -> void:
 	update_health(PlayerStats.current_life, PlayerStats.max_life)
 	update_mana(PlayerStats.current_mana, PlayerStats.max_mana)
 	update_stamina(PlayerStats.current_stamina, PlayerStats.max_stamina)
-	_update_level_label()
 
 
 func _on_resource_changed(resource: String, current: float, maximum: float) -> void:
@@ -349,17 +338,13 @@ func _on_resource_changed(resource: String, current: float, maximum: float) -> v
 
 
 func _on_level_changed(_old_level: int, _new_level: int) -> void:
-	_update_level_label()
+	# Level display removed from PlayerFrame
+	pass
 
 
 func _on_stats_changed() -> void:
 	# Max values might have changed, refresh all
 	_refresh_all_resources()
-
-
-func _update_level_label() -> void:
-	if level_label:
-		level_label.text = "Lv. %d" % PlayerStats.level
 
 
 func _connect_to_game_manager() -> void:
