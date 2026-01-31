@@ -6,6 +6,9 @@ class_name HUD
 ## Signals
 signal menu_button_pressed
 
+## Configuration
+@export var player_frame_config: PlayerFrameConfig
+
 ## References (set in scene or found automatically)
 @onready var joystick: VirtualJoystick = $Controls/JoystickArea/VirtualJoystick
 @onready var joystick_area: Control = $Controls/JoystickArea
@@ -13,14 +16,15 @@ signal menu_button_pressed
 @onready var player_frame: Control = $PlayerFrame
 @onready var menu_button: Button = $MenuButton/Button
 
-## Base sizes (designed for 270p pixel art viewport)
-const BASE_SCREEN_HEIGHT := 270.0
-const BASE_PLAYER_FRAME_SIZE := Vector2(75, 49)
-const BASE_JOYSTICK_AREA_SIZE := Vector2(75, 69)
-const BASE_JOYSTICK_RADIUS := 30.0
-const BASE_KNOB_RADIUS := 15.0
-const MIN_SCALE := 1.0
-const MAX_SCALE := 4.0
+## Joystick base sizes (percentage-based)
+const JOYSTICK_AREA_WIDTH_PCT := 0.15
+const JOYSTICK_AREA_HEIGHT_PCT := 0.25
+const JOYSTICK_MARGIN_PCT := 0.02
+const JOYSTICK_RADIUS_PCT := 0.04  ## Percentage of screen height
+const KNOB_RADIUS_PCT := 0.02  ## Percentage of screen height
+
+## Default config path
+const DEFAULT_CONFIG_PATH := "res://resources/player_frame_config.tres"
 
 ## Resource bars (created dynamically)
 var health_bar: ProgressBar
@@ -48,48 +52,73 @@ var _connected_pickup: Node = null  ## Track connected LootPickup for signal cle
 
 func _ready() -> void:
 	Debug.info("UI", "HUD ready")
+	_load_or_create_config()
 	_setup_resource_bars()
 	_setup_cast_bar()
 	_connect_to_game_manager()
 	_connect_to_player_stats()
 	_setup_controls()
-	# Apply initial scaling
-	call_deferred("_apply_hud_scaling")
+	# Apply initial layout
+	call_deferred("_apply_hud_layout")
 	# Connect to viewport resize
 	get_viewport().size_changed.connect(_on_viewport_resized)
 
 
+func _load_or_create_config() -> void:
+	if player_frame_config == null:
+		if ResourceLoader.exists(DEFAULT_CONFIG_PATH):
+			player_frame_config = load(DEFAULT_CONFIG_PATH) as PlayerFrameConfig
+		else:
+			player_frame_config = PlayerFrameConfig.new()
+			Debug.info("UI", "Using default PlayerFrameConfig")
+
+
 func _on_viewport_resized() -> void:
-	_apply_hud_scaling()
+	_apply_hud_layout()
 	_position_cast_bar()
 
 
-func _apply_hud_scaling() -> void:
-	## Scale HUD elements based on screen size
-	var viewport_size := get_viewport().get_visible_rect().size
-	var scale_factor := viewport_size.y / BASE_SCREEN_HEIGHT
-	scale_factor = clampf(scale_factor, MIN_SCALE, MAX_SCALE)
+func _apply_hud_layout() -> void:
+	## Layout HUD elements using percentage-based positioning
+	var screen_size := get_viewport().get_visible_rect().size
 
-	# Scale PlayerFrame
-	if player_frame:
-		var scaled_size := BASE_PLAYER_FRAME_SIZE * scale_factor
-		player_frame.custom_minimum_size = scaled_size
-		player_frame.size = scaled_size
-		# The contents use anchors/margins so they'll adapt
+	#===========================================================================
+	# PLAYER FRAME LAYOUT
+	# Position and size from config percentages
+	#===========================================================================
+	if player_frame and player_frame_config:
+		var frame_pos := player_frame_config.get_position(screen_size)
+		var frame_size := player_frame_config.get_size(screen_size)
 
-	# Scale JoystickArea
+		player_frame.position = frame_pos
+		player_frame.custom_minimum_size = frame_size
+		player_frame.size = frame_size
+
+		# Update internal layout
+		_update_player_frame_layout(frame_size)
+
+	#===========================================================================
+	# JOYSTICK AREA LAYOUT
+	# Percentage-based positioning from bottom-left
+	#===========================================================================
 	if joystick_area:
-		var scaled_joystick_size := BASE_JOYSTICK_AREA_SIZE * scale_factor
-		# Keep anchored to bottom-left, adjust offsets
-		joystick_area.offset_left = 16 * scale_factor
-		joystick_area.offset_top = -scaled_joystick_size.y - (16 * scale_factor)
-		joystick_area.offset_right = 16 * scale_factor + scaled_joystick_size.x
-		joystick_area.offset_bottom = -16 * scale_factor
+		var margin := JOYSTICK_MARGIN_PCT * screen_size.x
+		var area_width := JOYSTICK_AREA_WIDTH_PCT * screen_size.x
+		var area_height := JOYSTICK_AREA_HEIGHT_PCT * screen_size.y
 
-	# Scale VirtualJoystick radii and update center
+		# Keep anchored to bottom-left, adjust offsets
+		joystick_area.offset_left = margin
+		joystick_area.offset_top = -area_height - margin
+		joystick_area.offset_right = margin + area_width
+		joystick_area.offset_bottom = -margin
+
+	#===========================================================================
+	# VIRTUAL JOYSTICK
+	# Scale radii based on screen height
+	#===========================================================================
 	if joystick:
-		joystick.joystick_radius = BASE_JOYSTICK_RADIUS * scale_factor
-		joystick.knob_radius = BASE_KNOB_RADIUS * scale_factor
+		joystick.joystick_radius = JOYSTICK_RADIUS_PCT * screen_size.y
+		joystick.knob_radius = KNOB_RADIUS_PCT * screen_size.y
 		# Update center based on new control size (after layout settles)
 		await get_tree().process_frame
 		if joystick:
@@ -97,6 +126,74 @@ func _apply_hud_scaling() -> void:
 			if not joystick.is_active:
 				joystick.knob_position = joystick.joystick_center
 			joystick.queue_redraw()
+
+
+func _update_player_frame_layout(frame_size: Vector2) -> void:
+	## Update internal PlayerFrame layout based on new size
+	if not player_frame_config:
+		return
+
+	var padding := player_frame_config.get_padding(frame_size)
+	var bar_height := player_frame_config.get_bar_height(frame_size.y)
+	var bar_gap := player_frame_config.get_bar_gap(frame_size.y)
+	var bar_corner_radius := player_frame_config.get_bar_corner_radius(bar_height)
+	var bar_font_size := player_frame_config.get_bar_font_size(bar_height)
+	var level_font_size := player_frame_config.get_level_font_size(frame_size.y)
+	var status_icon_size := player_frame_config.get_status_icon_size(frame_size.y)
+	var corner_radius := player_frame_config.get_corner_radius(frame_size.y)
+
+	# Update background
+	var bg := player_frame.get_node_or_null("Background")
+	if bg is ColorRect:
+		bg.offset_left = padding
+		bg.offset_top = padding
+		bg.offset_right = -padding
+		bg.offset_bottom = -padding
+
+	# Update bars container
+	var bars_container := player_frame.get_node_or_null("BarsContainer")
+	if bars_container is VBoxContainer:
+		bars_container.offset_left = padding * 1.5
+		bars_container.offset_top = padding * 1.5
+		bars_container.offset_right = -padding * 1.5
+		bars_container.offset_bottom = -padding * 1.5
+		bars_container.add_theme_constant_override("separation", int(bar_gap))
+
+	# Update individual bars
+	_update_bar_style(health_bar, bar_height, bar_corner_radius, bar_font_size)
+	_update_bar_style(mana_bar, bar_height, bar_corner_radius, bar_font_size)
+	_update_bar_style(stamina_bar, bar_height, bar_corner_radius, bar_font_size)
+
+	# Update level label
+	if level_label:
+		level_label.add_theme_font_size_override("font_size", level_font_size)
+
+	# Update status effect display
+	if status_effect_display:
+		status_effect_display.custom_minimum_size = Vector2(0, status_icon_size)
+
+
+func _update_bar_style(bar: ProgressBar, height: float, corner_radius: int, font_size: int) -> void:
+	## Update a single bar's style based on new dimensions
+	if not bar:
+		return
+
+	bar.custom_minimum_size = Vector2(0, height)
+
+	# Update fill style corner radius
+	var fill_style := bar.get_theme_stylebox("fill") as StyleBoxFlat
+	if fill_style:
+		fill_style.set_corner_radius_all(corner_radius)
+
+	# Update background style corner radius
+	var bg_style := bar.get_theme_stylebox("background") as StyleBoxFlat
+	if bg_style:
+		bg_style.set_corner_radius_all(corner_radius)
+
+	# Update label font size
+	var label := bar.get_node_or_null("Label") as Label
+	if label:
+		label.add_theme_font_size_override("font_size", font_size)
 
 
 func _process(_delta: float) -> void:
@@ -109,7 +206,7 @@ func _process(_delta: float) -> void:
 
 
 func _setup_resource_bars() -> void:
-	if not player_frame:
+	if not player_frame or not player_frame_config:
 		return
 
 	# Clear existing children
@@ -120,36 +217,33 @@ func _setup_resource_bars() -> void:
 	var bg := ColorRect.new()
 	bg.name = "Background"
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.offset_left = UITheme.MARGIN_STANDARD
-	bg.offset_top = UITheme.MARGIN_STANDARD
-	bg.offset_right = -UITheme.MARGIN_STANDARD
-	bg.offset_bottom = -UITheme.MARGIN_STANDARD
-	bg.color = UITheme.COLOR_PANEL_BG
+	bg.color = player_frame_config.background_color
 	player_frame.add_child(bg)
 
 	# Bars container
 	var bars_container := VBoxContainer.new()
 	bars_container.name = "BarsContainer"
 	bars_container.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bars_container.offset_left = UITheme.MARGIN_STANDARD + 4
-	bars_container.offset_top = UITheme.MARGIN_STANDARD + 4
-	bars_container.offset_right = -(UITheme.MARGIN_STANDARD + 4)
-	bars_container.offset_bottom = -(UITheme.MARGIN_STANDARD + 4)
-	bars_container.add_theme_constant_override("separation", UITheme.SEPARATION_SMALL)
 	player_frame.add_child(bars_container)
 
 	# Health bar
-	health_bar = _create_resource_bar("Health", Color(0.8, 0.2, 0.2), Color(0.4, 0.1, 0.1))
+	health_bar = _create_resource_bar("Health",
+		player_frame_config.health_fill_color,
+		player_frame_config.health_bg_color)
 	health_label = health_bar.get_node("Label")
 	bars_container.add_child(health_bar)
 
 	# Mana bar
-	mana_bar = _create_resource_bar("Mana", Color(0.2, 0.4, 0.9), Color(0.1, 0.2, 0.45))
+	mana_bar = _create_resource_bar("Mana",
+		player_frame_config.mana_fill_color,
+		player_frame_config.mana_bg_color)
 	mana_label = mana_bar.get_node("Label")
 	bars_container.add_child(mana_bar)
 
 	# Stamina bar
-	stamina_bar = _create_resource_bar("Stamina", Color(0.2, 0.7, 0.3), Color(0.1, 0.35, 0.15))
+	stamina_bar = _create_resource_bar("Stamina",
+		player_frame_config.stamina_fill_color,
+		player_frame_config.stamina_bg_color)
 	stamina_label = stamina_bar.get_node("Label")
 	bars_container.add_child(stamina_bar)
 
@@ -157,14 +251,12 @@ func _setup_resource_bars() -> void:
 	level_label = Label.new()
 	level_label.name = "LevelLabel"
 	level_label.text = "Lv. 1"
-	level_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_HEADER)
-	level_label.add_theme_color_override("font_color", UITheme.COLOR_AVAILABLE)
+	level_label.add_theme_color_override("font_color", player_frame_config.level_color)
 	bars_container.add_child(level_label)
 
 	# Status effect display (DoTs, buffs, debuffs)
 	status_effect_display = StatusEffectDisplay.new()
 	status_effect_display.name = "StatusEffectDisplay"
-	status_effect_display.custom_minimum_size = UITheme.scale_size(Vector2(0, 12))  # Base 12px scaled
 	bars_container.add_child(status_effect_display)
 
 
@@ -198,31 +290,27 @@ func _position_cast_bar() -> void:
 func _create_resource_bar(bar_name: String, fill_color: Color, bg_color: Color) -> ProgressBar:
 	var bar := ProgressBar.new()
 	bar.name = bar_name + "Bar"
-	bar.custom_minimum_size = UITheme.scale_size(Vector2(0, 7))  # Base 7px scaled for native resolution
 	bar.max_value = 100.0
 	bar.value = 100.0
 	bar.show_percentage = false
 
-	# Style the bar
+	# Style the bar (corner radius will be set in _update_bar_style)
 	var fill_style := StyleBoxFlat.new()
 	fill_style.bg_color = fill_color
-	fill_style.set_corner_radius_all(UITheme.CORNER_RADIUS_SMALL)
 	bar.add_theme_stylebox_override("fill", fill_style)
 
 	var bg_style := StyleBoxFlat.new()
 	bg_style.bg_color = bg_color
-	bg_style.set_corner_radius_all(UITheme.CORNER_RADIUS_SMALL)
 	bar.add_theme_stylebox_override("background", bg_style)
 
-	# Add value label on top of bar
+	# Add value label on top of bar (font size will be set in _update_bar_style)
 	var label := Label.new()
 	label.name = "Label"
 	label.set_anchors_preset(Control.PRESET_FULL_RECT)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
-	label.add_theme_color_override("font_color", UITheme.COLOR_SELECTED)
-	label.add_theme_color_override("font_shadow_color", UITheme.COLOR_PANEL_DARK_BG)
+	label.add_theme_color_override("font_color", player_frame_config.bar_text_color)
+	label.add_theme_color_override("font_shadow_color", player_frame_config.bar_text_shadow_color)
 	label.add_theme_constant_override("shadow_offset_x", 1)
 	label.add_theme_constant_override("shadow_offset_y", 1)
 	label.text = "100 / 100"
