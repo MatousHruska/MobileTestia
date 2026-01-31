@@ -168,7 +168,7 @@ func _update_player_frame_layout(frame_size: Vector2) -> void:
 	if status_effect_display:
 		var screen_size: Vector2 = get_viewport().get_visible_rect().size
 		var frame_pos: Vector2 = player_frame_config.get_position(screen_size)
-		var gap_below: float = player_frame_config.get_bar_gap(frame_size.y)
+		var gap_below: float = padding * 0.5  # Small gap below frame
 		# Offset X by padding * 1.5 to align with bars inside the frame
 		var status_x: float = frame_pos.x + (padding * 1.5)
 		status_effect_display.position = Vector2(status_x, frame_pos.y + frame_size.y + gap_below)
