@@ -19,12 +19,12 @@ signal menu_button_pressed
 @onready var player_frame: Control = $PlayerFrame
 @onready var menu_button: Button = $MenuButton/Button
 
-## Joystick base sizes (percentage-based) - 60% larger than original
-const JOYSTICK_AREA_WIDTH_PCT := 0.24   ## Was 0.15
-const JOYSTICK_AREA_HEIGHT_PCT := 0.40  ## Was 0.25
+## Joystick base sizes (percentage-based) - 124% larger than original (60% + 40%)
+const JOYSTICK_AREA_WIDTH_PCT := 0.336   ## Was 0.24, originally 0.15
+const JOYSTICK_AREA_HEIGHT_PCT := 0.56   ## Was 0.40, originally 0.25
 const JOYSTICK_MARGIN_PCT := 0.02
-const JOYSTICK_RADIUS_PCT := 0.064  ## Percentage of screen height (was 0.04)
-const KNOB_RADIUS_PCT := 0.032  ## Percentage of screen height (was 0.02)
+const JOYSTICK_RADIUS_PCT := 0.0896  ## Was 0.064, originally 0.04
+const KNOB_RADIUS_PCT := 0.0448  ## Was 0.032, originally 0.02
 
 ## Default config path
 const DEFAULT_CONFIG_PATH := "res://resources/player_frame_config.tres"
