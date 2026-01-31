@@ -247,9 +247,10 @@ func _setup_resource_bars() -> void:
 	stamina_label = stamina_bar.get_node("Label")
 	bars_container.add_child(stamina_bar)
 
-	# Status effect display (DoTs, buffs, debuffs) - positioned below frame
+	# Status effect display (DoTs, buffs, debuffs) - positioned below frame, left-aligned
 	status_effect_display = StatusEffectDisplay.new()
 	status_effect_display.name = "StatusEffectDisplay"
+	status_effect_display.alignment = BoxContainer.ALIGNMENT_BEGIN  # Left-align icons
 	add_child(status_effect_display)  # Add to HUD, not player_frame
 
 
