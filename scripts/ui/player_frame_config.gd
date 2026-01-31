@@ -67,8 +67,8 @@ class_name PlayerFrameConfig
 
 #region Status Effects
 @export_group("Status Effects")
-## Status effect icon size as percentage of frame height (20% larger than original)
-@export var status_icon_size_pct: float = 0.18
+## Status effect icon size as percentage of frame height (40% larger than original)
+@export var status_icon_size_pct: float = 0.21
 #endregion
 
 
