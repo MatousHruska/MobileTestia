@@ -22,7 +22,7 @@ class_name CombatHUDConfig
 #region AbilityWheel Group
 @export_group("AbilityWheel: Group Position")
 ## Anchor point for AbilityWheel center, as percentage from bottom-right corner
-@export var ability_wheel_anchor_pct: Vector2 = Vector2(0.12, 0.18)
+@export var ability_wheel_anchor_pct: Vector2 = Vector2(0.08, 0.18)
 
 @export_group("AbilityWheel: Attack Button")
 @export var attack_radius: float = 30.0
@@ -46,9 +46,9 @@ class_name CombatHUDConfig
 #region UtilityBar Group
 @export_group("UtilityBar: Group Position")
 ## Anchor point for UtilityBar center, as percentage from bottom-right corner
-@export var utility_bar_anchor_pct: Vector2 = Vector2(0.41, 0.12)
-## Gap between Dodge and QuickSlot buttons (in base pixels, will be scaled)
-@export var utility_bar_gap: float = 8.0
+@export var utility_bar_anchor_pct: Vector2 = Vector2(0.28, 0.12)
+## Gap between Dodge and QuickSlot buttons as percentage of screen width
+@export var utility_bar_gap_pct: float = 0.01
 
 @export_group("UtilityBar: Dodge Button")
 @export var dodge_radius: float = 16.0
@@ -158,6 +158,6 @@ func get_utility_bar_center(screen_size: Vector2) -> Vector2:
 	return apply_handedness(pos, screen_size.x)
 
 
-## Get scaled gap for UtilityBar buttons
-func get_utility_bar_gap(scale_factor: float) -> float:
-	return utility_bar_gap * scale_factor
+## Get gap for UtilityBar buttons based on screen width
+func get_utility_bar_gap(screen_width: float) -> float:
+	return utility_bar_gap_pct * screen_width
