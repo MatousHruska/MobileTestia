@@ -20,8 +20,7 @@ class_name PlayerFrameConfig
 ## Anchor point for PlayerFrame top-left corner, as percentage from top-left corner
 @export var anchor_pct: Vector2 = Vector2(0.01, 0.01)
 ## Size of PlayerFrame as percentage of screen dimensions (width%, height%)
-## Height reduced to fit only 3 resource bars (no level label)
-@export var size_pct: Vector2 = Vector2(0.22, 0.10)
+@export var size_pct: Vector2 = Vector2(0.20, 0.20)
 #endregion
 
 #region Visual Style
