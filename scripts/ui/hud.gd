@@ -173,6 +173,8 @@ func _update_player_frame_layout(frame_size: Vector2) -> void:
 		var status_x: float = frame_pos.x + (padding * 1.5)
 		status_effect_display.position = Vector2(status_x, frame_pos.y + frame_size.y + gap_below)
 		status_effect_display.custom_minimum_size = Vector2(frame_size.x - (padding * 3.0), status_icon_size)
+		# Set icon size for dynamic scaling
+		status_effect_display.set_icon_size(status_icon_size)
 
 
 func _update_bar_style(bar: ProgressBar, height: float, corner_radius: int, font_size: int) -> void:

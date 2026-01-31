@@ -11,6 +11,9 @@ var duration: float = 0.0
 var max_duration: float = 0.0
 var is_permanent: bool = false
 
+## Dynamic icon size (passed from StatusEffectDisplay)
+var _icon_size: float = 32.0
+
 ## Visual components
 var _background: ColorRect
 var _icon: ColorRect
@@ -18,7 +21,8 @@ var _timer_label: Label
 var _duration_bar: ProgressBar
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(UITheme.STATUS_EFFECT_ICON_SIZE, UITheme.STATUS_EFFECT_ICON_SIZE)
+	custom_minimum_size = Vector2(_icon_size, _icon_size)
+	size = Vector2(_icon_size, _icon_size)
 	_setup_visuals()
 
 
@@ -36,6 +40,12 @@ func _process(delta: float) -> void:
 
 
 func _setup_visuals() -> void:
+	# Calculate relative sizes based on icon size
+	var pad: float = _icon_size * 0.08  # 8% padding
+	var bar_height: float = _icon_size * 0.15  # 15% for duration bar
+	var font_size: int = int(_icon_size * 0.4)  # 40% for timer text
+	var corner_radius: int = int(_icon_size * 0.08)
+
 	# Background (border color indicates buff/debuff)
 	_background = ColorRect.new()
 	_background.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -45,21 +55,20 @@ func _setup_visuals() -> void:
 	# Icon placeholder (inner colored square)
 	_icon = ColorRect.new()
 	_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
-	var pad := UITheme.PADDING_ELEMENT_SMALL
 	_icon.offset_left = pad
 	_icon.offset_top = pad
 	_icon.offset_right = -pad
-	_icon.offset_bottom = -UITheme.BAR_HEIGHT_THIN - pad * 2  # Leave room for timer
+	_icon.offset_bottom = -bar_height - pad * 2  # Leave room for timer
 	_icon.color = _get_effect_color()
 	add_child(_icon)
 
 	# Duration bar at bottom
 	_duration_bar = ProgressBar.new()
 	_duration_bar.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	_duration_bar.offset_top = -UITheme.BAR_HEIGHT_THIN - pad
+	_duration_bar.offset_top = -bar_height - pad
 	_duration_bar.offset_left = pad
 	_duration_bar.offset_right = -pad
-	_duration_bar.custom_minimum_size.y = UITheme.BAR_HEIGHT_THIN
+	_duration_bar.custom_minimum_size.y = bar_height
 	_duration_bar.show_percentage = false
 
 	if is_permanent:
@@ -72,14 +81,14 @@ func _setup_visuals() -> void:
 
 	var bar_style := StyleBoxFlat.new()
 	bar_style.bg_color = Color(1.0, 1.0, 1.0, 0.8)
-	bar_style.corner_radius_bottom_left = 1
-	bar_style.corner_radius_bottom_right = 1
+	bar_style.corner_radius_bottom_left = corner_radius
+	bar_style.corner_radius_bottom_right = corner_radius
 	_duration_bar.add_theme_stylebox_override("fill", bar_style)
 
 	var bar_bg := StyleBoxFlat.new()
 	bar_bg.bg_color = Color(0.2, 0.2, 0.2, 0.8)
-	bar_bg.corner_radius_bottom_left = 1
-	bar_bg.corner_radius_bottom_right = 1
+	bar_bg.corner_radius_bottom_left = corner_radius
+	bar_bg.corner_radius_bottom_right = corner_radius
 	_duration_bar.add_theme_stylebox_override("background", bar_bg)
 
 	add_child(_duration_bar)
@@ -89,9 +98,9 @@ func _setup_visuals() -> void:
 	_timer_label.set_anchors_preset(Control.PRESET_CENTER)
 	_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_timer_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_timer_label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_SMALL)
-	_timer_label.add_theme_color_override("font_color", UITheme.COLOR_SELECTED)
-	_timer_label.add_theme_color_override("font_shadow_color", UITheme.COLOR_PANEL_DARK_BG)
+	_timer_label.add_theme_font_size_override("font_size", font_size)
+	_timer_label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0))
+	_timer_label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.5))
 	_timer_label.add_theme_constant_override("shadow_offset_x", 1)
 	_timer_label.add_theme_constant_override("shadow_offset_y", 1)
 	add_child(_timer_label)
@@ -151,9 +160,10 @@ func _get_effect_color() -> Color:
 			return Color(0.4, 0.7, 0.4) if not is_debuff else Color(0.5, 0.5, 0.5)
 
 
-func setup(p_effect_type: String, p_duration: float, p_is_debuff: bool = true) -> void:
+func setup(p_effect_type: String, p_duration: float, p_is_debuff: bool = true, p_icon_size: float = 32.0) -> void:
 	effect_type = p_effect_type
 	is_debuff = p_is_debuff
+	_icon_size = p_icon_size
 
 	# Negative duration or zero means permanent effect
 	if p_duration < 0:
@@ -165,7 +175,22 @@ func setup(p_effect_type: String, p_duration: float, p_is_debuff: bool = true) -
 		duration = p_duration
 		max_duration = p_duration
 
+	custom_minimum_size = Vector2(_icon_size, _icon_size)
+	size = Vector2(_icon_size, _icon_size)
+
 	if is_inside_tree():
+		_setup_visuals()
+
+
+## Update icon size dynamically (called when HUD resizes)
+func set_size_dynamic(new_size: float) -> void:
+	_icon_size = new_size
+	custom_minimum_size = Vector2(_icon_size, _icon_size)
+	size = Vector2(_icon_size, _icon_size)
+	# Rebuild visuals with new size
+	if is_inside_tree():
+		for child in get_children():
+			child.queue_free()
 		_setup_visuals()
 
 
