@@ -63,30 +63,31 @@
 | Concept | Description |
 |---------|-------------|
 | **Animation Sheet** | Spritesheet where each pixel has a unique RGB color that matches a position in the UV Map |
-| **UV Map** | 32x32 texture with unique colors per pixel - shader searches this to find UV coordinates |
+| **UV Map** | 64x64 texture with unique colors per pixel - shader searches this to find UV coordinates |
 | **Lookup Texture** | The actual appearance (skin) - sampled at the position found in the UV Map |
 | **Color-Lookup** | Shader technique: find animation pixel's color in UV map → use found position to sample skin |
 | **Sector-Based Slots** | Equipment system: position in UV map determines which equipment slot texture to use |
 | **Anchor** | Position data for attaching weapons to animation frames |
+| **Color Tolerance** | How close colors must match (0.002 = ~0.5 RGB units). Must be < half the minimum color distance in the UV map |
 
 ### Color-Lookup UV System
 
 Our system uses **color matching** instead of encoding UV in R/G channels:
 
 ```
-ANIMATION FRAME                      UV MAP (32x32)                    LOOKUP TEXTURE
+ANIMATION FRAME                      UV MAP (64x64)                    LOOKUP TEXTURE
 ┌────────────────┐                   ┌────────────────┐                ┌────────────────┐
 │  Pixel at (5,3)│                   │                │                │                │
 │  Color: #A4B2C3│ ──color match──►  │  #A4B2C3 found │ ──position──►  │  Sample at     │
-│                │                   │  at pos (12,8) │                │  UV (12/32,    │
-└────────────────┘                   └────────────────┘                │     8/32)      │
+│                │                   │  at pos (12,8) │                │  UV (12.5/64,  │
+└────────────────┘                   └────────────────┘                │     8.5/64)    │
                                                                        └────────────────┘
 
 WORKFLOW:
 1. Animation sprite pixel has unique RGB color (e.g., #A4B2C3)
-2. Shader searches UV Map for that exact color
+2. Shader searches UV Map for that exact color (within tolerance 0.002)
 3. Found at position (12, 8) in UV Map
-4. Convert to UV: (12/32, 8/32) = (0.375, 0.25)
+4. Convert to UV: (12+0.5)/64 = 0.1953125
 5. Sample Lookup Texture at that UV coordinate
 6. Output: skin color with animation's alpha as mask
 ```
@@ -373,167 +374,31 @@ anchor_attack_1h_down       | anim_humanoid_attack_1h_down | 3  | 4        | 0  
 
 For single-skin characters (enemies, NPCs, testing):
 
-```glsl
-shader_type canvas_item;
-render_mode blend_mix;
+> **CRITICAL RULES** (learned through debugging):
+> 1. **Never use `source_color`** on `uv_map` or `skin` samplers — in canvas_item shaders, TEXTURE is NOT linearized, so uniforms shouldn't be either. Using `source_color` puts them in different color spaces.
+> 2. **Tolerance must be tiny** — if UV map colors are gradient-based (adjacent pixels differ by ~5 RGB units), tolerance of 0.02 causes 97% false matches. Use 0.002 (~0.5 RGB units). Rule: tolerance < half the minimum color distance in the UV map.
+> 3. **No `out bool` params, no `return` in fragment()** — the mobile renderer rejects these. Use sentinel return values (`vec2(-1,-1)`) and conditional assignment chains instead.
+> 4. **Use `hint_default_white, filter_nearest`** on all sampler2D uniforms — bare `filter_nearest` can fail to compile.
 
-// UV Color-Lookup Shader
-// Searches UV map for matching color, samples skin at found position
-
-// The UV reference map - contains unique colors per pixel position
-uniform sampler2D uv_map : hint_default_white, filter_nearest;
-
-// The appearance texture (skin/lookup)
-uniform sampler2D skin : hint_default_white, filter_nearest;
-
-// Size of the UV map for searching
-uniform vec2 uv_map_size = vec2(32.0, 32.0);
-
-// Color matching tolerance (for anti-aliasing/compression artifacts)
-uniform float color_tolerance : hint_range(0.0, 0.1) = 0.01;
-
-// Visual modifiers
-uniform vec4 tint : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform float flash_amount : hint_range(0.0, 1.0) = 0.0;
-uniform vec4 flash_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-
-// Find UV coordinates by matching color in the UV map
-vec2 find_color_in_uvmap(vec3 target_color) {
-    for (float y = 0.0; y < uv_map_size.y; y += 1.0) {
-        for (float x = 0.0; x < uv_map_size.x; x += 1.0) {
-            vec2 sample_uv = vec2(x + 0.5, y + 0.5) / uv_map_size;
-            vec4 map_color = texture(uv_map, sample_uv);
-
-            // Only check non-transparent pixels
-            if (map_color.a > 0.5) {
-                vec3 diff = abs(map_color.rgb - target_color);
-                if (diff.r < color_tolerance && diff.g < color_tolerance && diff.b < color_tolerance) {
-                    return sample_uv;
-                }
-            }
-        }
-    }
-    return vec2(0.5, 0.5); // Fallback to center
-}
-
-void fragment() {
-    // Sample the animation sprite (TEXTURE)
-    vec4 anim_color = texture(TEXTURE, UV);
-
-    if (anim_color.a < 0.01) {
-        discard;
-    }
-
-    // Find where this color appears in the UV map
-    vec2 skin_uv = find_color_in_uvmap(anim_color.rgb);
-
-    // Sample the skin texture at found position
-    vec4 skin_color = texture(skin, skin_uv);
-
-    // Apply tint and flash
-    vec4 final_color = skin_color;
-    final_color.rgb *= tint.rgb;
-    final_color.rgb = mix(final_color.rgb, flash_color.rgb, flash_amount);
-
-    COLOR = vec4(final_color.rgb, anim_color.a * skin_color.a);
-}
-```
+See `shaders/uv_color_lookup.gdshader` for the actual working implementation. The shader includes 5 debug modes (switchable via uniform):
+- Mode 0: Normal rendering
+- Mode 1: Raw frame colors (verify TEXTURE reads correctly)
+- Mode 2: Matched UV positions as R=x, G=y color
+- Mode 3: Match success — green=found, red=fallback
+- Mode 4: Raw skin lookup (no tint/flash)
 
 ### Equipment Shader: `uv_equipment_lookup.gdshader`
 
-For player character with equipment slots (sector-based):
+For player character with equipment slots (sector-based). See `shaders/uv_equipment_lookup.gdshader` for the actual implementation.
 
-```glsl
-shader_type canvas_item;
-render_mode blend_mix;
+Same color-lookup mechanism as the basic shader, but adds position-based sector detection to choose which equipment texture to sample.
 
-// UV Equipment Lookup Shader
-// Uses POSITION in UV map to determine equipment slot (sector-based)
-
-uniform sampler2D uv_map : hint_default_white, filter_nearest;
-
-// Equipment slot textures (pixel-perfect overlays with uv_map)
-uniform sampler2D skin_base : hint_default_white, filter_nearest;
-uniform sampler2D skin_head : hint_default_transparent, filter_nearest;
-uniform sampler2D skin_body : hint_default_transparent, filter_nearest;
-uniform sampler2D skin_hands : hint_default_transparent, filter_nearest;
-uniform sampler2D skin_feet : hint_default_transparent, filter_nearest;
-
-uniform vec2 uv_map_size = vec2(32.0, 32.0);
-uniform float color_tolerance : hint_range(0.0, 0.1) = 0.01;
-
-// Sector boundaries (configurable per character)
-// Default: Head=top, Feet=bottom, Body=middle-left, Hands=middle-right
-uniform float sector_head_max_y : hint_range(0.0, 1.0) = 0.25;
-uniform float sector_feet_min_y : hint_range(0.0, 1.0) = 0.75;
-uniform float sector_hands_min_x : hint_range(0.0, 1.0) = 0.5;
-
-uniform vec4 tint : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-uniform float flash_amount : hint_range(0.0, 1.0) = 0.0;
-uniform vec4 flash_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);
-
-// Determine body part based on UV position (sector-based)
-int get_body_part_from_position(vec2 uv) {
-    if (uv.y < sector_head_max_y) return 1; // Head
-    if (uv.y >= sector_feet_min_y) return 4; // Feet
-    if (uv.x >= sector_hands_min_x) return 3; // Hands
-    return 2; // Body
-}
-
-vec2 find_color_in_uvmap(vec3 target_color) {
-    for (float y = 0.0; y < uv_map_size.y; y += 1.0) {
-        for (float x = 0.0; x < uv_map_size.x; x += 1.0) {
-            vec2 sample_uv = vec2(x + 0.5, y + 0.5) / uv_map_size;
-            vec4 map_color = texture(uv_map, sample_uv);
-            if (map_color.a > 0.5) {
-                vec3 diff = abs(map_color.rgb - target_color);
-                if (diff.r < color_tolerance && diff.g < color_tolerance && diff.b < color_tolerance) {
-                    return sample_uv;
-                }
-            }
-        }
-    }
-    return vec2(0.5, 0.5);
-}
-
-vec4 sample_equipment(vec2 uv, int body_part) {
-    vec4 equip;
-    if (body_part == 1) {
-        equip = texture(skin_head, uv);
-        if (equip.a > 0.01) return equip;
-    } else if (body_part == 2) {
-        equip = texture(skin_body, uv);
-        if (equip.a > 0.01) return equip;
-    } else if (body_part == 3) {
-        equip = texture(skin_hands, uv);
-        if (equip.a > 0.01) return equip;
-    } else if (body_part == 4) {
-        equip = texture(skin_feet, uv);
-        if (equip.a > 0.01) return equip;
-    }
-    return texture(skin_base, uv); // Fallback to base skin
-}
-
-void fragment() {
-    vec4 anim_color = texture(TEXTURE, UV);
-    if (anim_color.a < 0.01) discard;
-
-    vec2 skin_uv = find_color_in_uvmap(anim_color.rgb);
-    int body_part = get_body_part_from_position(skin_uv);
-    vec4 skin_color = sample_equipment(skin_uv, body_part);
-
-    vec4 final_color = skin_color;
-    final_color.rgb *= tint.rgb;
-    final_color.rgb = mix(final_color.rgb, flash_color.rgb, flash_amount);
-
-    COLOR = vec4(final_color.rgb, anim_color.a * skin_color.a);
-}
-```
+> **NOTE**: When adapting this shader, apply the same critical rules as the basic shader (no `source_color` on texture samplers, tight tolerance, mobile-safe control flow).
 
 ### Sector Layout for Equipment
 
 ```
-UV MAP SECTORS (32x32 texture):
+UV MAP SECTORS (64x64 texture):
 ┌────────────────────────────────┐
 │                                │
 │        HEAD SECTOR             │  Y: 0.00 - 0.25
@@ -567,9 +432,15 @@ This will be documented in PHASE_7_LIGHTING_ATMOSPHERE.md when implemented.
 
 ### Test Scenes
 
-Two test scenes are available for shader development:
+Three test scenes are available for shader development:
 
-**`scenes/test/test_custom_uv_shader.tscn`** - Basic color-lookup testing
+**`scenes/test/test_annia_uv_shader.tscn`** - Simplified color-lookup testing (64x64)
+- Uses `uv_color_lookup.gdshader`
+- Assets: `assets/test/NewTest/` (Frame1.png, AnniaUVsimplified.png, AnniaLookup.png)
+- Controls: Space=flash, T=tint, R=reload
+- Debug buttons at bottom: Normal, Frame Colors, UV Positions, Match Status, Raw Skin
+
+**`scenes/test/test_custom_uv_shader.tscn`** - Original 32x32 color-lookup testing
 - Uses `uv_color_lookup.gdshader`
 - Controls: R=reload textures, S=swap skin, Space=flash, T=tint, 1-5=frames
 
@@ -1562,10 +1433,12 @@ Test assets are located at:
 
 ### Important Guidelines
 
-- **All textures must be 32x32** (or match your UV map size)
-- **Use Nearest filtering** - never Linear (causes blurring)
-- **Colors must match exactly** - tolerance is ~0.02 (about 5 RGB values)
-- **Pixel positions matter** - UV map position = lookup texture position
+- **All textures must match your UV map size** (currently 64x64 for Annia test, 32x32 for original player test)
+- **Use Nearest filtering** — never Linear (causes blurring and color interpolation)
+- **Colors must match exactly** — tolerance is 0.002 (~0.5 RGB units). UV map colors must have a minimum distance of at least 2 RGB units between any two pixels
+- **Never use smooth gradients in UV maps** — adjacent pixels must have colors far enough apart to avoid false matches during the shader's sequential search
+- **Never use `source_color`** on `uv_map` or `skin` sampler uniforms — this causes sRGB-to-linear conversion mismatch with TEXTURE in canvas_item shaders
+- **Pixel positions matter** — UV map position = lookup texture position
 - **Transparent pixels** work correctly in both UV map and lookup textures
 
 ---
@@ -1607,6 +1480,6 @@ Tests the sector-based equipment shader with slot toggling.
 
 ---
 
-*Document Version: 3.0 - Updated for Color-Lookup shader system*
+*Document Version: 4.0 - Updated with verified shader constraints and debug system*
 *Companion to: ART_DIRECTION.md*
-*Last Updated: Session claude/phase-1-TestingShaders-spp2s*
+*Last Updated: Session claude/testingshaders2-branch-lKfTU*

@@ -894,7 +894,7 @@ Size: 20x15 tiles (320x240 pixels)
 1. Draw character silhouette for each frame
 2. Color each pixel to MATCH the UV map color at the desired position
 3. Alpha channel defines the visible shape
-4. Colors must match within tolerance (~5 RGB values)
+4. Colors must match within tolerance (~0.5 RGB values at 0.002 tolerance)
 
 ### Hot-Reload Development Workflow
 1. Open test scene (`test_custom_uv_shader.tscn` or `test_equipment_shader.tscn`)
@@ -914,8 +914,8 @@ If you're stuck on an asset:
 ## WHEN YOU'RE STUCK
 
 **Shader shows wrong colors?**
-→ Colors in animation must EXACTLY match UV map (within tolerance)
-→ Check textures are 32x32 and aligned
+→ Colors in animation must EXACTLY match UV map (within tolerance 0.002)
+→ Check textures match UV map size (64x64) and are aligned
 → Ensure texture filter is "Nearest" not "Linear"
 
 **Character is invisible?**
@@ -935,6 +935,6 @@ If you're stuck on an asset:
 
 ---
 
-*Document Version: 2.0 - Updated for Color-Lookup shader system*
-*Last Updated: Session claude/phase-1-TestingShaders-spp2s*
+*Document Version: 3.0 - Updated with verified shader constraints*
+*Last Updated: Session claude/testingshaders2-branch-lKfTU*
 *This is your guided path from nothing to a fully rendered visual system.*
