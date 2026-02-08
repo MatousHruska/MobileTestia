@@ -2,7 +2,7 @@
 extends Node2D
 
 ## Test scene for Annia UV lookup shader
-## Tests: Frame1 + AnniaUVsimplified + AnniaLookup
+## Tests: Frame1 + AnniaUVComplexCorrect + AnniaLookupEditedFinal
 ##
 ## Controls:
 ##   Space - Test hit flash (white)
@@ -15,8 +15,8 @@ const FRAME_HEIGHT := 64
 
 const BASE_PATH := "res://assets/test/NewTest/"
 
-const UV_MAP_FILE := "AnniaUVsimplified.png"
-const SKIN_FILE := "AnniaLookup.png"
+const UV_MAP_FILE := "AnniaUVComplexCorrect.png"
+const SKIN_FILE := "AnniaLookupEditedFinal.png"
 
 const DEBUG_NAMES := {
 	0: "Normal",
