@@ -2,21 +2,28 @@
 extends Node2D
 
 ## Test scene for Annia UV lookup shader
-## Tests: Frame1 + AnniaUVComplexCorrect + AnniaLookupEditedFinal
+## Tests: Frame1/Idle01 + FinalsUV + FinalsLookup
 ##
 ## Controls:
 ##   Space - Test hit flash (white)
 ##   T - Toggle poison tint (green)
 ##   R - Reload textures from disk
-##   Buttons at bottom - Debug mode switching
+##   Buttons at bottom - Debug mode switching, frame switching
 
 const FRAME_WIDTH := 64
 const FRAME_HEIGHT := 64
 
 const BASE_PATH := "res://assets/test/NewTest/"
 
-const UV_MAP_FILE := "AnniaUVComplexCorrect.png"
-const SKIN_FILE := "AnniaLookupEditedFinal.png"
+const UV_MAP_FILE := "FinalsUV.png"
+const SKIN_FILE := "FinalsLookup.png"
+
+const FRAME_FILES := {
+	"Basic": "Frame1.png",
+	"Idle": "Idle01.png",
+}
+
+var current_frame: String = "Basic"
 
 const DEBUG_NAMES := {
 	0: "Normal",
@@ -36,7 +43,8 @@ func _ready() -> void:
 
 
 func _setup_textures() -> void:
-	var frame_sheet = load(BASE_PATH + "Frame1.png")
+	var frame_file: String = FRAME_FILES[current_frame]
+	var frame_sheet = load(BASE_PATH + frame_file)
 	var uv_map = load(BASE_PATH + UV_MAP_FILE)
 	var skin = load(BASE_PATH + SKIN_FILE)
 
@@ -56,7 +64,7 @@ func _setup_textures() -> void:
 	material.set_shader_parameter("debug_mode", 0.0)
 
 	print("=== Annia Textures Loaded ===")
-	print("Frame: ", frame_sheet.get_size())
+	print("Frame: %s (%s)" % [frame_file, str(frame_sheet.get_size())])
 	print("UV Map: ", uv_map.get_size())
 	print("Skin: ", skin.get_size(), " [", SKIN_FILE, "]")
 	print("Tolerance: 0.002 (~0.5 in 0-255)")
@@ -112,6 +120,28 @@ func _on_debug_skin() -> void:
 	_set_debug_mode(4)
 
 
+# Frame switching callbacks
+func _switch_frame(frame_name: String) -> void:
+	current_frame = frame_name
+	var frame_file: String = FRAME_FILES[current_frame]
+	var frame_sheet = load(BASE_PATH + frame_file)
+	if not frame_sheet:
+		push_error("Failed to load frame: " + frame_file)
+		return
+	sprite.texture = frame_sheet
+	sprite.region_rect = Rect2(0, 0, FRAME_WIDTH, FRAME_HEIGHT)
+	label.text = "Frame: %s (%s)" % [current_frame, frame_file]
+	print("Switched to frame: %s (%s)" % [current_frame, frame_file])
+
+
+func _on_frame_basic() -> void:
+	_switch_frame("Basic")
+
+
+func _on_frame_idle() -> void:
+	_switch_frame("Idle")
+
+
 func _test_flash() -> void:
 	var material := sprite.material as ShaderMaterial
 	material.set_shader_parameter("flash_amount", 1.0)
@@ -137,7 +167,8 @@ func _reload_textures() -> void:
 	print("")
 	print("=== RELOADING TEXTURES ===")
 
-	var frame_sheet = load(BASE_PATH + "Frame1.png")
+	var frame_file: String = FRAME_FILES[current_frame]
+	var frame_sheet = load(BASE_PATH + frame_file)
 	var uv_map = load(BASE_PATH + UV_MAP_FILE)
 	var skin = load(BASE_PATH + SKIN_FILE)
 
@@ -149,7 +180,7 @@ func _reload_textures() -> void:
 		material.set_shader_parameter("skin", skin)
 		material.set_shader_parameter("uv_map_size", Vector2(64.0, 64.0))
 
-		print("Reloaded: Frame1.png (%s)" % str(frame_sheet.get_size()))
+		print("Reloaded: %s (%s)" % [frame_file, str(frame_sheet.get_size())])
 		print("Reloaded: %s (%s)" % [UV_MAP_FILE, str(uv_map.get_size())])
 		print("Reloaded: %s (%s)" % [SKIN_FILE, str(skin.get_size())])
 		print("=== RELOAD COMPLETE ===")

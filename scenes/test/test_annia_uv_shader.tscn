@@ -39,11 +39,34 @@ offset_bottom = -200.0
 text = "Annia UV Shader Test - Space=flash, T=tint, R=reload"
 horizontal_alignment = 1
 
+[node name="FrameButtons" type="HBoxContainer" parent="."]
+offset_left = -460.0
+offset_top = 160.0
+offset_right = 460.0
+offset_bottom = 200.0
+theme_override_constants/separation = 8
+
+[node name="FrameLabel" type="Label" parent="FrameButtons"]
+layout_mode = 2
+text = "Frame:"
+
+[node name="BtnBasic" type="Button" parent="FrameButtons"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Basic"
+
+[node name="BtnIdle" type="Button" parent="FrameButtons"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Idle"
+
 [node name="DebugButtons" type="HBoxContainer" parent="."]
 offset_left = -460.0
-offset_top = 200.0
+offset_top = 208.0
 offset_right = 460.0
-offset_bottom = 240.0
+offset_bottom = 248.0
 theme_override_constants/separation = 8
 
 [node name="BtnNormal" type="Button" parent="DebugButtons"]
@@ -76,6 +99,8 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Raw Skin"
 
+[connection signal="pressed" from="FrameButtons/BtnBasic" to="." method="_on_frame_basic"]
+[connection signal="pressed" from="FrameButtons/BtnIdle" to="." method="_on_frame_idle"]
 [connection signal="pressed" from="DebugButtons/BtnNormal" to="." method="_on_debug_normal"]
 [connection signal="pressed" from="DebugButtons/BtnFrame" to="." method="_on_debug_frame"]
 [connection signal="pressed" from="DebugButtons/BtnUVPos" to="." method="_on_debug_uv_pos"]
