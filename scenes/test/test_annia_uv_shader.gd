@@ -2,12 +2,11 @@
 extends Node2D
 
 ## Test scene for Annia UV lookup shader (basic, no body-part separation)
-## Tests: Frame1 + AnniaUV + AnniaLookupEditedFinal / AnniaSecondaryLookup
+## Tests: Frame1 + AnniaUVsimplified + AnniaLookupSimplified
 ##
 ## Controls:
 ##   Space - Test hit flash (white)
 ##   T - Toggle poison tint (green)
-##   S - Swap skin (primary <-> secondary lookup)
 ##   R - Reload textures from disk
 
 const FRAME_WIDTH := 64
@@ -16,14 +15,10 @@ const FRAME_COUNT := 1
 
 const BASE_PATH := "res://assets/test/NewTest/"
 
-const SKINS := [
-	"AnniaLookupEditedFinal.png",
-	"AnniaSecondaryLookup.png",
-]
+const UV_MAP_FILE := "AnniaUVsimplified.png"
+const SKIN_FILE := "AnniaLookupSimplified.png"
 
 @onready var sprite: Sprite2D = $Sprite2D
-
-var _current_skin_index: int = 0
 
 
 func _ready() -> void:
@@ -33,8 +28,8 @@ func _ready() -> void:
 
 func _setup_textures() -> void:
 	var frame_sheet = load(BASE_PATH + "Frame1.png")
-	var uv_map = load(BASE_PATH + "AnniaUV.png")
-	var skin = load(BASE_PATH + SKINS[_current_skin_index])
+	var uv_map = load(BASE_PATH + UV_MAP_FILE)
+	var skin = load(BASE_PATH + SKIN_FILE)
 
 	if not frame_sheet or not uv_map or not skin:
 		push_error("Failed to load Annia textures!")
@@ -53,17 +48,16 @@ func _setup_textures() -> void:
 	print("=== Annia Textures Loaded ===")
 	print("Frame: ", frame_sheet.get_size())
 	print("UV Map: ", uv_map.get_size())
-	print("Skin: ", skin.get_size(), " [", SKINS[_current_skin_index], "]")
+	print("Skin: ", skin.get_size(), " [", SKIN_FILE, "]")
 
 
 func _print_instructions() -> void:
 	print("")
 	print("=== Annia UV Shader Test (Basic - No Body Parts) ===")
 	print("")
-	print("Testing: Frame1 + AnniaUV + Lookup textures")
+	print("Testing: Frame1 + AnniaUVsimplified + AnniaLookupSimplified")
 	print("")
 	print("Controls:")
-	print("  S          - SWAP skin (primary <-> secondary)")
 	print("  Space      - Test hit flash (white)")
 	print("  T          - Toggle poison tint (green)")
 	print("  R          - Reload textures from disk")
@@ -81,8 +75,6 @@ func _input(event: InputEvent) -> void:
 		match event.keycode:
 			KEY_R:
 				_reload_textures()
-			KEY_S:
-				_swap_skin()
 			KEY_T:
 				_test_tint()
 
@@ -108,29 +100,13 @@ func _test_tint() -> void:
 		print("Tint: Normal")
 
 
-func _swap_skin() -> void:
-	_current_skin_index = (_current_skin_index + 1) % SKINS.size()
-	var skin_path = BASE_PATH + SKINS[_current_skin_index]
-
-	if ResourceLoader.exists(skin_path):
-		var skin = load(skin_path)
-		if skin:
-			var material := sprite.material as ShaderMaterial
-			material.set_shader_parameter("skin", skin)
-			print("Swapped to: %s" % SKINS[_current_skin_index])
-		else:
-			print("ERROR: Failed to load skin: %s" % skin_path)
-	else:
-		print("Skin not found: %s" % skin_path)
-
-
 func _reload_textures() -> void:
 	print("")
 	print("=== RELOADING TEXTURES ===")
 
 	var frame_sheet = load(BASE_PATH + "Frame1.png")
-	var uv_map = load(BASE_PATH + "AnniaUV.png")
-	var skin = load(BASE_PATH + SKINS[_current_skin_index])
+	var uv_map = load(BASE_PATH + UV_MAP_FILE)
+	var skin = load(BASE_PATH + SKIN_FILE)
 
 	if frame_sheet and uv_map and skin:
 		sprite.texture = frame_sheet
@@ -141,8 +117,8 @@ func _reload_textures() -> void:
 		material.set_shader_parameter("uv_map_size", Vector2(64.0, 64.0))
 
 		print("Reloaded: Frame1.png (%s)" % str(frame_sheet.get_size()))
-		print("Reloaded: AnniaUV.png (%s)" % str(uv_map.get_size()))
-		print("Reloaded: %s (%s)" % [SKINS[_current_skin_index], str(skin.get_size())])
+		print("Reloaded: %s (%s)" % [UV_MAP_FILE, str(uv_map.get_size())])
+		print("Reloaded: %s (%s)" % [SKIN_FILE, str(skin.get_size())])
 		print("=== RELOAD COMPLETE ===")
 	else:
 		print("ERROR: Failed to reload textures!")
