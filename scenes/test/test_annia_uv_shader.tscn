@@ -35,5 +35,5 @@ offset_left = -400.0
 offset_top = -250.0
 offset_right = 400.0
 offset_bottom = -200.0
-text = "Annia UV Shader Test - S=swap skin, Space=flash, T=tint, R=reload"
+text = "Annia UV Shader Test (Simplified) - Space=flash, T=tint, R=reload"
 horizontal_alignment = 1
