@@ -53,7 +53,7 @@ func _setup_textures() -> void:
 	material.set_shader_parameter("skin", skin)
 	material.set_shader_parameter("uv_map_size", Vector2(64.0, 64.0))
 	material.set_shader_parameter("color_tolerance", 0.002)
-	material.set_shader_parameter("debug_mode", 0)
+	material.set_shader_parameter("debug_mode", 0.0)
 
 	print("=== Annia Textures Loaded ===")
 	print("Frame: ", frame_sheet.get_size())
@@ -89,7 +89,7 @@ func _input(event: InputEvent) -> void:
 
 func _set_debug_mode(mode: int) -> void:
 	var material := sprite.material as ShaderMaterial
-	material.set_shader_parameter("debug_mode", mode)
+	material.set_shader_parameter("debug_mode", float(mode))
 	var mode_name: String = DEBUG_NAMES.get(mode, "Unknown")
 	label.text = "Debug Mode %d: %s" % [mode, mode_name]
 	print("Debug mode: %d - %s" % [mode, mode_name])
