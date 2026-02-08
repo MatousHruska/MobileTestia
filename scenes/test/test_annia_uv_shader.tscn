@@ -39,27 +39,25 @@ offset_bottom = -200.0
 text = "Annia UV Shader Test - Space=flash, T=tint, R=reload"
 horizontal_alignment = 1
 
-[node name="FrameButtons" type="HBoxContainer" parent="."]
+[node name="FrameButtons" type="VBoxContainer" parent="."]
 offset_left = -460.0
-offset_top = 160.0
-offset_right = 460.0
-offset_bottom = 200.0
-theme_override_constants/separation = 8
+offset_top = -200.0
+offset_right = -370.0
+offset_bottom = -100.0
+theme_override_constants/separation = 4
 
 [node name="FrameLabel" type="Label" parent="FrameButtons"]
 layout_mode = 2
 text = "Frame:"
 
 [node name="BtnBasic" type="Button" parent="FrameButtons"]
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(80, 28)
 layout_mode = 2
-size_flags_horizontal = 3
 text = "Basic"
 
 [node name="BtnIdle" type="Button" parent="FrameButtons"]
-custom_minimum_size = Vector2(100, 0)
+custom_minimum_size = Vector2(80, 28)
 layout_mode = 2
-size_flags_horizontal = 3
 text = "Idle"
 
 [node name="DebugButtons" type="HBoxContainer" parent="."]
