@@ -436,7 +436,7 @@ Three test scenes are available for shader development:
 
 **`scenes/test/test_annia_uv_shader.tscn`** - Simplified color-lookup testing (64x64)
 - Uses `uv_color_lookup.gdshader`
-- Assets: `assets/test/NewTest/` (Frame1.png, AnniaUVsimplified.png, AnniaLookup.png)
+- Assets: `assets/test/NewTest/` (Frame1.png, AnniaUVComplexCorrect.png, AnniaLookupEditedFinal.png)
 - Controls: Space=flash, T=tint, R=reload
 - Debug buttons at bottom: Normal, Frame Colors, UV Positions, Match Status, Raw Skin
 
