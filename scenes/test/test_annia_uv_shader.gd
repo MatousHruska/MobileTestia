@@ -8,8 +8,7 @@ extends Node2D
 ##   Space - Test hit flash (white)
 ##   T - Toggle poison tint (green)
 ##   R - Reload textures from disk
-##   1-4 - Debug modes (1=frame colors, 2=UV positions, 3=match status, 4=raw skin)
-##   0 - Normal rendering
+##   Buttons at bottom - Debug mode switching
 
 const FRAME_WIDTH := 64
 const FRAME_HEIGHT := 64
@@ -71,11 +70,7 @@ func _print_instructions() -> void:
 	print("  Space      - Test hit flash (white)")
 	print("  T          - Toggle poison tint (green)")
 	print("  R          - Reload textures from disk")
-	print("  0          - Normal rendering")
-	print("  1          - Debug: show raw frame colors")
-	print("  2          - Debug: show UV match positions")
-	print("  3          - Debug: match success (green/red)")
-	print("  4          - Debug: raw skin lookup")
+	print("  Buttons    - Switch debug modes")
 	print("")
 
 
@@ -90,16 +85,6 @@ func _input(event: InputEvent) -> void:
 				_reload_textures()
 			KEY_T:
 				_test_tint()
-			KEY_0:
-				_set_debug_mode(0)
-			KEY_1:
-				_set_debug_mode(1)
-			KEY_2:
-				_set_debug_mode(2)
-			KEY_3:
-				_set_debug_mode(3)
-			KEY_4:
-				_set_debug_mode(4)
 
 
 func _set_debug_mode(mode: int) -> void:
@@ -108,6 +93,23 @@ func _set_debug_mode(mode: int) -> void:
 	var mode_name: String = DEBUG_NAMES.get(mode, "Unknown")
 	label.text = "Debug Mode %d: %s" % [mode, mode_name]
 	print("Debug mode: %d - %s" % [mode, mode_name])
+
+
+# Button callbacks
+func _on_debug_normal() -> void:
+	_set_debug_mode(0)
+
+func _on_debug_frame() -> void:
+	_set_debug_mode(1)
+
+func _on_debug_uv_pos() -> void:
+	_set_debug_mode(2)
+
+func _on_debug_match() -> void:
+	_set_debug_mode(3)
+
+func _on_debug_skin() -> void:
+	_set_debug_mode(4)
 
 
 func _test_flash() -> void:
