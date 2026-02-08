@@ -2,13 +2,13 @@
 extends Node2D
 
 ## Test scene for Annia UV lookup shader
-## Tests: Frame1/Idle01 + FinalsUV + FinalsLookup
+## Tests: Frame1 / Idle animation + FinalsUV + FinalsLookup
 ##
 ## Controls:
 ##   Space - Test hit flash (white)
 ##   T - Toggle poison tint (green)
 ##   R - Reload textures from disk
-##   Buttons at bottom - Debug mode switching, frame switching
+##   Buttons - Debug mode switching, animation switching (Basic/Idle)
 
 const FRAME_WIDTH := 64
 const FRAME_HEIGHT := 64
@@ -18,12 +18,16 @@ const BASE_PATH := "res://assets/test/NewTest/"
 const UV_MAP_FILE := "FinalsUV.png"
 const SKIN_FILE := "FinalsLookup.png"
 
-const FRAME_FILES := {
-	"Basic": "Frame1.png",
-	"Idle": "Idle01.png",
+const ANIMATIONS := {
+	"Basic": ["Frame1.png"],
+	"Idle": ["Idle01.png", "Idle02.png"],
 }
 
-var current_frame: String = "Basic"
+const ANIM_FRAME_TIME := 0.2  # 200ms between frames
+
+var current_anim: String = "Basic"
+var current_anim_index: int = 0
+var anim_timer: float = 0.0
 
 const DEBUG_NAMES := {
 	0: "Normal",
@@ -43,7 +47,7 @@ func _ready() -> void:
 
 
 func _setup_textures() -> void:
-	var frame_file: String = FRAME_FILES[current_frame]
+	var frame_file: String = ANIMATIONS[current_anim][0]
 	var frame_sheet = load(BASE_PATH + frame_file)
 	var uv_map = load(BASE_PATH + UV_MAP_FILE)
 	var skin = load(BASE_PATH + SKIN_FILE)
@@ -80,6 +84,20 @@ func _print_instructions() -> void:
 	print("  R          - Reload textures from disk")
 	print("  Buttons    - Switch debug modes")
 	print("")
+
+
+func _process(delta: float) -> void:
+	var frames: Array = ANIMATIONS[current_anim]
+	if frames.size() <= 1:
+		return
+	anim_timer += delta
+	if anim_timer >= ANIM_FRAME_TIME:
+		anim_timer -= ANIM_FRAME_TIME
+		current_anim_index = (current_anim_index + 1) % frames.size()
+		var frame_file: String = frames[current_anim_index]
+		var tex = load(BASE_PATH + frame_file)
+		if tex:
+			sprite.texture = tex
 
 
 func _input(event: InputEvent) -> void:
@@ -120,26 +138,30 @@ func _on_debug_skin() -> void:
 	_set_debug_mode(4)
 
 
-# Frame switching callbacks
-func _switch_frame(frame_name: String) -> void:
-	current_frame = frame_name
-	var frame_file: String = FRAME_FILES[current_frame]
+# Animation switching callbacks
+func _switch_anim(anim_name: String) -> void:
+	current_anim = anim_name
+	current_anim_index = 0
+	anim_timer = 0.0
+	var frames: Array = ANIMATIONS[current_anim]
+	var frame_file: String = frames[0]
 	var frame_sheet = load(BASE_PATH + frame_file)
 	if not frame_sheet:
 		push_error("Failed to load frame: " + frame_file)
 		return
 	sprite.texture = frame_sheet
 	sprite.region_rect = Rect2(0, 0, FRAME_WIDTH, FRAME_HEIGHT)
-	label.text = "Frame: %s (%s)" % [current_frame, frame_file]
-	print("Switched to frame: %s (%s)" % [current_frame, frame_file])
+	var frame_count: int = frames.size()
+	label.text = "Anim: %s (%d frames, %dms)" % [current_anim, frame_count, int(ANIM_FRAME_TIME * 1000)]
+	print("Switched to anim: %s (%d frames)" % [current_anim, frame_count])
 
 
 func _on_frame_basic() -> void:
-	_switch_frame("Basic")
+	_switch_anim("Basic")
 
 
 func _on_frame_idle() -> void:
-	_switch_frame("Idle")
+	_switch_anim("Idle")
 
 
 func _test_flash() -> void:
@@ -167,7 +189,7 @@ func _reload_textures() -> void:
 	print("")
 	print("=== RELOADING TEXTURES ===")
 
-	var frame_file: String = FRAME_FILES[current_frame]
+	var frame_file: String = ANIMATIONS[current_anim][current_anim_index]
 	var frame_sheet = load(BASE_PATH + frame_file)
 	var uv_map = load(BASE_PATH + UV_MAP_FILE)
 	var skin = load(BASE_PATH + SKIN_FILE)
