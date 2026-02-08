@@ -1,7 +1,7 @@
 shader_type canvas_item;
 render_mode blend_mix;
 
-// The UV reference map - contains unique colors per body part
+// The UV reference map - each pixel has a unique color
 // Position of a color in this texture = UV coordinates for skin lookup
 uniform sampler2D uv_map : hint_default_white, filter_nearest;
 
@@ -68,5 +68,5 @@ void fragment() {
     final_color.rgb = mix(final_color.rgb, flash_color.rgb, flash_amount);
 
     // Output: skin color with animation's alpha controlling shape
-    COLOR = vec4(final_color.rgb, anim_color.a * skin_color.a);
+    COLOR = vec4(final_color.rgb, anim_color.a);
 }
