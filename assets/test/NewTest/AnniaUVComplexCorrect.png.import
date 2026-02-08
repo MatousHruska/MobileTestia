@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://beuu715ujbj7v"
-path="res://.godot/imported/AnniaUVsimplified.png-57ea9929f6a9fc44ea117416a20baa42.ctex"
+uid="uid://hta7bc23g24m"
+path="res://.godot/imported/AnniaUVComplexCorrect.png-6f438f56615df07b5e1babea87ea815e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/test/NewTest/AnniaUVsimplified.png"
-dest_files=["res://.godot/imported/AnniaUVsimplified.png-57ea9929f6a9fc44ea117416a20baa42.ctex"]
+source_file="res://assets/test/NewTest/AnniaUVComplexCorrect.png"
+dest_files=["res://.godot/imported/AnniaUVComplexCorrect.png-6f438f56615df07b5e1babea87ea815e.ctex"]
 
 [params]
 

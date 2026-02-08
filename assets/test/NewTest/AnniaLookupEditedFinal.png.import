@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://8m3yl7rhgmbs"
-path="res://.godot/imported/AnniaLookup.png-c6d023fc21ab4653143eb3334fae8ee1.ctex"
+uid="uid://cbdh2b2fkweua"
+path="res://.godot/imported/AnniaLookupEditedFinal.png-99310a14ae87e79b1cffc8ca3b3088b9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/test/NewTest/AnniaLookup.png"
-dest_files=["res://.godot/imported/AnniaLookup.png-c6d023fc21ab4653143eb3334fae8ee1.ctex"]
+source_file="res://assets/test/NewTest/AnniaLookupEditedFinal.png"
+dest_files=["res://.godot/imported/AnniaLookupEditedFinal.png-99310a14ae87e79b1cffc8ca3b3088b9.ctex"]
 
 [params]
 
