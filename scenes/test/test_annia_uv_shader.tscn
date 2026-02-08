@@ -6,10 +6,11 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_annia_uv"]
 shader = ExtResource("2_shader")
 shader_parameter/uv_map_size = Vector2(64, 64)
-shader_parameter/color_tolerance = 0.02
+shader_parameter/color_tolerance = 0.002
 shader_parameter/tint = Color(1, 1, 1, 1)
 shader_parameter/flash_amount = 0.0
 shader_parameter/flash_color = Color(1, 1, 1, 1)
+shader_parameter/debug_mode = 0
 
 [node name="TestAnniaUVShader" type="Node2D"]
 script = ExtResource("1_script")
