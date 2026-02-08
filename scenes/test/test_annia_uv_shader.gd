@@ -2,7 +2,7 @@
 extends Node2D
 
 ## Test scene for Annia UV lookup shader (basic, no body-part separation)
-## Tests: Frame1 + AnniaUVsimplified + AnniaLookupSimplified
+## Tests: Frame1 + AnniaUVsimplified + AnniaLookup
 ##
 ## Controls:
 ##   Space - Test hit flash (white)
@@ -16,7 +16,7 @@ const FRAME_COUNT := 1
 const BASE_PATH := "res://assets/test/NewTest/"
 
 const UV_MAP_FILE := "AnniaUVsimplified.png"
-const SKIN_FILE := "AnniaLookupSimplified.png"
+const SKIN_FILE := "AnniaLookup.png"
 
 @onready var sprite: Sprite2D = $Sprite2D
 
@@ -55,7 +55,7 @@ func _print_instructions() -> void:
 	print("")
 	print("=== Annia UV Shader Test (Basic - No Body Parts) ===")
 	print("")
-	print("Testing: Frame1 + AnniaUVsimplified + AnniaLookupSimplified")
+	print("Testing: Frame1 + AnniaUVsimplified + AnniaLookup")
 	print("")
 	print("Controls:")
 	print("  Space      - Test hit flash (white)")
