@@ -3,10 +3,10 @@ render_mode blend_mix;
 
 // The UV reference map - each pixel has a unique color
 // Position of a color in this texture = UV coordinates for skin lookup
-uniform sampler2D uv_map : hint_default_white, filter_nearest;
+uniform sampler2D uv_map : source_color, filter_nearest;
 
 // Skin texture - the actual appearance (pixel-perfect overlay with uv_map)
-uniform sampler2D skin : hint_default_white, filter_nearest;
+uniform sampler2D skin : source_color, filter_nearest;
 
 // Size of the UV map for searching
 uniform vec2 uv_map_size = vec2(32.0, 32.0);
