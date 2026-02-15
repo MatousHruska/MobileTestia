@@ -1,7 +1,6 @@
 # MOBILETESTIA ART DIRECTION DOCUMENT
 
 > **Reference Style**: Hyper Light Drifter
-> **Core Tech**: UV Lookup Animation System
 > **Target**: Mobile (2022+ smartphones)
 
 ---
@@ -68,54 +67,6 @@
 | World Icons | 16×16 | Items on ground |
 | UI Icons | 32×32 | Abilities, inventory |
 | Portraits | 64×64 | NPC dialogue |
-
-### UV Color-Lookup System
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    RENDERING ARCHITECTURE                    │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  COLOR-LOOKUP SHADER WORKFLOW:                               │
-│                                                              │
-│  1. Animation Sprite → Contains unique colors per pixel      │
-│  2. UV Map → Same unique colors at same positions (32x32)    │
-│  3. Shader searches UV map for matching color                │
-│  4. Found position → samples Lookup/Skin texture at that UV  │
-│                                                              │
-│  ┌──────────┐      ┌──────────┐      ┌──────────┐           │
-│  │ Animation│ RGB  │  UV Map  │ pos  │  Lookup  │           │
-│  │  Frame   │ ───► │ (search) │ ───► │ Texture  │ → Output  │
-│  └──────────┘      └──────────┘      └──────────┘           │
-│                                                              │
-│  PLAYER CHARACTER (Equipment Shader)                         │
-│  ├── Animation Sheet (colored silhouettes)                   │
-│  ├── UV Map (unique color per pixel, 32x32)                  │
-│  ├── Base Skin (fallback for all body parts)                 │
-│  └── Equipment Slots (sector-based):                         │
-│      ├── Head Skin (top sector: Y < 0.25)                    │
-│      ├── Body Skin (middle-left: Y 0.25-0.75, X < 0.5)       │
-│      ├── Hands Skin (middle-right: Y 0.25-0.75, X >= 0.5)    │
-│      └── Feet Skin (bottom sector: Y >= 0.75)                │
-│                                                              │
-│  ENEMIES / NPCS (Single Skin Shader)                         │
-│  ├── Animation Sheet (unique colors matching UV map)         │
-│  ├── UV Map (shared with player or unique per type)          │
-│  └── Single Lookup Texture (swappable for variants)          │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
-**How Color-Lookup Works:**
-1. Each pixel in the animation sprite has a unique RGB color
-2. The UV Map texture has the same colors at corresponding positions
-3. The shader scans the UV map to find where the color appears
-4. That found position becomes the UV coordinate to sample the skin
-
-**Benefits:**
-- Full RGB available for visual art workflow (no channel encoding)
-- Pixel-perfect mapping between animation and skin textures
-- Easy to create variants by swapping lookup textures
-- Equipment slots determined by position, not color channels
 
 ### Weapon Categories
 | Category | Examples | Animation Set |
@@ -496,45 +447,30 @@ MAGENTAS (Signature) (4)
 
 ## IMPLEMENTATION PRIORITY
 
-### Phase 1: Core Foundation ✓
-1. UV Color-Lookup shader (searches UV map for color match)
-2. Test scene with hot-reload capability
-3. Basic shader parameters (tint, flash)
-4. Single lookup texture swapping
+### Phase 1: Core Animations
+1. Player spritesheet animations (idle, walk, attack, dodge, death)
+2. Weapon sprites visible during attack animations
+3. Integration with player controller
 
-### Phase 2: Player Character
-5. Player animation sheet (unique colors per pixel)
-6. UV Map (32x32, pixel-perfect overlay with animation)
-7. Multiple lookup textures (skin variants)
-8. Integration with player controller
+### Phase 2: Basic World
+4. Terrain tileset (grass, stone, snow)
+5. Basic interactables (chest, door)
+6. Simple particle effects
 
-### Phase 3: Equipment System ✓
-9. Sector-based equipment shader (position determines slot)
-10. Head/Body/Hands/Feet lookup textures
-11. Per-slot texture swapping
-12. Equipment test scene with slot toggles
+### Phase 3: Enemies
+7. Enemy sprite animations
+8. Enemy death animations
 
-### Phase 3: Basic World
-9. Terrain tileset (grass, stone, snow)
-10. Basic interactables (chest, door)
-11. Simple particle effects
+### Phase 4: Polish & Effects
+9. Full lighting system with normal maps
+10. Weather system (snow)
+11. Hit feedback (hitstop, shake)
+12. Bloom and post-processing
 
-### Phase 4: Enemies
-12. One enemy motion map (wolf or skeleton)
-13. Two enemy skin variants
-14. Enemy death animations
-
-### Phase 5: Polish & Effects
-15. Full lighting system with normal maps
-16. Weather system (snow)
-17. Hit feedback (hitstop, shake)
-18. Bloom and post-processing
-
-### Phase 6: Content Expansion
-19. Additional enemy types
-20. Additional equipment skins
-21. Additional weapon categories
-22. Additional zones and tilesets
+### Phase 5: Content Expansion
+13. Additional enemy types
+14. Additional weapon sprites
+15. Additional zones and tilesets
 
 ---
 
@@ -548,7 +484,6 @@ MAGENTAS (Signature) (4)
 - Death's Door (character design balance)
 
 ### Technical References
-- Aarthificial UV Lookup system (animation tech)
 - Sprite Lamp / normal mapped 2D (lighting)
 
 ---
@@ -559,13 +494,12 @@ MAGENTAS (Signature) (4)
 |--------|-----|--------------|
 | Storytelling | Wordless, visual only | Full dialogue & text |
 | UI text | Symbols only | Full descriptions |
-| Equipment | Fixed character | Visible equipment changes |
+| Equipment | Fixed character | Static character, weapon visible during attacks |
 | Combat text | None | Floating damage numbers |
 | Menus | Minimal | Deep progression systems |
 | Character | The Drifter (mysterious) | Young woman (defined) |
 
 ---
 
-*Document Version: 2.0*
-*Last Updated: Session claude/phase-1-TestingShaders-spp2s*
-*Major Update: Replaced R/G UV encoding with Color-Lookup shader system*
+*Document Version: 3.0*
+*Last Updated: Removed UV shader system in favor of simple sprite animations*
