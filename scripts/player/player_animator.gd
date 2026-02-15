@@ -146,8 +146,17 @@ func _get_direction_suffix() -> String:
 
 func get_weapon_anchor_position() -> Vector2:
 	## Returns the local position of the weapon anchor pixel in the current frame.
-	## Scans the current frame texture for the magenta anchor color.
+	## Delegates to CharacterVisuals if available, falls back to legacy scanning.
 	## Returns Vector2.INF if no anchor found (non-attack frames).
+	var controller := get_parent() as PlayerController
+	if controller and controller.character_visuals:
+		return controller.character_visuals._find_weapon_anchor()
+	return _legacy_get_weapon_anchor_position()
+
+
+func _legacy_get_weapon_anchor_position() -> Vector2:
+	## Original anchor scanning logic — used as fallback when CharacterVisuals
+	## is not yet available (e.g., during _ready before visuals are set up).
 	if not sprite_frames:
 		return Vector2.INF
 
@@ -165,16 +174,12 @@ func get_weapon_anchor_position() -> Vector2:
 	if img == null:
 		return Vector2.INF
 
-	# Scan for anchor pixel
 	for x in range(img.get_width()):
 		for y in range(img.get_height()):
 			var pixel := img.get_pixel(x, y)
 			if pixel.is_equal_approx(WEAPON_ANCHOR_COLOR):
-				# Convert from pixel coords to local coords
-				# Centered sprite: offset by half size
 				var local_x: float = x - img.get_width() / 2.0
 				var local_y: float = y - img.get_height() / 2.0
-				# Account for flip
 				if flip_h:
 					local_x = -local_x
 				return Vector2(local_x, local_y)

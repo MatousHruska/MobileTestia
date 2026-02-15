@@ -43,6 +43,9 @@ var is_casting: bool = false  ## Currently channeling a cast
 @onready var hitbox_pivot: Node2D = $HitboxPivot
 @onready var animator: PlayerAnimator = $Sprite
 
+## Visual layers (weapon, effects, overlay)
+var character_visuals: CharacterVisuals = null
+
 ## Level up effect
 var _level_up_effect: LevelUpEffect
 
@@ -76,6 +79,7 @@ func _ready() -> void:
 	_setup_level_up_effect()
 	_setup_status_effect_manager()
 	_setup_animator()
+	_setup_character_visuals()
 	Debug.print_saveload("[SAVELOAD] PlayerController._ready() COMPLETE")
 
 
@@ -142,6 +146,14 @@ func _setup_animator() -> void:
 	if animator:
 		animator.attack_animation_finished.connect(_on_attack_animation_finished)
 		Debug.log("Player", "Animator connected")
+
+
+func _setup_character_visuals() -> void:
+	character_visuals = CharacterVisuals.new()
+	character_visuals.name = "CharacterVisuals"
+	add_child(character_visuals)
+	if animator:
+		character_visuals.initialize(animator)  # PlayerAnimator IS the AnimatedSprite2D
 
 
 func _on_attack_animation_finished() -> void:
@@ -357,6 +369,14 @@ func _update_facing(new_facing: Facing) -> void:
 	# Update hitbox pivot rotation
 	if hitbox_pivot:
 		hitbox_pivot.rotation = _facing_to_rotation(current_facing)
+
+	# Sync visuals direction
+	if character_visuals:
+		var flipped := (new_facing == Facing.LEFT)
+		var dir_name: String = Facing.keys()[new_facing].to_lower()
+		if dir_name == "left":
+			dir_name = "right"
+		character_visuals.set_direction(dir_name, flipped)
 
 	Debug.trace("Player", "Facing changed", Facing.keys()[current_facing])
 
