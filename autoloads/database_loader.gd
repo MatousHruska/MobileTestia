@@ -1540,6 +1540,9 @@ func create_enemy(enemy_id: String, level: int = 1, spawn_config: Dictionary = {
 	if not spawn_config.is_empty():
 		enemy.set_meta("spawn_config", spawn_config)
 
+	# Load SpriteFrames resource if one exists for this enemy
+	_load_enemy_sprite_frames(enemy, enemy_id)
+
 	Debug.log("Database", "Created enemy from database", {
 		"id": enemy_id,
 		"name": enemy.enemy_name,
@@ -1549,6 +1552,20 @@ func create_enemy(enemy_id: String, level: int = 1, spawn_config: Dictionary = {
 	})
 
 	return enemy
+
+
+func _load_enemy_sprite_frames(enemy: EnemyNPC, enemy_id: String) -> void:
+	## Try to load a SpriteFrames resource matching the enemy_id.
+	## Convention: res://resources/enemies/{short_id}_sprites.tres
+	## where short_id strips the "ene_" prefix (e.g., ene_starved_wolf -> starved_wolf)
+	var short_id: String = enemy_id
+	if short_id.begins_with("ene_"):
+		short_id = short_id.substr(4)
+
+	var sprite_path := "res://resources/enemies/%s_sprites.tres" % short_id
+	if ResourceLoader.exists(sprite_path):
+		enemy.sprite_frames = load(sprite_path)
+		Debug.log("Database", "Loaded SpriteFrames for %s: %s" % [enemy_id, sprite_path])
 
 
 ## Get list of all enemy IDs
