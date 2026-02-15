@@ -44,14 +44,19 @@ func _ready() -> void:
 	animation_finished.connect(_on_animation_finished)
 
 	# If parent has an AbilityVisualPlayer, listen to it
-	if _controller.ability_visual_player:
-		_visual_player = _controller.ability_visual_player
-		_visual_player.sequence_started.connect(_on_visual_sequence_started)
-		_visual_player.sequence_finished.connect(_on_visual_sequence_finished)
+	# (deferred because parent's _ready runs after children's _ready)
+	call_deferred("_connect_visual_player")
 
 	# Start with idle
 	_play_anim(State.IDLE)
 	Debug.info("Player", "PlayerAnimator ready")
+
+
+func _connect_visual_player() -> void:
+	if _controller and _controller.ability_visual_player:
+		_visual_player = _controller.ability_visual_player
+		_visual_player.sequence_started.connect(_on_visual_sequence_started)
+		_visual_player.sequence_finished.connect(_on_visual_sequence_finished)
 
 
 func _on_visual_sequence_started(_template_id: String) -> void:
