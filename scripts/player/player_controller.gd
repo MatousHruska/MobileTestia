@@ -41,6 +41,7 @@ var is_casting: bool = false  ## Currently channeling a cast
 
 ## Components
 @onready var hitbox_pivot: Node2D = $HitboxPivot
+@onready var animator: PlayerAnimator = $Sprite
 
 ## Level up effect
 var _level_up_effect: LevelUpEffect
@@ -74,6 +75,7 @@ func _ready() -> void:
 	_update_facing(Facing.DOWN)
 	_setup_level_up_effect()
 	_setup_status_effect_manager()
+	_setup_animator()
 	Debug.print_saveload("[SAVELOAD] PlayerController._ready() COMPLETE")
 
 
@@ -133,6 +135,18 @@ func _setup_status_effect_manager() -> void:
 	_status_effect_manager = StatusEffectManager.new()
 	_status_effect_manager.name = "StatusEffectManager"
 	add_child(_status_effect_manager)
+
+
+func _setup_animator() -> void:
+	## Connect animator signals for attack completion
+	if animator:
+		animator.attack_animation_finished.connect(_on_attack_animation_finished)
+		Debug.log("Player", "Animator connected")
+
+
+func _on_attack_animation_finished() -> void:
+	## Called by animator when attack animation completes
+	end_attack()
 
 
 func _physics_process(delta: float) -> void:
@@ -231,8 +245,6 @@ func request_attack() -> void:
 
 	Debug.log("Combat", "Attack started", ["facing:", Facing.keys()[current_facing]])
 
-	# TODO: Trigger attack animation on new simple animator
-
 
 func request_dodge() -> void:
 	if is_dodging or is_attacking:
@@ -255,8 +267,6 @@ func request_dodge() -> void:
 
 	dodge_started.emit()
 	Debug.log("Combat", "Dodge started", ["direction:", _dodge_direction])
-
-	# TODO: Trigger dodge animation on new simple animator
 
 
 func end_attack() -> void:
@@ -293,8 +303,8 @@ func _end_recovery_lockout() -> void:
 
 ## Facing logic
 func _update_animator() -> void:
-	## Update the animator based on velocity and state
-	# TODO: Update new simple animator with velocity
+	## Animator handles its own state via signals and velocity polling.
+	## Nothing to do here — kept for interface compatibility.
 	pass
 
 
@@ -347,8 +357,6 @@ func _update_facing(new_facing: Facing) -> void:
 	# Update hitbox pivot rotation
 	if hitbox_pivot:
 		hitbox_pivot.rotation = _facing_to_rotation(current_facing)
-
-	# TODO: Update new simple animator facing
 
 	Debug.trace("Player", "Facing changed", Facing.keys()[current_facing])
 
