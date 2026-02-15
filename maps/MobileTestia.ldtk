@@ -1465,7 +1465,7 @@
 					"entityInstances": [
 						{
 							"__identifier": "playerspawn",
-							"__grid": [43,94],
+							"__grid": [44,111],
 							"__pivot": [0.5,1],
 							"__tags": ["player"],
 							"__tile": null,
@@ -1474,13 +1474,13 @@
 							"width": 16,
 							"height": 16,
 							"defUid": 50,
-							"px": [700,1520],
+							"px": [716,1792],
 							"fieldInstances": [{ "__identifier": "spawn_id", "__type": "String", "__value": "default", "__tile": null, "defUid": 51, "realEditorValues": [{
 								"id": "V_String",
 								"params": ["default"]
 							}] }],
-							"__worldX": 700,
-							"__worldY": 1520
+							"__worldX": 716,
+							"__worldY": 1792
 						},
 						{
 							"__identifier": "spawnpoint",
@@ -1598,7 +1598,7 @@
 						},
 						{
 							"__identifier": "spawnpoint",
-							"__grid": [78,20],
+							"__grid": [74,118],
 							"__pivot": [0.5,0.5],
 							"__tags": ["enemy"],
 							"__tile": null,
@@ -1607,7 +1607,7 @@
 							"width": 16,
 							"height": 16,
 							"defUid": 10,
-							"px": [1256,328],
+							"px": [1192,1896],
 							"fieldInstances": [
 								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
 									"id": "V_String",
@@ -1615,8 +1615,8 @@
 								}] },
 								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
 							],
-							"__worldX": 1256,
-							"__worldY": 328
+							"__worldX": 1192,
+							"__worldY": 1896
 						},
 						{
 							"__identifier": "npcspawn",
@@ -1636,6 +1636,25 @@
 							}] }],
 							"__worldX": 616,
 							"__worldY": 1584
+						},
+						{
+							"__identifier": "spawnpoint",
+							"__grid": [73,91],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
+							"__tile": null,
+							"__smartColor": "#FF0000",
+							"iid": "045241d0-fa90-11f0-9bd0-a5b544959283",
+							"width": 16,
+							"height": 16,
+							"defUid": 10,
+							"px": [1176,1464],
+							"fieldInstances": [
+								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "", "__tile": null, "defUid": 11, "realEditorValues": [] },
+								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
+							],
+							"__worldX": 1176,
+							"__worldY": 1464
 						}
 					]
 				},
