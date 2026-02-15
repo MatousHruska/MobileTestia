@@ -21,6 +21,12 @@ const WEAPON_ANCHOR_COLOR := Color("#FF00AA")
 enum State { IDLE, WALK, DASH, ATTACK }
 var _current_state: State = State.IDLE
 
+## Reference to the AbilityVisualPlayer (if parent has one)
+var _visual_player: AbilityVisualPlayer = null
+
+## Whether a visual sequence is currently playing (don't override animations)
+var _in_visual_sequence: bool = false
+
 
 func _ready() -> void:
 	_controller = get_parent() as PlayerController
@@ -37,17 +43,32 @@ func _ready() -> void:
 	# Connect our own animation_finished signal
 	animation_finished.connect(_on_animation_finished)
 
+	# If parent has an AbilityVisualPlayer, listen to it
+	if _controller.ability_visual_player:
+		_visual_player = _controller.ability_visual_player
+		_visual_player.sequence_started.connect(_on_visual_sequence_started)
+		_visual_player.sequence_finished.connect(_on_visual_sequence_finished)
+
 	# Start with idle
 	_play_anim(State.IDLE)
 	Debug.info("Player", "PlayerAnimator ready")
+
+
+func _on_visual_sequence_started(_template_id: String) -> void:
+	_in_visual_sequence = true
+
+
+func _on_visual_sequence_finished(_template_id: String) -> void:
+	_in_visual_sequence = false
+	_play_anim(State.IDLE)
 
 
 func _process(_delta: float) -> void:
 	if not _controller:
 		return
 
-	# Don't override one-shot animations (attack/dash) with movement logic
-	if _current_state == State.ATTACK or _current_state == State.DASH:
+	# Don't override during visual sequences or one-shot animations
+	if _in_visual_sequence or _current_state == State.ATTACK or _current_state == State.DASH:
 		return
 
 	# Determine walk vs idle from velocity

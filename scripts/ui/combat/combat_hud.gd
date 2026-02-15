@@ -71,6 +71,10 @@ var cast_direction: Vector2 = Vector2.DOWN
 const DEFAULT_MAX_CHARGE_TIME: float = 2.0      ## Default maximum charge time for full range
 const DEFAULT_BASE_RANGE: float = 150.0         ## Default range at minimum charge
 
+## Pending talent for visual sequencer signal-based damage/projectile handling
+var _pending_talent: TalentData = null
+var _pending_slot_index: int = -1
+
 ## Constants
 const DEFAULT_CONFIG_PATH := "res://resources/combat_hud_config.tres"
 
@@ -120,6 +124,131 @@ static func get_cooldown(talent: TalentData) -> float:
 	if cdr > 0 and talent.cooldown > 0:
 		return talent.cooldown * (1.0 - minf(cdr, 75.0) / 100.0)  # Cap at 75% CDR
 	return talent.cooldown
+
+
+#===============================================================================
+# VISUAL SEQUENCER INTEGRATION
+#===============================================================================
+
+## Map TalentData.EffectType to visual template IDs
+static func _get_visual_template_for_talent(talent: TalentData) -> String:
+	match talent.effect_type:
+		TalentData.EffectType.DAMAGE:
+			return "melee_single"
+		TalentData.EffectType.PROJECTILE:
+			return "ranged_aim"
+		TalentData.EffectType.MAGIC_PROJECTILE, TalentData.EffectType.MAGIC_PROJECTILE_AOE:
+			if talent.cast_time > 0:
+				return "spell_cast"
+			else:
+				return "spell_instant"
+		TalentData.EffectType.SELF_BUFF:
+			return "self_buff"
+		TalentData.EffectType.HEAL:
+			return "spell_instant"
+		TalentData.EffectType.AOE:
+			return "spell_cast"
+		_:
+			return "melee_single"
+
+
+static func _build_visual_overrides(talent: TalentData) -> Dictionary:
+	var overrides := {}
+
+	if talent.lunge_force > 0:
+		overrides["lunge_distance"] = get_lunge_force(talent)
+	if talent.lunge_duration > 0:
+		overrides["lunge_duration"] = talent.lunge_duration
+	if talent.recovery_time > 0:
+		overrides["recovery_duration"] = talent.recovery_time
+	if talent.cast_time > 0:
+		overrides["cast_duration"] = get_cast_time(talent)
+
+	return overrides
+
+
+func _connect_visual_signals() -> void:
+	if not player or not player.ability_visual_player:
+		return
+	var vp := player.ability_visual_player
+
+	if not vp.damage_event.is_connected(_on_visual_damage_event):
+		vp.damage_event.connect(_on_visual_damage_event)
+	if not vp.spawn_projectile_event.is_connected(_on_visual_spawn_projectile):
+		vp.spawn_projectile_event.connect(_on_visual_spawn_projectile)
+	if not vp.sequence_finished.is_connected(_on_visual_finished):
+		vp.sequence_finished.connect(_on_visual_finished)
+
+
+func _disconnect_visual_signals() -> void:
+	if not player or not player.ability_visual_player:
+		return
+	var vp := player.ability_visual_player
+	if vp.damage_event.is_connected(_on_visual_damage_event):
+		vp.damage_event.disconnect(_on_visual_damage_event)
+	if vp.spawn_projectile_event.is_connected(_on_visual_spawn_projectile):
+		vp.spawn_projectile_event.disconnect(_on_visual_spawn_projectile)
+	if vp.sequence_finished.is_connected(_on_visual_finished):
+		vp.sequence_finished.disconnect(_on_visual_finished)
+
+
+func _on_visual_damage_event() -> void:
+	## The sequencer says "now is the damage frame" — apply damage using existing logic
+	if _pending_talent:
+		var invested := TalentManager.get_invested_points(_pending_talent.id)
+		var damage_result := DamageCalculator.calculate_final_damage(_pending_talent, invested)
+		_apply_skill_damage(_pending_talent, damage_result)
+	else:
+		# Basic attack — enable hitbox briefly
+		if player:
+			player._on_attack_hit_frame()
+
+
+func _on_visual_spawn_projectile() -> void:
+	## The sequencer says "now spawn the projectile" — spawn using existing logic
+	if _pending_talent:
+		_spawn_skill_projectile(_pending_talent)
+
+
+func _on_visual_finished(_template_id: String) -> void:
+	_pending_talent = null
+	_pending_slot_index = -1
+	_disconnect_visual_signals()
+
+
+func _spawn_skill_projectile(talent: TalentData) -> void:
+	## Pure projectile spawning — no animation logic
+	## Called by the visual sequencer's spawn_projectile_event signal
+	var facing_dir := _get_player_facing_vector()
+
+	match talent.effect_type:
+		TalentData.EffectType.PROJECTILE:
+			# For physical projectiles, use existing _fire_projectile logic
+			var max_range := get_hit_range(talent)
+			_fire_projectile(talent, facing_dir, max_range, 1.0)
+		TalentData.EffectType.MAGIC_PROJECTILE:
+			_fire_magic_projectile(talent, facing_dir)
+		TalentData.EffectType.MAGIC_PROJECTILE_AOE:
+			_fire_magic_projectile(talent, facing_dir)
+
+
+func _find_nearest_enemy_position() -> Vector2:
+	## Find the nearest enemy position for lunge targeting
+	if not player:
+		return Vector2.ZERO
+
+	var nearest_pos := player.global_position + _get_player_facing_vector() * 50.0
+	var nearest_dist := INF
+
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(enemy):
+			continue
+		var dist := player.global_position.distance_to(enemy.global_position)
+		if dist < nearest_dist:
+			nearest_dist = dist
+			nearest_pos = enemy.global_position
+
+	return nearest_pos
 
 
 func _ready() -> void:
@@ -530,13 +659,22 @@ func _on_attack_activated(_slot_index: int, _ability_id: String) -> void:
 
 	# If a skill is bound to the attack button, execute it
 	if attack_button_talent:
-		# Use slot index -1 for the attack button (special handling in _on_ability_activated)
 		_on_ability_activated(-1, attack_button_talent.id)
 		return
 
-	# Basic attack uses the player's request_attack which triggers animation
+	# Basic attack — use visual sequencer if available, else legacy
 	if player:
-		player.request_attack()
+		if player.ability_visual_player:
+			var overrides := {
+				"lunge_distance": player.attack_lunge_force,
+				"lunge_duration": player.attack_lunge_duration,
+			}
+			_pending_talent = null  # No talent — basic attack uses hitbox
+			_pending_slot_index = -1
+			_connect_visual_signals()
+			player.play_ability_visual("melee_single", overrides)
+		else:
+			player.request_attack()
 
 
 func _on_ability_activated(slot_index: int, ability_id: String) -> void:
@@ -570,32 +708,103 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 		Debug.log("Combat", "Not enough stamina for %s" % talent.talent_name)
 		return
 
+	# --- New sequencer-based path ---
+	if player and player.ability_visual_player:
+		_activate_skill_via_sequencer(slot_index, talent)
+		return
+
+	# --- Legacy fallback path ---
+	_activate_skill_legacy(slot_index, talent)
+
+
+func _activate_skill_via_sequencer(slot_index: int, talent: TalentData) -> void:
+	## Sequencer-based skill activation — delegates visuals to AbilityVisualPlayer
+
+	# For ranged skills, start aiming instead of immediate play
+	if talent.effect_type == TalentData.EffectType.PROJECTILE:
+		_start_aiming(slot_index, talent)
+		return
+
+	# Consume resources
+	if talent.mana_cost > 0:
+		PlayerStats.use_mana(talent.mana_cost)
+	if talent.stamina_cost > 0:
+		PlayerStats.use_stamina(talent.stamina_cost)
+
+	# Determine visual template
+	var template_id := _get_visual_template_for_talent(talent)
+	var overrides := _build_visual_overrides(talent)
+
+	# Find nearest enemy for target position (used by lunge direction)
+	var target_pos := _find_nearest_enemy_position()
+
+	# Connect to damage/projectile events for this activation
+	_pending_talent = talent
+	_pending_slot_index = slot_index
+	_connect_visual_signals()
+
+	# Play the visual sequence
+	player.play_ability_visual(template_id, overrides, target_pos)
+
+	# Start cooldown
+	_start_slot_cooldown(slot_index, talent)
+
+	ability_pressed.emit(slot_index, talent.id)
+
+	# Notify quest system for USE_ABILITY objectives
+	if QuestManager:
+		QuestManager.on_ability_used(talent.id)
+
+	Debug.log("Combat", "Skill via sequencer: %s (template: %s)" % [talent.talent_name, template_id])
+
+
+func _start_aiming(slot_index: int, talent: TalentData) -> void:
+	## Start aiming for ranged skills (enters hold-to-charge flow)
+	## This bridges into the existing _on_ability_hold_started logic
+	is_aiming = true
+	aiming_slot_index = slot_index
+	aiming_talent = talent
+	aim_start_time = Time.get_ticks_msec() / 1000.0
+
+	_ensure_aim_indicator()
+
+	var aim_dir := _get_player_facing_vector()
+	var final_range := get_hit_range(talent)
+	aim_indicator.activate(aim_dir, final_range)
+	aim_indicator.global_position = player.global_position
+
+	Debug.log("Combat", "Started aiming %s (via sequencer)" % talent.talent_name)
+
+
+func _start_slot_cooldown(slot_index: int, talent: TalentData) -> void:
+	## Start cooldown on the appropriate slot
+	if talent.cooldown > 0:
+		if slot_index == -1:
+			attack_button.start_cooldown(talent.cooldown)
+		elif slot_index >= 0 and slot_index < ability_slots.size():
+			ability_slots[slot_index].start_cooldown(talent.cooldown)
+
+
+func _activate_skill_legacy(slot_index: int, talent: TalentData) -> void:
+	## Legacy (pre-sequencer) skill activation — inline animation/movement
+
 	# Check if this is a magic projectile (AOE or single-target)
 	var is_magic_projectile := talent.effect_type in [
 		TalentData.EffectType.MAGIC_PROJECTILE,
 		TalentData.EffectType.MAGIC_PROJECTILE_AOE
 	]
-	print("[ABILITY] Checking magic projectile: effect_type=%s, is_magic=%s, cast_time=%s" % [
-		talent.effect_type, is_magic_projectile, talent.cast_time
-	])
 	if is_magic_projectile:
-		print("[ABILITY] Detected magic projectile (AOE=%s)!" % (talent.effect_type == TalentData.EffectType.MAGIC_PROJECTILE_AOE))
 		if talent.cast_time > 0:
-			# Has cast time - start casting sequence
 			_start_casting(slot_index, talent)
 		else:
-			# No cast time - fire immediately
 			_fire_magic_projectile_instant(slot_index, talent)
 		return
 
 	# Check if this is a self-buff (like Bandage)
 	if talent.effect_type == TalentData.EffectType.SELF_BUFF:
-		print("[ABILITY] Detected self-buff!")
 		if talent.cast_time > 0:
-			# Has cast time - start casting sequence
 			_start_casting_self_buff(slot_index, talent)
 		else:
-			# No cast time - apply immediately
 			_apply_self_buff_instant(slot_index, talent)
 		return
 
@@ -606,14 +815,14 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 		PlayerStats.use_stamina(talent.stamina_cost)
 
 	# Calculate damage
-	var invested := TalentManager.get_invested_points(ability_id)
+	var invested := TalentManager.get_invested_points(talent.id)
 	var damage_result := DamageCalculator.calculate_final_damage(talent, invested)
 
 	# Apply combat mechanics (lunge, animation, recovery)
 	_apply_skill_mechanics(talent)
 
 	# Wait for lunge to complete before applying damage
-	var lunge_delay := 0.1  # Match player's attack_lunge_duration
+	var lunge_delay := 0.1
 	if talent.lunge_force > 0:
 		await get_tree().create_timer(lunge_delay).timeout
 
@@ -621,21 +830,15 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 	_apply_skill_damage(talent, damage_result)
 
 	# Start cooldown
-	if talent.cooldown > 0:
-		if slot_index == -1:
-			# Attack button (main slot)
-			attack_button.start_cooldown(talent.cooldown)
-		elif slot_index >= 0 and slot_index < ability_slots.size():
-			# Regular ability slots
-			ability_slots[slot_index].start_cooldown(talent.cooldown)
+	_start_slot_cooldown(slot_index, talent)
 
-	ability_pressed.emit(slot_index, ability_id)
+	ability_pressed.emit(slot_index, talent.id)
 
 	# Notify quest system for USE_ABILITY objectives
 	if QuestManager:
-		QuestManager.on_ability_used(ability_id)
+		QuestManager.on_ability_used(talent.id)
 
-	Debug.log("Combat", "Skill executed: %s" % talent.talent_name, {
+	Debug.log("Combat", "Skill executed (legacy): %s" % talent.talent_name, {
 		"damage": int(damage_result.final_damage),
 		"crit": damage_result.is_critical,
 		"type": DamageCalculator.get_damage_type_name(damage_result.damage_type),
@@ -725,12 +928,32 @@ func _on_ability_released(slot_index: int, ability_id: String, hold_duration: fl
 		var charge_progress := clampf((hold_duration - min_charge) / (max_charge - min_charge), 0.0, 1.0)
 		effective_range = lerpf(base_range, max_range, charge_progress)
 
-	# Fire the projectile
-	_fire_projectile(aiming_talent, aim_indicator.get_aim_direction(), effective_range, damage_multiplier)
+	# Consume resources on release
+	if aiming_talent.stamina_cost > 0:
+		PlayerStats.use_stamina(aiming_talent.stamina_cost)
+	if aiming_talent.mana_cost > 0:
+		PlayerStats.use_mana(aiming_talent.mana_cost)
+
+	# Use sequencer path if available
+	if player and player.ability_visual_player:
+		var overrides := _build_visual_overrides(aiming_talent)
+		overrides["charge_percent"] = damage_multiplier
+
+		_pending_talent = aiming_talent
+		_pending_slot_index = slot_index
+		_connect_visual_signals()
+
+		# Play the ranged_aim template (skipping aim phase — go straight to release)
+		player.play_ability_visual("ranged_aim", overrides)
+
+		# Release the held aim phase so the sequence continues past aim -> release -> spawn
+		player.ability_visual_player.release_held_phase()
+	else:
+		# Legacy path — fire projectile directly
+		_fire_projectile(aiming_talent, aim_indicator.get_aim_direction(), effective_range, damage_multiplier)
 
 	# Start cooldown
-	if aiming_talent.cooldown > 0 and slot_index >= 0 and slot_index < ability_slots.size():
-		ability_slots[slot_index].start_cooldown(aiming_talent.cooldown)
+	_start_slot_cooldown(slot_index, aiming_talent)
 
 	# End aiming
 	_end_aiming()
