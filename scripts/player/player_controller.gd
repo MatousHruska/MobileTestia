@@ -40,7 +40,6 @@ var is_locked: bool = false  ## Prevents input during certain actions
 var is_casting: bool = false  ## Currently channeling a cast
 
 ## Components
-@onready var animator: UVCharacterAnimator = $UVCharacterAnimator
 @onready var hitbox_pivot: Node2D = $HitboxPivot
 
 ## Level up effect
@@ -72,7 +71,6 @@ func _ready() -> void:
 	Game.player = self
 	Debug.print_saveload("[SAVELOAD] Player: Set Game.player = self, Game.current_state AFTER: %s" % (Game.GameState.keys()[Game.current_state] if Game else "null"))
 	_load_settings_from_database()
-	_setup_animator()
 	_update_facing(Facing.DOWN)
 	_setup_level_up_effect()
 	_setup_status_effect_manager()
@@ -104,19 +102,6 @@ func _load_settings_from_database() -> void:
 		"dodge_duration": dodge_duration,
 		"attack_lunge_duration": attack_lunge_duration
 	})
-
-
-func _setup_animator() -> void:
-	## Connect animator signals
-	if not animator:
-		Debug.warning("Player", "UVCharacterAnimator not found!")
-		return
-
-	# Connect attack hit signal
-	if not animator.attack_hit_frame.is_connected(_on_attack_hit_frame):
-		animator.attack_hit_frame.connect(_on_attack_hit_frame)
-
-	Debug.info("Player", "UV animator connected")
 
 
 func _on_attack_hit_frame() -> void:
@@ -246,9 +231,7 @@ func request_attack() -> void:
 
 	Debug.log("Combat", "Attack started", ["facing:", Facing.keys()[current_facing]])
 
-	# Animator handles attack animation and timing
-	if animator:
-		animator.play_attack()
+	# TODO: Trigger attack animation on new simple animator
 
 
 func request_dodge() -> void:
@@ -273,8 +256,7 @@ func request_dodge() -> void:
 	dodge_started.emit()
 	Debug.log("Combat", "Dodge started", ["direction:", _dodge_direction])
 
-	if animator:
-		animator.play_dodge()
+	# TODO: Trigger dodge animation on new simple animator
 
 
 func end_attack() -> void:
@@ -312,8 +294,8 @@ func _end_recovery_lockout() -> void:
 ## Facing logic
 func _update_animator() -> void:
 	## Update the animator based on velocity and state
-	if animator:
-		animator.update_movement(velocity)
+	# TODO: Update new simple animator with velocity
+	pass
 
 
 func _update_facing_from_input(direction: Vector2) -> void:
@@ -366,9 +348,7 @@ func _update_facing(new_facing: Facing) -> void:
 	if hitbox_pivot:
 		hitbox_pivot.rotation = _facing_to_rotation(current_facing)
 
-	# Update animator facing
-	if animator:
-		animator.set_facing(current_facing)
+	# TODO: Update new simple animator facing
 
 	Debug.trace("Player", "Facing changed", Facing.keys()[current_facing])
 
@@ -547,19 +527,3 @@ func debug_test_ends_when_buff() -> void:
 		Debug.info("Debug", "Heal to full health to see buff disappear!")
 
 
-func debug_cycle_skin() -> void:
-	## Cycle through available skins for the player character
-	## Call from debug console or Numpad 9
-	if not animator:
-		Debug.warn("Debug", "No animator to cycle skin")
-		return
-
-	var skins = VisualAssets.get_available_skins("player")
-	if skins.is_empty():
-		return
-
-	var current_index = skins.find(animator.skin_id)
-	var next_index = (current_index + 1) % skins.size()
-	animator.set_skin(skins[next_index])
-	Debug.info("Debug", "Switched skin to: " + skins[next_index])
-	animator.print_state()

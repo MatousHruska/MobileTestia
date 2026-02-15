@@ -57,8 +57,6 @@ Consult these docs when working on the corresponding systems:
 | Collision layers | `docs/COLLISION_LAYERS.md` |
 | UI system | `docs/UI_DOCUMENTATION.md` |
 | Art direction | `docs/ART_DIRECTION.md` |
-| Visual system | `docs/VISUAL_SYSTEM_TECHNICAL.md`, `docs/VISUAL_IMPLEMENTATION_ROADMAP.md` |
-| Visual phases | `docs/visual_phases/PHASE_1_BASIC_SHADER.md` through `PHASE_8_POLISH_EFFECTS.md` |
 
 ## Project Structure
 
