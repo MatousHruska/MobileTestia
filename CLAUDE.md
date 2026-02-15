@@ -57,6 +57,7 @@ Consult these docs when working on the corresponding systems:
 | Collision layers | `docs/COLLISION_LAYERS.md` |
 | UI system | `docs/UI_DOCUMENTATION.md` |
 | Art direction | `docs/ART_DIRECTION.md` |
+| Placeholder sprites | `docs/PLACEHOLDER_SPRITES.md` |
 
 ## Project Structure
 
