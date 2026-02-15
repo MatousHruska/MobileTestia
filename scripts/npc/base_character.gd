@@ -36,6 +36,9 @@ var is_locked: bool = false  ## Prevents movement during certain actions
 ## Sprite reference (created dynamically in _setup_sprite)
 var sprite: AnimatedSprite2D = null
 
+## Visual layers (weapon, effects, overlay)
+var character_visuals: CharacterVisuals = null
+
 ## Name label
 var name_label: Label
 
@@ -84,8 +87,18 @@ func _setup_sprite() -> void:
 	# Connect animation signals
 	sprite.animation_finished.connect(_on_animation_finished)
 
+	# Set up visual layers (weapon, effects, overlay)
+	_setup_character_visuals()
+
 	# Play initial idle animation so sprite is visible immediately
 	_play_animation_for_state(AnimState.IDLE)
+
+
+func _setup_character_visuals() -> void:
+	character_visuals = CharacterVisuals.new()
+	character_visuals.name = "CharacterVisuals"
+	add_child(character_visuals)
+	character_visuals.initialize(sprite)
 
 
 func _setup_collision() -> void:
@@ -276,6 +289,13 @@ func _set_facing(new_facing: Facing) -> void:
 
 	if is_flipped != was_flipped and sprite:
 		sprite.flip_h = is_flipped
+
+	# Sync visuals direction
+	if character_visuals:
+		var dir_name: String = Facing.keys()[new_facing].to_lower()
+		if dir_name == "left":
+			dir_name = "right"
+		character_visuals.set_direction(dir_name, is_flipped)
 
 	facing_changed.emit(current_facing)
 	Debug.trace("NPC", "%s facing changed" % name, Facing.keys()[new_facing])
