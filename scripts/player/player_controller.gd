@@ -46,6 +46,9 @@ var is_casting: bool = false  ## Currently channeling a cast
 ## Visual layers (weapon, effects, overlay)
 var character_visuals: Node2D = null
 
+## Ability visual sequencer
+var ability_visual_player: AbilityVisualPlayer = null
+
 ## Level up effect
 var _level_up_effect: LevelUpEffect
 
@@ -80,6 +83,7 @@ func _ready() -> void:
 	_setup_status_effect_manager()
 	_setup_animator()
 	_setup_character_visuals()
+	_setup_ability_visual_player()
 	Debug.print_saveload("[SAVELOAD] PlayerController._ready() COMPLETE")
 
 
@@ -155,6 +159,83 @@ func _setup_character_visuals() -> void:
 	add_child(character_visuals)
 	if animator:
 		character_visuals.initialize(animator)  # PlayerAnimator IS the AnimatedSprite2D
+
+
+func _setup_ability_visual_player() -> void:
+	ability_visual_player = AbilityVisualPlayer.new()
+	ability_visual_player.name = "AbilityVisualPlayer"
+	add_child(ability_visual_player)
+
+	# Initialize with the sprite
+	if animator:
+		ability_visual_player.initialize(animator)
+
+	# Connect movement signal — the visual player requests movement,
+	# PlayerController executes it
+	ability_visual_player.movement_requested.connect(_on_visual_movement_requested)
+
+	# Connect sequence lifecycle
+	ability_visual_player.sequence_started.connect(_on_visual_sequence_started)
+	ability_visual_player.sequence_finished.connect(_on_visual_sequence_finished)
+
+	# Connect body animation signal to CharacterVisuals
+	if character_visuals:
+		character_visuals.connect_to_visual_player(ability_visual_player)
+
+
+func _on_visual_movement_requested(direction: String, distance: float, duration: float) -> void:
+	## Execute movement requested by the visual sequencer
+	var move_dir: Vector2
+
+	match direction:
+		"toward_target":
+			move_dir = _facing_to_vector(current_facing)
+		"away_from_target":
+			move_dir = -_facing_to_vector(current_facing)
+		"facing":
+			move_dir = _facing_to_vector(current_facing)
+		_:
+			move_dir = _facing_to_vector(current_facing)
+
+	# Use the existing lunge system
+	_lunge_velocity = move_dir * (distance / max(duration, 0.01))
+	_lunge_timer = duration
+
+	Debug.log("Combat", "Visual movement", {"dir": direction, "dist": distance, "dur": duration})
+
+
+func _on_visual_sequence_started(template_id: String) -> void:
+	is_attacking = true
+	is_locked = true  # Lock movement during ability animation
+	attack_started.emit()
+	Debug.log("Combat", "Visual sequence started: %s" % template_id)
+
+
+func _on_visual_sequence_finished(template_id: String) -> void:
+	is_attacking = false
+	is_locked = false
+	attack_ended.emit()
+	Debug.log("Combat", "Visual sequence finished: %s" % template_id)
+
+
+func play_ability_visual(template_id: String, overrides: Dictionary = {}, target_pos: Vector2 = Vector2.ZERO) -> void:
+	## Called by CombatHUD to trigger an ability's visual sequence
+	if ability_visual_player.is_playing:
+		Debug.warn("Combat", "Tried to play visual while one is active")
+		return
+
+	var template: AbilityVisualData = AbilityVisualTemplates.get_all().get(template_id)
+	if not template:
+		Debug.warn("Combat", "Unknown visual template: %s" % template_id)
+		# Fallback to legacy attack
+		request_attack()
+		return
+
+	# Snap facing if we have input
+	if input_direction != Vector2.ZERO:
+		_snap_facing_to_cardinal(input_direction)
+
+	ability_visual_player.play(template, target_pos, overrides)
 
 
 func _on_attack_animation_finished() -> void:
