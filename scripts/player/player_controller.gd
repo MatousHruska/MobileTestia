@@ -44,7 +44,7 @@ var is_casting: bool = false  ## Currently channeling a cast
 @onready var animator: PlayerAnimator = $Sprite
 
 ## Visual layers (weapon, effects, overlay)
-var character_visuals: CharacterVisuals = null
+var character_visuals: Node2D = null
 
 ## Level up effect
 var _level_up_effect: LevelUpEffect
@@ -149,7 +149,8 @@ func _setup_animator() -> void:
 
 
 func _setup_character_visuals() -> void:
-	character_visuals = CharacterVisuals.new()
+	var cv_script := load("res://scripts/combat/character_visuals.gd")
+	character_visuals = cv_script.new()
 	character_visuals.name = "CharacterVisuals"
 	add_child(character_visuals)
 	if animator:

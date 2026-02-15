@@ -201,7 +201,7 @@ func play_hit_flash(duration: float = 0.15) -> void:
 #===============================================================================
 
 ## Connect to an AbilityVisualPlayer's signals
-func connect_to_visual_player(visual_player: AbilityVisualPlayer) -> void:
+func connect_to_visual_player(visual_player: Node) -> void:
 	visual_player.weapon_visibility_changed.connect(set_weapon_visible)
 	visual_player.play_body_animation.connect(_on_play_body_animation)
 	visual_player.effect_event.connect(_on_effect_event)

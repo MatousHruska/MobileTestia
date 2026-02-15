@@ -37,7 +37,7 @@ var is_locked: bool = false  ## Prevents movement during certain actions
 var sprite: AnimatedSprite2D = null
 
 ## Visual layers (weapon, effects, overlay)
-var character_visuals: CharacterVisuals = null
+var character_visuals: Node2D = null
 
 ## Name label
 var name_label: Label
@@ -95,7 +95,8 @@ func _setup_sprite() -> void:
 
 
 func _setup_character_visuals() -> void:
-	character_visuals = CharacterVisuals.new()
+	var cv_script := load("res://scripts/combat/character_visuals.gd")
+	character_visuals = cv_script.new()
 	character_visuals.name = "CharacterVisuals"
 	add_child(character_visuals)
 	character_visuals.initialize(sprite)
