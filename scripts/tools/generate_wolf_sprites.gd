@@ -66,6 +66,13 @@ const ANIM_DEFS := {
 	"howl_down":    { "frames": 6, "fps": 8, "loop": false },
 	"howl_up":      { "frames": 6, "fps": 8, "loop": false },
 	"howl_right":   { "frames": 6, "fps": 8, "loop": false },
+	# Split melee animations (reuse attack frames for ability visual sequencer)
+	"melee_windup_down":  { "frames": 2, "fps": 10, "loop": false },
+	"melee_windup_up":    { "frames": 2, "fps": 10, "loop": false },
+	"melee_windup_right": { "frames": 2, "fps": 10, "loop": false },
+	"melee_strike_down":  { "frames": 3, "fps": 12, "loop": false },
+	"melee_strike_up":    { "frames": 3, "fps": 12, "loop": false },
+	"melee_strike_right": { "frames": 3, "fps": 12, "loop": false },
 }
 
 
@@ -121,9 +128,10 @@ func _draw_frame(anim_name: String, frame_idx: int, frame_count: int) -> Image:
 	var img := Image.create(SPRITE_SIZE, SPRITE_SIZE, false, Image.FORMAT_RGBA8)
 	img.fill(Color.TRANSPARENT)
 
-	var parts := anim_name.split("_")
-	var anim_type: String = parts[0]
-	var direction: String = parts[1]
+	# Parse: everything before the LAST underscore is action, last token is direction
+	var last_underscore := anim_name.rfind("_")
+	var anim_type: String = anim_name.substr(0, last_underscore)
+	var direction: String = anim_name.substr(last_underscore + 1)
 
 	match anim_type:
 		"idle":
@@ -134,6 +142,10 @@ func _draw_frame(anim_name: String, frame_idx: int, frame_count: int) -> Image:
 			_draw_attack_frame(img, direction, frame_idx, frame_count)
 		"howl":
 			_draw_howl_frame(img, direction, frame_idx, frame_count)
+		"melee_windup":
+			_draw_melee_windup_frame(img, direction, frame_idx, frame_count)
+		"melee_strike":
+			_draw_melee_strike_frame(img, direction, frame_idx, frame_count)
 
 	return img
 
@@ -446,6 +458,37 @@ func _draw_attack_up(img: Image, phase: int) -> void:
 			_draw_wolf_body_up(img, cx, cy + 1, 0.0)
 		4:
 			_draw_wolf_body_up(img, cx, cy, 0.0)
+
+
+#===============================================================================
+# MELEE WINDUP (Split from attack — first 2 frames: crouch + launch)
+#===============================================================================
+
+func _draw_melee_windup_frame(img: Image, direction: String, frame_idx: int, _frame_count: int) -> void:
+	## Melee windup: reuses attack frames 0-1 (crouch + launch)
+	match direction:
+		"right":
+			_draw_attack_side(img, frame_idx)
+		"down":
+			_draw_attack_down(img, frame_idx)
+		"up":
+			_draw_attack_up(img, frame_idx)
+
+
+#===============================================================================
+# MELEE STRIKE (Split from attack — frames 2-4: airborne + strike + land)
+#===============================================================================
+
+func _draw_melee_strike_frame(img: Image, direction: String, frame_idx: int, _frame_count: int) -> void:
+	## Melee strike: reuses attack frames 2-4 (airborne + strike + land)
+	var attack_frame := frame_idx + 2
+	match direction:
+		"right":
+			_draw_attack_side(img, attack_frame)
+		"down":
+			_draw_attack_down(img, attack_frame)
+		"up":
+			_draw_attack_up(img, attack_frame)
 
 
 #===============================================================================
