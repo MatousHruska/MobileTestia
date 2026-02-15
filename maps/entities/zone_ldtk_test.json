@@ -56,8 +56,8 @@
 		{
 			"id": "default",
 			"position": {
-				"x": 700.0,
-				"y": 1520.0
+				"x": 716.0,
+				"y": 1792.0
 			}
 		}
 	],
@@ -77,8 +77,17 @@
 			"id": "sp_test_static",
 			"patrol_group": "",
 			"position": {
-				"x": 1256.0,
-				"y": 328.0
+				"x": 1192.0,
+				"y": 1896.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "",
+			"patrol_group": "",
+			"position": {
+				"x": 1176.0,
+				"y": 1464.0
 			},
 			"spawn_group": ""
 		}

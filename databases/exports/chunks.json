@@ -14,7 +14,7 @@
 		{
 			"ambient_override": "",
 			"biome_type": "snow",
-			"enemy_density": "medium",
+			"enemy_density": "low",
 			"grid_x": 1,
 			"grid_y": 0,
 			"id": "chunk_ldtk_test_1_0",
@@ -47,7 +47,7 @@
 		{
 			"ambient_override": "",
 			"biome_type": "snow",
-			"enemy_density": "none",
+			"enemy_density": "medium",
 			"grid_x": 1,
 			"grid_y": 1,
 			"id": "chunk_ldtk_test_1_1",
