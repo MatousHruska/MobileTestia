@@ -16,7 +16,8 @@
       "movement_distance": 0,
       "status_effect_id": "",
       "animation": "attack",
-      "description": "Basic melee attack"
+      "description": "Basic melee attack",
+      "visual_type": ""
     },
     {
       "id": "abi_heavy_strike",
@@ -34,7 +35,8 @@
       "movement_distance": 0,
       "status_effect_id": "",
       "animation": "attack",
-      "description": "Slow powerful attack"
+      "description": "Slow powerful attack",
+      "visual_type": ""
     },
     {
       "id": "abi_leap_attack",
@@ -53,7 +55,8 @@
       "status_effect_id": "",
       "animation": "attack",
       "extra_config": {"dash_duration": 0.4},
-      "description": "Dash to target and strike"
+      "description": "Dash to target and strike",
+      "visual_type": ""
     },
     {
       "id": "abi_fireball",
@@ -71,7 +74,8 @@
       "movement_distance": 0,
       "status_effect_id": "",
       "animation": "attack",
-      "description": "Fire projectile"
+      "description": "Fire projectile",
+      "visual_type": ""
     },
     {
       "id": "abi_arrow_shot",
@@ -89,7 +93,8 @@
       "movement_distance": 0,
       "status_effect_id": "",
       "animation": "attack",
-      "description": "Ranged arrow attack"
+      "description": "Ranged arrow attack",
+      "visual_type": ""
     },
     {
       "id": "abi_heal_self",
@@ -107,7 +112,8 @@
       "movement_distance": 0,
       "status_effect_id": "",
       "animation": "cast",
-      "description": "Heal 30% max health"
+      "description": "Heal 30% max health",
+      "visual_type": ""
     },
     {
       "id": "abi_rot_strike",
@@ -125,7 +131,8 @@
       "movement_distance": 0,
       "status_effect_id": "status_rot",
       "animation": "attack",
-      "description": "Basic melee attack"
+      "description": "Basic melee attack",
+      "visual_type": ""
     },
     {
       "id": "abi_wolf_leap",
@@ -144,7 +151,8 @@
       "status_effect_id": "",
       "animation": "attack",
       "extra_config": {"dash_duration": 0.3},
-      "description": "Leaps at target after preparing"
+      "description": "Leaps at target after preparing",
+      "visual_type": ""
     },
     {
       "id": "abi_blood_howl",
@@ -163,7 +171,8 @@
       "status_effect_id": "status_blood_frenzy",
       "animation": "attack",
       "extra_config": {},
-      "description": "Howls to buff self and nearby wolves"
+      "description": "Howls to buff self and nearby wolves",
+      "visual_type": "howl "
     }
   ]
 }
