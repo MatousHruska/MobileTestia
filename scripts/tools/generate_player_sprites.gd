@@ -284,6 +284,10 @@ func _draw_melee_windup_frame(img: Image, direction: String, frame_idx: int, _fr
 	var v_offsets := [0, 1]
 	_draw_character_pose(img, direction, h_offsets[frame_idx], v_offsets[frame_idx],
 		0.0, false, false, 0, PoseType.MELEE_WINDUP, frame_idx)
+	# Weapon anchor on both frames (weapon raised overhead)
+	var anchor := _get_action_weapon_anchor(direction, PoseType.MELEE_WINDUP, frame_idx)
+	if anchor.x >= 0:
+		_set_pixel_safe(img, anchor.x, anchor.y, COL_WEAPON_ANCHOR)
 
 
 #===============================================================================
@@ -1206,8 +1210,23 @@ func _get_weapon_anchor(direction: String, phase: int) -> Vector2i:
 
 func _get_action_weapon_anchor(direction: String, pose_type: int, frame: int) -> Vector2i:
 	## Returns weapon anchor position for new action animations
-	## Only melee_strike, thrust, aim, and aim_release have weapon anchors
+	## melee_windup, melee_strike, thrust, aim, and aim_release have weapon anchors
 	match pose_type:
+		PoseType.MELEE_WINDUP:
+			# Weapon held above/behind head during windup
+			match direction:
+				"down":
+					# Arms raised to sides of head — weapon above head center
+					if frame == 0: return Vector2i(15, 6)
+					if frame == 1: return Vector2i(15, 4)
+				"up":
+					# Arms pulled back toward camera — weapon behind/below
+					if frame == 0: return Vector2i(15, 22)
+					if frame == 1: return Vector2i(15, 24)
+				"right":
+					# Arm pulled back — weapon behind character
+					if frame == 0: return Vector2i(12, 10)
+					if frame == 1: return Vector2i(10, 9)
 		PoseType.MELEE_STRIKE:
 			match direction:
 				"down":
