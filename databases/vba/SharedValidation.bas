@@ -690,6 +690,7 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "Abilities", 5, "physical,fire,cold,lightning,poison,healing"  ' damage_type
     ApplyListValidation "Abilities", 9, "TRUE,FALSE"  ' cast_while_moving
     ApplyListValidation "Abilities", 12, "none,dash_to,dash_away,teleport"  ' movement_type
+    ApplyListValidation "Abilities", 18, "melee_single,melee_combo_2,melee_combo_3,dash_attack,ranged_aim,ranged_attack,spell_cast,spell_instant,throw,self_buff,howl"  ' visual_type
 
     ' EnemyAbilities
     ApplyListValidation "EnemyAbilities", 4, "default,opener,target_close,target_melee,target_close_60,target_far,health_below_30,health_below_50,health_above_50,health_above_70,ally_nearby"  ' condition
@@ -725,6 +726,7 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "Cutscenes", 6, "TRUE,FALSE"          ' once_only
     ApplyListValidation "Talents", 43, "TRUE,FALSE"           ' can_move_while_casting
     ApplyListValidation "Talents", 44, "TRUE,FALSE"           ' interrupt_on_damage
+    ApplyListValidation "Talents", 45, "melee_single,melee_combo_2,melee_combo_3,dash_attack,ranged_aim,ranged_attack,spell_cast,spell_instant,throw,self_buff,howl"  ' visual_type
 
     ' Doors
     ApplyListValidation "Doors", 6, "TRUE,FALSE"              ' lever_controlled

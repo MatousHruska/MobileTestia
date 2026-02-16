@@ -88,6 +88,9 @@ const DamageType = CombatTypes.DamageType
 
 @export var animation: String = "attack"
 
+## Visual template override (empty = auto-detect from ability type)
+@export var visual_type: String = ""
+
 #===============================================================================
 # AI PRIORITY
 #===============================================================================
