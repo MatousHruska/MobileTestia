@@ -253,6 +253,12 @@ func _execute_phase_in_slot(phase: AbilityVisualPhase, is_primary: bool) -> void
 					_primary_timer = phase.duration
 				else:
 					_concurrent_timer = phase.duration
+			elif _is_looping_animation(resolved_name):
+				# Looping animations never emit animation_finished — resolve immediately
+				if is_primary:
+					_primary_resolved = true
+				else:
+					_concurrent_resolved = true
 			else:
 				# Wait for animation to finish
 				if is_primary:
@@ -340,6 +346,9 @@ func _execute_phase_single(phase: AbilityVisualPhase) -> void:
 			if phase.duration > 0.0:
 				_primary_timer = phase.duration
 				_primary_waiting_for_anim = false
+			elif _is_looping_animation(resolved_name):
+				# Looping animations never emit animation_finished — advance immediately
+				_advance_to_next_phase()
 			else:
 				# duration=0 on BODY_ANIM means "wait for animation to finish"
 				_primary_waiting_for_anim = true
@@ -494,6 +503,15 @@ func _duplicate_phase(original: AbilityVisualPhase) -> AbilityVisualPhase:
 #===============================================================================
 # HELPERS
 #===============================================================================
+
+func _is_looping_animation(anim_name: String) -> bool:
+	## Check if the given animation is set to loop in the sprite's SpriteFrames.
+	## Looping animations never emit animation_finished, so the sequencer must
+	## not wait for them — it should advance immediately instead.
+	if _sprite and _sprite.sprite_frames and _sprite.sprite_frames.has_animation(anim_name):
+		return _sprite.sprite_frames.get_animation_loop(anim_name)
+	return false
+
 
 func _reset_timers() -> void:
 	_primary_timer = 0.0
