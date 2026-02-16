@@ -160,6 +160,11 @@ func _setup_character_visuals() -> void:
 	if animator:
 		character_visuals.initialize(animator)  # PlayerAnimator IS the AnimatedSprite2D
 
+	# Load weapon visual for currently equipped weapon
+	_update_weapon_visual()
+	# Update weapon visual when equipment changes
+	Inventory.equipment_changed.connect(_on_equipment_changed_weapon_visual)
+
 
 func _setup_ability_visual_player() -> void:
 	ability_visual_player = AbilityVisualPlayer.new()
@@ -181,6 +186,24 @@ func _setup_ability_visual_player() -> void:
 	# Connect body animation signal to CharacterVisuals
 	if character_visuals:
 		character_visuals.connect_to_visual_player(ability_visual_player)
+
+
+func _on_equipment_changed_weapon_visual(slot) -> void:
+	## Update weapon visual when any equipment slot changes
+	if slot == ItemData.EquipSlot.MAIN_HAND:
+		_update_weapon_visual()
+
+
+func _update_weapon_visual() -> void:
+	## Load the correct placeholder weapon sprite set for the equipped weapon
+	if not character_visuals:
+		return
+	var category := Inventory.get_equipped_weapon_category()
+	if category != "":
+		var texture_set := PlaceholderWeaponSprites.create_set_for_category(category)
+		character_visuals.set_weapon_texture_set(texture_set)
+	else:
+		character_visuals.set_weapon_texture_set({})
 
 
 func _on_visual_movement_requested(direction: String, distance: float, duration: float) -> void:
