@@ -35,6 +35,11 @@ TalentManager (skill bindings)         EnemyAbilityController (AI selection)
 CombatHUD (input routing)              AbilityExecutor (execution)
      ↓                                      ↓
   ┌──┴──────────────────────────────────────┴──┐
+  │        ABILITY VISUAL SEQUENCER             │
+  │  AbilityVisualPlayer (phase executor)       │
+  │  AbilityVisualTemplates (template library)  │
+  │  CharacterVisuals (layered sprite stack)    │
+  ├─────────────────────────────────────────────┤
   │           SHARED SYSTEMS                    │
   │  • DamageCalculator (unified damage math)  │
   │  • StatusEffectComponent (buffs/debuffs)   │
@@ -276,7 +281,7 @@ enemy.apply_status_effect("status_burning")  # Convenience wrapper
 
 ## Attack Execution Phases
 
-Both player and enemy attacks follow the same **three-phase pattern**:
+Both player and enemy attacks follow the same **three-phase pattern**, orchestrated by the Ability Visual Sequencer (see next section):
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -300,6 +305,165 @@ Both player and enemy attacks follow the same **three-phase pattern**:
 | Player Magic | cast_time | Instant (projectile spawns) | 0 |
 | Enemy Default | 0.2s | Varies | 0.3s |
 | Enemy Dash | 0.2s | Dash duration | 0.3s |
+
+---
+
+## Ability Visual Sequencer
+
+The sequencer system replaces hardcoded animation/movement/timing logic with data-driven visual sequences. Each ability is defined as a timeline of phases that the sequencer steps through automatically.
+
+### Architecture
+
+```
+TalentData / AbilityData
+     ↓
+CombatHUD / EnemyNPC (maps effect_type → template_id)
+     ↓
+AbilityVisualTemplates.get_all()[template_id]  →  AbilityVisualData
+     ↓
+AbilityVisualPlayer.play(data, target_pos, overrides)
+     ↓
+┌─────────────────────────────────────────────────┐
+│  Phase 0: WEAPON_VISIBILITY(true)     [instant] │
+│  Phase 1: BODY_ANIM("melee_windup")   [wait]    │
+│  Phase 2: MOVEMENT + BODY_ANIM        [concurrent] │
+│  Phase 3: DAMAGE_EVENT                [instant] │
+│  Phase 4: BODY_ANIM("idle")           [instant] │
+│  ...                                             │
+│  → sequence_finished signal                      │
+└─────────────────────────────────────────────────┘
+     ↓
+PlayerController / BaseCharacter unlocks movement
+```
+
+### Core Classes
+
+| Class | File | Purpose |
+|-------|------|---------|
+| `AbilityVisualData` | `scripts/combat/ability_visual_data.gd` | Resource defining a named sequence of phases |
+| `AbilityVisualPhase` | `scripts/combat/ability_visual_phase.gd` | Single phase (animation, movement, event, etc.) |
+| `AbilityVisualPlayer` | `scripts/combat/ability_visual_player.gd` | Node that executes phases, emits signals |
+| `AbilityVisualTemplates` | `scripts/combat/ability_visual_templates.gd` | Static factory for built-in templates |
+| `CharacterVisuals` | `scripts/combat/character_visuals.gd` | Layered sprite stack (body, weapon, effects, overlay) |
+
+### Phase Types
+
+| Phase Type | Description | Timing |
+|------------|-------------|--------|
+| `BODY_ANIM` | Play a body animation (e.g., `"melee_windup"`) | `duration > 0`: timer. `duration = 0`: wait for `animation_finished` (skips if looping). |
+| `MOVEMENT` | Lunge/dash via `movement_requested` signal | Timer based on duration |
+| `DAMAGE_EVENT` | Emit `damage_event` signal (combat system applies damage) | Instant |
+| `SPAWN_PROJECTILE` | Emit `spawn_projectile_event` signal | Instant |
+| `WAIT` | Pure delay | Timer |
+| `WEAPON_VISIBILITY` | Show/hide weapon layer | Instant |
+| `EFFECT` | Trigger VFX via `effect_event` signal | `duration > 0`: timer. Else instant. |
+
+### Concurrency
+
+Phases with `concurrent = true` run alongside the next phase. Both must resolve before advancing. Used for movement + animation combos (e.g., lunge while playing strike animation).
+
+### Templates
+
+Templates define the visual shape of abilities. Actual durations come from talent/ability data via the override system.
+
+| Template | Used For | Phase Sequence |
+|----------|----------|----------------|
+| `melee_single` | Basic melee attack | weapon show → windup → lunge+strike → damage → idle |
+| `melee_combo_2` | Two-hit melee | windup → lunge+strike → damage → pause → strike → damage → idle |
+| `melee_combo_3` | Three-hit melee | Same as combo_2 with third hit |
+| `dash_attack` | Dash + strike | weapon show → dash+move → strike → damage → idle |
+| `ranged_aim` | Charge-to-fire ranged | weapon show → aim (held) → release → projectile → idle |
+| `spell_cast` | Cast-time spell | weapon hide → cast+effect → release → projectile → weapon show → idle |
+| `spell_instant` | Instant spell | weapon hide → release → effect → damage → weapon show → idle |
+| `throw` | Throw item | weapon hide → windup+item → release → projectile → weapon show → idle |
+| `self_buff` | Self-buff | weapon hide → cast → effect → damage event → weapon show → idle |
+| `ranged_attack` | Enemy ranged | attack anim → projectile → wait |
+| `howl` | Wolf howl | howl anim → aura effect → damage → wait |
+
+### Override System
+
+Templates use placeholder durations. Real values come from talent/ability data via override keys:
+
+| Override Key | Source (Player) | Source (Enemy) |
+|-------------|-----------------|----------------|
+| `windup_duration` | — | `ability.windup` |
+| `lunge_distance` | `talent.lunge_force` (with equipment bonus) | `ability.dash_speed * ability.windup` |
+| `lunge_duration` | `talent.lunge_duration` | `ability.windup` |
+| `recovery_duration` | `talent.recovery_time` | `ability.recovery` |
+| `cast_duration` | `talent.cast_time` (with cast_speed bonus) | — |
+
+Built in `CombatHUD._build_visual_overrides()` for player, or equivalent in `EnemyNPC` for enemies.
+
+### Signal Flow
+
+`AbilityVisualPlayer` emits signals at key moments. The character and combat systems listen:
+
+| Signal | Listener | Action |
+|--------|----------|--------|
+| `sequence_started` | PlayerController | Set `is_attacking=true`, `is_locked=true` |
+| `sequence_finished` | PlayerController | Set `is_attacking=false`, `is_locked=false` |
+| `damage_event` | CombatHUD | Apply damage to enemies in range/arc |
+| `spawn_projectile_event` | CombatHUD | Spawn projectile |
+| `play_body_animation` | CharacterVisuals | Resolve and play animation on sprite |
+| `movement_requested` | PlayerController | Execute lunge via velocity/timer |
+| `weapon_visibility_changed` | CharacterVisuals | Show/hide weapon sprite layer |
+| `effect_event` | CharacterVisuals | Spawn VFX on effect anchor |
+
+### Animation Name Resolution
+
+Both `AbilityVisualPlayer` and `CharacterVisuals` resolve animation names using a fallback chain:
+
+1. `{action}_{direction}` — e.g., `melee_windup_down`
+2. `{action}` — directionless fallback
+3. `attack_{direction}` — legacy fallback
+4. `idle_{direction}` — final fallback
+
+Left-facing uses the `right` animations with `flip_h = true`.
+
+**Important:** Looping animations (idle, walk) never emit `animation_finished`. The sequencer detects this and advances immediately instead of waiting.
+
+### CharacterVisuals (Layered Sprite Stack)
+
+Manages visual layers alongside the body `AnimatedSprite2D`:
+
+```
+CharacterVisuals (Node2D)
+  ├── WeaponSprite (Sprite2D)     — positioned per-frame at weapon anchor pixel
+  ├── EffectAnchor (Node2D)       — parent for VFX nodes
+  └── OverlaySprite (AnimatedSprite2D) — hit flashes, shields
+```
+
+**Weapon Anchor**: A magenta pixel (`#FF00AA`) in attack frame sprites marks where the weapon sprite should be positioned. `CharacterVisuals` scans for this pixel each frame.
+
+### Routing: Sequencer vs Legacy
+
+`CombatHUD._on_ability_activated()` routes abilities:
+
+| Condition | Path |
+|-----------|------|
+| `ability_visual_player` exists | Sequencer path (`_activate_skill_via_sequencer`) |
+| Otherwise | Legacy path (`_activate_skill_legacy`) |
+
+Within the sequencer path:
+
+| Condition | Action |
+|-----------|--------|
+| `effect_type == PROJECTILE` | `_start_aiming()` (hold-to-charge) |
+| `cast_time > 0` | Delegate to legacy path (handles cast bar) |
+| Everything else | Play visual sequence immediately |
+
+### Key Files
+
+| File | Role |
+|------|------|
+| `scripts/combat/ability_visual_data.gd` | Sequence data resource |
+| `scripts/combat/ability_visual_phase.gd` | Phase definition + factory helpers |
+| `scripts/combat/ability_visual_player.gd` | Sequencer executor |
+| `scripts/combat/ability_visual_templates.gd` | Built-in template definitions |
+| `scripts/combat/character_visuals.gd` | Layered sprite stack |
+| `scripts/player/player_controller.gd` | Player integration (setup, movement, lock/unlock) |
+| `scripts/player/player_animator.gd` | Animator integration (sequence awareness) |
+| `scripts/ui/combat/combat_hud.gd` | Template mapping, overrides, signal handling |
 
 ---
 
@@ -1078,6 +1242,9 @@ This creates items like "Extended Iron Sword" with "+10-25% Hit Range".
 | **Status Effects** | `scripts/combat/status_effect_component.gd`, `scripts/player/status_effect_manager.gd` |
 | **Movement Actions** | `scripts/combat/movement_action.gd` |
 | **Visual Effects** | `scripts/effects/`, `scripts/ui/combat/hitbox_visual.gd` |
+| **Ability Sequencer** | `scripts/combat/ability_visual_player.gd`, `ability_visual_data.gd`, `ability_visual_phase.gd` |
+| **Visual Templates** | `scripts/combat/ability_visual_templates.gd` |
+| **Character Visuals** | `scripts/combat/character_visuals.gd` |
 
 ---
 
@@ -1097,3 +1264,4 @@ This creates items like "Extended Iron Sword" with "+10-25% Hit Range".
 | 2026-01-03 | Fixed status effect HUD not refreshing duration on reapplication (emit signal on refresh) |
 | 2026-01-03 | Added database-driven stat descriptions for Stats panel (StatDescriptions sheet) |
 | 2026-01-03 | Changed elemental spell damage from percentage to flat bonus (Fire, Cold, Lightning, Poison, Arcane) |
+| 2026-02-16 | Added Ability Visual Sequencer section (AbilityVisualPlayer, templates, CharacterVisuals, signal flow) |
