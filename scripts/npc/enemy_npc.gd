@@ -707,6 +707,11 @@ func _execute_ability_visual(ability: Dictionary, ability_type: String) -> void:
 
 func _get_visual_template_for_ability(ability: Dictionary, ability_type: String) -> String:
 	"""Map ability data to a visual template ID"""
+	# Explicit visual_type override from database takes priority
+	var visual_type: String = ability.get("visual_type", "")
+	if not visual_type.is_empty():
+		return visual_type
+
 	# Check if ability has a custom animation mapping (e.g., "howl")
 	var animation: String = ability.get("animation", "attack")
 	if animation != "attack" and animation != "":
@@ -714,7 +719,7 @@ func _get_visual_template_for_ability(ability: Dictionary, ability_type: String)
 		if custom_template:
 			return animation
 
-	# Map by ability type
+	# Auto-detect fallback from ability type
 	match ability_type:
 		"melee":
 			return "melee_single"

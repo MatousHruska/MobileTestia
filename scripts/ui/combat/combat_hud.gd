@@ -130,8 +130,13 @@ static func get_cooldown(talent: TalentData) -> float:
 # VISUAL SEQUENCER INTEGRATION
 #===============================================================================
 
-## Map TalentData.EffectType to visual template IDs
+## Map TalentData to visual template ID. Explicit visual_type takes priority.
 static func _get_visual_template_for_talent(talent: TalentData) -> String:
+	# Explicit override from database
+	if not talent.visual_type.is_empty():
+		return talent.visual_type
+
+	# Auto-detect fallback from effect_type
 	match talent.effect_type:
 		TalentData.EffectType.DAMAGE:
 			return "melee_single"

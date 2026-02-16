@@ -93,6 +93,9 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, MAGIC_PROJECTILE
 @export var can_move_while_casting: bool = false   # Can player move while casting?
 @export var interrupt_on_damage: bool = true       # Does taking damage interrupt cast?
 
+## Visual template override (empty = auto-detect from effect_type)
+@export var visual_type: String = ""
+
 ## Database-driven timing (previously hardcoded)
 @export var max_charge_time: float = 2.0           # Max charge time for full range (ranged)
 @export var base_range: float = 150.0              # Base range at minimum charge (ranged)
@@ -200,6 +203,9 @@ static func from_dict(data: Dictionary) -> TalentData:
 	# Cast bar behavior
 	talent.can_move_while_casting = _parse_bool(data.get("can_move_while_casting", false))
 	talent.interrupt_on_damage = _parse_bool(data.get("interrupt_on_damage", true))
+
+	# Visual template override
+	talent.visual_type = data.get("visual_type", "")
 
 	# Database-driven timing (previously hardcoded)
 	talent.max_charge_time = float(data.get("max_charge_time", 2.0))

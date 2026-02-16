@@ -21,7 +21,7 @@ Public Sub SetupAbilitiesSheet()
     headers = Array("id", "name", "ability_type", "damage_mult", "damage_type", _
                     "range", "cooldown", "cast_time", "cast_while_moving", "projectile_speed", _
                     "aoe_radius", "movement_type", "movement_distance", _
-                    "status_effect_id", "animation", "extra_config", "description")
+                    "status_effect_id", "animation", "extra_config", "description", "visual_type")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -40,6 +40,7 @@ Public Sub SetupAbilitiesSheet()
     SafeAddComment ws.Cells(1, 14), "Status effect to apply (from StatusEffects)"
     SafeAddComment ws.Cells(1, 15), "Animation name to play"
     SafeAddComment ws.Cells(1, 16), "JSON config for ability-specific params, e.g. {""falloff_type"": ""linear"", ""center_mult"": 2.0}"
+    SafeAddComment ws.Cells(1, 18), "Visual template: melee_single, melee_combo_2, dash_attack, ranged_attack, spell_cast, howl (empty=auto)"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -103,7 +104,8 @@ Public Sub ExportAbilities()
                 json = json & "      ""extra_config"": " & extraConfig & "," & vbCrLf
             End If
 
-            json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 17))) & """" & vbCrLf
+            json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 17))) & """," & vbCrLf
+            json = json & "      ""visual_type"": """ & EscapeJsonString(GetDefaultString(ws.Cells(row, 18))) & """" & vbCrLf
             json = json & "    }"
         End If
     Next row
@@ -176,6 +178,17 @@ Public Sub ValidateAbilities()
             movementType = LCase(Trim(ws.Cells(row, 12).Value))
             If Len(movementType) > 0 And Not ValidateDropdown(movementType, validMovementTypes) Then
                 LogValidationError errors, errorCount, row, "L", "Invalid movement_type: " & movementType
+            End If
+
+            ' Validate visual_type (if present)
+            Dim visualType As String
+            visualType = LCase(Trim(ws.Cells(row, 18).Value))
+            If Len(visualType) > 0 Then
+                Dim validVisualTypes() As String
+                validVisualTypes = Split("melee_single,melee_combo_2,melee_combo_3,dash_attack,ranged_aim,ranged_attack,spell_cast,spell_instant,throw,self_buff,howl", ",")
+                If Not ValidateDropdown(visualType, validVisualTypes) Then
+                    LogValidationError errors, errorCount, row, "R", "Invalid visual_type: " & visualType
+                End If
             End If
 
             ' Validate numeric ranges
