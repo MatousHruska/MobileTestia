@@ -237,7 +237,7 @@ static func _draw_arc(img: Image, direction: String, body_color: Color, edge_col
 			var y_positions := [4, 2, 1, 2, 4]
 			for i in range(5):
 				var sx := int(i * (w - seg_w) / 4.0)
-				var sy := y_positions[i]
+				var sy: int = y_positions[i]
 				# Leading edge highlight (top row)
 				_fill_rect(img, sx, sy, seg_w, 1, edge_color)
 				# Body
@@ -249,7 +249,7 @@ static func _draw_arc(img: Image, direction: String, body_color: Color, edge_col
 			var y_offsets := [4, 2, 1, 2, 4]
 			for i in range(5):
 				var sx := int(i * (w - seg_w) / 4.0)
-				var sy := base_y + y_offsets[i]
+				var sy: int = base_y + y_offsets[i]
 				_fill_rect(img, sx, sy, seg_w, thickness, body_color)
 				# Leading edge highlight (bottom row)
 				_fill_rect(img, sx, sy + thickness, seg_w, 1, edge_color)
@@ -259,7 +259,7 @@ static func _draw_arc(img: Image, direction: String, body_color: Color, edge_col
 			var x_positions := [4, 2, 1, 2, 4]
 			for i in range(5):
 				var sy := int(i * (h - seg_h) / 4.0)
-				var sx := x_positions[i]
+				var sx: int = x_positions[i]
 				# Leading edge highlight (left column)
 				_fill_rect(img, sx, sy, 1, seg_h, edge_color)
 				# Body
