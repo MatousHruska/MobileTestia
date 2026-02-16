@@ -38,7 +38,8 @@ static func get_template(template_id: String) -> AbilityVisualData:
 #===============================================================================
 
 ## melee_single - Standard single melee attack
-## Windup -> lunge + strike -> damage -> return to idle
+## Weapon shows during windup, hides for slash effect, stays hidden after.
+## Show weapon -> windup -> hide weapon -> slash effect -> lunge+strike -> damage -> idle
 static func _melee_single() -> AbilityVisualData:
 	var data := AbilityVisualData.new()
 	data.template_id = "melee_single"
@@ -46,26 +47,29 @@ static func _melee_single() -> AbilityVisualData:
 	data.locks_movement = true
 
 	data.phases = [
-		# Phase 0: Show weapon
+		# Phase 0: Show weapon for windup
 		AbilityVisualPhase.create_weapon_visibility(true),
-		# Phase 1: Windup animation (wait for anim to finish)
+		# Phase 1: Windup animation (sword raised)
 		AbilityVisualPhase.create_body_anim("melee_windup", 0.0, "windup"),
-		# Phase 2: Lunge toward target + strike animation (concurrent)
+		# Phase 2: Hide weapon before slash
+		AbilityVisualPhase.create_weapon_visibility(false),
+		# Phase 3: Spawn slash effect (instant — animates on its own)
+		AbilityVisualPhase.create_effect("slash_arc"),
+		# Phase 4: Lunge toward target (concurrent with strike)
 		AbilityVisualPhase.create_movement("toward_target", 20.0, 0.15, "lunge", true),
-		# Phase 3: Strike animation (runs concurrently with lunge)
+		# Phase 5: Strike animation (runs alongside lunge)
 		AbilityVisualPhase.create_body_anim("melee_strike"),
-		# Phase 4: Damage event (instant)
+		# Phase 6: Damage event
 		AbilityVisualPhase.create_damage_event(),
-		# Phase 5: Return to idle
+		# Phase 7: Return to idle (recovery)
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
-		# Phase 6: Weapon stays visible
-		AbilityVisualPhase.create_weapon_visibility(true),
 	]
 
 	return data
 
 
 ## melee_combo_2 - Two-hit melee combo
+## Weapon shows during windup only. Each hit fires its own slash effect.
 static func _melee_combo_2() -> AbilityVisualData:
 	var data := AbilityVisualData.new()
 	data.template_id = "melee_combo_2"
@@ -73,22 +77,28 @@ static func _melee_combo_2() -> AbilityVisualData:
 	data.locks_movement = true
 
 	data.phases = [
-		# Phase 0: Show weapon
+		# Phase 0: Show weapon for windup
 		AbilityVisualPhase.create_weapon_visibility(true),
 		# Phase 1: Windup
 		AbilityVisualPhase.create_body_anim("melee_windup", 0.0, "windup"),
-		# Phase 2: Lunge + strike (concurrent)
+		# Phase 2: Hide weapon
+		AbilityVisualPhase.create_weapon_visibility(false),
+		# Phase 3: First slash effect
+		AbilityVisualPhase.create_effect("slash_arc"),
+		# Phase 4: Lunge + strike (concurrent)
 		AbilityVisualPhase.create_movement("toward_target", 20.0, 0.15, "lunge", true),
 		AbilityVisualPhase.create_body_anim("melee_strike"),
-		# Phase 4: First hit damage
+		# Phase 6: First hit damage
 		AbilityVisualPhase.create_damage_event(),
-		# Phase 5: Brief pause between hits
+		# Phase 7: Brief pause between hits
 		AbilityVisualPhase.create_wait(0.1),
-		# Phase 6: Second strike
+		# Phase 8: Second slash effect (wider for combo)
+		AbilityVisualPhase.create_effect("slash_arc_wide"),
+		# Phase 9: Second strike
 		AbilityVisualPhase.create_body_anim("melee_strike"),
-		# Phase 7: Second hit damage
+		# Phase 10: Second hit damage
 		AbilityVisualPhase.create_damage_event(),
-		# Phase 8: Return to idle
+		# Phase 11: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
@@ -96,6 +106,7 @@ static func _melee_combo_2() -> AbilityVisualData:
 
 
 ## melee_combo_3 - Three-hit melee combo
+## Weapon shows during windup only. Each hit fires its own slash effect.
 static func _melee_combo_3() -> AbilityVisualData:
 	var data := AbilityVisualData.new()
 	data.template_id = "melee_combo_3"
@@ -103,28 +114,36 @@ static func _melee_combo_3() -> AbilityVisualData:
 	data.locks_movement = true
 
 	data.phases = [
-		# Phase 0: Show weapon
+		# Phase 0: Show weapon for windup
 		AbilityVisualPhase.create_weapon_visibility(true),
 		# Phase 1: Windup
 		AbilityVisualPhase.create_body_anim("melee_windup", 0.0, "windup"),
-		# Phase 2: Lunge + strike (concurrent)
+		# Phase 2: Hide weapon
+		AbilityVisualPhase.create_weapon_visibility(false),
+		# Phase 3: First slash effect
+		AbilityVisualPhase.create_effect("slash_arc"),
+		# Phase 4: Lunge + strike (concurrent)
 		AbilityVisualPhase.create_movement("toward_target", 20.0, 0.15, "lunge", true),
 		AbilityVisualPhase.create_body_anim("melee_strike"),
-		# Phase 4: First hit damage
+		# Phase 6: First hit damage
 		AbilityVisualPhase.create_damage_event(),
-		# Phase 5: Brief pause
+		# Phase 7: Brief pause
 		AbilityVisualPhase.create_wait(0.1),
-		# Phase 6: Second strike
+		# Phase 8: Second slash effect (wider for combo)
+		AbilityVisualPhase.create_effect("slash_arc_wide"),
+		# Phase 9: Second strike
 		AbilityVisualPhase.create_body_anim("melee_strike"),
-		# Phase 7: Second hit damage
+		# Phase 10: Second hit damage
 		AbilityVisualPhase.create_damage_event(),
-		# Phase 8: Brief pause
+		# Phase 11: Brief pause
 		AbilityVisualPhase.create_wait(0.1),
-		# Phase 9: Third strike
+		# Phase 12: Third slash effect (wider)
+		AbilityVisualPhase.create_effect("slash_arc_wide"),
+		# Phase 13: Third strike
 		AbilityVisualPhase.create_body_anim("melee_strike"),
-		# Phase 10: Third hit damage
+		# Phase 14: Third hit damage
 		AbilityVisualPhase.create_damage_event(),
-		# Phase 11: Return to idle
+		# Phase 15: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
@@ -136,6 +155,7 @@ static func _melee_combo_3() -> AbilityVisualData:
 #===============================================================================
 
 ## dash_attack - Rush forward then strike
+## Weapon visible during dash, hidden during slash+strike.
 static func _dash_attack() -> AbilityVisualData:
 	var data := AbilityVisualData.new()
 	data.template_id = "dash_attack"
@@ -143,16 +163,20 @@ static func _dash_attack() -> AbilityVisualData:
 	data.locks_movement = true
 
 	data.phases = [
-		# Phase 0: Show weapon
+		# Phase 0: Show weapon for dash
 		AbilityVisualPhase.create_weapon_visibility(true),
 		# Phase 1: Dash animation + movement (concurrent)
 		AbilityVisualPhase.create_body_anim("dash", 0.0, "dash", true),
 		AbilityVisualPhase.create_movement("toward_target", 60.0, 0.25, "dash"),
-		# Phase 3: Strike
+		# Phase 3: Hide weapon for slash
+		AbilityVisualPhase.create_weapon_visibility(false),
+		# Phase 4: Slash effect (wide — dash attacks hit hard)
+		AbilityVisualPhase.create_effect("slash_arc_wide"),
+		# Phase 5: Strike
 		AbilityVisualPhase.create_body_anim("melee_strike"),
-		# Phase 4: Damage
+		# Phase 6: Damage
 		AbilityVisualPhase.create_damage_event(),
-		# Phase 5: Return to idle
+		# Phase 7: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
