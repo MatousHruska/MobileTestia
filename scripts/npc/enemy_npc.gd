@@ -107,6 +107,17 @@ var _enemy_module_config: Dictionary = {}  # Per-enemy module config overrides
 # KNOCKBACK STATE
 #===============================================================================
 
+#===============================================================================
+# VISUAL SEQUENCER STATE
+#===============================================================================
+
+## Ability being executed through the visual sequencer (for signal handlers)
+var _pending_ability: Dictionary = {}
+
+#===============================================================================
+# KNOCKBACK STATE
+#===============================================================================
+
 var _knockback_velocity: Vector2 = Vector2.ZERO
 var _knockback_duration: float = 0.0
 var _knockback_elapsed: float = 0.0
@@ -475,6 +486,12 @@ func _execute_ability(ability: Dictionary) -> void:
 
 func _do_execute_ability(ability: Dictionary, ability_type: String) -> void:
 	"""Actually perform the ability after any cast time"""
+	# Try new visual sequencer path
+	if ability_visual_player:
+		_execute_ability_visual(ability, ability_type)
+		return
+
+	# Legacy fallback (no visual sequencer)
 	match ability_type:
 		"melee":
 			_execute_melee_attack(ability)
@@ -658,6 +675,204 @@ func _execute_basic_attack() -> void:
 		if module_controller:
 			module_controller.get_context().attack_in_progress = false
 	)
+
+
+#===============================================================================
+# VISUAL SEQUENCER ABILITY EXECUTION
+#===============================================================================
+
+func _execute_ability_visual(ability: Dictionary, ability_type: String) -> void:
+	"""Route ability through the visual sequencer"""
+	var template_id := _get_visual_template_for_ability(ability, ability_type)
+	var overrides := _build_ability_overrides(ability)
+	var target_pos := Vector2.ZERO
+
+	if Game.is_player_valid():
+		target_pos = Game.player.global_position
+
+	# Face toward target before executing
+	if Game.is_player_valid():
+		var dir := global_position.direction_to(Game.player.global_position)
+		_update_facing_from_direction(dir)
+
+	# Store pending ability for signal handlers
+	_pending_ability = ability
+
+	# Connect signals (one-shot pattern)
+	_connect_ability_visual_signals()
+
+	# Play the visual sequence
+	play_ability_visual(template_id, overrides, target_pos)
+
+
+func _get_visual_template_for_ability(ability: Dictionary, ability_type: String) -> String:
+	"""Map ability data to a visual template ID"""
+	# Check if ability has a custom animation mapping (e.g., "howl")
+	var animation: String = ability.get("animation", "attack")
+	if animation != "attack" and animation != "":
+		var custom_template = AbilityVisualTemplates.get_all().get(animation)
+		if custom_template:
+			return animation
+
+	# Map by ability type
+	match ability_type:
+		"melee":
+			return "melee_single"
+		"dash":
+			return "dash_attack"
+		"ranged", "projectile":
+			return "ranged_attack"
+		"buff":
+			return "self_buff"
+		"debuff":
+			return "spell_cast"
+		_:
+			return "melee_single"
+
+
+func _build_ability_overrides(ability: Dictionary) -> Dictionary:
+	"""Build override dictionary from ability data fields"""
+	var overrides := {}
+
+	var windup: float = float(ability.get("windup", 0.0))
+	if windup > 0:
+		overrides["windup_duration"] = windup
+
+	var recovery: float = float(ability.get("recovery", 0.0))
+	if recovery > 0:
+		overrides["recovery_duration"] = recovery
+
+	var dash_speed: float = float(ability.get("dash_speed", 0.0))
+	if dash_speed > 0:
+		# Convert dash_speed to distance: speed * windup_duration
+		overrides["lunge_distance"] = dash_speed * windup
+		overrides["lunge_duration"] = windup
+
+	var cast_time: float = float(ability.get("cast_time", 0.0))
+	if cast_time > 0:
+		overrides["cast_duration"] = cast_time
+
+	# Dash-specific overrides from extra_config
+	var extra: Dictionary = ability.get("extra_config", {})
+	if extra is Dictionary:
+		var dash_duration: float = float(extra.get("dash_duration", 0.0))
+		if dash_duration > 0:
+			overrides["dash_duration"] = dash_duration
+		var dash_distance: float = float(extra.get("movement_distance", 0.0))
+		if dash_distance > 0:
+			overrides["dash_distance"] = dash_distance
+
+	return overrides
+
+
+func _connect_ability_visual_signals() -> void:
+	"""Connect to visual player signals for this ability execution"""
+	var vp := ability_visual_player
+	if not vp:
+		return
+
+	if not vp.damage_event.is_connected(_on_ability_damage_event):
+		vp.damage_event.connect(_on_ability_damage_event)
+	if not vp.spawn_projectile_event.is_connected(_on_ability_spawn_projectile):
+		vp.spawn_projectile_event.connect(_on_ability_spawn_projectile)
+	if not vp.sequence_finished.is_connected(_on_ability_sequence_finished):
+		vp.sequence_finished.connect(_on_ability_sequence_finished)
+
+
+func _disconnect_ability_visual_signals() -> void:
+	"""Disconnect visual player signals after ability completes"""
+	var vp := ability_visual_player
+	if not vp:
+		return
+	if vp.damage_event.is_connected(_on_ability_damage_event):
+		vp.damage_event.disconnect(_on_ability_damage_event)
+	if vp.spawn_projectile_event.is_connected(_on_ability_spawn_projectile):
+		vp.spawn_projectile_event.disconnect(_on_ability_spawn_projectile)
+	if vp.sequence_finished.is_connected(_on_ability_sequence_finished):
+		vp.sequence_finished.disconnect(_on_ability_sequence_finished)
+
+
+func _on_ability_damage_event() -> void:
+	"""Handle damage event from visual sequencer"""
+	if _pending_ability.is_empty():
+		return
+
+	var ctx = module_controller.get_context() if module_controller else null
+
+	# For buff abilities, apply to self instead
+	var ability_type: String = _pending_ability.get("ability_type", "melee")
+	if ability_type == "buff":
+		_execute_buff(_pending_ability)
+		return
+
+	if not Game.is_player_valid():
+		return
+
+	var target: Node2D = ctx.current_target if ctx else Game.player
+
+	# Check range
+	var aoe_radius: float = float(_pending_ability.get("aoe_radius", 0.0))
+	var ability_range: float = float(_pending_ability.get("range", attack_radius))
+	var hit_radius: float = aoe_radius if aoe_radius > 0 else ability_range
+	var distance := global_position.distance_to(target.global_position)
+
+	# Show debug hitbox
+	_show_debug_hitbox(global_position, hit_radius, Color.RED, 0.3)
+
+	if distance > hit_radius:
+		return  # Missed — target moved out of range
+
+	# Calculate and apply damage
+	var damage: float = base_damage * float(_pending_ability.get("damage_mult", 1.0))
+
+	if target.has_method("take_damage"):
+		target.take_damage(damage, self)
+	elif PlayerStats:
+		PlayerStats.damage(damage)
+
+	# Emit signal for modules that react to damage dealt
+	damage_dealt.emit(target, damage, _pending_ability.get("id", ""))
+
+	# Apply status effect if ability has one
+	_apply_ability_status_effect(_pending_ability, target)
+
+	Debug.log("Combat", "%s sequencer damage '%s' (damage=%.0f)" % [
+		enemy_name,
+		_pending_ability.get("name", "Attack"),
+		damage
+	])
+
+
+func _on_ability_spawn_projectile() -> void:
+	"""Handle projectile spawn event from visual sequencer"""
+	if _pending_ability.is_empty():
+		return
+
+	var ctx = module_controller.get_context() if module_controller else null
+	var target: Node2D = null
+	var direction: Vector2 = get_facing_vector()
+
+	if ctx and ctx.current_target:
+		target = ctx.current_target
+		direction = ctx.target_direction
+	elif Game.is_player_valid():
+		target = Game.player
+		direction = global_position.direction_to(Game.player.global_position)
+
+	if target:
+		_spawn_projectile(_pending_ability, direction, target)
+
+
+func _on_ability_sequence_finished(_template_id: String) -> void:
+	"""Handle sequence completion — clean up state"""
+	_pending_ability = {}
+	_disconnect_ability_visual_signals()
+
+	# Clear module attack_in_progress flag
+	if module_controller:
+		module_controller.get_context().attack_in_progress = false
+
+	Debug.log("Combat", "%s ability sequence finished: %s" % [enemy_name, _template_id])
 
 
 #===============================================================================
