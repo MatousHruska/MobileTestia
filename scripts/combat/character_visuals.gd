@@ -24,6 +24,11 @@ var body_sprite: AnimatedSprite2D = null
 var weapon_sprite: Sprite2D = null
 var weapon_visible: bool = true
 
+## Weapon texture set: { "down": Texture2D, "up": Texture2D, "right": Texture2D }
+## When set, the system picks the correct texture based on current_direction.
+## Empty dictionary = single-texture mode (legacy).
+var _weapon_texture_set: Dictionary = {}
+
 ## Effect anchor for VFX
 var effect_anchor: Node2D = null
 
@@ -99,7 +104,20 @@ func _update_weapon_position() -> void:
 	if weapon_sprite == null or body_sprite == null:
 		return
 
-	if not weapon_visible or not weapon_sprite.texture:
+	if not weapon_visible:
+		weapon_sprite.visible = false
+		return
+
+	# Select texture based on direction (set mode vs single mode)
+	if not _weapon_texture_set.is_empty():
+		var dir_key := current_direction  # "down", "up", "right"
+		var tex: Texture2D = _weapon_texture_set.get(dir_key)
+		if tex:
+			weapon_sprite.texture = tex
+		else:
+			weapon_sprite.visible = false
+			return
+	elif not weapon_sprite.texture:
 		weapon_sprite.visible = false
 		return
 
@@ -154,10 +172,22 @@ func _find_weapon_anchor() -> Vector2:
 # WEAPON MANAGEMENT
 #===============================================================================
 
-## Set the weapon texture to display. Pass null to clear.
+## Set a single weapon texture to display. Pass null to clear.
+## Clears any active texture set — switches to single-texture mode.
 func set_weapon_texture(texture: Texture2D) -> void:
+	_weapon_texture_set = {}
 	if weapon_sprite:
 		weapon_sprite.texture = texture
+
+
+## Set a direction-aware weapon texture set.
+## Pass a Dictionary with keys "down", "up", "right" mapping to Texture2D.
+## Replaces any single texture set via set_weapon_texture().
+func set_weapon_texture_set(textures: Dictionary) -> void:
+	_weapon_texture_set = textures
+	if weapon_sprite:
+		# Clear single texture — set mode is now active
+		weapon_sprite.texture = null
 
 
 ## Show/hide the weapon layer (called by AbilityVisualPlayer signals)
@@ -262,3 +292,8 @@ func set_direction(direction: String, flipped: bool) -> void:
 		body_sprite.flip_h = flipped
 	if weapon_sprite:
 		weapon_sprite.flip_h = flipped
+		# Immediately update weapon texture for new direction
+		if not _weapon_texture_set.is_empty():
+			var tex: Texture2D = _weapon_texture_set.get(direction)
+			if tex:
+				weapon_sprite.texture = tex
