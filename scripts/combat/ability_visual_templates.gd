@@ -233,9 +233,7 @@ static func _spell_cast() -> AbilityVisualData:
 		AbilityVisualPhase.create_body_anim("cast_release"),
 		# Phase 4: Spawn projectile (or damage event for non-projectile spells)
 		AbilityVisualPhase.create_spawn_projectile(),
-		# Phase 5: Restore weapon
-		AbilityVisualPhase.create_weapon_visibility(true),
-		# Phase 6: Return to idle
+		# Phase 5: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
@@ -258,9 +256,7 @@ static func _spell_instant() -> AbilityVisualData:
 		AbilityVisualPhase.create_effect("spell_burst"),
 		# Phase 3: Damage/heal event (combat system interprets based on ability data)
 		AbilityVisualPhase.create_damage_event(),
-		# Phase 4: Restore weapon
-		AbilityVisualPhase.create_weapon_visibility(true),
-		# Phase 5: Return to idle
+		# Phase 4: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
@@ -288,9 +284,7 @@ static func _throw() -> AbilityVisualData:
 		AbilityVisualPhase.create_body_anim("throw_release"),
 		# Phase 4: Spawn the thrown projectile
 		AbilityVisualPhase.create_spawn_projectile(),
-		# Phase 5: Restore weapon
-		AbilityVisualPhase.create_weapon_visibility(true),
-		# Phase 6: Return to idle
+		# Phase 5: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
@@ -317,9 +311,7 @@ static func _self_buff() -> AbilityVisualData:
 		AbilityVisualPhase.create_effect("buff_burst"),
 		# Phase 3: Apply buff (combat system applies based on ability data)
 		AbilityVisualPhase.create_damage_event(),
-		# Phase 4: Restore weapon
-		AbilityVisualPhase.create_weapon_visibility(true),
-		# Phase 5: Return to idle
+		# Phase 4: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
