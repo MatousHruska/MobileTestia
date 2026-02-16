@@ -42,7 +42,10 @@
       "max_charge_time": 0,
       "base_range": 0,
       "lunge_duration": 0.5,
-      "explosion_falloff": 0
+      "explosion_falloff": 0,
+      "can_move_while_casting": false,
+      "interrupt_on_damage": true,
+      "visual_type": ""
     },
     {
       "id": "tal_basic_shot",
@@ -86,7 +89,10 @@
       "max_charge_time": 2,
       "base_range": 150,
       "lunge_duration": 0,
-      "explosion_falloff": 0
+      "explosion_falloff": 0,
+      "can_move_while_casting": false,
+      "interrupt_on_damage": true,
+      "visual_type": ""
     },
     {
       "id": "tal_basic_fireball",
@@ -130,7 +136,10 @@
       "max_charge_time": 0,
       "base_range": 0,
       "lunge_duration": 0,
-      "explosion_falloff": 30
+      "explosion_falloff": 30,
+      "can_move_while_casting": false,
+      "interrupt_on_damage": true,
+      "visual_type": ""
     },
     {
       "id": "tal_basic_bandage",
@@ -174,7 +183,10 @@
       "max_charge_time": 0,
       "base_range": 0,
       "lunge_duration": 0,
-      "explosion_falloff": 0
+      "explosion_falloff": 0,
+      "can_move_while_casting": false,
+      "interrupt_on_damage": true,
+      "visual_type": ""
     },
     {
       "id": "tal_noble_resolve",
@@ -218,7 +230,10 @@
       "max_charge_time": 0,
       "base_range": 0,
       "lunge_duration": 0,
-      "explosion_falloff": 0
+      "explosion_falloff": 0,
+      "can_move_while_casting": false,
+      "interrupt_on_damage": true,
+      "visual_type": ""
     },
     {
       "id": "tal_noble_strike",
@@ -262,7 +277,10 @@
       "max_charge_time": 0,
       "base_range": 0,
       "lunge_duration": 0.15,
-      "explosion_falloff": 0
+      "explosion_falloff": 0,
+      "can_move_while_casting": false,
+      "interrupt_on_damage": true,
+      "visual_type": ""
     }
   ]
 }
