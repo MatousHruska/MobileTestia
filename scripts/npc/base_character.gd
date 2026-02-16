@@ -39,6 +39,9 @@ var sprite: AnimatedSprite2D = null
 ## Visual layers (weapon, effects, overlay)
 var character_visuals: Node2D = null
 
+## Visual sequencer for ability animations
+var ability_visual_player: AbilityVisualPlayer = null
+
 ## Name label
 var name_label: Label
 
@@ -50,6 +53,7 @@ func _ready() -> void:
 	_setup_sprite()
 	_setup_collision()
 	_setup_name_label()
+	_setup_ability_visual_player()
 	if use_y_sorting:
 		y_sort_enabled = true
 	Debug.info("NPC", "%s ready at %s" % [name, global_position])
@@ -100,6 +104,74 @@ func _setup_character_visuals() -> void:
 	character_visuals.name = "CharacterVisuals"
 	add_child(character_visuals)
 	character_visuals.initialize(sprite)
+
+
+func _setup_ability_visual_player() -> void:
+	ability_visual_player = AbilityVisualPlayer.new()
+	ability_visual_player.name = "AbilityVisualPlayer"
+	add_child(ability_visual_player)
+
+	if sprite:
+		ability_visual_player.initialize(sprite)
+
+	# Connect movement to base character movement system
+	ability_visual_player.movement_requested.connect(_on_visual_movement_requested)
+	ability_visual_player.sequence_started.connect(_on_visual_sequence_started)
+	ability_visual_player.sequence_finished.connect(_on_visual_sequence_finished)
+
+	# Connect to CharacterVisuals if available
+	if character_visuals:
+		character_visuals.connect_to_visual_player(ability_visual_player)
+
+
+func _on_visual_movement_requested(direction: String, distance: float, duration: float) -> void:
+	## Execute movement from the visual sequencer using a tween
+	var move_dir: Vector2
+	match direction:
+		"toward_target":
+			move_dir = get_direction_to_player()
+		"away_from_target":
+			move_dir = -get_direction_to_player()
+		"facing":
+			move_dir = get_facing_vector()
+		_:
+			move_dir = get_facing_vector()
+
+	if move_dir.is_zero_approx():
+		move_dir = get_facing_vector()
+
+	var target_pos := global_position + move_dir * distance
+	var tween := create_tween()
+	tween.tween_property(self, "global_position", target_pos, max(duration, 0.01))
+
+
+func _on_visual_sequence_started(_template_id: String) -> void:
+	is_locked = true
+	current_anim_state = AnimState.ATTACK  # Prevent _update_animation from overriding
+	stop_movement()
+
+
+func _on_visual_sequence_finished(_template_id: String) -> void:
+	is_locked = false
+	_set_anim_state(AnimState.IDLE)
+
+
+func play_ability_visual(template_id: String, overrides: Dictionary = {}, target_pos: Vector2 = Vector2.ZERO) -> void:
+	## Play a visual template. Called by EnemyNPC ability execution.
+	if not ability_visual_player:
+		play_attack()
+		return
+
+	if ability_visual_player.is_playing:
+		return
+
+	var template: AbilityVisualData = AbilityVisualTemplates.get_all().get(template_id)
+	if not template:
+		# Fallback to legacy play_attack()
+		play_attack()
+		return
+
+	ability_visual_player.play(template, target_pos, overrides)
 
 
 func _setup_collision() -> void:
@@ -388,6 +460,10 @@ func _get_animation_name(state: AnimState, facing: Facing) -> String:
 
 
 func _on_animation_finished() -> void:
+	# Don't interfere with visual sequencer — it handles its own animation flow
+	if ability_visual_player and ability_visual_player.is_playing:
+		return
+
 	Debug.log("NPC", "%s anim_finished: state=%s locked=%s" % [
 		name,
 		AnimState.keys()[current_anim_state],

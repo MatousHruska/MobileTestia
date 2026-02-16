@@ -18,10 +18,12 @@ static func get_all() -> Dictionary:
 		"melee_combo_3": _melee_combo_3(),
 		"dash_attack": _dash_attack(),
 		"ranged_aim": _ranged_aim(),
+		"ranged_attack": _ranged_attack(),
 		"spell_cast": _spell_cast(),
 		"spell_instant": _spell_instant(),
 		"throw": _throw(),
 		"self_buff": _self_buff(),
+		"howl": _howl(),
 	}
 
 
@@ -295,6 +297,52 @@ static func _self_buff() -> AbilityVisualData:
 		AbilityVisualPhase.create_weapon_visibility(true),
 		# Phase 5: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
+	]
+
+	return data
+
+
+#===============================================================================
+# ENEMY-SPECIFIC TEMPLATES
+#===============================================================================
+
+## ranged_attack - Enemy ranged attack (no aiming, instant fire)
+## Windup -> spawn projectile -> recovery
+static func _ranged_attack() -> AbilityVisualData:
+	var data := AbilityVisualData.new()
+	data.template_id = "ranged_attack"
+	data.display_name = "Ranged Attack"
+	data.locks_movement = true
+
+	data.phases = [
+		# Phase 0: Windup animation (uses attack_{dir} fallback)
+		AbilityVisualPhase.create_body_anim("attack", 0.0, "windup"),
+		# Phase 1: Spawn projectile
+		AbilityVisualPhase.create_spawn_projectile(),
+		# Phase 2: Recovery
+		AbilityVisualPhase.create_wait(0.3, "recovery"),
+	]
+
+	return data
+
+
+## howl - Custom ability animation for wolf howl
+## Plays howl_{dir} animation, emits effect, then damage
+static func _howl() -> AbilityVisualData:
+	var data := AbilityVisualData.new()
+	data.template_id = "howl"
+	data.display_name = "Howl"
+	data.locks_movement = true
+
+	data.phases = [
+		# Phase 0: Howl animation (uses howl_{dir} animations)
+		AbilityVisualPhase.create_body_anim("howl", 0.0, "cast"),
+		# Phase 1: Howl aura effect
+		AbilityVisualPhase.create_effect("howl_aura"),
+		# Phase 2: Damage/buff event
+		AbilityVisualPhase.create_damage_event(),
+		# Phase 3: Recovery
+		AbilityVisualPhase.create_wait(0.3, "recovery"),
 	]
 
 	return data
