@@ -54,10 +54,11 @@ Consult these docs when working on the corresponding systems:
 | Maps and LDtk | `docs/LDTK_MAP_REFERENCE.md`, `docs/ZONE_DESIGN_GUIDE.md` |
 | Debugging tools | `docs/DEBUG_QUICK_REFERENCE.md` |
 | Combat system | `docs/COMBAT_SYSTEM.md` |
+| Ability visual sequencer, templates, CharacterVisuals | `docs/COMBAT_SYSTEM.md` (Ability Visual Sequencer section) |
+| Animations, sprite generation, pose types | `docs/PLACEHOLDER_SPRITES.md` |
 | Collision layers | `docs/COLLISION_LAYERS.md` |
 | UI system | `docs/UI_DOCUMENTATION.md` |
 | Art direction | `docs/ART_DIRECTION.md` |
-| Placeholder sprites | `docs/PLACEHOLDER_SPRITES.md` |
 
 ## Project Structure
 
