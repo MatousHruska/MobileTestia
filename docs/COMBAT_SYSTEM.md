@@ -368,15 +368,15 @@ Templates define the visual shape of abilities. Actual durations come from talen
 
 | Template | Used For | Phase Sequence |
 |----------|----------|----------------|
-| `melee_single` | Basic melee attack | weapon show → windup → lunge+strike → damage → idle |
-| `melee_combo_2` | Two-hit melee | windup → lunge+strike → damage → pause → strike → damage → idle |
+| `melee_single` | Basic melee attack | weapon show → windup → weapon hide → slash effect → lunge+strike → damage → idle |
+| `melee_combo_2` | Two-hit melee | weapon show → windup → weapon hide → slash+lunge+strike → damage → pause → wide slash+strike → damage → idle |
 | `melee_combo_3` | Three-hit melee | Same as combo_2 with third hit |
-| `dash_attack` | Dash + strike | weapon show → dash+move → strike → damage → idle |
+| `dash_attack` | Dash + strike | weapon show → dash+move → weapon hide → wide slash+strike → damage → idle |
 | `ranged_aim` | Charge-to-fire ranged | weapon show → aim (held) → release → projectile → idle |
-| `spell_cast` | Cast-time spell | weapon hide → cast+effect → release → projectile → weapon show → idle |
-| `spell_instant` | Instant spell | weapon hide → release → effect → damage → weapon show → idle |
-| `throw` | Throw item | weapon hide → windup+item → release → projectile → weapon show → idle |
-| `self_buff` | Self-buff | weapon hide → cast → effect → damage event → weapon show → idle |
+| `spell_cast` | Cast-time spell | cast+effect → release → projectile → idle |
+| `spell_instant` | Instant spell | release → effect → damage → idle |
+| `throw` | Throw item | windup+item → release → projectile → idle |
+| `self_buff` | Self-buff | cast → effect → damage event → idle |
 | `ranged_attack` | Enemy ranged | attack anim → projectile → wait |
 | `howl` | Wolf howl | howl anim → aura effect → damage → wait |
 
@@ -421,6 +421,39 @@ Both `AbilityVisualPlayer` and `CharacterVisuals` resolve animation names using 
 Left-facing uses the `right` animations with `flip_h = true`.
 
 **Important:** Looping animations (idle, walk) never emit `animation_finished`. The sequencer detects this and advances immediately instead of waiting.
+
+### Weapon Visibility Model
+
+Weapons are hidden by default and only appear during ability sequences via `WEAPON_VISIBILITY` phases.
+
+**Melee abilities:**
+- Weapon visible during **windup** (preparation/dramatic reveal)
+- Weapon hidden during **strike** (replaced by slash effect VFX)
+- Weapon hidden during **recovery** and **idle**
+
+**Ranged abilities** (future):
+- Weapon visible during **aim** and **release**
+- Hidden after projectile spawns
+
+**Magic abilities** (future):
+- Weapon visible during **cast** (channeling with staff)
+- Hidden after release
+
+**No-weapon abilities** (throw, self_buff):
+- Weapon hidden throughout
+
+### Combat Effects
+
+Effects are spawned during `EFFECT` phases via the `effect_event` signal. `CharacterVisuals` delegates to `PlaceholderEffectSprites` which generates self-animating Node2D VFX.
+
+Effects are **direction-aware** — they orient and offset based on the character's facing direction.
+
+| Effect | Visual | Lifetime |
+|--------|--------|----------|
+| `slash_arc` | Arc sweep VFX | 0.15s |
+| `slash_arc_wide` | Wider arc for combos | 0.18s |
+| `thrust_line` | Directional stab line | 0.12s |
+| `impact_spark` | Hit confirmation flash | 0.10s |
 
 ### CharacterVisuals (Layered Sprite Stack)
 
@@ -1265,3 +1298,4 @@ This creates items like "Extended Iron Sword" with "+10-25% Hit Range".
 | 2026-01-03 | Added database-driven stat descriptions for Stats panel (StatDescriptions sheet) |
 | 2026-01-03 | Changed elemental spell damage from percentage to flat bonus (Fire, Cold, Lightning, Poison, Arcane) |
 | 2026-02-16 | Added Ability Visual Sequencer section (AbilityVisualPlayer, templates, CharacterVisuals, signal flow) |
+| 2026-02-16 | Added weapon placeholder system: direction-aware weapon sprites, melee effect VFX, revised melee templates with cinematic weapon show/hide pattern |
