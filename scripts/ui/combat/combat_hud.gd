@@ -730,6 +730,11 @@ func _activate_skill_via_sequencer(slot_index: int, talent: TalentData) -> void:
 		_start_aiming(slot_index, talent)
 		return
 
+	# Abilities with cast_time use the legacy path which handles the cast bar
+	if talent.cast_time > 0:
+		_activate_skill_legacy(slot_index, talent)
+		return
+
 	# Consume resources
 	if talent.mana_cost > 0:
 		PlayerStats.use_mana(talent.mana_cost)
