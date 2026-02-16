@@ -91,17 +91,20 @@ func _load_settings_from_database() -> void:
 	## Load player settings from gameplay_settings.json (if available)
 	## These override the @export defaults when database values exist
 	## Note: For durations, 0 in database means "use code default" (not "disable")
-	move_speed = DatabaseLoader.get_setting("base_move_speed", move_speed)
-	dodge_speed = DatabaseLoader.get_setting("base_dodge_speed", dodge_speed)
-	dodge_stamina_cost = DatabaseLoader.get_setting("base_dodge_stamina_cost", dodge_stamina_cost)
-	attack_lunge_force = DatabaseLoader.get_setting("base_lunge_force", attack_lunge_force)
+	var db := Engine.get_singleton("DatabaseLoader")
+	if not db:
+		return
+	move_speed = db.get_setting("base_move_speed", move_speed)
+	dodge_speed = db.get_setting("base_dodge_speed", dodge_speed)
+	dodge_stamina_cost = db.get_setting("base_dodge_stamina_cost", dodge_stamina_cost)
+	attack_lunge_force = db.get_setting("base_lunge_force", attack_lunge_force)
 
 	# Duration values: only override if database has non-zero value (0 = use code default)
-	var db_dodge_duration := DatabaseLoader.get_setting("base_dodge_duration", 0.0)
+	var db_dodge_duration: float = db.get_setting("base_dodge_duration", 0.0)
 	if db_dodge_duration > 0:
 		dodge_duration = db_dodge_duration
 
-	var db_lunge_duration := DatabaseLoader.get_setting("base_lunge_duration", 0.0)
+	var db_lunge_duration: float = db.get_setting("base_lunge_duration", 0.0)
 	if db_lunge_duration > 0:
 		attack_lunge_duration = db_lunge_duration
 
