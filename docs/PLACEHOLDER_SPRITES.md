@@ -75,7 +75,7 @@ The generator uses a `PoseType` enum to route arm drawing for each action:
 | `NEUTRAL` | Arms at sides (idle, walk) | No |
 | `ATTACK` | Legacy 4-frame swing (windup → swing → impact → recover) | Frames 1-2 |
 | `DASH` | Leaning silhouette with motion trail ghost | No |
-| `MELEE_WINDUP` | Arms pulled back, weight shifting, coiled stance | No |
+| `MELEE_WINDUP` | Arms pulled back, weight shifting, coiled stance | Yes (both frames) |
 | `MELEE_STRIKE` | Arms forward, lunging impact, full extension | Yes (both frames) |
 | `THRUST` | One-arm forward stab, narrow silhouette | Yes (both frames) |
 | `CAST` | Arms raised overhead, channeling glow on frame 2 | No (weapon hidden) |
@@ -133,7 +133,7 @@ The generator uses a `PoseType` enum to route arm drawing for each action:
 
 A magenta pixel (`#FF00AA`) marks where the weapon sprite should be positioned on attack frames. Only present on actions that show a weapon:
 
-- `attack` (frames 1-2), `melee_strike`, `thrust`, `aim`, `aim_release` — **have anchors**
+- `attack` (frames 1-2), `melee_windup`, `melee_strike`, `thrust`, `aim`, `aim_release` — **have anchors**
 - `cast`, `cast_release`, `throw_windup`, `throw_release` — **no anchors** (weapon hidden during casting/throwing)
 
 The `CharacterVisuals` system scans for this pixel each frame to position the `WeaponSprite` layer.
