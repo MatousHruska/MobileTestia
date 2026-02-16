@@ -235,6 +235,9 @@ func play_ability_visual(template_id: String, overrides: Dictionary = {}, target
 	if input_direction != Vector2.ZERO:
 		_snap_facing_to_cardinal(input_direction)
 
+	# Sync facing direction so animations resolve to the correct variant
+	ability_visual_player.facing_direction = _facing_to_direction_string(current_facing)
+
 	ability_visual_player.play(template, target_pos, overrides)
 
 
@@ -453,14 +456,25 @@ func _update_facing(new_facing: Facing) -> void:
 		hitbox_pivot.rotation = _facing_to_rotation(current_facing)
 
 	# Sync visuals direction
+	var dir_name := _facing_to_direction_string(new_facing)
+	var flipped := (new_facing == Facing.LEFT)
 	if character_visuals:
-		var flipped := (new_facing == Facing.LEFT)
-		var dir_name: String = Facing.keys()[new_facing].to_lower()
-		if dir_name == "left":
-			dir_name = "right"
 		character_visuals.set_direction(dir_name, flipped)
+	if ability_visual_player:
+		ability_visual_player.facing_direction = dir_name
 
 	Debug.trace("Player", "Facing changed", Facing.keys()[current_facing])
+
+
+func _facing_to_direction_string(facing: Facing) -> String:
+	## Convert Facing enum to direction string for animation resolution.
+	## Left uses "right" sprites with flip_h.
+	match facing:
+		Facing.DOWN: return "down"
+		Facing.UP: return "up"
+		Facing.LEFT: return "right"
+		Facing.RIGHT: return "right"
+	return "down"
 
 
 func _facing_to_vector(facing: Facing) -> Vector2:
