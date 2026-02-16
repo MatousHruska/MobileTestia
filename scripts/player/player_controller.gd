@@ -238,6 +238,9 @@ func _on_visual_sequence_finished(template_id: String) -> void:
 	is_attacking = false
 	is_locked = false
 	attack_ended.emit()
+	# Safety: ensure weapon is hidden when not in a sequence
+	if character_visuals:
+		character_visuals.set_weapon_visible(false)
 	Debug.log("Combat", "Visual sequence finished: %s" % template_id)
 
 

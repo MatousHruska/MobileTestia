@@ -22,7 +22,7 @@ var body_sprite: AnimatedSprite2D = null
 
 ## Weapon layer
 var weapon_sprite: Sprite2D = null
-var weapon_visible: bool = true
+var weapon_visible: bool = false
 
 ## Weapon texture set: { "down": Texture2D, "up": Texture2D, "right": Texture2D }
 ## When set, the system picks the correct texture based on current_direction.
@@ -64,6 +64,8 @@ func initialize(body: AnimatedSprite2D) -> void:
 	_create_weapon_layer()
 	_create_effect_anchor()
 	_create_overlay_layer()
+	# Ensure weapon starts hidden
+	set_weapon_visible(false)
 
 
 #===============================================================================
