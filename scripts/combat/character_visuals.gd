@@ -132,6 +132,26 @@ func _update_weapon_position() -> void:
 	weapon_sprite.position = anchor
 	weapon_sprite.flip_h = is_flipped
 
+	# Apply grip offset so the weapon handle sits on the anchor pixel,
+	# not the texture center.  grip_<dir> is the image-space pixel where
+	# the character holds the weapon.
+	var grip_key := "grip_" + current_direction
+	var grip: Vector2 = _weapon_texture_set.get(grip_key, Vector2.ZERO)
+	if grip != Vector2.ZERO:
+		var tex_size := weapon_sprite.texture.get_size()
+		# offset shifts the rendered texture so that the grip pixel
+		# lands exactly at weapon_sprite.position (the anchor).
+		var ofs := Vector2(tex_size.x / 2.0 - grip.x, tex_size.y / 2.0 - grip.y)
+		if is_flipped:
+			ofs.x = -ofs.x
+		weapon_sprite.offset = ofs
+	else:
+		weapon_sprite.offset = Vector2.ZERO
+
+	# Keep the effect anchor at the weapon anchor so VFX spawn there
+	if effect_anchor:
+		effect_anchor.position = anchor
+
 
 #===============================================================================
 # WEAPON ANCHOR SCANNING
