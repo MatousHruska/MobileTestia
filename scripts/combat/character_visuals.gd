@@ -99,21 +99,45 @@ func _create_overlay_layer() -> void:
 #===============================================================================
 
 func _process(_delta: float) -> void:
-	_update_weapon_position()
+	if body_sprite == null:
+		return
+
+	# Find the anchor once per frame and reuse for both weapon and effects
+	var anchor := _find_weapon_anchor()
+
+	# Always keep the effect anchor at the magenta pixel so VFX spawn
+	# at the correct location, regardless of whether the weapon is visible.
+	if anchor != Vector2.INF and effect_anchor:
+		effect_anchor.position = anchor
+
+	_update_weapon_position(anchor)
 
 
-func _update_weapon_position() -> void:
-	if weapon_sprite == null or body_sprite == null:
+func _update_weapon_position(anchor: Vector2) -> void:
+	if weapon_sprite == null:
 		return
 
 	if not weapon_visible:
 		weapon_sprite.visible = false
 		return
+	if anchor == Vector2.INF:
+		weapon_sprite.visible = false
+		return
 
-	# Select texture based on direction (set mode vs single mode)
+	# Determine weapon texture direction from anchor position.
+	# The weapon blade should point AWAY from the character center,
+	# matching the direction the hand is reaching.  During windup the
+	# anchor is behind the character so the blade points backward;
+	# during strike it's in front so the blade points forward.
+	var weapon_dir := _weapon_direction_from_anchor(anchor)
+	var weapon_flip := is_flipped
+	if abs(anchor.x) > abs(anchor.y):
+		# Horizontal dominant — flip when anchor is to the left
+		weapon_flip = anchor.x < 0
+
+	# Select texture based on computed weapon direction
 	if not _weapon_texture_set.is_empty():
-		var dir_key := current_direction  # "down", "up", "right"
-		var tex: Texture2D = _weapon_texture_set.get(dir_key)
+		var tex: Texture2D = _weapon_texture_set.get(weapon_dir)
 		if tex:
 			weapon_sprite.texture = tex
 		else:
@@ -123,34 +147,36 @@ func _update_weapon_position() -> void:
 		weapon_sprite.visible = false
 		return
 
-	var anchor := _find_weapon_anchor()
-	if anchor == Vector2.INF:
-		weapon_sprite.visible = false
-		return
-
 	weapon_sprite.visible = true
 	weapon_sprite.position = anchor
-	weapon_sprite.flip_h = is_flipped
+	weapon_sprite.flip_h = weapon_flip
 
 	# Apply grip offset so the weapon handle sits on the anchor pixel,
 	# not the texture center.  grip_<dir> is the image-space pixel where
 	# the character holds the weapon.
-	var grip_key := "grip_" + current_direction
+	var grip_key := "grip_" + weapon_dir
 	var grip: Vector2 = _weapon_texture_set.get(grip_key, Vector2.ZERO)
 	if grip != Vector2.ZERO:
 		var tex_size := weapon_sprite.texture.get_size()
 		# offset shifts the rendered texture so that the grip pixel
 		# lands exactly at weapon_sprite.position (the anchor).
 		var ofs := Vector2(tex_size.x / 2.0 - grip.x, tex_size.y / 2.0 - grip.y)
-		if is_flipped:
+		if weapon_flip:
 			ofs.x = -ofs.x
 		weapon_sprite.offset = ofs
 	else:
 		weapon_sprite.offset = Vector2.ZERO
 
-	# Keep the effect anchor at the weapon anchor so VFX spawn there
-	if effect_anchor:
-		effect_anchor.position = anchor
+
+func _weapon_direction_from_anchor(anchor: Vector2) -> String:
+	## Derive the weapon texture direction from the anchor position.
+	## The blade should point in the same direction as the anchor offset
+	## from center — e.g. anchor above head → blade points up ("up"),
+	## anchor below body → blade points down ("down").
+	if abs(anchor.y) >= abs(anchor.x):
+		return "down" if anchor.y > 0 else "up"
+	else:
+		return "right"
 
 
 #===============================================================================
@@ -315,10 +341,6 @@ func set_direction(direction: String, flipped: bool) -> void:
 	is_flipped = flipped
 	if body_sprite:
 		body_sprite.flip_h = flipped
-	if weapon_sprite:
-		weapon_sprite.flip_h = flipped
-		# Immediately update weapon texture for new direction
-		if not _weapon_texture_set.is_empty():
-			var tex: Texture2D = _weapon_texture_set.get(direction)
-			if tex:
-				weapon_sprite.texture = tex
+	# Weapon texture direction is determined per-frame by
+	# _update_weapon_position() based on the anchor position,
+	# so we don't force-select it here.
