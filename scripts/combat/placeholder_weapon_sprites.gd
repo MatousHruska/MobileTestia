@@ -67,32 +67,48 @@ static func create_bow() -> ImageTexture:
 #===============================================================================
 
 ## Returns direction-aware sword textures for melee_1h weapons.
-## { "down": ImageTexture, "up": ImageTexture, "right": ImageTexture }
+## { "down": ImageTexture, "up": ImageTexture, "right": ImageTexture,
+##   "grip_down": Vector2, "grip_up": Vector2, "grip_right": Vector2 }
+## Grip points are the pixel in image-space where the character's hand holds
+## the weapon. CharacterVisuals uses them to compute Sprite2D.offset so the
+## handle sits exactly on the magenta anchor pixel.
 static func create_sword_set() -> Dictionary:
 	return {
 		"down": _draw_sword_down(),
 		"up": _draw_sword_up(),
 		"right": _draw_sword_right(),
+		# Grip points (image pixel coords where the hand grips)
+		"grip_down": Vector2(4, 2),    # middle of handle, top of 8×20
+		"grip_up": Vector2(4, 17),     # middle of handle, bottom of 8×20
+		"grip_right": Vector2(2, 4),   # middle of handle, left of 20×8
 	}
 
 
 ## Returns direction-aware greatsword textures for melee_2h weapons.
-## { "down": ImageTexture, "up": ImageTexture, "right": ImageTexture }
+## { "down": ImageTexture, "up": ImageTexture, "right": ImageTexture,
+##   "grip_down": Vector2, "grip_up": Vector2, "grip_right": Vector2 }
 static func create_greatsword_set() -> Dictionary:
 	return {
 		"down": _draw_greatsword_down(),
 		"up": _draw_greatsword_up(),
 		"right": _draw_greatsword_right(),
+		"grip_down": Vector2(5, 4),    # middle of handle, top of 10×26
+		"grip_up": Vector2(5, 22),     # middle of handle, bottom of 10×26
+		"grip_right": Vector2(3, 5),   # middle of handle, left of 26×10
 	}
 
 
 ## Returns direction-aware dagger textures.
-## { "down": ImageTexture, "up": ImageTexture, "right": ImageTexture }
+## { "down": ImageTexture, "up": ImageTexture, "right": ImageTexture,
+##   "grip_down": Vector2, "grip_up": Vector2, "grip_right": Vector2 }
 static func create_dagger_set() -> Dictionary:
 	return {
 		"down": _draw_dagger_down(),
 		"up": _draw_dagger_up(),
 		"right": _draw_dagger_right(),
+		"grip_down": Vector2(3, 2),    # middle of handle, top of 6×14
+		"grip_up": Vector2(3, 12),     # middle of handle, bottom of 6×14
+		"grip_right": Vector2(2, 3),   # middle of handle, left of 14×6
 	}
 
 
