@@ -15,6 +15,7 @@ class_name EquipmentData
 @export var poison_damage: int = 0         # Poison elemental damage
 @export var weapon_attack_speed: float = 1.0  # Attacks per second (weapon base)
 @export var weapon_category: String = ""   # melee_1h, melee_2h, ranged, magic
+@export var sprite_id: String = ""         # Sprite set ID for weapon visuals (e.g., "sword_iron")
 
 ## Stat bonuses provided when equipped
 @export_group("Stat Bonuses")
@@ -241,6 +242,7 @@ func to_dict() -> Dictionary:
 		"poison_damage": poison_damage,
 		"weapon_attack_speed": weapon_attack_speed,
 		"weapon_category": weapon_category,
+		"sprite_id": sprite_id,
 		# Stat bonuses
 		"bonus_strength": bonus_strength,
 		"bonus_dexterity": bonus_dexterity,
@@ -300,6 +302,7 @@ static func from_dict(data: Dictionary) -> EquipmentData:
 	equip.poison_damage = data.get("poison_damage", 0)
 	equip.weapon_attack_speed = data.get("weapon_attack_speed", 1.0)
 	equip.weapon_category = data.get("weapon_category", "")
+	equip.sprite_id = data.get("sprite_id", "")
 
 	# Stat bonuses
 	equip.bonus_strength = data.get("bonus_strength", 0)

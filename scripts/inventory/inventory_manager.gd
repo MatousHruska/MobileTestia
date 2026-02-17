@@ -354,6 +354,17 @@ func get_equipped_weapon_category() -> String:
 	return ""
 
 
+## Get the sprite_id of the currently equipped weapon (for texture loading)
+func get_equipped_weapon_sprite_id() -> String:
+	var weapon_slot := get_equipped_item(ItemData.EquipSlot.MAIN_HAND)
+	if weapon_slot.is_empty():
+		return ""
+	var weapon: ItemData = weapon_slot.get("item")
+	if weapon is EquipmentData:
+		return weapon.sprite_id
+	return ""
+
+
 func is_slot_blocked(_slot: ItemData.EquipSlot) -> bool:
 	# No slots are blocked in this configuration
 	return false
