@@ -67,9 +67,9 @@ func _export_weapon(sprite_id: String, weapon_type: String) -> void:
 			print("  WARN: Missing '%s' texture for %s" % [dir_key, sprite_id])
 			continue
 
-		var img := tex.get_image()
-		var png_path := dir_path + dir_key + ".png"
-		var err := img.save_png(png_path)
+		var img: Image = tex.get_image()
+		var png_path: String = dir_path + dir_key + ".png"
+		var err: int = img.save_png(png_path)
 		if err != OK:
 			print("  ERROR: Failed to save %s (error %d)" % [png_path, err])
 		else:
@@ -78,7 +78,7 @@ func _export_weapon(sprite_id: String, weapon_type: String) -> void:
 	# Export grip data as JSON
 	var grip_data := {}
 	for dir_key in ["down", "up", "right"]:
-		var grip_key := "grip_" + dir_key
+		var grip_key: String = "grip_" + dir_key
 		if tex_set.has(grip_key):
 			var grip: Vector2 = tex_set[grip_key]
 			grip_data[dir_key] = [grip.x, grip.y]
