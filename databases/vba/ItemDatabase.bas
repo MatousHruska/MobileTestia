@@ -30,6 +30,7 @@ Private Const COL_IB_REQ_INT As Integer = 15
 Private Const COL_IB_ALLOWED_AFFIX_TAGS As Integer = 16
 Private Const COL_IB_DESCRIPTION As Integer = 17
 Private Const COL_IB_WEAPON_CATEGORY As Integer = 18
+Private Const COL_IB_SPRITE_ID As Integer = 19
 
 ' Column indices for Affixes
 Private Const COL_AX_ID As Integer = 1
@@ -218,7 +219,8 @@ Public Sub ExportItemBases()
         json = json & "      ""req_int"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_IB_REQ_INT))) & "," & vbCrLf
         json = json & "      ""allowed_affix_tags"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_ALLOWED_AFFIX_TAGS))) & """," & vbCrLf
         json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_DESCRIPTION))) & """," & vbCrLf
-        json = json & "      ""weapon_category"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_IB_WEAPON_CATEGORY)))) & """" & vbCrLf
+        json = json & "      ""weapon_category"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_IB_WEAPON_CATEGORY)))) & """," & vbCrLf
+        json = json & "      ""sprite_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_IB_SPRITE_ID))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1

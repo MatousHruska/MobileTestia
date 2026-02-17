@@ -18,7 +18,8 @@
       "req_int": 0,
       "allowed_affix_tags": "weapon,melee",
       "description": "",
-      "weapon_category": "melee_1h"
+      "weapon_category": "melee_1h",
+      "sprite_id": "sword_iron"
     },
     {
       "id": "wep_sword_steel",
@@ -38,7 +39,8 @@
       "req_int": 0,
       "allowed_affix_tags": "weapon,melee",
       "description": "",
-      "weapon_category": "melee_1h"
+      "weapon_category": "melee_1h",
+      "sprite_id": "sword_steel"
     },
     {
       "id": "wep_dagger_iron",
@@ -58,7 +60,8 @@
       "req_int": 0,
       "allowed_affix_tags": "weapon,melee",
       "description": "",
-      "weapon_category": "melee_1h"
+      "weapon_category": "melee_1h",
+      "sprite_id": "dagger_iron"
     },
     {
       "id": "wep_staff_oak",
@@ -78,7 +81,8 @@
       "req_int": 5,
       "allowed_affix_tags": "weapon,magic",
       "description": "",
-      "weapon_category": "magic"
+      "weapon_category": "magic",
+      "sprite_id": "staff_oak"
     },
     {
       "id": "wep_bow_short",
@@ -98,7 +102,8 @@
       "req_int": 0,
       "allowed_affix_tags": "weapon,ranged",
       "description": "",
-      "weapon_category": "ranged"
+      "weapon_category": "ranged",
+      "sprite_id": "bow_short"
     },
     {
       "id": "arm_helmet_iron",
@@ -118,7 +123,8 @@
       "req_int": 0,
       "allowed_affix_tags": "armor,head",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     },
     {
       "id": "arm_helmet_leather",
@@ -138,7 +144,8 @@
       "req_int": 0,
       "allowed_affix_tags": "armor,head",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     },
     {
       "id": "arm_chest_chainmail",
@@ -158,7 +165,8 @@
       "req_int": 0,
       "allowed_affix_tags": "armor,chest",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     },
     {
       "id": "arm_chest_leather",
@@ -178,7 +186,8 @@
       "req_int": 0,
       "allowed_affix_tags": "armor,chest",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     },
     {
       "id": "arm_gloves_leather",
@@ -198,7 +207,8 @@
       "req_int": 0,
       "allowed_affix_tags": "armor,hands",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     },
     {
       "id": "arm_gloves_iron",
@@ -218,7 +228,8 @@
       "req_int": 0,
       "allowed_affix_tags": "armor,hands",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     },
     {
       "id": "arm_boots_leather",
@@ -238,7 +249,8 @@
       "req_int": 0,
       "allowed_affix_tags": "armor,boots",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     },
     {
       "id": "arm_boots_traveler",
@@ -258,7 +270,8 @@
       "req_int": 0,
       "allowed_affix_tags": "armor,boots",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     },
     {
       "id": "acc_ring_copper",
@@ -278,7 +291,8 @@
       "req_int": 0,
       "allowed_affix_tags": "jewelry,ring",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     },
     {
       "id": "acc_ring_silver",
@@ -298,7 +312,8 @@
       "req_int": 0,
       "allowed_affix_tags": "jewelry,ring",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     },
     {
       "id": "acc_amulet_bone",
@@ -318,7 +333,8 @@
       "req_int": 0,
       "allowed_affix_tags": "jewelry,amulet",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     },
     {
       "id": "acc_amulet_jade",
@@ -338,7 +354,8 @@
       "req_int": 0,
       "allowed_affix_tags": "jewelry,amulet",
       "description": "",
-      "weapon_category": ""
+      "weapon_category": "",
+      "sprite_id": ""
     }
   ]
 }

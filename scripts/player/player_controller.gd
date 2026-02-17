@@ -198,15 +198,13 @@ func _on_equipment_changed_weapon_visual(slot) -> void:
 
 
 func _update_weapon_visual() -> void:
-	## Load the correct placeholder weapon sprite set for the equipped weapon
+	## Load weapon sprite set: tries disk textures by sprite_id, falls back to procedural
 	if not character_visuals:
 		return
+	var sprite_id := Inventory.get_equipped_weapon_sprite_id()
 	var category := Inventory.get_equipped_weapon_category()
-	if category != "":
-		var texture_set := PlaceholderWeaponSprites.create_set_for_category(category)
-		character_visuals.set_weapon_texture_set(texture_set)
-	else:
-		character_visuals.set_weapon_texture_set({})
+	var texture_set := WeaponTextureLoader.load_weapon_textures(sprite_id, category)
+	character_visuals.set_weapon_texture_set(texture_set)
 
 
 func _on_visual_movement_requested(direction: String, distance: float, duration: float) -> void:
