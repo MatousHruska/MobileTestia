@@ -98,6 +98,10 @@ func apply_critical(base_damage: float) -> Dictionary:
 	var crit_chance := PlayerStats.critical_chance
 	var crit_damage := PlayerStats.critical_damage
 
+	# Add bonus crit chance from passive talent procs (e.g., Exposed Throat)
+	if TalentProcSystem:
+		crit_chance += TalentProcSystem.get_bonus_crit_chance()
+
 	var is_crit := randf() * 100.0 < crit_chance
 	var final_damage := base_damage
 

@@ -74,8 +74,8 @@ var luck: int = 10:
 		_recalculate_derived()
 		stats_changed.emit()
 
-## Starting level for testing (set to 3 for skill point testing)
-const DEBUG_STARTING_LEVEL: int = 3
+## Starting level for testing (set to 50 for talent tree testing)
+const DEBUG_STARTING_LEVEL: int = 50
 
 ## Level and Experience
 var level: int = 1:
@@ -331,7 +331,20 @@ func _regenerate_resources(delta: float) -> void:
 		current_stamina += stamina_regen * delta
 
 
-func damage(amount: float, damage_type: String = "physical", is_crit: bool = false) -> void:
+func damage(amount: float, damage_type: String = "physical", is_crit: bool = false, attacker_position: Vector2 = Vector2.INF) -> bool:
+	# Check Cold Parry - if active, try to negate the damage
+	if TalentProcSystem and TalentProcSystem.is_parry_active():
+		# Determine attacker position for frontal arc check
+		var parry_pos := attacker_position
+		if parry_pos == Vector2.INF and Game.player:
+			# No explicit attacker position - estimate from nearest enemy
+			var enemies := NPCManager.get_enemies_in_radius(Game.player.global_position, 100.0)
+			if not enemies.is_empty():
+				parry_pos = enemies[0].global_position
+		if parry_pos != Vector2.INF and TalentProcSystem.try_parry(parry_pos):
+			Debug.log("Combat", "Damage PARRIED! (%.0f %s negated)" % [amount, damage_type])
+			return false  # Damage fully negated
+
 	current_life -= amount
 	last_damage_time = Time.get_ticks_msec() / 1000.0  # Track when damage occurred
 	damaged.emit(amount, damage_type, is_crit)
@@ -339,6 +352,7 @@ func damage(amount: float, damage_type: String = "physical", is_crit: bool = fal
 	if current_life <= 0:
 		Debug.warn("Combat", "Player died!")
 		Game.game_over()
+	return true
 
 
 func get_time_since_last_damage() -> float:
