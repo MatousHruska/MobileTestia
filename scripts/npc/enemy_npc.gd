@@ -529,7 +529,7 @@ func _execute_melee_attack(ability: Dictionary) -> void:
 		if ctx.current_target.has_method("take_damage"):
 			ctx.current_target.take_damage(damage, self)
 		elif PlayerStats:
-			PlayerStats.damage(damage)
+			PlayerStats.damage(damage, "physical", false, global_position)
 
 		# Emit signal for modules that react to damage dealt
 		Debug.info("AI", "Emitting damage_dealt signal: target=%s, damage=%.0f, ability=%s" % [
@@ -666,7 +666,7 @@ func _execute_basic_attack() -> void:
 		if ctx.current_target.has_method("take_damage"):
 			ctx.current_target.take_damage(base_damage, self)
 		elif PlayerStats:
-			PlayerStats.damage(base_damage)
+			PlayerStats.damage(base_damage, "physical", false, global_position)
 
 	Debug.log("Combat", "%s basic attack (damage=%.0f)" % [enemy_name, base_damage])
 
@@ -808,7 +808,7 @@ func _on_ability_damage_event() -> void:
 	if target.has_method("take_damage"):
 		target.take_damage(damage, self)
 	elif PlayerStats:
-		PlayerStats.damage(damage)
+		PlayerStats.damage(damage, "physical", false, global_position)
 
 	# Emit signal for modules that react to damage dealt
 	damage_dealt.emit(target, damage, _pending_ability.get("id", ""))
@@ -914,7 +914,7 @@ func _spawn_projectile(ability: Dictionary, direction: Vector2, target: Node2D) 
 			if ctx.current_target.has_method("take_damage"):
 				ctx.current_target.take_damage(damage_final, self)
 			elif PlayerStats:
-				PlayerStats.damage(damage_final)
+				PlayerStats.damage(damage_final, "physical", false, global_position)
 			# Emit signal for modules that react to damage dealt
 			damage_dealt.emit(ctx.current_target, damage_final, ability.get("id", ""))
 
@@ -1295,7 +1295,7 @@ func perform_attack() -> void:
 	var distance := get_distance_to_player()
 	if distance <= attack_radius:
 		var damage := base_damage
-		PlayerStats.damage(damage)
+		PlayerStats.damage(damage, "physical", false, global_position)
 		Debug.log("Combat", "%s attacked player" % enemy_name, ["damage:", damage])
 
 

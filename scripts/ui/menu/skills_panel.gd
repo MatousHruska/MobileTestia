@@ -543,8 +543,8 @@ func _build_talent_row(row: int) -> void:
 	# Get talents for this row
 	var talents := TalentManager.get_talents_at_row(current_tree_id, row)
 
-	# Create 3 columns (some may be empty)
-	for col in range(1, 4):
+	# Create 5 columns (some may be empty)
+	for col in range(1, 6):
 		var found := false
 		for talent in talents:
 			if talent.column == col:

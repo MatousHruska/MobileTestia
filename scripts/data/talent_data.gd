@@ -127,6 +127,25 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, MAGIC_PROJECTILE
 @export var stat_bonuses: Dictionary = {}
 
 #===============================================================================
+# PROC SYSTEM (for conditional/event-driven passive talents)
+#===============================================================================
+
+## Event that triggers the proc (e.g., "on_kill", "on_dodge", "on_hit", "on_crit", "on_take_damage", "on_parry", "always")
+@export var proc_trigger: String = ""
+
+## Condition that must be met (e.g., "stamina_above_50", "target_full_hp", "target_marked")
+@export var proc_condition: String = ""
+
+## Effect to apply when triggered (e.g., "apply_status:status_marked", "buff:attack_speed:15:3")
+@export var proc_effect: String = ""
+
+## % chance to trigger (0 = always)
+@export var proc_chance: float = 0.0
+
+## Internal cooldown in seconds (0 = no cooldown)
+@export var proc_cooldown: float = 0.0
+
+#===============================================================================
 # DESCRIPTIONS
 #===============================================================================
 
@@ -252,6 +271,13 @@ static func from_dict(data: Dictionary) -> TalentData:
 		for stat in additional:
 			talent.stat_bonuses[stat] = additional[stat]
 
+	# Proc system fields
+	talent.proc_trigger = data.get("proc_trigger", "")
+	talent.proc_condition = data.get("proc_condition", "")
+	talent.proc_effect = data.get("proc_effect", "")
+	talent.proc_chance = float(data.get("proc_chance", 0))
+	talent.proc_cooldown = float(data.get("proc_cooldown", 0))
+
 	# Descriptions
 	talent.description = data.get("description", "")
 	var ranks_str: String = data.get("rank_descriptions", "")
@@ -321,6 +347,11 @@ func is_active() -> bool:
 ## Check if this talent is passive type
 func is_passive() -> bool:
 	return type == TalentType.PASSIVE
+
+
+## Check if this talent has proc/trigger data
+func has_proc() -> bool:
+	return not proc_trigger.is_empty() and not proc_effect.is_empty()
 
 
 ## Get damage at a specific point investment

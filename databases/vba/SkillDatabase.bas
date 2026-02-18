@@ -59,6 +59,11 @@ Private Const COL_TAL_SHOW_WEAPON As Integer = 46               ' Show weapon du
 Private Const COL_TAL_WINDUP_TIME As Integer = 47               ' Seconds before attack hits (0 = use anim length)
 Private Const COL_TAL_HIT_EFFECT As Integer = 48                ' VFX effect ID per-skill (empty = template default)
 Private Const COL_TAL_HIT_COUNT As Integer = 49                 ' Combo hit count (0 = template default)
+Private Const COL_TAL_PROC_TRIGGER As Integer = 50              ' Event that fires proc: on_kill, on_dodge, on_hit, on_crit, on_take_damage, on_parry, always
+Private Const COL_TAL_PROC_CONDITION As Integer = 51            ' Condition: stamina_above_50, target_full_hp, target_marked, target_hp_below_30, etc.
+Private Const COL_TAL_PROC_EFFECT As Integer = 52               ' Effect: apply_status:id, restore_stamina:amt, buff:stat:val:dur, damage_bonus_next:pct:dur
+Private Const COL_TAL_PROC_CHANCE As Integer = 53               ' % chance to trigger (0 = always)
+Private Const COL_TAL_PROC_COOLDOWN As Integer = 54             ' Internal cooldown in seconds (0 = none)
 
 ' Column indices for TalentTrees (1-based)
 Private Const COL_TT_ID As Integer = 1
@@ -249,11 +254,11 @@ Public Sub ValidateTalents()
             LogValidationError errors, errorCount, i, "Row", "Row must be between 1 and 10"
         End If
 
-        ' Validate column 1-3
+        ' Validate column 1-5
         Dim talentCol As Double
         talentCol = GetDefaultNumeric(ws.Cells(i, COL_TAL_COLUMN), 1)
-        If talentCol < 1 Or talentCol > 3 Then
-            LogValidationError errors, errorCount, i, "Column", "Column must be between 1 and 3"
+        If talentCol < 1 Or talentCol > 5 Then
+            LogValidationError errors, errorCount, i, "Column", "Column must be between 1 and 5"
         End If
 
         ' Validate max_points 1-5
@@ -277,7 +282,7 @@ Public Sub ValidateTalents()
         visualType = LCase(Trim(ws.Cells(i, COL_TAL_VISUAL_TYPE).value))
         If Len(visualType) > 0 Then
             Dim validVisualTypes() As String
-            validVisualTypes = Split("melee_single,melee_combo_2,melee_combo_3,dash_attack,ranged_aim,ranged_attack,spell_cast,spell_instant,throw,self_buff,howl", ",")
+            validVisualTypes = Split("melee_single,melee_combo_2,melee_combo_3,dash_attack,ranged_aim,ranged_attack,spell_cast,spell_instant,throw,self_buff,howl,parry_stance", ",")
             If Not ValidateDropdown(visualType, validVisualTypes) Then
                 LogValidationError errors, errorCount, i, "visual_type", _
                     "Invalid visual_type: " & visualType
@@ -404,7 +409,12 @@ Public Sub ExportTalents()
         json = json & "      ""show_weapon"": " & LCase(GetDefaultString(ws.Cells(i, COL_TAL_SHOW_WEAPON), "false")) & "," & vbCrLf
         json = json & "      ""windup_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_WINDUP_TIME))) & "," & vbCrLf
         json = json & "      ""hit_effect"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_HIT_EFFECT))) & """," & vbCrLf
-        json = json & "      ""hit_count"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_HIT_COUNT))) & "" & vbCrLf
+        json = json & "      ""hit_count"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_HIT_COUNT))) & "," & vbCrLf
+        json = json & "      ""proc_trigger"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_PROC_TRIGGER)))) & """," & vbCrLf
+        json = json & "      ""proc_condition"": """ & EscapeJsonString(LCase(GetDefaultString(ws.Cells(i, COL_TAL_PROC_CONDITION)))) & """," & vbCrLf
+        json = json & "      ""proc_effect"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_PROC_EFFECT))) & """," & vbCrLf
+        json = json & "      ""proc_chance"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_PROC_CHANCE))) & "," & vbCrLf
+        json = json & "      ""proc_cooldown"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_PROC_COOLDOWN))) & "" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -461,14 +471,15 @@ Public Sub SetupTalentsSheet()
                     "cast_time", "explosion_radius", "contact_status_effect", "projectile_speed", _
                     "max_charge_time", "base_range", "lunge_duration", "explosion_falloff", _
                     "can_move_while_casting", "interrupt_on_damage", "visual_type", "show_weapon", _
-                    "windup_time", "hit_effect", "hit_count")
+                    "windup_time", "hit_effect", "hit_count", _
+                    "proc_trigger", "proc_condition", "proc_effect", "proc_chance", "proc_cooldown")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
     SafeAddComment ws.Cells(1, 1), "Format: tal_tree_name (e.g., tal_noble_powerstrike)"
     SafeAddComment ws.Cells(1, 3), "Reference to TalentTrees id (e.g., tree_noble_legacy)"
     SafeAddComment ws.Cells(1, 4), "Vertical position in tree (1-10). Row 1 = top"
-    SafeAddComment ws.Cells(1, 5), "Horizontal position in tree (1-3). 1=left, 2=center, 3=right"
+    SafeAddComment ws.Cells(1, 5), "Horizontal position in tree (1-5). Position in the row"
     SafeAddComment ws.Cells(1, 6), "Maximum points investable (1-5, or 1 for active)"
     SafeAddComment ws.Cells(1, 7), "active = appears in skillbook, passive = stat bonus only"
     SafeAddComment ws.Cells(1, 8), "melee, ranged, or magic - determines damage formula"
@@ -504,6 +515,11 @@ Public Sub SetupTalentsSheet()
     SafeAddComment ws.Cells(1, 47), "Seconds before attack hits (0 = use animation length). Overrides windup_duration."
     SafeAddComment ws.Cells(1, 48), "VFX effect ID per-skill (e.g., slash_arc, impact_spark). Empty = template default."
     SafeAddComment ws.Cells(1, 49), "Combo hit count (0 = template default, 1-10). Determines melee_single/combo_2/combo_3."
+    SafeAddComment ws.Cells(1, 50), "Proc trigger event: on_kill, on_dodge, on_hit, on_crit, on_take_damage, on_parry, always"
+    SafeAddComment ws.Cells(1, 51), "Proc condition: stamina_above_50, target_full_hp, target_marked, target_hp_below_30, moved_toward_target, same_target_consecutive, max_range_hit"
+    SafeAddComment ws.Cells(1, 52), "Proc effect: apply_status:id, restore_stamina:amt, buff:stat:val:dur, damage_bonus_next:pct:dur, conditional_crit:pct"
+    SafeAddComment ws.Cells(1, 53), "% chance to trigger (0 = always triggers)"
+    SafeAddComment ws.Cells(1, 54), "Internal cooldown in seconds (0 = no cooldown)"
 End Sub
 
 '-------------------------------------------------------------------------------

@@ -729,6 +729,14 @@ func _activate_skill_via_sequencer(slot_index: int, talent: TalentData) -> void:
 	var template_id := _get_visual_template_for_talent(talent)
 	var overrides := _build_visual_overrides(talent)
 
+	# For parry_stance: calculate full parry duration (with Deflective Spin) before playing
+	var parry_duration: float = 0.0
+	if template_id == "parry_stance":
+		parry_duration = talent.duration if talent.duration > 0 else 0.5
+		if TalentManager.get_invested_points("tal_noble_deflective_spin") > 0:
+			parry_duration += 0.2
+		overrides["parry_window_duration"] = parry_duration
+
 	# Find nearest enemy for target position (used by lunge direction)
 	var target_pos := _find_nearest_enemy_position()
 
@@ -739,6 +747,10 @@ func _activate_skill_via_sequencer(slot_index: int, talent: TalentData) -> void:
 
 	# Play the visual sequence
 	player.play_ability_visual(template_id, overrides, target_pos)
+
+	# Start parry window after visual begins
+	if template_id == "parry_stance":
+		TalentProcSystem.start_parry_window(parry_duration, talent)
 
 	# Start cooldown
 	_start_slot_cooldown(slot_index, talent)
@@ -1407,12 +1419,24 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 				continue  # Enemy is outside hit arc
 
 		if enemy.has_method("take_damage"):
-			# Apply armor/resistance reduction on enemy
+			# Apply proc damage bonus (from talents like Closing the Gap, First Blood)
 			var final_damage: float = damage_result.final_damage
+			var proc_bonus := TalentProcSystem.consume_next_attack_bonus()
+			if proc_bonus > 0:
+				final_damage *= (1.0 + proc_bonus / 100.0)
+
+			# Apply armor/resistance reduction on enemy
 			if enemy.has_method("_calculate_damage_after_armor"):
 				final_damage = enemy._calculate_damage_after_armor(final_damage)
 
 			enemy.take_damage(final_damage, player)
+
+			# Apply contact status effect to enemy (stagger, slow, bleed, etc.)
+			if not talent.contact_status_effect.is_empty() and "status_effects" in enemy and enemy.status_effects:
+				enemy.status_effects.apply_status_effect(talent.contact_status_effect)
+
+			# Notify proc system of hit
+			TalentProcSystem.on_player_hit_enemy(enemy, damage_result, talent)
 
 			# Spawn hit effect on enemy
 			_spawn_hit_effect(enemy.global_position, _get_damage_type_string(talent.damage_type))
@@ -1533,6 +1557,9 @@ func _on_quick_slot_activated(_slot_index: int, _ability_id: String) -> void:
 func _on_player_spawned(new_player: Node2D) -> void:
 	if new_player is PlayerController:
 		player = new_player as PlayerController
+		# Connect parry success signal for counter-attack
+		if TalentProcSystem and not TalentProcSystem.parry_succeeded.is_connected(_on_parry_succeeded):
+			TalentProcSystem.parry_succeeded.connect(_on_parry_succeeded)
 		Debug.info("Combat", "CombatHUD connected to player")
 
 
@@ -1618,3 +1645,66 @@ func reset_to_default() -> void:
 	config.layout_preset = "default"
 	_layout_buttons()
 	Debug.log("Combat", "Layout reset to default (stub)")
+
+
+#===============================================================================
+# COLD PARRY COUNTER-ATTACK
+#===============================================================================
+
+func _on_parry_succeeded(attacker: Node2D) -> void:
+	## Called when TalentProcSystem signals a successful parry.
+	## Cancel the parry stance visual and execute a counter-attack.
+	if not player:
+		return
+
+	# Cancel the parry stance visual sequence
+	if player.ability_visual_player and player.ability_visual_player.is_playing:
+		player.ability_visual_player.cancel()
+
+	# Get the Cold Parry talent for counter-attack damage
+	var parry_talent := TalentProcSystem.get_parry_talent()
+	if not parry_talent:
+		return
+
+	# Face the attacker
+	if attacker and is_instance_valid(attacker):
+		var dir := (attacker.global_position - player.global_position).normalized()
+		_snap_player_facing(dir)
+
+	# Calculate counter-attack damage (uses Cold Parry's weapon_damage_percent)
+	var invested := TalentManager.get_invested_points(parry_talent.id)
+	var damage_result := DamageCalculator.calculate_final_damage(parry_talent, invested)
+
+	# Play counter-attack visual (quick melee strike)
+	_pending_talent = parry_talent
+	_pending_slot_index = -1
+	_connect_visual_signals()
+	var counter_overrides := {
+		"lunge_distance": 15.0,
+		"lunge_duration": 0.06,
+	}
+	player.play_ability_visual("melee_single", counter_overrides, attacker.global_position if attacker and is_instance_valid(attacker) else player.global_position)
+
+	# Show parry text feedback
+	if player and CombatText:
+		CombatText.show_custom(player, "PARRY!", Color(1.0, 0.85, 0.2), 16)
+
+	Debug.log("Combat", "Parry counter-attack! %s damage" % damage_result.final_damage)
+
+
+func _snap_player_facing(direction: Vector2) -> void:
+	## Snap the player's facing toward a direction vector
+	if not player:
+		return
+	# Determine cardinal direction
+	if abs(direction.x) > abs(direction.y):
+		if direction.x > 0:
+			player.current_facing = PlayerController.Facing.RIGHT
+		else:
+			player.current_facing = PlayerController.Facing.LEFT
+	else:
+		if direction.y > 0:
+			player.current_facing = PlayerController.Facing.DOWN
+		else:
+			player.current_facing = PlayerController.Facing.UP
+	player.facing_changed.emit(player.current_facing)

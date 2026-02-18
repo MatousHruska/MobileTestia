@@ -128,9 +128,14 @@ func _handle_hit(target: Node2D) -> void:
 
 	# Check if it's the player
 	if target.is_in_group("player") or target.name == "Player":
-		# Deal damage via PlayerStats
+		# Check for Cold Parry projectile reflection (Deflective Spin)
+		if TalentProcSystem and TalentProcSystem.can_reflect_projectiles():
+			_reflect_projectile()
+			return
+
+		# Deal damage via PlayerStats (parry check happens inside damage())
 		if PlayerStats:
-			PlayerStats.damage(damage)
+			PlayerStats.damage(damage, "physical", false, global_position)
 			Debug.log("Combat", "Enemy projectile hit player for %.0f damage" % damage)
 		_destroy()
 		return
@@ -140,6 +145,31 @@ func _handle_hit(target: Node2D) -> void:
 		target.take_damage(damage, owner_node)
 		Debug.log("Combat", "Enemy projectile hit %s for %.0f damage" % [target.name, damage])
 		_destroy()
+
+
+func _reflect_projectile() -> void:
+	## Reverse the projectile back at the attacker at 150% damage
+	direction = -direction
+	damage *= 1.5
+	_traveled_distance = 0.0
+
+	# Switch ownership so it can hit enemies
+	owner_node = Game.player
+
+	# Update collision mask to hit enemies instead of player
+	collision_mask = 0b00000100  # Layer 3 = Enemies
+
+	# Consume the parry window without triggering melee counter-attack
+	# Still fire on_parry procs (Master's Riposte heal, etc.)
+	TalentProcSystem.on_parry_success(null)
+	TalentProcSystem.cancel_parry_window()
+
+	# Visual feedback
+	modulate = Color(1.0, 0.85, 0.2)  # Gold tint
+	if CombatText and Game.player:
+		CombatText.show_custom(Game.player, "REFLECT!", Color(1.0, 0.85, 0.2), 16)
+
+	Debug.log("Combat", "Projectile REFLECTED! Damage: %.0f" % damage)
 
 
 func _destroy() -> void:

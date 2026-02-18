@@ -36,6 +36,7 @@ static func get_all() -> Dictionary:
 		"spell_instant": _spell_instant(),
 		"throw": _throw(),
 		"self_buff": _self_buff(),
+		"parry_stance": _parry_stance(),
 		"howl": _howl(),
 	}
 
@@ -193,6 +194,36 @@ static func _build_melee_combo(hit_count: int, effects: Array) -> AbilityVisualD
 	phases.append(AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"))
 
 	data.phases = phases
+	return data
+
+
+#===============================================================================
+# PARRY TEMPLATE
+#===============================================================================
+
+## parry_stance - Defensive stance with a timed parry window
+## Weapon raised in guard position, waits for the parry window duration,
+## then returns to idle. If hit during the window, the combat system
+## cancels this sequence and triggers a counter-attack.
+static func _parry_stance() -> AbilityVisualData:
+	var data := AbilityVisualData.new()
+	data.template_id = "parry_stance"
+	data.display_name = "Parry Stance"
+	data.locks_movement = true
+
+	data.phases = [
+		# Phase 0: Show weapon (guard position)
+		AbilityVisualPhase.create_weapon_visibility(true),
+		# Phase 1: Enter parry stance animation
+		AbilityVisualPhase.create_body_anim("melee_windup", 0.0, "windup"),
+		# Phase 2: Hold parry window (duration overridden by talent data)
+		AbilityVisualPhase.create_wait(0.5, "parry_window"),
+		# Phase 3: Parry window expired — hide weapon and return to idle
+		AbilityVisualPhase.create_weapon_visibility(false),
+		# Phase 4: Return to idle (recovery)
+		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
+	]
+
 	return data
 
 

@@ -534,7 +534,12 @@ func _on_leveled_up(new_level: int) -> void:
 
 func take_damage(amount: float, _source: Node2D = null) -> void:
 	## Called by enemy abilities when hitting player
-	PlayerStats.damage(amount)
+	var attacker_pos := _source.global_position if _source and is_instance_valid(_source) else Vector2.INF
+	var damage_applied := PlayerStats.damage(amount, "physical", false, attacker_pos)
+
+	if not damage_applied:
+		return  # Damage was parried - don't interrupt or log
+
 	Debug.log("Combat", "Player took damage", amount)
 
 	# Interrupt casting if flagged
