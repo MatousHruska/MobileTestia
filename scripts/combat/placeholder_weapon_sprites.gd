@@ -8,7 +8,7 @@ class_name PlaceholderWeaponSprites
 ##   create_sword(), create_staff(), create_bow()
 ##
 ## Direction-aware texture set API:
-##   create_sword_set(), create_greatsword_set(), create_dagger_set()
+##   create_sword_set(), create_greatsword_set(), create_dagger_set(), create_bow_set()
 ##   Returns { "down": ImageTexture, "up": ImageTexture, "right": ImageTexture }
 ##
 ## Convenience mapping:
@@ -27,6 +27,8 @@ const COL_GUARD := Color("#4A4A4A")         # Crossguard/pommel
 const COL_BOW_LIMB := Color("#6B4226")      # Bow limbs (dark wood)
 const COL_BOW_GRIP := Color("#5A3A1A")      # Bow grip (brown)
 const COL_BOWSTRING := Color("#AAAAAA")     # Bowstring (light gray)
+const COL_ARROW_SHAFT := Color("#7A5C3A")   # Arrow shaft (warm wood)
+const COL_ARROWHEAD := Color("#888888")     # Arrowhead (dark gray metal)
 
 
 #===============================================================================
@@ -138,14 +140,14 @@ static func create_bow_set() -> Dictionary:
 		"down": _draw_bow_down(),
 		"up": _draw_bow_up(),
 		"right": _draw_bow_right(),
-		# Grip points (center of the handle where the hand holds)
-		"grip_down": Vector2(4, 12),   # center of 8×24
-		"grip_up": Vector2(4, 12),     # center of 8×24
-		"grip_right": Vector2(12, 4),  # center of 24×8
-		# Tip points (arrow nock / string center — where release effect spawns)
-		"tip_down": Vector2(6, 12),    # string center, slightly right of grip
-		"tip_up": Vector2(2, 12),      # string center, slightly left of grip
-		"tip_right": Vector2(12, 6),   # string center, below grip
+		# Grip points (center of the bow handle where the hand holds)
+		"grip_down": Vector2(10, 5),   # center of grip in 20×12
+		"grip_up": Vector2(10, 7),     # center of grip in 20×12
+		"grip_right": Vector2(5, 10),  # center of grip in 12×20
+		# Tip points (string center — where bowstring snap effect spawns)
+		"tip_down": Vector2(10, 0),    # string center at top of 20×12
+		"tip_up": Vector2(10, 11),     # string center at bottom of 20×12
+		"tip_right": Vector2(0, 10),   # string center at left of 12×20
 	}
 
 
@@ -374,75 +376,96 @@ static func _draw_dagger_right() -> ImageTexture:
 
 
 #===============================================================================
-# BOW (ranged) — 8×24 vertical, 24×8 horizontal
+# BOW (ranged) — 20×12 horizontal (down/up), 12×20 vertical (right)
+# Each texture includes a nocked arrow pointing in the attack direction.
 #===============================================================================
 
-## Bow facing down — vertical, string on the right side.
-## The character holds the grip at center and draws the string back.
+## Bow facing down — horizontal bow (limbs left-right), arrow pointing down.
+## String at top (archer side), limbs curve downward, arrow extends through center.
 static func _draw_bow_down() -> ImageTexture:
-	# Canvas: 8 wide × 24 tall
-	var img := Image.create(8, 24, false, Image.FORMAT_RGBA8)
+	# Canvas: 20 wide × 12 tall
+	var img := Image.create(20, 12, false, Image.FORMAT_RGBA8)
 	img.fill(Color.TRANSPARENT)
 
-	# Left limb (curved bow stave) — runs along left side
-	# Upper limb
-	_fill_rect(img, 1, 1, 2, 4, COL_BOW_LIMB)   # top section
-	_fill_rect(img, 2, 5, 2, 3, COL_BOW_LIMB)    # curves inward
-	_fill_rect(img, 3, 8, 2, 3, COL_BOW_LIMB)    # near grip
-	# Grip (brown, center)
-	_fill_rect(img, 3, 11, 2, 2, COL_BOW_GRIP)
-	# Lower limb
-	_fill_rect(img, 3, 13, 2, 3, COL_BOW_LIMB)   # near grip
-	_fill_rect(img, 2, 16, 2, 3, COL_BOW_LIMB)   # curves outward
-	_fill_rect(img, 1, 19, 2, 4, COL_BOW_LIMB)   # bottom section
-	# Bowstring — vertical line on the right side connecting limb tips
-	_fill_rect(img, 6, 2, 1, 20, COL_BOWSTRING)
+	# String connecting limb tips at top (archer side)
+	_fill_rect(img, 2, 0, 16, 1, COL_BOWSTRING)
+	# Left limb (tip at top-left, curves down-right to grip)
+	_fill_rect(img, 1, 0, 2, 2, COL_BOW_LIMB)     # left tip
+	_fill_rect(img, 3, 1, 2, 2, COL_BOW_LIMB)     # outer
+	_fill_rect(img, 5, 2, 2, 2, COL_BOW_LIMB)     # mid
+	_fill_rect(img, 7, 3, 2, 2, COL_BOW_LIMB)     # inner
+	# Right limb (mirrored)
+	_fill_rect(img, 17, 0, 2, 2, COL_BOW_LIMB)    # right tip
+	_fill_rect(img, 15, 1, 2, 2, COL_BOW_LIMB)    # outer
+	_fill_rect(img, 13, 2, 2, 2, COL_BOW_LIMB)    # mid
+	_fill_rect(img, 11, 3, 2, 2, COL_BOW_LIMB)    # inner
+	# Grip at center
+	_fill_rect(img, 9, 4, 2, 2, COL_BOW_GRIP)
+	# Arrow shaft (from string center downward through bow)
+	_fill_rect(img, 9, 1, 2, 9, COL_ARROW_SHAFT)
+	# Arrowhead pointing down
+	_fill_rect(img, 8, 10, 4, 1, COL_ARROWHEAD)   # wide base
+	_fill_rect(img, 9, 11, 2, 1, COL_ARROWHEAD)   # narrow tip
 
 	return ImageTexture.create_from_image(img)
 
 
-## Bow facing up — vertical, string on the left side (mirrored perspective).
+## Bow facing up — horizontal bow (limbs left-right), arrow pointing up.
+## String at bottom (archer side), limbs curve upward, arrow extends through center.
 static func _draw_bow_up() -> ImageTexture:
-	# Canvas: 8 wide × 24 tall
-	var img := Image.create(8, 24, false, Image.FORMAT_RGBA8)
+	# Canvas: 20 wide × 12 tall
+	var img := Image.create(20, 12, false, Image.FORMAT_RGBA8)
 	img.fill(Color.TRANSPARENT)
 
-	# Right limb (curved bow stave) — runs along right side
-	# Upper limb
-	_fill_rect(img, 5, 1, 2, 4, COL_BOW_LIMB)    # top section
-	_fill_rect(img, 4, 5, 2, 3, COL_BOW_LIMB)     # curves inward
-	_fill_rect(img, 3, 8, 2, 3, COL_BOW_LIMB)     # near grip
-	# Grip (brown, center)
-	_fill_rect(img, 3, 11, 2, 2, COL_BOW_GRIP)
-	# Lower limb
-	_fill_rect(img, 3, 13, 2, 3, COL_BOW_LIMB)    # near grip
-	_fill_rect(img, 4, 16, 2, 3, COL_BOW_LIMB)    # curves outward
-	_fill_rect(img, 5, 19, 2, 4, COL_BOW_LIMB)    # bottom section
-	# Bowstring — vertical line on the left side
-	_fill_rect(img, 1, 2, 1, 20, COL_BOWSTRING)
+	# String connecting limb tips at bottom (archer side)
+	_fill_rect(img, 2, 11, 16, 1, COL_BOWSTRING)
+	# Left limb (tip at bottom-left, curves up-right to grip)
+	_fill_rect(img, 1, 10, 2, 2, COL_BOW_LIMB)    # left tip
+	_fill_rect(img, 3, 9, 2, 2, COL_BOW_LIMB)     # outer
+	_fill_rect(img, 5, 8, 2, 2, COL_BOW_LIMB)     # mid
+	_fill_rect(img, 7, 7, 2, 2, COL_BOW_LIMB)     # inner
+	# Right limb (mirrored)
+	_fill_rect(img, 17, 10, 2, 2, COL_BOW_LIMB)   # right tip
+	_fill_rect(img, 15, 9, 2, 2, COL_BOW_LIMB)    # outer
+	_fill_rect(img, 13, 8, 2, 2, COL_BOW_LIMB)    # mid
+	_fill_rect(img, 11, 7, 2, 2, COL_BOW_LIMB)    # inner
+	# Grip at center
+	_fill_rect(img, 9, 6, 2, 2, COL_BOW_GRIP)
+	# Arrow shaft (from string center upward through bow)
+	_fill_rect(img, 9, 2, 2, 9, COL_ARROW_SHAFT)
+	# Arrowhead pointing up
+	_fill_rect(img, 9, 0, 2, 1, COL_ARROWHEAD)    # narrow tip
+	_fill_rect(img, 8, 1, 4, 1, COL_ARROWHEAD)    # wide base
 
 	return ImageTexture.create_from_image(img)
 
 
-## Bow facing right — horizontal, string on the bottom.
+## Bow facing right — vertical bow (limbs up-down), arrow pointing right.
+## String on left (archer side), limbs curve rightward, arrow extends through center.
 static func _draw_bow_right() -> ImageTexture:
-	# Canvas: 24 wide × 8 tall (rotated 90° from vertical)
-	var img := Image.create(24, 8, false, Image.FORMAT_RGBA8)
+	# Canvas: 12 wide × 20 tall (rotated 90° from horizontal)
+	var img := Image.create(12, 20, false, Image.FORMAT_RGBA8)
 	img.fill(Color.TRANSPARENT)
 
-	# Top limb (curved bow stave) — runs along top side
-	# Left limb
-	_fill_rect(img, 1, 1, 4, 2, COL_BOW_LIMB)     # left section
-	_fill_rect(img, 5, 2, 3, 2, COL_BOW_LIMB)      # curves inward
-	_fill_rect(img, 8, 3, 3, 2, COL_BOW_LIMB)      # near grip
-	# Grip (brown, center)
-	_fill_rect(img, 11, 3, 2, 2, COL_BOW_GRIP)
-	# Right limb
-	_fill_rect(img, 13, 3, 3, 2, COL_BOW_LIMB)     # near grip
-	_fill_rect(img, 16, 2, 3, 2, COL_BOW_LIMB)     # curves outward
-	_fill_rect(img, 19, 1, 4, 2, COL_BOW_LIMB)     # right section
-	# Bowstring — horizontal line on the bottom connecting limb tips
-	_fill_rect(img, 2, 6, 20, 1, COL_BOWSTRING)
+	# String connecting limb tips on left (archer side)
+	_fill_rect(img, 0, 2, 1, 16, COL_BOWSTRING)
+	# Top limb (tip at top-left, curves down-right to grip)
+	_fill_rect(img, 0, 1, 2, 2, COL_BOW_LIMB)     # top tip
+	_fill_rect(img, 1, 3, 2, 2, COL_BOW_LIMB)     # outer
+	_fill_rect(img, 2, 5, 2, 2, COL_BOW_LIMB)     # mid
+	_fill_rect(img, 3, 7, 2, 2, COL_BOW_LIMB)     # inner
+	# Bottom limb (mirrored)
+	_fill_rect(img, 0, 17, 2, 2, COL_BOW_LIMB)    # bottom tip
+	_fill_rect(img, 1, 15, 2, 2, COL_BOW_LIMB)    # outer
+	_fill_rect(img, 2, 13, 2, 2, COL_BOW_LIMB)    # mid
+	_fill_rect(img, 3, 11, 2, 2, COL_BOW_LIMB)    # inner
+	# Grip at center
+	_fill_rect(img, 4, 9, 2, 2, COL_BOW_GRIP)
+	# Arrow shaft (from string center rightward through bow)
+	_fill_rect(img, 1, 9, 9, 2, COL_ARROW_SHAFT)
+	# Arrowhead pointing right
+	_fill_rect(img, 10, 8, 1, 4, COL_ARROWHEAD)   # wide base
+	_fill_rect(img, 11, 9, 1, 2, COL_ARROWHEAD)   # narrow tip
 
 	return ImageTexture.create_from_image(img)
 
