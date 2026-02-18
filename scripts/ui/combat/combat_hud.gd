@@ -168,6 +168,8 @@ static func _build_visual_overrides(talent: TalentData) -> Dictionary:
 		overrides["recovery_duration"] = talent.recovery_time
 	if talent.cast_time > 0:
 		overrides["cast_duration"] = get_cast_time(talent)
+	if talent.show_weapon:
+		overrides["show_weapon"] = true
 
 	return overrides
 

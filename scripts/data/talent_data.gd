@@ -96,6 +96,9 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, MAGIC_PROJECTILE
 ## Visual template override (empty = auto-detect from effect_type)
 @export var visual_type: String = ""
 
+## Whether to show the weapon during spell casting (e.g., staff visible for fireball)
+@export var show_weapon: bool = false
+
 ## Database-driven timing (previously hardcoded)
 @export var max_charge_time: float = 2.0           # Max charge time for full range (ranged)
 @export var base_range: float = 150.0              # Base range at minimum charge (ranged)
@@ -206,6 +209,9 @@ static func from_dict(data: Dictionary) -> TalentData:
 
 	# Visual template override
 	talent.visual_type = data.get("visual_type", "")
+
+	# Show weapon during spell casting
+	talent.show_weapon = _parse_bool(data.get("show_weapon", false))
 
 	# Database-driven timing (previously hardcoded)
 	talent.max_charge_time = float(data.get("max_charge_time", 2.0))

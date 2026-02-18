@@ -29,6 +29,9 @@ const COL_BOW_GRIP := Color("#5A3A1A")      # Bow grip (brown)
 const COL_BOWSTRING := Color("#AAAAAA")     # Bowstring (light gray)
 const COL_ARROW_SHAFT := Color("#7A5C3A")   # Arrow shaft (warm wood)
 const COL_ARROWHEAD := Color("#888888")     # Arrowhead (dark gray metal)
+const COL_STAFF_SHAFT := Color("#6B4226")   # Staff shaft (brown wood)
+const COL_STAFF_ORB := Color("#4488CC")     # Staff orb (blue crystal)
+const COL_STAFF_ORB_GLOW := Color("#66AAEE") # Staff orb highlight (lighter blue)
 
 
 #===============================================================================
@@ -151,6 +154,27 @@ static func create_bow_set() -> Dictionary:
 	}
 
 
+## Returns direction-aware staff textures for magic weapons.
+## { "down": ImageTexture, "up": ImageTexture, "right": ImageTexture,
+##   "grip_down": Vector2, "grip_up": Vector2, "grip_right": Vector2,
+##   "tip_down": Vector2, "tip_up": Vector2, "tip_right": Vector2 }
+## Tip points are at the center of the orb (where spell effects spawn).
+static func create_staff_set() -> Dictionary:
+	return {
+		"down": _draw_staff_down(),
+		"up": _draw_staff_up(),
+		"right": _draw_staff_right(),
+		# Grip points (where the hand holds the shaft)
+		"grip_down": Vector2(3, 2),    # near top of shaft in 6×24
+		"grip_up": Vector2(3, 22),     # near bottom of shaft in 6×24
+		"grip_right": Vector2(2, 3),   # near left of shaft in 24×6
+		# Tip points (center of the orb — where spell effects spawn)
+		"tip_down": Vector2(3, 22),    # orb center at bottom of 6×24
+		"tip_up": Vector2(3, 2),       # orb center at top of 6×24
+		"tip_right": Vector2(22, 3),   # orb center at right of 24×6
+	}
+
+
 #===============================================================================
 # CONVENIENCE MAPPING
 #===============================================================================
@@ -168,6 +192,8 @@ static func create_set_for_category(weapon_category: String) -> Dictionary:
 			return create_dagger_set()
 		"ranged":
 			return create_bow_set()
+		"magic":
+			return create_staff_set()
 	# Fallback: basic sword for any melee-ish weapon
 	if weapon_category.begins_with("melee"):
 		return create_sword_set()
@@ -466,6 +492,59 @@ static func _draw_bow_right() -> ImageTexture:
 	# Arrowhead pointing right
 	_fill_rect(img, 10, 8, 1, 4, COL_ARROWHEAD)   # wide base
 	_fill_rect(img, 11, 9, 1, 2, COL_ARROWHEAD)   # narrow tip
+
+	return ImageTexture.create_from_image(img)
+
+
+#===============================================================================
+# STAFF (magic) — 6×24 per direction (down/up), 24×6 (right)
+#===============================================================================
+
+## Staff pointing down — grip at top, orb at bottom (pointing toward enemy).
+static func _draw_staff_down() -> ImageTexture:
+	var img := Image.create(6, 24, false, Image.FORMAT_RGBA8)
+	img.fill(Color.TRANSPARENT)
+
+	# Shaft (brown wood) — vertical, centered
+	_fill_rect(img, 2, 0, 2, 20, COL_STAFF_SHAFT)
+	# Orb (blue crystal) — bottom of staff
+	_fill_rect(img, 1, 19, 4, 4, COL_STAFF_ORB)
+	_fill_rect(img, 0, 20, 6, 2, COL_STAFF_ORB)
+	# Orb highlight — bright center
+	_fill_rect(img, 2, 21, 2, 1, COL_STAFF_ORB_GLOW)
+
+	return ImageTexture.create_from_image(img)
+
+
+## Staff pointing up — grip at bottom, orb at top.
+static func _draw_staff_up() -> ImageTexture:
+	var img := Image.create(6, 24, false, Image.FORMAT_RGBA8)
+	img.fill(Color.TRANSPARENT)
+
+	# Orb (blue crystal) — top of staff
+	_fill_rect(img, 1, 0, 4, 4, COL_STAFF_ORB)
+	_fill_rect(img, 0, 1, 6, 2, COL_STAFF_ORB)
+	# Orb highlight — bright center
+	_fill_rect(img, 2, 2, 2, 1, COL_STAFF_ORB_GLOW)
+	# Shaft (brown wood) — vertical, centered
+	_fill_rect(img, 2, 4, 2, 20, COL_STAFF_SHAFT)
+
+	return ImageTexture.create_from_image(img)
+
+
+## Staff pointing right — grip on left, orb on right.
+static func _draw_staff_right() -> ImageTexture:
+	# Canvas: 24 wide × 6 tall (rotated 90°)
+	var img := Image.create(24, 6, false, Image.FORMAT_RGBA8)
+	img.fill(Color.TRANSPARENT)
+
+	# Shaft (brown wood) — horizontal, centered
+	_fill_rect(img, 0, 2, 20, 2, COL_STAFF_SHAFT)
+	# Orb (blue crystal) — right end of staff
+	_fill_rect(img, 19, 1, 4, 4, COL_STAFF_ORB)
+	_fill_rect(img, 20, 0, 2, 6, COL_STAFF_ORB)
+	# Orb highlight — bright center
+	_fill_rect(img, 21, 2, 1, 2, COL_STAFF_ORB_GLOW)
 
 	return ImageTexture.create_from_image(img)
 
