@@ -242,7 +242,9 @@ NextExportChest:
     filePath = GetExportPath() & "chests.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " chests to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " chests to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 
@@ -293,5 +295,7 @@ Public Sub SetupChestsSheet()
     ' Auto-fit columns
     ws.Columns("A:S").AutoFit
 
-    MsgBox "Chests sheet headers set up successfully!", vbInformation
+    If Not g_SilentMode Then
+        MsgBox "Chests sheet headers set up successfully!", vbInformation
+    End If
 End Sub

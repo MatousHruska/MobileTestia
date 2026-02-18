@@ -325,7 +325,9 @@ NextExportQuest:
     filePath = GetExportPath() & "quests.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " quests to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " quests to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -466,7 +468,9 @@ Public Sub ExportQuestObjectives()
     filePath = GetExportPath() & "quest_objectives.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported quest objective types reference to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported quest objective types reference to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 '===============================================================================
@@ -479,7 +483,9 @@ End Sub
 Public Sub ExportAllQuests()
     ExportQuests
     ExportQuestObjectives
-    MsgBox "All quest databases exported!", vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "All quest databases exported!", vbInformation, "Export Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -488,5 +494,7 @@ End Sub
 Public Sub ValidateAllQuests()
     ValidateQuests
     ValidateQuestObjectives
-    MsgBox "All quest validations complete!", vbInformation, "Validation Complete"
+    If Not g_SilentMode Then
+        MsgBox "All quest validations complete!", vbInformation, "Validation Complete"
+    End If
 End Sub

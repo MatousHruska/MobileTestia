@@ -114,7 +114,9 @@ NextExportDialogue:
     filePath = GetExportPath() & "dialogues.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " dialogues to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " dialogues to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------

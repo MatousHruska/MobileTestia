@@ -13,6 +13,8 @@ Public Sub ExportAll()
     Dim startTime As Double
     startTime = Timer
 
+    g_SilentMode = True
+
     ' Items
     On Error Resume Next
     ExportItemBases
@@ -92,6 +94,8 @@ Public Sub ExportAll()
 
     On Error GoTo 0
 
+    g_SilentMode = False
+
     Dim elapsed As Double
     elapsed = Timer - startTime
 
@@ -106,6 +110,8 @@ End Sub
 Public Sub ValidateAll()
     Dim startTime As Double
     startTime = Timer
+
+    g_SilentMode = True
 
     On Error Resume Next
     ValidateItemBases
@@ -144,6 +150,8 @@ Public Sub ValidateAll()
     ValidateTerrainTypes
     On Error GoTo 0
 
+    g_SilentMode = False
+
     Dim elapsed As Double
     elapsed = Timer - startTime
 
@@ -161,6 +169,8 @@ Public Sub SetupWorkbook()
                       "Continue?", vbYesNo + vbQuestion, "Setup Workbook")
 
     If response <> vbYes Then Exit Sub
+
+    g_SilentMode = True
 
     On Error GoTo SheetError
     Dim currentSheet As String
@@ -210,6 +220,8 @@ Public Sub SetupWorkbook()
     currentSheet = "Chunks": SetupChunksSheet
     currentSheet = "TerrainTypes": SetupTerrainTypesSheet
 
+    g_SilentMode = False
+
     MsgBox "Workbook setup complete!" & vbCrLf & vbCrLf & _
            "All sheets have been created with proper headers." & vbCrLf & _
            "Don't forget to add Data Validation (dropdowns) to relevant columns!", _
@@ -217,6 +229,7 @@ Public Sub SetupWorkbook()
     Exit Sub
 
 SheetError:
+    g_SilentMode = False
     MsgBox "Error setting up sheet: " & currentSheet & vbCrLf & vbCrLf & _
            "Error " & Err.Number & ": " & Err.Description, vbCritical, "Setup Error"
 End Sub

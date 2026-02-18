@@ -180,7 +180,9 @@ NextExportDoor:
     filePath = GetExportPath() & "doors.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " doors to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " doors to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -205,5 +207,7 @@ Public Sub SetupDoorsSheet()
     ' Auto-fit columns
     ws.Columns("A:L").AutoFit
 
-    MsgBox "Doors sheet headers set up successfully!", vbInformation
+    If Not g_SilentMode Then
+        MsgBox "Doors sheet headers set up successfully!", vbInformation
+    End If
 End Sub

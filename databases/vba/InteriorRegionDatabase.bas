@@ -195,7 +195,9 @@ NextExportInteriorRegion:
     filePath = GetExportPath() & "interior_regions.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " interior regions to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " interior regions to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -229,5 +231,7 @@ Public Sub SetupInteriorRegionsSheet()
     ws.Columns(6).ColumnWidth = 14  ' ambient_light
     ws.Columns(7).ColumnWidth = 14  ' ambient_color
 
-    MsgBox "InteriorRegions sheet setup complete!", vbInformation
+    If Not g_SilentMode Then
+        MsgBox "InteriorRegions sheet setup complete!", vbInformation
+    End If
 End Sub
