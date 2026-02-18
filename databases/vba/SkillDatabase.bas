@@ -185,9 +185,7 @@ NextExportTree:
     filePath = GetExportPath() & "talent_trees.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " talent trees to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " talent trees to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -420,9 +418,7 @@ NextExportTalent:
     filePath = GetExportPath() & "talents.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " talents to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " talents to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------

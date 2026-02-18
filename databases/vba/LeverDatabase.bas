@@ -138,9 +138,7 @@ NextExportLever:
     filePath = GetExportPath() & "levers.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " levers to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " levers to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -163,7 +161,5 @@ Public Sub SetupLeversSheet()
     ' Auto-fit columns
     ws.Columns("A:I").AutoFit
 
-    If Not g_SilentMode Then
-        MsgBox "Levers sheet headers set up successfully!", vbInformation
-    End If
+    MsgBox "Levers sheet headers set up successfully!", vbInformation
 End Sub

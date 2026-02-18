@@ -162,9 +162,7 @@ NextExportPlate:
     filePath = GetExportPath() & "pressure_plates.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " pressure plates to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " pressure plates to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -188,7 +186,5 @@ Public Sub SetupPressurePlatesSheet()
     ' Auto-fit columns
     ws.Columns("A:H").AutoFit
 
-    If Not g_SilentMode Then
-        MsgBox "PressurePlates sheet headers set up successfully!", vbInformation
-    End If
+    MsgBox "PressurePlates sheet headers set up successfully!", vbInformation
 End Sub

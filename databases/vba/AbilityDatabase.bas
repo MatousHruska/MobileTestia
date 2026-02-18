@@ -401,11 +401,9 @@ Public Sub SetupAbilitySheetsOnly()
     SetupAbilitiesSheet
     SetupEnemyAbilitiesSheet
 
-    If Not g_SilentMode Then
-        MsgBox "Ability sheets created successfully!" & vbCrLf & vbCrLf & _
-               "Sheets created: Abilities, EnemyAbilities", _
-               vbInformation, "Setup Complete"
-    End If
+    MsgBox "Ability sheets created successfully!" & vbCrLf & vbCrLf & _
+           "Sheets created: Abilities, EnemyAbilities", _
+           vbInformation, "Setup Complete"
     Exit Sub
 
 AbilityError:

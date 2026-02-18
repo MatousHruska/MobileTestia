@@ -184,9 +184,7 @@ NextExportNPC:
     filePath = GetExportPath() & "npcs.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " NPCs to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " NPCs to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -324,9 +322,7 @@ NextExportShopItem:
     filePath = GetExportPath() & "shop_inventory.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " shop inventory items to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " shop inventory items to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -339,9 +335,7 @@ End Sub
 Public Sub ExportAllNPCs()
     ExportNPCs
     ExportShopInventory
-    If Not g_SilentMode Then
-        MsgBox "All NPC databases exported!", vbInformation, "Export Complete"
-    End If
+    MsgBox "All NPC databases exported!", vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------

@@ -186,9 +186,7 @@ NextExportFloatingDialogue:
     filePath = GetExportPath() & "floating_dialogues.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " floating dialogues to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " floating dialogues to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -231,7 +229,5 @@ Public Sub SetupFloatingDialoguesSheet()
     SafeAddComment ws.Cells(1, 10), "How long to display (seconds)"
     SafeAddComment ws.Cells(1, 11), "Weight for random selection among matching lines"
 
-    If Not g_SilentMode Then
-        MsgBox "FloatingDialogues sheet created with headers!", vbInformation
-    End If
+    MsgBox "FloatingDialogues sheet created with headers!", vbInformation
 End Sub
