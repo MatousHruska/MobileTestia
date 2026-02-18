@@ -727,6 +727,7 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "Talents", 43, "TRUE,FALSE"           ' can_move_while_casting
     ApplyListValidation "Talents", 44, "TRUE,FALSE"           ' interrupt_on_damage
     ApplyListValidation "Talents", 45, "melee_single,melee_combo_2,melee_combo_3,dash_attack,ranged_aim,ranged_attack,spell_cast,spell_instant,throw,self_buff,howl"  ' visual_type
+    ApplyListValidation "Talents", 48, "slash_arc,slash_arc_wide,thrust_line,impact_spark,bowstring_snap,cast_circle,spell_burst,buff_burst,howl_aura,show_held_item"  ' hit_effect
 
     ' Doors
     ApplyListValidation "Doors", 6, "TRUE,FALSE"              ' lever_controlled

@@ -99,6 +99,11 @@ enum EffectType { NONE, DAMAGE, HEAL, BUFF, DEBUFF, PROJECTILE, MAGIC_PROJECTILE
 ## Whether to show the weapon during spell casting (e.g., staff visible for fireball)
 @export var show_weapon: bool = false
 
+## Per-skill animation overrides (previously hardcoded in templates)
+@export var windup_time: float = 0.0              ## Seconds before attack hits (0 = use anim length)
+@export var hit_effect: String = ""                ## VFX effect ID per-skill (empty = template default)
+@export var hit_count: int = 0                     ## Combo hit count (0 = template default)
+
 ## Database-driven timing (previously hardcoded)
 @export var max_charge_time: float = 2.0           # Max charge time for full range (ranged)
 @export var base_range: float = 150.0              # Base range at minimum charge (ranged)
@@ -212,6 +217,11 @@ static func from_dict(data: Dictionary) -> TalentData:
 
 	# Show weapon during spell casting
 	talent.show_weapon = _parse_bool(data.get("show_weapon", false))
+
+	# Per-skill animation overrides
+	talent.windup_time = float(data.get("windup_time", 0))
+	talent.hit_effect = data.get("hit_effect", "")
+	talent.hit_count = int(data.get("hit_count", 0))
 
 	# Database-driven timing (previously hardcoded)
 	talent.max_charge_time = float(data.get("max_charge_time", 2.0))

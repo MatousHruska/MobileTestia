@@ -130,31 +130,9 @@ static func get_cooldown(talent: TalentData) -> float:
 # VISUAL SEQUENCER INTEGRATION
 #===============================================================================
 
-## Map TalentData to visual template ID. Explicit visual_type takes priority.
+## Map TalentData to visual template ID. Delegates to AbilityVisualTemplates.
 static func _get_visual_template_for_talent(talent: TalentData) -> String:
-	# Explicit override from database
-	if not talent.visual_type.is_empty():
-		return talent.visual_type
-
-	# Auto-detect fallback from effect_type
-	match talent.effect_type:
-		TalentData.EffectType.DAMAGE:
-			return "melee_single"
-		TalentData.EffectType.PROJECTILE:
-			return "ranged_aim"
-		TalentData.EffectType.MAGIC_PROJECTILE, TalentData.EffectType.MAGIC_PROJECTILE_AOE:
-			if talent.cast_time > 0:
-				return "spell_cast"
-			else:
-				return "spell_instant"
-		TalentData.EffectType.SELF_BUFF:
-			return "self_buff"
-		TalentData.EffectType.HEAL:
-			return "spell_instant"
-		TalentData.EffectType.AOE:
-			return "spell_cast"
-		_:
-			return "melee_single"
+	return AbilityVisualTemplates.resolve_template_for_talent(talent)
 
 
 static func _build_visual_overrides(talent: TalentData) -> Dictionary:
@@ -170,6 +148,10 @@ static func _build_visual_overrides(talent: TalentData) -> Dictionary:
 		overrides["cast_duration"] = get_cast_time(talent)
 	if talent.show_weapon:
 		overrides["show_weapon"] = true
+	if talent.windup_time > 0:
+		overrides["windup_duration"] = talent.windup_time
+	if not talent.hit_effect.is_empty():
+		overrides["hit_effect_id"] = talent.hit_effect
 
 	return overrides
 
@@ -211,7 +193,7 @@ func _on_visual_damage_event() -> void:
 			player._on_attack_hit_frame()
 
 
-func _on_visual_spawn_projectile() -> void:
+func _on_visual_spawn_projectile(_context: Dictionary = {}) -> void:
 	## The sequencer says "now spawn the projectile" — spawn using existing logic
 	if _pending_talent:
 		_spawn_skill_projectile(_pending_talent)

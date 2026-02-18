@@ -22,7 +22,7 @@ signal sequence_finished(template_id: String)
 signal damage_event()
 
 ## Emitted on SPAWN_PROJECTILE phase - combat system spawns projectile
-signal spawn_projectile_event()
+signal spawn_projectile_event(context: Dictionary)
 
 ## Emitted on EFFECT phase - VFX system spawns effect
 signal effect_event(effect_id: String)
@@ -288,7 +288,7 @@ func _execute_phase_in_slot(phase: AbilityVisualPhase, is_primary: bool) -> void
 				_concurrent_resolved = true
 
 		AbilityVisualPhase.PhaseType.SPAWN_PROJECTILE:
-			spawn_projectile_event.emit()
+			spawn_projectile_event.emit(phase.context_data)
 			if is_primary:
 				_primary_resolved = true
 			else:
@@ -365,7 +365,7 @@ func _execute_phase_single(phase: AbilityVisualPhase) -> void:
 			_advance_to_next_phase()
 
 		AbilityVisualPhase.PhaseType.SPAWN_PROJECTILE:
-			spawn_projectile_event.emit()
+			spawn_projectile_event.emit(phase.context_data)
 			_advance_to_next_phase()
 
 		AbilityVisualPhase.PhaseType.WEAPON_VISIBILITY:
@@ -431,22 +431,11 @@ func _finish_sequence() -> void:
 # ANIMATION NAME FALLBACK
 #===============================================================================
 
-## Resolve an animation name with fallback chain:
-## 1. "{base_name}_{direction}" (e.g., "melee_windup_down")
-## 2. "{base_name}" (directionless)
-## 3. "attack_{direction}" (legacy fallback)
-## 4. "idle_{direction}" (final fallback)
+## Resolve an animation name with fallback chain.
+## Delegates to AnimationUtils for the canonical implementation.
 func _resolve_animation_name(base_name: String, direction: String) -> String:
-	var candidates: Array[String] = [
-		"%s_%s" % [base_name, direction],
-		base_name,
-		"attack_%s" % direction,
-		"idle_%s" % direction,
-	]
-	for candidate in candidates:
-		if _sprite and _sprite.sprite_frames and _sprite.sprite_frames.has_animation(candidate):
-			return candidate
-	return "idle_%s" % direction
+	var frames: SpriteFrames = _sprite.sprite_frames if _sprite else null
+	return AnimationUtils.resolve_animation_name(frames, base_name, direction)
 
 
 #===============================================================================
@@ -483,6 +472,13 @@ func _apply_overrides(data: AbilityVisualData, overrides: Dictionary) -> Ability
 
 		patched.phases.append(phase)
 
+	# Handle hit_effect_id override: replace effect_id on EFFECT phases with override_key "hit"
+	var hit_effect_id: String = overrides.get("hit_effect_id", "")
+	if not hit_effect_id.is_empty():
+		for phase in patched.phases:
+			if phase.type == AbilityVisualPhase.PhaseType.EFFECT and phase.override_key == "hit":
+				phase.effect_id = hit_effect_id
+
 	# Handle show_weapon override: flip the first WEAPON_VISIBILITY(false) to true,
 	# and insert a WEAPON_VISIBILITY(false) before the final idle phase so the
 	# weapon hides after the spell finishes.
@@ -515,6 +511,7 @@ func _duplicate_phase(original: AbilityVisualPhase) -> AbilityVisualPhase:
 	phase.effect_id = original.effect_id
 	phase.concurrent = original.concurrent
 	phase.override_key = original.override_key
+	phase.context_data = original.context_data.duplicate()
 	return phase
 
 
