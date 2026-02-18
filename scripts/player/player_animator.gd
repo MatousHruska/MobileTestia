@@ -90,13 +90,16 @@ func _process(_delta: float) -> void:
 #===============================================================================
 
 func _on_facing_changed(_facing: PlayerController.Facing) -> void:
-	# Re-play current animation in new direction (unless in one-shot)
-	if _current_state == State.ATTACK or _current_state == State.DASH:
+	# Re-play current animation in new direction (unless in one-shot or visual sequence)
+	if _in_visual_sequence or _current_state == State.ATTACK or _current_state == State.DASH:
 		return
 	_play_anim(_current_state)
 
 
 func _on_attack_started() -> void:
+	# Visual sequencer controls animations directly — don't override with attack_{dir}
+	if _in_visual_sequence:
+		return
 	_play_anim(State.ATTACK)
 
 
@@ -111,6 +114,10 @@ func _on_dodge_ended() -> void:
 
 
 func _on_animation_finished() -> void:
+	# Visual sequencer handles its own animation_finished logic — don't interfere
+	if _in_visual_sequence:
+		return
+
 	match _current_state:
 		State.ATTACK:
 			_current_state = State.IDLE
