@@ -1400,8 +1400,8 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 	var skill_range := get_hit_range(talent)
 	var skill_arc := get_hit_arc(talent)
 
-	# Spawn visual hitbox indicator
-	_spawn_skill_visual(talent, damage_result)
+	# Spawn visual hitbox indicator (disabled for testing)
+	#_spawn_skill_visual(talent, damage_result)
 
 	# Find enemies in range
 	var enemies := NPCManager.get_enemies_in_radius(player.global_position, skill_range)
