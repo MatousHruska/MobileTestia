@@ -220,42 +220,45 @@ static func _draw_arc(img: Image, direction: String, body_color: Color, edge_col
 
 	# Arc is approximated by 5 segments positioned along a curve.
 	# Each segment is a small rectangle at a calculated position.
+	# Arcs are drawn in the half of the image that faces the attack direction
+	# so they extend outward from the blade tip (image center = anchor).
 	match direction:
 		"down":
-			# Arc sweeps left-to-right across the top half, curving downward.
-			# Attack goes down, so the arc is above/in-front.
+			# Arc sweeps left-to-right in the bottom half, curving downward.
 			var seg_w := maxi(w / 5, 2)
-			# 5 segments across, with vertical positions forming a shallow curve
-			var y_positions := [4, 2, 1, 2, 4]
-			for i in range(5):
-				var sx := int(i * (w - seg_w) / 4.0)
-				var sy: int = y_positions[i]
-				# Leading edge highlight (top row)
-				_fill_rect(img, sx, sy, seg_w, 1, edge_color)
-				# Body
-				_fill_rect(img, sx, sy + 1, seg_w, thickness, body_color)
-		"up":
-			# Arc sweeps left-to-right across the bottom half, curving upward.
-			var seg_w := maxi(w / 5, 2)
-			var base_y := h - thickness - 5
+			var base_y := h / 2
 			var y_offsets := [4, 2, 1, 2, 4]
 			for i in range(5):
 				var sx := int(i * (w - seg_w) / 4.0)
 				var sy: int = base_y + y_offsets[i]
-				_fill_rect(img, sx, sy, seg_w, thickness, body_color)
 				# Leading edge highlight (bottom row)
 				_fill_rect(img, sx, sy + thickness, seg_w, 1, edge_color)
+				# Body
+				_fill_rect(img, sx, sy, seg_w, thickness, body_color)
+		"up":
+			# Arc sweeps left-to-right in the top half, curving upward.
+			var seg_w := maxi(w / 5, 2)
+			var base_y := h / 2 - thickness
+			var y_offsets := [4, 2, 1, 2, 4]
+			for i in range(5):
+				var sx := int(i * (w - seg_w) / 4.0)
+				var sy: int = base_y - y_offsets[i]
+				# Leading edge highlight (top row)
+				_fill_rect(img, sx, sy - 1, seg_w, 1, edge_color)
+				# Body
+				_fill_rect(img, sx, sy, seg_w, thickness, body_color)
 		_:  # "right"
-			# Arc sweeps top-to-bottom along the left half, curving rightward.
+			# Arc sweeps top-to-bottom in the right half, curving rightward.
 			var seg_h := maxi(h / 5, 2)
-			var x_positions := [4, 2, 1, 2, 4]
+			var base_x := w / 2
+			var x_offsets := [4, 2, 1, 2, 4]
 			for i in range(5):
 				var sy := int(i * (h - seg_h) / 4.0)
-				var sx: int = x_positions[i]
-				# Leading edge highlight (left column)
-				_fill_rect(img, sx, sy, 1, seg_h, edge_color)
+				var sx: int = base_x + x_offsets[i]
+				# Leading edge highlight (right column)
+				_fill_rect(img, sx + thickness, sy, 1, seg_h, edge_color)
 				# Body
-				_fill_rect(img, sx + 1, sy, thickness, seg_h, body_color)
+				_fill_rect(img, sx, sy, thickness, seg_h, body_color)
 
 
 #===============================================================================
