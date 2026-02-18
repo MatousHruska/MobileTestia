@@ -55,6 +55,7 @@ Private Const COL_TAL_EXPLOSION_FALLOFF As Integer = 42         ' Damage falloff
 Private Const COL_TAL_CAN_MOVE_WHILE_CASTING As Integer = 43    ' Can player move while casting? (bool)
 Private Const COL_TAL_INTERRUPT_ON_DAMAGE As Integer = 44       ' Does taking damage interrupt cast? (bool)
 Private Const COL_TAL_VISUAL_TYPE As Integer = 45               ' Visual template override (e.g., melee_single, spell_cast)
+Private Const COL_TAL_SHOW_WEAPON As Integer = 46               ' Show weapon during spell casting (true/false)
 
 ' Column indices for TalentTrees (1-based)
 Private Const COL_TT_ID As Integer = 1
@@ -382,7 +383,8 @@ Public Sub ExportTalents()
         json = json & "      ""explosion_falloff"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_EXPLOSION_FALLOFF))) & "," & vbCrLf
         json = json & "      ""can_move_while_casting"": " & LCase(GetDefaultString(ws.Cells(i, COL_TAL_CAN_MOVE_WHILE_CASTING), "false")) & "," & vbCrLf
         json = json & "      ""interrupt_on_damage"": " & LCase(GetDefaultString(ws.Cells(i, COL_TAL_INTERRUPT_ON_DAMAGE), "true")) & "," & vbCrLf
-        json = json & "      ""visual_type"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_VISUAL_TYPE))) & """" & vbCrLf
+        json = json & "      ""visual_type"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_VISUAL_TYPE))) & """," & vbCrLf
+        json = json & "      ""show_weapon"": " & LCase(GetDefaultString(ws.Cells(i, COL_TAL_SHOW_WEAPON), "false")) & "" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -438,7 +440,7 @@ Public Sub SetupTalentsSheet()
                     "min_charge_time", "weak_shot_damage_percent", "weak_shot_range_percent", _
                     "cast_time", "explosion_radius", "contact_status_effect", "projectile_speed", _
                     "max_charge_time", "base_range", "lunge_duration", "explosion_falloff", _
-                    "can_move_while_casting", "interrupt_on_damage", "visual_type")
+                    "can_move_while_casting", "interrupt_on_damage", "visual_type", "show_weapon")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -477,6 +479,7 @@ Public Sub SetupTalentsSheet()
     SafeAddComment ws.Cells(1, 43), "Cast: Can player move while casting? (true/false, default false)"
     SafeAddComment ws.Cells(1, 44), "Cast: Does taking damage interrupt cast? (true/false, default true)"
     SafeAddComment ws.Cells(1, 45), "Visual template: melee_single, melee_combo_2, melee_combo_3, dash_attack, ranged_aim, spell_cast, spell_instant, throw, self_buff (empty=auto)"
+    SafeAddComment ws.Cells(1, 46), "Show weapon during spell casting (true/false, default false). Use for staff-wielding spells like fireball."
 End Sub
 
 '-------------------------------------------------------------------------------

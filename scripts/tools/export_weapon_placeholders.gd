@@ -25,6 +25,7 @@ const WEAPON_SETS := {
 	"dagger_iron": "dagger",
 	"greatsword": "greatsword",
 	"bow_short": "bow",
+	"staff_oak": "staff",
 }
 
 const OUTPUT_BASE := "res://assets/sprites/weapons/"
@@ -54,6 +55,8 @@ func _export_weapon(sprite_id: String, weapon_type: String) -> void:
 			tex_set = PlaceholderWeaponSprites.create_dagger_set()
 		"bow":
 			tex_set = PlaceholderWeaponSprites.create_bow_set()
+		"staff":
+			tex_set = PlaceholderWeaponSprites.create_staff_set()
 		_:
 			print("  SKIP: Unknown weapon type '%s' for sprite_id '%s'" % [weapon_type, sprite_id])
 			return

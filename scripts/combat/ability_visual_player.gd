@@ -483,6 +483,24 @@ func _apply_overrides(data: AbilityVisualData, overrides: Dictionary) -> Ability
 
 		patched.phases.append(phase)
 
+	# Handle show_weapon override: flip the first WEAPON_VISIBILITY(false) to true,
+	# and insert a WEAPON_VISIBILITY(false) before the final idle phase so the
+	# weapon hides after the spell finishes.
+	if overrides.get("show_weapon", false):
+		var flipped := false
+		for i in patched.phases.size():
+			var phase: AbilityVisualPhase = patched.phases[i]
+			if phase.type == AbilityVisualPhase.PhaseType.WEAPON_VISIBILITY and not phase.weapon_visible:
+				phase.weapon_visible = true
+				flipped = true
+				break
+		# Insert a hide-weapon phase before the final idle phase
+		if flipped and patched.phases.size() >= 2:
+			var last_phase: AbilityVisualPhase = patched.phases[patched.phases.size() - 1]
+			if last_phase.type == AbilityVisualPhase.PhaseType.BODY_ANIM and last_phase.anim_name == "idle":
+				var hide_phase := AbilityVisualPhase.create_weapon_visibility(false)
+				patched.phases.insert(patched.phases.size() - 1, hide_phase)
+
 	return patched
 
 
