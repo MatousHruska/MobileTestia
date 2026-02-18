@@ -324,6 +324,11 @@ func _on_effect_event(effect_id: String) -> void:
 	Debug.log("Visuals", "Effect requested: %s" % effect_id)
 	var effect_node := PlaceholderEffectSprites.create_effect(effect_id, current_direction)
 	if effect_node:
+		# Mirror the effect sprite when facing left (flipped "right" direction)
+		if is_flipped:
+			for child in effect_node.get_children():
+				if child is Sprite2D:
+					child.flip_h = true
 		spawn_effect(effect_node)
 
 
