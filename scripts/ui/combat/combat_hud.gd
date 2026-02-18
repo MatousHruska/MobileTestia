@@ -732,6 +732,11 @@ func _activate_skill_via_sequencer(slot_index: int, talent: TalentData) -> void:
 		_start_aiming(slot_index, talent)
 		return
 
+	# Abilities with cast_time use the legacy path which handles the cast bar
+	if talent.cast_time > 0:
+		_activate_skill_legacy(slot_index, talent)
+		return
+
 	# Consume resources
 	if talent.mana_cost > 0:
 		PlayerStats.use_mana(talent.mana_cost)
@@ -1088,6 +1093,10 @@ func _start_casting(slot_index: int, talent: TalentData) -> void:
 	cast_start_time = Time.get_ticks_msec() / 1000.0
 	cast_direction = _get_player_facing_vector()
 
+	# Show weapon during cast if talent requests it (e.g., staff for fireball)
+	if talent.show_weapon and player.character_visuals:
+		player.character_visuals.set_weapon_visible(true)
+
 	print("[CAST] Casting started: cast_time=%s, direction=%s" % [talent.cast_time, cast_direction])
 
 
@@ -1212,6 +1221,9 @@ func _fire_magic_projectile(talent: TalentData, direction: Vector2) -> void:
 
 func _end_casting() -> void:
 	## Clean up after casting completes
+	# Hide weapon if it was shown during cast
+	if casting_talent and casting_talent.show_weapon and player and player.character_visuals:
+		player.character_visuals.set_weapon_visible(false)
 	is_casting = false
 	casting_slot_index = -1
 	casting_talent = null
