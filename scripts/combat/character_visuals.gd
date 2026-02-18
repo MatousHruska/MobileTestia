@@ -180,25 +180,24 @@ func _weapon_direction_from_anchor(anchor: Vector2) -> String:
 
 
 ## Calculate the offset from the weapon grip to the blade tip in local space.
+## Uses the character's facing direction (not the dynamic weapon direction)
+## so the offset always points toward the attack, even during windup.
 ## Returns Vector2.ZERO if no tip data is available (e.g. no weapon equipped).
-func _get_blade_tip_offset(anchor: Vector2) -> Vector2:
+func _get_blade_tip_offset(_anchor: Vector2) -> Vector2:
 	if _weapon_texture_set.is_empty():
 		return Vector2.ZERO
 
-	var weapon_dir := _weapon_direction_from_anchor(anchor)
-	var grip: Vector2 = _weapon_texture_set.get("grip_" + weapon_dir, Vector2.ZERO)
-	var tip: Vector2 = _weapon_texture_set.get("tip_" + weapon_dir, Vector2.ZERO)
+	var dir := current_direction
+	var grip: Vector2 = _weapon_texture_set.get("grip_" + dir, Vector2.ZERO)
+	var tip: Vector2 = _weapon_texture_set.get("tip_" + dir, Vector2.ZERO)
 
 	if grip == Vector2.ZERO or tip == Vector2.ZERO:
 		return Vector2.ZERO
 
 	var offset := tip - grip
 
-	# Mirror horizontally when flipped (left-facing or anchor on left side)
-	var weapon_flip := is_flipped
-	if abs(anchor.x) > abs(anchor.y):
-		weapon_flip = anchor.x < 0
-	if weapon_flip:
+	# Mirror horizontally when facing left
+	if is_flipped:
 		offset.x = -offset.x
 
 	return offset
