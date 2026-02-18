@@ -66,8 +66,9 @@ static func _load_from_disk(sprite_id: String) -> Dictionary:
 	return result
 
 
-## Parse grip.json which contains grip pixel coordinates per direction.
-## Format: { "down": [x, y], "up": [x, y], "right": [x, y] }
+## Parse grip.json which contains grip and tip pixel coordinates per direction.
+## Format: { "down": [x, y], "up": [x, y], "right": [x, y],
+##           "tip_down": [x, y], "tip_up": [x, y], "tip_right": [x, y] }
 static func _load_grip_json(path: String) -> Dictionary:
 	var file := FileAccess.open(path, FileAccess.READ)
 	if file == null:
@@ -85,7 +86,12 @@ static func _load_grip_json(path: String) -> Dictionary:
 	var result := {}
 
 	for dir_key in ["down", "up", "right"]:
+		# Grip points (stored as "down", "up", "right" for backward compat)
 		if data.has(dir_key) and data[dir_key] is Array and data[dir_key].size() >= 2:
 			result["grip_" + dir_key] = Vector2(float(data[dir_key][0]), float(data[dir_key][1]))
+		# Tip points (stored as "tip_down", "tip_up", "tip_right")
+		var tip_key := "tip_" + dir_key
+		if data.has(tip_key) and data[tip_key] is Array and data[tip_key].size() >= 2:
+			result[tip_key] = Vector2(float(data[tip_key][0]), float(data[tip_key][1]))
 
 	return result

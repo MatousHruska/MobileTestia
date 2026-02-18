@@ -24,6 +24,7 @@ const WEAPON_SETS := {
 	"sword_steel": "sword",
 	"dagger_iron": "dagger",
 	"greatsword": "greatsword",
+	"bow_short": "bow",
 }
 
 const OUTPUT_BASE := "res://assets/sprites/weapons/"
@@ -51,6 +52,8 @@ func _export_weapon(sprite_id: String, weapon_type: String) -> void:
 			tex_set = PlaceholderWeaponSprites.create_greatsword_set()
 		"dagger":
 			tex_set = PlaceholderWeaponSprites.create_dagger_set()
+		"bow":
+			tex_set = PlaceholderWeaponSprites.create_bow_set()
 		_:
 			print("  SKIP: Unknown weapon type '%s' for sprite_id '%s'" % [weapon_type, sprite_id])
 			return
@@ -75,13 +78,17 @@ func _export_weapon(sprite_id: String, weapon_type: String) -> void:
 		else:
 			print("  Saved: %s" % png_path)
 
-	# Export grip data as JSON
+	# Export grip and tip data as JSON
 	var grip_data := {}
 	for dir_key in ["down", "up", "right"]:
 		var grip_key: String = "grip_" + dir_key
 		if tex_set.has(grip_key):
 			var grip: Vector2 = tex_set[grip_key]
 			grip_data[dir_key] = [grip.x, grip.y]
+		var tip_key: String = "tip_" + dir_key
+		if tex_set.has(tip_key):
+			var tip: Vector2 = tex_set[tip_key]
+			grip_data["tip_" + dir_key] = [tip.x, tip.y]
 
 	if not grip_data.is_empty():
 		var grip_path := dir_path + "grip.json"
