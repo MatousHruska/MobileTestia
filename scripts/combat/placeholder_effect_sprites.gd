@@ -21,6 +21,8 @@ const COL_THRUST_GLOW := Color("#AABBDD")   # Thrust edge glow
 const COL_SPARK_CORE := Color("#FFFFFF")     # Impact center
 const COL_SPARK_BODY := Color("#FFFFDD")     # Impact cross
 const COL_SPARK_WARM := Color("#FFDDAA")     # Impact corners
+const COL_STRING_FLASH := Color("#EEEEFF")   # Bowstring snap flash
+const COL_STRING_EDGE := Color("#AABBCC")    # Bowstring snap edge
 
 
 #===============================================================================
@@ -40,6 +42,8 @@ static func create_effect(effect_id: String, direction: String = "down") -> Node
 			return _create_thrust_line(direction)
 		"impact_spark":
 			return _create_impact_spark()
+		"bowstring_snap":
+			return _create_bowstring_snap(direction)
 	return null
 
 
@@ -200,6 +204,52 @@ static func _create_impact_spark() -> Node2D:
 		var tween := root.create_tween()
 		tween.set_parallel(true)
 		tween.tween_property(root, "scale", Vector2(1.5, 1.5), 0.10)
+		tween.tween_property(root, "modulate:a", 0.0, 0.10)
+		tween.chain().tween_callback(root.queue_free)
+	)
+
+	return root
+
+
+#===============================================================================
+# BOWSTRING SNAP — Release VFX (0.10s lifetime)
+#===============================================================================
+
+static func _create_bowstring_snap(direction: String) -> Node2D:
+	var root := Node2D.new()
+	root.name = "BowstringSnap"
+
+	var img: Image
+
+	match direction:
+		"down", "up":
+			# Vertical snap line (2×16)
+			img = Image.create(4, 16, false, Image.FORMAT_RGBA8)
+			img.fill(Color.TRANSPARENT)
+			# Edge glow on sides
+			_fill_rect(img, 0, 0, 1, 16, COL_STRING_EDGE)
+			_fill_rect(img, 3, 0, 1, 16, COL_STRING_EDGE)
+			# Core flash
+			_fill_rect(img, 1, 0, 2, 16, COL_STRING_FLASH)
+		_:  # "right"
+			# Horizontal snap line (16×2)
+			img = Image.create(16, 4, false, Image.FORMAT_RGBA8)
+			img.fill(Color.TRANSPARENT)
+			# Edge glow on top/bottom
+			_fill_rect(img, 0, 0, 16, 1, COL_STRING_EDGE)
+			_fill_rect(img, 0, 3, 16, 1, COL_STRING_EDGE)
+			# Core flash
+			_fill_rect(img, 0, 1, 16, 2, COL_STRING_FLASH)
+
+	var sprite := Sprite2D.new()
+	sprite.texture = ImageTexture.create_from_image(img)
+	root.add_child(sprite)
+
+	root.modulate.a = 0.9
+	root.ready.connect(func():
+		var tween := root.create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(root, "scale", Vector2(1.3, 1.3), 0.10)
 		tween.tween_property(root, "modulate:a", 0.0, 0.10)
 		tween.chain().tween_callback(root.queue_free)
 	)

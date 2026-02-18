@@ -207,15 +207,19 @@ static func _ranged_aim() -> AbilityVisualData:
 	data.locks_movement = true
 
 	data.phases = [
-		# Phase 0: Show weapon
+		# Phase 0: Show weapon (bow appears)
 		AbilityVisualPhase.create_weapon_visibility(true),
 		# Phase 1: Aim/charge animation (held until released externally)
 		AbilityVisualPhase.create_body_anim("aim", 0.0, "charge"),
 		# Phase 2: Release animation
 		AbilityVisualPhase.create_body_anim("aim_release"),
-		# Phase 3: Spawn projectile
+		# Phase 3: Bowstring snap effect at string position
+		AbilityVisualPhase.create_effect("bowstring_snap"),
+		# Phase 4: Spawn projectile
 		AbilityVisualPhase.create_spawn_projectile(),
-		# Phase 4: Return to idle
+		# Phase 5: Hide weapon (bow disappears after shot)
+		AbilityVisualPhase.create_weapon_visibility(false),
+		# Phase 6: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
