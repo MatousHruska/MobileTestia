@@ -172,9 +172,7 @@ NextExportTrigger:
     filePath = GetExportPath() & "trigger_areas.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " trigger areas to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " trigger areas to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -200,7 +198,5 @@ Public Sub SetupTriggerAreasSheet()
     ' Auto-fit columns
     ws.Columns("A:H").AutoFit
 
-    If Not g_SilentMode Then
-        MsgBox "TriggerAreas sheet headers set up successfully!", vbInformation
-    End If
+    MsgBox "TriggerAreas sheet headers set up successfully!", vbInformation
 End Sub

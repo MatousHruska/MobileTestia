@@ -303,10 +303,8 @@ End Sub
 Public Sub ShowValidationResults(ByRef errors() As String, ByVal errorCount As Integer, _
                                   ByVal tableName As String)
     If errorCount = 0 Then
-        If Not g_SilentMode Then
-            MsgBox tableName & " validation passed!" & vbCrLf & "No errors found.", _
-                   vbInformation, "Validation Success"
-        End If
+        MsgBox tableName & " validation passed!" & vbCrLf & "No errors found.", _
+               vbInformation, "Validation Success"
     Else
         Dim msg As String
         msg = tableName & " validation found " & errorCount & " error(s):" & vbCrLf & vbCrLf
@@ -459,12 +457,10 @@ Public Sub SetupAllDataValidation()
 
     Application.ScreenUpdating = True
 
-    If Not g_SilentMode Then
-        MsgBox "Data validation setup complete!" & vbCrLf & vbCrLf & _
-               "Named ranges created for ID columns." & vbCrLf & _
-               "Dropdowns applied to foreign key and enum columns.", _
-               vbInformation, "Setup Complete"
-    End If
+    MsgBox "Data validation setup complete!" & vbCrLf & vbCrLf & _
+           "Named ranges created for ID columns." & vbCrLf & _
+           "Dropdowns applied to foreign key and enum columns.", _
+           vbInformation, "Setup Complete"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -762,6 +758,28 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "TriggerAreas", 5, "TRUE,FALSE"       ' one_shot
     ApplyListValidation "TriggerAreas", 8, "not_started,active,completed"  ' require_quest_state
 End Sub
+
+'-------------------------------------------------------------------------------
+' MsgBox - Shadows VBA.MsgBox to suppress informational popups in silent mode.
+' When g_SilentMode = True, messages with vbInformation icon are suppressed.
+' Error/warning messages (vbExclamation, vbCritical) always display.
+' This avoids needing to edit every individual database module.
+'-------------------------------------------------------------------------------
+Public Function MsgBox(ByVal Prompt As String, _
+                       Optional ByVal Buttons As VbMsgBoxStyle = vbOKOnly, _
+                       Optional ByVal Title As String = "", _
+                       Optional ByVal HelpFile As String = "", _
+                       Optional ByVal Context As Long = 0) As VbMsgBoxResult
+    If g_SilentMode Then
+        Dim iconBits As Long
+        iconBits = Buttons And &H70  ' Extract icon flags
+        If iconBits = vbInformation Then
+            MsgBox = vbOK
+            Exit Function
+        End If
+    End If
+    MsgBox = VBA.MsgBox(Prompt, Buttons, Title, HelpFile, Context)
+End Function
 
 '-------------------------------------------------------------------------------
 ' ApplyValidation - Applies named range validation to a column

@@ -228,9 +228,7 @@ NextExportAchievement:
     filePath = GetExportPath() & "achievements.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " achievements to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " achievements to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -273,7 +271,5 @@ Public Sub SetupAchievementsSheet()
     SafeAddComment ws.Cells(1, 10), "Reward value (item_id, gold amount, unlock_id, etc.)"
     SafeAddComment ws.Cells(1, 11), "Sort order in achievement list (lower = first)"
 
-    If Not g_SilentMode Then
-        MsgBox "Achievements sheet created with headers!", vbInformation
-    End If
+    MsgBox "Achievements sheet created with headers!", vbInformation
 End Sub

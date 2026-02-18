@@ -156,7 +156,5 @@ NextExportLoot:
     filePath = GetExportPath() & "loot_tables.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " loot tables to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " loot tables to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub

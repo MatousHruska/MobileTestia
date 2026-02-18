@@ -169,9 +169,7 @@ NextExportLootable:
     filePath = GetExportPath() & "lootables.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " lootables to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " lootables to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -198,7 +196,5 @@ Public Sub SetupLootablesSheet()
     ' Auto-fit columns
     ws.Columns("A:K").AutoFit
 
-    If Not g_SilentMode Then
-        MsgBox "Lootables sheet headers set up successfully!", vbInformation
-    End If
+    MsgBox "Lootables sheet headers set up successfully!", vbInformation
 End Sub

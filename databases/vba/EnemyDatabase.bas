@@ -211,9 +211,7 @@ NextExportEnemy:
     filePath = GetExportPath() & "enemies.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " enemies to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " enemies to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -273,9 +271,7 @@ NextExportVariant:
     filePath = GetExportPath() & "enemy_variants.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " enemy variants to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " enemy variants to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -288,9 +284,7 @@ End Sub
 Public Sub ExportAllEnemies()
     ExportEnemies
     ExportEnemyVariants
-    If Not g_SilentMode Then
-        MsgBox "All enemy databases exported!", vbInformation, "Export Complete"
-    End If
+    MsgBox "All enemy databases exported!", vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -351,7 +345,5 @@ End Sub
 Public Sub SetupAllEnemySheets()
     SetupEnemiesSheet
     SetupEnemyVariantsSheet
-    If Not g_SilentMode Then
-        MsgBox "All enemy sheets created!", vbInformation, "Setup Complete"
-    End If
+    MsgBox "All enemy sheets created!", vbInformation, "Setup Complete"
 End Sub

@@ -204,9 +204,7 @@ NextExportLocation:
     filePath = GetExportPath() & "locations.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " locations to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " locations to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -248,7 +246,5 @@ Public Sub SetupLocationsSheet()
     ws.Columns(10).ColumnWidth = 14 ' discovery_popup
     ws.Columns(11).ColumnWidth = 40 ' description
 
-    If Not g_SilentMode Then
-        MsgBox "Locations sheet setup complete!", vbInformation
-    End If
+    MsgBox "Locations sheet setup complete!", vbInformation
 End Sub

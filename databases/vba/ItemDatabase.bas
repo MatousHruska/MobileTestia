@@ -234,9 +234,7 @@ NextExportItem:
     filePath = GetExportPath() & "item_bases.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " item bases to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " item bases to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -370,9 +368,7 @@ NextExportAffix:
     filePath = GetExportPath() & "affixes.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " affixes to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " affixes to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -433,9 +429,7 @@ NextExportUnique:
     filePath = GetExportPath() & "unique_items.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " unique items to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " unique items to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -449,9 +443,7 @@ Public Sub ExportAllItems()
     ExportItemBases
     ExportAffixes
     ExportUniqueItems
-    If Not g_SilentMode Then
-        MsgBox "All item databases exported!", vbInformation, "Export Complete"
-    End If
+    MsgBox "All item databases exported!", vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------

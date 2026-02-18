@@ -277,9 +277,7 @@ NextCat:
     filePath = GetExportPath() & "combat_text.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported combat text to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported combat text to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -313,9 +311,7 @@ Public Sub SetupCombatTextSettingsSheet()
     SafeAddComment ws.Cells(1, 2), "Value (boolean, number, or string)"
     SafeAddComment ws.Cells(1, 3), "Description of what this setting controls"
 
-    If Not g_SilentMode Then
-        MsgBox "CombatTextSettings sheet created with headers!", vbInformation
-    End If
+    MsgBox "CombatTextSettings sheet created with headers!", vbInformation
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -361,9 +357,7 @@ Public Sub SetupCombatTextCategoriesSheet()
     SafeAddComment ws.Cells(1, 12), "Maximum scale factor when scale_with_damage is TRUE"
     SafeAddComment ws.Cells(1, 13), "Damage amount at which max_scale is reached"
 
-    If Not g_SilentMode Then
-        MsgBox "CombatTextCategories sheet created with headers!", vbInformation
-    End If
+    MsgBox "CombatTextCategories sheet created with headers!", vbInformation
 End Sub
 
 '-------------------------------------------------------------------------------

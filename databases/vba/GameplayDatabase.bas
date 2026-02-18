@@ -213,9 +213,7 @@ NextExportConsumable:
     filePath = GetExportPath() & "consumables.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " consumables to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " consumables to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -379,9 +377,7 @@ NextExportStatusEffect:
     filePath = GetExportPath() & "status_effects.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " status effects to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " status effects to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -538,9 +534,7 @@ NextExportZone:
     filePath = GetExportPath() & "zones.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " zones to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " zones to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '===============================================================================
@@ -597,9 +591,7 @@ NextExportSetting:
     filePath = GetExportPath() & "gameplay_settings.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " gameplay settings to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " gameplay settings to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -655,10 +647,8 @@ Public Sub SetupZonesSheet()
     SafeAddComment ws.Cells(1, 11), "TRUE/FALSE - show discovery popup on first visit"
     SafeAddComment ws.Cells(1, 12), "Flavor text description of the zone"
 
-    If Not g_SilentMode Then
-        MsgBox "Zones sheet setup complete!" & vbCrLf & vbCrLf & _
-               "NOTE: Enemy spawns are now configured in the SpawnPoints sheet.", vbInformation
-    End If
+    MsgBox "Zones sheet setup complete!" & vbCrLf & vbCrLf & _
+           "NOTE: Enemy spawns are now configured in the SpawnPoints sheet.", vbInformation
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -669,9 +659,7 @@ Public Sub ExportAllGameplay()
     ExportStatusEffects
     ExportZones
     ExportGameplaySettings
-    If Not g_SilentMode Then
-        MsgBox "All gameplay databases exported!", vbInformation, "Export Complete"
-    End If
+    MsgBox "All gameplay databases exported!", vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------

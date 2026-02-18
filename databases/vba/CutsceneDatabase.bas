@@ -141,9 +141,7 @@ NextExportCutscene:
     filePath = GetExportPath() & "cutscenes.json"
     WriteJsonFile filePath, json
 
-    If Not g_SilentMode Then
-        MsgBox "Exported " & itemCount & " cutscenes to:" & vbCrLf & filePath, vbInformation, "Export Complete"
-    End If
+    MsgBox "Exported " & itemCount & " cutscenes to:" & vbCrLf & filePath, vbInformation, "Export Complete"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -376,7 +374,5 @@ Public Sub SetupCutscenesSheet()
         .ErrorMessage = "Please select TRUE or FALSE."
     End With
 
-    If Not g_SilentMode Then
-        MsgBox "Cutscenes sheet created with headers and data validation!", vbInformation
-    End If
+    MsgBox "Cutscenes sheet created with headers and data validation!", vbInformation
 End Sub
