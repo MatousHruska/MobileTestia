@@ -33,7 +33,7 @@ const PLAYER_LAYER := 0b00000010  ## Player layer to detect (layer 2)
 #===============================================================================
 
 var active_hitboxes: Array[Area2D] = []
-var show_visuals := true  ## Show attack visuals
+var show_visuals := false  ## Show attack visuals (disabled for testing)
 
 #===============================================================================
 # PUBLIC METHODS
