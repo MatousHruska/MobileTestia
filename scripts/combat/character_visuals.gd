@@ -121,8 +121,13 @@ func _update_weapon_position(anchor: Vector2) -> void:
 		weapon_sprite.visible = false
 		return
 	if anchor == Vector2.INF:
-		weapon_sprite.visible = false
-		return
+		# No anchor pixel in current frame — use a fallback "held at side"
+		# position so weapons remain visible during animations without anchors
+		# (e.g., casting with a staff).
+		anchor = _get_fallback_weapon_anchor()
+		if anchor == Vector2.INF:
+			weapon_sprite.visible = false
+			return
 
 	# Determine weapon texture direction from anchor position.
 	# The weapon blade should point AWAY from the character center,
@@ -240,6 +245,24 @@ func _find_weapon_anchor() -> Vector2:
 					local_x = -local_x
 				return Vector2(local_x, local_y)
 
+	return Vector2.INF
+
+
+func _get_fallback_weapon_anchor() -> Vector2:
+	## Returns a default weapon anchor in local-space for animations without
+	## anchor pixels (e.g., cast animations when show_weapon is active).
+	## Positions the weapon at the character's side, ensuring the
+	## weapon_direction_from_anchor() picks the correct texture variant.
+	match current_direction:
+		"down":
+			# Slightly right, well below center → direction "down"
+			return Vector2(1.0, 7.0)
+		"up":
+			# Slightly right, well above center → direction "up"
+			return Vector2(1.0, -7.0)
+		"right":
+			# Well to the right, slightly below center → direction "right"
+			return Vector2(7.0, 1.0)
 	return Vector2.INF
 
 
