@@ -24,6 +24,9 @@ const COL_BLADE_TIP := Color("#CCCCCC")     # Blade tip
 const COL_BLADE_FULLER := Color("#888888")  # Fuller groove (greatsword)
 const COL_HANDLE := Color("#5A3A1A")        # Handle/grip
 const COL_GUARD := Color("#4A4A4A")         # Crossguard/pommel
+const COL_BOW_LIMB := Color("#6B4226")      # Bow limbs (dark wood)
+const COL_BOW_GRIP := Color("#5A3A1A")      # Bow grip (brown)
+const COL_BOWSTRING := Color("#AAAAAA")     # Bowstring (light gray)
 
 
 #===============================================================================
@@ -124,6 +127,28 @@ static func create_dagger_set() -> Dictionary:
 	}
 
 
+## Returns direction-aware bow textures for ranged weapons.
+## { "down": ImageTexture, "up": ImageTexture, "right": ImageTexture,
+##   "grip_down": Vector2, "grip_up": Vector2, "grip_right": Vector2,
+##   "tip_down": Vector2, "tip_up": Vector2, "tip_right": Vector2 }
+## Tip points are at the arrow nock position (string center) where release
+## effects spawn.
+static func create_bow_set() -> Dictionary:
+	return {
+		"down": _draw_bow_down(),
+		"up": _draw_bow_up(),
+		"right": _draw_bow_right(),
+		# Grip points (center of the handle where the hand holds)
+		"grip_down": Vector2(4, 12),   # center of 8×24
+		"grip_up": Vector2(4, 12),     # center of 8×24
+		"grip_right": Vector2(12, 4),  # center of 24×8
+		# Tip points (arrow nock / string center — where release effect spawns)
+		"tip_down": Vector2(6, 12),    # string center, slightly right of grip
+		"tip_up": Vector2(2, 12),      # string center, slightly left of grip
+		"tip_right": Vector2(12, 6),   # string center, below grip
+	}
+
+
 #===============================================================================
 # CONVENIENCE MAPPING
 #===============================================================================
@@ -139,6 +164,8 @@ static func create_set_for_category(weapon_category: String) -> Dictionary:
 			return create_greatsword_set()
 		"dagger":
 			return create_dagger_set()
+		"ranged":
+			return create_bow_set()
 	# Fallback: basic sword for any melee-ish weapon
 	if weapon_category.begins_with("melee"):
 		return create_sword_set()
@@ -342,6 +369,80 @@ static func _draw_dagger_right() -> ImageTexture:
 	_fill_rect(img, 5, 2, 7, 1, COL_BLADE_EDGE)
 	# Sharp tip — right end
 	_fill_rect(img, 12, 2, 1, 1, COL_BLADE_TIP)
+
+	return ImageTexture.create_from_image(img)
+
+
+#===============================================================================
+# BOW (ranged) — 8×24 vertical, 24×8 horizontal
+#===============================================================================
+
+## Bow facing down — vertical, string on the right side.
+## The character holds the grip at center and draws the string back.
+static func _draw_bow_down() -> ImageTexture:
+	# Canvas: 8 wide × 24 tall
+	var img := Image.create(8, 24, false, Image.FORMAT_RGBA8)
+	img.fill(Color.TRANSPARENT)
+
+	# Left limb (curved bow stave) — runs along left side
+	# Upper limb
+	_fill_rect(img, 1, 1, 2, 4, COL_BOW_LIMB)   # top section
+	_fill_rect(img, 2, 5, 2, 3, COL_BOW_LIMB)    # curves inward
+	_fill_rect(img, 3, 8, 2, 3, COL_BOW_LIMB)    # near grip
+	# Grip (brown, center)
+	_fill_rect(img, 3, 11, 2, 2, COL_BOW_GRIP)
+	# Lower limb
+	_fill_rect(img, 3, 13, 2, 3, COL_BOW_LIMB)   # near grip
+	_fill_rect(img, 2, 16, 2, 3, COL_BOW_LIMB)   # curves outward
+	_fill_rect(img, 1, 19, 2, 4, COL_BOW_LIMB)   # bottom section
+	# Bowstring — vertical line on the right side connecting limb tips
+	_fill_rect(img, 6, 2, 1, 20, COL_BOWSTRING)
+
+	return ImageTexture.create_from_image(img)
+
+
+## Bow facing up — vertical, string on the left side (mirrored perspective).
+static func _draw_bow_up() -> ImageTexture:
+	# Canvas: 8 wide × 24 tall
+	var img := Image.create(8, 24, false, Image.FORMAT_RGBA8)
+	img.fill(Color.TRANSPARENT)
+
+	# Right limb (curved bow stave) — runs along right side
+	# Upper limb
+	_fill_rect(img, 5, 1, 2, 4, COL_BOW_LIMB)    # top section
+	_fill_rect(img, 4, 5, 2, 3, COL_BOW_LIMB)     # curves inward
+	_fill_rect(img, 3, 8, 2, 3, COL_BOW_LIMB)     # near grip
+	# Grip (brown, center)
+	_fill_rect(img, 3, 11, 2, 2, COL_BOW_GRIP)
+	# Lower limb
+	_fill_rect(img, 3, 13, 2, 3, COL_BOW_LIMB)    # near grip
+	_fill_rect(img, 4, 16, 2, 3, COL_BOW_LIMB)    # curves outward
+	_fill_rect(img, 5, 19, 2, 4, COL_BOW_LIMB)    # bottom section
+	# Bowstring — vertical line on the left side
+	_fill_rect(img, 1, 2, 1, 20, COL_BOWSTRING)
+
+	return ImageTexture.create_from_image(img)
+
+
+## Bow facing right — horizontal, string on the bottom.
+static func _draw_bow_right() -> ImageTexture:
+	# Canvas: 24 wide × 8 tall (rotated 90° from vertical)
+	var img := Image.create(24, 8, false, Image.FORMAT_RGBA8)
+	img.fill(Color.TRANSPARENT)
+
+	# Top limb (curved bow stave) — runs along top side
+	# Left limb
+	_fill_rect(img, 1, 1, 4, 2, COL_BOW_LIMB)     # left section
+	_fill_rect(img, 5, 2, 3, 2, COL_BOW_LIMB)      # curves inward
+	_fill_rect(img, 8, 3, 3, 2, COL_BOW_LIMB)      # near grip
+	# Grip (brown, center)
+	_fill_rect(img, 11, 3, 2, 2, COL_BOW_GRIP)
+	# Right limb
+	_fill_rect(img, 13, 3, 3, 2, COL_BOW_LIMB)     # near grip
+	_fill_rect(img, 16, 2, 3, 2, COL_BOW_LIMB)     # curves outward
+	_fill_rect(img, 19, 1, 4, 2, COL_BOW_LIMB)     # right section
+	# Bowstring — horizontal line on the bottom connecting limb tips
+	_fill_rect(img, 2, 6, 20, 1, COL_BOWSTRING)
 
 	return ImageTexture.create_from_image(img)
 
