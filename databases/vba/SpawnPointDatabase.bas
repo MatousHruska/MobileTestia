@@ -285,7 +285,9 @@ NextExportSpawnPoint:
     filePath = GetExportPath() & "spawn_points.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " spawn points to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " spawn points to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -332,5 +334,7 @@ Public Sub SetupSpawnPointsSheet()
     SafeAddComment ws.Cells(1, 19), "Comma-separated module IDs to add (e.g., mod_patrol,mod_ambush)"
     SafeAddComment ws.Cells(1, 20), "JSON config override for modules. Example: {""mod_patrol"": {""waypoints_relative"": [[0,0], [100,0]], ""loop"": true}}"
 
-    MsgBox "SpawnPoints sheet created with headers!", vbInformation
+    If Not g_SilentMode Then
+        MsgBox "SpawnPoints sheet created with headers!", vbInformation
+    End If
 End Sub

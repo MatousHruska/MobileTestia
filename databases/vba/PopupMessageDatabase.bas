@@ -193,7 +193,9 @@ NextExportPopupMessage:
     filePath = GetExportPath() & "popup_messages.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " popup messages to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " popup messages to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -234,5 +236,7 @@ Public Sub SetupPopupMessagesSheet()
     SafeAddComment ws.Cells(1, 8), "1-10 (higher priority can replace lower)"
     SafeAddComment ws.Cells(1, 9), "Sound effect to play (optional)"
 
-    MsgBox "PopupMessages sheet created with headers!", vbInformation
+    If Not g_SilentMode Then
+        MsgBox "PopupMessages sheet created with headers!", vbInformation
+    End If
 End Sub

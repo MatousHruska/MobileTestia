@@ -144,7 +144,9 @@ NextExportEcho:
     filePath = GetExportPath() & "lore_echoes.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " lore echoes to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " lore echoes to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -170,5 +172,7 @@ Public Sub SetupLoreEchoesSheet()
     ' Auto-fit columns
     ws.Columns("A:H").AutoFit
 
-    MsgBox "LoreEchoes sheet headers set up successfully!", vbInformation
+    If Not g_SilentMode Then
+        MsgBox "LoreEchoes sheet headers set up successfully!", vbInformation
+    End If
 End Sub

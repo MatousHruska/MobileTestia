@@ -5,6 +5,11 @@ Attribute VB_Name = "SharedValidation"
 '===============================================================================
 Option Explicit
 
+' Silent mode flag — when True, individual export/setup/validation-pass
+' MsgBox calls are suppressed.  Set by ExportAll / SetupWorkbook / ValidateAll
+' so only one summary message appears at the end.
+Public g_SilentMode As Boolean
+
 ' Constants for validation
 Public Const VALID_ID_PATTERN As String = "^[a-z]+_[a-z]+_[a-z0-9_]+$"
 Public Const DEBUG_PREFIX As String = "debug_"
@@ -298,8 +303,10 @@ End Sub
 Public Sub ShowValidationResults(ByRef errors() As String, ByVal errorCount As Integer, _
                                   ByVal tableName As String)
     If errorCount = 0 Then
-        MsgBox tableName & " validation passed!" & vbCrLf & "No errors found.", _
-               vbInformation, "Validation Success"
+        If Not g_SilentMode Then
+            MsgBox tableName & " validation passed!" & vbCrLf & "No errors found.", _
+                   vbInformation, "Validation Success"
+        End If
     Else
         Dim msg As String
         msg = tableName & " validation found " & errorCount & " error(s):" & vbCrLf & vbCrLf
@@ -452,10 +459,12 @@ Public Sub SetupAllDataValidation()
 
     Application.ScreenUpdating = True
 
-    MsgBox "Data validation setup complete!" & vbCrLf & vbCrLf & _
-           "Named ranges created for ID columns." & vbCrLf & _
-           "Dropdowns applied to foreign key and enum columns.", _
-           vbInformation, "Setup Complete"
+    If Not g_SilentMode Then
+        MsgBox "Data validation setup complete!" & vbCrLf & vbCrLf & _
+               "Named ranges created for ID columns." & vbCrLf & _
+               "Dropdowns applied to foreign key and enum columns.", _
+               vbInformation, "Setup Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------

@@ -129,7 +129,9 @@ NextExportSign:
     filePath = GetExportPath() & "signs.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " signs to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " signs to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -151,5 +153,7 @@ Public Sub SetupSignsSheet()
     ' Auto-fit columns
     ws.Columns("A:E").AutoFit
 
-    MsgBox "Signs sheet headers set up successfully!", vbInformation
+    If Not g_SilentMode Then
+        MsgBox "Signs sheet headers set up successfully!", vbInformation
+    End If
 End Sub

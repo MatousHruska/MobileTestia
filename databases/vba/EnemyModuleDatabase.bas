@@ -184,5 +184,7 @@ NextExportModule:
     filePath = GetExportPath() & "enemy_modules.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " enemy modules to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " enemy modules to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub

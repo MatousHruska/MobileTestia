@@ -145,7 +145,9 @@ NextExportStatDescription:
     filePath = GetExportPath() & "stat_descriptions.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " stat descriptions to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " stat descriptions to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -180,5 +182,7 @@ Public Sub SetupStatDescriptionsSheet()
     SafeAddComment ws.Cells(1, 3), "Category: primary, resource, offensive, defensive, utility"
     SafeAddComment ws.Cells(1, 4), "Description shown when player taps the stat in Stats panel"
 
-    MsgBox "StatDescriptions sheet created with headers!", vbInformation
+    If Not g_SilentMode Then
+        MsgBox "StatDescriptions sheet created with headers!", vbInformation
+    End If
 End Sub

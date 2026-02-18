@@ -69,7 +69,9 @@ NextExportSetting:
     filePath = GetExportPath() & "ui_theme.json"
     WriteJsonFile filePath, json
 
-    MsgBox "Exported " & itemCount & " UI theme settings to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    If Not g_SilentMode Then
+        MsgBox "Exported " & itemCount & " UI theme settings to:" & vbCrLf & filePath, vbInformation, "Export Complete"
+    End If
 End Sub
 
 '-------------------------------------------------------------------------------
