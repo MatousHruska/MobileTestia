@@ -19,7 +19,7 @@
       "allowed_affix_tags": "weapon,melee",
       "description": "",
       "weapon_category": "melee_1h",
-      "sprite_id": ""
+      "sprite_id": "sword_iron"
     },
     {
       "id": "wep_sword_steel",
@@ -40,7 +40,7 @@
       "allowed_affix_tags": "weapon,melee",
       "description": "",
       "weapon_category": "melee_1h",
-      "sprite_id": ""
+      "sprite_id": "sword_steel"
     },
     {
       "id": "wep_dagger_iron",
@@ -61,7 +61,7 @@
       "allowed_affix_tags": "weapon,melee",
       "description": "",
       "weapon_category": "melee_1h",
-      "sprite_id": ""
+      "sprite_id": "dagger_iron"
     },
     {
       "id": "wep_staff_oak",
@@ -82,7 +82,7 @@
       "allowed_affix_tags": "weapon,magic",
       "description": "",
       "weapon_category": "magic",
-      "sprite_id": ""
+      "sprite_id": "staff_oak"
     },
     {
       "id": "wep_bow_short",
@@ -103,7 +103,7 @@
       "allowed_affix_tags": "weapon,ranged",
       "description": "",
       "weapon_category": "ranged",
-      "sprite_id": ""
+      "sprite_id": "bow_short"
     },
     {
       "id": "arm_helmet_iron",

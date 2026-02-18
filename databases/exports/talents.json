@@ -45,7 +45,8 @@
       "explosion_falloff": 0,
       "can_move_while_casting": false,
       "interrupt_on_damage": true,
-      "visual_type": ""
+      "visual_type": "",
+      "show_weapon": true
     },
     {
       "id": "tal_basic_shot",
@@ -92,7 +93,8 @@
       "explosion_falloff": 0,
       "can_move_while_casting": false,
       "interrupt_on_damage": true,
-      "visual_type": ""
+      "visual_type": "",
+      "show_weapon": true
     },
     {
       "id": "tal_basic_fireball",
@@ -139,7 +141,8 @@
       "explosion_falloff": 30,
       "can_move_while_casting": false,
       "interrupt_on_damage": true,
-      "visual_type": ""
+      "visual_type": "",
+      "show_weapon": true
     },
     {
       "id": "tal_basic_bandage",
@@ -186,7 +189,8 @@
       "explosion_falloff": 0,
       "can_move_while_casting": false,
       "interrupt_on_damage": true,
-      "visual_type": ""
+      "visual_type": "",
+      "show_weapon": false
     },
     {
       "id": "tal_noble_resolve",
@@ -233,7 +237,8 @@
       "explosion_falloff": 0,
       "can_move_while_casting": false,
       "interrupt_on_damage": true,
-      "visual_type": ""
+      "visual_type": "",
+      "show_weapon": true
     },
     {
       "id": "tal_noble_strike",
@@ -280,7 +285,8 @@
       "explosion_falloff": 0,
       "can_move_while_casting": false,
       "interrupt_on_damage": true,
-      "visual_type": ""
+      "visual_type": "",
+      "show_weapon": true
     }
   ]
 }
