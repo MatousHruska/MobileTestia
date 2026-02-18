@@ -261,8 +261,10 @@ func _get_fallback_weapon_anchor() -> Vector2:
 			# Slightly right, well above center → direction "up"
 			return Vector2(1.0, -7.0)
 		"right":
-			# Slightly in front, well below center → direction "down" (staff held vertically)
-			return Vector2(3.0, 7.0)
+			# Staff held upright (orb at top) slightly in front of the character.
+			# Negate x when flipped so "in front" is correct for left-facing.
+			var x_sign := -1.0 if is_flipped else 1.0
+			return Vector2(3.0 * x_sign, -7.0)
 	return Vector2.INF
 
 
