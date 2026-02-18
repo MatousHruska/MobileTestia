@@ -60,6 +60,10 @@ Consult these docs when working on the corresponding systems:
 | UI system | `docs/UI_DOCUMENTATION.md` |
 | Art direction | `docs/ART_DIRECTION.md` |
 
+## Problem-Solving Behavior
+
+If you fail at the same approach more than 2-3 times (e.g., a fix that doesn't work, a build error you can't resolve, a pattern that keeps breaking), stop and ask the user what to do instead of continuing to retry. Repeatedly attempting the same failing strategy wastes time and context — the user may have context or preferences that can unblock you immediately.
+
 ## Project Structure
 
 ```
