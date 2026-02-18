@@ -90,7 +90,7 @@ static func _load_grip_json(path: String) -> Dictionary:
 		if data.has(dir_key) and data[dir_key] is Array and data[dir_key].size() >= 2:
 			result["grip_" + dir_key] = Vector2(float(data[dir_key][0]), float(data[dir_key][1]))
 		# Tip points (stored as "tip_down", "tip_up", "tip_right")
-		var tip_key := "tip_" + dir_key
+		var tip_key: String = "tip_" + dir_key
 		if data.has(tip_key) and data[tip_key] is Array and data[tip_key].size() >= 2:
 			result[tip_key] = Vector2(float(data[tip_key][0]), float(data[tip_key][1]))
 
