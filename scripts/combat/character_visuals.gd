@@ -105,10 +105,10 @@ func _process(_delta: float) -> void:
 	# Find the anchor once per frame and reuse for both weapon and effects
 	var anchor := _find_weapon_anchor()
 
-	# Always keep the effect anchor at the magenta pixel so VFX spawn
-	# at the correct location, regardless of whether the weapon is visible.
+	# Position the effect anchor at the blade tip (not the grip) so VFX
+	# spawn where the weapon is striking, not at the character's hand.
 	if anchor != Vector2.INF and effect_anchor:
-		effect_anchor.position = anchor
+		effect_anchor.position = anchor + _get_blade_tip_offset(anchor)
 
 	_update_weapon_position(anchor)
 
@@ -177,6 +177,31 @@ func _weapon_direction_from_anchor(anchor: Vector2) -> String:
 		return "down" if anchor.y > 0 else "up"
 	else:
 		return "right"
+
+
+## Calculate the offset from the weapon grip to the blade tip in local space.
+## Returns Vector2.ZERO if no tip data is available (e.g. no weapon equipped).
+func _get_blade_tip_offset(anchor: Vector2) -> Vector2:
+	if _weapon_texture_set.is_empty():
+		return Vector2.ZERO
+
+	var weapon_dir := _weapon_direction_from_anchor(anchor)
+	var grip: Vector2 = _weapon_texture_set.get("grip_" + weapon_dir, Vector2.ZERO)
+	var tip: Vector2 = _weapon_texture_set.get("tip_" + weapon_dir, Vector2.ZERO)
+
+	if grip == Vector2.ZERO or tip == Vector2.ZERO:
+		return Vector2.ZERO
+
+	var offset := tip - grip
+
+	# Mirror horizontally when flipped (left-facing or anchor on left side)
+	var weapon_flip := is_flipped
+	if abs(anchor.x) > abs(anchor.y):
+		weapon_flip = anchor.x < 0
+	if weapon_flip:
+		offset.x = -offset.x
+
+	return offset
 
 
 #===============================================================================
