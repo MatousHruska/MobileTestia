@@ -147,6 +147,9 @@ func _update_weapon_position(anchor: Vector2) -> void:
 		weapon_sprite.visible = false
 		return
 
+	# Adjust z-index: weapon behind body when facing up (character's back to camera)
+	weapon_sprite.z_index = -1 if weapon_dir == "up" else 1
+
 	weapon_sprite.visible = true
 	weapon_sprite.position = anchor
 	weapon_sprite.flip_h = weapon_flip
@@ -260,6 +263,13 @@ func set_weapon_texture_set(textures: Dictionary) -> void:
 	if weapon_sprite:
 		# Clear single texture — set mode is now active
 		weapon_sprite.texture = null
+
+
+## Set the body animation playback speed (used for charge draw-back).
+## 1.0 = normal speed, lower = slower (e.g. 0.25 for 4× slower).
+func set_body_speed_scale(speed: float) -> void:
+	if body_sprite:
+		body_sprite.speed_scale = speed
 
 
 ## Show/hide the weapon layer (called by AbilityVisualPlayer signals)

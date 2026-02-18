@@ -783,6 +783,24 @@ func _start_aiming(slot_index: int, talent: TalentData) -> void:
 	aim_indicator.activate(aim_dir, final_range)
 	aim_indicator.global_position = player.global_position
 
+	# Start visual sequence immediately so the bow is visible during charging.
+	# Phase 0 (show weapon) and Phase 1 (aim animation) execute, then the
+	# sequence holds on Phase 1 until the player releases the button.
+	if player and player.ability_visual_player:
+		var overrides := _build_visual_overrides(talent)
+		_pending_talent = talent
+		_pending_slot_index = slot_index
+		_connect_visual_signals()
+
+		# Slow down the aim animation so the draw-back matches the charge time.
+		# Aim animation is 2 frames at 8fps = 0.25s. Scale to min_charge_time.
+		var min_charge := talent.min_charge_time if talent.min_charge_time > 0 else 0.5
+		var aim_anim_base_duration := 0.25  # 2 frames at 8fps
+		player.character_visuals.set_body_speed_scale(aim_anim_base_duration / min_charge)
+
+		player.play_ability_visual("ranged_aim", overrides)
+		player.ability_visual_player.hold_current_phase()
+
 	Debug.log("Combat", "Started aiming %s (via sequencer)" % talent.talent_name)
 
 
@@ -883,24 +901,8 @@ func _on_ability_hold_started(slot_index: int, ability_id: String) -> void:
 		Debug.log("Combat", "Not enough stamina for %s" % talent.talent_name)
 		return
 
-	# Start aiming
-	is_aiming = true
-	aiming_slot_index = slot_index
-	aiming_talent = talent
-	aim_start_time = Time.get_ticks_msec() / 1000.0
-
-	# Create aim indicator if needed
-	_ensure_aim_indicator()
-
-	# Get aim direction from player facing
-	var aim_dir := _get_player_facing_vector()
-
-	# Activate aim indicator (use talent's hit_range with equipment bonus as max range)
-	var final_range := get_hit_range(talent)
-	aim_indicator.activate(aim_dir, final_range)
-	aim_indicator.global_position = player.global_position
-
-	Debug.log("Combat", "Started aiming %s" % talent.talent_name)
+	# Start aiming (delegates to _start_aiming for shared logic)
+	_start_aiming(slot_index, talent)
 
 
 func _on_ability_released(slot_index: int, ability_id: String, hold_duration: float) -> void:
@@ -944,21 +946,13 @@ func _on_ability_released(slot_index: int, ability_id: String, hold_duration: fl
 	if aiming_talent.mana_cost > 0:
 		PlayerStats.use_mana(aiming_talent.mana_cost)
 
-	# Use sequencer path if available
-	if player and player.ability_visual_player:
-		var overrides := _build_visual_overrides(aiming_talent)
-		overrides["charge_percent"] = damage_multiplier
-
-		_pending_talent = aiming_talent
-		_pending_slot_index = slot_index
-		_connect_visual_signals()
-
-		# Play the ranged_aim template (skipping aim phase — go straight to release)
-		player.play_ability_visual("ranged_aim", overrides)
-
-		# Release the held aim phase so the sequence continues past aim -> release -> spawn
+	# Use sequencer path if available (sequence was started in _start_aiming)
+	if player and player.ability_visual_player and player.ability_visual_player.is_playing:
+		# Reset animation speed and release the held aim phase so the
+		# sequence continues: aim_release -> bowstring_snap -> spawn -> hide -> idle
+		player.character_visuals.set_body_speed_scale(1.0)
 		player.ability_visual_player.release_held_phase()
-	else:
+	elif player:
 		# Legacy path — fire projectile directly
 		_fire_projectile(aiming_talent, aim_indicator.get_aim_direction(), effective_range, damage_multiplier)
 
@@ -1055,6 +1049,9 @@ func _fire_projectile(talent: TalentData, direction: Vector2, range_dist: float,
 
 func _cancel_aiming() -> void:
 	## Cancel aiming without firing
+	if player and player.ability_visual_player and player.ability_visual_player.is_playing:
+		player.character_visuals.set_body_speed_scale(1.0)
+		player.ability_visual_player.cancel()
 	_end_aiming()
 	Debug.log("Combat", "Aiming cancelled")
 
