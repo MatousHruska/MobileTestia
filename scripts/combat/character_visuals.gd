@@ -261,8 +261,8 @@ func _get_fallback_weapon_anchor() -> Vector2:
 			# Slightly right, well above center → direction "up"
 			return Vector2(1.0, -7.0)
 		"right":
-			# Well to the right, slightly below center → direction "right"
-			return Vector2(7.0, 1.0)
+			# Slightly in front, well below center → direction "down" (staff held vertically)
+			return Vector2(3.0, 7.0)
 	return Vector2.INF
 
 
