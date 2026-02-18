@@ -44,7 +44,7 @@ static func create_effect(effect_id: String, direction: String = "down") -> Node
 
 
 #===============================================================================
-# SLASH ARC — Melee swing VFX (24×24, 0.15s lifetime)
+# SLASH ARC — Melee swing VFX (64×64, 0.15s lifetime)
 #===============================================================================
 
 static func _create_slash_arc(direction: String) -> Node2D:
@@ -54,10 +54,10 @@ static func _create_slash_arc(direction: String) -> Node2D:
 	# Effect anchor is already positioned at the blade tip by CharacterVisuals,
 	# so no additional directional offset is needed.
 
-	# Draw arc texture
-	var img := Image.create(24, 24, false, Image.FORMAT_RGBA8)
+	# Draw arc texture — sized to approximate the melee hit area
+	var img := Image.create(64, 64, false, Image.FORMAT_RGBA8)
 	img.fill(Color.TRANSPARENT)
-	_draw_arc(img, direction, COL_SLASH, COL_SLASH_EDGE, 3)
+	_draw_arc(img, direction, COL_SLASH, COL_SLASH_EDGE, 5)
 
 	var sprite := Sprite2D.new()
 	sprite.texture = ImageTexture.create_from_image(img)
@@ -77,7 +77,7 @@ static func _create_slash_arc(direction: String) -> Node2D:
 
 
 #===============================================================================
-# SLASH ARC WIDE — Combo hit VFX (28×28, 0.18s lifetime)
+# SLASH ARC WIDE — Combo hit VFX (80×80, 0.18s lifetime)
 #===============================================================================
 
 static func _create_slash_arc_wide(direction: String) -> Node2D:
@@ -86,10 +86,10 @@ static func _create_slash_arc_wide(direction: String) -> Node2D:
 
 	# Effect anchor is already positioned at the blade tip by CharacterVisuals.
 
-	# Wider arc on larger canvas with warm tint
-	var img := Image.create(28, 28, false, Image.FORMAT_RGBA8)
+	# Wider arc on larger canvas with warm tint — sized to approximate the melee hit area
+	var img := Image.create(80, 80, false, Image.FORMAT_RGBA8)
 	img.fill(Color.TRANSPARENT)
-	_draw_arc(img, direction, COL_SLASH_WARM, COL_SLASH_EDGE, 4)
+	_draw_arc(img, direction, COL_SLASH_WARM, COL_SLASH_EDGE, 6)
 
 	var sprite := Sprite2D.new()
 	sprite.texture = ImageTexture.create_from_image(img)
@@ -108,7 +108,7 @@ static func _create_slash_arc_wide(direction: String) -> Node2D:
 
 
 #===============================================================================
-# THRUST LINE — Stab VFX (4×16 or 16×4, 0.12s lifetime)
+# THRUST LINE — Stab VFX (8×40 or 40×8, 0.12s lifetime)
 #===============================================================================
 
 static func _create_thrust_line(direction: String) -> Node2D:
@@ -121,29 +121,29 @@ static func _create_thrust_line(direction: String) -> Node2D:
 	# Effect anchor is already positioned at the blade tip by CharacterVisuals.
 	match direction:
 		"down":
-			img = Image.create(4, 16, false, Image.FORMAT_RGBA8)
+			img = Image.create(8, 40, false, Image.FORMAT_RGBA8)
 			img.fill(Color.TRANSPARENT)
 			# Edge glow on sides
-			_fill_rect(img, 0, 0, 1, 16, COL_THRUST_GLOW)
-			_fill_rect(img, 3, 0, 1, 16, COL_THRUST_GLOW)
+			_fill_rect(img, 0, 0, 2, 40, COL_THRUST_GLOW)
+			_fill_rect(img, 6, 0, 2, 40, COL_THRUST_GLOW)
 			# Core line
-			_fill_rect(img, 1, 0, 2, 16, COL_THRUST)
+			_fill_rect(img, 2, 0, 4, 40, COL_THRUST)
 			start_scale = Vector2(0.8, 0.3)
 		"up":
-			img = Image.create(4, 16, false, Image.FORMAT_RGBA8)
+			img = Image.create(8, 40, false, Image.FORMAT_RGBA8)
 			img.fill(Color.TRANSPARENT)
-			_fill_rect(img, 0, 0, 1, 16, COL_THRUST_GLOW)
-			_fill_rect(img, 3, 0, 1, 16, COL_THRUST_GLOW)
-			_fill_rect(img, 1, 0, 2, 16, COL_THRUST)
+			_fill_rect(img, 0, 0, 2, 40, COL_THRUST_GLOW)
+			_fill_rect(img, 6, 0, 2, 40, COL_THRUST_GLOW)
+			_fill_rect(img, 2, 0, 4, 40, COL_THRUST)
 			start_scale = Vector2(0.8, 0.3)
 		_:  # "right" and default
-			img = Image.create(16, 4, false, Image.FORMAT_RGBA8)
+			img = Image.create(40, 8, false, Image.FORMAT_RGBA8)
 			img.fill(Color.TRANSPARENT)
 			# Edge glow on top/bottom
-			_fill_rect(img, 0, 0, 16, 1, COL_THRUST_GLOW)
-			_fill_rect(img, 0, 3, 16, 1, COL_THRUST_GLOW)
+			_fill_rect(img, 0, 0, 40, 2, COL_THRUST_GLOW)
+			_fill_rect(img, 0, 6, 40, 2, COL_THRUST_GLOW)
 			# Core line
-			_fill_rect(img, 0, 1, 16, 2, COL_THRUST)
+			_fill_rect(img, 0, 2, 40, 4, COL_THRUST)
 			start_scale = Vector2(0.3, 0.8)
 
 	var sprite := Sprite2D.new()
