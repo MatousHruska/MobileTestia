@@ -51,11 +51,8 @@ static func _create_slash_arc(direction: String) -> Node2D:
 	var root := Node2D.new()
 	root.name = "SlashArc"
 
-	# Position offset toward attack direction
-	match direction:
-		"down": root.position = Vector2(0, 8)
-		"up": root.position = Vector2(0, -12)
-		"right": root.position = Vector2(10, 0)
+	# Effect anchor is already positioned at the blade tip by CharacterVisuals,
+	# so no additional directional offset is needed.
 
 	# Draw arc texture
 	var img := Image.create(24, 24, false, Image.FORMAT_RGBA8)
@@ -87,10 +84,7 @@ static func _create_slash_arc_wide(direction: String) -> Node2D:
 	var root := Node2D.new()
 	root.name = "SlashArcWide"
 
-	match direction:
-		"down": root.position = Vector2(0, 8)
-		"up": root.position = Vector2(0, -12)
-		"right": root.position = Vector2(10, 0)
+	# Effect anchor is already positioned at the blade tip by CharacterVisuals.
 
 	# Wider arc on larger canvas with warm tint
 	var img := Image.create(28, 28, false, Image.FORMAT_RGBA8)
@@ -124,9 +118,9 @@ static func _create_thrust_line(direction: String) -> Node2D:
 	var img: Image
 	var start_scale: Vector2
 
+	# Effect anchor is already positioned at the blade tip by CharacterVisuals.
 	match direction:
 		"down":
-			root.position = Vector2(0, 10)
 			img = Image.create(4, 16, false, Image.FORMAT_RGBA8)
 			img.fill(Color.TRANSPARENT)
 			# Edge glow on sides
@@ -136,7 +130,6 @@ static func _create_thrust_line(direction: String) -> Node2D:
 			_fill_rect(img, 1, 0, 2, 16, COL_THRUST)
 			start_scale = Vector2(0.8, 0.3)
 		"up":
-			root.position = Vector2(0, -14)
 			img = Image.create(4, 16, false, Image.FORMAT_RGBA8)
 			img.fill(Color.TRANSPARENT)
 			_fill_rect(img, 0, 0, 1, 16, COL_THRUST_GLOW)
@@ -144,7 +137,6 @@ static func _create_thrust_line(direction: String) -> Node2D:
 			_fill_rect(img, 1, 0, 2, 16, COL_THRUST)
 			start_scale = Vector2(0.8, 0.3)
 		_:  # "right" and default
-			root.position = Vector2(12, 0)
 			img = Image.create(16, 4, false, Image.FORMAT_RGBA8)
 			img.fill(Color.TRANSPARENT)
 			# Edge glow on top/bottom

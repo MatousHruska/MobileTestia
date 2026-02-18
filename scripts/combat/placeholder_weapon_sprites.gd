@@ -81,6 +81,10 @@ static func create_sword_set() -> Dictionary:
 		"grip_down": Vector2(4, 2),    # middle of handle, top of 8×20
 		"grip_up": Vector2(4, 17),     # middle of handle, bottom of 8×20
 		"grip_right": Vector2(2, 4),   # middle of handle, left of 20×8
+		# Tip points (image pixel coords at the blade tip)
+		"tip_down": Vector2(4, 17),    # center of tip, bottom of 8×20
+		"tip_up": Vector2(4, 3),       # center of tip, top of 8×20
+		"tip_right": Vector2(17, 4),   # center of tip, right of 20×8
 	}
 
 
@@ -95,6 +99,10 @@ static func create_greatsword_set() -> Dictionary:
 		"grip_down": Vector2(5, 4),    # middle of handle, top of 10×26
 		"grip_up": Vector2(5, 22),     # middle of handle, bottom of 10×26
 		"grip_right": Vector2(3, 5),   # middle of handle, left of 26×10
+		# Tip points (image pixel coords at the blade tip)
+		"tip_down": Vector2(5, 23),    # center of tip, bottom of 10×26
+		"tip_up": Vector2(5, 3),       # center of tip, top of 10×26
+		"tip_right": Vector2(23, 5),   # center of tip, right of 26×10
 	}
 
 
@@ -109,6 +117,10 @@ static func create_dagger_set() -> Dictionary:
 		"grip_down": Vector2(3, 2),    # middle of handle, top of 6×14
 		"grip_up": Vector2(3, 12),     # middle of handle, bottom of 6×14
 		"grip_right": Vector2(2, 3),   # middle of handle, left of 14×6
+		# Tip points (image pixel coords at the blade tip)
+		"tip_down": Vector2(3, 12),    # tip pixel, bottom of 6×14
+		"tip_up": Vector2(3, 1),       # tip pixel, top of 6×14
+		"tip_right": Vector2(12, 3),   # tip pixel, right of 14×6
 	}
 
 
