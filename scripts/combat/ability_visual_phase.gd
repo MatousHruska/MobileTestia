@@ -56,6 +56,9 @@ enum PhaseType {
 ## e.g., "windup", "lunge", "recovery", "cast", "charge", "dash"
 @export var override_key: String = ""
 
+## Optional context data passed through with SPAWN_PROJECTILE signals
+@export var context_data: Dictionary = {}
+
 
 #===============================================================================
 # FACTORY HELPERS
@@ -88,9 +91,10 @@ static func create_damage_event() -> AbilityVisualPhase:
 	return phase
 
 
-static func create_spawn_projectile() -> AbilityVisualPhase:
+static func create_spawn_projectile(context: Dictionary = {}) -> AbilityVisualPhase:
 	var phase := AbilityVisualPhase.new()
 	phase.type = PhaseType.SPAWN_PROJECTILE
+	phase.context_data = context
 	return phase
 
 

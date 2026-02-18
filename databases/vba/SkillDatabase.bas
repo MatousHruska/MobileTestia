@@ -56,6 +56,9 @@ Private Const COL_TAL_CAN_MOVE_WHILE_CASTING As Integer = 43    ' Can player mov
 Private Const COL_TAL_INTERRUPT_ON_DAMAGE As Integer = 44       ' Does taking damage interrupt cast? (bool)
 Private Const COL_TAL_VISUAL_TYPE As Integer = 45               ' Visual template override (e.g., melee_single, spell_cast)
 Private Const COL_TAL_SHOW_WEAPON As Integer = 46               ' Show weapon during spell casting (true/false)
+Private Const COL_TAL_WINDUP_TIME As Integer = 47               ' Seconds before attack hits (0 = use anim length)
+Private Const COL_TAL_HIT_EFFECT As Integer = 48                ' VFX effect ID per-skill (empty = template default)
+Private Const COL_TAL_HIT_COUNT As Integer = 49                 ' Combo hit count (0 = template default)
 
 ' Column indices for TalentTrees (1-based)
 Private Const COL_TT_ID As Integer = 1
@@ -281,6 +284,20 @@ Public Sub ValidateTalents()
             End If
         End If
 
+        ' Validate windup_time >= 0
+        Dim windupTime As Double
+        windupTime = GetDefaultNumeric(ws.Cells(i, COL_TAL_WINDUP_TIME))
+        If windupTime < 0 Then
+            LogValidationError errors, errorCount, i, "windup_time", "Cannot be negative"
+        End If
+
+        ' Validate hit_count 0-10
+        Dim hitCount As Double
+        hitCount = GetDefaultNumeric(ws.Cells(i, COL_TAL_HIT_COUNT))
+        If hitCount < 0 Or hitCount > 10 Then
+            LogValidationError errors, errorCount, i, "hit_count", "Must be between 0 and 10"
+        End If
+
         ' Validate required_weapon_category for active talents
         If talentType = "active" Then
             Dim reqWeaponCat As String
@@ -384,7 +401,10 @@ Public Sub ExportTalents()
         json = json & "      ""can_move_while_casting"": " & LCase(GetDefaultString(ws.Cells(i, COL_TAL_CAN_MOVE_WHILE_CASTING), "false")) & "," & vbCrLf
         json = json & "      ""interrupt_on_damage"": " & LCase(GetDefaultString(ws.Cells(i, COL_TAL_INTERRUPT_ON_DAMAGE), "true")) & "," & vbCrLf
         json = json & "      ""visual_type"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_VISUAL_TYPE))) & """," & vbCrLf
-        json = json & "      ""show_weapon"": " & LCase(GetDefaultString(ws.Cells(i, COL_TAL_SHOW_WEAPON), "false")) & "" & vbCrLf
+        json = json & "      ""show_weapon"": " & LCase(GetDefaultString(ws.Cells(i, COL_TAL_SHOW_WEAPON), "false")) & "," & vbCrLf
+        json = json & "      ""windup_time"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_WINDUP_TIME))) & "," & vbCrLf
+        json = json & "      ""hit_effect"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TAL_HIT_EFFECT))) & """," & vbCrLf
+        json = json & "      ""hit_count"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TAL_HIT_COUNT))) & "" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -440,7 +460,8 @@ Public Sub SetupTalentsSheet()
                     "min_charge_time", "weak_shot_damage_percent", "weak_shot_range_percent", _
                     "cast_time", "explosion_radius", "contact_status_effect", "projectile_speed", _
                     "max_charge_time", "base_range", "lunge_duration", "explosion_falloff", _
-                    "can_move_while_casting", "interrupt_on_damage", "visual_type", "show_weapon")
+                    "can_move_while_casting", "interrupt_on_damage", "visual_type", "show_weapon", _
+                    "windup_time", "hit_effect", "hit_count")
     SetupSheetHeaders ws, headers
 
     ' Add column notes
@@ -480,6 +501,9 @@ Public Sub SetupTalentsSheet()
     SafeAddComment ws.Cells(1, 44), "Cast: Does taking damage interrupt cast? (true/false, default true)"
     SafeAddComment ws.Cells(1, 45), "Visual template: melee_single, melee_combo_2, melee_combo_3, dash_attack, ranged_aim, spell_cast, spell_instant, throw, self_buff (empty=auto)"
     SafeAddComment ws.Cells(1, 46), "Show weapon during spell casting (true/false, default false). Use for staff-wielding spells like fireball."
+    SafeAddComment ws.Cells(1, 47), "Seconds before attack hits (0 = use animation length). Overrides windup_duration."
+    SafeAddComment ws.Cells(1, 48), "VFX effect ID per-skill (e.g., slash_arc, impact_spark). Empty = template default."
+    SafeAddComment ws.Cells(1, 49), "Combo hit count (0 = template default, 1-10). Determines melee_single/combo_2/combo_3."
 End Sub
 
 '-------------------------------------------------------------------------------

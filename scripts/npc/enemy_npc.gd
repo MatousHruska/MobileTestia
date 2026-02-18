@@ -706,33 +706,8 @@ func _execute_ability_visual(ability: Dictionary, ability_type: String) -> void:
 
 
 func _get_visual_template_for_ability(ability: Dictionary, ability_type: String) -> String:
-	"""Map ability data to a visual template ID"""
-	# Explicit visual_type override from database takes priority
-	var visual_type: String = ability.get("visual_type", "")
-	if not visual_type.is_empty():
-		return visual_type
-
-	# Check if ability has a custom animation mapping (e.g., "howl")
-	var animation: String = ability.get("animation", "attack")
-	if animation != "attack" and animation != "":
-		var custom_template = AbilityVisualTemplates.get_all().get(animation)
-		if custom_template:
-			return animation
-
-	# Auto-detect fallback from ability type
-	match ability_type:
-		"melee":
-			return "melee_single"
-		"dash":
-			return "dash_attack"
-		"ranged", "projectile":
-			return "ranged_attack"
-		"buff":
-			return "self_buff"
-		"debuff":
-			return "spell_cast"
-		_:
-			return "melee_single"
+	"""Map ability data to a visual template ID. Delegates to AbilityVisualTemplates."""
+	return AbilityVisualTemplates.resolve_template_for_enemy_ability(ability, ability_type)
 
 
 func _build_ability_overrides(ability: Dictionary) -> Dictionary:
@@ -848,7 +823,7 @@ func _on_ability_damage_event() -> void:
 	])
 
 
-func _on_ability_spawn_projectile() -> void:
+func _on_ability_spawn_projectile(_context: Dictionary = {}) -> void:
 	"""Handle projectile spawn event from visual sequencer"""
 	if _pending_ability.is_empty():
 		return

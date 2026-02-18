@@ -8,6 +8,19 @@ class_name AbilityVisualTemplates
 ## (windup time, lunge distance, recovery time) come from ability/talent data
 ## and are applied via the overrides dictionary in AbilityVisualPlayer.play().
 
+#===============================================================================
+# TIMING & DISTANCE CONSTANTS
+#===============================================================================
+
+const STRIKE_LEAD_IN := 0.05       ## Delay after strike anim before damage
+const WEAPON_LINGER := 0.12        ## Weapon stays extended after hit
+const COMBO_PAUSE := 0.1           ## Beat between combo hits
+const DEFAULT_LUNGE_DISTANCE := 20.0
+const DEFAULT_LUNGE_DURATION := 0.08
+const DASH_DISTANCE := 60.0
+const DASH_DURATION := 0.25
+const ENEMY_RECOVERY_WAIT := 0.3
+
 
 ## Returns a dictionary of template_id -> AbilityVisualData.
 ## These are the standard templates that abilities reference by name.
@@ -34,127 +47,152 @@ static func get_template(template_id: String) -> AbilityVisualData:
 
 
 #===============================================================================
+# TEMPLATE ROUTING
+#===============================================================================
+
+## Resolve the visual template ID for a player talent.
+## Uses explicit visual_type first, then hit_count for combo selection,
+## then auto-detects from effect_type.
+static func resolve_template_for_talent(talent: TalentData) -> String:
+	# Explicit override from database
+	if not talent.visual_type.is_empty():
+		return talent.visual_type
+
+	# Hit-count-aware combo selection for melee damage skills
+	if talent.hit_count > 0 and talent.effect_type == TalentData.EffectType.DAMAGE:
+		match talent.hit_count:
+			1: return "melee_single"
+			2: return "melee_combo_2"
+			3: return "melee_combo_3"
+			_: return "melee_single"
+
+	# Auto-detect fallback from effect_type
+	match talent.effect_type:
+		TalentData.EffectType.DAMAGE:
+			return "melee_single"
+		TalentData.EffectType.PROJECTILE:
+			return "ranged_aim"
+		TalentData.EffectType.MAGIC_PROJECTILE, TalentData.EffectType.MAGIC_PROJECTILE_AOE:
+			if talent.cast_time > 0:
+				return "spell_cast"
+			else:
+				return "spell_instant"
+		TalentData.EffectType.SELF_BUFF:
+			return "self_buff"
+		TalentData.EffectType.HEAL:
+			return "spell_instant"
+		TalentData.EffectType.AOE:
+			return "spell_cast"
+		_:
+			return "melee_single"
+
+
+## Resolve the visual template ID for an enemy ability.
+## Uses explicit visual_type, then custom animation name, then ability_type fallback.
+static func resolve_template_for_enemy_ability(ability: Dictionary, ability_type: String) -> String:
+	# Explicit visual_type override from database takes priority
+	var visual_type: String = ability.get("visual_type", "")
+	if not visual_type.is_empty():
+		return visual_type
+
+	# Check if ability has a custom animation mapping (e.g., "howl")
+	var animation: String = ability.get("animation", "attack")
+	if animation != "attack" and animation != "":
+		if get_all().has(animation):
+			return animation
+
+	# Auto-detect fallback from ability type
+	match ability_type:
+		"melee":
+			return "melee_single"
+		"dash":
+			return "dash_attack"
+		"ranged", "projectile":
+			return "ranged_attack"
+		"buff":
+			return "self_buff"
+		"debuff":
+			return "spell_cast"
+		_:
+			return "melee_single"
+
+
+#===============================================================================
 # MELEE TEMPLATES
 #===============================================================================
 
 ## melee_single - Standard single melee attack
-## Weapon visible throughout: raised during windup, swings with strike,
-## lingers briefly pointing in attack direction, then hides for recovery.
 static func _melee_single() -> AbilityVisualData:
-	var data := AbilityVisualData.new()
-	data.template_id = "melee_single"
-	data.display_name = "Melee Single"
-	data.locks_movement = true
-
-	data.phases = [
-		# Phase 0: Show weapon for windup
-		AbilityVisualPhase.create_weapon_visibility(true),
-		# Phase 1: Windup animation (sword raised behind)
-		AbilityVisualPhase.create_body_anim("melee_windup", 0.0, "windup"),
-		# Phase 2: Spawn slash effect (weapon still visible)
-		AbilityVisualPhase.create_effect("slash_arc"),
-		# Phase 3: Strike starts — 50ms lets sword reach mid-arc
-		AbilityVisualPhase.create_body_anim("melee_strike", 0.05),
-		# Phase 4: Lunge forward (concurrent with damage — follow-through)
-		AbilityVisualPhase.create_movement("toward_target", 20.0, 0.08, "lunge", true),
-		# Phase 5: Damage fires mid-swing as body lunges
-		AbilityVisualPhase.create_damage_event(),
-		# Phase 6: Brief linger — sword stays extended in attack direction
-		AbilityVisualPhase.create_wait(0.12),
-		# Phase 7: Hide weapon
-		AbilityVisualPhase.create_weapon_visibility(false),
-		# Phase 8: Return to idle (recovery)
-		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
-	]
-
-	return data
+	return _build_melee_combo(1, ["slash_arc"])
 
 
 ## melee_combo_2 - Two-hit melee combo
-## Weapon stays visible throughout all hits, hides after last strike linger.
 static func _melee_combo_2() -> AbilityVisualData:
-	var data := AbilityVisualData.new()
-	data.template_id = "melee_combo_2"
-	data.display_name = "Melee Combo (2-hit)"
-	data.locks_movement = true
-
-	data.phases = [
-		# Phase 0: Show weapon for windup
-		AbilityVisualPhase.create_weapon_visibility(true),
-		# Phase 1: Windup
-		AbilityVisualPhase.create_body_anim("melee_windup", 0.0, "windup"),
-		# Phase 2: First slash effect
-		AbilityVisualPhase.create_effect("slash_arc"),
-		# Phase 3: Strike starts — 50ms lets sword reach mid-arc
-		AbilityVisualPhase.create_body_anim("melee_strike", 0.05),
-		# Phase 4: Lunge (concurrent with damage — follow-through)
-		AbilityVisualPhase.create_movement("toward_target", 20.0, 0.08, "lunge", true),
-		# Phase 5: First hit damage fires mid-swing
-		AbilityVisualPhase.create_damage_event(),
-		# Phase 6: Brief pause between hits (weapon stays visible)
-		AbilityVisualPhase.create_wait(0.1),
-		# Phase 7: Second slash effect (wider for combo)
-		AbilityVisualPhase.create_effect("slash_arc_wide"),
-		# Phase 8: Second strike — 50ms then damage mid-arc
-		AbilityVisualPhase.create_body_anim("melee_strike", 0.05),
-		# Phase 9: Second hit damage
-		AbilityVisualPhase.create_damage_event(),
-		# Phase 10: Brief linger — sword extended
-		AbilityVisualPhase.create_wait(0.12),
-		# Phase 11: Hide weapon
-		AbilityVisualPhase.create_weapon_visibility(false),
-		# Phase 12: Return to idle
-		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
-	]
-
-	return data
+	return _build_melee_combo(2, ["slash_arc", "slash_arc_wide"])
 
 
 ## melee_combo_3 - Three-hit melee combo
-## Weapon stays visible throughout all hits, hides after last strike linger.
 static func _melee_combo_3() -> AbilityVisualData:
-	var data := AbilityVisualData.new()
-	data.template_id = "melee_combo_3"
-	data.display_name = "Melee Combo (3-hit)"
-	data.locks_movement = true
+	return _build_melee_combo(3, ["slash_arc", "slash_arc_wide", "slash_arc_wide"])
 
-	data.phases = [
-		# Phase 0: Show weapon for windup
-		AbilityVisualPhase.create_weapon_visibility(true),
-		# Phase 1: Windup
-		AbilityVisualPhase.create_body_anim("melee_windup", 0.0, "windup"),
-		# Phase 2: First slash effect
-		AbilityVisualPhase.create_effect("slash_arc"),
-		# Phase 3: Strike starts — 50ms lets sword reach mid-arc
-		AbilityVisualPhase.create_body_anim("melee_strike", 0.05),
-		# Phase 4: Lunge (concurrent with damage — follow-through)
-		AbilityVisualPhase.create_movement("toward_target", 20.0, 0.08, "lunge", true),
-		# Phase 5: First hit damage fires mid-swing
+
+#===============================================================================
+# MELEE COMPOSITION HELPERS
+#===============================================================================
+
+## Build phases for one melee hit beat: effect -> strike -> lunge+damage.
+## override_key "hit" enables per-skill hit_effect override (Step 6).
+static func _melee_hit_phases(effect_id: String, override_key: String = "hit") -> Array[AbilityVisualPhase]:
+	var effect_phase := AbilityVisualPhase.create_effect(effect_id)
+	effect_phase.override_key = override_key
+	return [
+		effect_phase,
+		AbilityVisualPhase.create_body_anim("melee_strike", STRIKE_LEAD_IN),
+		AbilityVisualPhase.create_movement("toward_target", DEFAULT_LUNGE_DISTANCE, DEFAULT_LUNGE_DURATION, "lunge", true),
 		AbilityVisualPhase.create_damage_event(),
-		# Phase 6: Brief pause (weapon stays visible between hits)
-		AbilityVisualPhase.create_wait(0.1),
-		# Phase 7: Second slash effect (wider for combo)
-		AbilityVisualPhase.create_effect("slash_arc_wide"),
-		# Phase 8: Second strike — 50ms then damage mid-arc
-		AbilityVisualPhase.create_body_anim("melee_strike", 0.05),
-		# Phase 9: Second hit damage
-		AbilityVisualPhase.create_damage_event(),
-		# Phase 10: Brief pause
-		AbilityVisualPhase.create_wait(0.1),
-		# Phase 11: Third slash effect (wider)
-		AbilityVisualPhase.create_effect("slash_arc_wide"),
-		# Phase 12: Third strike — 50ms then damage mid-arc
-		AbilityVisualPhase.create_body_anim("melee_strike", 0.05),
-		# Phase 13: Third hit damage
-		AbilityVisualPhase.create_damage_event(),
-		# Phase 14: Brief linger — sword extended
-		AbilityVisualPhase.create_wait(0.12),
-		# Phase 15: Hide weapon
-		AbilityVisualPhase.create_weapon_visibility(false),
-		# Phase 16: Return to idle
-		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
+
+## Build a full melee combo: weapon show -> windup -> N hits with pauses -> linger -> weapon hide -> recovery.
+## hit_count: number of hits (1-10). effects: array of effect IDs per hit (cycled if shorter than hit_count).
+static func _build_melee_combo(hit_count: int, effects: Array) -> AbilityVisualData:
+	var data := AbilityVisualData.new()
+
+	match hit_count:
+		1:
+			data.template_id = "melee_single"
+			data.display_name = "Melee Single"
+		2:
+			data.template_id = "melee_combo_2"
+			data.display_name = "Melee Combo (2-hit)"
+		3:
+			data.template_id = "melee_combo_3"
+			data.display_name = "Melee Combo (3-hit)"
+		_:
+			data.template_id = "melee_combo_%d" % hit_count
+			data.display_name = "Melee Combo (%d-hit)" % hit_count
+
+	data.locks_movement = true
+
+	var phases: Array[AbilityVisualPhase] = []
+
+	# Weapon show + windup
+	phases.append(AbilityVisualPhase.create_weapon_visibility(true))
+	phases.append(AbilityVisualPhase.create_body_anim("melee_windup", 0.0, "windup"))
+
+	# N hits with pauses between
+	for i in hit_count:
+		if i > 0:
+			phases.append(AbilityVisualPhase.create_wait(COMBO_PAUSE))
+		var effect_id: String = effects[i % effects.size()]
+		phases.append_array(_melee_hit_phases(effect_id))
+
+	# Linger + weapon hide + recovery
+	phases.append(AbilityVisualPhase.create_wait(WEAPON_LINGER))
+	phases.append(AbilityVisualPhase.create_weapon_visibility(false))
+	phases.append(AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"))
+
+	data.phases = phases
 	return data
 
 
@@ -175,15 +213,15 @@ static func _dash_attack() -> AbilityVisualData:
 		AbilityVisualPhase.create_weapon_visibility(true),
 		# Phase 1: Dash animation + movement (concurrent)
 		AbilityVisualPhase.create_body_anim("dash", 0.0, "dash", true),
-		AbilityVisualPhase.create_movement("toward_target", 60.0, 0.25, "dash"),
+		AbilityVisualPhase.create_movement("toward_target", DASH_DISTANCE, DASH_DURATION, "dash"),
 		# Phase 3: Slash effect (wide — dash attacks hit hard)
 		AbilityVisualPhase.create_effect("slash_arc_wide"),
-		# Phase 4: Strike starts — 50ms lets sword reach mid-arc
-		AbilityVisualPhase.create_body_anim("melee_strike", 0.05),
+		# Phase 4: Strike starts — brief lead-in lets sword reach mid-arc
+		AbilityVisualPhase.create_body_anim("melee_strike", STRIKE_LEAD_IN),
 		# Phase 5: Damage fires mid-swing
 		AbilityVisualPhase.create_damage_event(),
 		# Phase 6: Brief linger — sword extended
-		AbilityVisualPhase.create_wait(0.12),
+		AbilityVisualPhase.create_wait(WEAPON_LINGER),
 		# Phase 7: Hide weapon
 		AbilityVisualPhase.create_weapon_visibility(false),
 		# Phase 8: Return to idle
@@ -350,7 +388,7 @@ static func _ranged_attack() -> AbilityVisualData:
 		# Phase 1: Spawn projectile
 		AbilityVisualPhase.create_spawn_projectile(),
 		# Phase 2: Recovery
-		AbilityVisualPhase.create_wait(0.3, "recovery"),
+		AbilityVisualPhase.create_wait(ENEMY_RECOVERY_WAIT, "recovery"),
 	]
 
 	return data
@@ -372,7 +410,7 @@ static func _howl() -> AbilityVisualData:
 		# Phase 2: Damage/buff event
 		AbilityVisualPhase.create_damage_event(),
 		# Phase 3: Recovery
-		AbilityVisualPhase.create_wait(0.3, "recovery"),
+		AbilityVisualPhase.create_wait(ENEMY_RECOVERY_WAIT, "recovery"),
 	]
 
 	return data

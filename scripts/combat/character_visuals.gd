@@ -358,41 +358,28 @@ func _on_play_body_animation(anim_name: String) -> void:
 func _on_effect_event(effect_id: String) -> void:
 	Debug.log("Visuals", "Effect requested: %s" % effect_id)
 	var effect_node := PlaceholderEffectSprites.create_effect(effect_id, current_direction)
-	if effect_node:
-		# Mirror the effect sprite when facing left (flipped "right" direction)
-		if is_flipped:
-			for child in effect_node.get_children():
-				if child is Sprite2D:
-					child.flip_h = true
-		spawn_effect(effect_node)
+	if not effect_node:
+		Debug.warn("Visuals", "Effect creation returned null for '%s'" % effect_id)
+		return
+	# Mirror the effect sprite when facing left (flipped "right" direction)
+	if is_flipped:
+		for child in effect_node.get_children():
+			if child is Sprite2D:
+				child.flip_h = true
+	spawn_effect(effect_node)
 
 
 #===============================================================================
 # ANIMATION NAME RESOLUTION
 #===============================================================================
 
-## Resolve animation name with direction suffix and fallback chain:
-## 1. "{base_name}_{direction}" (e.g., "melee_windup_down")
-## 2. "{base_name}" (directionless)
-## 3. "attack_{direction}" (legacy fallback)
-## 4. "idle_{direction}" (final fallback)
+## Resolve animation name with direction suffix and fallback chain.
+## Delegates to AnimationUtils for the canonical implementation.
 func _resolve_animation_name(base_name: String) -> String:
 	var dir := current_direction
 	if is_flipped:
 		dir = "right"
-
-	var candidates: Array[String] = [
-		"%s_%s" % [base_name, dir],
-		base_name,
-		"attack_%s" % dir,
-		"idle_%s" % dir,
-	]
-
-	for candidate in candidates:
-		if body_sprite.sprite_frames.has_animation(candidate):
-			return candidate
-
-	return "idle_%s" % dir
+	return AnimationUtils.resolve_animation_name(body_sprite.sprite_frames, base_name, dir)
 
 
 #===============================================================================
