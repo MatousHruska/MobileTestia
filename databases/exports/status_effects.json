@@ -71,6 +71,76 @@
       "show_in_hud": false,
       "icon_color": "#8B0000",
       "ends_when": "player_full_health"
+    },
+    {
+      "id": "status_stagger",
+      "name": "Staggered",
+      "type": "debuff",
+      "stat_affected": "movement_speed",
+      "value": -100,
+      "duration": 0,
+      "tick_interval": 0,
+      "visual_effect": "stagger_particles",
+      "stackable": false,
+      "max_stacks": 1,
+      "show_in_hud": true,
+      "icon_color": "#CC8844"
+    },
+    {
+      "id": "status_marked",
+      "name": "Marked",
+      "type": "debuff",
+      "stat_affected": "none",
+      "value": 0,
+      "duration": 4,
+      "tick_interval": 0,
+      "visual_effect": "mark_particles",
+      "stackable": false,
+      "max_stacks": 1,
+      "show_in_hud": true,
+      "icon_color": "#FF4444"
+    },
+    {
+      "id": "status_bleed",
+      "name": "Bleeding",
+      "type": "debuff_dot",
+      "stat_affected": "health",
+      "value": -4,
+      "duration": 6,
+      "tick_interval": 1,
+      "visual_effect": "bleed_particles",
+      "stackable": false,
+      "max_stacks": 1,
+      "show_in_hud": true,
+      "icon_color": "#8B0000"
+    },
+    {
+      "id": "status_slow",
+      "name": "Slowed",
+      "type": "debuff",
+      "stat_affected": "movement_speed",
+      "value": -40,
+      "duration": 2,
+      "tick_interval": 0,
+      "visual_effect": "slow_particles",
+      "stackable": false,
+      "max_stacks": 1,
+      "show_in_hud": true,
+      "icon_color": "#4488CC"
+    },
+    {
+      "id": "status_stun",
+      "name": "Stunned",
+      "type": "debuff",
+      "stat_affected": "movement_speed",
+      "value": -100,
+      "duration": 2,
+      "tick_interval": 0,
+      "visual_effect": "stun_particles",
+      "stackable": false,
+      "max_stacks": 1,
+      "show_in_hud": true,
+      "icon_color": "#FFCC00"
     }
   ]
 }
