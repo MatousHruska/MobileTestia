@@ -115,16 +115,25 @@ func _draw() -> void:
 
 
 func _draw_icon(center: Vector2, radius: float) -> void:
-	# Draw texture icon if available — sized to diameter so it fills the circle
+	# Draw texture icon clipped to circle using polygon with UV mapping
 	if icon_texture:
-		var icon_size := radius * 2.0
-		var icon_rect := Rect2(center - Vector2(icon_size, icon_size) / 2, Vector2(icon_size, icon_size))
 		var modulate := Color.WHITE
 		if not has_enough_resource:
 			modulate = Color(0.7, 0.7, 0.7)
 		if not has_valid_weapon:
 			modulate = Color(0.5, 0.5, 0.5)
-		draw_texture_rect(icon_texture, icon_rect, false, modulate)
+
+		var segments := 32
+		var points := PackedVector2Array()
+		var uvs := PackedVector2Array()
+		var colors := PackedColorArray()
+		for i in range(segments):
+			var angle := float(i) * TAU / float(segments)
+			points.append(center + Vector2(cos(angle), sin(angle)) * radius)
+			# Map circle edge to UV space: center=(0.5,0.5), edge at radius=1.0
+			uvs.append((Vector2(cos(angle), sin(angle)) + Vector2.ONE) / 2.0)
+			colors.append(modulate)
+		draw_polygon(points, colors, uvs, icon_texture)
 		return
 
 	# Fall back to text
