@@ -345,6 +345,22 @@ func damage(amount: float, damage_type: String = "physical", is_crit: bool = fal
 			Debug.log("Combat", "Damage PARRIED! (%.0f %s negated)" % [amount, damage_type])
 			return false  # Damage fully negated
 
+	# Check Phalanx Stance — reduce frontal/side damage by 75%
+	if Game.player and Game.player.is_stance_active:
+		var stance_arc := 270.0  # Front + sides (not directly behind)
+		var reduce := true
+		# Check if attack is within stance arc
+		if attacker_position != Vector2.INF:
+			var player_pos: Vector2 = Game.player.global_position
+			var to_attacker := (attacker_position - player_pos).normalized()
+			var facing_vec := _get_player_facing_vector()
+			var angle := rad_to_deg(facing_vec.angle_to(to_attacker))
+			if abs(angle) > stance_arc / 2.0:
+				reduce = false  # Attack from directly behind — no reduction
+		if reduce:
+			amount *= 0.25  # 75% damage reduction
+			Debug.log("Combat", "Phalanx Stance reduced damage to %.0f" % amount)
+
 	current_life -= amount
 	last_damage_time = Time.get_ticks_msec() / 1000.0  # Track when damage occurred
 	damaged.emit(amount, damage_type, is_crit)
@@ -563,6 +579,17 @@ func debug_add_skill_points(amount: int = 10) -> void:
 	skill_points += amount
 	skill_points_changed.emit(skill_points)
 	Debug.info("Stats", "Debug: Added skill points", amount)
+
+
+func _get_player_facing_vector() -> Vector2:
+	if not Game.player:
+		return Vector2.DOWN
+	match Game.player.current_facing:
+		PlayerController.Facing.DOWN: return Vector2.DOWN
+		PlayerController.Facing.UP: return Vector2.UP
+		PlayerController.Facing.LEFT: return Vector2.LEFT
+		PlayerController.Facing.RIGHT: return Vector2.RIGHT
+		_: return Vector2.DOWN
 
 
 #===============================================================================
