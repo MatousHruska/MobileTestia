@@ -1377,6 +1377,13 @@ func _apply_self_buff(talent: TalentData) -> void:
 	## Apply the self-buff effect to the player
 	print("[CAST] Applying self-buff: %s" % talent.talent_name)
 
+	# Check if this is Father's Last Lesson (ultimate ability)
+	if talent.id == "tal_noble_fathers_lesson":
+		var duration := talent.duration if talent.duration > 0 else 6.0
+		TalentProcSystem.activate_ultimate(duration)
+		Debug.log("Combat", "Father's Last Lesson ultimate activated for %.1fs" % duration)
+		return
+
 	# Apply status effect from contact_status_effect field
 	if not talent.contact_status_effect.is_empty():
 		if Game.player and Game.player.status_effect_manager:
