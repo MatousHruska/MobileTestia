@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__plugin_episodic-memory_episodic-memory__search",
+      "mcp__plugin_episodic-memory_episodic-memory__read",
+      "Bash(python3:*)",
+      "Bash(python -c \" import json with open\\(''mcp-plugin_episodic-memory_episodic-memory-read-1771515228779.txt'', ''r'', encoding=''utf-8''\\) as f: data = json.load\\(f\\) for item in data: text = item.get\\(''text'', ''''\\) # Print just the first 500 chars of each text block to get overview print\\(text[:500]\\) print\\(''---BREAK---''\\) \")",
+      "Bash(python -c \" import json with open\\(''mcp-plugin_episodic-memory_episodic-memory-read-1771515228779.txt'', ''r'', encoding=''utf-8''\\) as f: data = json.load\\(f\\) for item in data: text = item.get\\(''text'', ''''\\) # Print the full text print\\(text\\) \")",
+      "Bash(python:*)",
+      "Bash(grep:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
+    ]
+  }
+}
