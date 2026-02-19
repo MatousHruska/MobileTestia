@@ -86,23 +86,23 @@ func _draw() -> void:
 	# Draw button circle (background)
 	draw_circle(center, radius, color)
 
-	# Draw icon/text (between background and border so border masks icon edges)
+	# Always draw icon/text
+	_draw_icon(center, radius)
+
+	# Draw cooldown overlay on top of icon
 	if is_on_cooldown and cooldown_duration > 0:
-		# Draw cooldown overlay
 		var progress := cooldown_remaining / cooldown_duration
-		# Draw from top (-PI/2) clockwise
+		# Sweep arc from top (-PI/2) clockwise
 		var sweep_angle := progress * TAU
 		draw_arc(center, radius * 0.75, -PI/2, -PI/2 + sweep_angle, 24, cooldown_color, radius * 0.4)
 
-		# Draw cooldown text
+		# Cooldown text
 		var cd_text := "%.1f" % cooldown_remaining if cooldown_remaining < 10 else "%d" % int(cooldown_remaining)
 		var font := ThemeDB.fallback_font
 		var font_size := int(radius * 0.5)
 		var text_size := font.get_string_size(cd_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
 		var text_pos := center - text_size / 2 + Vector2(0, text_size.y * 0.35)
 		draw_string(font, text_pos, cd_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, Color.WHITE)
-	else:
-		_draw_icon(center, radius)
 
 	# Draw border on top (visually masks square icon corners beyond the circle)
 	draw_arc(center, radius, 0, TAU, 32, border_color, border_width)
