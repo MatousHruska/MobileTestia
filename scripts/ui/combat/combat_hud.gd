@@ -71,6 +71,10 @@ var cast_direction: Vector2 = Vector2.DOWN
 const DEFAULT_MAX_CHARGE_TIME: float = 2.0      ## Default maximum charge time for full range
 const DEFAULT_BASE_RANGE: float = 150.0         ## Default range at minimum charge
 
+## Toggle stance tracking
+var _active_stance_slot: int = -1  ## Slot index of currently active toggle stance (-1 = none)
+var _active_stance_talent_id: String = ""
+
 ## Pending talent for visual sequencer signal-based damage/projectile handling
 var _pending_talent: TalentData = null
 var _pending_slot_index: int = -1
@@ -675,6 +679,11 @@ func _on_ability_activated(slot_index: int, ability_id: String) -> void:
 		Debug.warn("Combat", "Talent not found: %s" % ability_id)
 		return
 
+	# Check if this is a deactivation of an active toggle stance
+	if _active_stance_slot >= 0 and ability_id == _active_stance_talent_id:
+		_deactivate_active_stance()
+		return
+
 	# Check if player can act (not in recovery)
 	if player and player.is_locked:
 		Debug.log("Combat", "Player is locked, cannot use %s" % talent.talent_name)
@@ -751,6 +760,12 @@ func _activate_skill_via_sequencer(slot_index: int, talent: TalentData) -> void:
 	# Start parry window after visual begins
 	if template_id == "parry_stance":
 		TalentProcSystem.start_parry_window(parry_duration, talent)
+
+	# Start toggle stance if this is a toggle ability
+	if template_id == "toggle_stance":
+		player.activate_stance(talent)
+		_active_stance_slot = slot_index
+		_active_stance_talent_id = talent.id
 
 	# Start cooldown
 	_start_slot_cooldown(slot_index, talent)
@@ -1560,6 +1575,9 @@ func _on_player_spawned(new_player: Node2D) -> void:
 		# Connect parry success signal for counter-attack
 		if TalentProcSystem and not TalentProcSystem.parry_succeeded.is_connected(_on_parry_succeeded):
 			TalentProcSystem.parry_succeeded.connect(_on_parry_succeeded)
+		# Connect stance deactivated signal for auto-deactivation sync
+		if not player.stance_deactivated.is_connected(_on_stance_deactivated):
+			player.stance_deactivated.connect(_on_stance_deactivated)
 		Debug.info("Combat", "CombatHUD connected to player")
 
 
@@ -1645,6 +1663,26 @@ func reset_to_default() -> void:
 	config.layout_preset = "default"
 	_layout_buttons()
 	Debug.log("Combat", "Layout reset to default (stub)")
+
+
+#===============================================================================
+# TOGGLE STANCE
+#===============================================================================
+
+func _deactivate_active_stance() -> void:
+	## Deactivate the currently active toggle stance
+	if _active_stance_slot < 0:
+		return
+	if player:
+		player.deactivate_stance()
+	_active_stance_slot = -1
+	_active_stance_talent_id = ""
+
+
+func _on_stance_deactivated(_talent_id: String) -> void:
+	## Called when stance auto-deactivates (e.g., ran out of stamina)
+	_active_stance_slot = -1
+	_active_stance_talent_id = ""
 
 
 #===============================================================================
