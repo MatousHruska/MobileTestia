@@ -13,6 +13,8 @@ signal cast_started(skill_id: String, duration: float)
 signal cast_progress(progress: float)  ## 0.0 to 1.0
 signal cast_completed(skill_id: String)
 signal cast_interrupted(skill_id: String, reason: String)
+signal stance_activated(talent_id: String)
+signal stance_deactivated(talent_id: String)
 
 ## Facing directions (4-cardinal for animations)
 enum Facing { DOWN = 0, UP = 1, LEFT = 2, RIGHT = 3 }
@@ -38,6 +40,7 @@ var is_attacking: bool = false
 var is_dodging: bool = false
 var is_locked: bool = false  ## Prevents input during certain actions
 var is_casting: bool = false  ## Currently channeling a cast
+var is_stance_active: bool = false  ## Currently in toggle stance (Phalanx Stance)
 
 ## Components
 @onready var hitbox_pivot: Node2D = $HitboxPivot
@@ -69,6 +72,10 @@ var _cast_timer: float = 0.0
 var _cast_duration: float = 0.0
 var _cast_can_move: bool = false
 var _cast_interrupt_on_damage: bool = true
+
+## Stance state (Phalanx Stance toggle)
+var _stance_talent: TalentData = null
+var _stance_stamina_drain: float = 5.0  ## Stamina drained per second while in stance
 
 
 func _ready() -> void:
@@ -316,6 +323,16 @@ func _process_timers(delta: float) -> void:
 		elif _cast_timer >= _cast_duration:
 			_complete_cast()
 
+	# Drain stamina while in toggle stance
+	if is_stance_active:
+		var drain := _stance_stamina_drain * delta
+		if PlayerStats.current_stamina <= drain:
+			# Not enough stamina — auto-deactivate
+			PlayerStats.current_stamina = 0.0
+			deactivate_stance()
+		else:
+			PlayerStats.current_stamina -= drain
+
 
 func _process_movement(delta: float) -> void:
 	if is_locked:
@@ -371,6 +388,8 @@ func request_attack() -> void:
 
 
 func request_dodge() -> void:
+	if is_stance_active:
+		return
 	if is_dodging or is_attacking:
 		return
 
@@ -423,6 +442,36 @@ func _end_recovery_lockout() -> void:
 	if not is_dodging:  # Don't unlock if in middle of dodge
 		is_locked = false
 	Debug.log("Combat", "Recovery ended")
+
+
+#===============================================================================
+# TOGGLE STANCE (Phalanx Stance)
+#===============================================================================
+
+func activate_stance(talent: TalentData) -> void:
+	## Enter toggle stance mode
+	if is_stance_active:
+		return
+	is_stance_active = true
+	_stance_talent = talent
+	stance_activated.emit(talent.id)
+	Debug.log("Combat", "Stance activated: %s" % talent.talent_name)
+
+
+func deactivate_stance() -> void:
+	## Exit toggle stance mode
+	if not is_stance_active:
+		return
+	is_stance_active = false
+	var talent_id := _stance_talent.id if _stance_talent else ""
+	_stance_talent = null
+
+	# Cancel the visual sequence so weapon hides and idle resumes
+	if ability_visual_player and ability_visual_player.is_playing:
+		ability_visual_player.cancel()
+
+	stance_deactivated.emit(talent_id)
+	Debug.log("Combat", "Stance deactivated")
 
 
 ## Facing logic
