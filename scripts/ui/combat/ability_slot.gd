@@ -83,14 +83,12 @@ func _draw() -> void:
 	var radius := button_radius * current_scale
 	var color := _get_current_color()
 
-	# Draw button circle
+	# Draw button circle (background)
 	draw_circle(center, radius, color)
 
-	# Draw border
-	draw_arc(center, radius, 0, TAU, 32, border_color, border_width)
-
-	# Draw cooldown overlay
+	# Draw icon/text (between background and border so border masks icon edges)
 	if is_on_cooldown and cooldown_duration > 0:
+		# Draw cooldown overlay
 		var progress := cooldown_remaining / cooldown_duration
 		# Draw from top (-PI/2) clockwise
 		var sweep_angle := progress * TAU
@@ -104,8 +102,10 @@ func _draw() -> void:
 		var text_pos := center - text_size / 2 + Vector2(0, text_size.y * 0.35)
 		draw_string(font, text_pos, cd_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, Color.WHITE)
 	else:
-		# Draw icon/text
 		_draw_icon(center, radius)
+
+	# Draw border on top (visually masks square icon corners beyond the circle)
+	draw_arc(center, radius, 0, TAU, 32, border_color, border_width)
 
 	# Draw mana cost indicator (small text at bottom)
 	if slot_type == SlotType.ABILITY and not is_empty and ability_data.has("mana_cost"):
@@ -115,9 +115,9 @@ func _draw() -> void:
 
 
 func _draw_icon(center: Vector2, radius: float) -> void:
-	# Draw texture icon if available
+	# Draw texture icon if available — sized to diameter so it fills the circle
 	if icon_texture:
-		var icon_size := radius * 1.4
+		var icon_size := radius * 2.0
 		var icon_rect := Rect2(center - Vector2(icon_size, icon_size) / 2, Vector2(icon_size, icon_size))
 		var modulate := Color.WHITE
 		if not has_enough_resource:
