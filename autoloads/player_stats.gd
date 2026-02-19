@@ -393,6 +393,9 @@ func use_mana(amount: float) -> bool:
 
 
 func use_stamina(amount: float) -> bool:
+	# Ultimate ability waives all stamina costs
+	if TalentProcSystem and TalentProcSystem.should_waive_stamina_cost():
+		return true
 	if current_stamina >= amount:
 		current_stamina -= amount
 		return true
