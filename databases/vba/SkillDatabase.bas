@@ -313,6 +313,16 @@ Public Sub ValidateTalents()
             End If
         End If
 
+        ' Validate icon_name format (should use tal_ prefix or be empty for default)
+        Dim iconName As String
+        iconName = Trim(ws.Cells(i, COL_TAL_ICON_NAME).value)
+        If Len(iconName) > 0 Then
+            If Not ValidateId(iconName, "tal_") Then
+                LogValidationError errors, errorCount, i, "Icon Name", _
+                    "Invalid icon_name format. Use: tal_tree_name (e.g., tal_noble_hilt_bash) or leave empty for default"
+            End If
+        End If
+
 NextTalent:
     Next i
 
@@ -496,6 +506,7 @@ Public Sub SetupTalentsSheet()
     SafeAddComment ws.Cells(1, 22), "For magic: additional damage per rank (1-20)"
     SafeAddComment ws.Cells(1, 27), "For passive: stat:value_per_point pairs (e.g., strength:2;armor:5)"
     SafeAddComment ws.Cells(1, 29), "Pipe-separated descriptions per rank"
+    SafeAddComment ws.Cells(1, 30), "Icon filename (without .png). Must match tal_ prefix. Loads from assets/icons/{icon_name}.png. Empty = uses talent ID."
     SafeAddComment ws.Cells(1, 31), "Required weapon: melee (any), melee_1h, melee_2h, ranged, magic"
     SafeAddComment ws.Cells(1, 32), "Projectiles: min seconds to charge for full damage (e.g., 0.5)"
     SafeAddComment ws.Cells(1, 33), "Projectiles: damage % for quick shot below min_charge_time (e.g., 30)"

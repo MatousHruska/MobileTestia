@@ -137,6 +137,14 @@ func close() -> void:
 #===============================================================================
 
 func _update_content(talent: TalentData) -> void:
+	# Icon
+	if _icon:
+		var tex := TalentIconLoader.load_icon(talent.icon_name)
+		if tex:
+			_icon.texture = tex
+		else:
+			_icon.texture = null
+
 	# Name
 	_name_label.text = talent.talent_name
 
