@@ -38,6 +38,15 @@ var _parry_window_timer: float = 0.0
 var _parry_talent: TalentData = null  ## The Cold Parry talent data (for counter damage)
 var _parry_frontal_arc: float = 180.0  ## Frontal arc in degrees for parry
 
+## Ultimate ability state (Father's Last Lesson)
+var _ultimate_active: bool = false
+var _ultimate_timer: float = 0.0
+var _ultimate_crit_bonus: float = 1000.0  ## Added to bonus_crit_chance during ultimate
+var _ultimate_no_stamina_cost: bool = false
+var _ultimate_slow_tick: float = 0.0  ## Timer for periodic AOE slow
+const ULTIMATE_SLOW_INTERVAL: float = 1.0  ## Apply slow every 1s
+const ULTIMATE_SLOW_RADIUS: float = 200.0  ## Radius for enemy slow
+
 
 func _ready() -> void:
 	add_to_group("saveable")
@@ -103,6 +112,18 @@ func _process(delta: float) -> void:
 		_parry_window_timer -= delta
 		if _parry_window_timer <= 0:
 			_end_parry_window()
+
+	# Tick ultimate timer
+	if _ultimate_active:
+		_ultimate_timer -= delta
+		if _ultimate_timer <= 0:
+			deactivate_ultimate()
+		else:
+			# Apply AOE slow to nearby enemies periodically
+			_ultimate_slow_tick -= delta
+			if _ultimate_slow_tick <= 0:
+				_ultimate_slow_tick = ULTIMATE_SLOW_INTERVAL
+				_apply_ultimate_slow()
 
 	# Recalculate "always" procs (conditional crit, conditional armor, etc.)
 	_update_always_procs()
@@ -532,6 +553,53 @@ func _find_attacker_at_position(pos: Vector2) -> Node2D:
 
 
 #===============================================================================
+# ULTIMATE ABILITY (Father's Last Lesson)
+#===============================================================================
+
+## Activate ultimate buff for the given duration
+func activate_ultimate(duration: float) -> void:
+	_ultimate_active = true
+	_ultimate_timer = duration
+	_ultimate_no_stamina_cost = true
+	_ultimate_slow_tick = 0.0
+	bonus_crit_chance += _ultimate_crit_bonus
+	Debug.log("Procs", "ULTIMATE ACTIVATED! (%.1fs) Guaranteed crits, no stamina cost" % duration)
+
+
+## Check if ultimate is currently active
+func is_ultimate_active() -> bool:
+	return _ultimate_active
+
+
+## Check if stamina costs should be waived (during ultimate)
+func should_waive_stamina_cost() -> bool:
+	return _ultimate_no_stamina_cost
+
+
+## Deactivate ultimate (called on expiry or forced cancel)
+func deactivate_ultimate() -> void:
+	if not _ultimate_active:
+		return
+	_ultimate_active = false
+	_ultimate_timer = 0.0
+	_ultimate_no_stamina_cost = false
+	bonus_crit_chance -= _ultimate_crit_bonus
+	if bonus_crit_chance < 0:
+		bonus_crit_chance = 0.0
+	Debug.log("Procs", "Ultimate expired")
+
+
+func _apply_ultimate_slow() -> void:
+	## Apply slow debuff to all enemies within radius during ultimate
+	if not Game.player:
+		return
+	var enemies := NPCManager.get_enemies_in_radius(Game.player.global_position, ULTIMATE_SLOW_RADIUS)
+	for enemy in enemies:
+		if is_instance_valid(enemy) and "status_effects" in enemy and enemy.status_effects:
+			enemy.status_effects.apply_status_effect("status_slow")
+
+
+#===============================================================================
 # PERSISTENCE
 #===============================================================================
 
@@ -556,3 +624,7 @@ func load_save_data(_data: Dictionary) -> void:
 	_parry_active = false
 	_parry_window_timer = 0.0
 	_parry_talent = null
+	_ultimate_active = false
+	_ultimate_timer = 0.0
+	_ultimate_no_stamina_cost = false
+	_ultimate_slow_tick = 0.0
