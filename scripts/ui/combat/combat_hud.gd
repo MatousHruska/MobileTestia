@@ -317,6 +317,7 @@ func _bind_talent_to_slot(slot_index: int, talent: TalentData) -> void:
 	var data := {
 		"name": talent.talent_name,
 		"icon": talent.talent_name.substr(0, 2).to_upper(),
+		"icon_name": talent.icon_name,
 		"mana_cost": talent.mana_cost,
 		"stamina_cost": talent.stamina_cost,
 		"cooldown": talent.cooldown,
@@ -345,6 +346,7 @@ func _bind_talent_to_attack_button(talent: TalentData) -> void:
 	var data := {
 		"name": talent.talent_name,
 		"icon": talent.talent_name.substr(0, 2).to_upper(),
+		"icon_name": talent.icon_name,
 		"mana_cost": talent.mana_cost,
 		"stamina_cost": talent.stamina_cost,
 		"cooldown": talent.cooldown,

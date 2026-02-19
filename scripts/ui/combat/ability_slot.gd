@@ -34,6 +34,7 @@ enum SlotType { ABILITY, ATTACK, DODGE, QUICK_SLOT }
 var bound_ability_id: String = ""
 var ability_data: Dictionary = {}
 var icon_text: String = ""
+var icon_texture: Texture2D = null
 
 ## State
 var is_pressed_state: bool = false
@@ -114,6 +115,19 @@ func _draw() -> void:
 
 
 func _draw_icon(center: Vector2, radius: float) -> void:
+	# Draw texture icon if available
+	if icon_texture:
+		var icon_size := radius * 1.4
+		var icon_rect := Rect2(center - Vector2(icon_size, icon_size) / 2, Vector2(icon_size, icon_size))
+		var modulate := Color.WHITE
+		if not has_enough_resource:
+			modulate = Color(0.7, 0.7, 0.7)
+		if not has_valid_weapon:
+			modulate = Color(0.5, 0.5, 0.5)
+		draw_texture_rect(icon_texture, icon_rect, false, modulate)
+		return
+
+	# Fall back to text
 	var display_text := icon_text if icon_text != "" else _get_default_icon()
 	var font := ThemeDB.fallback_font
 	var font_size := int(radius * 0.6)
@@ -281,6 +295,11 @@ func bind_ability(ability_id: String, data: Dictionary = {}) -> void:
 	bound_ability_id = ability_id
 	ability_data = data
 
+	# Try to load icon texture from icon_name
+	icon_texture = null
+	if data.has("icon_name"):
+		icon_texture = TalentIconLoader.load_icon(data.icon_name)
+
 	if data.has("icon"):
 		icon_text = data.icon
 	elif data.has("name"):
@@ -300,6 +319,7 @@ func clear_ability() -> void:
 	bound_ability_id = ""
 	ability_data = {}
 	icon_text = ""
+	icon_texture = null
 	is_on_cooldown = false
 	cooldown_remaining = 0.0
 	_update_empty_state()
