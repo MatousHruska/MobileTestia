@@ -37,6 +37,7 @@ static func get_all() -> Dictionary:
 		"throw": _throw(),
 		"self_buff": _self_buff(),
 		"parry_stance": _parry_stance(),
+		"toggle_stance": _toggle_stance(),
 		"howl": _howl(),
 	}
 
@@ -221,6 +222,31 @@ static func _parry_stance() -> AbilityVisualData:
 		# Phase 3: Parry window expired — hide weapon and return to idle
 		AbilityVisualPhase.create_weapon_visibility(false),
 		# Phase 4: Return to idle (recovery)
+		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
+	]
+
+	return data
+
+
+## toggle_stance - Toggle defensive stance (Phalanx Stance)
+## Shows weapon in guard position and holds indefinitely until deactivated.
+## Unlike parry_stance, this does NOT auto-finish — PlayerController manages the state.
+static func _toggle_stance() -> AbilityVisualData:
+	var data := AbilityVisualData.new()
+	data.template_id = "toggle_stance"
+	data.display_name = "Toggle Stance"
+	data.locks_movement = false  # Player can walk (but not sprint/dodge)
+
+	data.phases = [
+		# Phase 0: Show weapon (guard position)
+		AbilityVisualPhase.create_weapon_visibility(true),
+		# Phase 1: Enter defensive pose
+		AbilityVisualPhase.create_body_anim("melee_windup", 0.0, "windup"),
+		# Phase 2: Hold indefinitely (PlayerController will cancel this)
+		AbilityVisualPhase.create_wait(999.0, "stance_hold"),
+		# Phase 3: Hide weapon on deactivation
+		AbilityVisualPhase.create_weapon_visibility(false),
+		# Phase 4: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
