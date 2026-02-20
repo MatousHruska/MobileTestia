@@ -17,6 +17,9 @@ signal proc_triggered(talent_id: String, effect: String)
 ## Signal emitted when a parry successfully negates damage
 signal parry_succeeded(attacker: Node2D)
 
+## Signal emitted with per-hit damage breakdown data (for debug overlay)
+signal damage_breakdown_available(info: Dictionary)
+
 ## Internal cooldown tracking (talent_id -> time_remaining)
 var _cooldowns: Dictionary = {}
 
@@ -422,6 +425,11 @@ func consume_next_attack_bonus() -> float:
 ## Get bonus crit chance from passive talents (does NOT consume)
 func get_bonus_crit_chance() -> float:
 	return bonus_crit_chance
+
+
+## Report damage breakdown for debug overlay
+func report_damage_breakdown(info: Dictionary) -> void:
+	damage_breakdown_available.emit(info)
 
 
 #===============================================================================

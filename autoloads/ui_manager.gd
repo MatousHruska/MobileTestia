@@ -14,6 +14,9 @@ var chest_menu: ChestMenu = null
 var quest_reward_popup = null  # QuestRewardPopup
 var quest_debug_overlay = null  # QuestDebugOverlay
 
+## Debug overlay instances
+var talent_debug_overlay = null  # TalentDebugOverlay
+
 
 func _ready() -> void:
 	layer = 100  # Always on top of game UI
@@ -101,10 +104,23 @@ func _setup_quest_ui() -> void:
 		add_child(quest_debug_overlay)
 		Debug.info("UI", "QuestDebugOverlay created")
 
+	# Create talent debug overlay
+	var talent_overlay_script = load("res://scripts/ui/debug/talent_debug_overlay.gd")
+	if talent_overlay_script:
+		talent_debug_overlay = talent_overlay_script.new()
+		talent_debug_overlay.name = "TalentDebugOverlay"
+		add_child(talent_debug_overlay)
+		Debug.info("UI", "TalentDebugOverlay created")
+
 
 func toggle_quest_debug() -> void:
 	if quest_debug_overlay and quest_debug_overlay.has_method("toggle"):
 		quest_debug_overlay.toggle()
+
+
+func toggle_talent_debug() -> void:
+	if talent_debug_overlay and talent_debug_overlay.has_method("toggle"):
+		talent_debug_overlay.toggle()
 
 
 ## Utility
