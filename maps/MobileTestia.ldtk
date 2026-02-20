@@ -1598,7 +1598,7 @@
 						},
 						{
 							"__identifier": "spawnpoint",
-							"__grid": [74,118],
+							"__grid": [110,115],
 							"__pivot": [0.5,0.5],
 							"__tags": ["enemy"],
 							"__tile": null,
@@ -1607,7 +1607,7 @@
 							"width": 16,
 							"height": 16,
 							"defUid": 10,
-							"px": [1192,1896],
+							"px": [1768,1848],
 							"fieldInstances": [
 								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
 									"id": "V_String",
@@ -1615,8 +1615,8 @@
 								}] },
 								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
 							],
-							"__worldX": 1192,
-							"__worldY": 1896
+							"__worldX": 1768,
+							"__worldY": 1848
 						},
 						{
 							"__identifier": "npcspawn",
@@ -1639,22 +1639,91 @@
 						},
 						{
 							"__identifier": "spawnpoint",
-							"__grid": [73,91],
+							"__grid": [114,119],
 							"__pivot": [0.5,0.5],
 							"__tags": ["enemy"],
 							"__tile": null,
 							"__smartColor": "#FF0000",
-							"iid": "045241d0-fa90-11f0-9bd0-a5b544959283",
+							"iid": "653bf990-fa90-11f0-b755-358d92bcb278",
 							"width": 16,
 							"height": 16,
 							"defUid": 10,
-							"px": [1176,1464],
+							"px": [1832,1912],
 							"fieldInstances": [
-								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "", "__tile": null, "defUid": 11, "realEditorValues": [] },
+								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["sp_test_static"]
+								}] },
 								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
 							],
-							"__worldX": 1176,
-							"__worldY": 1464
+							"__worldX": 1832,
+							"__worldY": 1912
+						},
+						{
+							"__identifier": "spawnpoint",
+							"__grid": [125,128],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
+							"__tile": null,
+							"__smartColor": "#FF0000",
+							"iid": "698d5250-fa90-11f0-b755-19ddf55c7057",
+							"width": 16,
+							"height": 16,
+							"defUid": 10,
+							"px": [2008,2056],
+							"fieldInstances": [
+								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_static", "__tile": null, "defUid": 11, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["sp_test_static"]
+								}] },
+								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
+							],
+							"__worldX": 2008,
+							"__worldY": 2056
+						},
+						{
+							"__identifier": "spawnpoint",
+							"__grid": [65,113],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
+							"__tile": null,
+							"__smartColor": "#FF0000",
+							"iid": "6e61bdc0-fa90-11f0-b755-299ad22b3351",
+							"width": 16,
+							"height": 16,
+							"defUid": 10,
+							"px": [1048,1816],
+							"fieldInstances": [
+								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_dummy", "__tile": null, "defUid": 11, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["sp_test_dummy"]
+								}] },
+								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
+							],
+							"__worldX": 1048,
+							"__worldY": 1816
+						},
+						{
+							"__identifier": "spawnpoint",
+							"__grid": [65,116],
+							"__pivot": [0.5,0.5],
+							"__tags": ["enemy"],
+							"__tile": null,
+							"__smartColor": "#FF0000",
+							"iid": "82e42350-fa90-11f0-b755-59d12b0096d7",
+							"width": 16,
+							"height": 16,
+							"defUid": 10,
+							"px": [1048,1864],
+							"fieldInstances": [
+								{ "__identifier": "spawn_point_id", "__type": "String", "__value": "sp_test_dummy", "__tile": null, "defUid": 11, "realEditorValues": [{
+									"id": "V_String",
+									"params": ["sp_test_dummy"]
+								}] },
+								{ "__identifier": "patrol_group", "__type": "String", "__value": null, "__tile": null, "defUid": 12, "realEditorValues": [] }
+							],
+							"__worldX": 1048,
+							"__worldY": 1864
 						}
 					]
 				},
