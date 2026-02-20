@@ -31,6 +31,15 @@ var _consecutive_hits: int = 0
 var _next_attack_bonus_percent: float = 0.0
 var _next_attack_bonus_timer: float = 0.0
 
+## Closing the Gap - continuous distance-based damage bonus
+var _closing_gap_bonus: float = 0.0
+var _closing_gap_cap: float = 0.0
+var _closing_gap_nearest_name: String = ""
+const CLOSING_GAP_REFERENCE_DISTANCE: float = 120.0  # pixels to reach max
+const CLOSING_GAP_DECAY_TIME: float = 2.5  # seconds to fully decay
+const CLOSING_GAP_TALENT_ID: String = "tal_noble_closing_gap"
+const CLOSING_GAP_BONUS_PER_POINT: float = 7.0
+
 ## Conditional crit bonus (from "always" procs like Exposed Throat)
 ## This is checked by DamageCalculator before rolling crit
 var bonus_crit_chance: float = 0.0
@@ -131,6 +140,9 @@ func _process(delta: float) -> void:
 	# Recalculate "always" procs (conditional crit, conditional armor, etc.)
 	_update_always_procs()
 
+	# Accumulate/decay Closing the Gap bonus based on movement toward enemies
+	_update_closing_gap(delta)
+
 
 #===============================================================================
 # EVENT HANDLERS
@@ -183,6 +195,10 @@ func _process_procs(trigger: String, target: Node2D) -> void:
 	for talent_id in TalentManager.invested_talents:
 		var points: int = TalentManager.invested_talents[talent_id]
 		if points <= 0:
+			continue
+
+		# Closing the Gap is handled continuously in _update_closing_gap()
+		if talent_id == CLOSING_GAP_TALENT_ID:
 			continue
 
 		var talent := TalentManager.get_talent(talent_id)
@@ -398,6 +414,44 @@ func _update_always_procs() -> void:
 
 
 #===============================================================================
+# CLOSING THE GAP - CONTINUOUS DISTANCE-BASED BONUS
+#===============================================================================
+
+func _update_closing_gap(delta: float) -> void:
+	## Accumulate damage bonus while player moves toward nearest enemy, decay otherwise
+	var points := TalentManager.get_invested_points(CLOSING_GAP_TALENT_ID)
+	if points <= 0:
+		_closing_gap_bonus = 0.0
+		_closing_gap_cap = 0.0
+		_closing_gap_nearest_name = ""
+		return
+
+	_closing_gap_cap = CLOSING_GAP_BONUS_PER_POINT * points
+
+	if not Game.player:
+		return
+
+	var nearest := _get_nearest_enemy()
+	if nearest and is_instance_valid(nearest):
+		_closing_gap_nearest_name = nearest.name
+		var direction_to_enemy := (nearest.global_position - Game.player.global_position).normalized()
+		var approach_speed := Game.player.velocity.dot(direction_to_enemy)
+
+		if approach_speed > 0:
+			# Moving toward enemy — accumulate bonus proportional to approach speed
+			_closing_gap_bonus += approach_speed * delta * (_closing_gap_cap / CLOSING_GAP_REFERENCE_DISTANCE)
+		else:
+			# Stationary or moving away — gradual decay
+			_closing_gap_bonus -= (_closing_gap_cap / CLOSING_GAP_DECAY_TIME) * delta
+	else:
+		_closing_gap_nearest_name = ""
+		# No enemy nearby — decay
+		_closing_gap_bonus -= (_closing_gap_cap / CLOSING_GAP_DECAY_TIME) * delta
+
+	_closing_gap_bonus = clampf(_closing_gap_bonus, 0.0, _closing_gap_cap)
+
+
+#===============================================================================
 # BUFF APPLICATION
 #===============================================================================
 
@@ -415,10 +469,12 @@ func _apply_temporary_buff(stat: String, value: float, duration: float, talent_i
 #===============================================================================
 
 ## Get and consume the next-attack damage bonus percentage
+## Combines proc bonuses (First Blood, etc.) with Closing the Gap bonus
 func consume_next_attack_bonus() -> float:
-	var bonus := _next_attack_bonus_percent
+	var bonus := _next_attack_bonus_percent + _closing_gap_bonus
 	_next_attack_bonus_percent = 0.0
 	_next_attack_bonus_timer = 0.0
+	_closing_gap_bonus = 0.0
 	return bonus
 
 
@@ -629,6 +685,9 @@ func load_save_data(_data: Dictionary) -> void:
 	_last_hit_target = null
 	_next_attack_bonus_percent = 0.0
 	_next_attack_bonus_timer = 0.0
+	_closing_gap_bonus = 0.0
+	_closing_gap_cap = 0.0
+	_closing_gap_nearest_name = ""
 	_parry_active = false
 	_parry_window_timer = 0.0
 	_parry_talent = null
