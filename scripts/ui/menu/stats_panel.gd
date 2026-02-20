@@ -860,8 +860,9 @@ func _update_derived_stats() -> void:
 	_set_stat_value("poison_spell_damage", "%.0f" % PlayerStats.get_equipment_bonus("poison_spell_damage"))
 	_set_stat_value("arcane_spell_damage", "%.0f" % PlayerStats.get_equipment_bonus("arcane_spell_damage"))
 
-	# Defensive
-	_set_stat_value("armor", "%.0f" % PlayerStats.armor)
+	# Defensive (apply conditional armor % from talents like Iron Posture)
+	var effective_armor := PlayerStats.armor * (1.0 + TalentProcSystem.get_bonus_armor_percent() / 100.0) if TalentProcSystem else PlayerStats.armor
+	_set_stat_value("armor", "%.0f" % effective_armor)
 	_set_stat_value("magic_resistance", "%.0f" % PlayerStats.magic_resistance)
 	_set_stat_value("dodge_chance", "%.1f%%" % PlayerStats.dodge_chance)
 
@@ -1035,7 +1036,8 @@ func _get_stat_value_text(stat_name: String) -> String:
 			return "%.0f" % PlayerStats.get_equipment_bonus(stat_name)
 		# Defensive
 		"armor":
-			return "%.0f" % PlayerStats.armor
+			var eff_armor := PlayerStats.armor * (1.0 + TalentProcSystem.get_bonus_armor_percent() / 100.0) if TalentProcSystem else PlayerStats.armor
+			return "%.0f" % eff_armor
 		"magic_resistance":
 			return "%.0f" % PlayerStats.magic_resistance
 		"dodge_chance":
