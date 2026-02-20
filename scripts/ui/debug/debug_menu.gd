@@ -118,6 +118,7 @@ func _build_ui() -> void:
 	_add_toggle_button("chunk_overlay", "Chunk Borders", _on_toggle_chunk_overlay)
 	_add_toggle_button("ai_overlay", "AI Debug", _on_toggle_ai_overlay)
 	_add_toggle_button("quest_overlay", "Quest Debug", _on_toggle_quest_overlay)
+	_add_toggle_button("talent_overlay", "Talent Debug", _on_toggle_talent_overlay)
 	_add_toggle_button("pathfinding_overlay", "Pathfinding", _on_toggle_pathfinding)
 	_end_section()
 
@@ -142,6 +143,7 @@ func _build_ui() -> void:
 
 	# ── TALENTS section ──
 	_begin_section("talents", "TALENTS")
+	_add_action_button("Quick Setup Row 1", _on_talent_quick_setup_row1)
 	_add_action_button("+10 Skill Points", _on_talent_add_points)
 	# Add per-tree learn buttons dynamically from database
 	for tree_data in DatabaseLoader.get_all_talent_trees():
@@ -339,6 +341,12 @@ func _refresh_toggle_states() -> void:
 	else:
 		_set_toggle_state("quest_overlay", false)
 
+	# Talent overlay
+	if UIManager and UIManager.talent_debug_overlay:
+		_set_toggle_state("talent_overlay", UIManager.talent_debug_overlay.enabled)
+	else:
+		_set_toggle_state("talent_overlay", false)
+
 	# Pathfinding
 	var pathfinding_service = _get_pathfinding_service()
 	if pathfinding_service:
@@ -369,6 +377,12 @@ func _on_toggle_ai_overlay() -> void:
 func _on_toggle_quest_overlay() -> void:
 	if UIManager:
 		UIManager.toggle_quest_debug()
+	_refresh_toggle_states()
+
+
+func _on_toggle_talent_overlay() -> void:
+	if UIManager:
+		UIManager.toggle_talent_debug()
 	_refresh_toggle_states()
 
 
@@ -468,6 +482,19 @@ func _on_toggle_npc_verbose() -> void:
 
 
 ## ─── TALENT ACTIONS ──────────────────────────────────────────────────────────
+
+func _on_talent_quick_setup_row1() -> void:
+	## One-tap setup: learn Noble Legacy Row 1, max ranks, bind Hilt Bash to attack button
+	var tree_id := "tree_noble_legacy"
+	_ensure_enough_points_for_tree(tree_id)
+	TalentManager.debug_learn_all_in_tree(tree_id)
+	# Max all active skill ranks
+	for talent in TalentManager.get_skillbook_talents():
+		TalentManager.set_skill_rank(talent.id, TalentManager.MAX_SKILL_RANK)
+	# Bind Hilt Bash to attack button (slot 0)
+	TalentManager.bind_skill(0, "tal_noble_hilt_bash")
+	Debug.info("Debug", "Quick Setup Row 1: Noble Legacy learned, ranks maxed, Hilt Bash bound")
+
 
 func _on_talent_add_points() -> void:
 	TalentManager.debug_add_points(10)
