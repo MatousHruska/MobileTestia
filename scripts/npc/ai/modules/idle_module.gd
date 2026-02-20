@@ -44,6 +44,12 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	if context.is_locked:
 		return
 
+	# Don't roam if move_speed is zero (e.g., practice dummy)
+	if context.base_move_speed <= 0:
+		context.behavior_state = EnemyContext.BehaviorState.IDLE
+		context.should_stop = true
+		return
+
 	var can_roam = get_config_bool("can_roam", true)
 	if not can_roam:
 		# Just stand
@@ -66,7 +72,7 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 	# Check if reached roam target
 	var dist = context.global_position.distance_to(_roam_target)
 	if dist < 8.0:
-		Debug.log("AI", "IdleModule %s: Reached roam target (dist=%.1f), pausing" % [
+		Debug.trace("AI", "IdleModule %s: Reached roam target (dist=%.1f), pausing" % [
 			context.owner.name if context.owner else "?", dist])
 		_start_pause()
 		context.should_stop = true
@@ -74,7 +80,7 @@ func _process_module(context: EnemyContext, delta: float) -> void:
 
 	# Move toward roam target (with pathfinding if enabled)
 	var roam_direction := _get_pathfinding_direction(context, _roam_target)
-	Debug.log("AI", "IdleModule %s: Moving - pos=%s target=%s dist=%.1f dir=%s" % [
+	Debug.trace("AI", "IdleModule %s: Moving - pos=%s target=%s dist=%.1f dir=%s" % [
 		context.owner.name if context.owner else "?",
 		context.global_position,
 		_roam_target,
@@ -117,7 +123,7 @@ func _pick_roam_target(context: EnemyContext) -> void:
 
 			if PathfindingService.has_path(context.global_position, candidate):
 				_roam_target = candidate
-				Debug.log("AI", "IdleModule %s: PF roam target picked (attempt %d): %s" % [
+				Debug.trace("AI", "IdleModule %s: PF roam target picked (attempt %d): %s" % [
 					context.owner.name if context.owner else "?", attempt, _roam_target])
 				return
 
@@ -136,7 +142,7 @@ func _pick_roam_target(context: EnemyContext) -> void:
 		candidate = context.home_position + dir_from_home * roam_radius
 
 	_roam_target = candidate
-	Debug.log("AI", "IdleModule %s: Direct roam - pos=%s home=%s orig=%s final=%s dist_home=%.1f clamped=%s" % [
+	Debug.trace("AI", "IdleModule %s: Direct roam - pos=%s home=%s orig=%s final=%s dist_home=%.1f clamped=%s" % [
 		context.owner.name if context.owner else "?",
 		context.global_position,
 		context.home_position,
