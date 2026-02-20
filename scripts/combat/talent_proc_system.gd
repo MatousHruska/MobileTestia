@@ -90,7 +90,15 @@ func _connect_signals() -> void:
 	# Player dodge - connect to player controller when available
 	_try_connect_player_signals()
 
+	# Recalculate always-procs when talents change (needed while game is paused in menus)
+	if TalentManager:
+		TalentManager.talent_learned.connect(_on_talent_changed)
+
 	Debug.info("Procs", "Combat signals connected")
+
+
+func _on_talent_changed(_talent_id: String, _new_points: int) -> void:
+	_update_always_procs()
 
 
 func _try_connect_player_signals() -> void:
