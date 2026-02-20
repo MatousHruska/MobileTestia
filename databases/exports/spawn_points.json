@@ -177,7 +177,7 @@
       "module_config_override": {}
     },
     {
-      "id": "sp_test_static",
+      "id": "sp_test_dummy",
       "name": "Practice Dummy",
       "description": "",
       "enemy_pool": "ene_practice_dummy:100",
