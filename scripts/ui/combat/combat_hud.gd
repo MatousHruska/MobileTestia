@@ -1431,6 +1431,12 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 	# Get player facing direction for arc check
 	var facing_vector := _get_player_facing_vector()
 
+	# Track first-hit data for debug breakdown
+	var breakdown_target_name: String = ""
+	var breakdown_proc_bonus: float = 0.0
+	var breakdown_final_damage: float = 0.0
+	var breakdown_hit := false
+
 	for enemy in enemies:
 		# Check if enemy is within hit arc (skip if arc is 360 = all around)
 		if skill_arc < 360.0:
@@ -1451,6 +1457,13 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 			if enemy.has_method("_calculate_damage_after_armor"):
 				final_damage = enemy._calculate_damage_after_armor(final_damage)
 
+			# Capture first hit for debug breakdown
+			if not breakdown_hit:
+				breakdown_hit = true
+				breakdown_target_name = enemy.enemy_name if "enemy_name" in enemy else enemy.name
+				breakdown_proc_bonus = proc_bonus
+				breakdown_final_damage = final_damage
+
 			enemy.take_damage(final_damage, player)
 
 			# Apply contact status effect to enemy (stagger, slow, bleed, etc.)
@@ -1466,6 +1479,17 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 			# Log crit hits
 			if damage_result.is_critical:
 				Debug.log("Combat", "CRITICAL %s on %s!" % [talent.talent_name, enemy.enemy_name], "%.0f damage" % final_damage)
+
+	# Report damage breakdown for debug overlay
+	if breakdown_hit:
+		TalentProcSystem.report_damage_breakdown({
+			"skill_name": talent.talent_name,
+			"target_name": breakdown_target_name,
+			"base_damage": damage_result.final_damage,
+			"proc_bonus_pct": breakdown_proc_bonus,
+			"final_damage": breakdown_final_damage,
+			"is_critical": damage_result.get("is_critical", false),
+		})
 
 
 func _spawn_skill_visual(talent: TalentData, _damage_result: Dictionary) -> void:
