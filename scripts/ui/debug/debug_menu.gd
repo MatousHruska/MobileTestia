@@ -135,6 +135,20 @@ func _build_ui() -> void:
 	_add_action_button("Test ends_when Buff", _on_test_ends_when)
 	_add_separator()
 
+	# ── TALENTS section ──
+	_add_section_header("TALENTS")
+	_add_action_button("+10 Skill Points", _on_talent_add_points)
+	# Add per-tree learn buttons dynamically from database
+	for tree_data in DatabaseLoader.get_all_talent_trees():
+		var tree_id: String = tree_data.get("id", "")
+		var tree_name: String = tree_data.get("name", tree_id)
+		_add_action_button("Learn All: " + tree_name, _on_talent_learn_tree.bind(tree_id))
+	_add_action_button("Learn ALL Trees", _on_talent_learn_all)
+	_add_action_button("Max All Skill Ranks", _on_talent_max_ranks)
+	_add_action_button("Reset All Talents", _on_talent_reset)
+	_add_action_button("Print Talent State", _on_talent_print_state)
+	_add_separator()
+
 	# ── LOG SETTINGS section ──
 	_add_section_header("LOG SETTINGS")
 	_add_action_button("Cycle Log Level", _on_cycle_log_level)
@@ -386,6 +400,56 @@ func _on_toggle_all_verbose() -> void:
 func _on_toggle_npc_verbose() -> void:
 	Debug._toggle_npc_verbose()
 	_refresh_toggle_states()
+
+
+## ─── TALENT ACTIONS ──────────────────────────────────────────────────────────
+
+func _on_talent_add_points() -> void:
+	TalentManager.debug_add_points(10)
+	Debug.info("Debug", "Added 10 skill points (available: %d)" % TalentManager.get_available_points())
+
+
+func _on_talent_learn_tree(tree_id: String) -> void:
+	# Add enough points to learn the full tree, then learn all
+	_ensure_enough_points_for_tree(tree_id)
+	TalentManager.debug_learn_all_in_tree(tree_id)
+	Debug.info("Debug", "Learned all talents in %s" % tree_id)
+
+
+func _on_talent_learn_all() -> void:
+	for tree_data in DatabaseLoader.get_all_talent_trees():
+		var tree_id: String = tree_data.get("id", "")
+		_ensure_enough_points_for_tree(tree_id)
+		TalentManager.debug_learn_all_in_tree(tree_id)
+	Debug.info("Debug", "Learned all talents in all trees")
+
+
+func _on_talent_max_ranks() -> void:
+	var count := 0
+	for talent in TalentManager.get_skillbook_talents():
+		TalentManager.set_skill_rank(talent.id, TalentManager.MAX_SKILL_RANK)
+		count += 1
+	Debug.info("Debug", "Maxed ranks for %d active skills to rank %d" % [count, TalentManager.MAX_SKILL_RANK])
+
+
+func _on_talent_reset() -> void:
+	TalentManager.reset_all_talents()
+	Debug.info("Debug", "All talents reset")
+
+
+func _on_talent_print_state() -> void:
+	TalentManager.print_state()
+
+
+func _ensure_enough_points_for_tree(tree_id: String) -> void:
+	## Add skill points if needed so all talents in a tree can be learned
+	var total_needed := 0
+	for talent in TalentManager.get_talents_for_tree(tree_id):
+		var already := TalentManager.get_invested_points(talent.id)
+		total_needed += talent.max_points - already
+	var available := TalentManager.get_available_points()
+	if total_needed > available:
+		TalentManager.debug_add_points(total_needed - available)
 
 
 ## ─── HELPERS ─────────────────────────────────────────────────────────────────
