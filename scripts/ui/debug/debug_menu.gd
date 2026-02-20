@@ -1,7 +1,7 @@
 extends CanvasLayer
 ## DebugMenu - Tappable debug menu panel replacing numpad keybinds
 ## Opened via the eye icon button on the HUD
-## All debug actions consolidated into categorized, scrollable sections
+## All debug actions consolidated into categorized, collapsible sections
 
 var is_open: bool = false
 
@@ -13,6 +13,10 @@ var _vbox: VBoxContainer
 
 ## Toggle button references (to update on/off state)
 var _toggle_buttons: Dictionary = {}  # key -> Button
+
+## Collapsible section tracking
+var _sections: Dictionary = {}  # key -> { header: Button, content: VBoxContainer }
+var _current_container: VBoxContainer  # Where buttons are added (main vbox or section content)
 
 ## Panel sizing (percentage of viewport)
 const PANEL_WIDTH_PCT := 0.42
@@ -86,6 +90,7 @@ func _build_ui() -> void:
 	_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	UITheme.setup_vbox(_vbox)
 	_scroll.add_child(_vbox)
+	_current_container = _vbox
 
 	# ── Header ──
 	var header_hbox := HBoxContainer.new()
@@ -109,15 +114,15 @@ func _build_ui() -> void:
 	_add_separator()
 
 	# ── OVERLAYS section ──
-	_add_section_header("OVERLAYS")
+	_begin_section("overlays", "OVERLAYS")
 	_add_toggle_button("chunk_overlay", "Chunk Borders", _on_toggle_chunk_overlay)
 	_add_toggle_button("ai_overlay", "AI Debug", _on_toggle_ai_overlay)
 	_add_toggle_button("quest_overlay", "Quest Debug", _on_toggle_quest_overlay)
 	_add_toggle_button("pathfinding_overlay", "Pathfinding", _on_toggle_pathfinding)
-	_add_separator()
+	_end_section()
 
 	# ── SNAPSHOTS section ──
-	_add_section_header("SNAPSHOTS")
+	_begin_section("snapshots", "SNAPSHOTS")
 	_add_action_button("Chunk State", _on_chunk_state)
 	_add_action_button("Loot State", _on_loot_state)
 	_add_action_button("Enemy Summary", _on_enemy_summary)
@@ -125,18 +130,18 @@ func _build_ui() -> void:
 	_add_action_button("Game State", _on_game_state)
 	_add_action_button("Chest Persistence", _on_chest_persistence)
 	_add_action_button("Debug Settings", _on_debug_settings)
-	_add_separator()
+	_end_section()
 
 	# ── DIAGNOSTICS section ──
-	_add_section_header("DIAGNOSTICS")
+	_begin_section("diagnostics", "DIAGNOSTICS")
 	_add_action_button("Zone Naming", _on_zone_naming)
 	_add_action_button("Zone Resolution", _on_zone_resolution)
 	_add_action_button("Test Pathfinding", _on_test_pathfinding)
 	_add_action_button("Test ends_when Buff", _on_test_ends_when)
-	_add_separator()
+	_end_section()
 
 	# ── TALENTS section ──
-	_add_section_header("TALENTS")
+	_begin_section("talents", "TALENTS")
 	_add_action_button("+10 Skill Points", _on_talent_add_points)
 	# Add per-tree learn buttons dynamically from database
 	for tree_data in DatabaseLoader.get_all_talent_trees():
@@ -147,13 +152,14 @@ func _build_ui() -> void:
 	_add_action_button("Max All Skill Ranks", _on_talent_max_ranks)
 	_add_action_button("Reset All Talents", _on_talent_reset)
 	_add_action_button("Print Talent State", _on_talent_print_state)
-	_add_separator()
+	_end_section()
 
 	# ── LOG SETTINGS section ──
-	_add_section_header("LOG SETTINGS")
+	_begin_section("log_settings", "LOG SETTINGS")
 	_add_action_button("Cycle Log Level", _on_cycle_log_level)
 	_add_toggle_button("verbose_all", "All Verbose", _on_toggle_all_verbose)
 	_add_toggle_button("verbose_npc", "NPC Verbose", _on_toggle_npc_verbose)
+	_end_section()
 
 	# Apply initial layout
 	call_deferred("_apply_layout")
@@ -171,15 +177,74 @@ func _apply_layout() -> void:
 	_panel.size = Vector2(panel_w, panel_h)
 
 
+## ─── COLLAPSIBLE SECTIONS ───────────────────────────────────────────────────
+
+func _begin_section(key: String, text: String) -> void:
+	# Section header button (tap to expand/collapse)
+	var header_btn := Button.new()
+	header_btn.text = "> " + text
+	header_btn.custom_minimum_size = Vector2(0, UITheme.BUTTON_HEIGHT_NORMAL)
+	header_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_apply_section_header_style(header_btn)
+	header_btn.pressed.connect(_on_toggle_section.bind(key))
+	_vbox.add_child(header_btn)
+
+	# Content container (hidden by default)
+	var content := VBoxContainer.new()
+	content.name = "Section_" + key
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	UITheme.setup_vbox(content)
+	content.visible = false
+	_vbox.add_child(content)
+
+	_sections[key] = { "header": header_btn, "content": content }
+	_current_container = content
+
+
+func _end_section() -> void:
+	_current_container = _vbox
+
+
+func _on_toggle_section(key: String) -> void:
+	if not _sections.has(key):
+		return
+	var section: Dictionary = _sections[key]
+	var content: VBoxContainer = section["content"]
+	var header: Button = section["header"]
+	content.visible = not content.visible
+	# Update arrow indicator
+	var label_text: String = header.text.substr(2)  # Strip "> " or "v "
+	header.text = ("v " if content.visible else "> ") + label_text
+
+
+func _apply_section_header_style(btn: Button) -> void:
+	var normal := StyleBoxFlat.new()
+	normal.bg_color = Color(UITheme.COLOR_PANEL_BG, 0.0)  # Transparent bg
+	normal.set_corner_radius_all(UITheme.CORNER_RADIUS_SMALL)
+	normal.content_margin_left = UITheme.MARGIN_SMALL
+	normal.content_margin_right = UITheme.MARGIN_SMALL
+	btn.add_theme_stylebox_override("normal", normal)
+
+	var hover := StyleBoxFlat.new()
+	hover.bg_color = UITheme.COLOR_BUTTON_BG
+	hover.set_corner_radius_all(UITheme.CORNER_RADIUS_SMALL)
+	hover.content_margin_left = UITheme.MARGIN_SMALL
+	hover.content_margin_right = UITheme.MARGIN_SMALL
+	btn.add_theme_stylebox_override("hover", hover)
+
+	var pressed := StyleBoxFlat.new()
+	pressed.bg_color = UITheme.COLOR_BUTTON_BG_ACTIVE
+	pressed.set_corner_radius_all(UITheme.CORNER_RADIUS_SMALL)
+	pressed.content_margin_left = UITheme.MARGIN_SMALL
+	pressed.content_margin_right = UITheme.MARGIN_SMALL
+	btn.add_theme_stylebox_override("pressed", pressed)
+
+	btn.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+	btn.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
+
+
 ## ─── UI HELPERS ──────────────────────────────────────────────────────────────
-
-func _add_section_header(text: String) -> void:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
-	label.add_theme_color_override("font_color", UITheme.COLOR_SECTION_HEADER)
-	_vbox.add_child(label)
-
 
 func _add_separator() -> void:
 	var sep := HSeparator.new()
@@ -199,7 +264,7 @@ func _add_action_button(text: String, callback: Callable) -> void:
 	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn.pressed.connect(callback)
 	_apply_button_style(btn)
-	_vbox.add_child(btn)
+	_current_container.add_child(btn)
 
 
 func _add_toggle_button(key: String, text: String, callback: Callable) -> void:
@@ -210,7 +275,7 @@ func _add_toggle_button(key: String, text: String, callback: Callable) -> void:
 	btn.pressed.connect(callback)
 	_apply_button_style(btn)
 	_toggle_buttons[key] = btn
-	_vbox.add_child(btn)
+	_current_container.add_child(btn)
 
 
 func _set_toggle_state(key: String, active: bool) -> void:
