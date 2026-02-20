@@ -22,7 +22,7 @@ func _ready() -> void:
 	_create_ui()
 	_connect_signals()
 	visible = false
-	Debug.info("Quest", "Debug overlay initialized (press F9 to toggle)")
+	Debug.info("Quest", "Debug overlay initialized (toggle via debug menu)")
 
 
 func _create_ui() -> void:
@@ -105,12 +105,6 @@ func _connect_signals() -> void:
 	qm.objective_updated.connect(_on_objective_updated)
 	qm.objective_completed.connect(_on_objective_completed)
 	qm.rewards_granted.connect(_on_rewards_granted)
-
-
-func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_F9:
-			toggle()
 
 
 func _process(_delta: float) -> void:

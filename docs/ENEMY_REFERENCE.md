@@ -343,7 +343,7 @@ Each movement module has its own `use_pathfinding` config:
 
 ### Debug Visualization
 
-Press **Numpad /** to toggle pathfinding debug:
+Toggle **Pathfinding** in the debug menu (eye icon on HUD):
 - Green lines show current paths
 - Red squares show blocked tiles
 - Shows grid bounds and loaded chunk count
