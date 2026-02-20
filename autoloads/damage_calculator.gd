@@ -186,6 +186,9 @@ func get_weapon_stats_text() -> String:
 ## Uses diminishing returns formula: reduction = armor / (armor + k * level)
 func calculate_armor_reduction(incoming_damage: float, attacker_level: int = 1) -> float:
 	var armor := PlayerStats.armor
+	# Apply conditional armor % bonus from talents (e.g., Iron Posture)
+	if TalentProcSystem:
+		armor *= (1.0 + TalentProcSystem.get_bonus_armor_percent() / 100.0)
 	# k is the armor constant from database (default 50.0)
 	var k := DatabaseLoader.get_setting("armor_constant", 50.0)
 	var reduction := armor / (armor + k * attacker_level)

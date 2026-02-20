@@ -44,6 +44,10 @@ const CLOSING_GAP_BONUS_PER_POINT: float = 7.0
 ## This is checked by DamageCalculator before rolling crit
 var bonus_crit_chance: float = 0.0
 
+## Conditional armor % bonus (from "always" procs like Iron Posture)
+## This is checked by DamageCalculator when calculating armor reduction
+var bonus_armor_percent: float = 0.0
+
 ## Parry system state
 var _parry_active: bool = false
 var _parry_window_timer: float = 0.0
@@ -386,6 +390,7 @@ func _execute_single_effect(effect: String, points: int, target: Node2D, talent_
 func _update_always_procs() -> void:
 	## Recalculate bonuses from "always" trigger talents
 	var new_crit_bonus: float = 0.0
+	var new_armor_pct: float = 0.0
 
 	for talent_id in TalentManager.invested_talents:
 		var points: int = TalentManager.invested_talents[talent_id]
@@ -399,18 +404,21 @@ func _update_always_procs() -> void:
 			continue
 
 		# "always" procs check condition against current target or state
-		# For conditional_crit, we check condition and accumulate bonus
 		var effects := talent.proc_effect.split(";")
 		for effect in effects:
 			effect = effect.strip_edges()
 			var parts := effect.split(":")
-			if parts[0] == "conditional_crit":
-				# Check condition against nearest enemy (combat target)
-				var nearest := _get_nearest_enemy()
-				if _check_condition(talent.proc_condition, nearest):
-					new_crit_bonus += float(parts[1]) * points
+			match parts[0]:
+				"conditional_crit":
+					var nearest := _get_nearest_enemy()
+					if _check_condition(talent.proc_condition, nearest):
+						new_crit_bonus += float(parts[1]) * points
+				"conditional_armor_pct":
+					if _check_condition(talent.proc_condition, null):
+						new_armor_pct += float(parts[1]) * points
 
 	bonus_crit_chance = new_crit_bonus
+	bonus_armor_percent = new_armor_pct
 
 
 #===============================================================================
@@ -481,6 +489,11 @@ func consume_next_attack_bonus() -> float:
 ## Get bonus crit chance from passive talents (does NOT consume)
 func get_bonus_crit_chance() -> float:
 	return bonus_crit_chance
+
+
+## Get bonus armor percent from passive talents (does NOT consume)
+func get_bonus_armor_percent() -> float:
+	return bonus_armor_percent
 
 
 ## Report damage breakdown for debug overlay
@@ -688,6 +701,7 @@ func load_save_data(_data: Dictionary) -> void:
 	_closing_gap_bonus = 0.0
 	_closing_gap_cap = 0.0
 	_closing_gap_nearest_name = ""
+	bonus_armor_percent = 0.0
 	_parry_active = false
 	_parry_window_timer = 0.0
 	_parry_talent = null
