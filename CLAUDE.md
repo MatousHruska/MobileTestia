@@ -44,6 +44,15 @@ Whenever you make an update to stats, add a new stat, or create a new way of imp
 
 The project has an existing save/load system (`autoloads/save_manager.gd`, `autoloads/persistence_manager.gd`). When planning new features and systems, always integrate with this existing framework rather than creating separate persistence logic.
 
+## Debug System
+
+All debug actions are accessed through the **Debug Menu** — a tappable panel opened via the **eye icon (👁)** next to the hamburger menu (☰) on the HUD. It is only visible in debug builds.
+
+- **Adding new debug actions**: Add buttons to `scripts/ui/debug/debug_menu.gd` in the appropriate section (Overlays, Snapshots, Diagnostics, or Log Settings). Use `_add_action_button()` for one-shot actions or `_add_toggle_button()` for toggleable overlays.
+- **Do NOT add keyboard debug keybinds** (numpad keys, F-keys, etc.). All debug functionality goes through the debug menu.
+- The debug menu is lazy-instantiated via `UIManager.toggle_debug_menu()`.
+- See `docs/DEBUG_QUICK_REFERENCE.md` for the full list of available debug actions.
+
 ## Reference Documentation
 
 Consult these docs when working on the corresponding systems:
