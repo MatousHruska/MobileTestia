@@ -435,7 +435,7 @@ func _update_closing_gap(delta: float) -> void:
 	if nearest and is_instance_valid(nearest):
 		_closing_gap_nearest_name = nearest.name
 		var direction_to_enemy := (nearest.global_position - Game.player.global_position).normalized()
-		var approach_speed := Game.player.velocity.dot(direction_to_enemy)
+		var approach_speed: float = Game.player.velocity.dot(direction_to_enemy)
 
 		if approach_speed > 0:
 			# Moving toward enemy — accumulate bonus proportional to approach speed
