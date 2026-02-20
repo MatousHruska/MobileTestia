@@ -495,6 +495,9 @@ func _recalculate_derived() -> void:
 
 	# Defensive stats (equipment + talents + status effects)
 	armor = get_equipment_bonus("armor") + _get_talent_bonus("armor") + _get_status_effect_modifier("armor")
+	# Apply conditional armor % multiplier (e.g., Iron Posture) after all flat sources
+	if TalentProcSystem:
+		armor *= (1.0 + TalentProcSystem.get_bonus_armor_percent() / 100.0)
 	magic_resistance = get_equipment_bonus("magic_resistance") + _get_talent_bonus("magic_resistance") + _get_status_effect_modifier("magic_resistance")
 	dodge_chance = get_equipment_bonus("dodge_chance") + _get_talent_bonus("dodge_chance") + _get_status_effect_modifier("dodge_chance")
 

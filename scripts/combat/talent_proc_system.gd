@@ -418,7 +418,12 @@ func _update_always_procs() -> void:
 						new_armor_pct += float(parts[1]) * points
 
 	bonus_crit_chance = new_crit_bonus
-	bonus_armor_percent = new_armor_pct
+
+	# Trigger stat recalculation when conditional armor % changes
+	if new_armor_pct != bonus_armor_percent:
+		bonus_armor_percent = new_armor_pct
+		PlayerStats.recalculate_stats()
+
 
 
 #===============================================================================
