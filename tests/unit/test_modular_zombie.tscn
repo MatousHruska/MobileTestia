@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8yv4n3mxr2qp"]
+
+[ext_resource type="Script" path="res://tests/unit/test_modular_zombie.gd" id="1_test"]
+
+[node name="TestModularZombie" type="Node2D"]
+script = ExtResource("1_test")

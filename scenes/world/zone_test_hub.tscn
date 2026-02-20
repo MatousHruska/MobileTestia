@@ -1,0 +1,220 @@
+[gd_scene load_steps=11 format=3 uid="uid://test0one001"]
+
+[ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
+[ext_resource type="Script" uid="uid://br7g6n3ugvdis" path="res://scripts/camera/game_camera.gd" id="3_camera"]
+[ext_resource type="Script" uid="uid://vo3bhpaiw1r0" path="res://scripts/world/reference_object.gd" id="4_ref"]
+[ext_resource type="Script" uid="uid://vik7jjuuh4ix" path="res://scripts/world/zone_base.gd" id="5_zone"]
+[ext_resource type="PackedScene" path="res://scenes/prefabs/database_npc.tscn" id="8_npc_prefab"]
+[ext_resource type="Script" uid="uid://cayikglml6hs4" path="res://scripts/world/zone_transition.gd" id="9_transition"]
+[ext_resource type="Script" uid="uid://dc6rssr8gotxo" path="res://scripts/world/spawn_point.gd" id="10_spawn"]
+[ext_resource type="Script" uid="uid://bxs48qilberw1" path="res://scripts/interactable/chest_spawn_point.gd" id="11_chest_spawn"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
+size = Vector2(80, 40)
+
+[node name="TestZone" type="Node2D"]
+script = ExtResource("5_zone")
+zone_id = "zone_test_hub"
+zone_name = "Test Hub"
+
+[node name="Background" type="ColorRect" parent="."]
+offset_left = -640.0
+offset_top = -500.0
+offset_right = 640.0
+offset_bottom = 360.0
+color = Color(0.15, 0.2, 0.15, 1)
+
+[node name="ZoneTransitions" type="Node2D" parent="."]
+
+[node name="ToMeadow" type="Area2D" parent="ZoneTransitions"]
+position = Vector2(-200, -350)
+script = ExtResource("9_transition")
+target_zone = "res://scenes/world/zone_meadow.tscn"
+display_name = "Meadow"
+transition_color = Color(0.3, 0.6, 0.3, 0.7)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZoneTransitions/ToMeadow"]
+shape = SubResource("RectangleShape2D_trans")
+
+[node name="ToForest" type="Area2D" parent="ZoneTransitions"]
+position = Vector2(0, -350)
+script = ExtResource("9_transition")
+target_zone = "res://scenes/world/zone_forest.tscn"
+display_name = "Forest"
+transition_color = Color(0.15, 0.35, 0.15, 0.7)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZoneTransitions/ToForest"]
+shape = SubResource("RectangleShape2D_trans")
+
+[node name="ToCrypt" type="Area2D" parent="ZoneTransitions"]
+position = Vector2(200, -350)
+script = ExtResource("9_transition")
+target_zone = "res://scenes/world/zone_crypt.tscn"
+display_name = "Crypt"
+transition_color = Color(0.3, 0.2, 0.4, 0.7)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZoneTransitions/ToCrypt"]
+shape = SubResource("RectangleShape2D_trans")
+
+[node name="ToMountain" type="Area2D" parent="ZoneTransitions"]
+position = Vector2(400, -350)
+script = ExtResource("9_transition")
+target_zone = "res://scenes/world/zone_mountain.tscn"
+display_name = "Mountain"
+transition_color = Color(0.5, 0.4, 0.3, 0.7)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ZoneTransitions/ToMountain"]
+shape = SubResource("RectangleShape2D_trans")
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="SpawnFromMeadow" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(-200, -280)
+script = ExtResource("10_spawn")
+spawn_id = "from_meadow"
+marker_color = Color(0.3, 0.6, 0.3, 0.8)
+
+[node name="SpawnFromForest" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(0, -280)
+script = ExtResource("10_spawn")
+spawn_id = "from_forest"
+marker_color = Color(0.15, 0.35, 0.15, 0.8)
+
+[node name="SpawnFromCrypt" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(200, -280)
+script = ExtResource("10_spawn")
+spawn_id = "from_crypt"
+marker_color = Color(0.3, 0.2, 0.4, 0.8)
+
+[node name="SpawnFromMountain" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(400, -280)
+script = ExtResource("10_spawn")
+spawn_id = "from_mountain"
+marker_color = Color(0.5, 0.4, 0.3, 0.8)
+
+[node name="SpawnDefault" type="Marker2D" parent="SpawnPoints"]
+script = ExtResource("10_spawn")
+
+[node name="TransitionLabels" type="Node2D" parent="."]
+
+[node name="LabelMeadow" type="Label" parent="TransitionLabels"]
+offset_left = -240.0
+offset_top = -400.0
+offset_right = -160.0
+offset_bottom = -377.0
+text = "MEADOW
+(Zombies)"
+horizontal_alignment = 1
+
+[node name="LabelForest" type="Label" parent="TransitionLabels"]
+offset_left = -40.0
+offset_top = -400.0
+offset_right = 40.0
+offset_bottom = -377.0
+text = "FOREST
+(Ghouls)"
+horizontal_alignment = 1
+
+[node name="LabelCrypt" type="Label" parent="TransitionLabels"]
+offset_left = 160.0
+offset_top = -400.0
+offset_right = 240.0
+offset_bottom = -377.0
+text = "CRYPT
+(Vampires)"
+horizontal_alignment = 1
+
+[node name="LabelMountain" type="Label" parent="TransitionLabels"]
+offset_left = 360.0
+offset_top = -400.0
+offset_right = 440.0
+offset_bottom = -377.0
+text = "MOUNTAIN
+(Test AI)"
+horizontal_alignment = 1
+
+[node name="Grid" type="Node2D" parent="."]
+script = ExtResource("4_ref")
+
+[node name="ReferenceObjects" type="Node2D" parent="."]
+
+[node name="Rock1" type="Node2D" parent="ReferenceObjects"]
+position = Vector2(100, 50)
+script = ExtResource("4_ref")
+object_color = Color(0.4, 0.35, 0.3, 1)
+object_size = Vector2(40, 30)
+
+[node name="Rock2" type="Node2D" parent="ReferenceObjects"]
+position = Vector2(-150, 100)
+script = ExtResource("4_ref")
+object_color = Color(0.35, 0.3, 0.28, 1)
+object_size = Vector2(50, 35)
+
+[node name="Tree1" type="Node2D" parent="ReferenceObjects"]
+position = Vector2(-100, -80)
+script = ExtResource("4_ref")
+object_color = Color(0.2, 0.5, 0.2, 1)
+object_size = Vector2(30, 60)
+
+[node name="Tree2" type="Node2D" parent="ReferenceObjects"]
+position = Vector2(200, -50)
+script = ExtResource("4_ref")
+object_color = Color(0.25, 0.55, 0.25, 1)
+object_size = Vector2(35, 70)
+
+[node name="Crate" type="Node2D" parent="ReferenceObjects"]
+position = Vector2(50, 150)
+script = ExtResource("4_ref")
+object_color = Color(0.6, 0.45, 0.25, 1)
+
+[node name="Barrel" type="Node2D" parent="ReferenceObjects"]
+position = Vector2(-200, -150)
+script = ExtResource("4_ref")
+object_color = Color(0.5, 0.35, 0.2, 1)
+object_size = Vector2(24, 28)
+
+[node name="Marker" type="Node2D" parent="ReferenceObjects"]
+position = Vector2(0, -200)
+script = ExtResource("4_ref")
+object_color = Color(0.8, 0.2, 0.2, 1)
+object_size = Vector2(16, 16)
+
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="ChestSpawns" type="Node2D" parent="."]
+
+[node name="StarterChest" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(-80, 50)
+script = ExtResource("11_chest_spawn")
+database_chest_id = "chest_hub_starter"
+
+[node name="ChestSpawn1" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(-300, 80)
+script = ExtResource("11_chest_spawn")
+database_chest_id = "chest_hub_01"
+
+[node name="ChestSpawn2" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(350, 120)
+script = ExtResource("11_chest_spawn")
+database_chest_id = "chest_hub_02"
+
+[node name="ChestSpawn3" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(-50, 200)
+script = ExtResource("11_chest_spawn")
+database_chest_id = "chest_hub_03"
+
+[node name="FriendlyNPCs" type="Node2D" parent="."]
+
+[node name="QuestGiver" parent="FriendlyNPCs" instance=ExtResource("8_npc_prefab")]
+position = Vector2(280, 0)
+database_id = "npc_quest_giver_main"
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+
+[node name="GameCamera" type="Camera2D" parent="."]
+script = ExtResource("3_camera")
+follow_smoothing = 8.0
+look_ahead_distance = 30.0
+
+[node name="HUD" parent="." instance=ExtResource("2_hud")]

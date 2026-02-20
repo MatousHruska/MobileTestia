@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="CombatHUDConfig" load_steps=2 format=3 uid="uid://cq84144a0oxct"]
+
+[ext_resource type="Script" uid="uid://cha3i88nc4sw7" path="res://scripts/ui/combat/combat_hud_config.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+attack_offset_pct = Vector2(0.1, 0.15)
+dodge_offset_pct = Vector2(0.26, 0.09)
+quick_slot_offset_pct = Vector2(0.34, 0.09)
+interact_offset_pct = Vector2(0.15, 0.42)
+interact_size = Vector2(45, 18)

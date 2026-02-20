@@ -1,0 +1,30 @@
+{
+  "locations": [
+    {
+      "id": "loc_forest_north",
+      "zone_id": "zone_forest",
+      "name": "Northern Forest",
+      "location_type": "poi",
+      "is_safe_zone": null,
+      "is_pvp_enabled": null,
+      "status_effect_id": "",
+      "music_track": "",
+      "ambient_sound": "amb_wind_cold",
+      "discovery_popup": true,
+      "description": "The northern reaches where ancient pines whisper secrets"
+    },
+    {
+      "id": "loc_forest_south",
+      "zone_id": "zone_forest",
+      "name": "Southern Forest",
+      "location_type": "poi",
+      "is_safe_zone": null,
+      "is_pvp_enabled": null,
+      "status_effect_id": "",
+      "music_track": "music_forest_cheerful",
+      "ambient_sound": "amb_birds_singing",
+      "discovery_popup": true,
+      "description": "Sun-dappled glades where flowers bloom year-round"
+    }
+  ]
+}

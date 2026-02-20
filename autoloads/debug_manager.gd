@@ -16,7 +16,7 @@ enum LogLevel { TRACE = 0, DEBUG = 1, INFO = 2, WARN = 3, ERROR = 4, NONE = 5 }
 
 ## Configuration
 var enabled: bool = true
-var log_level: LogLevel = LogLevel.DEBUG
+var log_level: LogLevel = LogLevel.INFO  # Default to INFO - less noise
 var show_timestamps: bool = true
 var show_frame_count: bool = true
 var show_stack_trace_on_error: bool = true
@@ -25,6 +25,22 @@ var max_history: int = 500
 ## Category filtering - empty means all categories enabled
 var enabled_categories: Array[String] = []
 var disabled_categories: Array[String] = []
+
+## Category groups for easy toggling
+const CATEGORY_GROUPS := {
+	"verbose": ["NPC", "AI", "Movement", "ChunkManager"],  # Movement/AI spam
+	"data": ["Database", "Data"],  # Database loading
+	"spawn": ["Spawner", "SpawnPoint", "Chest"],  # Entity spawning
+	"combat": ["Combat", "Damage"],  # Combat details
+	"save": ["Save", "Load", "Persistence"],  # Save/load system
+	"ui": ["UI", "HUD", "Menu"],  # UI updates
+}
+
+## Verbose mode flags (separate from log level)
+var verbose_npc: bool = false  # NPC movement spam
+var verbose_chunks: bool = false  # Chunk loading details
+var verbose_spawn: bool = false  # Spawn point details
+var verbose_saveload: bool = false  # SAVELOAD debug prints
 
 ## Performance timers
 var _perf_timers: Dictionary = {}
@@ -50,6 +66,30 @@ var _category_markers: Dictionary = {
 	"Inventory": "[INV]",
 	"System": "[SYS]",
 	"Debug": "[DBG]",
+	"NPC": "[NPC]",
+	"AI": "[AI_]",
+	"Spawner": "[SPN]",
+	"SpawnPoint": "[SPA]",
+	"Loot": "[LOT]",
+	"Stats": "[STS]",
+	"Zone": "[ZON]",
+	"ChunkManager": "[CHK]",
+	"Database": "[DAT]",
+	"Data": "[DAT]",
+	"Chest": "[CHE]",
+	"Persistence": "[PER]",
+	"Damage": "[DMG]",
+	"Talent": "[TAL]",
+	"Location": "[LOC]",
+	"Cutscene": "[CUT]",
+	"Dialogue": "[DLG]",
+	"FloatingDialogue": "[FLO]",
+	"PopupMessage": "[POP]",
+	"Global": "[GLO]",
+	"CombatText": "[COM]",
+	"Perf": "[PRF]",
+	"PathfindingService": "[NAV]",
+	"NavigationGrid": "[NAV]",
 }
 
 ## Level prefixes
@@ -65,6 +105,144 @@ var _level_prefixes: Dictionary = {
 func _ready() -> void:
 	_log_internal(LogLevel.INFO, "System", "DebugManager initialized", [])
 	_log_internal(LogLevel.INFO, "System", "Log level set to", [LogLevel.keys()[log_level]])
+	_log_internal(LogLevel.INFO, "System", "Debug hotkeys (Numpad): 0=level, *=verbose, -=NPC, +=settings, /=nav, .=navtest, 9=testmotion", [])
+
+
+func _input(event: InputEvent) -> void:
+	# Only process in debug builds
+	if not OS.is_debug_build():
+		return
+
+	if not event is InputEventKey or not event.pressed:
+		return
+
+	var key_event := event as InputEventKey
+
+	# ALL debug keys use NUMPAD ONLY to avoid conflicts with:
+	# - Godot editor (F1-F12)
+	# - Typing in dialogs (regular keys)
+	# - Game input bindings
+	match key_event.keycode:
+		KEY_KP_0:
+			# Cycle through log levels: INFO -> DEBUG -> TRACE -> INFO
+			_cycle_log_level()
+		KEY_KP_MULTIPLY:
+			# Toggle all verbose modes
+			_toggle_all_verbose()
+		KEY_KP_SUBTRACT:
+			# Toggle NPC movement spam specifically
+			_toggle_npc_verbose()
+		KEY_KP_ADD:
+			# Print current debug settings
+			_print_debug_settings()
+		KEY_KP_DIVIDE:
+			# Toggle pathfinding debug visualization
+			_toggle_pathfinding_debug()
+		KEY_KP_PERIOD:
+			# Test pathfinding from player position
+			_test_pathfinding()
+
+
+func _cycle_log_level() -> void:
+	# Cycle between INFO and DEBUG only
+	# TRACE is too verbose (per-frame output) - enable via code if needed
+	match log_level:
+		LogLevel.INFO:
+			set_level(LogLevel.DEBUG)
+		_:
+			set_level(LogLevel.INFO)
+	print(">>> Debug level: %s <<<" % LogLevel.keys()[log_level])
+
+
+func _toggle_all_verbose() -> void:
+	var new_state := not (verbose_npc or verbose_chunks or verbose_spawn)
+	verbose_npc = new_state
+	verbose_chunks = new_state
+	verbose_spawn = new_state
+	verbose_saveload = new_state
+	print(">>> Verbose mode: %s <<<" % ("ON" if new_state else "OFF"))
+
+
+func _toggle_npc_verbose() -> void:
+	verbose_npc = not verbose_npc
+	print(">>> NPC verbose: %s <<<" % ("ON" if verbose_npc else "OFF"))
+
+
+func _print_debug_settings() -> void:
+	var pathfinding_enabled: bool = false
+	var pathfinding_service: PathfindingServiceClass = get_node_or_null("/root/PathfindingService")
+	if pathfinding_service:
+		pathfinding_enabled = pathfinding_service.is_debug_enabled()
+
+	print("┌─── DEBUG SETTINGS ───")
+	print("│ Log level: %s" % LogLevel.keys()[log_level])
+	print("│ Verbose NPC: %s" % verbose_npc)
+	print("│ Verbose Chunks: %s" % verbose_chunks)
+	print("│ Verbose Spawn: %s" % verbose_spawn)
+	print("│ Verbose SaveLoad: %s" % verbose_saveload)
+	print("│ Pathfinding debug: %s" % pathfinding_enabled)
+	print("│ Disabled categories: %s" % disabled_categories)
+	print("└──────────────────────")
+
+
+func _toggle_pathfinding_debug() -> void:
+	var pathfinding_service: PathfindingServiceClass = get_node_or_null("/root/PathfindingService")
+	if pathfinding_service:
+		var new_state: bool = not pathfinding_service.is_debug_enabled()
+		pathfinding_service.set_debug_enabled(new_state)
+		print("0>>> Pathfinding debug: %s <<<" % ("ON" if new_state else "OFF"))
+	else:
+		print(">>> PathfindingService not available <<<")
+
+
+func _test_pathfinding() -> void:
+	var pathfinding_service: PathfindingServiceClass = get_node_or_null("/root/PathfindingService")
+	if pathfinding_service:
+		pathfinding_service.debug_test_path()
+	else:
+		print(">>> PathfindingService not available <<<")
+
+
+
+## Check if verbose logging is enabled for a specific type
+func is_verbose(verbose_type: String) -> bool:
+	match verbose_type:
+		"npc", "NPC", "movement":
+			return verbose_npc
+		"chunk", "chunks", "ChunkManager":
+			return verbose_chunks
+		"spawn", "SpawnPoint", "spawner":
+			return verbose_spawn
+		"saveload", "save", "load":
+			return verbose_saveload
+	return false
+
+
+## Toggle a category group on/off
+func toggle_category_group(group_name: String) -> void:
+	if not CATEGORY_GROUPS.has(group_name):
+		warn("Debug", "Unknown category group", group_name)
+		return
+
+	var categories: Array = CATEGORY_GROUPS[group_name]
+	var currently_disabled := false
+	for cat in categories:
+		if cat in disabled_categories:
+			currently_disabled = true
+			break
+
+	if currently_disabled:
+		# Enable all in group
+		for cat in categories:
+			if cat in disabled_categories:
+				disabled_categories.erase(cat)
+		info("Debug", "Enabled category group", group_name)
+	else:
+		# Disable all in group
+		for cat in categories:
+			if cat not in disabled_categories:
+				disabled_categories.append(cat)
+		info("Debug", "Disabled category group", group_name)
 
 
 ## Core logging functions
@@ -82,6 +260,33 @@ func warn(category: String, message: String, data: Variant = null) -> void:
 
 func err(category: String, message: String, data: Variant = null) -> void:
 	_log_internal(LogLevel.ERROR, category, message, _wrap_data(data), show_stack_trace_on_error)
+
+
+## Verbose logging - only prints if verbose mode is enabled for the type
+## Use for high-frequency debug output (NPC movement, chunk details, etc.)
+func log_verbose(verbose_type: String, category: String, message: String, data: Variant = null) -> void:
+	if not is_verbose(verbose_type):
+		return
+	_log_internal(LogLevel.DEBUG, category, message, _wrap_data(data))
+
+
+## Conditional print for raw debug output (replaces direct print() calls)
+## Only prints if verbose_saveload is true
+func print_saveload(message: String) -> void:
+	if verbose_saveload:
+		print(message)
+
+
+## Conditional print for chunk debug output
+func print_chunk(message: String) -> void:
+	if verbose_chunks:
+		print(message)
+
+
+## Conditional print for spawn debug output
+func print_spawn(message: String) -> void:
+	if verbose_spawn:
+		print(message)
 
 
 ## Pretty print any data structure

@@ -6,7 +6,7 @@ class_name ItemData
 enum Rarity { COMMON, UNCOMMON, RARE, EPIC, LEGENDARY }
 
 ## Item types
-enum ItemType { EQUIPMENT, CONSUMABLE }
+enum ItemType { EQUIPMENT, CONSUMABLE, KEY }
 
 ## Equipment slots
 enum EquipSlot {
@@ -126,3 +126,34 @@ static func get_slot_for_type(equip_type: EquipmentType) -> EquipSlot:
 			return EquipSlot.ACCESSORY_2  # Amulets use accessory slot
 		_:
 			return EquipSlot.NONE
+
+
+#===============================================================================
+# SERIALIZATION (for loot persistence across chunk loads)
+#===============================================================================
+
+## Serialize item to dictionary for storage
+func to_dict() -> Dictionary:
+	return {
+		"id": id,
+		"item_name": item_name,
+		"description": description,
+		"rarity": rarity,
+		"item_type": item_type,
+		"max_stack": max_stack,
+		"sell_value": sell_value,
+		"class_type": "ItemData"
+	}
+
+
+## Deserialize item from dictionary
+## Note: For EquipmentData, use EquipmentData.from_dict() directly
+## This method handles base ItemData and KeyData types
+func deserialize_from(data: Dictionary) -> void:
+	id = data.get("id", "")
+	item_name = data.get("item_name", "Unknown Item")
+	description = data.get("description", "")
+	rarity = data.get("rarity", Rarity.COMMON)
+	item_type = data.get("item_type", ItemType.EQUIPMENT)
+	max_stack = data.get("max_stack", 1)
+	sell_value = data.get("sell_value", 0)

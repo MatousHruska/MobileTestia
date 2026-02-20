@@ -1,0 +1,97 @@
+{
+	"chests": [],
+	"doors": [],
+	"levers": [],
+	"locations": [],
+	"lootables": [],
+	"lore_echoes": [],
+	"npcs": [
+		{
+			"id": "npc_quest_giver_main",
+			"position": {
+				"x": 616.0,
+				"y": 1584.0
+			}
+		}
+	],
+	"patrol_waypoints": [
+		{
+			"order": 1,
+			"patrol_group": "south_road",
+			"position": {
+				"x": 1720.0,
+				"y": 2696.0
+			},
+			"wait_time": 0.0
+		},
+		{
+			"order": 2,
+			"patrol_group": "south_road",
+			"position": {
+				"x": 1080.0,
+				"y": 2792.0
+			},
+			"wait_time": 0.0
+		},
+		{
+			"order": 3,
+			"patrol_group": "south_road",
+			"position": {
+				"x": 472.0,
+				"y": 2712.0
+			},
+			"wait_time": 0.0
+		},
+		{
+			"order": 4,
+			"patrol_group": "south_road",
+			"position": {
+				"x": 56.0,
+				"y": 2776.0
+			},
+			"wait_time": 0.0
+		}
+	],
+	"player_spawns": [
+		{
+			"id": "default",
+			"position": {
+				"x": 716.0,
+				"y": 1792.0
+			}
+		}
+	],
+	"pressure_plates": [],
+	"signs": [],
+	"spawn_points": [
+		{
+			"id": "sp_test_static",
+			"patrol_group": "",
+			"position": {
+				"x": 1640.0,
+				"y": 232.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"patrol_group": "",
+			"position": {
+				"x": 1192.0,
+				"y": 1896.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "",
+			"patrol_group": "",
+			"position": {
+				"x": 1176.0,
+				"y": 1464.0
+			},
+			"spawn_group": ""
+		}
+	],
+	"transitions": [],
+	"trigger_areas": []
+}

@@ -1,0 +1,27 @@
+[gd_resource type="TileSet" load_steps=3 format=3 uid="uid://bbvwi2o17clfq"]
+
+[ext_resource type="Texture2D" uid="uid://ccmsq30stbrsb" path="res://resources/tilesets/placeholder_tiles.png" id="1_dyu7k"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_sryhn"]
+texture = ExtResource("1_dyu7k")
+; Row 0: Terrain tiles
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+4:0/0 = 0
+4:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(0, 0, 16, 0, 16, 16, 0, 16)
+5:0/0 = 0
+5:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(0, 0, 16, 0, 16, 16, 0, 16)
+6:0/0 = 0
+7:0/0 = 0
+; Row 1: Roof tiles
+0:1/0 = 0
+1:1/0 = 0
+2:1/0 = 0
+3:1/0 = 0
+
+[resource]
+physics_layer_0/collision_layer = 1
+physics_layer_0/collision_mask = 0
+sources/0 = SubResource("TileSetAtlasSource_sryhn")

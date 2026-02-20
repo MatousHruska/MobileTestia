@@ -1,0 +1,48 @@
+{
+  "chunks": [
+    {
+      "id": "chunk_test_0_0",
+      "zone_id": "zone_test",
+      "grid_x": 0,
+      "grid_y": 0,
+      "biome_type": "dirt",
+      "enemy_density": "medium",
+      "spawn_table_id": "",
+      "ambient_override": "default",
+      "lighting_preset": "default"
+    },
+    {
+      "id": "chunk_test_1_0",
+      "zone_id": "zone_test",
+      "grid_x": 1,
+      "grid_y": 0,
+      "biome_type": "grass",
+      "enemy_density": "none",
+      "spawn_table_id": "",
+      "ambient_override": "default",
+      "lighting_preset": "default"
+    },
+    {
+      "id": "chunk_test_0_1",
+      "zone_id": "zone_test",
+      "grid_x": 0,
+      "grid_y": 1,
+      "biome_type": "grass",
+      "enemy_density": "none",
+      "spawn_table_id": "",
+      "ambient_override": "default",
+      "lighting_preset": "default"
+    },
+    {
+      "id": "chunk_test_1_1",
+      "zone_id": "zone_test",
+      "grid_x": 1,
+      "grid_y": 1,
+      "biome_type": "grass",
+      "enemy_density": "none",
+      "spawn_table_id": "",
+      "ambient_override": "default",
+      "lighting_preset": "default"
+    }
+  ]
+}

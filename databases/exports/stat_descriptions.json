@@ -1,0 +1,172 @@
+{
+  "stat_descriptions": [
+    {
+      "id": "stat_strength",
+      "name": "Strength",
+      "category": "primary",
+      "description": "Physical Mastery. Required for heavy armor, swords, axes, and maces. Does not directly increase damage."
+    },
+    {
+      "id": "stat_dexterity",
+      "name": "Dexterity",
+      "category": "primary",
+      "description": "Agility Mastery. Required for light armor, bows, daggers, and precision gear. Does not directly increase damage."
+    },
+    {
+      "id": "stat_intelligence",
+      "name": "Intelligence",
+      "category": "primary",
+      "description": "Arcane Mastery. Required for robes, staves, wands, and magical items. Does not directly increase damage."
+    },
+    {
+      "id": "stat_vitality",
+      "name": "Vitality",
+      "category": "primary",
+      "description": "Life Force. Each point increases Maximum Health by 2."
+    },
+    {
+      "id": "stat_energy",
+      "name": "Energy",
+      "category": "primary",
+      "description": "Magical Capacity. Each point increases Maximum Mana (scaling from database)."
+    },
+    {
+      "id": "stat_luck",
+      "name": "Luck",
+      "category": "primary",
+      "description": "Fortune. Each point increases Critical Damage by 1%."
+    },
+    {
+      "id": "stat_life",
+      "name": "Life",
+      "category": "resource",
+      "description": "Health Points. You die when this reaches 0. Regenerates over time."
+    },
+    {
+      "id": "stat_mana",
+      "name": "Mana",
+      "category": "resource",
+      "description": "Magic Points. Consumed when casting spells and using abilities."
+    },
+    {
+      "id": "stat_stamina",
+      "name": "Stamina",
+      "category": "resource",
+      "description": "Endurance. Consumed by sprinting and dodging. Regenerates quickly."
+    },
+    {
+      "id": "stat_weapon_damage",
+      "name": "Weapon Damage",
+      "category": "offensive",
+      "description": "Base damage of your equipped weapon. Physical and ranged skills scale from this."
+    },
+    {
+      "id": "stat_weapon_dps",
+      "name": "Weapon DPS",
+      "category": "offensive",
+      "description": "Damage per second from basic attacks. Equals Weapon Damage × Attack Speed."
+    },
+    {
+      "id": "stat_attack_power",
+      "name": "Attack Power",
+      "category": "offensive",
+      "description": "Flat bonus damage added to all weapon-based attacks."
+    },
+    {
+      "id": "stat_spell_power",
+      "name": "Spell Power",
+      "category": "offensive",
+      "description": "Flat bonus damage added to all spell damage."
+    },
+    {
+      "id": "stat_attack_speed",
+      "name": "Attack Speed",
+      "category": "offensive",
+      "description": "Attacks per second. Determined by weapon speed plus any bonuses."
+    },
+    {
+      "id": "stat_critical_chance",
+      "name": "Critical Chance",
+      "category": "offensive",
+      "description": "Percentage chance for attacks to deal bonus damage. Base: 5%."
+    },
+    {
+      "id": "stat_critical_damage",
+      "name": "Critical Damage",
+      "category": "offensive",
+      "description": "Damage multiplier on critical hits. Base: 150%, scales with Luck."
+    },
+    {
+      "id": "stat_fire_spell_damage",
+      "name": "Fire Spell Damage",
+      "category": "offensive",
+      "description": "Flat bonus to Fire spell damage from equipment"
+    },
+    {
+      "id": "stat_cold_spell_damage",
+      "name": "Cold Spell Damage",
+      "category": "offensive",
+      "description": "Flat bonus to Cold/Frost spell damage from equipment."
+    },
+    {
+      "id": "stat_lightning_spell_damage",
+      "name": "Lightning Spell Damage",
+      "category": "offensive",
+      "description": "Flat bonus to Lightning spell damage from equipment."
+    },
+    {
+      "id": "stat_poison_spell_damage",
+      "name": "Poison Spell Damage",
+      "category": "offensive",
+      "description": "Flat bonus to Poison spell damage from equipment."
+    },
+    {
+      "id": "stat_arcane_spell_damage",
+      "name": "Arcane Spell Damage",
+      "category": "offensive",
+      "description": "Flat bonus to Arcane spell damage from equipment"
+    },
+    {
+      "id": "stat_armor",
+      "name": "Armor",
+      "category": "defensive",
+      "description": "Reduces incoming physical damage from attacks."
+    },
+    {
+      "id": "stat_magic_resistance",
+      "name": "Magic Resistance",
+      "category": "defensive",
+      "description": "Reduces incoming damage from spells and elemental sources."
+    },
+    {
+      "id": "stat_dodge_chance",
+      "name": "Dodge Chance",
+      "category": "defensive",
+      "description": "Percentage chance to completely evade an attack."
+    },
+    {
+      "id": "stat_movement_speed",
+      "name": "Movement Speed",
+      "category": "utility",
+      "description": "Percentage bonus to movement velocity."
+    },
+    {
+      "id": "stat_life_regen",
+      "name": "Life Regen",
+      "category": "utility",
+      "description": "Health recovered per second. Base: 1/s."
+    },
+    {
+      "id": "stat_mana_regen",
+      "name": "Mana Regen",
+      "category": "utility",
+      "description": "Mana recovered per second. Base: 0.5/s."
+    },
+    {
+      "id": "stat_stamina_regen",
+      "name": "Stamina Regen",
+      "category": "utility",
+      "description": "Stamina recovered per second. Base: 10/s."
+    }
+  ]
+}

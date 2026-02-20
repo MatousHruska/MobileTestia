@@ -1,0 +1,121 @@
+extends Node
+class_name ResponsiveUIManager
+## ResponsiveUI - Singleton providing screen size utilities for responsive UI
+##
+## Provides:
+## - Screen size category detection (small/normal/large)
+## - Scale factor calculation based on viewport
+## - Panel size constraints for modal dialogs
+## - Utility functions for responsive layouts
+
+## Screen size categories
+enum ScreenCategory { SMALL, NORMAL, LARGE }
+
+## Base design dimensions (720p UI design resolution)
+const BASE_WIDTH := 1280.0
+const BASE_HEIGHT := 720.0
+
+## Scale limits (1.0 = native, higher = larger displays)
+const MIN_SCALE := 1.0
+const MAX_SCALE := 4.0
+
+## Cached values (updated on resize)
+var viewport_size: Vector2 = Vector2(BASE_WIDTH, BASE_HEIGHT)
+var scale_factor: float = 1.0
+var screen_category: ScreenCategory = ScreenCategory.NORMAL
+
+## Signals
+signal viewport_changed(new_size: Vector2, new_scale: float)
+
+
+func _ready() -> void:
+	_update_viewport_info()
+	get_viewport().size_changed.connect(_on_viewport_resized)
+	Debug.info("UI", "ResponsiveUI initialized", {"scale": scale_factor, "category": ScreenCategory.keys()[screen_category]})
+
+
+func _on_viewport_resized() -> void:
+	_update_viewport_info()
+	viewport_changed.emit(viewport_size, scale_factor)
+
+
+func _update_viewport_info() -> void:
+	viewport_size = get_viewport().get_visible_rect().size
+
+	# Calculate scale factor based on viewport height relative to base design (720p)
+	# This ensures UI scales proportionally across different resolutions
+	scale_factor = clampf(viewport_size.y / BASE_HEIGHT, MIN_SCALE * 0.5, MAX_SCALE)
+
+	# Determine screen category (based on 720p base)
+	if viewport_size.y < 540:
+		screen_category = ScreenCategory.SMALL
+	elif viewport_size.y > 1080:
+		screen_category = ScreenCategory.LARGE
+	else:
+		screen_category = ScreenCategory.NORMAL
+
+
+#region Panel Size Utilities
+
+## Get constrained panel size for modal dialogs
+## target_size is in actual pixels (e.g., from UITheme percentage-based properties)
+## Ensures panel fits on screen with margins
+func get_constrained_panel_size(target_size: Vector2, margin_pct: float = 0.05) -> Vector2:
+	var max_width := viewport_size.x * (1.0 - margin_pct * 2)
+	var max_height := viewport_size.y * (1.0 - margin_pct * 2)
+
+	return Vector2(
+		minf(target_size.x, max_width),
+		minf(target_size.y, max_height)
+	)
+
+
+## Check if panel needs constraining (viewport too small for target size)
+func panel_needs_constraining(target_size: Vector2, margin_pct: float = 0.05) -> bool:
+	var max_width := viewport_size.x * (1.0 - margin_pct * 2)
+	var max_height := viewport_size.y * (1.0 - margin_pct * 2)
+	return target_size.x > max_width or target_size.y > max_height
+
+
+## Apply size constraints to a centered panel (modifies offsets)
+## target_width/height are in actual pixels (e.g., from UITheme)
+func constrain_centered_panel(panel: Control, target_width: float, target_height: float, margin_pct: float = 0.05) -> void:
+	var constrained := get_constrained_panel_size(Vector2(target_width, target_height), margin_pct)
+	var half_width := constrained.x / 2.0
+	var half_height := constrained.y / 2.0
+
+	panel.offset_left = -half_width
+	panel.offset_right = half_width
+	panel.offset_top = -half_height
+	panel.offset_bottom = half_height
+
+#endregion
+
+
+#region Scaling Utilities
+
+## Scale a pixel value based on current scale factor
+func scale_px(value: float) -> float:
+	return value * scale_factor
+
+
+## Scale a Vector2 based on current scale factor
+func scale_size(value: Vector2) -> Vector2:
+	return value * scale_factor
+
+
+## Get a font size scaled for current screen
+func get_scaled_font_size(base_size: int) -> int:
+	return maxi(10, int(base_size * scale_factor))
+
+
+## Check if we're on a small screen
+func is_small_screen() -> bool:
+	return screen_category == ScreenCategory.SMALL
+
+
+## Check if we're on a large screen
+func is_large_screen() -> bool:
+	return screen_category == ScreenCategory.LARGE
+
+#endregion

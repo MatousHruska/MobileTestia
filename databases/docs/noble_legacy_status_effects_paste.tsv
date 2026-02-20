@@ -1,0 +1,5 @@
+status_stagger	Staggered	debuff	movement_speed	-100	1.5	0	stagger_particles	false	1	true	#CC8844		Briefly stunned. Cannot move or act.
+status_marked	Marked	debuff	none	0	4	0	mark_particles	false	1	true	#FF4444		Marked for death. Takes bonus damage from certain abilities.
+status_bleed	Bleeding	debuff_dot	health	-4	6	1	bleed_particles	false	1	true	#8B0000		Losing health over time from an open wound.
+status_slow	Slowed	debuff	movement_speed	-40	2	0	slow_particles	false	1	true	#4488CC		Movement speed reduced by 40%.
+status_stun	Stunned	debuff	movement_speed	-100	2	0	stun_particles	false	1	true	#FFCC00		Cannot move or act.

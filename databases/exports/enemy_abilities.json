@@ -1,0 +1,94 @@
+{
+  "enemy_abilities": [
+    {
+      "enemy_id": "ene_zombie_basic",
+      "ability_id": "abi_melee_strike",
+      "priority": 50,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_zombie_basic",
+      "ability_id": "abi_rot_strike",
+      "priority": 100,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_ghoul_basic",
+      "ability_id": "abi_leap_attack",
+      "priority": 100,
+      "condition": "opener"
+    },
+    {
+      "enemy_id": "ene_ghoul_basic",
+      "ability_id": "abi_melee_strike",
+      "priority": 50,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_vampire_basic",
+      "ability_id": "abi_heavy_strike",
+      "priority": 60,
+      "condition": "health_above_50"
+    },
+    {
+      "enemy_id": "ene_vampire_basic",
+      "ability_id": "abi_melee_strike",
+      "priority": 50,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_vampire_basic",
+      "ability_id": "abi_heal_self",
+      "priority": 80,
+      "condition": "health_below_30"
+    },
+    {
+      "enemy_id": "ene_wolf_basic",
+      "ability_id": "abi_melee_strike",
+      "priority": 50,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_wolf_basic",
+      "ability_id": "abi_leap_attack",
+      "priority": 100,
+      "condition": "opener"
+    },
+    {
+      "enemy_id": "ene_skeleton_archer",
+      "ability_id": "abi_arrow_shot",
+      "priority": 100,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_skeleton_archer",
+      "ability_id": "abi_melee_strike",
+      "priority": 30,
+      "condition": "target_melee"
+    },
+    {
+      "enemy_id": "ene_skeleton_king",
+      "ability_id": "abi_heavy_strike",
+      "priority": 100,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_skeleton_king",
+      "ability_id": "abi_melee_strike",
+      "priority": 50,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_starved_wolf",
+      "ability_id": "abi_wolf_leap",
+      "priority": 100,
+      "condition": "default"
+    },
+    {
+      "enemy_id": "ene_starved_wolf",
+      "ability_id": "abi_blood_howl",
+      "priority": 150,
+      "condition": "never"
+    }
+  ]
+}

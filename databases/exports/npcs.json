@@ -1,0 +1,19 @@
+{
+  "npcs": [
+    {
+      "id": "npc_quest_giver_main",
+      "name": "Quest Master",
+      "type": "quest_giver",
+      "location": "town_square",
+      "shop_inventory_id": "",
+      "dialogue_greeting": "Greetings, brave adventurer! I have tasks that need doing.",
+      "faction": "adventurers_guild",
+      "sprite_id": "npc_quest_giver_01",
+      "min_level": 1,
+      "is_interactable": true,
+      "portrait_id": "",
+      "dialogue_talk_id": "dlg_quest_master_talk",
+      "spawn_condition": ""
+    }
+  ]
+}

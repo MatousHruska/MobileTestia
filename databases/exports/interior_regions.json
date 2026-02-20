@@ -1,0 +1,31 @@
+{
+  "interior_regions": [
+    {
+      "id": "int_example_cave",
+      "zone_id": "zone_ldtk_test",
+      "name": "Example Cave",
+      "region_value": 1,
+      "parent_region_value": 0,
+      "ambient_light": 1,
+      "ambient_color": "#1a1a2e"
+    },
+    {
+      "id": "int_example_house",
+      "zone_id": "zone_ldtk_test",
+      "name": "Example House",
+      "region_value": 2,
+      "parent_region_value": 0,
+      "ambient_light": 1,
+      "ambient_color": "#2a2520"
+    },
+    {
+      "id": "int_cave_inner",
+      "zone_id": "zone_ldtk_test",
+      "name": "Cave Inner Chamber",
+      "region_value": 3,
+      "parent_region_value": 1,
+      "ambient_light": 1,
+      "ambient_color": "#0d0d1a"
+    }
+  ]
+}

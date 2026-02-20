@@ -1,0 +1,44 @@
+{
+  "lore_echoes": [
+    {
+      "id": "echo_crypt_builder",
+      "name": "Crypt Builder's Memory",
+      "audio_id": "",
+      "subtitle_text": "The walls remember their maker. Stone by stone, I sealed my own tomb.",
+      "duration": 5,
+      "can_replay": true,
+      "sprite_id": "echo_blue",
+      "interaction_prompt": "Listen"
+    },
+    {
+      "id": "echo_forest_guardian",
+      "name": "Forest Guardian's Lament",
+      "audio_id": "",
+      "subtitle_text": "Once, these woods sang with life. Now only shadows remain.",
+      "duration": 5,
+      "can_replay": true,
+      "sprite_id": "echo_green",
+      "interaction_prompt": "Listen"
+    },
+    {
+      "id": "echo_meadow_battle",
+      "name": "Meadow Battle Memory",
+      "audio_id": "",
+      "subtitle_text": "Steel clashed here. The grass still weeps for the fallen.",
+      "duration": 6,
+      "can_replay": true,
+      "sprite_id": "echo_red",
+      "interaction_prompt": "Listen"
+    },
+    {
+      "id": "echo_ancient_warning",
+      "name": "Ancient Warning",
+      "audio_id": "",
+      "subtitle_text": "Beware the sealed door. What sleeps beyond hungers still.",
+      "duration": 5,
+      "can_replay": false,
+      "sprite_id": "echo_purple",
+      "interaction_prompt": "Listen"
+    }
+  ]
+}

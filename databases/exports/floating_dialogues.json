@@ -1,0 +1,108 @@
+{
+  "floating_dialogues": [
+    {
+      "id": "fld_zone_meadows",
+      "trigger_event": "zone_enter",
+      "trigger_filter": "zone_id:zone_meadow",
+      "text": "This place is den of evil!",
+      "voice_file": "",
+      "probability": 1,
+      "priority": 5,
+      "cooldown_group": "zone_comment",
+      "cooldown": 120,
+      "duration": 3,
+      "weight": 1
+    },
+    {
+      "id": "fld_loc_north_1",
+      "trigger_event": "location_enter",
+      "trigger_filter": "location_id:loc_forest_north",
+      "text": "Brrr... why does the north always have to be cold? It's a forest, not a freezer!",
+      "voice_file": "",
+      "probability": 0.5,
+      "priority": 5,
+      "cooldown_group": "location_bark",
+      "cooldown": 120,
+      "duration": 4,
+      "weight": 1
+    },
+    {
+      "id": "fld_loc_north_2",
+      "trigger_event": "location_enter",
+      "trigger_filter": "location_id:loc_forest_north",
+      "text": "sniffs Smells like pine and regret. Mostly pine though.",
+      "voice_file": "",
+      "probability": 0.5,
+      "priority": 5,
+      "cooldown_group": "location_bark",
+      "cooldown": 120,
+      "duration": 4,
+      "weight": 1
+    },
+    {
+      "id": "fld_loc_north_3",
+      "trigger_event": "location_enter",
+      "trigger_filter": "location_id:loc_forest_north",
+      "text": "The trees here are so tall... compensating for something?",
+      "voice_file": "",
+      "probability": 0.5,
+      "priority": 5,
+      "cooldown_group": "location_bark",
+      "cooldown": 120,
+      "duration": 4,
+      "weight": 1
+    },
+    {
+      "id": "fld_loc_south_1",
+      "trigger_event": "location_enter",
+      "trigger_filter": "location_id:loc_forest_south",
+      "text": "Ahh, the sunny side! Finally, some Vitamin D!",
+      "voice_file": "",
+      "probability": 0.5,
+      "priority": 5,
+      "cooldown_group": "location_bark",
+      "cooldown": 120,
+      "duration": 4,
+      "weight": 1
+    },
+    {
+      "id": "fld_loc_south_2",
+      "trigger_event": "location_enter",
+      "trigger_filter": "location_id:loc_forest_south",
+      "text": "singing Walking on sunshine, whoooaa! ...wait, was that a spider?",
+      "voice_file": "",
+      "probability": 0.5,
+      "priority": 5,
+      "cooldown_group": "location_bark",
+      "cooldown": 120,
+      "duration": 4,
+      "weight": 1
+    },
+    {
+      "id": "fld_loc_south_3",
+      "trigger_event": "location_enter",
+      "trigger_filter": "location_id:loc_forest_south",
+      "text": "Look at all these flowers! I bet they're plotting something.",
+      "voice_file": "",
+      "probability": 0.5,
+      "priority": 5,
+      "cooldown_group": "location_bark",
+      "cooldown": 120,
+      "duration": 4,
+      "weight": 1
+    },
+    {
+      "id": "fld_loc_south_4",
+      "trigger_event": "location_enter",
+      "trigger_filter": "location_id:loc_forest_south",
+      "text": "This place is suspiciously cheerful. I don't trust it.",
+      "voice_file": "",
+      "probability": 0.5,
+      "priority": 5,
+      "cooldown_group": "location_bark",
+      "cooldown": 120,
+      "duration": 4,
+      "weight": 1
+    }
+  ]
+}

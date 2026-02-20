@@ -1,0 +1,213 @@
+[gd_scene load_steps=11 format=3 uid="uid://b0sxxcsnfjnkf"]
+
+[ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="1_player"]
+[ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
+[ext_resource type="Script" uid="uid://br7g6n3ugvdis" path="res://scripts/camera/game_camera.gd" id="3_camera"]
+[ext_resource type="Script" uid="uid://vik7jjuuh4ix" path="res://scripts/world/zone_base.gd" id="4_zone"]
+[ext_resource type="Script" uid="uid://cayikglml6hs4" path="res://scripts/world/zone_transition.gd" id="6_transition"]
+[ext_resource type="Script" uid="uid://bxs48qilberw1" path="res://scripts/interactable/chest_spawn_point.gd" id="7_chest_spawn"]
+[ext_resource type="Script" path="res://scripts/npc/spawn_point.gd" id="9_spawn_point"]
+[ext_resource type="Script" path="res://scripts/world/wall.gd" id="10_wall"]
+[ext_resource type="Script" uid="uid://dycl1axw54emv" path="res://scripts/interactable/unlockable_door.gd" id="11_door"]
+[ext_resource type="Script" uid="uid://dc6rssr8gotxo" path="res://scripts/world/spawn_point.gd" id="12_spawn_point"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trans"]
+size = Vector2(80, 40)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
+size = Vector2(128, 16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
+size = Vector2(16, 160)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v_small"]
+size = Vector2(16, 56)
+
+[node name="ZoneMeadow" type="Node2D"]
+script = ExtResource("4_zone")
+zone_id = "zone_meadow"
+zone_name = "Peaceful Meadow"
+
+[node name="Background" type="ColorRect" parent="."]
+offset_left = -640.0
+offset_top = -360.0
+offset_right = 640.0
+offset_bottom = 360.0
+color = Color(0.15, 0.15, 0.18, 1)
+
+[node name="Decorations" type="Node2D" parent="."]
+
+[node name="Grass1" type="ColorRect" parent="Decorations"]
+offset_left = -100.0
+offset_top = -20.0
+offset_right = -60.0
+color = Color(0.2, 0.5, 0.15, 1)
+
+[node name="Grass2" type="ColorRect" parent="Decorations"]
+offset_left = 50.0
+offset_top = 80.0
+offset_right = 100.0
+offset_bottom = 100.0
+color = Color(0.2, 0.5, 0.15, 1)
+
+[node name="Flower1" type="ColorRect" parent="Decorations"]
+offset_left = 150.0
+offset_top = -50.0
+offset_right = 165.0
+offset_bottom = -35.0
+color = Color(0.9, 0.7, 0.2, 1)
+
+[node name="SecretRoom" type="Node2D" parent="."]
+position = Vector2(400, 0)
+
+[node name="MeadowGate" type="Node2D" parent="SecretRoom"]
+position = Vector2(0, 0)
+script = ExtResource("11_door")
+door_name = "Hidden Gate"
+persistence_id = "door_meadow_gate"
+lever_controlled = true
+locked_color = Color(0.4, 0.3, 0.25, 1)
+unlocked_color = Color(0.25, 0.4, 0.2, 1)
+collision_size = Vector2(16, 48)
+
+[node name="Floor" type="ColorRect" parent="SecretRoom"]
+offset_left = -8.0
+offset_top = -80.0
+offset_right = 120.0
+offset_bottom = 80.0
+color = Color(0.12, 0.12, 0.14, 1)
+
+[node name="WallTop" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(56, -80)
+script = ExtResource("10_wall")
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallTop"]
+offset_left = -64.0
+offset_top = -8.0
+offset_right = 64.0
+offset_bottom = 8.0
+color = Color(0.4, 0.35, 0.3, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallTop"]
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="WallBottom" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(56, 80)
+script = ExtResource("10_wall")
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallBottom"]
+offset_left = -64.0
+offset_top = -8.0
+offset_right = 64.0
+offset_bottom = 8.0
+color = Color(0.4, 0.35, 0.3, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallBottom"]
+shape = SubResource("RectangleShape2D_wall_h")
+
+[node name="WallRight" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(120, 0)
+script = ExtResource("10_wall")
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallRight"]
+offset_left = -8.0
+offset_top = -80.0
+offset_right = 8.0
+offset_bottom = 80.0
+color = Color(0.4, 0.35, 0.3, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallRight"]
+shape = SubResource("RectangleShape2D_wall_v")
+
+[node name="WallLeftTop" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(0, -52)
+script = ExtResource("10_wall")
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallLeftTop"]
+offset_left = -8.0
+offset_top = -28.0
+offset_right = 8.0
+offset_bottom = 28.0
+color = Color(0.4, 0.35, 0.3, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallLeftTop"]
+shape = SubResource("RectangleShape2D_wall_v_small")
+
+[node name="WallLeftBottom" type="StaticBody2D" parent="SecretRoom"]
+position = Vector2(0, 52)
+script = ExtResource("10_wall")
+
+[node name="Visual" type="ColorRect" parent="SecretRoom/WallLeftBottom"]
+offset_left = -8.0
+offset_top = -28.0
+offset_right = 8.0
+offset_bottom = 28.0
+color = Color(0.4, 0.35, 0.3, 1)
+
+[node name="Collision" type="CollisionShape2D" parent="SecretRoom/WallLeftBottom"]
+shape = SubResource("RectangleShape2D_wall_v_small")
+
+[node name="SecretChest" type="Marker2D" parent="SecretRoom"]
+position = Vector2(80, 0)
+script = ExtResource("7_chest_spawn")
+database_chest_id = "chest_meadow_secret"
+
+[node name="Enemies" type="Node2D" parent="."]
+
+[node name="SpawnPoint1" type="Node2D" parent="Enemies"]
+position = Vector2(-200, 50)
+script = ExtResource("9_spawn_point")
+preset_id = "sp_meadow_zombies"
+
+[node name="SpawnPoint2" type="Node2D" parent="Enemies"]
+position = Vector2(-280, -60)
+script = ExtResource("9_spawn_point")
+preset_id = "sp_meadow_zombies"
+
+[node name="SpawnPoint3" type="Node2D" parent="Enemies"]
+position = Vector2(-150, 120)
+script = ExtResource("9_spawn_point")
+preset_id = "sp_meadow_zombies"
+
+[node name="SpawnPointModular" type="Node2D" parent="Enemies"]
+position = Vector2(200, 50)
+script = ExtResource("9_spawn_point")
+preset_id = "sp_meadow_modular_zombie"
+
+[node name="ChestSpawns" type="Node2D" parent="."]
+
+[node name="MeadowChest1" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(250, 80)
+script = ExtResource("7_chest_spawn")
+database_chest_id = "chest_meadow_01"
+
+[node name="MeadowChest2" type="Marker2D" parent="ChestSpawns"]
+position = Vector2(-280, 150)
+script = ExtResource("7_chest_spawn")
+database_chest_id = "chest_meadow_02"
+
+[node name="SpawnPoints" type="Node2D" parent="."]
+
+[node name="SpawnFromLdtkTest" type="Marker2D" parent="SpawnPoints"]
+position = Vector2(-300, 0)
+script = ExtResource("12_spawn_point")
+spawn_id = "from_ldtk_test"
+
+[node name="TransitionToTest" type="Area2D" parent="."]
+position = Vector2(0, -280)
+script = ExtResource("6_transition")
+target_zone = "res://scenes/world/zone_test_hub.tscn"
+spawn_point_id = "from_meadow"
+display_name = "To Hub"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TransitionToTest"]
+shape = SubResource("RectangleShape2D_trans")
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+
+[node name="GameCamera" type="Camera2D" parent="."]
+script = ExtResource("3_camera")
+follow_smoothing = 8.0
+look_ahead_distance = 30.0
+
+[node name="HUD" parent="." instance=ExtResource("2_hud")]

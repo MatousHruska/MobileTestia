@@ -1,0 +1,76 @@
+{
+  "terrain_types": [
+    {
+      "id": "terrain_grass",
+      "name": "Grass",
+      "placeholder_color": "#3d6e3d",
+      "has_collision": false,
+      "movement_cost": 1,
+      "footstep_sound": "sfx_step_grass",
+      "can_spawn_on": true
+    },
+    {
+      "id": "terrain_dirt",
+      "name": "Dirt",
+      "placeholder_color": "#6b5344",
+      "has_collision": false,
+      "movement_cost": 1,
+      "footstep_sound": "sfx_step_dirt",
+      "can_spawn_on": true
+    },
+    {
+      "id": "terrain_stone",
+      "name": "Stone",
+      "placeholder_color": "#666673",
+      "has_collision": false,
+      "movement_cost": 1,
+      "footstep_sound": "sfx_step_stone",
+      "can_spawn_on": true
+    },
+    {
+      "id": "terrain_water",
+      "name": "Water",
+      "placeholder_color": "#334d99",
+      "has_collision": true,
+      "movement_cost": 0,
+      "footstep_sound": "sfx_step_water",
+      "can_spawn_on": false
+    },
+    {
+      "id": "terrain_wall",
+      "name": "Wall",
+      "placeholder_color": "#4d4033",
+      "has_collision": true,
+      "movement_cost": 0,
+      "footstep_sound": "",
+      "can_spawn_on": false
+    },
+    {
+      "id": "terrain_sand",
+      "name": "Sand",
+      "placeholder_color": "#c4a35a",
+      "has_collision": false,
+      "movement_cost": 1,
+      "footstep_sound": "sfx_step_sand",
+      "can_spawn_on": true
+    },
+    {
+      "id": "terrain_snow",
+      "name": "Snow",
+      "placeholder_color": "#e0e8f0",
+      "has_collision": false,
+      "movement_cost": 1,
+      "footstep_sound": "sfx_step_snow",
+      "can_spawn_on": true
+    },
+    {
+      "id": "terrain_void",
+      "name": "Void",
+      "placeholder_color": "#1a1a1a",
+      "has_collision": true,
+      "movement_cost": 0,
+      "footstep_sound": "",
+      "can_spawn_on": false
+    }
+  ]
+}

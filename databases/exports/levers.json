@@ -1,0 +1,26 @@
+{
+  "levers": [
+    {
+      "id": "lever_crypt_to_meadow",
+      "name": "Crypt Gate Lever",
+      "display_name": "Rusty Lever",
+      "linked_door_id": "door_meadow_gate",
+      "one_shot": true,
+      "default_on": false,
+      "sprite_id": "lever_wall",
+      "sound_id": "",
+      "description": "A lever covered in cobwebs."
+    },
+    {
+      "id": "lever_forest_trap",
+      "name": "Forest Trap Lever",
+      "display_name": "Hidden Switch",
+      "linked_door_id": "door_forest_secret",
+      "one_shot": false,
+      "default_on": false,
+      "sprite_id": "lever_hidden",
+      "sound_id": "",
+      "description": "Cleverly concealed in the wall."
+    }
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "affixes": [
+    {
+      "id": "pre_sturdy",
+      "name": "Sturdy",
+      "type": "prefix",
+      "stat_modifier": "armor",
+      "min_value": 2,
+      "max_value": 5,
+      "spawn_weight": 100,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": "armor"
+    },
+    {
+      "id": "pre_reinforced",
+      "name": "Reinforced",
+      "type": "prefix",
+      "stat_modifier": "armor",
+      "min_value": 4,
+      "max_value": 8,
+      "spawn_weight": 80,
+      "item_level_min": 3,
+      "item_level_max": 100,
+      "allowed_tags": "armor"
+    },
+    {
+      "id": "pre_vigorous",
+      "name": "Vigorous",
+      "type": "prefix",
+      "stat_modifier": "vitality",
+      "min_value": 1,
+      "max_value": 3,
+      "spawn_weight": 100,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": ""
+    },
+    {
+      "id": "pre_energized",
+      "name": "Energized",
+      "type": "prefix",
+      "stat_modifier": "energy",
+      "min_value": 1,
+      "max_value": 3,
+      "spawn_weight": 100,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": "jewelry"
+    },
+    {
+      "id": "pre_precise",
+      "name": "Precise",
+      "type": "prefix",
+      "stat_modifier": "critical_chance",
+      "min_value": 2,
+      "max_value": 4,
+      "spawn_weight": 80,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": "weapon"
+    },
+    {
+      "id": "pre_mighty",
+      "name": "Mighty",
+      "type": "prefix",
+      "stat_modifier": "strength",
+      "min_value": 1,
+      "max_value": 3,
+      "spawn_weight": 100,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": "weapon,armor"
+    },
+    {
+      "id": "suf_of_swiftness",
+      "name": "of Swiftness",
+      "type": "suffix",
+      "stat_modifier": "movement_speed",
+      "min_value": 5,
+      "max_value": 10,
+      "spawn_weight": 100,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": "boots"
+    },
+    {
+      "id": "suf_of_haste",
+      "name": "of Haste",
+      "type": "suffix",
+      "stat_modifier": "attack_speed",
+      "min_value": 3,
+      "max_value": 6,
+      "spawn_weight": 80,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": "weapon"
+    },
+    {
+      "id": "suf_of_the_bear",
+      "name": "of the Bear",
+      "type": "suffix",
+      "stat_modifier": "life",
+      "min_value": 10,
+      "max_value": 25,
+      "spawn_weight": 100,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": "armor,jewelry"
+    },
+    {
+      "id": "suf_of_warding",
+      "name": "of Warding",
+      "type": "suffix",
+      "stat_modifier": "magic_resistance",
+      "min_value": 3,
+      "max_value": 8,
+      "spawn_weight": 80,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": "armor"
+    },
+    {
+      "id": "suf_of_regeneration",
+      "name": "of Regeneration",
+      "type": "suffix",
+      "stat_modifier": "life_regen",
+      "min_value": 0.5,
+      "max_value": 1,
+      "spawn_weight": 80,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": "jewelry"
+    },
+    {
+      "id": "suf_of_fortune",
+      "name": "of Fortune",
+      "type": "suffix",
+      "stat_modifier": "luck",
+      "min_value": 1,
+      "max_value": 3,
+      "spawn_weight": 100,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": "jewelry"
+    },
+    {
+      "id": "suf_of_devastation",
+      "name": "of Devastation",
+      "type": "suffix",
+      "stat_modifier": "critical_damage",
+      "min_value": 10,
+      "max_value": 20,
+      "spawn_weight": 60,
+      "item_level_min": 3,
+      "item_level_max": 100,
+      "allowed_tags": "weapon"
+    },
+    {
+      "id": "suf_of_the_sage",
+      "name": "of the Sage",
+      "type": "suffix",
+      "stat_modifier": "intelligence",
+      "min_value": 1,
+      "max_value": 3,
+      "spawn_weight": 100,
+      "item_level_min": 1,
+      "item_level_max": 100,
+      "allowed_tags": "magic,jewelry"
+    }
+  ]
+}

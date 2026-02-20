@@ -1,0 +1,140 @@
+{
+  "loot_tables": [
+    {
+      "id": "loot_zombie",
+      "name": "Zombie Loot",
+      "min_drops": 1,
+      "max_drops": 1,
+      "rarity_weights": {
+        "nothing": 600,
+        "common": 70,
+        "magic": 20,
+        "rare": 10,
+        "unique": 0
+      },
+      "gold_min": 1,
+      "gold_max": 5,
+      "item_pool": "",
+      "guaranteed_drops": ""
+    },
+    {
+      "id": "loot_ghoul",
+      "name": "Ghoul Loot",
+      "min_drops": 1,
+      "max_drops": 1,
+      "rarity_weights": {
+        "nothing": 600,
+        "common": 65,
+        "magic": 25,
+        "rare": 10,
+        "unique": 0
+      },
+      "gold_min": 2,
+      "gold_max": 8,
+      "item_pool": "",
+      "guaranteed_drops": ""
+    },
+    {
+      "id": "loot_vampire",
+      "name": "Vampire Loot",
+      "min_drops": 1,
+      "max_drops": 2,
+      "rarity_weights": {
+        "nothing": 600,
+        "common": 55,
+        "magic": 30,
+        "rare": 15,
+        "unique": 0
+      },
+      "gold_min": 5,
+      "gold_max": 15,
+      "item_pool": "",
+      "guaranteed_drops": ""
+    },
+    {
+      "id": "loot_vampire_lord",
+      "name": "Vampire Lord Loot",
+      "min_drops": 2,
+      "max_drops": 3,
+      "rarity_weights": {
+        "nothing": 0,
+        "common": 0,
+        "magic": 40,
+        "rare": 50,
+        "unique": 10
+      },
+      "gold_min": 50,
+      "gold_max": 100,
+      "item_pool": "",
+      "guaranteed_drops": "key_old_wooden"
+    },
+    {
+      "id": "loot_chest_wooden",
+      "name": "Wooden Chest Loot",
+      "min_drops": 1,
+      "max_drops": 2,
+      "rarity_weights": {
+        "nothing": 100,
+        "common": 150,
+        "magic": 40,
+        "rare": 10,
+        "unique": 0
+      },
+      "gold_min": 5,
+      "gold_max": 15,
+      "item_pool": "",
+      "guaranteed_drops": ""
+    },
+    {
+      "id": "loot_chest_iron",
+      "name": "Iron Chest Loot",
+      "min_drops": 2,
+      "max_drops": 3,
+      "rarity_weights": {
+        "nothing": 50,
+        "common": 100,
+        "magic": 80,
+        "rare": 50,
+        "unique": 5
+      },
+      "gold_min": 15,
+      "gold_max": 40,
+      "item_pool": "",
+      "guaranteed_drops": ""
+    },
+    {
+      "id": "loot_chest_golden",
+      "name": "Golden Chest Loot",
+      "min_drops": 3,
+      "max_drops": 5,
+      "rarity_weights": {
+        "nothing": 0,
+        "common": 50,
+        "magic": 100,
+        "rare": 100,
+        "unique": 20
+      },
+      "gold_min": 30,
+      "gold_max": 80,
+      "item_pool": "",
+      "guaranteed_drops": ""
+    },
+    {
+      "id": "loot_starved_wolf",
+      "name": "Starved Wolf Loot",
+      "min_drops": 1,
+      "max_drops": 1,
+      "rarity_weights": {
+        "nothing": 650,
+        "common": 60,
+        "magic": 15,
+        "rare": 5,
+        "unique": 0
+      },
+      "gold_min": 1,
+      "gold_max": 4,
+      "item_pool": "",
+      "guaranteed_drops": ""
+    }
+  ]
+}

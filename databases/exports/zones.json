@@ -1,0 +1,88 @@
+{
+  "zones": [
+    {
+      "id": "zone_test_hub",
+      "name": "Test Hub",
+      "zone_type": "town",
+      "min_level": 1,
+      "max_level": 99,
+      "music_track": "",
+      "ambient_sound": "",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": false,
+      "description": ""
+    },
+    {
+      "id": "zone_meadow",
+      "name": "Peaceful Meadow",
+      "zone_type": "outdoor",
+      "min_level": 1,
+      "max_level": 3,
+      "music_track": "",
+      "ambient_sound": "",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": false,
+      "description": ""
+    },
+    {
+      "id": "zone_forest",
+      "name": "Whispering Woods",
+      "zone_type": "outdoor",
+      "min_level": 1,
+      "max_level": 10,
+      "music_track": "music_forest",
+      "ambient_sound": "amb_forest_birds",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": true,
+      "description": "A peaceful forest teeming with wildlife"
+    },
+    {
+      "id": "zone_crypt",
+      "name": "Ancient Crypt",
+      "zone_type": "dungeon",
+      "min_level": 5,
+      "max_level": 10,
+      "music_track": "",
+      "ambient_sound": "",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": false,
+      "description": ""
+    },
+    {
+      "id": "zone_mountain",
+      "name": "Rocky Mountain",
+      "zone_type": "outdoor",
+      "min_level": 5,
+      "max_level": 15,
+      "music_track": "",
+      "ambient_sound": "",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": true,
+      "description": "Mountain testing area with wolves, archers, and boss"
+    },
+    {
+      "id": "zone_test",
+      "name": "LDtk Test Zone",
+      "zone_type": "outdoor",
+      "min_level": 1,
+      "max_level": 10,
+      "music_track": "",
+      "ambient_sound": "",
+      "is_safe_zone": false,
+      "is_pvp_enabled": false,
+      "status_effect_id": "",
+      "discovery_popup": false,
+      "description": "Test zone imported from LDtk"
+    }
+  ]
+}

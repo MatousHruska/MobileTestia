@@ -1,0 +1,22 @@
+{
+  "quest_objectives": [
+    {
+      "id": "objective_type_reference",
+      "description": "This file documents the available objective types. Objectives are typically defined inline within quests.json, but this file can be used for shared/reusable objective templates.",
+      "types": {
+        "kill_named": "Kill a specific named enemy (target = enemy_id)",
+        "kill_count": "Kill X enemies of a type (target = enemy_id or type, count = number)",
+        "gather": "Collect X items (target = item_id, count = number)",
+        "delivery": "Bring an item to an NPC (target = npc_id)",
+        "interact": "Interact with object(s) (target = object_id, count = number)",
+        "talk": "Talk to an NPC (target = npc_id)",
+        "escort": "Escort NPC to location (target = npc_id)",
+        "defend": "Survive waves/time (target = zone_id, count = waves or seconds)",
+        "use_ability": "Use specific ability X times (target = ability_id, count = number)",
+        "defeat_no_kill": "Reduce enemy HP without killing (target = enemy_id)",
+        "reach_location": "Arrive at zone/location (target = zone_id)",
+        "race": "Reach location within time limit (target = zone_id, count = seconds)"
+      }
+    }
+  ]
+}

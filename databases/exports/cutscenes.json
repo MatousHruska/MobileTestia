@@ -1,0 +1,18 @@
+{
+  "cutscenes": [
+    {
+      "id": "cut_crypt_vampire",
+      "name": "Vampire Lord Entrance",
+      "trigger": "zone_enter",
+      "trigger_target": "zone_crypt",
+      "once_only": true,
+      "actions": [
+      {"type": "camera_pan", "position": [400, 200], "duration": 1},
+      {"type": "wait", "duration": 1},
+      {"type": "dialogue", "speaker": "Vampire Lord", "text": "Muhahahaha"},
+      {"type": "move", "target": "vampire_lord", "position": [400, 350], "speed": 100},
+      {"type": "camera_pan", "position": [400, 350], "duration": 1}
+    ]
+    }
+  ]
+}
