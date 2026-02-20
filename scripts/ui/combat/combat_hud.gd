@@ -93,6 +93,9 @@ static func calc_skill_value(base_value: float, stat_name: String) -> float:
 	if base_value <= 0:
 		return base_value  # Don't modify zero/negative values
 	var bonus := PlayerStats.get_equipment_bonus(stat_name)
+	# Include talent stat bonuses (e.g., Noble's Reach adds hit_range:5 per point)
+	var talent_bonuses := TalentManager.get_total_stat_bonuses()
+	bonus += talent_bonuses.get(stat_name, 0.0)
 	return base_value * (1.0 + bonus / 100.0)
 
 
@@ -1424,8 +1427,8 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 	var skill_range := get_hit_range(talent)
 	var skill_arc := get_hit_arc(talent)
 
-	# Spawn visual hitbox indicator (disabled for testing)
-	#_spawn_skill_visual(talent, damage_result)
+	# Spawn visual hitbox indicator
+	_spawn_skill_visual(talent, damage_result)
 
 	# Find enemies in range
 	var enemies := NPCManager.get_enemies_in_radius(player.global_position, skill_range)
