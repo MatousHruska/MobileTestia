@@ -1433,6 +1433,24 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 	# Get player facing direction for arc check
 	var facing_vector := _get_player_facing_vector()
 
+	# Fire on_hit procs BEFORE damage loop so conditions (e.g., target_full_hp)
+	# are checked while enemies are still at full HP and the bonus is available
+	# for consume_next_attack_bonus() inside the loop.
+	var first_target: Node2D = null
+	for enemy in enemies:
+		if skill_arc < 360.0:
+			var enemy_pos: Vector2 = enemy.global_position
+			var to_enemy: Vector2 = (enemy_pos - player.global_position).normalized()
+			var angle: float = rad_to_deg(facing_vector.angle_to(to_enemy))
+			if abs(angle) > skill_arc / 2.0:
+				continue
+		if enemy.has_method("take_damage"):
+			first_target = enemy
+			break
+
+	if first_target:
+		TalentProcSystem.on_player_hit_enemy(first_target, damage_result, talent)
+
 	# Track first-hit data for debug breakdown
 	var breakdown_target_name: String = ""
 	var breakdown_proc_bonus: float = 0.0
@@ -1472,8 +1490,9 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 			if not talent.contact_status_effect.is_empty() and "status_effects" in enemy and enemy.status_effects:
 				enemy.status_effects.apply_status_effect(talent.contact_status_effect)
 
-			# Notify proc system of hit
-			TalentProcSystem.on_player_hit_enemy(enemy, damage_result, talent)
+			# Notify proc system of hit for non-first targets
+			if enemy != first_target:
+				TalentProcSystem.on_player_hit_enemy(enemy, damage_result, talent)
 
 			# Spawn hit effect on enemy
 			_spawn_hit_effect(enemy.global_position, _get_damage_type_string(talent.damage_type))
