@@ -55,6 +55,7 @@ var _palette_colors: PackedColorArray = PackedColorArray()
 
 func _ready() -> void:
 	_build_ui()
+	_scan_palettes()
 	_scan_source_folders()
 
 
@@ -600,8 +601,36 @@ func _update_palette_preview() -> void:
 		palette_preview_container.add_child(swatch)
 
 
-func _on_palette_dropdown_selected(_index: int) -> void:
-	pass  # Implemented in Task 8
+func _on_palette_dropdown_selected(index: int) -> void:
+	if index == 0:
+		# "(none)" selected — clear palette
+		_palette_colors.clear()
+		_update_palette_preview()
+		_update_preview()
+		return
+	var palette_name: String = palette_dropdown.get_item_text(index)
+	var palette_path := "%s/%s" % [PALETTE_DIR, palette_name]
+	var global_path := ProjectSettings.globalize_path(palette_path)
+	_load_palette_from_path(global_path)
+
+
+func _scan_palettes() -> void:
+	palette_dropdown.clear()
+	palette_dropdown.add_item("(none)")
+
+	var global_dir := ProjectSettings.globalize_path(PALETTE_DIR)
+	var dir := DirAccess.open(global_dir)
+	if dir == null:
+		DirAccess.make_dir_recursive_absolute(global_dir)
+		return
+
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if file_name.to_lower().ends_with(".png"):
+			palette_dropdown.add_item(file_name)
+		file_name = dir.get_next()
+	dir.list_dir_end()
 
 
 func _apply_palette_mapping(image: Image) -> void:
