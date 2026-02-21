@@ -76,7 +76,7 @@ func _build_ui() -> void:
 
 	# Left panel — controls
 	var panel := PanelContainer.new()
-	panel.custom_minimum_size.x = 320
+	panel.custom_minimum_size.x = 240
 	root_hbox.add_child(panel)
 
 	var scroll := ScrollContainer.new()
@@ -156,13 +156,13 @@ func _build_ui() -> void:
 	camera_zoom_slider = HSlider.new()
 	camera_zoom_slider.min_value = 0.5
 	camera_zoom_slider.max_value = 15.0
-	camera_zoom_slider.value = 2.5
+	camera_zoom_slider.value = 3.5
 	camera_zoom_slider.step = 0.1
 	camera_zoom_slider.size_flags_horizontal = SIZE_EXPAND_FILL
 	camera_zoom_slider.value_changed.connect(_on_zoom_changed)
 	zoom_hbox.add_child(camera_zoom_slider)
 	camera_zoom_label = Label.new()
-	camera_zoom_label.text = "2.5"
+	camera_zoom_label.text = "3.5"
 	camera_zoom_label.custom_minimum_size.x = 40
 	zoom_hbox.add_child(camera_zoom_label)
 
@@ -260,7 +260,7 @@ func _build_viewport() -> void:
 	# Camera
 	camera = Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 2.5
+	camera.size = 3.5
 	camera.far = 100.0
 	sub_viewport.add_child(camera)
 	camera_target = Vector3(0.0, 1.0, 0.0)
