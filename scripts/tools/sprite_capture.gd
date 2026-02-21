@@ -460,55 +460,74 @@ func _auto_fit_camera() -> void:
 	if current_model_instance == null:
 		return
 
-	var aabb := _get_combined_aabb(current_model_instance)
-	print("[SpriteCapture] Raw AABB: pos=%s size=%s" % [aabb.position, aabb.size])
-
-	if aabb.size == Vector3.ZERO:
-		# Fallback: assume a standard humanoid (~1.8m tall, origin at feet)
-		print("[SpriteCapture] AABB zero — using humanoid fallback.")
+	# Try skeleton bones first (most reliable for skinned characters),
+	# then fall back to mesh AABB, then to a humanoid default.
+	var bounds := _get_skeleton_bounds(current_model_instance)
+	if bounds.size == Vector3.ZERO:
+		bounds = _get_mesh_aabb(current_model_instance)
+	if bounds.size == Vector3.ZERO:
+		print("[SpriteCapture] No bounds detected — using humanoid fallback.")
 		camera_target = Vector3(0.0, 0.9, 0.0)
 		camera.size = 2.4
 	else:
-		# Look at the center of the bounding box
-		camera_target = aabb.get_center()
-		print("[SpriteCapture] Camera target: %s" % camera_target)
-
-		# Zoom to fit the largest visible extent with padding
-		var fit_size := maxf(aabb.size.x, aabb.size.y) * 1.3
+		camera_target = bounds.get_center()
+		var fit_size := maxf(bounds.size.x, bounds.size.y) * 1.3
 		camera.size = fit_size
-		print("[SpriteCapture] Fit size: %.2f (aabb.size=%s)" % [fit_size, aabb.size])
+		print("[SpriteCapture] Bounds: pos=%s size=%s => target=%s zoom=%.2f" % [
+			bounds.position, bounds.size, camera_target, camera.size])
 
 	# Sync the zoom slider
 	camera_zoom_slider.value = camera.size
 	_position_camera(camera_elevation_slider.value)
 
 
-func _get_combined_aabb(node: Node) -> AABB:
+func _get_skeleton_bounds(node: Node) -> AABB:
+	## Compute bounds from skeleton bone rest positions — works reliably
+	## for skinned Mixamo characters where mesh AABB often returns zero.
+	if node is Skeleton3D:
+		var skel := node as Skeleton3D
+		if skel.get_bone_count() == 0:
+			return AABB()
+		var first_pos := skel.global_transform * skel.get_bone_global_rest(0).origin
+		var result := AABB(first_pos, Vector3.ZERO)
+		for bone_idx in range(1, skel.get_bone_count()):
+			var bone_world := skel.global_transform * skel.get_bone_global_rest(bone_idx).origin
+			result = result.expand(bone_world)
+		print("[SpriteCapture] Skeleton bounds: %d bones, size=%s" % [skel.get_bone_count(), result.size])
+		return result
+
+	for child in node.get_children():
+		var child_result := _get_skeleton_bounds(child)
+		if child_result.size != Vector3.ZERO:
+			return child_result
+	return AABB()
+
+
+func _get_mesh_aabb(node: Node) -> AABB:
+	## Fallback: compute bounds from MeshInstance3D AABBs.
 	var result := AABB()
 	var first := true
 
-	if node is VisualInstance3D:
-		var vi := node as VisualInstance3D
-		var node_aabb := vi.get_aabb()
-		# Transform AABB to global space
-		var global_transform := vi.global_transform
-		var corners: Array[Vector3] = []
-		for i in range(8):
-			var corner := Vector3(
-				node_aabb.position.x + node_aabb.size.x * (1 if (i & 1) else 0),
-				node_aabb.position.y + node_aabb.size.y * (1 if (i & 2) else 0),
-				node_aabb.position.z + node_aabb.size.z * (1 if (i & 4) else 0)
-			)
-			corners.append(global_transform * corner)
-		for c in corners:
-			if first:
-				result = AABB(c, Vector3.ZERO)
-				first = false
-			else:
-				result = result.expand(c)
+	if node is MeshInstance3D:
+		var mi := node as MeshInstance3D
+		var mesh_aabb := mi.get_aabb()
+		if mesh_aabb.size != Vector3.ZERO:
+			var xform := mi.global_transform
+			for i in range(8):
+				var corner := Vector3(
+					mesh_aabb.position.x + mesh_aabb.size.x * (1 if (i & 1) else 0),
+					mesh_aabb.position.y + mesh_aabb.size.y * (1 if (i & 2) else 0),
+					mesh_aabb.position.z + mesh_aabb.size.z * (1 if (i & 4) else 0)
+				)
+				var world_corner := xform * corner
+				if first:
+					result = AABB(world_corner, Vector3.ZERO)
+					first = false
+				else:
+					result = result.expand(world_corner)
 
 	for child in node.get_children():
-		var child_aabb := _get_combined_aabb(child)
+		var child_aabb := _get_mesh_aabb(child)
 		if child_aabb.size != Vector3.ZERO:
 			if first:
 				result = child_aabb
