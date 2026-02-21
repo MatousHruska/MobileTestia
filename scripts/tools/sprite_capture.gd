@@ -51,6 +51,7 @@ var current_model_path: String = ""
 var current_model_instance: Node = null
 var current_anim_player: AnimationPlayer = null
 var available_models: Array[String] = []
+var camera_target: Vector3 = Vector3.ZERO
 
 #===============================================================================
 # SETUP
@@ -427,14 +428,14 @@ func _apply_unlit_materials(node: Node) -> void:
 #===============================================================================
 
 func _position_camera(elevation_deg: float) -> void:
-	## Position camera at given elevation angle looking at origin.
+	## Position camera at given elevation angle looking at camera_target.
 	## Distance scales with camera.size so the model is never clipped.
 	var elevation_rad := deg_to_rad(elevation_deg)
 	var distance := maxf(camera.size * 2.0, 5.0)
-	var y := sin(elevation_rad) * distance
-	var z := cos(elevation_rad) * distance
-	camera.position = Vector3(0.0, y, z)
-	camera.look_at(Vector3.ZERO, Vector3.UP)
+	var offset_y := sin(elevation_rad) * distance
+	var offset_z := cos(elevation_rad) * distance
+	camera.position = camera_target + Vector3(0.0, offset_y, offset_z)
+	camera.look_at(camera_target, Vector3.UP)
 
 
 func _on_elevation_changed(value: float) -> void:
@@ -454,7 +455,8 @@ func _on_preview_direction(rotation_y: float) -> void:
 
 
 func _auto_fit_camera() -> void:
-	## Attempt to auto-fit the orthographic camera to the model's bounding box
+	## Point the camera at the model's visual center and zoom to fit.
+	## The model stays at its natural position (origin at feet for Mixamo).
 	if current_model_instance == null:
 		return
 
@@ -462,19 +464,16 @@ func _auto_fit_camera() -> void:
 	print("[SpriteCapture] Raw AABB: pos=%s size=%s" % [aabb.position, aabb.size])
 
 	if aabb.size == Vector3.ZERO:
-		# Fallback for skinned meshes where AABB detection fails:
-		# Assume a standard humanoid (~2m tall, centered at Y=1)
+		# Fallback: assume a standard humanoid (~1.8m tall, origin at feet)
 		print("[SpriteCapture] AABB zero — using humanoid fallback.")
-		current_model_instance.position = Vector3(0.0, -1.0, 0.0)
-		camera.size = 2.6
+		camera_target = Vector3(0.0, 0.9, 0.0)
+		camera.size = 2.4
 	else:
-		# Center the model so the AABB center is at origin
-		var center := aabb.get_center()
-		current_model_instance.position = -center
-		print("[SpriteCapture] Centering: offset=%s" % [-center])
+		# Look at the center of the bounding box
+		camera_target = aabb.get_center()
+		print("[SpriteCapture] Camera target: %s" % camera_target)
 
-		# Set orthographic size to fit the model height with padding
-		# Use Y extent as primary (character height matters most for framing)
+		# Zoom to fit the largest visible extent with padding
 		var fit_size := maxf(aabb.size.x, aabb.size.y) * 1.3
 		camera.size = fit_size
 		print("[SpriteCapture] Fit size: %.2f (aabb.size=%s)" % [fit_size, aabb.size])
