@@ -372,6 +372,10 @@ func _process_image(source: Image) -> Image:
 	if outline_toggle.button_pressed:
 		_apply_outline(result, outline_color_picker.color)
 
+	# Step 6: Denoising
+	if denoising_toggle.button_pressed:
+		_apply_denoising(result, int(denoising_min_cluster_spin.value))
+
 	return result
 
 
@@ -478,6 +482,50 @@ func _apply_outline(image: Image, outline_color: Color) -> void:
 
 	for pos in outline_pixels:
 		image.set_pixel(pos.x, pos.y, outline_color)
+
+
+#===============================================================================
+# DENOISING
+#===============================================================================
+
+func _apply_denoising(image: Image, min_cluster_size: int) -> void:
+	var width := image.get_width()
+	var height := image.get_height()
+	var visited := {}  # Dictionary<Vector2i, bool>
+
+	for y in range(height):
+		for x in range(width):
+			var pos := Vector2i(x, y)
+			if visited.has(pos):
+				continue
+			var color := image.get_pixel(x, y)
+			if color.a < 0.5:
+				visited[pos] = true
+				continue
+
+			# Flood fill to find cluster
+			var cluster: Array[Vector2i] = []
+			var queue: Array[Vector2i] = [pos]
+			while not queue.is_empty():
+				var current := queue.pop_back()
+				if visited.has(current):
+					continue
+				if current.x < 0 or current.x >= width or current.y < 0 or current.y >= height:
+					continue
+				if image.get_pixel(current.x, current.y).a < 0.5:
+					visited[current] = true
+					continue
+				visited[current] = true
+				cluster.append(current)
+				queue.append(Vector2i(current.x + 1, current.y))
+				queue.append(Vector2i(current.x - 1, current.y))
+				queue.append(Vector2i(current.x, current.y + 1))
+				queue.append(Vector2i(current.x, current.y - 1))
+
+			# Remove small clusters
+			if cluster.size() < min_cluster_size:
+				for pixel_pos in cluster:
+					image.set_pixel(pixel_pos.x, pixel_pos.y, Color.TRANSPARENT)
 
 
 #===============================================================================
