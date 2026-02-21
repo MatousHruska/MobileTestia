@@ -191,7 +191,7 @@ func _build_viewport() -> void:
 
 	# Camera
 	camera = Camera3D.new()
-	camera.projection = Camera3D.PROJECTION_ORTHOGRAPHIC
+	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.size = 2.0
 	sub_viewport.add_child(camera)
 	_position_camera(40.0)
@@ -349,7 +349,7 @@ func _apply_unlit_materials(node: Node) -> void:
 			for surface_idx in range(mesh.get_surface_count()):
 				var original_mat := mesh_instance.get_active_material(surface_idx)
 				var unlit_mat := StandardMaterial3D.new()
-				unlit_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNLIT
+				unlit_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 
 				# Preserve albedo from original material
 				if original_mat is StandardMaterial3D:
