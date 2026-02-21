@@ -349,8 +349,29 @@ func _update_preview() -> void:
 
 func _process_image(source: Image) -> Image:
 	var result := source.duplicate() as Image
-	# Pipeline steps will be added incrementally
+
+	# Step 1: Downscale
+	var target_height := int(output_height_spin.value)
+	var scale_factor := float(target_height) / float(result.get_height())
+	var target_width := int(float(result.get_width()) * scale_factor)
+	result.resize(target_width, target_height, Image.INTERPOLATE_NEAREST)
+
+	# Step 2: Alpha threshold
+	var threshold := int(alpha_threshold_slider.value)
+	_apply_alpha_threshold(result, threshold)
+
 	return result
+
+
+func _apply_alpha_threshold(image: Image, threshold: int) -> void:
+	for y in range(image.get_height()):
+		for x in range(image.get_width()):
+			var color := image.get_pixel(x, y)
+			if int(color.a * 255.0) >= threshold:
+				color.a = 1.0
+			else:
+				color.a = 0.0
+			image.set_pixel(x, y, color)
 
 
 #===============================================================================
