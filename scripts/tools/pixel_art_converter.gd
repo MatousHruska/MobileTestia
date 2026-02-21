@@ -47,6 +47,7 @@ var preview_texture_rect: TextureRect
 
 ## State
 var _source_image: Image = null
+var _palette_colors: PackedColorArray = PackedColorArray()
 
 #===============================================================================
 # SETUP
@@ -360,6 +361,9 @@ func _process_image(source: Image) -> Image:
 	var threshold := int(alpha_threshold_slider.value)
 	_apply_alpha_threshold(result, threshold)
 
+	# Step 3: Palette mapping
+	_apply_palette_mapping(result)
+
 	return result
 
 
@@ -404,11 +408,81 @@ func _on_show_original_toggled(enabled: bool) -> void:
 #===============================================================================
 
 func _on_load_palette_pressed() -> void:
-	pass  # Implemented in Task 3
+	var dialog := FileDialog.new()
+	dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	dialog.access = FileDialog.ACCESS_FILESYSTEM
+	dialog.filters = PackedStringArray(["*.png ; PNG Palette"])
+	dialog.file_selected.connect(_on_palette_file_selected)
+	add_child(dialog)
+	dialog.popup_centered(Vector2i(600, 400))
+
+
+func _on_palette_file_selected(path: String) -> void:
+	_load_palette_from_path(path)
+
+
+func _load_palette_from_path(path: String) -> void:
+	var image := Image.new()
+	var err := image.load(path)
+	if err != OK:
+		_set_status("ERROR: Could not load palette from %s" % path)
+		return
+
+	_palette_colors.clear()
+	for y in range(image.get_height()):
+		for x in range(image.get_width()):
+			var color := image.get_pixel(x, y)
+			if color.a > 0.5 and not _palette_colors.has(color):
+				_palette_colors.append(color)
+
+	_set_status("Loaded palette: %d colors" % _palette_colors.size())
+	_update_palette_preview()
+	_update_preview()
+
+
+func _update_palette_preview() -> void:
+	for child in palette_preview_container.get_children():
+		child.queue_free()
+	for color in _palette_colors:
+		var swatch := ColorRect.new()
+		swatch.custom_minimum_size = Vector2(12, 12)
+		swatch.color = color
+		palette_preview_container.add_child(swatch)
 
 
 func _on_palette_dropdown_selected(_index: int) -> void:
 	pass  # Implemented in Task 8
+
+
+func _apply_palette_mapping(image: Image) -> void:
+	if _palette_colors.is_empty():
+		return
+	for y in range(image.get_height()):
+		for x in range(image.get_width()):
+			var color := image.get_pixel(x, y)
+			if color.a < 0.5:
+				continue
+			var nearest := _find_nearest_palette_color(color)
+			nearest.a = 1.0
+			image.set_pixel(x, y, nearest)
+
+
+func _find_nearest_palette_color(target: Color) -> Color:
+	var best_color := _palette_colors[0]
+	var best_dist := _color_distance_sq(target, best_color)
+	for i in range(1, _palette_colors.size()):
+		var dist := _color_distance_sq(target, _palette_colors[i])
+		if dist < best_dist:
+			best_dist = dist
+			best_color = _palette_colors[i]
+	return best_color
+
+
+func _color_distance_sq(a: Color, b: Color) -> float:
+	var dr := a.r - b.r
+	var dg := a.g - b.g
+	var db := a.b - b.b
+	return dr * dr + dg * dg + db * db
 
 
 #===============================================================================
