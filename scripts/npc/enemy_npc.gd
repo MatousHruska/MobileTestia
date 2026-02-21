@@ -85,6 +85,7 @@ var home_position: Vector2 = Vector2.ZERO
 const StatusEffectComponentScript = preload("res://scripts/combat/status_effect_component.gd")
 var status_effects: Node = null  ## StatusEffectComponent instance
 var _burning_visual: Node2D = null  ## Visual effect for burning status
+var _stagger_visual: Node2D = null  ## Visual effect for stagger status
 
 ## Health bar
 const EnemyHealthBarScript = preload("res://scripts/ui/enemy_health_bar.gd")
@@ -121,6 +122,9 @@ var _pending_ability: Dictionary = {}
 var _knockback_velocity: Vector2 = Vector2.ZERO
 var _knockback_duration: float = 0.0
 var _knockback_elapsed: float = 0.0
+
+## Generation counter for safe timer callback invalidation (incremented on interrupt)
+var _ability_generation: int = 0
 
 #===============================================================================
 # LIFECYCLE
@@ -436,6 +440,10 @@ func _execute_ability(ability: Dictionary) -> void:
 	var ctx = module_controller.get_context()
 	ctx.attack_in_progress = true
 
+	# Increment generation so previous timer callbacks become stale
+	_ability_generation += 1
+	var gen := _ability_generation
+
 	# Check if ability can be cast while moving (default: false = must stop)
 	var cast_while_moving: bool = ability.get("cast_while_moving", false)
 	if not cast_while_moving:
@@ -451,7 +459,7 @@ func _execute_ability(ability: Dictionary) -> void:
 
 		# Wait for cast time, then execute (with LoS validation for leap attacks)
 		get_tree().create_timer(cast_time).timeout.connect(func():
-			if is_dead:
+			if is_dead or gen != _ability_generation:
 				return
 			# For leap/dash attacks, re-check LoS before executing
 			# If target went behind cover, cancel the attack
@@ -470,6 +478,8 @@ func _execute_ability(ability: Dictionary) -> void:
 		# Clear attack_in_progress after cast + a small buffer for the actual attack
 		var total_time: float = cast_time + 0.3
 		get_tree().create_timer(total_time).timeout.connect(func():
+			if gen != _ability_generation:
+				return
 			if module_controller:
 				module_controller.get_context().attack_in_progress = false
 		)
@@ -479,6 +489,8 @@ func _execute_ability(ability: Dictionary) -> void:
 
 		# Clear attack_in_progress after minimum animation time
 		get_tree().create_timer(0.3).timeout.connect(func():
+			if gen != _ability_generation:
+				return
 			if module_controller:
 				module_controller.get_context().attack_in_progress = false
 		)
@@ -1022,12 +1034,16 @@ func _on_status_effect_applied(effect_type: String, _duration: float, _show_in_h
 	## Handle visual effects when status effect is applied
 	if effect_type == "burning" or effect_type == "status_burning":
 		_spawn_burning_visual()
+	elif effect_type == "stagger" or effect_type == "status_stagger":
+		_spawn_stagger_visual()
 
 
 func _on_status_effect_removed(effect_type: String) -> void:
 	## Handle cleanup when status effect is removed
 	if effect_type == "burning" or effect_type == "status_burning":
 		_remove_burning_visual()
+	elif effect_type == "stagger" or effect_type == "status_stagger":
+		_remove_stagger_visual()
 
 
 func _on_status_effect_tick(effect_type: String, _damage: float) -> void:
@@ -1083,6 +1099,58 @@ func _remove_burning_visual() -> void:
 	if _burning_visual and is_instance_valid(_burning_visual):
 		_burning_visual.queue_free()
 		_burning_visual = null
+
+
+func _spawn_stagger_visual() -> void:
+	## Create orbiting stars visual for stagger effect
+	if _stagger_visual:
+		return  # Already has visual
+
+	var StaggerEffectScript = preload("res://scripts/effects/stagger_effect.gd")
+	_stagger_visual = StaggerEffectScript.new()
+	_stagger_visual.name = "StaggerEffect"
+	add_child(_stagger_visual)
+
+
+func _remove_stagger_visual() -> void:
+	## Remove stagger visual effect
+	if _stagger_visual and is_instance_valid(_stagger_visual):
+		_stagger_visual.queue_free()
+		_stagger_visual = null
+
+
+#===============================================================================
+# INTERRUPT
+#===============================================================================
+
+func interrupt_ability() -> void:
+	## Interrupt any in-progress ability (cast/windup). Used by stagger.
+	if is_dead or is_cc_immune():
+		return
+
+	# Invalidate all pending timer callbacks
+	_ability_generation += 1
+
+	# Cancel visual sequencer if active
+	if ability_visual_player:
+		ability_visual_player.cancel()
+
+	# Clear attack state
+	if module_controller:
+		var ctx = module_controller.get_context()
+		ctx.attack_in_progress = false
+		ctx.is_locked = false
+
+	# Unlock movement
+	is_locked = false
+
+	# Reset casting state on any ConditionalCastModule instances
+	if module_controller:
+		for m in module_controller.get_modules_by_type(BaseModule.ModuleType.SPECIAL):
+			if m is ConditionalCastModule:
+				m._is_casting = false
+
+	Debug.log("Combat", "%s ability interrupted (stagger)" % enemy_name)
 
 
 #===============================================================================

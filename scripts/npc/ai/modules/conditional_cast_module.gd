@@ -243,6 +243,11 @@ func _finish_cast(ability_data: Dictionary, aoe_radius: float, context: EnemyCon
 		_is_casting = false
 		return
 
+	# Guard: if the cast was interrupted, attack_in_progress will be cleared
+	if not context.attack_in_progress:
+		_is_casting = false
+		return
+
 	# Show visual effect
 	_show_howl_visual(aoe_radius)
 

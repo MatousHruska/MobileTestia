@@ -357,6 +357,8 @@ func apply_status_effect(effect_id: String) -> void:
 			apply_buff(effect_name, duration, show_in_hud, ends_when)
 		"debuff":
 			apply_debuff(effect_name, duration, show_in_hud)
+		"control":
+			apply_debuff(effect_name, duration, show_in_hud)
 		_:
 			Debug.warn("StatusEffect", "Unknown effect type: %s" % effect_type)
 

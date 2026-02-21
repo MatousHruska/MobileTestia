@@ -338,6 +338,9 @@ func _execute_single_effect(effect: String, points: int, target: Node2D, talent_
 				for enemy in enemies:
 					if enemy != target and is_instance_valid(enemy) and "status_effects" in enemy and enemy.status_effects:
 						enemy.status_effects.apply_status_effect(status_id)
+						# Stagger AOE: interrupt enemy abilities (no knockback for AOE)
+						if status_id == "status_stagger" and enemy.has_method("interrupt_ability"):
+							enemy.interrupt_ability()
 				Debug.log("Procs", "%s -> AOE %s (radius %s)" % [talent_id, status_id, radius])
 
 		"restore_stamina":

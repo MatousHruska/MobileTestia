@@ -1493,6 +1493,13 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 			if not talent.contact_status_effect.is_empty() and "status_effects" in enemy and enemy.status_effects:
 				enemy.status_effects.apply_status_effect(talent.contact_status_effect)
 
+			# Stagger: interrupt enemy ability + small knockback
+			if talent.contact_status_effect == "status_stagger":
+				if enemy.has_method("interrupt_ability"):
+					enemy.interrupt_ability()
+				if enemy.has_method("apply_knockback") and player:
+					enemy.apply_knockback(player.global_position, 80.0, 0.15)
+
 			# Notify proc system of hit for non-first targets
 			if enemy != first_target:
 				TalentProcSystem.on_player_hit_enemy(enemy, damage_result, talent)
