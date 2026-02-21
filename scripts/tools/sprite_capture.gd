@@ -42,6 +42,8 @@ var status_label: Label
 var preview_container: SubViewportContainer
 var sub_viewport: SubViewport
 var camera: Camera3D
+var camera_zoom_slider: HSlider
+var camera_zoom_label: Label
 var model_slot: Node3D
 
 ## State
@@ -144,6 +146,50 @@ func _build_ui() -> void:
 	camera_elevation_label.custom_minimum_size.x = 30
 	elev_hbox.add_child(camera_elevation_label)
 
+	# Camera zoom (orthographic size)
+	vbox.add_child(_make_label("Camera zoom:"))
+	var zoom_hbox := HBoxContainer.new()
+	vbox.add_child(zoom_hbox)
+	camera_zoom_slider = HSlider.new()
+	camera_zoom_slider.min_value = 0.5
+	camera_zoom_slider.max_value = 15.0
+	camera_zoom_slider.value = 2.5
+	camera_zoom_slider.step = 0.1
+	camera_zoom_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	camera_zoom_slider.value_changed.connect(_on_zoom_changed)
+	zoom_hbox.add_child(camera_zoom_slider)
+	camera_zoom_label = Label.new()
+	camera_zoom_label.text = "2.5"
+	camera_zoom_label.custom_minimum_size.x = 40
+	zoom_hbox.add_child(camera_zoom_label)
+
+	# Preview direction buttons
+	vbox.add_child(_make_label("Preview direction:"))
+	var dir_hbox := HBoxContainer.new()
+	dir_hbox.add_theme_constant_override("separation", 4)
+	vbox.add_child(dir_hbox)
+	var front_btn := Button.new()
+	front_btn.text = "Front"
+	front_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	front_btn.pressed.connect(_on_preview_direction.bind(0.0))
+	dir_hbox.add_child(front_btn)
+	var back_btn := Button.new()
+	back_btn.text = "Back"
+	back_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	back_btn.pressed.connect(_on_preview_direction.bind(180.0))
+	dir_hbox.add_child(back_btn)
+	var side_btn := Button.new()
+	side_btn.text = "Side"
+	side_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	side_btn.pressed.connect(_on_preview_direction.bind(90.0))
+	dir_hbox.add_child(side_btn)
+
+	# Fit model to view
+	var fit_button := Button.new()
+	fit_button.text = "Fit Model to View"
+	fit_button.pressed.connect(_auto_fit_camera)
+	vbox.add_child(fit_button)
+
 	vbox.add_child(HSeparator.new())
 
 	# Export buttons
@@ -194,9 +240,10 @@ func _build_viewport() -> void:
 	# Camera
 	camera = Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 2.0
+	camera.size = 2.5
 	sub_viewport.add_child(camera)
 	_position_camera(40.0)
+	camera.far = 100.0
 
 	# Ambient light — fallback for any materials the unlit override misses
 	var env := Environment.new()
@@ -380,9 +427,10 @@ func _apply_unlit_materials(node: Node) -> void:
 #===============================================================================
 
 func _position_camera(elevation_deg: float) -> void:
-	## Position camera at given elevation angle looking at origin
+	## Position camera at given elevation angle looking at origin.
+	## Distance scales with camera.size so the model is never clipped.
 	var elevation_rad := deg_to_rad(elevation_deg)
-	var distance := 3.0
+	var distance := maxf(camera.size * 2.0, 5.0)
 	var y := sin(elevation_rad) * distance
 	var z := cos(elevation_rad) * distance
 	camera.position = Vector3(0.0, y, z)
@@ -394,29 +442,45 @@ func _on_elevation_changed(value: float) -> void:
 	_position_camera(value)
 
 
+func _on_zoom_changed(value: float) -> void:
+	camera_zoom_label.text = "%.1f" % value
+	camera.size = value
+	_position_camera(camera_elevation_slider.value)
+
+
+func _on_preview_direction(rotation_y: float) -> void:
+	if current_model_instance is Node3D:
+		(current_model_instance as Node3D).rotation_degrees.y = rotation_y
+
+
 func _auto_fit_camera() -> void:
 	## Attempt to auto-fit the orthographic camera to the model's bounding box
 	if current_model_instance == null:
 		return
 
 	var aabb := _get_combined_aabb(current_model_instance)
+	print("[SpriteCapture] Raw AABB: pos=%s size=%s" % [aabb.position, aabb.size])
 
 	if aabb.size == Vector3.ZERO:
 		# Fallback for skinned meshes where AABB detection fails:
 		# Assume a standard humanoid (~2m tall, centered at Y=1)
-		print("[SpriteCapture] AABB detection returned zero — using humanoid fallback.")
+		print("[SpriteCapture] AABB zero — using humanoid fallback.")
 		current_model_instance.position = Vector3(0.0, -1.0, 0.0)
 		camera.size = 2.6
 	else:
 		# Center the model so the AABB center is at origin
 		var center := aabb.get_center()
 		current_model_instance.position = -center
+		print("[SpriteCapture] Centering: offset=%s" % [-center])
 
-		# Set orthographic size to fit the model with some padding
-		var max_extent := maxf(aabb.size.x, maxf(aabb.size.y, aabb.size.z))
-		camera.size = max_extent * 1.3
-		print("[SpriteCapture] AABB: %s — camera size: %.2f" % [aabb, camera.size])
+		# Set orthographic size to fit the model height with padding
+		# Use Y extent as primary (character height matters most for framing)
+		var fit_size := maxf(aabb.size.x, aabb.size.y) * 1.3
+		camera.size = fit_size
+		print("[SpriteCapture] Fit size: %.2f (aabb.size=%s)" % [fit_size, aabb.size])
 
+	# Sync the zoom slider
+	camera_zoom_slider.value = camera.size
 	_position_camera(camera_elevation_slider.value)
 
 
