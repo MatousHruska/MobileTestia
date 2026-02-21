@@ -361,7 +361,11 @@ func _process_image(source: Image) -> Image:
 	var threshold := int(alpha_threshold_slider.value)
 	_apply_alpha_threshold(result, threshold)
 
-	# Step 3: Palette mapping
+	# Step 3: Dithering (before palette mapping)
+	if dithering_toggle.button_pressed and not _palette_colors.is_empty():
+		_apply_ordered_dithering(result, dithering_strength_slider.value, dithering_pattern_dropdown.selected)
+
+	# Step 4: Palette mapping
 	_apply_palette_mapping(result)
 
 	return result
@@ -375,6 +379,66 @@ func _apply_alpha_threshold(image: Image, threshold: int) -> void:
 				color.a = 1.0
 			else:
 				color.a = 0.0
+			image.set_pixel(x, y, color)
+
+
+#===============================================================================
+# DITHERING
+#===============================================================================
+
+const BAYER_2X2 := [
+	[0.0, 2.0],
+	[3.0, 1.0],
+]
+
+const BAYER_4X4 := [
+	[ 0.0,  8.0,  2.0, 10.0],
+	[12.0,  4.0, 14.0,  6.0],
+	[ 3.0, 11.0,  1.0,  9.0],
+	[15.0,  7.0, 13.0,  5.0],
+]
+
+const BAYER_8X8 := [
+	[ 0.0, 32.0,  8.0, 40.0,  2.0, 34.0, 10.0, 42.0],
+	[48.0, 16.0, 56.0, 24.0, 50.0, 18.0, 58.0, 26.0],
+	[12.0, 44.0,  4.0, 36.0, 14.0, 46.0,  6.0, 38.0],
+	[60.0, 28.0, 52.0, 20.0, 62.0, 30.0, 54.0, 22.0],
+	[ 3.0, 35.0, 11.0, 43.0,  1.0, 33.0,  9.0, 41.0],
+	[51.0, 19.0, 59.0, 27.0, 49.0, 17.0, 57.0, 25.0],
+	[15.0, 47.0,  7.0, 39.0, 13.0, 45.0,  5.0, 37.0],
+	[63.0, 31.0, 55.0, 23.0, 61.0, 29.0, 53.0, 21.0],
+]
+
+
+func _apply_ordered_dithering(image: Image, strength: float, pattern_index: int) -> void:
+	var matrix: Array
+	var matrix_size: int
+	var matrix_max: float
+	match pattern_index:
+		0:
+			matrix = BAYER_2X2
+			matrix_size = 2
+			matrix_max = 4.0
+		1:
+			matrix = BAYER_4X4
+			matrix_size = 4
+			matrix_max = 16.0
+		2:
+			matrix = BAYER_8X8
+			matrix_size = 8
+			matrix_max = 64.0
+		_:
+			return
+
+	for y in range(image.get_height()):
+		for x in range(image.get_width()):
+			var color := image.get_pixel(x, y)
+			if color.a < 0.5:
+				continue
+			var threshold := (matrix[y % matrix_size][x % matrix_size] / matrix_max - 0.5) * strength
+			color.r = clampf(color.r + threshold, 0.0, 1.0)
+			color.g = clampf(color.g + threshold, 0.0, 1.0)
+			color.b = clampf(color.b + threshold, 0.0, 1.0)
 			image.set_pixel(x, y, color)
 
 
