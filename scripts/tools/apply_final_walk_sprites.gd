@@ -12,10 +12,22 @@ extends EditorScript
 ##
 ## NOTE: The attack (Slash) sheets have no weapon anchor pixel, so the weapon
 ## layer will not display correctly during attacks. This is expected for testing.
+##
+## The script also removes old placeholder melee animations (melee_windup_*,
+## melee_strike_*, thrust_*) so the fallback chain in AnimationUtils reaches
+## our new attack_* animations.
 
 const FRAME_SIZE := 64
 const SHEET_DIR := "res://assets/sprites/final"
 const SPRITEFRAMES_PATH := "res://resources/player_sprites.tres"
+
+## Old placeholder animations that shadow attack_* in the fallback chain.
+## These must be removed so melee_windup -> attack_{dir} fallback works.
+const ANIMS_TO_REMOVE := [
+	"melee_windup_down", "melee_windup_up", "melee_windup_right",
+	"melee_strike_down", "melee_strike_up", "melee_strike_right",
+	"thrust_down", "thrust_up", "thrust_right",
+]
 
 ## Each entry: { folder, anim_name -> filename, fps, loop }
 const ANIM_GROUPS := [
@@ -59,6 +71,13 @@ func _run() -> void:
 	if frames == null:
 		push_error("Could not load SpriteFrames: %s" % SPRITEFRAMES_PATH)
 		return
+
+	# Remove old placeholder melee animations that block fallback to attack_*
+	print("--- Removing old melee placeholders ---")
+	for anim_name in ANIMS_TO_REMOVE:
+		if frames.has_animation(anim_name):
+			frames.remove_animation(anim_name)
+			print("  Removed: %s" % anim_name)
 
 	for group in ANIM_GROUPS:
 		var folder: String = group["folder"]
@@ -105,5 +124,6 @@ func _run() -> void:
 
 	print("=== Done! Animations updated in %s ===" % SPRITEFRAMES_PATH)
 	print("Replaced: idle (3 dirs), walk (3 dirs), attack (3 dirs) — 9 animations total")
+	print("Removed: melee_windup (3), melee_strike (3), thrust (3) — fallback now hits attack_*")
 	print("NOTE: Frames are 64x64; other animations remain 32x32.")
 	print("NOTE: Attack has no weapon anchor pixel — weapon layer won't position correctly.")
