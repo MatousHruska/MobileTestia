@@ -368,6 +368,10 @@ func _process_image(source: Image) -> Image:
 	# Step 4: Palette mapping
 	_apply_palette_mapping(result)
 
+	# Step 5: Outline
+	if outline_toggle.button_pressed:
+		_apply_outline(result, outline_color_picker.color)
+
 	return result
 
 
@@ -440,6 +444,40 @@ func _apply_ordered_dithering(image: Image, strength: float, pattern_index: int)
 			color.g = clampf(color.g + threshold, 0.0, 1.0)
 			color.b = clampf(color.b + threshold, 0.0, 1.0)
 			image.set_pixel(x, y, color)
+
+
+#===============================================================================
+# OUTLINE
+#===============================================================================
+
+func _apply_outline(image: Image, outline_color: Color) -> void:
+	var width := image.get_width()
+	var height := image.get_height()
+
+	# Build a map of which pixels need outlines
+	# (can't modify the image while scanning it)
+	var outline_pixels: Array[Vector2i] = []
+
+	for y in range(height):
+		for x in range(width):
+			var color := image.get_pixel(x, y)
+			if color.a >= 0.5:
+				continue  # Already opaque, skip
+			# Check 4-connected neighbors for opaque pixels
+			var has_opaque_neighbor := false
+			if x > 0 and image.get_pixel(x - 1, y).a >= 0.5:
+				has_opaque_neighbor = true
+			elif x < width - 1 and image.get_pixel(x + 1, y).a >= 0.5:
+				has_opaque_neighbor = true
+			elif y > 0 and image.get_pixel(x, y - 1).a >= 0.5:
+				has_opaque_neighbor = true
+			elif y < height - 1 and image.get_pixel(x, y + 1).a >= 0.5:
+				has_opaque_neighbor = true
+			if has_opaque_neighbor:
+				outline_pixels.append(Vector2i(x, y))
+
+	for pos in outline_pixels:
+		image.set_pixel(pos.x, pos.y, outline_color)
 
 
 #===============================================================================
