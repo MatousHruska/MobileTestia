@@ -75,15 +75,15 @@
     {
       "id": "status_stagger",
       "name": "Staggered",
-      "type": "debuff",
-      "stat_affected": "movement_speed",
-      "value": -100,
-      "duration": 0,
+      "type": "control",
+      "stat_affected": "none",
+      "value": 0,
+      "duration": 1,
       "tick_interval": 0,
       "visual_effect": "stagger_particles",
       "stackable": false,
       "max_stacks": 1,
-      "show_in_hud": true,
+      "show_in_hud": false,
       "icon_color": "#CC8844"
     },
     {
