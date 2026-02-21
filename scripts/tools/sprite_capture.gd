@@ -234,12 +234,18 @@ func _build_ui() -> void:
 	status_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	vbox.add_child(status_label)
 
-	# Right side — preview viewport takes remaining space
+	# Right side — preview viewport in a 1:1 aspect ratio (matches export)
+	var aspect_box := AspectRatioContainer.new()
+	aspect_box.ratio = 1.0
+	aspect_box.size_flags_horizontal = SIZE_EXPAND_FILL
+	aspect_box.size_flags_vertical = SIZE_EXPAND_FILL
+	root_hbox.add_child(aspect_box)
+
 	preview_container = SubViewportContainer.new()
 	preview_container.size_flags_horizontal = SIZE_EXPAND_FILL
 	preview_container.size_flags_vertical = SIZE_EXPAND_FILL
 	preview_container.stretch = true
-	root_hbox.add_child(preview_container)
+	aspect_box.add_child(preview_container)
 
 
 func _build_viewport() -> void:
