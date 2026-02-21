@@ -640,11 +640,65 @@ func _color_distance_sq(a: Color, b: Color) -> float:
 #===============================================================================
 
 func _on_export_pressed() -> void:
-	pass  # Implemented in Task 7
+	if _source_image == null:
+		_set_status("ERROR: No spritesheet loaded.")
+		return
+
+	export_button.disabled = true
+	export_all_button.disabled = true
+
+	var file_name: String = file_dropdown.get_item_text(file_dropdown.selected)
+	_export_file(file_name)
+
+	export_button.disabled = false
+	export_all_button.disabled = false
 
 
 func _on_export_all_pressed() -> void:
-	pass  # Implemented in Task 7
+	if folder_dropdown.item_count == 0:
+		_set_status("ERROR: No source folder selected.")
+		return
+
+	export_button.disabled = true
+	export_all_button.disabled = true
+
+	var count := 0
+	for i in range(file_dropdown.item_count):
+		var file_name: String = file_dropdown.get_item_text(i)
+		_export_file(file_name)
+		count += 1
+
+	_set_status("Exported %d files!" % count)
+	export_button.disabled = false
+	export_all_button.disabled = false
+
+
+func _export_file(file_name: String) -> void:
+	var folder_name: String = folder_dropdown.get_item_text(folder_dropdown.selected)
+	var source_path := "%s/%s/%s" % [CAPTURES_DIR, folder_name, file_name]
+
+	var source := Image.new()
+	var global_source := ProjectSettings.globalize_path(source_path)
+	var err := source.load(global_source)
+	if err != OK:
+		_set_status("ERROR: Could not load %s (error %d)" % [source_path, err])
+		return
+
+	var processed := _process_image(source)
+
+	var output_dir := "%s/%s" % [OUTPUT_BASE, folder_name]
+	var global_output_dir := ProjectSettings.globalize_path(output_dir)
+	DirAccess.make_dir_recursive_absolute(global_output_dir)
+
+	var output_path := "%s/%s" % [output_dir, file_name]
+	var global_path := ProjectSettings.globalize_path(output_path)
+	err = processed.save_png(global_path)
+	if err != OK:
+		_set_status("ERROR: Failed to save %s (error %d)" % [output_path, err])
+		return
+
+	_set_status("Exported: %s -> %s" % [file_name, output_path])
+	print("[PixelArtConverter] Saved: %s" % output_path)
 
 
 #===============================================================================
