@@ -57,6 +57,8 @@ var available_models: Array[String] = []
 func _ready() -> void:
 	_build_ui()
 	_build_viewport()
+	# Defer model scanning so the UI layout and viewport have settled
+	await get_tree().process_frame
 	_scan_models()
 
 
@@ -286,7 +288,9 @@ func _on_model_selected(index: int) -> void:
 	current_anim_player = _find_animation_player(current_model_instance)
 	_populate_animations()
 
-	# Auto-fit the camera
+	# Wait for the skeleton and mesh to process before fitting the camera
+	await get_tree().process_frame
+	await get_tree().process_frame
 	_auto_fit_camera()
 
 	_set_status("Loaded: %s" % file_name)
@@ -396,16 +400,22 @@ func _auto_fit_camera() -> void:
 		return
 
 	var aabb := _get_combined_aabb(current_model_instance)
+
 	if aabb.size == Vector3.ZERO:
-		return
+		# Fallback for skinned meshes where AABB detection fails:
+		# Assume a standard humanoid (~2m tall, centered at Y=1)
+		print("[SpriteCapture] AABB detection returned zero — using humanoid fallback.")
+		current_model_instance.position = Vector3(0.0, -1.0, 0.0)
+		camera.size = 2.6
+	else:
+		# Center the model so the AABB center is at origin
+		var center := aabb.get_center()
+		current_model_instance.position = -center
 
-	# Center the model so the AABB center is at origin
-	var center := aabb.get_center()
-	current_model_instance.position = -center
-
-	# Set orthographic size to fit the model with some padding
-	var max_extent := maxf(aabb.size.x, maxf(aabb.size.y, aabb.size.z))
-	camera.size = max_extent * 1.3
+		# Set orthographic size to fit the model with some padding
+		var max_extent := maxf(aabb.size.x, maxf(aabb.size.y, aabb.size.z))
+		camera.size = max_extent * 1.3
+		print("[SpriteCapture] AABB: %s — camera size: %.2f" % [aabb, camera.size])
 
 	_position_camera(camera_elevation_slider.value)
 
