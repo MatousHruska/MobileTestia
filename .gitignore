@@ -50,3 +50,9 @@ android/build/
 # iOS build
 *.xcworkspace/
 *.xcodeproj/
+
+# 3D import sources (large binaries, not needed in repo)
+assets/3d_imports/
+
+# Captured spritesheets (intermediate renders before PixelOver)
+assets/sprites/captures/

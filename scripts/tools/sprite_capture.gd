@@ -157,6 +157,14 @@ func _build_ui() -> void:
 
 	vbox.add_child(HSeparator.new())
 
+	# Rescan button
+	var rescan_button := Button.new()
+	rescan_button.text = "Rescan Models Folder"
+	rescan_button.pressed.connect(_scan_models)
+	vbox.add_child(rescan_button)
+
+	vbox.add_child(HSeparator.new())
+
 	# Status
 	status_label = Label.new()
 	status_label.text = "Drop .glb files into assets/3d_imports/ and they will appear above."
@@ -187,6 +195,24 @@ func _build_viewport() -> void:
 	camera.size = 2.0
 	sub_viewport.add_child(camera)
 	_position_camera(40.0)
+
+	# Ambient light — fallback for any materials the unlit override misses
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color.TRANSPARENT
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color.WHITE
+	env.ambient_light_energy = 0.6
+	var world_env := WorldEnvironment.new()
+	world_env.environment = env
+	sub_viewport.add_child(world_env)
+
+	# Directional fill light
+	var dir_light := DirectionalLight3D.new()
+	dir_light.rotation_degrees = Vector3(-45, 30, 0)
+	dir_light.light_energy = 0.5
+	dir_light.shadow_enabled = false
+	sub_viewport.add_child(dir_light)
 
 	# Model slot
 	model_slot = Node3D.new()
@@ -504,7 +530,8 @@ func _export_animation(anim_name: String) -> void:
 			current_anim_player.play(anim_name)
 			current_anim_player.seek(seek_time, true)
 
-			# Wait for the viewport to render the frame
+			# Wait 2 frames — first settles the pose, second gives a clean render
+			await RenderingServer.frame_post_draw
 			await RenderingServer.frame_post_draw
 
 			# Capture
