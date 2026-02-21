@@ -111,8 +111,8 @@ func _build_ui() -> void:
 	vbox.add_child(_make_label("Frames per direction:"))
 	frame_count_spin = SpinBox.new()
 	frame_count_spin.min_value = 2
-	frame_count_spin.max_value = 32
-	frame_count_spin.value = 8
+	frame_count_spin.max_value = 60
+	frame_count_spin.value = 24
 	frame_count_spin.step = 1
 	vbox.add_child(frame_count_spin)
 

@@ -67,7 +67,6 @@ Consult these docs when working on the corresponding systems:
 | Animations, sprite generation, pose types | `docs/PLACEHOLDER_SPRITES.md` |
 | Collision layers | `docs/COLLISION_LAYERS.md` |
 | UI system | `docs/UI_DOCUMENTATION.md` |
-| Art direction | `docs/ART_DIRECTION.md` |
 
 ## Problem-Solving Behavior
 
