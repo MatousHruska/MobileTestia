@@ -44,6 +44,8 @@ var sub_viewport: SubViewport
 var camera: Camera3D
 var camera_zoom_slider: HSlider
 var camera_zoom_label: Label
+var camera_target_y_slider: HSlider
+var camera_target_y_label: Label
 var model_slot: Node3D
 
 ## State
@@ -164,6 +166,23 @@ func _build_ui() -> void:
 	camera_zoom_label.custom_minimum_size.x = 40
 	zoom_hbox.add_child(camera_zoom_label)
 
+	# Camera target height — where the camera looks vertically
+	vbox.add_child(_make_label("Camera target height:"))
+	var target_y_hbox := HBoxContainer.new()
+	vbox.add_child(target_y_hbox)
+	camera_target_y_slider = HSlider.new()
+	camera_target_y_slider.min_value = 0.0
+	camera_target_y_slider.max_value = 5.0
+	camera_target_y_slider.value = 1.0
+	camera_target_y_slider.step = 0.05
+	camera_target_y_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	camera_target_y_slider.value_changed.connect(_on_target_y_changed)
+	target_y_hbox.add_child(camera_target_y_slider)
+	camera_target_y_label = Label.new()
+	camera_target_y_label.text = "1.0"
+	camera_target_y_label.custom_minimum_size.x = 40
+	target_y_hbox.add_child(camera_target_y_label)
+
 	# Preview direction buttons
 	vbox.add_child(_make_label("Preview direction:"))
 	var dir_hbox := HBoxContainer.new()
@@ -184,12 +203,6 @@ func _build_ui() -> void:
 	side_btn.size_flags_horizontal = SIZE_EXPAND_FILL
 	side_btn.pressed.connect(_on_preview_direction.bind(90.0))
 	dir_hbox.add_child(side_btn)
-
-	# Fit model to view
-	var fit_button := Button.new()
-	fit_button.text = "Fit Model to View"
-	fit_button.pressed.connect(_auto_fit_camera)
-	vbox.add_child(fit_button)
 
 	vbox.add_child(HSeparator.new())
 
@@ -242,9 +255,10 @@ func _build_viewport() -> void:
 	camera = Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
 	camera.size = 2.5
-	sub_viewport.add_child(camera)
-	_position_camera(40.0)
 	camera.far = 100.0
+	sub_viewport.add_child(camera)
+	camera_target = Vector3(0.0, 1.0, 0.0)
+	_position_camera(40.0)
 
 	# Ambient light — fallback for any materials the unlit override misses
 	var env := Environment.new()
@@ -335,11 +349,6 @@ func _on_model_selected(index: int) -> void:
 	# Find AnimationPlayer
 	current_anim_player = _find_animation_player(current_model_instance)
 	_populate_animations()
-
-	# Wait for the skeleton and mesh to process before fitting the camera
-	await get_tree().process_frame
-	await get_tree().process_frame
-	_auto_fit_camera()
 
 	_set_status("Loaded: %s" % file_name)
 
@@ -454,88 +463,10 @@ func _on_preview_direction(rotation_y: float) -> void:
 		(current_model_instance as Node3D).rotation_degrees.y = rotation_y
 
 
-func _auto_fit_camera() -> void:
-	## Point the camera at the model's visual center and zoom to fit.
-	## The model stays at its natural position (origin at feet for Mixamo).
-	if current_model_instance == null:
-		return
-
-	# Try skeleton bones first (most reliable for skinned characters),
-	# then fall back to mesh AABB, then to a humanoid default.
-	var bounds := _get_skeleton_bounds(current_model_instance)
-	if bounds.size == Vector3.ZERO:
-		bounds = _get_mesh_aabb(current_model_instance)
-	if bounds.size == Vector3.ZERO:
-		print("[SpriteCapture] No bounds detected — using humanoid fallback.")
-		camera_target = Vector3(0.0, 0.9, 0.0)
-		camera.size = 2.4
-	else:
-		camera_target = bounds.get_center()
-		var fit_size := maxf(bounds.size.x, bounds.size.y) * 1.3
-		camera.size = fit_size
-		print("[SpriteCapture] Bounds: pos=%s size=%s => target=%s zoom=%.2f" % [
-			bounds.position, bounds.size, camera_target, camera.size])
-
-	# Sync the zoom slider
-	camera_zoom_slider.value = camera.size
+func _on_target_y_changed(value: float) -> void:
+	camera_target_y_label.text = "%.2f" % value
+	camera_target = Vector3(0.0, value, 0.0)
 	_position_camera(camera_elevation_slider.value)
-
-
-func _get_skeleton_bounds(node: Node) -> AABB:
-	## Compute bounds from skeleton bone rest positions — works reliably
-	## for skinned Mixamo characters where mesh AABB often returns zero.
-	if node is Skeleton3D:
-		var skel := node as Skeleton3D
-		if skel.get_bone_count() == 0:
-			return AABB()
-		var first_pos := skel.global_transform * skel.get_bone_global_rest(0).origin
-		var result := AABB(first_pos, Vector3.ZERO)
-		for bone_idx in range(1, skel.get_bone_count()):
-			var bone_world := skel.global_transform * skel.get_bone_global_rest(bone_idx).origin
-			result = result.expand(bone_world)
-		print("[SpriteCapture] Skeleton bounds: %d bones, size=%s" % [skel.get_bone_count(), result.size])
-		return result
-
-	for child in node.get_children():
-		var child_result := _get_skeleton_bounds(child)
-		if child_result.size != Vector3.ZERO:
-			return child_result
-	return AABB()
-
-
-func _get_mesh_aabb(node: Node) -> AABB:
-	## Fallback: compute bounds from MeshInstance3D AABBs.
-	var result := AABB()
-	var first := true
-
-	if node is MeshInstance3D:
-		var mi := node as MeshInstance3D
-		var mesh_aabb := mi.get_aabb()
-		if mesh_aabb.size != Vector3.ZERO:
-			var xform := mi.global_transform
-			for i in range(8):
-				var corner := Vector3(
-					mesh_aabb.position.x + mesh_aabb.size.x * (1 if (i & 1) else 0),
-					mesh_aabb.position.y + mesh_aabb.size.y * (1 if (i & 2) else 0),
-					mesh_aabb.position.z + mesh_aabb.size.z * (1 if (i & 4) else 0)
-				)
-				var world_corner := xform * corner
-				if first:
-					result = AABB(world_corner, Vector3.ZERO)
-					first = false
-				else:
-					result = result.expand(world_corner)
-
-	for child in node.get_children():
-		var child_aabb := _get_mesh_aabb(child)
-		if child_aabb.size != Vector3.ZERO:
-			if first:
-				result = child_aabb
-				first = false
-			else:
-				result = result.merge(child_aabb)
-
-	return result
 
 
 #===============================================================================
