@@ -39,6 +39,8 @@ var outline_toggle: CheckButton
 var outline_color_picker: ColorPickerButton
 var denoising_toggle: CheckButton
 var denoising_min_cluster_spin: SpinBox
+var generate_palette_button: Button
+var max_palette_colors_spin: SpinBox
 var show_original_toggle: CheckButton
 var export_button: Button
 var export_all_button: Button
@@ -123,6 +125,20 @@ func _build_ui() -> void:
 	palette_preview_container = HFlowContainer.new()
 	palette_preview_container.size_flags_horizontal = SIZE_EXPAND_FILL
 	vbox.add_child(palette_preview_container)
+
+	# Generate palette from folder
+	vbox.add_child(_make_label("Max palette colors:"))
+	max_palette_colors_spin = SpinBox.new()
+	max_palette_colors_spin.min_value = 4
+	max_palette_colors_spin.max_value = 128
+	max_palette_colors_spin.value = 32
+	max_palette_colors_spin.step = 4
+	vbox.add_child(max_palette_colors_spin)
+
+	generate_palette_button = Button.new()
+	generate_palette_button.text = "Generate Palette from Folder"
+	generate_palette_button.pressed.connect(_on_generate_palette_pressed)
+	vbox.add_child(generate_palette_button)
 
 	# Output height
 	vbox.add_child(_make_label("Output height (px):"))
@@ -444,7 +460,7 @@ func _apply_ordered_dithering(image: Image, strength: float, pattern_index: int)
 			var color := image.get_pixel(x, y)
 			if color.a < 0.5:
 				continue
-			var threshold := (matrix[y % matrix_size][x % matrix_size] / matrix_max - 0.5) * strength
+			var threshold: float = (matrix[y % matrix_size][x % matrix_size] / matrix_max - 0.5) * strength
 			color.r = clampf(color.r + threshold, 0.0, 1.0)
 			color.g = clampf(color.g + threshold, 0.0, 1.0)
 			color.b = clampf(color.b + threshold, 0.0, 1.0)
@@ -508,7 +524,7 @@ func _apply_denoising(image: Image, min_cluster_size: int) -> void:
 			var cluster: Array[Vector2i] = []
 			var queue: Array[Vector2i] = [pos]
 			while not queue.is_empty():
-				var current := queue.pop_back()
+				var current: Vector2i = queue.pop_back()
 				if visited.has(current):
 					continue
 				if current.x < 0 or current.x >= width or current.y < 0 or current.y >= height:
@@ -612,6 +628,105 @@ func _on_palette_dropdown_selected(index: int) -> void:
 	var palette_path := "%s/%s" % [PALETTE_DIR, palette_name]
 	var global_path := ProjectSettings.globalize_path(palette_path)
 	_load_palette_from_path(global_path)
+
+
+func _on_generate_palette_pressed() -> void:
+	if folder_dropdown.item_count == 0:
+		_set_status("ERROR: No source folder selected.")
+		return
+
+	var folder_name: String = folder_dropdown.get_item_text(folder_dropdown.selected)
+	var folder_path := "%s/%s" % [CAPTURES_DIR, folder_name]
+	var global_folder := ProjectSettings.globalize_path(folder_path)
+	var max_colors := int(max_palette_colors_spin.value)
+
+	_set_status("Generating palette from %s..." % folder_name)
+
+	# Collect colors from all PNGs in folder (downscaled + thresholded only)
+	var color_counts := {}  # Dictionary<Color, int>
+	var dir := DirAccess.open(global_folder)
+	if dir == null:
+		_set_status("ERROR: Could not open %s" % folder_path)
+		return
+
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if file_name.to_lower().ends_with(".png") and not file_name.ends_with(".import"):
+			var file_path := "%s/%s" % [folder_path, file_name]
+			var global_path := ProjectSettings.globalize_path(file_path)
+			var img := Image.new()
+			if img.load(global_path) == OK:
+				# Downscale + threshold (no palette mapping)
+				var target_height := int(output_height_spin.value)
+				var scale_factor := float(target_height) / float(img.get_height())
+				var target_width := int(float(img.get_width()) * scale_factor)
+				img.resize(target_width, target_height, Image.INTERPOLATE_NEAREST)
+				_apply_alpha_threshold(img, int(alpha_threshold_slider.value))
+
+				for y in range(img.get_height()):
+					for x in range(img.get_width()):
+						var color := img.get_pixel(x, y)
+						if color.a < 0.5:
+							continue
+						# Snap to 5-bit per channel to merge near-identical colors
+						var snapped := Color(
+							snappedf(color.r, 1.0 / 31.0),
+							snappedf(color.g, 1.0 / 31.0),
+							snappedf(color.b, 1.0 / 31.0),
+							1.0
+						)
+						if color_counts.has(snapped):
+							color_counts[snapped] += 1
+						else:
+							color_counts[snapped] = 1
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+	if color_counts.is_empty():
+		_set_status("ERROR: No opaque pixels found in folder.")
+		return
+
+	# Sort by frequency (most common first) and take top N
+	var sorted_colors: Array = color_counts.keys()
+	sorted_colors.sort_custom(func(a: Color, b: Color) -> bool:
+		return color_counts[a] > color_counts[b]
+	)
+
+	var final_colors: PackedColorArray = PackedColorArray()
+	for i in range(mini(max_colors, sorted_colors.size())):
+		final_colors.append(sorted_colors[i])
+
+	# Save as 1-row PNG strip to assets/palettes/
+	var palette_image := Image.create(final_colors.size(), 1, false, Image.FORMAT_RGBA8)
+	for i in range(final_colors.size()):
+		palette_image.set_pixel(i, 0, final_colors[i])
+
+	var palette_name := "%s_palette.png" % folder_name
+	var output_path := "%s/%s" % [PALETTE_DIR, palette_name]
+	var global_output := ProjectSettings.globalize_path(output_path)
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(PALETTE_DIR))
+
+	var err := palette_image.save_png(global_output)
+	if err != OK:
+		_set_status("ERROR: Failed to save palette (error %d)" % err)
+		return
+
+	_set_status("Generated palette: %d colors -> %s" % [final_colors.size(), output_path])
+	print("[PixelArtConverter] Saved palette: %s" % output_path)
+
+	# Load it immediately
+	_palette_colors = final_colors
+	_update_palette_preview()
+	_update_preview()
+
+	# Refresh dropdown so the new palette appears
+	_scan_palettes()
+	# Select the new palette in the dropdown
+	for i in range(palette_dropdown.item_count):
+		if palette_dropdown.get_item_text(i) == palette_name:
+			palette_dropdown.selected = i
+			break
 
 
 func _scan_palettes() -> void:
