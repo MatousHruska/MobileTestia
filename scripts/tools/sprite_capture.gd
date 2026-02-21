@@ -116,13 +116,13 @@ func _build_ui() -> void:
 	frame_count_spin.step = 1
 	vbox.add_child(frame_count_spin)
 
-	# Output size
+	# Output size — high-res for PixelOver, not final sprite size
 	vbox.add_child(_make_label("Output frame size (px):"))
 	output_size_spin = SpinBox.new()
-	output_size_spin.min_value = 16
-	output_size_spin.max_value = 256
-	output_size_spin.value = 32
-	output_size_spin.step = 8
+	output_size_spin.min_value = 64
+	output_size_spin.max_value = 1024
+	output_size_spin.value = 512
+	output_size_spin.step = 64
 	vbox.add_child(output_size_spin)
 
 	# Camera elevation
