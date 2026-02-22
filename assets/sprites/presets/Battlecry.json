@@ -1,0 +1,21 @@
+{
+	"camera": {
+		"elevation": 30.0,
+		"target_y": 0.3,
+		"zoom": 3.5
+	},
+	"capture": {
+		"frame_count": 8
+	},
+	"pixel_art": {
+		"alpha_threshold": 175,
+		"denoising_enabled": false,
+		"denoising_min_cluster": 4,
+		"dithering_enabled": true,
+		"dithering_pattern": 1,
+		"dithering_strength": 0.05,
+		"outline_color": "000000ff",
+		"outline_enabled": true,
+		"output_height": 64
+	}
+}
