@@ -2,7 +2,7 @@ extends Node
 ## DualViewportManager - Manages the dual viewport system for pixel art + crisp UI
 ##
 ## Architecture:
-## - Game world renders in a SubViewport at GAME_VIEWPORT_SIZE (768x432)
+## - Game world renders in a SubViewport at GAME_VIEWPORT_SIZE (480x270)
 ## - UI renders at native screen resolution (crisp text and buttons)
 ##
 ## Usage:
@@ -18,8 +18,8 @@ signal game_viewport_ready
 signal screen_size_changed(size: Vector2i)
 
 ## Constants
-const GAME_VIEWPORT_WIDTH: int = 768
-const GAME_VIEWPORT_HEIGHT: int = 432
+const GAME_VIEWPORT_WIDTH: int = 480
+const GAME_VIEWPORT_HEIGHT: int = 270
 const GAME_VIEWPORT_SIZE: Vector2i = Vector2i(GAME_VIEWPORT_WIDTH, GAME_VIEWPORT_HEIGHT)
 
 ## References to viewport nodes (set by main_game scene)
