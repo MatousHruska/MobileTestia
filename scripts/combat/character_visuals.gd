@@ -2,16 +2,17 @@ class_name CharacterVisuals
 extends Node2D
 ## CharacterVisuals - Layered sprite stack for character rendering.
 ##
-## Manages visual layers (weapon, effects, overlay) alongside the existing
+## Manages visual layers (shadow, weapon, effects, overlay) alongside the existing
 ## body AnimatedSprite2D. Added as a sibling to the body sprite — does NOT
 ## reparent it. Responds to AbilityVisualPlayer signals for weapon visibility,
 ## body animation, and effect spawning.
 ##
 ## Node tree (created in code):
 ##   CharacterVisuals (Node2D)
-##     +-- WeaponSprite    (Sprite2D)
+##     +-- ShadowSprite    (AnimatedSprite2D, z=-2)
+##     +-- WeaponSprite    (Sprite2D, z=1)
 ##     +-- EffectAnchor    (Node2D)
-##     +-- OverlaySprite   (AnimatedSprite2D)
+##     +-- OverlaySprite   (AnimatedSprite2D, z=2)
 
 #===============================================================================
 # REFERENCES
@@ -38,6 +39,7 @@ var overlay_sprite: AnimatedSprite2D = null
 ## Shadow layer
 var shadow_sprite: AnimatedSprite2D = null
 var _shadow_has_animations: bool = false  # True if SpriteFrames has _shadow anims
+var _shadow_animation_valid: bool = true  # False when no matching shadow anim found
 
 #===============================================================================
 # DIRECTION STATE
@@ -225,10 +227,11 @@ func _sync_shadow_animation(base_anim_name: String) -> void:
 	for candidate in candidates:
 		if shadow_sprite.sprite_frames.has_animation(candidate):
 			shadow_sprite.play(candidate)
+			_shadow_animation_valid = true
 			return
 
-	# If no shadow animation at all, hide shadow
-	shadow_sprite.visible = false
+	# If no shadow animation at all, mark invalid (light response will hide it)
+	_shadow_animation_valid = false
 
 
 func _update_shadow_light_response(delta: float) -> void:
@@ -262,14 +265,14 @@ func _update_shadow_light_response(delta: float) -> void:
 	var new_scale := lerpf(current_scale, _shadow_target_scale, lerp_speed)
 	shadow_sprite.scale = Vector2(new_scale, new_scale)
 
-	shadow_sprite.visible = true
+	shadow_sprite.visible = _shadow_animation_valid
 
 
 #===============================================================================
 # PER-FRAME UPDATE
 #===============================================================================
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	if body_sprite == null:
 		return
 
@@ -291,7 +294,7 @@ func _process(_delta: float) -> void:
 		effect_anchor.position = grip + _get_blade_tip_offset(grip)
 
 	_update_weapon_position(anchors)
-	_update_shadow_light_response(_delta)
+	_update_shadow_light_response(delta)
 
 
 func _update_weapon_position(anchors: Dictionary) -> void:

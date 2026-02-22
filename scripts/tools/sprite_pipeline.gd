@@ -2565,12 +2565,14 @@ func _append_log(text: String) -> void:
 func _on_run_again_pressed() -> void:
 	_captured_sheets.clear()
 	_captured_normal_sheets.clear()
+	_captured_shadow_sheets.clear()
 	_go_to_step(0)
 
 
 func _on_done_pressed() -> void:
 	_captured_sheets.clear()
 	_captured_normal_sheets.clear()
+	_captured_shadow_sheets.clear()
 	_palette_colors.clear()
 	_clear_model()
 	_go_to_step(0)
