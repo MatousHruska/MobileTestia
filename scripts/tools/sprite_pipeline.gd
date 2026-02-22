@@ -1820,7 +1820,11 @@ func _on_palette_mode_changed(index: int) -> void:
 
 
 func _on_palette_file_selected(index: int) -> void:
-	if index < 0:
+	if index <= 0:
+		# "(none)" or invalid — clear palette
+		_palette_colors.clear()
+		_update_palette_preview()
+		_update_pixel_preview()
 		return
 	var palette_name: String = palette_file_dropdown.get_item_text(index)
 	var palette_path := "%s/%s" % [PALETTE_DIR, palette_name]
@@ -1830,6 +1834,7 @@ func _on_palette_file_selected(index: int) -> void:
 
 func _scan_palettes() -> void:
 	palette_file_dropdown.clear()
+	palette_file_dropdown.add_item("(none)")
 
 	var global_dir := ProjectSettings.globalize_path(PALETTE_DIR)
 	var dir := DirAccess.open(global_dir)
