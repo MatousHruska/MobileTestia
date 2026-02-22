@@ -1,8 +1,12 @@
 extends Control
-## 3D-to-Spritesheet Capture Tool
+## [SUPERSEDED] 3D-to-Spritesheet Capture Tool
 ##
-## Run this scene to convert 3D animated models (GLB/FBX from Mixamo) into
-## directional pixel-art-ready spritesheets matching the project's conventions.
+## NOTE: This standalone tool has been superseded by the unified Sprite Pipeline
+## Wizard at scenes/tools/sprite_pipeline.tscn, which adds overscan-based camera
+## panning, pixel art conversion, weapon anchor editing, and SpriteFrames export.
+## Use the wizard instead for new work.
+##
+## This tool is kept for reference and simple one-off captures.
 ##
 ## Workflow:
 ##   1. Drop .glb/.glb files into assets/3d_imports/
