@@ -35,6 +35,10 @@ var effect_anchor: Node2D = null
 ## Overlay for flashes/shields
 var overlay_sprite: AnimatedSprite2D = null
 
+## Shadow layer
+var shadow_sprite: AnimatedSprite2D = null
+var _shadow_has_animations: bool = false  # True if SpriteFrames has _shadow anims
+
 #===============================================================================
 # DIRECTION STATE
 #===============================================================================
@@ -53,6 +57,35 @@ const WEAPON_ANCHOR_COLOR := Color("#FF00AA")
 ## Weapon direction pixel color — points from grip toward blade tip
 const WEAPON_DIRECTION_COLOR := Color("#00FFFF")
 
+#===============================================================================
+# SHADOW CONSTANTS
+#===============================================================================
+
+## Fallback ellipse shadow dimensions (fraction of frame size)
+const SHADOW_ELLIPSE_WIDTH_RATIO := 0.8
+const SHADOW_ELLIPSE_HEIGHT_RATIO := 0.3
+
+## Shadow Y offset — positions shadow at character's feet
+const SHADOW_Y_OFFSET := 14.0
+
+## Light detection
+const SHADOW_LIGHT_SEARCH_RADIUS := 512.0
+const SHADOW_TRANSITION_SPEED := 3.3
+
+## Shadow appearance ranges (based on light distance)
+const SHADOW_CLOSE_DISTANCE := 64.0
+const SHADOW_FAR_DISTANCE := 512.0
+const SHADOW_CLOSE_OPACITY := 0.5
+const SHADOW_FAR_OPACITY := 0.15
+const SHADOW_NO_LIGHT_OPACITY := 0.15
+const SHADOW_CLOSE_SCALE := 0.8
+const SHADOW_FAR_SCALE := 1.3
+const SHADOW_NO_LIGHT_SCALE := 1.3
+
+## Current shadow targets (for lerping)
+var _shadow_target_opacity := SHADOW_NO_LIGHT_OPACITY
+var _shadow_target_scale := SHADOW_NO_LIGHT_SCALE
+
 
 #===============================================================================
 # INITIALIZATION
@@ -64,11 +97,14 @@ const WEAPON_DIRECTION_COLOR := Color("#00FFFF")
 ## weapon/effect/overlay as children of this node.
 func initialize(body: AnimatedSprite2D) -> void:
 	body_sprite = body
+	_create_shadow_layer()
 	_create_weapon_layer()
 	_create_effect_anchor()
 	_create_overlay_layer()
 	# Ensure weapon starts hidden
 	set_weapon_visible(false)
+	# Setup shadow after layers are created
+	_setup_shadow()
 
 
 #===============================================================================
@@ -95,6 +131,76 @@ func _create_overlay_layer() -> void:
 	overlay_sprite.visible = false
 	overlay_sprite.z_index = 2
 	add_child(overlay_sprite)
+
+
+func _create_shadow_layer() -> void:
+	shadow_sprite = AnimatedSprite2D.new()
+	shadow_sprite.name = "ShadowSprite"
+	shadow_sprite.z_index = -2
+	shadow_sprite.position.y = SHADOW_Y_OFFSET
+	shadow_sprite.modulate = Color(1, 1, 1, SHADOW_NO_LIGHT_OPACITY)
+	add_child(shadow_sprite)
+	# Move shadow to be the first child (renders behind everything)
+	move_child(shadow_sprite, 0)
+
+
+func _setup_shadow() -> void:
+	if not body_sprite or not body_sprite.sprite_frames:
+		return
+
+	# Check if SpriteFrames has any _shadow animations
+	var anims := body_sprite.sprite_frames.get_animation_names()
+	for anim_name in anims:
+		if anim_name.ends_with("_shadow"):
+			_shadow_has_animations = true
+			break
+
+	if _shadow_has_animations:
+		# Use the same SpriteFrames — shadow plays _shadow variant animations
+		shadow_sprite.sprite_frames = body_sprite.sprite_frames
+	else:
+		# Generate a simple ellipse fallback
+		_generate_ellipse_shadow()
+
+
+func _generate_ellipse_shadow() -> void:
+	## Generate a simple oval shadow texture for characters without shadow animations.
+	if not body_sprite or not body_sprite.sprite_frames:
+		return
+
+	# Get frame size from the first available animation
+	var anims := body_sprite.sprite_frames.get_animation_names()
+	if anims.is_empty():
+		return
+	var first_tex := body_sprite.sprite_frames.get_frame_texture(anims[0], 0)
+	if not first_tex:
+		return
+
+	var frame_w := first_tex.get_width()
+	var frame_h := first_tex.get_height()
+	var shadow_w := int(frame_w * SHADOW_ELLIPSE_WIDTH_RATIO)
+	var shadow_h := int(frame_h * SHADOW_ELLIPSE_HEIGHT_RATIO)
+
+	# Draw ellipse
+	var img := Image.create(shadow_w, shadow_h, false, Image.FORMAT_RGBA8)
+	img.fill(Color.TRANSPARENT)
+	var center := Vector2(shadow_w / 2.0, shadow_h / 2.0)
+	var radius := Vector2(shadow_w / 2.0, shadow_h / 2.0)
+	for y in range(shadow_h):
+		for x in range(shadow_w):
+			var dx := (x - center.x) / radius.x
+			var dy := (y - center.y) / radius.y
+			if dx * dx + dy * dy <= 1.0:
+				img.set_pixel(x, y, Color.BLACK)
+
+	var tex := ImageTexture.create_from_image(img)
+	# Create a single-frame SpriteFrames for the ellipse
+	var frames := SpriteFrames.new()
+	frames.add_animation("ellipse")
+	frames.add_frame("ellipse", tex)
+	frames.set_animation_loop("ellipse", true)
+	shadow_sprite.sprite_frames = frames
+	shadow_sprite.play("ellipse")
 
 
 #===============================================================================
