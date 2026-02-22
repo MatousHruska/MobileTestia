@@ -32,6 +32,43 @@ When real art is ready, either replace the PNGs in place or swap the `.tres` res
 
 ---
 
+## Sprite Pipeline Wizard
+
+> **Primary tool** — use this for all new sprite work.
+
+The Sprite Pipeline Wizard (`scenes/tools/sprite_pipeline.tscn`) is a 6-step tool that chains 3D capture, pixel art conversion, weapon anchor editing, and SpriteFrames export into a single workflow.
+
+### How to run
+
+1. Run `scenes/tools/sprite_pipeline.tscn` (F6 in Godot)
+2. Follow the 6-step wizard
+
+### Steps
+
+| Step | Name | Description |
+|------|------|-------------|
+| 1 | Model & Animation | Select 3D model from `assets/3d_imports/`, pick animation, configure camera (elevation, zoom, target height). Presets auto-load per model. |
+| 2 | Capture Preview | Auto-captures 3 directions (down, up, right) at 512x512 with overscan-based camera panning to prevent limb clipping. |
+| 3 | Pixel Art Settings | Configure output height, alpha threshold, dithering, palette, outline, denoising. Real-time preview. |
+| 4 | Export | Processes all 3 directions with configured settings. Saves to `assets/sprites/final/{model_name}/`. |
+| 5 | Weapon Anchors | (Optional) Place grip pixel (magenta #FF00AA) and direction pixel (cyan #00FFFF) on exported frames. |
+| 6 | Apply to SpriteFrames | Load exported sheets into `resources/player_sprites.tres` as AtlasTexture regions with configurable FPS and loop. |
+
+### Presets
+
+Camera and pixel art settings are saved per model to `assets/sprites/presets/{model_name}.json`. They auto-load when selecting a model.
+
+### Standalone Tools
+
+Two standalone tools exist for specialized use:
+
+| Tool | Scene | Use Case |
+|------|-------|----------|
+| Sprite Capture | `sprite_capture.tscn` | Simple one-off 3D captures (superseded by wizard) |
+| Pixel Art Converter | `pixel_art_converter.tscn` | Process pre-captured spritesheets without re-capturing |
+
+---
+
 ## Animation Naming Convention
 
 All sprites follow the `{action}_{direction}` pattern. The action name is everything before the last underscore; the direction is the final token.
@@ -251,4 +288,4 @@ When real pixel art is ready:
 
 ---
 
-*Last Updated: 2026-02-16*
+*Last Updated: 2026-02-22*
