@@ -2,7 +2,7 @@ extends Control
 ## MainGame - Root scene for the dual viewport system
 ##
 ## This scene manages:
-## - Game SubViewport (640x360) for pixel-perfect game rendering
+## - Game SubViewport (768x432) for pixel-perfect game rendering
 ## - UI renders at native screen resolution (crisp text/buttons)
 ##
 ## Zone scenes are loaded into the game viewport, while UI elements
