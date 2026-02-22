@@ -75,6 +75,9 @@ var _captured_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": 
 var _palette_colors: PackedColorArray = PackedColorArray()
 var _preview_direction := "down"
 
+## Step 4 state — actual frame size from export (used by Steps 5/6)
+var _export_frame_size := 64
+
 ## Step 5 (Anchor Editor) state
 var _anchor_enabled := false
 var _anchor_images: Dictionary = {}  # {"down": Image, "up": Image, "right": Image}
@@ -825,7 +828,7 @@ func _on_anchor_dir_selected(dir_name: String) -> void:
 	_anchor_current_dir = dir_name
 	_anchor_current_frame = 0
 	if _anchor_images.has(dir_name):
-		_anchor_frame_count = _anchor_images[dir_name].get_width() / FRAME_SIZE
+		_anchor_frame_count = _anchor_images[dir_name].get_width() / _export_frame_size
 	else:
 		_anchor_frame_count = 0
 	_update_anchor_display()
@@ -868,11 +871,11 @@ func _enter_anchor_editor() -> void:
 			_append_anchor_log("WARNING: Could not load %s" % file_path)
 
 	if _anchor_images.has("down"):
-		_anchor_frame_count = _anchor_images["down"].get_width() / FRAME_SIZE
+		_anchor_frame_count = _anchor_images["down"].get_width() / _export_frame_size
 	elif not _anchor_images.is_empty():
 		var first_key: String = _anchor_images.keys()[0]
 		_anchor_current_dir = first_key
-		_anchor_frame_count = _anchor_images[first_key].get_width() / FRAME_SIZE
+		_anchor_frame_count = _anchor_images[first_key].get_width() / _export_frame_size
 
 	_append_anchor_log("Frames per direction: %d" % _anchor_frame_count)
 	_append_anchor_log("Note: Re-exporting will overwrite anchor changes.")
@@ -891,7 +894,7 @@ func _update_anchor_display() -> void:
 	anchor_frame_label.text = "%d / %d" % [_anchor_current_frame + 1, _anchor_frame_count]
 
 	var sheet: Image = _anchor_images[_anchor_current_dir]
-	var region := Rect2i(_anchor_current_frame * FRAME_SIZE, 0, FRAME_SIZE, FRAME_SIZE)
+	var region := Rect2i(_anchor_current_frame * _export_frame_size, 0, _export_frame_size, _export_frame_size)
 	var frame_img := sheet.get_region(region)
 
 	# Scan for existing anchor pixels
@@ -929,11 +932,11 @@ func _update_anchor_display() -> void:
 	# Draw grid overlay if enabled
 	if anchor_grid_toggle.button_pressed:
 		var grid_color := Color(1.0, 1.0, 1.0, 0.15)
-		for x in range(0, FRAME_SIZE, 8):
-			for y in range(FRAME_SIZE):
+		for x in range(0, _export_frame_size, 8):
+			for y in range(_export_frame_size):
 				display.set_pixel(x, y, display.get_pixel(x, y).blend(grid_color))
-		for y in range(0, FRAME_SIZE, 8):
-			for x in range(FRAME_SIZE):
+		for y in range(0, _export_frame_size, 8):
+			for x in range(_export_frame_size):
 				display.set_pixel(x, y, display.get_pixel(x, y).blend(grid_color))
 
 	# Draw crosshair markers around anchor pixels for visibility
@@ -1002,10 +1005,10 @@ func _on_anchor_frame_input(event: InputEvent) -> void:
 	if rel_x < 0.0 or rel_x > 1.0 or rel_y < 0.0 or rel_y > 1.0:
 		return
 
-	var pixel_x := int(rel_x * FRAME_SIZE)
-	var pixel_y := int(rel_y * FRAME_SIZE)
-	pixel_x = clampi(pixel_x, 0, FRAME_SIZE - 1)
-	pixel_y = clampi(pixel_y, 0, FRAME_SIZE - 1)
+	var pixel_x := int(rel_x * _export_frame_size)
+	var pixel_y := int(rel_y * _export_frame_size)
+	pixel_x = clampi(pixel_x, 0, _export_frame_size - 1)
+	pixel_y = clampi(pixel_y, 0, _export_frame_size - 1)
 
 	_place_anchor_pixel(pixel_x, pixel_y)
 
@@ -1020,22 +1023,22 @@ func _place_anchor_pixel(x: int, y: int) -> void:
 	match _anchor_tool:
 		"grip":
 			_clear_color_from_frame(sheet, _anchor_current_frame, grip_color)
-			sheet.set_pixel(_anchor_current_frame * FRAME_SIZE + x, y, grip_color)
+			sheet.set_pixel(_anchor_current_frame * _export_frame_size + x, y, grip_color)
 		"direction":
 			_clear_color_from_frame(sheet, _anchor_current_frame, dir_color)
-			sheet.set_pixel(_anchor_current_frame * FRAME_SIZE + x, y, dir_color)
+			sheet.set_pixel(_anchor_current_frame * _export_frame_size + x, y, dir_color)
 		"erase":
-			var pixel := sheet.get_pixel(_anchor_current_frame * FRAME_SIZE + x, y)
+			var pixel := sheet.get_pixel(_anchor_current_frame * _export_frame_size + x, y)
 			if pixel.is_equal_approx(grip_color) or pixel.is_equal_approx(dir_color):
-				sheet.set_pixel(_anchor_current_frame * FRAME_SIZE + x, y, Color.TRANSPARENT)
+				sheet.set_pixel(_anchor_current_frame * _export_frame_size + x, y, Color.TRANSPARENT)
 
 	_update_anchor_display()
 
 
 func _clear_color_from_frame(sheet: Image, frame_idx: int, color: Color) -> void:
-	var start_x := frame_idx * FRAME_SIZE
-	for y in range(FRAME_SIZE):
-		for x in range(start_x, start_x + FRAME_SIZE):
+	var start_x := frame_idx * _export_frame_size
+	for y in range(_export_frame_size):
+		for x in range(start_x, start_x + _export_frame_size):
 			if sheet.get_pixel(x, y).is_equal_approx(color):
 				sheet.set_pixel(x, y, Color.TRANSPARENT)
 
@@ -1050,9 +1053,9 @@ func _on_anchor_copy_to_all() -> void:
 	# Find anchor positions in current frame
 	var grip_pos := Vector2i(-1, -1)
 	var dir_pos := Vector2i(-1, -1)
-	var start_x := _anchor_current_frame * FRAME_SIZE
-	for y in range(FRAME_SIZE):
-		for x in range(start_x, start_x + FRAME_SIZE):
+	var start_x := _anchor_current_frame * _export_frame_size
+	for y in range(_export_frame_size):
+		for x in range(start_x, start_x + _export_frame_size):
 			var pixel := sheet.get_pixel(x, y)
 			if pixel.is_equal_approx(grip_color):
 				grip_pos = Vector2i(x - start_x, y)
@@ -1066,9 +1069,9 @@ func _on_anchor_copy_to_all() -> void:
 		_clear_color_from_frame(sheet, i, grip_color)
 		_clear_color_from_frame(sheet, i, dir_color)
 		if grip_pos.x >= 0:
-			sheet.set_pixel(i * FRAME_SIZE + grip_pos.x, grip_pos.y, grip_color)
+			sheet.set_pixel(i * _export_frame_size + grip_pos.x, grip_pos.y, grip_color)
 		if dir_pos.x >= 0:
-			sheet.set_pixel(i * FRAME_SIZE + dir_pos.x, dir_pos.y, dir_color)
+			sheet.set_pixel(i * _export_frame_size + dir_pos.x, dir_pos.y, dir_color)
 
 	_append_anchor_log("Copied anchors to all %d frames (%s)" % [_anchor_frame_count, _anchor_current_dir])
 	_update_anchor_display()
@@ -1919,6 +1922,7 @@ func _start_export() -> void:
 	next_button.visible = false
 	back_button.disabled = true
 	export_log_label.text = ""
+	_export_frame_size = int(output_height_spin.value)
 
 	var model_name := current_model_path.get_file().get_basename()
 	var anim_name: String = anim_dropdown.get_item_text(anim_dropdown.selected)
@@ -2115,7 +2119,7 @@ func _apply_to_spriteframes() -> void:
 				_append_apply_log("  ERROR: Failed to load: %s" % abs_path)
 				continue
 
-			var frame_count := sheet_image.get_width() / FRAME_SIZE
+			var frame_count := sheet_image.get_width() / _export_frame_size
 			_append_apply_log("  %s: %d frames from %s" % [anim_name, frame_count, sheet_filename])
 
 			# Remove existing animation and recreate
@@ -2130,7 +2134,7 @@ func _apply_to_spriteframes() -> void:
 			for i in range(frame_count):
 				var atlas_tex := AtlasTexture.new()
 				atlas_tex.atlas = sheet_texture
-				atlas_tex.region = Rect2(i * FRAME_SIZE, 0, FRAME_SIZE, FRAME_SIZE)
+				atlas_tex.region = Rect2(i * _export_frame_size, 0, _export_frame_size, _export_frame_size)
 				frames.add_frame(anim_name, atlas_tex)
 
 			total_anims += 1
