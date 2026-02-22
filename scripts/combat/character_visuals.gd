@@ -112,8 +112,6 @@ func _create_shadow_layer() -> void:
 	shadow_sprite.z_index = -2
 	_shadow_material = ShaderMaterial.new()
 	_shadow_material.shader = preload("res://shaders/shadow.gdshader")
-	_shadow_material.set_shader_parameter("shadow_angle", _shadow_angle)
-	_shadow_material.set_shader_parameter("shadow_length", _shadow_length)
 	_shadow_material.set_shader_parameter("shadow_opacity", _shadow_opacity)
 	shadow_sprite.material = _shadow_material
 	add_child(shadow_sprite)
@@ -340,10 +338,12 @@ func _update_shadow(delta: float) -> void:
 	_shadow_length = lerpf(_shadow_length, _target_shadow_length, t)
 	_shadow_opacity = lerpf(_shadow_opacity, _target_shadow_opacity, t)
 
-	# --- Push uniforms to shader ---
+	# --- Position shadow offset from character in shadow direction ---
+	var shadow_dir := Vector2(cos(_shadow_angle), sin(_shadow_angle))
+	shadow_sprite.position = shadow_dir * _shadow_length * 10.0
+
+	# --- Push opacity to shader ---
 	if _shadow_material:
-		_shadow_material.set_shader_parameter("shadow_angle", _shadow_angle)
-		_shadow_material.set_shader_parameter("shadow_length", _shadow_length)
 		_shadow_material.set_shader_parameter("shadow_opacity", _shadow_opacity)
 
 
