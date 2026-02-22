@@ -1786,6 +1786,36 @@ func _apply_unlit_materials(node: Node) -> void:
 		_apply_unlit_materials(child)
 
 
+var _saved_unlit_materials: Array[Dictionary] = []  # [{mesh_instance, surface_idx, material}]
+
+
+func _save_current_materials(node: Node) -> void:
+	## Save all current surface override materials so they can be restored
+	## after the normal capture pass (since _apply_unlit_materials reads
+	## the current material to derive properties, it can't restore after
+	## a ShaderMaterial override).
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var mesh := mesh_instance.mesh
+		if mesh != null:
+			for surface_idx in range(mesh.get_surface_count()):
+				_saved_unlit_materials.append({
+					"mesh_instance": mesh_instance,
+					"surface_idx": surface_idx,
+					"material": mesh_instance.get_surface_override_material(surface_idx),
+				})
+	for child in node.get_children():
+		_save_current_materials(child)
+
+
+func _restore_saved_materials() -> void:
+	## Restore the previously saved surface override materials.
+	for entry in _saved_unlit_materials:
+		var mi: MeshInstance3D = entry["mesh_instance"]
+		mi.set_surface_override_material(entry["surface_idx"], entry["material"])
+	_saved_unlit_materials.clear()
+
+
 func _apply_normal_capture_materials(node: Node) -> void:
 	## Override all mesh materials with the normal capture shader.
 	if node is MeshInstance3D:
@@ -2045,6 +2075,7 @@ func _capture_animation() -> void:
 
 			# --- Normal map pass: same camera position, normal capture materials ---
 			if _normal_capture_material:
+				_save_current_materials(current_model_instance)
 				_apply_normal_capture_materials(current_model_instance)
 				# Re-seek animation (material swap may have caused a frame advance)
 				current_anim_player.play(anim_name)
@@ -2056,8 +2087,8 @@ func _capture_animation() -> void:
 				normal_frame.convert(Image.FORMAT_RGBA8)
 				normal_sheet.blit_rect(normal_frame, Rect2i(0, 0, output_size, output_size), Vector2i(frame_idx * output_size, 0))
 
-				# Restore unlit materials for next color pass
-				_apply_unlit_materials(current_model_instance)
+				# Restore original unlit materials for next color pass
+				_restore_saved_materials()
 
 		_captured_sheets[dir_name] = sheet
 		_captured_normal_sheets[dir_name] = normal_sheet
