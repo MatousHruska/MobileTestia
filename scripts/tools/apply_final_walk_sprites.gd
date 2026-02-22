@@ -107,15 +107,13 @@ func _run() -> void:
 			frames.set_animation_speed(anim_name, fps)
 			frames.set_animation_loop(anim_name, loop)
 
+			# Use AtlasTexture regions from the full sheet instead of cutting individual frames
+			var sheet_texture := ImageTexture.create_from_image(sheet_image)
 			for i in range(frame_count):
-				var frame_image := Image.create(FRAME_SIZE, FRAME_SIZE, false, Image.FORMAT_RGBA8)
-				frame_image.blit_rect(
-					sheet_image,
-					Rect2i(i * FRAME_SIZE, 0, FRAME_SIZE, FRAME_SIZE),
-					Vector2i.ZERO
-				)
-				var texture := ImageTexture.create_from_image(frame_image)
-				frames.add_frame(anim_name, texture)
+				var atlas_tex := AtlasTexture.new()
+				atlas_tex.atlas = sheet_texture
+				atlas_tex.region = Rect2(i * FRAME_SIZE, 0, FRAME_SIZE, FRAME_SIZE)
+				frames.add_frame(anim_name, atlas_tex)
 
 	var err := ResourceSaver.save(frames, SPRITEFRAMES_PATH)
 	if err != OK:
