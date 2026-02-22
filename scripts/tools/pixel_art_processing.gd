@@ -178,3 +178,49 @@ static func color_distance_sq(a: Color, b: Color) -> float:
 	var dg := a.g - b.g
 	var db := a.b - b.b
 	return dr * dr + dg * dg + db * db
+
+
+static func process_normal_map(source: Image, target_height: int, alpha_threshold: int) -> Image:
+	## Process a raw normal map capture: bilinear downscale, alpha threshold,
+	## re-normalize vectors, fill transparent pixels with neutral normal.
+	var result := source.duplicate() as Image
+
+	# Downscale using bilinear interpolation (smooth normals, not pixelated)
+	var scale_factor := float(target_height) / float(result.get_height())
+	var target_width := int(float(result.get_width()) * scale_factor)
+	result.resize(target_width, target_height, Image.INTERPOLATE_BILINEAR)
+
+	# Apply alpha threshold to match color sprite silhouette exactly
+	apply_alpha_threshold(result, alpha_threshold)
+
+	# Re-normalize vectors (bilinear interpolation may denormalize them)
+	# and fill transparent pixels with neutral normal (0.5, 0.5, 1.0)
+	for y in range(result.get_height()):
+		for x in range(result.get_width()):
+			var color := result.get_pixel(x, y)
+			if color.a < 0.5:
+				# Neutral normal facing camera, fully transparent
+				result.set_pixel(x, y, Color(0.5, 0.5, 1.0, 0.0))
+			else:
+				# Decode normal from RGB, normalize, re-encode
+				var nx := color.r * 2.0 - 1.0
+				var ny := color.g * 2.0 - 1.0
+				var nz := color.b * 2.0 - 1.0
+				var length := sqrt(nx * nx + ny * ny + nz * nz)
+				if length > 0.001:
+					nx /= length
+					ny /= length
+					nz /= length
+				else:
+					# Fallback to camera-facing normal
+					nx = 0.0
+					ny = 0.0
+					nz = 1.0
+				result.set_pixel(x, y, Color(
+					nx * 0.5 + 0.5,
+					ny * 0.5 + 0.5,
+					nz * 0.5 + 0.5,
+					1.0
+				))
+
+	return result
