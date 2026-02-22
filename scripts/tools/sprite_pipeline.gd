@@ -623,7 +623,7 @@ func _build_step3(parent: VBoxContainer) -> void:
 		var btn := Button.new()
 		btn.text = mode_name
 		btn.size_flags_horizontal = SIZE_EXPAND_FILL
-		var mode_key := mode_name.to_lower()
+		var mode_key: String = mode_name.to_lower()
 		btn.pressed.connect(func() -> void:
 			_pixel_preview_mode = mode_key
 			_update_pixel_preview()
@@ -990,7 +990,7 @@ func _setup_light_preview() -> void:
 func _on_light_preview_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		if _light_preview_light and _light_preview_container:
-			var local_pos := event.position
+			var local_pos: Vector2 = (event as InputEventMouseMotion).position
 			var container_size := _light_preview_container.size
 			var viewport_size := Vector2(_light_preview_viewport.size)
 			_light_preview_light.position = Vector2(
@@ -999,7 +999,7 @@ func _on_light_preview_input(event: InputEvent) -> void:
 			)
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if _light_preview_light and _light_preview_container:
-			var local_pos := event.position
+			var local_pos: Vector2 = (event as InputEventMouseButton).position
 			var container_size := _light_preview_container.size
 			var viewport_size := Vector2(_light_preview_viewport.size)
 			_light_preview_light.position = Vector2(
@@ -2190,7 +2190,7 @@ func _update_pixel_preview() -> void:
 	if not _captured_sheets.has(_preview_direction):
 		return
 	if show_original_toggle.button_pressed:
-		var source := _captured_sheets[_preview_direction] if _pixel_preview_mode != "normal" else _captured_normal_sheets.get(_preview_direction)
+		var source: Image = _captured_sheets[_preview_direction] if _pixel_preview_mode != "normal" else _captured_normal_sheets.get(_preview_direction)
 		if source:
 			pixel_preview_rect.texture = ImageTexture.create_from_image(source)
 		return
