@@ -76,7 +76,7 @@ var _palette_colors: PackedColorArray = PackedColorArray()
 var _preview_direction := "down"
 
 ## Step 4 state — actual frame size from export (used by Steps 5/6)
-var _export_frame_size := 64
+var _export_frame_size := FRAME_SIZE
 
 ## Step 5 (Anchor Editor) state
 var _anchor_enabled := false

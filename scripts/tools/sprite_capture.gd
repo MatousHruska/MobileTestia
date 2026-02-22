@@ -9,7 +9,7 @@ extends Control
 ## This tool is kept for reference and simple one-off captures.
 ##
 ## Workflow:
-##   1. Drop .glb/.glb files into assets/3d_imports/
+##   1. Drop .glb/.gltf files into assets/3d_imports/
 ##   2. Run scenes/tools/sprite_capture.tscn
 ##   3. Select model, animation, configure settings
 ##   4. Press Export — get {action}_down.png, {action}_up.png, {action}_right.png
