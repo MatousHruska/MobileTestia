@@ -2650,7 +2650,7 @@ func _try_add_export_folder(folder_name: String) -> void:
 	sub_dir.list_dir_begin()
 	var file_name := sub_dir.get_next()
 	while file_name != "":
-		if file_name.ends_with(".png") and not file_name.ends_with(".png.import") and not file_name.ends_with("_normal.png"):
+		if file_name.ends_with(".png") and not file_name.ends_with(".png.import") and not file_name.ends_with("_normal.png") and not file_name.ends_with("_shadow.png"):
 			for dir_info in DIRECTIONS:
 				var dir_name: String = dir_info["name"]
 				if file_name.ends_with("_%s.png" % dir_name):
@@ -2743,6 +2743,14 @@ func _apply_to_spriteframes() -> void:
 			if FileAccess.file_exists(normal_abs_path):
 				normal_image = Image.load_from_file(normal_abs_path)
 
+			# Check for corresponding shadow map
+			var shadow_filename := sheet_filename.get_basename() + "_shadow.png"
+			var shadow_path := "%s/%s/%s" % [OUTPUT_BASE, folder, shadow_filename]
+			var shadow_abs_path := ProjectSettings.globalize_path(shadow_path)
+			var shadow_image: Image = null
+			if FileAccess.file_exists(shadow_abs_path):
+				shadow_image = Image.load_from_file(shadow_abs_path)
+
 			# Build texture: CanvasTexture if normal exists, plain ImageTexture otherwise
 			var sheet_texture := ImageTexture.create_from_image(sheet_image)
 			var atlas_source: Texture2D
@@ -2764,6 +2772,25 @@ func _apply_to_spriteframes() -> void:
 				frames.add_frame(anim_name, atlas_tex)
 
 			total_anims += 1
+
+			# Create shadow animation if shadow map exists
+			if shadow_image:
+				var shadow_anim_name := anim_name + "_shadow"
+				if frames.has_animation(shadow_anim_name):
+					frames.remove_animation(shadow_anim_name)
+				frames.add_animation(shadow_anim_name)
+				frames.set_animation_speed(shadow_anim_name, fps)
+				frames.set_animation_loop(shadow_anim_name, loop)
+
+				var shadow_texture := ImageTexture.create_from_image(shadow_image)
+				for i in range(frame_count):
+					var atlas_tex := AtlasTexture.new()
+					atlas_tex.atlas = shadow_texture
+					atlas_tex.region = Rect2(i * _export_frame_size, 0, _export_frame_size, _export_frame_size)
+					frames.add_frame(shadow_anim_name, atlas_tex)
+
+				_append_apply_log("    + shadow: %s (%s)" % [shadow_filename, shadow_anim_name])
+				total_anims += 1
 
 	var err := ResourceSaver.save(frames, SPRITEFRAMES_PATH)
 	if err != OK:
