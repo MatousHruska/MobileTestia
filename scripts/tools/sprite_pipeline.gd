@@ -2532,7 +2532,7 @@ func _start_export() -> void:
 	for dir_name in _captured_shadow_sheets:
 		_set_status("Processing shadow %s..." % dir_name)
 		# Shadow processing: just downscale + alpha threshold (no dithering/palette/outline)
-		var shadow_source := _captured_shadow_sheets[dir_name]
+		var shadow_source: Image = _captured_shadow_sheets[dir_name]
 		var result := shadow_source.duplicate() as Image
 		var target_height := int(output_height_spin.value)
 		var scale_factor := float(target_height) / float(result.get_height())
@@ -2777,7 +2777,7 @@ func _apply_to_spriteframes() -> void:
 
 			# Create shadow animation if shadow map exists
 			if shadow_image:
-				var shadow_anim_name := anim_name + "_shadow"
+				var shadow_anim_name: String = anim_name + "_shadow"
 				if frames.has_animation(shadow_anim_name):
 					frames.remove_animation(shadow_anim_name)
 				frames.add_animation(shadow_anim_name)
