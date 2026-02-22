@@ -1,4 +1,5 @@
 extends Control
+const PixelArtProcessing = preload("res://scripts/tools/pixel_art_processing.gd")
 ## Pixel Art Converter Tool
 ##
 ## Converts high-res captured spritesheets into pixel art using downscaling,
