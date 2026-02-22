@@ -316,6 +316,11 @@ func _build_step1(parent: VBoxContainer) -> void:
 	camera_elevation_label.text = "30"
 	camera_elevation_label.custom_minimum_size.x = 30
 	elev_hbox.add_child(camera_elevation_label)
+	var elev_hint := Label.new()
+	elev_hint.text = "(default: 30)"
+	elev_hint.add_theme_font_size_override("font_size", 10)
+	elev_hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	camera_settings_container.add_child(elev_hint)
 
 	# Camera zoom
 	camera_settings_container.add_child(_make_label("Camera zoom:"))
@@ -333,6 +338,11 @@ func _build_step1(parent: VBoxContainer) -> void:
 	camera_zoom_label.text = "3.0"
 	camera_zoom_label.custom_minimum_size.x = 40
 	zoom_hbox.add_child(camera_zoom_label)
+	var zoom_hint := Label.new()
+	zoom_hint.text = "(default: 3.0)"
+	zoom_hint.add_theme_font_size_override("font_size", 10)
+	zoom_hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	camera_settings_container.add_child(zoom_hint)
 
 	# Camera target height
 	camera_settings_container.add_child(_make_label("Camera target height:"))
