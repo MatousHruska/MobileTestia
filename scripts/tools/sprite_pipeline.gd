@@ -27,9 +27,9 @@ const PRESETS_DIR := "res://assets/sprites/presets"
 const SPRITEFRAMES_PATH := "res://resources/player_sprites.tres"
 const FRAME_SIZE := 64
 
-## Overscan factor for capture — renders a wider area at the same pixel density,
-## then auto-crops per frame to keep the character centered without clipping.
-## 1.5 = 50% extra area on each side. Set to 1.0 to disable.
+## Overscan factor for detection pass — renders a wider view to find the full
+## character extent, then re-renders at normal zoom with the camera panned
+## to keep the character centered. Character size stays the same.
 const CAPTURE_OVERSCAN := 1.5
 
 ## Known animation folder configs: folder name → {prefix, fps, loop}
@@ -1569,16 +1569,9 @@ func _capture_animation() -> void:
 	var frame_count := int(frame_count_spin.value)
 	var output_size := 512  # Final frame size in pixels
 
-	# Overscan: render a wider area at the same pixel density so limbs that
-	# extend beyond the normal frame don't get clipped.  We then auto-crop
-	# each frame back to output_size centered on the opaque content.
-	var overscan_size := int(output_size * CAPTURE_OVERSCAN)
-
 	var original_vp_size := sub_viewport.size
 	var original_cam_size := camera.size
-	sub_viewport.size = Vector2i(overscan_size, overscan_size)
-	camera.size = original_cam_size * CAPTURE_OVERSCAN
-	_position_camera(camera_elevation_slider.value)
+	var original_cam_target := camera_target
 	preview_container.stretch = false
 
 	var anim := current_anim_player.get_animation(anim_name)
@@ -1611,14 +1604,36 @@ func _capture_animation() -> void:
 				seek_time = (float(frame_idx) / float(frame_count)) * anim_length
 			current_anim_player.play(anim_name)
 			current_anim_player.seek(seek_time, true)
+
+			# --- Detection pass: wide-angle render to find character extent ---
+			var detect_size := int(output_size * CAPTURE_OVERSCAN)
+			sub_viewport.size = Vector2i(detect_size, detect_size)
+			camera.size = original_cam_size * CAPTURE_OVERSCAN
+			camera_target = original_cam_target
+			_position_camera(camera_elevation_slider.value)
 			await RenderingServer.frame_post_draw
 			await RenderingServer.frame_post_draw
 
-			var raw_frame := sub_viewport.get_texture().get_image()
-			raw_frame.convert(Image.FORMAT_RGBA8)
+			var detect_img := sub_viewport.get_texture().get_image()
+			detect_img.convert(Image.FORMAT_RGBA8)
 
-			# Auto-crop: find opaque bounding box and center a output_size crop on it
-			var frame_image := _autocrop_frame(raw_frame, output_size)
+			# Find bounding box center offset from viewport center
+			var cam_shift := _compute_camera_pan(detect_img, detect_size, original_cam_size * CAPTURE_OVERSCAN)
+
+			# --- Final pass: normal zoom with camera panned to center character ---
+			sub_viewport.size = Vector2i(output_size, output_size)
+			camera.size = original_cam_size
+			camera_target = original_cam_target + cam_shift
+			_position_camera(camera_elevation_slider.value)
+
+			# Re-seek the animation to the same time (detection pass may have advanced it)
+			current_anim_player.play(anim_name)
+			current_anim_player.seek(seek_time, true)
+			await RenderingServer.frame_post_draw
+			await RenderingServer.frame_post_draw
+
+			var frame_image := sub_viewport.get_texture().get_image()
+			frame_image.convert(Image.FORMAT_RGBA8)
 			sheet.blit_rect(frame_image, Rect2i(0, 0, output_size, output_size), Vector2i(frame_idx * output_size, 0))
 
 		_captured_sheets[dir_name] = sheet
@@ -1638,24 +1653,25 @@ func _capture_animation() -> void:
 		var global_path := ProjectSettings.globalize_path(file_path)
 		_captured_sheets[dir_name].save_png(global_path)
 
-	# Reset model rotation and camera
+	# Restore camera and viewport
 	if current_model_instance is Node3D:
 		(current_model_instance as Node3D).rotation_degrees.y = 0.0
 
 	sub_viewport.size = original_vp_size
 	camera.size = original_cam_size
+	camera_target = original_cam_target
 	_position_camera(camera_elevation_slider.value)
 	preview_container.stretch = true
 
 	_set_status("Captured all 3 directions. Review and click Next.")
 
 
-func _autocrop_frame(raw: Image, crop_size: int) -> Image:
-	## Find the bounding box of opaque pixels in the overscan frame, then return
-	## a crop_size x crop_size image centered on that bounding box.  If nothing
-	## is opaque, returns a centered crop (same as no overscan).
-	var w := raw.get_width()
-	var h := raw.get_height()
+func _compute_camera_pan(detect_img: Image, detect_size: int, detect_cam_size: float) -> Vector3:
+	## Given a detection-pass render (wider view), find the bounding box of opaque
+	## pixels and compute a world-space camera shift to center the character.
+	## Returns Vector3.ZERO if no shift is needed.
+	var w := detect_img.get_width()
+	var h := detect_img.get_height()
 	var min_x := w
 	var min_y := h
 	var max_x := 0
@@ -1663,7 +1679,7 @@ func _autocrop_frame(raw: Image, crop_size: int) -> Image:
 
 	for y in range(h):
 		for x in range(w):
-			if raw.get_pixel(x, y).a > 0.1:
+			if detect_img.get_pixel(x, y).a > 0.1:
 				if x < min_x:
 					min_x = x
 				if x > max_x:
@@ -1673,18 +1689,29 @@ func _autocrop_frame(raw: Image, crop_size: int) -> Image:
 				if y > max_y:
 					max_y = y
 
-	# No opaque pixels — return center crop
+	# No opaque pixels — no shift needed
 	if max_x < min_x:
-		var ofs := (w - crop_size) / 2
-		return raw.get_region(Rect2i(ofs, ofs, crop_size, crop_size))
+		return Vector3.ZERO
 
-	# Center the crop on the bounding box center
-	var center_x := (min_x + max_x) / 2
-	var center_y := (min_y + max_y) / 2
-	var crop_x := clampi(center_x - crop_size / 2, 0, w - crop_size)
-	var crop_y := clampi(center_y - crop_size / 2, 0, h - crop_size)
+	# Bounding box center offset from viewport center (in pixels)
+	var center_px_x := (min_x + max_x) / 2.0
+	var center_px_y := (min_y + max_y) / 2.0
+	var offset_px_x := center_px_x - detect_size / 2.0
+	var offset_px_y := center_px_y - detect_size / 2.0
 
-	return raw.get_region(Rect2i(crop_x, crop_y, crop_size, crop_size))
+	# If offset is small (character is already centered), skip the shift
+	var threshold := detect_size * 0.02  # ~2% of viewport = no meaningful shift
+	if absf(offset_px_x) < threshold and absf(offset_px_y) < threshold:
+		return Vector3.ZERO
+
+	# Convert pixel offset to world units using the camera's orientation.
+	# For orthogonal camera: 1 pixel = cam_size / viewport_size world units.
+	var world_per_pixel := detect_cam_size / float(detect_size)
+	var cam_right := camera.global_transform.basis.x
+	var cam_up := camera.global_transform.basis.y
+
+	# Screen-right = camera-right, screen-down = negative camera-up
+	return cam_right * (offset_px_x * world_per_pixel) - cam_up * (offset_px_y * world_per_pixel)
 
 
 #===============================================================================
