@@ -2396,8 +2396,26 @@ func _start_export() -> void:
 		_append_log("Saved: %s" % output_path)
 		count += 1
 
-	_append_log("\nExported %d files to %s/" % [count, output_dir])
-	_set_status("Export complete! %d files saved." % count)
+	# Export normal maps
+	var normal_count := 0
+	for dir_name in _captured_normal_sheets:
+		_set_status("Processing normal map %s..." % dir_name)
+		var processed_normal := PixelArtProcessing.process_normal_map(
+			_captured_normal_sheets[dir_name],
+			int(output_height_spin.value),
+			int(alpha_threshold_slider.value)
+		)
+		var output_path := "%s/%s_%s_normal.png" % [output_dir, safe_anim_name, dir_name]
+		var global_path := ProjectSettings.globalize_path(output_path)
+		var err := processed_normal.save_png(global_path)
+		if err != OK:
+			_append_log("ERROR: Failed to save normal map %s" % output_path)
+			continue
+		_append_log("Saved normal: %s" % output_path)
+		normal_count += 1
+
+	_append_log("\nExported %d color + %d normal files to %s/" % [count, normal_count, output_dir])
+	_set_status("Export complete! %d files saved." % (count + normal_count))
 	_exported_folder = model_name
 	back_button.disabled = false
 	next_button.visible = true
