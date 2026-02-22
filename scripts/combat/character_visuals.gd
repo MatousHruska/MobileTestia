@@ -77,12 +77,12 @@ const SHADOW_TRANSITION_SPEED := 3.3
 ## Shadow appearance ranges (based on light distance)
 const SHADOW_CLOSE_DISTANCE := 64.0
 const SHADOW_FAR_DISTANCE := 512.0
-const SHADOW_CLOSE_OPACITY := 0.75
-const SHADOW_FAR_OPACITY := 0.15
-const SHADOW_NO_LIGHT_OPACITY := 0.12
-const SHADOW_CLOSE_SCALE := 0.8
-const SHADOW_FAR_SCALE := 1.3
-const SHADOW_NO_LIGHT_SCALE := 1.3
+const SHADOW_CLOSE_OPACITY := 0.1
+const SHADOW_FAR_OPACITY := 0.6
+const SHADOW_NO_LIGHT_OPACITY := 0.5
+const SHADOW_CLOSE_SCALE := 0.7
+const SHADOW_FAR_SCALE := 1.0
+const SHADOW_NO_LIGHT_SCALE := 1.0
 
 ## Current shadow targets (for lerping)
 var _shadow_target_opacity := SHADOW_NO_LIGHT_OPACITY
