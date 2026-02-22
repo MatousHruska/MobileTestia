@@ -9,7 +9,6 @@ extends Node2D
 ##
 ## Node tree (created in code):
 ##   CharacterVisuals (Node2D)
-##     +-- ShadowSprite   (AnimatedSprite2D, z_index=-2, shadow shader)
 ##     +-- WeaponSprite    (Sprite2D)
 ##     +-- EffectAnchor    (Node2D)
 ##     +-- OverlaySprite   (AnimatedSprite2D)
@@ -36,10 +35,6 @@ var effect_anchor: Node2D = null
 ## Overlay for flashes/shields
 var overlay_sprite: AnimatedSprite2D = null
 
-## Shadow layer
-var shadow_sprite: AnimatedSprite2D = null
-var _shadow_material: ShaderMaterial = null
-
 #===============================================================================
 # DIRECTION STATE
 #===============================================================================
@@ -47,34 +42,6 @@ var _shadow_material: ShaderMaterial = null
 ## Current facing direction ("down", "up", "right" — left uses right + flip)
 var current_direction: String = "down"
 var is_flipped: bool = false
-
-#===============================================================================
-# SHADOW / LIGHT STATE
-#===============================================================================
-
-## Light detection search radius in pixels
-const LIGHT_SEARCH_RADIUS := 512.0
-
-## Lerp speed for smooth shadow transitions (~0.3s to settle)
-const SHADOW_TRANSITION_SPEED := 3.3
-
-## Pixel scale for shadow projection distance
-const SHADOW_PROJECTION_SCALE := 20.0
-
-## Ambient fallback: down-right at 45 degrees
-const AMBIENT_SHADOW_ANGLE := PI / 4.0
-const AMBIENT_SHADOW_LENGTH := 0.6
-const AMBIENT_SHADOW_OPACITY := 0.25
-
-## Current (lerped) shadow parameters
-var _shadow_angle: float = AMBIENT_SHADOW_ANGLE
-var _shadow_length: float = AMBIENT_SHADOW_LENGTH
-var _shadow_opacity: float = AMBIENT_SHADOW_OPACITY
-
-## Target shadow parameters (set each frame, lerped toward)
-var _target_shadow_angle: float = AMBIENT_SHADOW_ANGLE
-var _target_shadow_length: float = AMBIENT_SHADOW_LENGTH
-var _target_shadow_opacity: float = AMBIENT_SHADOW_OPACITY
 
 #===============================================================================
 # WEAPON ANCHOR
@@ -97,7 +64,6 @@ const WEAPON_DIRECTION_COLOR := Color("#00FFFF")
 ## weapon/effect/overlay as children of this node.
 func initialize(body: AnimatedSprite2D) -> void:
 	body_sprite = body
-	_create_shadow_layer()
 	_create_weapon_layer()
 	_create_effect_anchor()
 	_create_overlay_layer()
@@ -108,17 +74,6 @@ func initialize(body: AnimatedSprite2D) -> void:
 #===============================================================================
 # LAYER CREATION
 #===============================================================================
-
-func _create_shadow_layer() -> void:
-	shadow_sprite = AnimatedSprite2D.new()
-	shadow_sprite.name = "ShadowSprite"
-	shadow_sprite.z_index = -2
-	_shadow_material = ShaderMaterial.new()
-	_shadow_material.shader = preload("res://shaders/shadow.gdshader")
-	_shadow_material.set_shader_parameter("shadow_opacity", _shadow_opacity)
-	shadow_sprite.material = _shadow_material
-	add_child(shadow_sprite)
-
 
 func _create_weapon_layer() -> void:
 	weapon_sprite = Sprite2D.new()
@@ -146,7 +101,7 @@ func _create_overlay_layer() -> void:
 # PER-FRAME UPDATE
 #===============================================================================
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if body_sprite == null:
 		return
 
@@ -160,7 +115,6 @@ func _process(delta: float) -> void:
 		effect_anchor.position = grip + _get_blade_tip_offset(grip)
 
 	_update_weapon_position(anchors)
-	_update_shadow(delta)
 
 
 func _update_weapon_position(anchors: Dictionary) -> void:
@@ -279,100 +233,6 @@ func _get_blade_tip_offset(_anchor: Vector2) -> Vector2:
 		offset.x = -offset.x
 
 	return offset
-
-
-#===============================================================================
-# SHADOW UPDATE
-#===============================================================================
-
-func _update_shadow(delta: float) -> void:
-	if shadow_sprite == null or body_sprite == null:
-		return
-
-	# Sync SpriteFrames reference (handles late assignment)
-	if body_sprite.sprite_frames and shadow_sprite.sprite_frames != body_sprite.sprite_frames:
-		shadow_sprite.sprite_frames = body_sprite.sprite_frames
-
-	# Mirror body animation, frame, and flip each frame
-	if shadow_sprite.sprite_frames:
-		var anim := body_sprite.animation
-		if shadow_sprite.sprite_frames.has_animation(anim):
-			if shadow_sprite.animation != anim:
-				shadow_sprite.animation = anim
-			shadow_sprite.frame = body_sprite.frame
-	shadow_sprite.flip_h = body_sprite.flip_h
-
-	# --- Light detection ---
-	var char_global_pos := global_position
-	var nearest_light: PointLight2D = null
-	var nearest_dist := LIGHT_SEARCH_RADIUS
-
-	for light in get_tree().get_nodes_in_group("lights"):
-		if not light is PointLight2D:
-			continue
-		var dist := char_global_pos.distance_to(light.global_position)
-		if dist < nearest_dist:
-			nearest_dist = dist
-			nearest_light = light as PointLight2D
-
-	# --- Calculate target shadow parameters ---
-	if nearest_light:
-		var light_pos := nearest_light.global_position
-		var max_dist := float(nearest_light.get_meta("light_radius", LIGHT_SEARCH_RADIUS))
-		var norm_dist := clampf(nearest_dist / max_dist, 0.0, 1.0)
-
-		# Shadow points away from the light
-		_target_shadow_angle = atan2(
-			char_global_pos.y - light_pos.y,
-			char_global_pos.x - light_pos.x
-		)
-		# Closer light → longer shadow, higher opacity
-		_target_shadow_length = lerpf(1.5, 0.3, norm_dist)
-		_target_shadow_opacity = lerpf(0.5, 0.1, norm_dist)
-	else:
-		# Ambient fallback: subtle down-right shadow
-		_target_shadow_angle = AMBIENT_SHADOW_ANGLE
-		_target_shadow_length = AMBIENT_SHADOW_LENGTH
-		_target_shadow_opacity = AMBIENT_SHADOW_OPACITY
-
-	# --- Smooth transition (~0.3s) ---
-	var t := clampf(delta * SHADOW_TRANSITION_SPEED, 0.0, 1.0)
-	_shadow_angle = lerp_angle(_shadow_angle, _target_shadow_angle, t)
-	_shadow_length = lerpf(_shadow_length, _target_shadow_length, t)
-	_shadow_opacity = lerpf(_shadow_opacity, _target_shadow_opacity, t)
-
-	# --- Build shadow projection transform ---
-	# The shadow silhouette stretches FROM the character's feet ALONG shadow_dir.
-	# We rebuild the sprite's coordinate axes so:
-	#   X basis = perpendicular to shadow (preserves silhouette width)
-	#   Y basis = along shadow direction (projects height into shadow length)
-	#   Origin  = offset so feet anchor at the character's position
-	var shadow_dir := Vector2(cos(_shadow_angle), sin(_shadow_angle))
-	var perp := Vector2(-shadow_dir.y, shadow_dir.x)
-
-	# Get actual sprite half-height for accurate projection
-	var half_h := 16.0
-	if shadow_sprite.sprite_frames and shadow_sprite.sprite_frames.has_animation(shadow_sprite.animation):
-		var frame_tex := shadow_sprite.sprite_frames.get_frame_texture(
-			shadow_sprite.animation, shadow_sprite.frame
-		)
-		if frame_tex:
-			half_h = frame_tex.get_height() / 2.0
-
-	var projection_dist := _shadow_length * SHADOW_PROJECTION_SCALE
-	var sprite_height := half_h * 2.0
-
-	var x_basis := perp
-	var y_basis := -shadow_dir * (projection_dist / sprite_height)
-	# Anchor feet at the bottom of the sprite (0, half_h), not the center
-	var feet_offset := Vector2(0.0, half_h)
-	var origin := feet_offset + shadow_dir * (projection_dist / 2.0)
-
-	shadow_sprite.transform = Transform2D(x_basis, y_basis, origin)
-
-	# --- Push opacity to shader ---
-	if _shadow_material:
-		_shadow_material.set_shader_parameter("shadow_opacity", _shadow_opacity)
 
 
 #===============================================================================
