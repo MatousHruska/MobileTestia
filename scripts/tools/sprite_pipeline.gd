@@ -1715,32 +1715,8 @@ func _compute_camera_pan(detect_img: Image, detect_size: int, detect_cam_size: f
 
 
 #===============================================================================
-# IMAGE PROCESSING (Step 3)
+# IMAGE PROCESSING (Step 3) — delegates to PixelArtProcessing utility
 #===============================================================================
-
-const BAYER_2X2 := [
-	[0.0, 2.0],
-	[3.0, 1.0],
-]
-
-const BAYER_4X4 := [
-	[ 0.0,  8.0,  2.0, 10.0],
-	[12.0,  4.0, 14.0,  6.0],
-	[ 3.0, 11.0,  1.0,  9.0],
-	[15.0,  7.0, 13.0,  5.0],
-]
-
-const BAYER_8X8 := [
-	[ 0.0, 32.0,  8.0, 40.0,  2.0, 34.0, 10.0, 42.0],
-	[48.0, 16.0, 56.0, 24.0, 50.0, 18.0, 58.0, 26.0],
-	[12.0, 44.0,  4.0, 36.0, 14.0, 46.0,  6.0, 38.0],
-	[60.0, 28.0, 52.0, 20.0, 62.0, 30.0, 54.0, 22.0],
-	[ 3.0, 35.0, 11.0, 43.0,  1.0, 33.0,  9.0, 41.0],
-	[51.0, 19.0, 59.0, 27.0, 49.0, 17.0, 57.0, 25.0],
-	[15.0, 47.0,  7.0, 39.0, 13.0, 45.0,  5.0, 37.0],
-	[63.0, 31.0, 55.0, 23.0, 61.0, 29.0, 53.0, 21.0],
-]
-
 
 func _process_image(source: Image) -> Image:
 	var result := source.duplicate() as Image
@@ -1750,175 +1726,23 @@ func _process_image(source: Image) -> Image:
 	var target_width := int(float(result.get_width()) * scale_factor)
 	result.resize(target_width, target_height, Image.INTERPOLATE_NEAREST)
 
-	_apply_alpha_threshold(result, int(alpha_threshold_slider.value))
+	PixelArtProcessing.apply_alpha_threshold(result, int(alpha_threshold_slider.value))
 
 	if dithering_toggle.button_pressed:
-		_apply_ordered_dithering(result, dithering_strength_slider.value, dithering_pattern_dropdown.selected)
+		PixelArtProcessing.apply_ordered_dithering(result, dithering_strength_slider.value, dithering_pattern_dropdown.selected)
 
 	if not _palette_colors.is_empty():
-		_apply_palette_mapping(result)
+		PixelArtProcessing.apply_palette_mapping(result, _palette_colors)
 	elif dithering_toggle.button_pressed:
-		_apply_auto_quantize(result)
+		PixelArtProcessing.apply_auto_quantize(result)
 
 	if outline_toggle.button_pressed:
-		_apply_outline(result, outline_color_picker.color)
+		PixelArtProcessing.apply_outline(result, outline_color_picker.color)
 
 	if denoising_toggle.button_pressed:
-		_apply_denoising(result, int(denoising_min_cluster_spin.value))
+		PixelArtProcessing.apply_denoising(result, int(denoising_min_cluster_spin.value))
 
 	return result
-
-
-func _apply_alpha_threshold(image: Image, threshold: int) -> void:
-	for y in range(image.get_height()):
-		for x in range(image.get_width()):
-			var color := image.get_pixel(x, y)
-			if int(color.a * 255.0) >= threshold:
-				color.a = 1.0
-			else:
-				color.a = 0.0
-			image.set_pixel(x, y, color)
-
-
-func _apply_ordered_dithering(image: Image, strength: float, pattern_index: int) -> void:
-	var matrix: Array
-	var matrix_size: int
-	var matrix_max: float
-	match pattern_index:
-		0:
-			matrix = BAYER_2X2
-			matrix_size = 2
-			matrix_max = 4.0
-		1:
-			matrix = BAYER_4X4
-			matrix_size = 4
-			matrix_max = 16.0
-		2:
-			matrix = BAYER_8X8
-			matrix_size = 8
-			matrix_max = 64.0
-		_:
-			return
-
-	for y in range(image.get_height()):
-		for x in range(image.get_width()):
-			var color := image.get_pixel(x, y)
-			if color.a < 0.5:
-				continue
-			var threshold: float = (matrix[y % matrix_size][x % matrix_size] / matrix_max - 0.5) * strength
-			color.r = clampf(color.r + threshold, 0.0, 1.0)
-			color.g = clampf(color.g + threshold, 0.0, 1.0)
-			color.b = clampf(color.b + threshold, 0.0, 1.0)
-			image.set_pixel(x, y, color)
-
-
-func _apply_palette_mapping(image: Image) -> void:
-	if _palette_colors.is_empty():
-		return
-	for y in range(image.get_height()):
-		for x in range(image.get_width()):
-			var color := image.get_pixel(x, y)
-			if color.a < 0.5:
-				continue
-			var nearest := _find_nearest_palette_color(color)
-			nearest.a = 1.0
-			image.set_pixel(x, y, nearest)
-
-
-func _apply_auto_quantize(image: Image) -> void:
-	## Snap each RGB channel to 5-bit precision (32 levels) to make dithering visible
-	## without an explicit palette.
-	for y in range(image.get_height()):
-		for x in range(image.get_width()):
-			var color := image.get_pixel(x, y)
-			if color.a < 0.5:
-				continue
-			color.r = snappedf(color.r, 1.0 / 31.0)
-			color.g = snappedf(color.g, 1.0 / 31.0)
-			color.b = snappedf(color.b, 1.0 / 31.0)
-			image.set_pixel(x, y, color)
-
-
-func _find_nearest_palette_color(target: Color) -> Color:
-	var best_color := _palette_colors[0]
-	var best_dist := _color_distance_sq(target, best_color)
-	for i in range(1, _palette_colors.size()):
-		var dist := _color_distance_sq(target, _palette_colors[i])
-		if dist < best_dist:
-			best_dist = dist
-			best_color = _palette_colors[i]
-	return best_color
-
-
-func _color_distance_sq(a: Color, b: Color) -> float:
-	var dr := a.r - b.r
-	var dg := a.g - b.g
-	var db := a.b - b.b
-	return dr * dr + dg * dg + db * db
-
-
-func _apply_outline(image: Image, outline_color: Color) -> void:
-	var width := image.get_width()
-	var height := image.get_height()
-	var outline_pixels: Array[Vector2i] = []
-
-	for y in range(height):
-		for x in range(width):
-			var color := image.get_pixel(x, y)
-			if color.a >= 0.5:
-				continue
-			var has_opaque_neighbor := false
-			if x > 0 and image.get_pixel(x - 1, y).a >= 0.5:
-				has_opaque_neighbor = true
-			elif x < width - 1 and image.get_pixel(x + 1, y).a >= 0.5:
-				has_opaque_neighbor = true
-			elif y > 0 and image.get_pixel(x, y - 1).a >= 0.5:
-				has_opaque_neighbor = true
-			elif y < height - 1 and image.get_pixel(x, y + 1).a >= 0.5:
-				has_opaque_neighbor = true
-			if has_opaque_neighbor:
-				outline_pixels.append(Vector2i(x, y))
-
-	for pos in outline_pixels:
-		image.set_pixel(pos.x, pos.y, outline_color)
-
-
-func _apply_denoising(image: Image, min_cluster_size: int) -> void:
-	var width := image.get_width()
-	var height := image.get_height()
-	var visited := {}
-
-	for y in range(height):
-		for x in range(width):
-			var pos := Vector2i(x, y)
-			if visited.has(pos):
-				continue
-			var color := image.get_pixel(x, y)
-			if color.a < 0.5:
-				visited[pos] = true
-				continue
-
-			var cluster: Array[Vector2i] = []
-			var queue: Array[Vector2i] = [pos]
-			while not queue.is_empty():
-				var current: Vector2i = queue.pop_back()
-				if visited.has(current):
-					continue
-				if current.x < 0 or current.x >= width or current.y < 0 or current.y >= height:
-					continue
-				if image.get_pixel(current.x, current.y).a < 0.5:
-					visited[current] = true
-					continue
-				visited[current] = true
-				cluster.append(current)
-				queue.append(Vector2i(current.x + 1, current.y))
-				queue.append(Vector2i(current.x - 1, current.y))
-				queue.append(Vector2i(current.x, current.y + 1))
-				queue.append(Vector2i(current.x, current.y - 1))
-
-			if cluster.size() < min_cluster_size:
-				for pixel_pos in cluster:
-					image.set_pixel(pixel_pos.x, pixel_pos.y, Color.TRANSPARENT)
 
 
 #===============================================================================
@@ -2039,7 +1863,7 @@ func _on_generate_palette_pressed() -> void:
 		var scale_factor := float(target_height) / float(img.get_height())
 		var target_width := int(float(img.get_width()) * scale_factor)
 		img.resize(target_width, target_height, Image.INTERPOLATE_NEAREST)
-		_apply_alpha_threshold(img, int(alpha_threshold_slider.value))
+		PixelArtProcessing.apply_alpha_threshold(img, int(alpha_threshold_slider.value))
 
 		for y in range(img.get_height()):
 			for x in range(img.get_width()):
