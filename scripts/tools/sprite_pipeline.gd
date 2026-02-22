@@ -26,38 +26,15 @@ const PRESETS_DIR := "res://assets/sprites/presets"
 const SPRITEFRAMES_PATH := "res://resources/player_sprites.tres"
 const FRAME_SIZE := 64
 
-const APPLY_ANIM_GROUPS := [
-	{
-		"folder": "Idle",
-		"fps": 10,
-		"loop": true,
-		"sheets": {
-			"idle_down": "mixamo_com_down.png",
-			"idle_up": "mixamo_com_up.png",
-			"idle_right": "mixamo_com_right.png",
-		},
-	},
-	{
-		"folder": "Walking",
-		"fps": 15,
-		"loop": true,
-		"sheets": {
-			"walk_down": "mixamo_com_down.png",
-			"walk_up": "mixamo_com_up.png",
-			"walk_right": "mixamo_com_right.png",
-		},
-	},
-	{
-		"folder": "Slash",
-		"fps": 20,
-		"loop": false,
-		"sheets": {
-			"attack_down": "mixamo_com_down.png",
-			"attack_up": "mixamo_com_up.png",
-			"attack_right": "mixamo_com_right.png",
-		},
-	},
-]
+## Known animation folder configs: folder name → {prefix, fps, loop}
+## Folders not listed here auto-derive prefix from folder name lowercased.
+const KNOWN_ANIM_CONFIG := {
+	"Idle": {"prefix": "idle", "fps": 10, "loop": true},
+	"Walking": {"prefix": "walk", "fps": 15, "loop": true},
+	"Slash": {"prefix": "attack", "fps": 20, "loop": false},
+}
+const DEFAULT_APPLY_FPS := 15
+const DEFAULT_APPLY_LOOP := false
 
 const ANIMS_TO_REMOVE := [
 	"melee_windup_down", "melee_windup_up", "melee_windup_right",
@@ -91,6 +68,9 @@ var _captured_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": 
 ## Step 3 state
 var _palette_colors: PackedColorArray = PackedColorArray()
 var _preview_direction := "down"
+
+## Step 5 state
+var _apply_groups: Array = []  # Dynamically scanned from OUTPUT_BASE folders
 
 ## Preset
 var _current_preset: Dictionary = {}
@@ -149,6 +129,7 @@ var export_log_label: Label
 # Step 5 nodes
 var apply_log_label: Label
 var apply_button: Button
+var apply_summary_container: VBoxContainer
 
 # Shared
 var status_label: Label
@@ -692,18 +673,11 @@ func _build_step5(parent: VBoxContainer) -> void:
 
 	parent.add_child(HSeparator.new())
 
-	# Animation groups summary
+	# Dynamic summary — rebuilt when entering Step 5
 	parent.add_child(_make_label("Animations to apply:"))
-	for group in APPLY_ANIM_GROUPS:
-		var folder: String = group["folder"]
-		var fps: int = group["fps"]
-		var loop: bool = group["loop"]
-		var sheets: Dictionary = group["sheets"]
-		var anim_names := ", ".join(sheets.keys())
-		var summary := Label.new()
-		summary.text = "  %s (fps=%d, loop=%s): %s" % [folder, fps, loop, anim_names]
-		summary.add_theme_font_size_override("font_size", 12)
-		parent.add_child(summary)
+	apply_summary_container = VBoxContainer.new()
+	apply_summary_container.add_theme_constant_override("separation", 2)
+	parent.add_child(apply_summary_container)
 
 	var remove_label := Label.new()
 	remove_label.text = "Will remove: %s" % ", ".join(ANIMS_TO_REMOVE)
@@ -772,7 +746,7 @@ func _go_to_step(step: int) -> void:
 		3:
 			_start_export()
 		4:
-			pass  # User clicks Apply manually
+			_scan_export_folders()
 
 
 func _on_next_pressed() -> void:
@@ -1639,10 +1613,95 @@ func _on_done_pressed() -> void:
 # APPLY TO SPRITEFRAMES (Step 5)
 #===============================================================================
 
+func _scan_export_folders() -> void:
+	_apply_groups.clear()
+	for child in apply_summary_container.get_children():
+		child.queue_free()
+	apply_log_label.text = ""
+
+	var global_dir := ProjectSettings.globalize_path(OUTPUT_BASE)
+	var dir := DirAccess.open(global_dir)
+	if dir == null:
+		apply_summary_container.add_child(_make_label("  (no export folder found)"))
+		apply_button.disabled = true
+		return
+
+	dir.list_dir_begin()
+	var folder_name := dir.get_next()
+	while folder_name != "":
+		if dir.current_is_dir() and not folder_name.begins_with("."):
+			_try_add_export_folder(folder_name)
+		folder_name = dir.get_next()
+	dir.list_dir_end()
+
+	if _apply_groups.is_empty():
+		apply_summary_container.add_child(_make_label("  (no exported sheets found)"))
+		apply_button.disabled = true
+	else:
+		apply_button.disabled = false
+		# Build summary labels
+		for group in _apply_groups:
+			var anim_names := ", ".join((group["sheets"] as Dictionary).keys())
+			var summary := Label.new()
+			summary.text = "  %s (fps=%d, loop=%s): %s" % [group["folder"], group["fps"], group["loop"], anim_names]
+			summary.add_theme_font_size_override("font_size", 12)
+			apply_summary_container.add_child(summary)
+		_set_status("Found %d animation group(s). Click Apply when ready." % _apply_groups.size())
+
+
+func _try_add_export_folder(folder_name: String) -> void:
+	var folder_path := "%s/%s" % [OUTPUT_BASE, folder_name]
+	var global_folder := ProjectSettings.globalize_path(folder_path)
+	var sub_dir := DirAccess.open(global_folder)
+	if sub_dir == null:
+		return
+
+	# Find sheets for each direction
+	var direction_files := {}  # "down" -> "filename.png"
+	sub_dir.list_dir_begin()
+	var file_name := sub_dir.get_next()
+	while file_name != "":
+		if file_name.ends_with(".png") and not file_name.ends_with(".png.import"):
+			for dir_info in DIRECTIONS:
+				var dir_name: String = dir_info["name"]
+				if file_name.ends_with("_%s.png" % dir_name):
+					direction_files[dir_name] = file_name
+					break
+		file_name = sub_dir.get_next()
+	sub_dir.list_dir_end()
+
+	if direction_files.is_empty():
+		return
+
+	# Determine animation config from known mappings or auto-derive
+	var config: Dictionary = KNOWN_ANIM_CONFIG.get(folder_name, {})
+	var prefix: String = config.get("prefix", folder_name.to_lower())
+	var fps: int = config.get("fps", DEFAULT_APPLY_FPS)
+	var loop: bool = config.get("loop", DEFAULT_APPLY_LOOP)
+
+	# Build sheets mapping: {anim_name -> filename}
+	var sheets := {}
+	for dir_name in direction_files:
+		sheets["%s_%s" % [prefix, dir_name]] = direction_files[dir_name]
+
+	_apply_groups.append({
+		"folder": folder_name,
+		"fps": fps,
+		"loop": loop,
+		"sheets": sheets,
+	})
+
+
 func _apply_to_spriteframes() -> void:
 	apply_button.disabled = true
 	apply_log_label.text = ""
 	_set_status("Applying sprite sheets to SpriteFrames...")
+
+	if _apply_groups.is_empty():
+		_append_apply_log("ERROR: No animation groups to apply.")
+		_set_status("Apply failed — no groups found.")
+		apply_button.disabled = false
+		return
 
 	var frames := ResourceLoader.load(SPRITEFRAMES_PATH, "", ResourceLoader.CACHE_MODE_IGNORE) as SpriteFrames
 	if frames == null:
@@ -1659,7 +1718,7 @@ func _apply_to_spriteframes() -> void:
 			_append_apply_log("  Removed: %s" % anim_name)
 
 	var total_anims := 0
-	for group in APPLY_ANIM_GROUPS:
+	for group in _apply_groups:
 		var folder: String = group["folder"]
 		var fps: int = group["fps"]
 		var loop: bool = group["loop"]
