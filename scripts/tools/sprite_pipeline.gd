@@ -1,5 +1,4 @@
 extends Control
-const PixelArtProcessing = preload("res://scripts/tools/pixel_art_processing.gd")
 ## Sprite Pipeline Wizard
 ##
 ## Unified tool that chains 3D sprite capture and pixel art conversion
