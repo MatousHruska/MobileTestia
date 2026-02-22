@@ -560,6 +560,14 @@ func _build_step2(parent: VBoxContainer) -> void:
 		_update_capture_preview()
 	)
 	mode_hbox.add_child(normal_btn)
+	var shadow_btn := Button.new()
+	shadow_btn.text = "Shadow"
+	shadow_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	shadow_btn.pressed.connect(func() -> void:
+		_capture_preview_mode = "shadow"
+		_update_capture_preview()
+	)
+	mode_hbox.add_child(shadow_btn)
 
 	parent.add_child(_make_label("Capturing 3 directions..."))
 
@@ -2235,7 +2243,16 @@ func _compute_camera_pan(detect_img: Image, detect_size: int, detect_cam_size: f
 
 
 func _update_capture_preview() -> void:
-	var sheets := _captured_sheets if _capture_preview_mode == "color" else _captured_normal_sheets
+	var sheets: Dictionary
+	match _capture_preview_mode:
+		"color":
+			sheets = _captured_sheets
+		"normal":
+			sheets = _captured_normal_sheets
+		"shadow":
+			sheets = _captured_shadow_sheets
+		_:
+			sheets = _captured_sheets
 	var rects := [capture_down_rect, capture_up_rect, capture_right_rect]
 	var dir_names := ["down", "up", "right"]
 	for i in range(3):
@@ -2510,8 +2527,30 @@ func _start_export() -> void:
 		_append_log("Saved normal: %s" % output_path)
 		normal_count += 1
 
-	_append_log("\nExported %d color + %d normal files to %s/" % [count, normal_count, output_dir])
-	_set_status("Export complete! %d files saved." % (count + normal_count))
+	# Export shadow maps
+	var shadow_count := 0
+	for dir_name in _captured_shadow_sheets:
+		_set_status("Processing shadow %s..." % dir_name)
+		# Shadow processing: just downscale + alpha threshold (no dithering/palette/outline)
+		var shadow_source := _captured_shadow_sheets[dir_name]
+		var result := shadow_source.duplicate() as Image
+		var target_height := int(output_height_spin.value)
+		var scale_factor := float(target_height) / float(result.get_height())
+		var target_width := int(float(result.get_width()) * scale_factor)
+		result.resize(target_width, target_height, Image.INTERPOLATE_NEAREST)
+		PixelArtProcessing.apply_alpha_threshold(result, int(alpha_threshold_slider.value))
+
+		var output_path := "%s/%s_%s_shadow.png" % [output_dir, safe_anim_name, dir_name]
+		var global_path := ProjectSettings.globalize_path(output_path)
+		var err := result.save_png(global_path)
+		if err != OK:
+			_append_log("ERROR: Failed to save shadow %s" % output_path)
+			continue
+		_append_log("Saved shadow: %s" % output_path)
+		shadow_count += 1
+
+	_append_log("\nExported %d color + %d normal + %d shadow files to %s/" % [count, normal_count, shadow_count, output_dir])
+	_set_status("Export complete! %d files saved." % (count + normal_count + shadow_count))
 	_exported_folder = model_name
 	back_button.disabled = false
 	next_button.visible = true
