@@ -36,6 +36,7 @@ static func get_all() -> Dictionary:
 		"spell_instant": _spell_instant(),
 		"throw": _throw(),
 		"self_buff": _self_buff(),
+		"battlecry": _battlecry(),
 		"parry_stance": _parry_stance(),
 		"toggle_stance": _toggle_stance(),
 		"howl": _howl(),
@@ -419,6 +420,29 @@ static func _self_buff() -> AbilityVisualData:
 		# Phase 2: Buff burst effect
 		AbilityVisualPhase.create_effect("buff_burst"),
 		# Phase 3: Apply buff (combat system applies based on ability data)
+		AbilityVisualPhase.create_damage_event(),
+		# Phase 4: Return to idle
+		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
+	]
+
+	return data
+
+
+## battlecry - Warcry/battlecry buff with custom animation
+static func _battlecry() -> AbilityVisualData:
+	var data := AbilityVisualData.new()
+	data.template_id = "battlecry"
+	data.display_name = "Battlecry"
+	data.locks_movement = true
+
+	data.phases = [
+		# Phase 0: Hide weapon
+		AbilityVisualPhase.create_weapon_visibility(false),
+		# Phase 1: Battlecry animation (uses battlecry_{dir} sprites)
+		AbilityVisualPhase.create_body_anim("battlecry", 0.0, "cast"),
+		# Phase 2: Buff burst effect
+		AbilityVisualPhase.create_effect("buff_burst"),
+		# Phase 3: Apply buff
 		AbilityVisualPhase.create_damage_event(),
 		# Phase 4: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
