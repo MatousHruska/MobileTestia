@@ -378,12 +378,15 @@ func _process_image(source: Image) -> Image:
 	var threshold := int(alpha_threshold_slider.value)
 	_apply_alpha_threshold(result, threshold)
 
-	# Step 3: Dithering (before palette mapping)
-	if dithering_toggle.button_pressed and not _palette_colors.is_empty():
+	# Step 3: Dithering (before palette mapping / auto-quantize)
+	if dithering_toggle.button_pressed:
 		_apply_ordered_dithering(result, dithering_strength_slider.value, dithering_pattern_dropdown.selected)
 
-	# Step 4: Palette mapping
-	_apply_palette_mapping(result)
+	# Step 4: Palette mapping or auto-quantize
+	if not _palette_colors.is_empty():
+		_apply_palette_mapping(result)
+	elif dithering_toggle.button_pressed:
+		_apply_auto_quantize(result)
 
 	# Step 5: Outline
 	if outline_toggle.button_pressed:
@@ -759,6 +762,18 @@ func _apply_palette_mapping(image: Image) -> void:
 			var nearest := _find_nearest_palette_color(color)
 			nearest.a = 1.0
 			image.set_pixel(x, y, nearest)
+
+
+func _apply_auto_quantize(image: Image) -> void:
+	for y in range(image.get_height()):
+		for x in range(image.get_width()):
+			var color := image.get_pixel(x, y)
+			if color.a < 0.5:
+				continue
+			color.r = snappedf(color.r, 1.0 / 31.0)
+			color.g = snappedf(color.g, 1.0 / 31.0)
+			color.b = snappedf(color.b, 1.0 / 31.0)
+			image.set_pixel(x, y, color)
 
 
 func _find_nearest_palette_color(target: Color) -> Color:

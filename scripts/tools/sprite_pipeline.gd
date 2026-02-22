@@ -1127,10 +1127,13 @@ func _process_image(source: Image) -> Image:
 
 	_apply_alpha_threshold(result, int(alpha_threshold_slider.value))
 
-	if dithering_toggle.button_pressed and not _palette_colors.is_empty():
+	if dithering_toggle.button_pressed:
 		_apply_ordered_dithering(result, dithering_strength_slider.value, dithering_pattern_dropdown.selected)
 
-	_apply_palette_mapping(result)
+	if not _palette_colors.is_empty():
+		_apply_palette_mapping(result)
+	elif dithering_toggle.button_pressed:
+		_apply_auto_quantize(result)
 
 	if outline_toggle.button_pressed:
 		_apply_outline(result, outline_color_picker.color)
@@ -1195,6 +1198,20 @@ func _apply_palette_mapping(image: Image) -> void:
 			var nearest := _find_nearest_palette_color(color)
 			nearest.a = 1.0
 			image.set_pixel(x, y, nearest)
+
+
+func _apply_auto_quantize(image: Image) -> void:
+	## Snap each RGB channel to 5-bit precision (32 levels) to make dithering visible
+	## without an explicit palette.
+	for y in range(image.get_height()):
+		for x in range(image.get_width()):
+			var color := image.get_pixel(x, y)
+			if color.a < 0.5:
+				continue
+			color.r = snappedf(color.r, 1.0 / 31.0)
+			color.g = snappedf(color.g, 1.0 / 31.0)
+			color.b = snappedf(color.b, 1.0 / 31.0)
+			image.set_pixel(x, y, color)
 
 
 func _find_nearest_palette_color(target: Color) -> Color:
