@@ -85,6 +85,7 @@ var _anchor_current_dir := "down"
 var _anchor_current_frame := 0
 var _anchor_frame_count := 0
 var _anchor_tool := "grip"  # "grip", "direction", "erase"
+var _anchor_undo_state: Dictionary = {}  # {dir_name: Image} — single-level undo snapshot
 
 ## Step 6 state
 var _apply_groups: Array = []  # Dynamically scanned from OUTPUT_BASE folders
@@ -808,6 +809,12 @@ func _build_step_anchors(parent: VBoxContainer) -> void:
 	copy_btn.pressed.connect(_on_anchor_copy_to_all)
 	parent.add_child(copy_btn)
 
+	# Undo
+	var undo_btn := Button.new()
+	undo_btn.text = "Undo Last Placement"
+	undo_btn.pressed.connect(_on_anchor_undo)
+	parent.add_child(undo_btn)
+
 	# Save Anchor Changes
 	var save_btn := Button.new()
 	save_btn.text = "Save Anchor Changes"
@@ -850,6 +857,7 @@ func _update_anchor_button_highlights() -> void:
 
 func _enter_anchor_editor() -> void:
 	_anchor_images.clear()
+	_anchor_undo_state.clear()
 	_anchor_current_dir = "down"
 	_anchor_current_frame = 0
 	_anchor_frame_count = 0
@@ -1016,6 +1024,8 @@ func _on_anchor_frame_input(event: InputEvent) -> void:
 func _place_anchor_pixel(x: int, y: int) -> void:
 	if not _anchor_images.has(_anchor_current_dir):
 		return
+	# Save undo snapshot before modifying
+	_anchor_undo_state[_anchor_current_dir] = (_anchor_images[_anchor_current_dir] as Image).duplicate()
 	var sheet: Image = _anchor_images[_anchor_current_dir]
 	var grip_color := Color("#FF00AA")
 	var dir_color := Color("#00FFFF")
@@ -1046,6 +1056,8 @@ func _clear_color_from_frame(sheet: Image, frame_idx: int, color: Color) -> void
 func _on_anchor_copy_to_all() -> void:
 	if not _anchor_images.has(_anchor_current_dir) or _anchor_frame_count == 0:
 		return
+	# Save undo snapshot before copy-to-all
+	_anchor_undo_state[_anchor_current_dir] = (_anchor_images[_anchor_current_dir] as Image).duplicate()
 	var sheet: Image = _anchor_images[_anchor_current_dir]
 	var grip_color := Color("#FF00AA")
 	var dir_color := Color("#00FFFF")
@@ -1098,6 +1110,17 @@ func _on_anchor_save() -> void:
 			_append_anchor_log("ERROR: Failed to save %s" % file_path)
 
 	_append_anchor_log("Saved %d/%d direction sheets." % [saved, _anchor_images.size()])
+
+
+func _on_anchor_undo() -> void:
+	if not _anchor_undo_state.has(_anchor_current_dir):
+		_append_anchor_log("Nothing to undo for %s." % _anchor_current_dir)
+		return
+	_anchor_images[_anchor_current_dir] = _anchor_undo_state[_anchor_current_dir]
+	_anchor_undo_state.erase(_anchor_current_dir)
+	_anchor_frame_count = _anchor_images[_anchor_current_dir].get_width() / _export_frame_size
+	_append_anchor_log("Undid last change to %s." % _anchor_current_dir)
+	_update_anchor_display()
 
 
 func _append_anchor_log(text: String) -> void:
