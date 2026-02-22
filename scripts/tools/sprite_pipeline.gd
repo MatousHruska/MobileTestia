@@ -79,7 +79,7 @@ var _preview_direction := "down"
 var _capture_preview_mode := "color"  # "color" or "normal"
 var _pixel_preview_mode := "color"  # "color", "normal", "lit"
 
-## Step 3 (Light Preview) state
+## Step 4 (Light Preview) state
 var _light_preview_viewport: SubViewport = null
 var _light_preview_container: SubViewportContainer = null
 var _light_preview_sprite: Sprite2D = null
@@ -96,8 +96,9 @@ var _light_intensity_slider: HSlider = null
 var _light_height_slider: HSlider = null
 var _light_ambient_slider: HSlider = null
 var _light_frame_label: Label = null
+var _light_texture_cache: ImageTexture = null  # Cached soft circular light texture
 
-## Step 4 state — actual frame size from export (used by Steps 5/6/7)
+## Step 5 state — actual frame size from export (used by Steps 5/6/7)
 var _export_frame_size := FRAME_SIZE
 
 ## Step 5 (Anchor Editor) state
@@ -380,7 +381,7 @@ func _build_ui() -> void:
 	anchor_frame_display.gui_input.connect(_on_anchor_frame_input)
 	right_vbox.add_child(anchor_frame_display)
 
-	# Light preview viewport (Step 3 — Light Preview), initially hidden
+	# Light preview viewport (Step 4 — Light Preview), initially hidden
 	_light_preview_container = SubViewportContainer.new()
 	_light_preview_container.size_flags_horizontal = SIZE_EXPAND_FILL
 	_light_preview_container.size_flags_vertical = SIZE_EXPAND_FILL
@@ -964,15 +965,18 @@ func _setup_light_preview() -> void:
 	_light_preview_light.color = _light_color_picker.color
 	_light_preview_light.energy = _light_intensity_slider.value
 	_light_preview_light.height = _light_height_slider.value
-	var light_img := Image.create(128, 128, false, Image.FORMAT_RGBA8)
-	for y in range(128):
-		for x in range(128):
-			var dx := (x - 64.0) / 64.0
-			var dy := (y - 64.0) / 64.0
-			var dist := sqrt(dx * dx + dy * dy)
-			var alpha := clampf(1.0 - dist, 0.0, 1.0)
-			light_img.set_pixel(x, y, Color(1, 1, 1, alpha))
-	_light_preview_light.texture = ImageTexture.create_from_image(light_img)
+	# Use cached light texture (generated once, reused across direction changes)
+	if _light_texture_cache == null:
+		var light_img := Image.create(128, 128, false, Image.FORMAT_RGBA8)
+		for y in range(128):
+			for x in range(128):
+				var dx := (x - 64.0) / 64.0
+				var dy := (y - 64.0) / 64.0
+				var dist := sqrt(dx * dx + dy * dy)
+				var alpha := clampf(1.0 - dist, 0.0, 1.0)
+				light_img.set_pixel(x, y, Color(1, 1, 1, alpha))
+		_light_texture_cache = ImageTexture.create_from_image(light_img)
+	_light_preview_light.texture = _light_texture_cache
 	_light_preview_light.texture_scale = 4.0
 	_light_preview_viewport.add_child(_light_preview_light)
 
@@ -1500,7 +1504,7 @@ func _build_step6(parent: VBoxContainer) -> void:
 
 	parent.add_child(HSeparator.new())
 
-	# Dynamic summary — rebuilt when entering Step 5
+	# Dynamic summary — rebuilt when entering Step 7
 	parent.add_child(_make_label("Animations to apply:"))
 	apply_summary_container = VBoxContainer.new()
 	apply_summary_container.add_theme_constant_override("separation", 2)
