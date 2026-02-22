@@ -27,6 +27,11 @@ const PRESETS_DIR := "res://assets/sprites/presets"
 const SPRITEFRAMES_PATH := "res://resources/player_sprites.tres"
 const FRAME_SIZE := 64
 
+## Overscan factor for capture — renders a wider area at the same pixel density,
+## then auto-crops per frame to keep the character centered without clipping.
+## 1.5 = 50% extra area on each side. Set to 1.0 to disable.
+const CAPTURE_OVERSCAN := 1.5
+
 ## Known animation folder configs: folder name → {prefix, fps, loop}
 ## Folders not listed here auto-derive prefix from folder name lowercased.
 const KNOWN_ANIM_CONFIG := {
@@ -1562,10 +1567,18 @@ func _start_capture() -> void:
 func _capture_animation() -> void:
 	var anim_name: String = anim_dropdown.get_item_text(anim_dropdown.selected)
 	var frame_count := int(frame_count_spin.value)
-	var output_size := 512  # Always capture at 512px
+	var output_size := 512  # Final frame size in pixels
+
+	# Overscan: render a wider area at the same pixel density so limbs that
+	# extend beyond the normal frame don't get clipped.  We then auto-crop
+	# each frame back to output_size centered on the opaque content.
+	var overscan_size := int(output_size * CAPTURE_OVERSCAN)
 
 	var original_vp_size := sub_viewport.size
-	sub_viewport.size = Vector2i(output_size, output_size)
+	var original_cam_size := camera.size
+	sub_viewport.size = Vector2i(overscan_size, overscan_size)
+	camera.size = original_cam_size * CAPTURE_OVERSCAN
+	_position_camera(camera_elevation_slider.value)
 	preview_container.stretch = false
 
 	var anim := current_anim_player.get_animation(anim_name)
@@ -1601,8 +1614,11 @@ func _capture_animation() -> void:
 			await RenderingServer.frame_post_draw
 			await RenderingServer.frame_post_draw
 
-			var frame_image := sub_viewport.get_texture().get_image()
-			frame_image.convert(Image.FORMAT_RGBA8)
+			var raw_frame := sub_viewport.get_texture().get_image()
+			raw_frame.convert(Image.FORMAT_RGBA8)
+
+			# Auto-crop: find opaque bounding box and center a output_size crop on it
+			var frame_image := _autocrop_frame(raw_frame, output_size)
 			sheet.blit_rect(frame_image, Rect2i(0, 0, output_size, output_size), Vector2i(frame_idx * output_size, 0))
 
 		_captured_sheets[dir_name] = sheet
@@ -1622,14 +1638,53 @@ func _capture_animation() -> void:
 		var global_path := ProjectSettings.globalize_path(file_path)
 		_captured_sheets[dir_name].save_png(global_path)
 
-	# Reset model rotation
+	# Reset model rotation and camera
 	if current_model_instance is Node3D:
 		(current_model_instance as Node3D).rotation_degrees.y = 0.0
 
 	sub_viewport.size = original_vp_size
+	camera.size = original_cam_size
+	_position_camera(camera_elevation_slider.value)
 	preview_container.stretch = true
 
 	_set_status("Captured all 3 directions. Review and click Next.")
+
+
+func _autocrop_frame(raw: Image, crop_size: int) -> Image:
+	## Find the bounding box of opaque pixels in the overscan frame, then return
+	## a crop_size x crop_size image centered on that bounding box.  If nothing
+	## is opaque, returns a centered crop (same as no overscan).
+	var w := raw.get_width()
+	var h := raw.get_height()
+	var min_x := w
+	var min_y := h
+	var max_x := 0
+	var max_y := 0
+
+	for y in range(h):
+		for x in range(w):
+			if raw.get_pixel(x, y).a > 0.1:
+				if x < min_x:
+					min_x = x
+				if x > max_x:
+					max_x = x
+				if y < min_y:
+					min_y = y
+				if y > max_y:
+					max_y = y
+
+	# No opaque pixels — return center crop
+	if max_x < min_x:
+		var ofs := (w - crop_size) / 2
+		return raw.get_region(Rect2i(ofs, ofs, crop_size, crop_size))
+
+	# Center the crop on the bounding box center
+	var center_x := (min_x + max_x) / 2
+	var center_y := (min_y + max_y) / 2
+	var crop_x := clampi(center_x - crop_size / 2, 0, w - crop_size)
+	var crop_y := clampi(center_y - crop_size / 2, 0, h - crop_size)
+
+	return raw.get_region(Rect2i(crop_x, crop_y, crop_size, crop_size))
 
 
 #===============================================================================
