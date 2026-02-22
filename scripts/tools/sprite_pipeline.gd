@@ -71,6 +71,7 @@ var _preview_direction := "down"
 
 ## Step 5 state
 var _apply_groups: Array = []  # Dynamically scanned from OUTPUT_BASE folders
+var _exported_folder: String = ""  # Folder name from the most recent export
 
 ## Preset
 var _current_preset: Dictionary = {}
@@ -678,14 +679,6 @@ func _build_step5(parent: VBoxContainer) -> void:
 	apply_summary_container = VBoxContainer.new()
 	apply_summary_container.add_theme_constant_override("separation", 2)
 	parent.add_child(apply_summary_container)
-
-	var remove_label := Label.new()
-	remove_label.text = "Will remove: %s" % ", ".join(ANIMS_TO_REMOVE)
-	remove_label.add_theme_font_size_override("font_size", 11)
-	remove_label.add_theme_color_override("font_color", Color(0.8, 0.5, 0.5))
-	remove_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	remove_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	parent.add_child(remove_label)
 
 	parent.add_child(HSeparator.new())
 
@@ -1586,6 +1579,7 @@ func _start_export() -> void:
 
 	_append_log("\nExported %d files to %s/" % [count, output_dir])
 	_set_status("Export complete! %d files saved." % count)
+	_exported_folder = model_name
 	back_button.disabled = false
 	next_button.visible = true
 	next_button.text = "Next"
@@ -1619,23 +1613,15 @@ func _scan_export_folders() -> void:
 		child.queue_free()
 	apply_log_label.text = ""
 
-	var global_dir := ProjectSettings.globalize_path(OUTPUT_BASE)
-	var dir := DirAccess.open(global_dir)
-	if dir == null:
-		apply_summary_container.add_child(_make_label("  (no export folder found)"))
+	if _exported_folder.is_empty():
+		apply_summary_container.add_child(_make_label("  (no export was run this session)"))
 		apply_button.disabled = true
 		return
 
-	dir.list_dir_begin()
-	var folder_name := dir.get_next()
-	while folder_name != "":
-		if dir.current_is_dir() and not folder_name.begins_with("."):
-			_try_add_export_folder(folder_name)
-		folder_name = dir.get_next()
-	dir.list_dir_end()
+	_try_add_export_folder(_exported_folder)
 
 	if _apply_groups.is_empty():
-		apply_summary_container.add_child(_make_label("  (no exported sheets found)"))
+		apply_summary_container.add_child(_make_label("  (no sheets found in %s/)" % _exported_folder))
 		apply_button.disabled = true
 	else:
 		apply_button.disabled = false
