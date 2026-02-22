@@ -943,11 +943,11 @@ func _update_anchor_display() -> void:
 
 func _draw_crosshair(img: Image, cx: int, cy: int, color: Color) -> void:
 	## Draw a small crosshair around the given pixel for visibility.
-	var offsets := [Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(2, 0),
+	var offsets: Array[Vector2i] = [Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(2, 0),
 					Vector2i(0, -2), Vector2i(0, -1), Vector2i(0, 1), Vector2i(0, 2)]
 	for ofs in offsets:
-		var px := cx + ofs.x
-		var py := cy + ofs.y
+		var px: int = cx + ofs.x
+		var py: int = cy + ofs.y
 		if px >= 0 and px < img.get_width() and py >= 0 and py < img.get_height():
 			img.set_pixel(px, py, color)
 
