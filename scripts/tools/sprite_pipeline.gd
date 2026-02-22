@@ -274,7 +274,7 @@ func _build_step1(parent: VBoxContainer) -> void:
 	frame_count_spin = SpinBox.new()
 	frame_count_spin.min_value = 2
 	frame_count_spin.max_value = 60
-	frame_count_spin.value = 24
+	frame_count_spin.value = 8
 	frame_count_spin.step = 1
 	parent.add_child(frame_count_spin)
 
@@ -307,13 +307,13 @@ func _build_step1(parent: VBoxContainer) -> void:
 	camera_elevation_slider = HSlider.new()
 	camera_elevation_slider.min_value = 10.0
 	camera_elevation_slider.max_value = 80.0
-	camera_elevation_slider.value = 40.0
+	camera_elevation_slider.value = 30.0
 	camera_elevation_slider.step = 1.0
 	camera_elevation_slider.size_flags_horizontal = SIZE_EXPAND_FILL
 	camera_elevation_slider.value_changed.connect(_on_elevation_changed)
 	elev_hbox.add_child(camera_elevation_slider)
 	camera_elevation_label = Label.new()
-	camera_elevation_label.text = "40"
+	camera_elevation_label.text = "30"
 	camera_elevation_label.custom_minimum_size.x = 30
 	elev_hbox.add_child(camera_elevation_label)
 
@@ -324,13 +324,13 @@ func _build_step1(parent: VBoxContainer) -> void:
 	camera_zoom_slider = HSlider.new()
 	camera_zoom_slider.min_value = 0.5
 	camera_zoom_slider.max_value = 15.0
-	camera_zoom_slider.value = 3.5
+	camera_zoom_slider.value = 3.0
 	camera_zoom_slider.step = 0.1
 	camera_zoom_slider.size_flags_horizontal = SIZE_EXPAND_FILL
 	camera_zoom_slider.value_changed.connect(_on_zoom_changed)
 	zoom_hbox.add_child(camera_zoom_slider)
 	camera_zoom_label = Label.new()
-	camera_zoom_label.text = "3.5"
+	camera_zoom_label.text = "3.0"
 	camera_zoom_label.custom_minimum_size.x = 40
 	zoom_hbox.add_child(camera_zoom_label)
 
@@ -634,11 +634,11 @@ func _build_viewport() -> void:
 	# Camera
 	camera = Camera3D.new()
 	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
-	camera.size = 3.5
+	camera.size = 3.0
 	camera.far = 100.0
 	sub_viewport.add_child(camera)
 	camera_target = Vector3(0.0, 1.0, 0.0)
-	_position_camera(40.0)
+	_position_camera(30.0)
 
 	# Environment
 	var env := Environment.new()
