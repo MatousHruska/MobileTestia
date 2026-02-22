@@ -203,6 +203,68 @@ func _generate_ellipse_shadow() -> void:
 	shadow_sprite.play("ellipse")
 
 
+func _sync_shadow_animation(base_anim_name: String) -> void:
+	if not shadow_sprite or not shadow_sprite.sprite_frames:
+		return
+
+	if not _shadow_has_animations:
+		# Ellipse mode — shadow is always the same, nothing to sync
+		return
+
+	# Resolve the shadow animation name
+	var dir := current_direction
+	if is_flipped:
+		dir = "right"
+
+	# Try: {base}_{dir}_shadow, then idle_{dir}_shadow
+	var candidates: Array[String] = [
+		"%s_%s_shadow" % [base_anim_name, dir],
+		"idle_%s_shadow" % dir,
+	]
+
+	for candidate in candidates:
+		if shadow_sprite.sprite_frames.has_animation(candidate):
+			shadow_sprite.play(candidate)
+			return
+
+	# If no shadow animation at all, hide shadow
+	shadow_sprite.visible = false
+
+
+func _update_shadow_light_response(delta: float) -> void:
+	if not shadow_sprite:
+		return
+
+	# Find nearest PointLight2D in "lights" group
+	var nearest_dist := SHADOW_LIGHT_SEARCH_RADIUS + 1.0
+	var lights := get_tree().get_nodes_in_group("lights")
+	for light_node in lights:
+		if light_node is PointLight2D and light_node.visible:
+			var dist := global_position.distance_to(light_node.global_position)
+			if dist < nearest_dist:
+				nearest_dist = dist
+
+	# Determine target opacity and scale based on distance
+	if nearest_dist > SHADOW_LIGHT_SEARCH_RADIUS:
+		# No light nearby — ambient fallback
+		_shadow_target_opacity = SHADOW_NO_LIGHT_OPACITY
+		_shadow_target_scale = SHADOW_NO_LIGHT_SCALE
+	else:
+		# Interpolate between close and far values
+		var t := clampf((nearest_dist - SHADOW_CLOSE_DISTANCE) / (SHADOW_FAR_DISTANCE - SHADOW_CLOSE_DISTANCE), 0.0, 1.0)
+		_shadow_target_opacity = lerpf(SHADOW_CLOSE_OPACITY, SHADOW_FAR_OPACITY, t)
+		_shadow_target_scale = lerpf(SHADOW_CLOSE_SCALE, SHADOW_FAR_SCALE, t)
+
+	# Smooth lerp toward targets
+	var lerp_speed := SHADOW_TRANSITION_SPEED * delta
+	shadow_sprite.modulate.a = lerpf(shadow_sprite.modulate.a, _shadow_target_opacity, lerp_speed)
+	var current_scale := shadow_sprite.scale.x
+	var new_scale := lerpf(current_scale, _shadow_target_scale, lerp_speed)
+	shadow_sprite.scale = Vector2(new_scale, new_scale)
+
+	shadow_sprite.visible = true
+
+
 #===============================================================================
 # PER-FRAME UPDATE
 #===============================================================================
@@ -210,6 +272,14 @@ func _generate_ellipse_shadow() -> void:
 func _process(_delta: float) -> void:
 	if body_sprite == null:
 		return
+
+	# Keep shadow frame in sync with body
+	if shadow_sprite and shadow_sprite.visible and _shadow_has_animations:
+		if body_sprite.sprite_frames and shadow_sprite.sprite_frames:
+			shadow_sprite.frame = body_sprite.frame
+	# Flip shadow to match body
+	if shadow_sprite:
+		shadow_sprite.flip_h = is_flipped
 
 	# Find both anchor pixels once per frame
 	var anchors := _find_weapon_anchors()
@@ -221,6 +291,7 @@ func _process(_delta: float) -> void:
 		effect_anchor.position = grip + _get_blade_tip_offset(grip)
 
 	_update_weapon_position(anchors)
+	_update_shadow_light_response(_delta)
 
 
 func _update_weapon_position(anchors: Dictionary) -> void:
@@ -499,6 +570,8 @@ func _on_play_body_animation(anim_name: String) -> void:
 	var resolved := _resolve_animation_name(anim_name)
 	if body_sprite.sprite_frames.has_animation(resolved):
 		body_sprite.play(resolved)
+		# Sync shadow animation
+		_sync_shadow_animation(anim_name)
 	else:
 		Debug.warn("Visuals", "Animation not found after resolve: %s (from %s)" % [resolved, anim_name])
 
@@ -543,3 +616,13 @@ func set_direction(direction: String, flipped: bool) -> void:
 	# Weapon texture direction is determined per-frame by
 	# _update_weapon_position() based on the anchor position,
 	# so we don't force-select it here.
+	# Update shadow animation for new direction
+	if shadow_sprite and _shadow_has_animations and body_sprite:
+		var current_body_anim := body_sprite.animation as String
+		# Strip direction suffix to get base name
+		var base_name := current_body_anim
+		for dir_suffix in ["_down", "_up", "_right"]:
+			if base_name.ends_with(dir_suffix):
+				base_name = base_name.substr(0, base_name.length() - dir_suffix.length())
+				break
+		_sync_shadow_animation(base_name)
