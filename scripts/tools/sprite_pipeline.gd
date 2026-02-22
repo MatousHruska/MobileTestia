@@ -2,15 +2,16 @@ extends Control
 ## Sprite Pipeline Wizard
 ##
 ## Unified tool that chains 3D sprite capture and pixel art conversion
-## into a single 6-step wizard flow with saveable presets.
+## into a single 7-step wizard flow with saveable presets.
 ##
 ## Steps:
 ##   1. Model & Animation — select model, pick animation, configure camera
 ##   2. Capture Preview — auto-capture all 3 directions, confirm
 ##   3. Pixel Art Settings — configure processing, preview result
-##   4. Export — process all directions, save final pixel art
-##   5. Weapon Anchors — place grip/direction pixels on exported frames (optional)
-##   6. Apply to SpriteFrames — load exported sheets into player_sprites.tres
+##   4. Light Preview — interactive light/normal map preview
+##   5. Export — process all directions, save final pixel art
+##   6. Weapon Anchors — place grip/direction pixels on exported frames (optional)
+##   7. Apply to SpriteFrames — load exported sheets into player_sprites.tres
 ##
 ## Run: scenes/tools/sprite_pipeline.tscn (F6)
 
@@ -58,7 +59,7 @@ const DIRECTIONS := [
 # WIZARD STATE
 #===============================================================================
 
-var _current_step := 0  # 0-5
+var _current_step := 0  # 0-6
 var _step_containers: Array[VBoxContainer] = []  # one per step
 
 ## Step 1 state
@@ -78,7 +79,25 @@ var _preview_direction := "down"
 var _capture_preview_mode := "color"  # "color" or "normal"
 var _pixel_preview_mode := "color"  # "color", "normal", "lit"
 
-## Step 4 state — actual frame size from export (used by Steps 5/6)
+## Step 3 (Light Preview) state
+var _light_preview_viewport: SubViewport = null
+var _light_preview_container: SubViewportContainer = null
+var _light_preview_sprite: Sprite2D = null
+var _light_preview_light: PointLight2D = null
+var _light_preview_direction := "down"
+var _light_preview_frame := 0
+var _light_preview_frame_count := 0
+var _light_preview_playing := false
+var _light_preview_timer := 0.0
+
+# Light Preview UI nodes
+var _light_color_picker: ColorPickerButton = null
+var _light_intensity_slider: HSlider = null
+var _light_height_slider: HSlider = null
+var _light_ambient_slider: HSlider = null
+var _light_frame_label: Label = null
+
+## Step 4 state — actual frame size from export (used by Steps 5/6/7)
 var _export_frame_size := FRAME_SIZE
 
 ## Step 5 (Anchor Editor) state
@@ -90,7 +109,7 @@ var _anchor_frame_count := 0
 var _anchor_tool := "grip"  # "grip", "direction", "erase"
 var _anchor_undo_state: Dictionary = {}  # {dir_name: Image} — single-level undo snapshot
 
-## Step 6 state
+## Step 6 (Apply) state
 var _apply_groups: Array = []  # Dynamically scanned from OUTPUT_BASE folders
 var _exported_folder: String = ""  # Folder name from the most recent export
 
@@ -188,6 +207,16 @@ func _ready() -> void:
 	_scan_models()
 
 
+func _process(delta: float) -> void:
+	if _light_preview_playing and _current_step == 3:
+		_light_preview_timer += delta
+		var fps := 15.0
+		if _light_preview_timer >= 1.0 / fps:
+			_light_preview_timer -= 1.0 / fps
+			_light_preview_frame = (_light_preview_frame + 1) % _light_preview_frame_count
+			_update_light_preview_frame()
+
+
 func _build_ui() -> void:
 	var root_hbox := HBoxContainer.new()
 	root_hbox.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
@@ -218,14 +247,14 @@ func _build_ui() -> void:
 
 	# Step indicator
 	step_indicator_label = Label.new()
-	step_indicator_label.text = "Step 1 of 6: Model & Animation"
+	step_indicator_label.text = "Step 1 of 7: Model & Animation"
 	step_indicator_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	step_indicator_label.add_theme_font_size_override("font_size", 14)
 	vbox.add_child(step_indicator_label)
 
 	vbox.add_child(HSeparator.new())
 
-	# Build 6 step containers
+	# Build 7 step containers
 	var step1 := VBoxContainer.new()
 	step1.add_theme_constant_override("separation", 8)
 	vbox.add_child(step1)
@@ -261,13 +290,20 @@ func _build_ui() -> void:
 	vbox.add_child(step6)
 	_step_containers.append(step6)
 
+	var step7 := VBoxContainer.new()
+	step7.add_theme_constant_override("separation", 8)
+	step7.visible = false
+	vbox.add_child(step7)
+	_step_containers.append(step7)
+
 	# Build each step's contents
 	_build_step1(step1)
 	_build_step2(step2)
 	_build_step3(step3)
-	_build_step4(step4)
-	_build_step_anchors(step5)
-	_build_step6(step6)
+	_build_step_light_preview(step4)  # Light Preview
+	_build_step4(step5)  # Export (now in container index 4)
+	_build_step_anchors(step6)  # Anchors (now in container index 5)
+	_build_step6(step7)  # Apply (now in container index 6)
 
 	vbox.add_child(HSeparator.new())
 
@@ -343,6 +379,14 @@ func _build_ui() -> void:
 	anchor_frame_display.visible = false
 	anchor_frame_display.gui_input.connect(_on_anchor_frame_input)
 	right_vbox.add_child(anchor_frame_display)
+
+	# Light preview viewport (Step 3 — Light Preview), initially hidden
+	_light_preview_container = SubViewportContainer.new()
+	_light_preview_container.size_flags_horizontal = SIZE_EXPAND_FILL
+	_light_preview_container.size_flags_vertical = SIZE_EXPAND_FILL
+	_light_preview_container.stretch = true
+	_light_preview_container.visible = false
+	right_vbox.add_child(_light_preview_container)
 
 
 #===============================================================================
@@ -729,6 +773,270 @@ func _build_step3(parent: VBoxContainer) -> void:
 
 
 #===============================================================================
+# STEP 3b — LIGHT PREVIEW
+#===============================================================================
+
+func _build_step_light_preview(parent: VBoxContainer) -> void:
+	parent.add_child(_make_label("Light Preview"))
+	parent.add_child(_make_label("Drag the light around to test normal maps."))
+
+	# Direction buttons
+	parent.add_child(_make_label("Direction:"))
+	var dir_hbox := HBoxContainer.new()
+	dir_hbox.add_theme_constant_override("separation", 4)
+	parent.add_child(dir_hbox)
+	for dir_name in ["down", "up", "right"]:
+		var btn := Button.new()
+		btn.text = dir_name.capitalize()
+		btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		btn.pressed.connect(_on_light_preview_direction.bind(dir_name))
+		dir_hbox.add_child(btn)
+
+	# Frame navigation
+	var frame_hbox := HBoxContainer.new()
+	frame_hbox.add_theme_constant_override("separation", 4)
+	parent.add_child(frame_hbox)
+	var prev_btn := Button.new()
+	prev_btn.text = "<"
+	prev_btn.pressed.connect(func() -> void:
+		_light_preview_frame = max(0, _light_preview_frame - 1)
+		_update_light_preview_frame()
+	)
+	frame_hbox.add_child(prev_btn)
+	_light_frame_label = Label.new()
+	_light_frame_label.text = "Frame 1 / 1"
+	_light_frame_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_light_frame_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	frame_hbox.add_child(_light_frame_label)
+	var next_frame_btn := Button.new()
+	next_frame_btn.text = ">"
+	next_frame_btn.pressed.connect(func() -> void:
+		_light_preview_frame = min(_light_preview_frame_count - 1, _light_preview_frame + 1)
+		_update_light_preview_frame()
+	)
+	frame_hbox.add_child(next_frame_btn)
+	var play_btn := Button.new()
+	play_btn.text = "Play"
+	play_btn.pressed.connect(func() -> void:
+		_light_preview_playing = not _light_preview_playing
+		play_btn.text = "Stop" if _light_preview_playing else "Play"
+	)
+	frame_hbox.add_child(play_btn)
+
+	parent.add_child(HSeparator.new())
+
+	# Light controls
+	parent.add_child(_make_label("Light Color:"))
+	_light_color_picker = ColorPickerButton.new()
+	_light_color_picker.color = Color("#FFAA44")
+	_light_color_picker.custom_minimum_size = Vector2(60, 30)
+	_light_color_picker.color_changed.connect(func(c: Color) -> void:
+		if _light_preview_light:
+			_light_preview_light.color = c
+	)
+	parent.add_child(_light_color_picker)
+
+	parent.add_child(_make_label("Intensity:"))
+	_light_intensity_slider = HSlider.new()
+	_light_intensity_slider.min_value = 0.0
+	_light_intensity_slider.max_value = 3.0
+	_light_intensity_slider.value = 1.5
+	_light_intensity_slider.step = 0.1
+	_light_intensity_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	_light_intensity_slider.value_changed.connect(func(v: float) -> void:
+		if _light_preview_light:
+			_light_preview_light.energy = v
+	)
+	parent.add_child(_light_intensity_slider)
+
+	parent.add_child(_make_label("Height:"))
+	_light_height_slider = HSlider.new()
+	_light_height_slider.min_value = 0.0
+	_light_height_slider.max_value = 200.0
+	_light_height_slider.value = 50.0
+	_light_height_slider.step = 5.0
+	_light_height_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	_light_height_slider.value_changed.connect(func(v: float) -> void:
+		if _light_preview_light:
+			_light_preview_light.height = v
+	)
+	parent.add_child(_light_height_slider)
+
+	parent.add_child(_make_label("Ambient:"))
+	_light_ambient_slider = HSlider.new()
+	_light_ambient_slider.min_value = 0.0
+	_light_ambient_slider.max_value = 1.0
+	_light_ambient_slider.value = 0.2
+	_light_ambient_slider.step = 0.05
+	_light_ambient_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	_light_ambient_slider.value_changed.connect(func(_v: float) -> void:
+		_update_light_preview_ambient()
+	)
+	parent.add_child(_light_ambient_slider)
+
+	parent.add_child(HSeparator.new())
+
+	# Presets
+	parent.add_child(_make_label("Light presets:"))
+	var preset_hbox := HBoxContainer.new()
+	preset_hbox.add_theme_constant_override("separation", 4)
+	parent.add_child(preset_hbox)
+	var presets := {
+		"Torch": {"color": Color("#FFAA44"), "intensity": 1.5, "height": 50.0, "ambient": 0.2},
+		"Sunlight": {"color": Color("#FFFDE0"), "intensity": 1.0, "height": 150.0, "ambient": 0.4},
+		"Moonlight": {"color": Color("#8899CC"), "intensity": 0.8, "height": 120.0, "ambient": 0.15},
+		"Spell": {"color": Color("#44FFDD"), "intensity": 2.0, "height": 30.0, "ambient": 0.1},
+	}
+	for preset_name in presets:
+		var btn := Button.new()
+		btn.text = preset_name
+		btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		var preset_data: Dictionary = presets[preset_name]
+		btn.pressed.connect(_apply_light_preset.bind(preset_data))
+		preset_hbox.add_child(btn)
+
+
+#===============================================================================
+# LIGHT PREVIEW LOGIC
+#===============================================================================
+
+func _setup_light_preview() -> void:
+	if _light_preview_viewport:
+		_light_preview_viewport.queue_free()
+
+	_light_preview_viewport = SubViewport.new()
+	_light_preview_viewport.transparent_bg = false
+	_light_preview_viewport.size = Vector2i(400, 400)
+	_light_preview_viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+	_light_preview_container.add_child(_light_preview_viewport)
+
+	# Dark background
+	var bg := ColorRect.new()
+	bg.color = Color(0.05, 0.05, 0.08, 1.0)
+	bg.size = Vector2(400, 400)
+	_light_preview_viewport.add_child(bg)
+
+	# Process color and normal for current direction
+	if not _captured_sheets.has(_light_preview_direction):
+		_light_preview_direction = "down"
+	if not _captured_sheets.has(_light_preview_direction):
+		return
+
+	var color_processed := _process_image(_captured_sheets[_light_preview_direction])
+	var normal_processed: Image = null
+	if _captured_normal_sheets.has(_light_preview_direction):
+		normal_processed = PixelArtProcessing.process_normal_map(
+			_captured_normal_sheets[_light_preview_direction],
+			int(output_height_spin.value),
+			int(alpha_threshold_slider.value)
+		)
+
+	# Create CanvasTexture pairing diffuse + normal
+	var color_tex := ImageTexture.create_from_image(color_processed)
+	var canvas_tex := CanvasTexture.new()
+	canvas_tex.diffuse_texture = color_tex
+	if normal_processed:
+		var normal_tex := ImageTexture.create_from_image(normal_processed)
+		canvas_tex.normal_texture = normal_tex
+
+	# Calculate frame info
+	_light_preview_frame_count = color_processed.get_width() / maxi(int(output_height_spin.value), 1)
+	if _light_preview_frame_count < 1:
+		_light_preview_frame_count = 1
+	_light_preview_frame = 0
+
+	# Create sprite showing single frame via AtlasTexture
+	var frame_size := int(output_height_spin.value)
+	var atlas_tex := AtlasTexture.new()
+	atlas_tex.atlas = canvas_tex
+	atlas_tex.region = Rect2(0, 0, frame_size, frame_size)
+
+	_light_preview_sprite = Sprite2D.new()
+	_light_preview_sprite.texture = atlas_tex
+	_light_preview_sprite.position = Vector2(200, 200)
+	_light_preview_sprite.scale = Vector2(3, 3)
+	_light_preview_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_light_preview_viewport.add_child(_light_preview_sprite)
+
+	# Create point light with soft circular texture
+	_light_preview_light = PointLight2D.new()
+	_light_preview_light.position = Vector2(250, 150)
+	_light_preview_light.color = _light_color_picker.color
+	_light_preview_light.energy = _light_intensity_slider.value
+	_light_preview_light.height = _light_height_slider.value
+	var light_img := Image.create(128, 128, false, Image.FORMAT_RGBA8)
+	for y in range(128):
+		for x in range(128):
+			var dx := (x - 64.0) / 64.0
+			var dy := (y - 64.0) / 64.0
+			var dist := sqrt(dx * dx + dy * dy)
+			var alpha := clampf(1.0 - dist, 0.0, 1.0)
+			light_img.set_pixel(x, y, Color(1, 1, 1, alpha))
+	_light_preview_light.texture = ImageTexture.create_from_image(light_img)
+	_light_preview_light.texture_scale = 4.0
+	_light_preview_viewport.add_child(_light_preview_light)
+
+	_update_light_preview_ambient()
+	_update_light_preview_frame()
+
+	if not _light_preview_container.gui_input.is_connected(_on_light_preview_input):
+		_light_preview_container.gui_input.connect(_on_light_preview_input)
+
+
+func _on_light_preview_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		if _light_preview_light and _light_preview_container:
+			var local_pos := event.position
+			var container_size := _light_preview_container.size
+			var viewport_size := Vector2(_light_preview_viewport.size)
+			_light_preview_light.position = Vector2(
+				(local_pos.x / container_size.x) * viewport_size.x,
+				(local_pos.y / container_size.y) * viewport_size.y
+			)
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if _light_preview_light and _light_preview_container:
+			var local_pos := event.position
+			var container_size := _light_preview_container.size
+			var viewport_size := Vector2(_light_preview_viewport.size)
+			_light_preview_light.position = Vector2(
+				(local_pos.x / container_size.x) * viewport_size.x,
+				(local_pos.y / container_size.y) * viewport_size.y
+			)
+
+
+func _on_light_preview_direction(dir_name: String) -> void:
+	_light_preview_direction = dir_name
+	_setup_light_preview()
+
+
+func _update_light_preview_frame() -> void:
+	if _light_preview_sprite and _light_preview_sprite.texture is AtlasTexture:
+		var atlas := _light_preview_sprite.texture as AtlasTexture
+		var frame_size := int(output_height_spin.value)
+		atlas.region = Rect2(_light_preview_frame * frame_size, 0, frame_size, frame_size)
+	if _light_frame_label:
+		_light_frame_label.text = "Frame %d / %d" % [_light_preview_frame + 1, _light_preview_frame_count]
+
+
+func _update_light_preview_ambient() -> void:
+	if _light_preview_sprite:
+		var ambient := _light_ambient_slider.value
+		_light_preview_sprite.self_modulate = Color(ambient, ambient, ambient, 1.0)
+
+
+func _apply_light_preset(preset: Dictionary) -> void:
+	_light_color_picker.color = preset["color"]
+	_light_intensity_slider.value = preset["intensity"]
+	_light_height_slider.value = preset["height"]
+	_light_ambient_slider.value = preset["ambient"]
+	if _light_preview_light:
+		_light_preview_light.color = preset["color"]
+		_light_preview_light.energy = preset["intensity"]
+		_light_preview_light.height = preset["height"]
+	_update_light_preview_ambient()
+
+
+#===============================================================================
 # STEP 4 — EXPORT
 #===============================================================================
 
@@ -761,7 +1069,7 @@ func _build_step4(parent: VBoxContainer) -> void:
 
 
 #===============================================================================
-# STEP 5 — WEAPON ANCHOR EDITOR
+# STEP 5 — WEAPON ANCHOR EDITOR (index 5)
 #===============================================================================
 
 func _build_step_anchors(parent: VBoxContainer) -> void:
@@ -1178,7 +1486,7 @@ func _append_anchor_log(text: String) -> void:
 
 
 #===============================================================================
-# STEP 6 — APPLY TO SPRITEFRAMES
+# STEP 6 — APPLY TO SPRITEFRAMES (index 6)
 #===============================================================================
 
 func _build_step6(parent: VBoxContainer) -> void:
@@ -1234,17 +1542,20 @@ func _go_to_step(step: int) -> void:
 		_step_containers[i].visible = (i == step)
 	# Update navigation buttons
 	back_button.visible = step > 0
-	next_button.visible = (step < 5)
-	next_button.text = "Export" if step == 3 else "Next"
+	next_button.visible = (step < 6)
+	next_button.text = "Export" if step == 4 else "Next"
 	# Update step indicator
-	var step_names := ["Model & Animation", "Capture Preview", "Pixel Art Settings", "Export", "Weapon Anchors", "Apply to SpriteFrames"]
-	step_indicator_label.text = "Step %d of 6: %s" % [step + 1, step_names[step]]
+	var step_names := ["Model & Animation", "Capture Preview", "Pixel Art Settings",
+		"Light Preview", "Export", "Weapon Anchors", "Apply to SpriteFrames"]
+	step_indicator_label.text = "Step %d of 7: %s" % [step + 1, step_names[step]]
 	# Update preview visibility
 	var viewport_area := preview_container.get_parent()  # AspectRatioContainer
 	viewport_area.visible = (step <= 1)
 	pixel_preview_rect.get_parent().visible = (step == 2)
 	if anchor_frame_display:
-		anchor_frame_display.visible = (step == 4)
+		anchor_frame_display.visible = (step == 5)
+	if _light_preview_container:
+		_light_preview_container.visible = (step == 3)
 	# Trigger step-specific logic
 	match step:
 		0:
@@ -1257,30 +1568,31 @@ func _go_to_step(step: int) -> void:
 				_apply_pixel_art_preset(_current_preset["pixel_art"])
 			_update_pixel_preview()
 		3:
-			_start_export()
+			_setup_light_preview()
 		4:
-			_enter_anchor_editor()
+			_start_export()
 		5:
+			_enter_anchor_editor()
+		6:
 			_scan_export_folders()
 
 
 func _on_next_pressed() -> void:
-	if _current_step == 3:
+	if _current_step == 4:
 		# After export: check if anchor editor is enabled
 		if anchor_weapon_anim_toggle and anchor_weapon_anim_toggle.button_pressed:
 			_anchor_enabled = true
-			_go_to_step(4)  # Weapon Anchors
+			_go_to_step(5)  # Weapon Anchors
 		else:
 			_anchor_enabled = false
-			_go_to_step(5)  # Skip to Apply
-	elif _current_step < 5:
+			_go_to_step(6)  # Skip to Apply
+	elif _current_step < 6:
 		_go_to_step(_current_step + 1)
 
 
 func _on_back_pressed() -> void:
-	if _current_step == 5 and not _anchor_enabled:
-		# Anchors were skipped — go back to export, not anchor editor
-		_go_to_step(3)
+	if _current_step == 6 and not _anchor_enabled:
+		_go_to_step(4)  # Anchors were skipped — go back to export
 	elif _current_step > 0:
 		_go_to_step(_current_step - 1)
 
