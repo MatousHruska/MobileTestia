@@ -1858,6 +1858,16 @@ func _position_camera(elevation_deg: float) -> void:
 	camera.look_at(camera_target, Vector3.UP)
 
 
+func _create_shadow_camera() -> Camera3D:
+	## Create a temporary top-down orthographic camera for shadow capture.
+	var shadow_cam := Camera3D.new()
+	shadow_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	shadow_cam.size = camera.size  # Match main camera's view width
+	shadow_cam.position = camera_target + Vector3(0.0, 10.0, 0.0)  # High above
+	shadow_cam.rotation_degrees = Vector3(-90.0, 0.0, 0.0)  # Look straight down
+	return shadow_cam
+
+
 func _on_elevation_changed(value: float) -> void:
 	camera_elevation_label.text = str(int(value))
 	_position_camera(value)
@@ -2051,6 +2061,9 @@ func _capture_animation() -> void:
 		var normal_sheet := Image.create(sheet_width, output_size, false, Image.FORMAT_RGBA8)
 		normal_sheet.fill(Color(0.5, 0.5, 1.0, 0.0))  # Neutral normal, transparent
 
+		var shadow_sheet := Image.create(sheet_width, output_size, false, Image.FORMAT_RGBA8)
+		shadow_sheet.fill(Color.TRANSPARENT)
+
 		for frame_idx in range(frame_count):
 			var seek_time: float
 			if frame_count == 1:
@@ -2108,8 +2121,33 @@ func _capture_animation() -> void:
 				# Restore original unlit materials for next color pass
 				_restore_saved_materials()
 
+			# --- Shadow capture pass: top-down silhouette ---
+			if _shadow_capture_material:
+				# Swap main camera for top-down shadow camera
+				var shadow_cam := _create_shadow_camera()
+				sub_viewport.add_child(shadow_cam)
+				shadow_cam.current = true
+
+				_save_current_materials(current_model_instance)
+				_apply_shadow_capture_materials(current_model_instance)
+				# Re-seek animation
+				current_anim_player.play(anim_name)
+				current_anim_player.seek(seek_time, true)
+				await RenderingServer.frame_post_draw
+				await RenderingServer.frame_post_draw
+
+				var shadow_frame := sub_viewport.get_texture().get_image()
+				shadow_frame.convert(Image.FORMAT_RGBA8)
+				shadow_sheet.blit_rect(shadow_frame, Rect2i(0, 0, output_size, output_size), Vector2i(frame_idx * output_size, 0))
+
+				_restore_saved_materials()
+				# Restore main camera
+				shadow_cam.queue_free()
+				camera.current = true
+
 		_captured_sheets[dir_name] = sheet
 		_captured_normal_sheets[dir_name] = normal_sheet
+		_captured_shadow_sheets[dir_name] = shadow_sheet
 
 	_update_capture_preview()
 
@@ -2129,6 +2167,11 @@ func _capture_animation() -> void:
 		var file_path := "%s/%s_%s_normal.png" % [output_dir, safe_anim_name, dir_name]
 		var global_path := ProjectSettings.globalize_path(file_path)
 		_captured_normal_sheets[dir_name].save_png(global_path)
+
+	for dir_name in _captured_shadow_sheets:
+		var file_path := "%s/%s_%s_shadow.png" % [output_dir, safe_anim_name, dir_name]
+		var global_path := ProjectSettings.globalize_path(file_path)
+		_captured_shadow_sheets[dir_name].save_png(global_path)
 
 	# Restore camera and viewport
 	if current_model_instance is Node3D:
