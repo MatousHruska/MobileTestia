@@ -1639,14 +1639,43 @@ func _scan_export_folders() -> void:
 		apply_button.disabled = true
 	else:
 		apply_button.disabled = false
-		# Build summary labels
+		# Build editable rows per folder
 		for group in _apply_groups:
+			var row_vbox := VBoxContainer.new()
+			row_vbox.add_theme_constant_override("separation", 2)
+			apply_summary_container.add_child(row_vbox)
+
+			# Folder name + animation names
 			var anim_names := ", ".join((group["sheets"] as Dictionary).keys())
-			var summary := Label.new()
-			summary.text = "  %s (fps=%d, loop=%s): %s" % [group["folder"], group["fps"], group["loop"], anim_names]
-			summary.add_theme_font_size_override("font_size", 12)
-			apply_summary_container.add_child(summary)
-		_set_status("Found %d animation group(s). Click Apply when ready." % _apply_groups.size())
+			var name_label := Label.new()
+			name_label.text = "%s: %s" % [group["folder"], anim_names]
+			name_label.add_theme_font_size_override("font_size", 12)
+			row_vbox.add_child(name_label)
+
+			# FPS + Loop controls on one row
+			var controls_hbox := HBoxContainer.new()
+			controls_hbox.add_theme_constant_override("separation", 8)
+			row_vbox.add_child(controls_hbox)
+
+			controls_hbox.add_child(_make_small_label("  FPS:"))
+			var fps_spin := SpinBox.new()
+			fps_spin.min_value = 1
+			fps_spin.max_value = 60
+			fps_spin.value = group["fps"]
+			fps_spin.step = 1
+			fps_spin.custom_minimum_size.x = 70
+			controls_hbox.add_child(fps_spin)
+			group["fps_spin"] = fps_spin
+
+			var loop_toggle := CheckButton.new()
+			loop_toggle.text = "Loop"
+			loop_toggle.button_pressed = group["loop"]
+			controls_hbox.add_child(loop_toggle)
+			group["loop_toggle"] = loop_toggle
+
+			apply_summary_container.add_child(HSeparator.new())
+
+		_set_status("Found %d animation group(s). Adjust settings and click Apply." % _apply_groups.size())
 
 
 func _try_add_export_folder(folder_name: String) -> void:
@@ -1720,8 +1749,8 @@ func _apply_to_spriteframes() -> void:
 	var total_anims := 0
 	for group in _apply_groups:
 		var folder: String = group["folder"]
-		var fps: int = group["fps"]
-		var loop: bool = group["loop"]
+		var fps: int = int((group["fps_spin"] as SpinBox).value)
+		var loop: bool = (group["loop_toggle"] as CheckButton).button_pressed
 		var sheets: Dictionary = group["sheets"]
 
 		_append_apply_log("--- %s (fps=%d, loop=%s) ---" % [folder, fps, loop])
@@ -1780,6 +1809,13 @@ func _append_apply_log(text: String) -> void:
 func _make_label(text: String) -> Label:
 	var l := Label.new()
 	l.text = text
+	return l
+
+
+func _make_small_label(text: String) -> Label:
+	var l := Label.new()
+	l.text = text
+	l.add_theme_font_size_override("font_size", 12)
 	return l
 
 
