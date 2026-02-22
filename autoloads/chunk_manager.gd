@@ -1779,6 +1779,7 @@ func _spawn_light(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 	light.set_meta("world_position", world_pos)
 
 	parent.add_child(light)
+	Debug.log("ChunkManager", "Spawned light at %s (color=%s, radius=%.0f)" % [world_pos, color_str, radius])
 	return light
 
 
