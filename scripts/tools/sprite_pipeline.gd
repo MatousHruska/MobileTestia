@@ -47,6 +47,7 @@ var _captured_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": 
 
 ## Step 3 state
 var _palette_colors: PackedColorArray = PackedColorArray()
+var _preview_direction := "down"
 
 ## Preset
 var _current_preset: Dictionary = {}
@@ -423,6 +424,38 @@ func _build_step2(parent: VBoxContainer) -> void:
 #===============================================================================
 
 func _build_step3(parent: VBoxContainer) -> void:
+	# Direction preview selector
+	parent.add_child(_make_label("Preview direction:"))
+	var dir_btn_hbox := HBoxContainer.new()
+	dir_btn_hbox.add_theme_constant_override("separation", 4)
+	parent.add_child(dir_btn_hbox)
+	var dir_down_btn := Button.new()
+	dir_down_btn.text = "Down"
+	dir_down_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	dir_down_btn.pressed.connect(func() -> void:
+		_preview_direction = "down"
+		_update_pixel_preview()
+	)
+	dir_btn_hbox.add_child(dir_down_btn)
+	var dir_up_btn := Button.new()
+	dir_up_btn.text = "Up"
+	dir_up_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	dir_up_btn.pressed.connect(func() -> void:
+		_preview_direction = "up"
+		_update_pixel_preview()
+	)
+	dir_btn_hbox.add_child(dir_up_btn)
+	var dir_right_btn := Button.new()
+	dir_right_btn.text = "Right"
+	dir_right_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	dir_right_btn.pressed.connect(func() -> void:
+		_preview_direction = "right"
+		_update_pixel_preview()
+	)
+	dir_btn_hbox.add_child(dir_right_btn)
+
+	parent.add_child(HSeparator.new())
+
 	# Output height
 	parent.add_child(_make_label("Output height (px):"))
 	output_height_spin = SpinBox.new()
@@ -1251,13 +1284,13 @@ func _apply_denoising(image: Image, min_cluster_size: int) -> void:
 #===============================================================================
 
 func _update_pixel_preview() -> void:
-	if not _captured_sheets.has("down"):
+	if not _captured_sheets.has(_preview_direction):
 		return
 	if show_original_toggle.button_pressed:
-		var tex := ImageTexture.create_from_image(_captured_sheets["down"])
+		var tex := ImageTexture.create_from_image(_captured_sheets[_preview_direction])
 		pixel_preview_rect.texture = tex
 		return
-	var processed := _process_image(_captured_sheets["down"])
+	var processed := _process_image(_captured_sheets[_preview_direction])
 	var tex := ImageTexture.create_from_image(processed)
 	pixel_preview_rect.texture = tex
 
