@@ -70,6 +70,7 @@ var camera_target: Vector3 = Vector3.ZERO
 
 ## Step 2 state
 var _captured_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
+var _captured_normal_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
 
 ## Step 3 state
 var _palette_colors: PackedColorArray = PackedColorArray()
@@ -93,6 +94,10 @@ var _exported_folder: String = ""  # Folder name from the most recent export
 
 ## Preset
 var _current_preset: Dictionary = {}
+
+## Normal map capture shader — loaded once at startup
+var _normal_capture_shader: Shader = null
+var _normal_capture_material: ShaderMaterial = null
 
 #===============================================================================
 # NODE REFERENCES
@@ -172,6 +177,11 @@ var next_button: Button
 func _ready() -> void:
 	_build_ui()
 	_build_viewport()
+	# Load normal capture shader
+	_normal_capture_shader = load("res://shaders/normal_capture.gdshader") as Shader
+	if _normal_capture_shader:
+		_normal_capture_material = ShaderMaterial.new()
+		_normal_capture_material.shader = _normal_capture_shader
 	await get_tree().process_frame
 	_scan_models()
 
@@ -1421,6 +1431,18 @@ func _apply_unlit_materials(node: Node) -> void:
 		_apply_unlit_materials(child)
 
 
+func _apply_normal_capture_materials(node: Node) -> void:
+	## Override all mesh materials with the normal capture shader.
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var mesh := mesh_instance.mesh
+		if mesh != null:
+			for surface_idx in range(mesh.get_surface_count()):
+				mesh_instance.set_surface_override_material(surface_idx, _normal_capture_material)
+	for child in node.get_children():
+		_apply_normal_capture_materials(child)
+
+
 #===============================================================================
 # CAMERA
 #===============================================================================
@@ -1583,6 +1605,7 @@ func _start_capture() -> void:
 		_go_to_step(0)
 		return
 	_captured_sheets.clear()
+	_captured_normal_sheets.clear()
 	next_button.disabled = true
 	back_button.disabled = true
 	await _capture_animation()
@@ -1621,6 +1644,9 @@ func _capture_animation() -> void:
 		var sheet_width := output_size * frame_count
 		var sheet := Image.create(sheet_width, output_size, false, Image.FORMAT_RGBA8)
 		sheet.fill(Color.TRANSPARENT)
+
+		var normal_sheet := Image.create(sheet_width, output_size, false, Image.FORMAT_RGBA8)
+		normal_sheet.fill(Color(0.5, 0.5, 1.0, 0.0))  # Neutral normal, transparent
 
 		for frame_idx in range(frame_count):
 			var seek_time: float
@@ -1662,7 +1688,24 @@ func _capture_animation() -> void:
 			frame_image.convert(Image.FORMAT_RGBA8)
 			sheet.blit_rect(frame_image, Rect2i(0, 0, output_size, output_size), Vector2i(frame_idx * output_size, 0))
 
+			# --- Normal map pass: same camera position, normal capture materials ---
+			if _normal_capture_material:
+				_apply_normal_capture_materials(current_model_instance)
+				# Re-seek animation (material swap may have caused a frame advance)
+				current_anim_player.play(anim_name)
+				current_anim_player.seek(seek_time, true)
+				await RenderingServer.frame_post_draw
+				await RenderingServer.frame_post_draw
+
+				var normal_frame := sub_viewport.get_texture().get_image()
+				normal_frame.convert(Image.FORMAT_RGBA8)
+				normal_sheet.blit_rect(normal_frame, Rect2i(0, 0, output_size, output_size), Vector2i(frame_idx * output_size, 0))
+
+				# Restore unlit materials for next color pass
+				_apply_unlit_materials(current_model_instance)
+
 		_captured_sheets[dir_name] = sheet
+		_captured_normal_sheets[dir_name] = normal_sheet
 		# Show preview
 		var tex := ImageTexture.create_from_image(sheet)
 		direction_rects[dir_idx].texture = tex
@@ -1678,6 +1721,11 @@ func _capture_animation() -> void:
 		var file_path := "%s/%s_%s.png" % [output_dir, safe_anim_name, dir_name]
 		var global_path := ProjectSettings.globalize_path(file_path)
 		_captured_sheets[dir_name].save_png(global_path)
+
+	for dir_name in _captured_normal_sheets:
+		var file_path := "%s/%s_%s_normal.png" % [output_dir, safe_anim_name, dir_name]
+		var global_path := ProjectSettings.globalize_path(file_path)
+		_captured_normal_sheets[dir_name].save_png(global_path)
 
 	# Restore camera and viewport
 	if current_model_instance is Node3D:
@@ -1988,11 +2036,13 @@ func _append_log(text: String) -> void:
 
 func _on_run_again_pressed() -> void:
 	_captured_sheets.clear()
+	_captured_normal_sheets.clear()
 	_go_to_step(0)
 
 
 func _on_done_pressed() -> void:
 	_captured_sheets.clear()
+	_captured_normal_sheets.clear()
 	_palette_colors.clear()
 	_clear_model()
 	_go_to_step(0)
