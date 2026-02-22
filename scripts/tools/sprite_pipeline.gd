@@ -2515,7 +2515,7 @@ func _try_add_export_folder(folder_name: String) -> void:
 	sub_dir.list_dir_begin()
 	var file_name := sub_dir.get_next()
 	while file_name != "":
-		if file_name.ends_with(".png") and not file_name.ends_with(".png.import"):
+		if file_name.ends_with(".png") and not file_name.ends_with(".png.import") and not file_name.ends_with("_normal.png"):
 			for dir_info in DIRECTIONS:
 				var dir_name: String = dir_info["name"]
 				if file_name.ends_with("_%s.png" % dir_name):
@@ -2600,11 +2600,31 @@ func _apply_to_spriteframes() -> void:
 			frames.set_animation_speed(anim_name, fps)
 			frames.set_animation_loop(anim_name, loop)
 
-			# Use AtlasTexture regions from the full sheet
+			# Check for corresponding normal map
+			var normal_filename := sheet_filename.get_basename() + "_normal.png"
+			var normal_path := "%s/%s/%s" % [OUTPUT_BASE, folder, normal_filename]
+			var normal_abs_path := ProjectSettings.globalize_path(normal_path)
+			var normal_image: Image = null
+			if FileAccess.file_exists(normal_abs_path):
+				normal_image = Image.load_from_file(normal_abs_path)
+
+			# Build texture: CanvasTexture if normal exists, plain ImageTexture otherwise
 			var sheet_texture := ImageTexture.create_from_image(sheet_image)
+			var atlas_source: Texture2D
+
+			if normal_image:
+				var normal_texture := ImageTexture.create_from_image(normal_image)
+				var canvas_tex := CanvasTexture.new()
+				canvas_tex.diffuse_texture = sheet_texture
+				canvas_tex.normal_texture = normal_texture
+				atlas_source = canvas_tex
+				_append_apply_log("    + normal map: %s" % normal_filename)
+			else:
+				atlas_source = sheet_texture
+
 			for i in range(frame_count):
 				var atlas_tex := AtlasTexture.new()
-				atlas_tex.atlas = sheet_texture
+				atlas_tex.atlas = atlas_source
 				atlas_tex.region = Rect2(i * _export_frame_size, 0, _export_frame_size, _export_frame_size)
 				frames.add_frame(anim_name, atlas_tex)
 
