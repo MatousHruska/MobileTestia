@@ -75,6 +75,8 @@ var _captured_normal_sheets: Dictionary = {}  # { "down": Image, "up": Image, "r
 ## Step 3 state
 var _palette_colors: PackedColorArray = PackedColorArray()
 var _preview_direction := "down"
+var _capture_preview_mode := "color"  # "color" or "normal"
+var _pixel_preview_mode := "color"  # "color", "normal", "lit"
 
 ## Step 4 state — actual frame size from export (used by Steps 5/6)
 var _export_frame_size := FRAME_SIZE
@@ -487,6 +489,27 @@ func _build_step1(parent: VBoxContainer) -> void:
 #===============================================================================
 
 func _build_step2(parent: VBoxContainer) -> void:
+	# Preview mode toggle
+	var mode_hbox := HBoxContainer.new()
+	mode_hbox.add_theme_constant_override("separation", 4)
+	parent.add_child(mode_hbox)
+	var color_btn := Button.new()
+	color_btn.text = "Color"
+	color_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	color_btn.pressed.connect(func() -> void:
+		_capture_preview_mode = "color"
+		_update_capture_preview()
+	)
+	mode_hbox.add_child(color_btn)
+	var normal_btn := Button.new()
+	normal_btn.text = "Normal"
+	normal_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	normal_btn.pressed.connect(func() -> void:
+		_capture_preview_mode = "normal"
+		_update_capture_preview()
+	)
+	mode_hbox.add_child(normal_btn)
+
 	parent.add_child(_make_label("Capturing 3 directions..."))
 
 	parent.add_child(_make_label("Down:"))
@@ -545,6 +568,22 @@ func _build_step3(parent: VBoxContainer) -> void:
 		_update_pixel_preview()
 	)
 	dir_btn_hbox.add_child(dir_right_btn)
+
+	# Preview mode toggle
+	parent.add_child(_make_label("Preview mode:"))
+	var pmode_hbox := HBoxContainer.new()
+	pmode_hbox.add_theme_constant_override("separation", 4)
+	parent.add_child(pmode_hbox)
+	for mode_name in ["Color", "Normal", "Lit"]:
+		var btn := Button.new()
+		btn.text = mode_name
+		btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		var mode_key := mode_name.to_lower()
+		btn.pressed.connect(func() -> void:
+			_pixel_preview_mode = mode_key
+			_update_pixel_preview()
+		)
+		pmode_hbox.add_child(btn)
 
 	parent.add_child(HSeparator.new())
 
@@ -1706,9 +1745,8 @@ func _capture_animation() -> void:
 
 		_captured_sheets[dir_name] = sheet
 		_captured_normal_sheets[dir_name] = normal_sheet
-		# Show preview
-		var tex := ImageTexture.create_from_image(sheet)
-		direction_rects[dir_idx].texture = tex
+
+	_update_capture_preview()
 
 	# Save intermediate captures to disk
 	var model_name := current_model_path.get_file().get_basename()
@@ -1788,6 +1826,15 @@ func _compute_camera_pan(detect_img: Image, detect_size: int, detect_cam_size: f
 	return cam_right * (offset_px_x * world_per_pixel) - cam_up * (offset_px_y * world_per_pixel)
 
 
+func _update_capture_preview() -> void:
+	var sheets := _captured_sheets if _capture_preview_mode == "color" else _captured_normal_sheets
+	var rects := [capture_down_rect, capture_up_rect, capture_right_rect]
+	var dir_names := ["down", "up", "right"]
+	for i in range(3):
+		if sheets.has(dir_names[i]):
+			rects[i].texture = ImageTexture.create_from_image(sheets[dir_names[i]])
+
+
 #===============================================================================
 # IMAGE PROCESSING (Step 3) — delegates to PixelArtProcessing utility
 #===============================================================================
@@ -1827,12 +1874,28 @@ func _update_pixel_preview() -> void:
 	if not _captured_sheets.has(_preview_direction):
 		return
 	if show_original_toggle.button_pressed:
-		var tex := ImageTexture.create_from_image(_captured_sheets[_preview_direction])
-		pixel_preview_rect.texture = tex
+		var source := _captured_sheets[_preview_direction] if _pixel_preview_mode != "normal" else _captured_normal_sheets.get(_preview_direction)
+		if source:
+			pixel_preview_rect.texture = ImageTexture.create_from_image(source)
 		return
-	var processed := _process_image(_captured_sheets[_preview_direction])
-	var tex := ImageTexture.create_from_image(processed)
-	pixel_preview_rect.texture = tex
+
+	match _pixel_preview_mode:
+		"color":
+			var processed := _process_image(_captured_sheets[_preview_direction])
+			pixel_preview_rect.texture = ImageTexture.create_from_image(processed)
+		"normal":
+			if _captured_normal_sheets.has(_preview_direction):
+				var processed := PixelArtProcessing.process_normal_map(
+					_captured_normal_sheets[_preview_direction],
+					int(output_height_spin.value),
+					int(alpha_threshold_slider.value)
+				)
+				pixel_preview_rect.texture = ImageTexture.create_from_image(processed)
+		"lit":
+			# Simple inline lit preview — shows color for now
+			# Full interactive lighting is in the dedicated Light Preview step
+			var processed := _process_image(_captured_sheets[_preview_direction])
+			pixel_preview_rect.texture = ImageTexture.create_from_image(processed)
 
 
 func _on_alpha_threshold_changed(value: float) -> void:
