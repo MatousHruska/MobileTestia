@@ -21,7 +21,8 @@
       "Bash(cd:*)",
       "WebFetch(domain:docs.godotengine.org)",
       "Bash(wc:*)",
-      "Bash(find \"/c/Users/mathr/Documents/MobileTesia/mobile-tesia/MobileTestia/docs\" -type f -name \"*.md\" | xargs ls -la 2>/dev/null)"
+      "Bash(find \"/c/Users/mathr/Documents/MobileTesia/mobile-tesia/MobileTestia/docs\" -type f -name \"*.md\" | xargs ls -la 2>/dev/null)",
+      "WebFetch(domain:ldtk.io)"
     ]
   }
 }

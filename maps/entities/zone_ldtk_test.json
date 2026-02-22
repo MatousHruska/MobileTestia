@@ -2,6 +2,38 @@
 	"chests": [],
 	"doors": [],
 	"levers": [],
+	"lights": [
+		{
+			"color": "#FFAA44",
+			"height": 50.0,
+			"intensity": 1.5,
+			"position": {
+				"x": 506.0,
+				"y": 1654.0
+			},
+			"radius": 128
+		},
+		{
+			"color": "#8899CC",
+			"height": 120.0,
+			"intensity": 0.8,
+			"position": {
+				"x": 528.0,
+				"y": 1940.0
+			},
+			"radius": 192
+		},
+		{
+			"color": "#44FFDD",
+			"height": 30.0,
+			"intensity": 2.0,
+			"position": {
+				"x": 876.0,
+				"y": 1642.0
+			},
+			"radius": 96
+		}
+	],
 	"locations": [],
 	"lootables": [],
 	"lore_echoes": [],

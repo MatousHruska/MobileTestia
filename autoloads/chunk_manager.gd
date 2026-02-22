@@ -1773,12 +1773,14 @@ func _spawn_light(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 	var radius: float = float(data.get("radius", 128))
 	light.texture_scale = radius / (texture.width * 0.5)
 
-	# Metadata for chunk cleanup
+	# Metadata for chunk cleanup and light detection
 	light.set_meta("chunk_spawned", true)
 	light.set_meta("chunk_id", chunk_id)
 	light.set_meta("world_position", world_pos)
+	light.set_meta("light_radius", radius)
 
 	parent.add_child(light)
+	light.add_to_group("lights")
 	Debug.log("ChunkManager", "Spawned light at %s (color=%s, radius=%.0f)" % [world_pos, color_str, radius])
 	return light
 

@@ -1,48 +1,103 @@
 {
-  "chunks": [
-    {
-      "id": "chunk_test_0_0",
-      "zone_id": "zone_test",
-      "grid_x": 0,
-      "grid_y": 0,
-      "biome_type": "dirt",
-      "enemy_density": "medium",
-      "spawn_table_id": "",
-      "ambient_override": "default",
-      "lighting_preset": "default"
-    },
-    {
-      "id": "chunk_test_1_0",
-      "zone_id": "zone_test",
-      "grid_x": 1,
-      "grid_y": 0,
-      "biome_type": "grass",
-      "enemy_density": "none",
-      "spawn_table_id": "",
-      "ambient_override": "default",
-      "lighting_preset": "default"
-    },
-    {
-      "id": "chunk_test_0_1",
-      "zone_id": "zone_test",
-      "grid_x": 0,
-      "grid_y": 1,
-      "biome_type": "grass",
-      "enemy_density": "none",
-      "spawn_table_id": "",
-      "ambient_override": "default",
-      "lighting_preset": "default"
-    },
-    {
-      "id": "chunk_test_1_1",
-      "zone_id": "zone_test",
-      "grid_x": 1,
-      "grid_y": 1,
-      "biome_type": "grass",
-      "enemy_density": "none",
-      "spawn_table_id": "",
-      "ambient_override": "default",
-      "lighting_preset": "default"
-    }
-  ]
+	"chunks": [
+		{
+			"ambient_override": "",
+			"biome_type": "snow",
+			"enemy_density": "none",
+			"grid_x": 0,
+			"grid_y": 0,
+			"id": "chunk_ldtk_test_0_0",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_ldtk_test"
+		},
+		{
+			"ambient_override": "",
+			"biome_type": "snow",
+			"enemy_density": "low",
+			"grid_x": 1,
+			"grid_y": 0,
+			"id": "chunk_ldtk_test_1_0",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_ldtk_test"
+		},
+		{
+			"ambient_override": "",
+			"biome_type": "snow",
+			"enemy_density": "none",
+			"grid_x": 2,
+			"grid_y": 0,
+			"id": "chunk_ldtk_test_2_0",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_ldtk_test"
+		},
+		{
+			"ambient_override": "",
+			"biome_type": "snow",
+			"enemy_density": "none",
+			"grid_x": 0,
+			"grid_y": 1,
+			"id": "chunk_ldtk_test_0_1",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_ldtk_test"
+		},
+		{
+			"ambient_override": "",
+			"biome_type": "snow",
+			"enemy_density": "high",
+			"grid_x": 1,
+			"grid_y": 1,
+			"id": "chunk_ldtk_test_1_1",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_ldtk_test"
+		},
+		{
+			"ambient_override": "",
+			"biome_type": "grass",
+			"enemy_density": "none",
+			"grid_x": 2,
+			"grid_y": 1,
+			"id": "chunk_ldtk_test_2_1",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_ldtk_test"
+		},
+		{
+			"ambient_override": "",
+			"biome_type": "grass",
+			"enemy_density": "none",
+			"grid_x": 0,
+			"grid_y": 2,
+			"id": "chunk_ldtk_test_0_2",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_ldtk_test"
+		},
+		{
+			"ambient_override": "",
+			"biome_type": "grass",
+			"enemy_density": "low",
+			"grid_x": 1,
+			"grid_y": 2,
+			"id": "chunk_ldtk_test_1_2",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_ldtk_test"
+		},
+		{
+			"ambient_override": "",
+			"biome_type": "snow",
+			"enemy_density": "none",
+			"grid_x": 2,
+			"grid_y": 2,
+			"id": "chunk_ldtk_test_2_2",
+			"lighting_preset": "default",
+			"spawn_table_id": "",
+			"zone_id": "zone_ldtk_test"
+		}
+	]
 }
