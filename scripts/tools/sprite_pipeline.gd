@@ -577,7 +577,7 @@ func _build_step3(parent: VBoxContainer) -> void:
 	denoising_min_cluster_spin = SpinBox.new()
 	denoising_min_cluster_spin.min_value = 1
 	denoising_min_cluster_spin.max_value = 50
-	denoising_min_cluster_spin.value = 2
+	denoising_min_cluster_spin.value = 4
 	denoising_min_cluster_spin.step = 1
 	denoising_min_cluster_spin.value_changed.connect(_on_pixel_setting_changed)
 	denoise_hbox.add_child(denoising_min_cluster_spin)
