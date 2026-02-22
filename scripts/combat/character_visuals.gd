@@ -58,6 +58,9 @@ const LIGHT_SEARCH_RADIUS := 512.0
 ## Lerp speed for smooth shadow transitions (~0.3s to settle)
 const SHADOW_TRANSITION_SPEED := 3.3
 
+## Pixel scale for shadow projection distance
+const SHADOW_PROJECTION_SCALE := 20.0
+
 ## Ambient fallback: down-right at 45 degrees
 const AMBIENT_SHADOW_ANGLE := PI / 4.0
 const AMBIENT_SHADOW_LENGTH := 0.6
@@ -338,9 +341,32 @@ func _update_shadow(delta: float) -> void:
 	_shadow_length = lerpf(_shadow_length, _target_shadow_length, t)
 	_shadow_opacity = lerpf(_shadow_opacity, _target_shadow_opacity, t)
 
-	# --- Position shadow offset from character in shadow direction ---
+	# --- Build shadow projection transform ---
+	# The shadow silhouette stretches FROM the character's feet ALONG shadow_dir.
+	# We rebuild the sprite's coordinate axes so:
+	#   X basis = perpendicular to shadow (preserves silhouette width)
+	#   Y basis = along shadow direction (projects height into shadow length)
+	#   Origin  = offset so feet anchor at the character's position
 	var shadow_dir := Vector2(cos(_shadow_angle), sin(_shadow_angle))
-	shadow_sprite.position = shadow_dir * _shadow_length * 10.0
+	var perp := Vector2(-shadow_dir.y, shadow_dir.x)
+
+	# Get actual sprite half-height for accurate projection
+	var half_h := 16.0
+	if shadow_sprite.sprite_frames and shadow_sprite.sprite_frames.has_animation(shadow_sprite.animation):
+		var frame_tex := shadow_sprite.sprite_frames.get_frame_texture(
+			shadow_sprite.animation, shadow_sprite.frame
+		)
+		if frame_tex:
+			half_h = frame_tex.get_height() / 2.0
+
+	var projection_dist := _shadow_length * SHADOW_PROJECTION_SCALE
+	var sprite_height := half_h * 2.0
+
+	var x_basis := perp
+	var y_basis := -shadow_dir * (projection_dist / sprite_height)
+	var origin := shadow_dir * (projection_dist / 2.0)
+
+	shadow_sprite.transform = Transform2D(x_basis, y_basis, origin)
 
 	# --- Push opacity to shader ---
 	if _shadow_material:
