@@ -93,7 +93,9 @@ func _run() -> void:
 		"lore_echoes": [],
 		"trigger_areas": [],
 		# Patrol system
-		"patrol_waypoints": []
+		"patrol_waypoints": [],
+		# Lighting
+		"lights": []
 	}
 
 	var levels: Array = ldtk_data.get("levels", [])
@@ -201,7 +203,7 @@ func _process_level(level: Dictionary) -> Dictionary:
 	# Extract entities from the entire level
 	var entities := _extract_entities(level, zone_id)
 
-	print("  Extracted %d spawn points, %d chests, %d transitions, %d doors, %d levers, %d npcs, %d lootables, %d signs, %d echoes, %d triggers, %d patrol_waypoints" % [
+	print("  Extracted %d spawn points, %d chests, %d transitions, %d doors, %d levers, %d npcs, %d lootables, %d signs, %d echoes, %d triggers, %d patrol_waypoints, %d lights" % [
 		entities.spawn_points.size(),
 		entities.chests.size(),
 		entities.transitions.size(),
@@ -212,7 +214,8 @@ func _process_level(level: Dictionary) -> Dictionary:
 		entities.signs.size(),
 		entities.lore_echoes.size(),
 		entities.trigger_areas.size(),
-		entities.patrol_waypoints.size()
+		entities.patrol_waypoints.size(),
+		entities.lights.size()
 	])
 
 	return {
@@ -596,7 +599,9 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 		"lore_echoes": [],
 		"trigger_areas": [],
 		# Patrol system
-		"patrol_waypoints": []
+		"patrol_waypoints": [],
+		# Lighting
+		"lights": []
 	}
 
 	for layer in level.get("layerInstances", []):
@@ -744,6 +749,19 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 						"zone_id": zone_id,
 						"position_x": position.x,
 						"position_y": position.y
+					})
+
+				# Lighting
+				"lightsource":
+					var color_val = fields.get("light_color", "#FFAA44")
+					result.lights.append({
+						"zone_id": zone_id,
+						"position_x": position.x,
+						"position_y": position.y,
+						"color": color_val if color_val != null else "#FFAA44",
+						"intensity": float(fields.get("intensity", 1.5)),
+						"radius": int(fields.get("radius", 128)),
+						"height": float(fields.get("height", 50.0))
 					})
 
 	return result
@@ -938,6 +956,18 @@ func _export_entities_summary(entities: Dictionary) -> void:
 			"position": {"x": wp.get("position_x", 0), "y": wp.get("position_y", 0)}
 		})
 
+	# Process lights
+	for light in entities.lights:
+		var zone_id: String = light.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].lights.append({
+			"position": {"x": light.get("position_x", 0), "y": light.get("position_y", 0)},
+			"color": light.get("color", "#FFAA44"),
+			"intensity": light.get("intensity", 1.5),
+			"radius": light.get("radius", 128),
+			"height": light.get("height", 50.0)
+		})
+
 	# Export each zone's entities to a separate JSON file
 	for zone_id in zones_data:
 		_export_zone_entities(zone_id, zones_data[zone_id])
@@ -950,6 +980,7 @@ func _export_entities_summary(entities: Dictionary) -> void:
 		entity_count += zd.doors.size() + zd.levers.size() + zd.pressure_plates.size()
 		entity_count += zd.npcs.size() + zd.lootables.size() + zd.signs.size()
 		entity_count += zd.lore_echoes.size() + zd.trigger_areas.size() + zd.patrol_waypoints.size()
+		entity_count += zd.lights.size()
 		print("  %s: %d total entities" % [zone_id, entity_count])
 		print("    spawns: %d, chests: %d, transitions: %d, player_spawns: %d" % [
 			zd.spawn_points.size(), zd.chests.size(), zd.transitions.size(), zd.player_spawns.size()
@@ -966,6 +997,8 @@ func _export_entities_summary(entities: Dictionary) -> void:
 			print("    lore_echoes: %d, trigger_areas: %d, patrol_waypoints: %d" % [
 				zd.lore_echoes.size(), zd.trigger_areas.size(), zd.patrol_waypoints.size()
 			])
+		if zd.lights.size() > 0:
+			print("    lights: %d" % [zd.lights.size()])
 
 
 func _ensure_zone_data(zones_data: Dictionary, zone_id: String) -> void:
@@ -987,7 +1020,9 @@ func _ensure_zone_data(zones_data: Dictionary, zone_id: String) -> void:
 			"lore_echoes": [],
 			"trigger_areas": [],
 			# Patrol system
-			"patrol_waypoints": []
+			"patrol_waypoints": [],
+			# Lighting
+			"lights": []
 		}
 
 
