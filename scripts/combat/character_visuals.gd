@@ -50,6 +50,9 @@ var is_flipped: bool = false
 ## Weapon anchor pixel color for scanning
 const WEAPON_ANCHOR_COLOR := Color("#FF00AA")
 
+## Weapon direction pixel color — points from grip toward blade tip
+const WEAPON_DIRECTION_COLOR := Color("#00FFFF")
+
 
 #===============================================================================
 # INITIALIZATION
@@ -102,40 +105,49 @@ func _process(_delta: float) -> void:
 	if body_sprite == null:
 		return
 
-	# Find the anchor once per frame and reuse for both weapon and effects
-	var anchor := _find_weapon_anchor()
+	# Find both anchor pixels once per frame
+	var anchors := _find_weapon_anchors()
+	var grip: Vector2 = anchors.get("grip", Vector2.INF)
 
 	# Position the effect anchor at the blade tip (not the grip) so VFX
 	# spawn where the weapon is striking, not at the character's hand.
-	if anchor != Vector2.INF and effect_anchor:
-		effect_anchor.position = anchor + _get_blade_tip_offset(anchor)
+	if grip != Vector2.INF and effect_anchor:
+		effect_anchor.position = grip + _get_blade_tip_offset(grip)
 
-	_update_weapon_position(anchor)
+	_update_weapon_position(anchors)
 
 
-func _update_weapon_position(anchor: Vector2) -> void:
+func _update_weapon_position(anchors: Dictionary) -> void:
 	if weapon_sprite == null:
 		return
 
 	if not weapon_visible:
 		weapon_sprite.visible = false
 		return
+
+	var anchor: Vector2 = anchors.get("grip", Vector2.INF)
+	var direction_pixel: Vector2 = anchors.get("direction", Vector2.INF)
+
 	if anchor == Vector2.INF:
-		# No anchor pixel in current frame — use a fallback "held at side"
-		# position so weapons remain visible during animations without anchors
-		# (e.g., casting with a staff).
+		if anchors.is_empty():
+			# No anchor pixels at all — hide weapon (explicit visibility control)
+			weapon_sprite.visible = false
+			return
+		# No grip pixel but anchors dict exists — use fallback
 		anchor = _get_fallback_weapon_anchor()
 		if anchor == Vector2.INF:
 			weapon_sprite.visible = false
 			return
 
-	# Determine weapon texture direction from anchor position.
-	# The weapon blade should point AWAY from the character center,
-	# matching the direction the hand is reaching.  During windup the
-	# anchor is behind the character so the blade points backward;
-	# during strike it's in front so the blade points forward.
-	var weapon_dir := _weapon_direction_from_anchor(anchor)
+	# Determine weapon texture direction:
+	# - Both pixels present → angle from grip to direction pixel (explicit)
+	# - Only grip → position heuristic (backward compat)
+	var weapon_dir: String
 	var weapon_flip := is_flipped
+	if direction_pixel != Vector2.INF:
+		weapon_dir = _weapon_direction_from_angle(anchor, direction_pixel)
+	else:
+		weapon_dir = _weapon_direction_from_anchor(anchor)
 	if abs(anchor.x) > abs(anchor.y):
 		# Horizontal dominant — flip when anchor is to the left
 		weapon_flip = anchor.x < 0
@@ -187,6 +199,18 @@ func _weapon_direction_from_anchor(anchor: Vector2) -> String:
 		return "right"
 
 
+func _weapon_direction_from_angle(grip: Vector2, direction: Vector2) -> String:
+	## Compute weapon direction from the angle between grip and direction pixels.
+	## Angle thresholds: down = 30-150°, up = -150 to -30°, right = everything else.
+	var angle_deg := rad_to_deg(atan2(direction.y - grip.y, direction.x - grip.x))
+	if angle_deg >= 30.0 and angle_deg <= 150.0:
+		return "down"
+	elif angle_deg >= -150.0 and angle_deg <= -30.0:
+		return "up"
+	else:
+		return "right"
+
+
 ## Calculate the offset from the weapon grip to the blade tip in local space.
 ## Uses the character's facing direction (not the dynamic weapon direction)
 ## so the offset always points toward the attack, even during windup.
@@ -215,37 +239,55 @@ func _get_blade_tip_offset(_anchor: Vector2) -> Vector2:
 # WEAPON ANCHOR SCANNING
 #===============================================================================
 
-## Scan the current body sprite frame for the magenta anchor pixel.
-## Returns local position relative to the sprite center, or Vector2.INF if not found.
-func _find_weapon_anchor() -> Vector2:
+## Scan the current body sprite frame for grip (magenta) and direction (cyan) anchor pixels.
+## Returns Dictionary with "grip" and/or "direction" keys (local-space Vector2), or empty dict.
+func _find_weapon_anchors() -> Dictionary:
 	if not body_sprite or not body_sprite.sprite_frames:
-		return Vector2.INF
+		return {}
 
 	var current_anim := body_sprite.animation
 	var current_frame_idx := body_sprite.frame
 
 	if not body_sprite.sprite_frames.has_animation(current_anim):
-		return Vector2.INF
+		return {}
 
 	var tex := body_sprite.sprite_frames.get_frame_texture(current_anim, current_frame_idx)
 	if tex == null:
-		return Vector2.INF
+		return {}
 
 	var img := tex.get_image()
 	if img == null:
-		return Vector2.INF
+		return {}
 
-	for x in range(img.get_width()):
-		for y in range(img.get_height()):
+	var result := {}
+	var half_w := img.get_width() / 2.0
+	var half_h := img.get_height() / 2.0
+
+	for y in range(img.get_height()):
+		for x in range(img.get_width()):
 			var pixel := img.get_pixel(x, y)
-			if pixel.is_equal_approx(WEAPON_ANCHOR_COLOR):
-				var local_x: float = x - img.get_width() / 2.0
-				var local_y: float = y - img.get_height() / 2.0
+			if pixel.is_equal_approx(WEAPON_ANCHOR_COLOR) and not result.has("grip"):
+				var local_x: float = x - half_w
+				var local_y: float = y - half_h
 				if is_flipped:
 					local_x = -local_x
-				return Vector2(local_x, local_y)
+				result["grip"] = Vector2(local_x, local_y)
+			elif pixel.is_equal_approx(WEAPON_DIRECTION_COLOR) and not result.has("direction"):
+				var local_x: float = x - half_w
+				var local_y: float = y - half_h
+				if is_flipped:
+					local_x = -local_x
+				result["direction"] = Vector2(local_x, local_y)
+			if result.size() == 2:
+				return result
 
-	return Vector2.INF
+	return result
+
+
+## Backward-compatible wrapper — returns just the grip position.
+func _find_weapon_anchor() -> Vector2:
+	var anchors := _find_weapon_anchors()
+	return anchors.get("grip", Vector2.INF)
 
 
 func _get_fallback_weapon_anchor() -> Vector2:

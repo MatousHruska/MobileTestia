@@ -17,6 +17,9 @@ var _controller: PlayerController
 ## Weapon anchor pixel color used to locate anchor in attack frames
 const WEAPON_ANCHOR_COLOR := Color("#FF00AA")
 
+## Weapon direction pixel color — points from grip toward blade tip
+const WEAPON_DIRECTION_COLOR := Color("#00FFFF")
+
 ## Current high-level state for priority resolution
 enum State { IDLE, WALK, DASH, ATTACK }
 var _current_state: State = State.IDLE

@@ -2,14 +2,15 @@ extends Control
 ## Sprite Pipeline Wizard
 ##
 ## Unified tool that chains 3D sprite capture and pixel art conversion
-## into a single 5-step wizard flow with saveable presets.
+## into a single 6-step wizard flow with saveable presets.
 ##
 ## Steps:
 ##   1. Model & Animation — select model, pick animation, configure camera
 ##   2. Capture Preview — auto-capture all 3 directions, confirm
 ##   3. Pixel Art Settings — configure processing, preview result
 ##   4. Export — process all directions, save final pixel art
-##   5. Apply to SpriteFrames — load exported sheets into player_sprites.tres
+##   5. Weapon Anchors — place grip/direction pixels on exported frames (optional)
+##   6. Apply to SpriteFrames — load exported sheets into player_sprites.tres
 ##
 ## Run: scenes/tools/sprite_pipeline.tscn (F6)
 
@@ -52,7 +53,7 @@ const DIRECTIONS := [
 # WIZARD STATE
 #===============================================================================
 
-var _current_step := 0  # 0-4
+var _current_step := 0  # 0-5
 var _step_containers: Array[VBoxContainer] = []  # one per step
 
 ## Step 1 state
@@ -69,7 +70,15 @@ var _captured_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": 
 var _palette_colors: PackedColorArray = PackedColorArray()
 var _preview_direction := "down"
 
-## Step 5 state
+## Step 5 (Anchor Editor) state
+var _anchor_enabled := false
+var _anchor_images: Dictionary = {}  # {"down": Image, "up": Image, "right": Image}
+var _anchor_current_dir := "down"
+var _anchor_current_frame := 0
+var _anchor_frame_count := 0
+var _anchor_tool := "grip"  # "grip", "direction", "erase"
+
+## Step 6 state
 var _apply_groups: Array = []  # Dynamically scanned from OUTPUT_BASE folders
 var _exported_folder: String = ""  # Folder name from the most recent export
 
@@ -126,8 +135,18 @@ var show_original_toggle: CheckButton
 
 # Step 4 nodes
 var export_log_label: Label
+var anchor_weapon_anim_toggle: CheckButton  # In export step — gates anchor editor
 
-# Step 5 nodes
+# Step 5 (Anchor Editor) nodes
+var anchor_frame_label: Label
+var anchor_info_label: Label
+var anchor_log_label: Label
+var anchor_frame_display: TextureRect  # In right panel, with gui_input connected
+var anchor_grid_toggle: CheckButton
+var _anchor_dir_buttons: Dictionary = {}  # {"down": Button, ...}
+var _anchor_tool_buttons: Dictionary = {}  # {"grip": Button, ...}
+
+# Step 6 nodes
 var apply_log_label: Label
 var apply_button: Button
 var apply_summary_container: VBoxContainer
@@ -178,14 +197,14 @@ func _build_ui() -> void:
 
 	# Step indicator
 	step_indicator_label = Label.new()
-	step_indicator_label.text = "Step 1 of 5: Model & Animation"
+	step_indicator_label.text = "Step 1 of 6: Model & Animation"
 	step_indicator_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	step_indicator_label.add_theme_font_size_override("font_size", 14)
 	vbox.add_child(step_indicator_label)
 
 	vbox.add_child(HSeparator.new())
 
-	# Build 5 step containers
+	# Build 6 step containers
 	var step1 := VBoxContainer.new()
 	step1.add_theme_constant_override("separation", 8)
 	vbox.add_child(step1)
@@ -215,12 +234,19 @@ func _build_ui() -> void:
 	vbox.add_child(step5)
 	_step_containers.append(step5)
 
+	var step6 := VBoxContainer.new()
+	step6.add_theme_constant_override("separation", 8)
+	step6.visible = false
+	vbox.add_child(step6)
+	_step_containers.append(step6)
+
 	# Build each step's contents
 	_build_step1(step1)
 	_build_step2(step2)
 	_build_step3(step3)
 	_build_step4(step4)
-	_build_step5(step5)
+	_build_step_anchors(step5)
+	_build_step6(step6)
 
 	vbox.add_child(HSeparator.new())
 
@@ -233,7 +259,7 @@ func _build_ui() -> void:
 	back_button.text = "Back"
 	back_button.size_flags_horizontal = SIZE_EXPAND_FILL
 	back_button.visible = false
-	back_button.pressed.connect(func() -> void: _go_to_step(_current_step - 1))
+	back_button.pressed.connect(_on_back_pressed)
 	nav_hbox.add_child(back_button)
 
 	next_button = Button.new()
@@ -285,6 +311,17 @@ func _build_ui() -> void:
 	pixel_preview_rect.size_flags_horizontal = SIZE_EXPAND_FILL
 	pixel_preview_rect.size_flags_vertical = SIZE_EXPAND_FILL
 	pixel_preview_scroll.add_child(pixel_preview_rect)
+
+	# Anchor frame display (Step 5), initially hidden
+	anchor_frame_display = TextureRect.new()
+	anchor_frame_display.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	anchor_frame_display.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	anchor_frame_display.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	anchor_frame_display.size_flags_horizontal = SIZE_EXPAND_FILL
+	anchor_frame_display.size_flags_vertical = SIZE_EXPAND_FILL
+	anchor_frame_display.visible = false
+	anchor_frame_display.gui_input.connect(_on_anchor_frame_input)
+	right_vbox.add_child(anchor_frame_display)
 
 
 #===============================================================================
@@ -648,6 +685,12 @@ func _build_step4(parent: VBoxContainer) -> void:
 
 	parent.add_child(HSeparator.new())
 
+	anchor_weapon_anim_toggle = CheckButton.new()
+	anchor_weapon_anim_toggle.text = "Weapon Animation (edit anchors next)"
+	parent.add_child(anchor_weapon_anim_toggle)
+
+	parent.add_child(HSeparator.new())
+
 	var run_again_btn := Button.new()
 	run_again_btn.text = "Run Again"
 	run_again_btn.pressed.connect(_on_run_again_pressed)
@@ -660,10 +703,405 @@ func _build_step4(parent: VBoxContainer) -> void:
 
 
 #===============================================================================
-# STEP 5 — APPLY TO SPRITEFRAMES
+# STEP 5 — WEAPON ANCHOR EDITOR
 #===============================================================================
 
-func _build_step5(parent: VBoxContainer) -> void:
+func _build_step_anchors(parent: VBoxContainer) -> void:
+	parent.add_child(_make_label("Weapon Anchor Editor"))
+
+	parent.add_child(HSeparator.new())
+
+	# Direction selector
+	parent.add_child(_make_label("Direction:"))
+	var dir_hbox := HBoxContainer.new()
+	dir_hbox.add_theme_constant_override("separation", 4)
+	parent.add_child(dir_hbox)
+	for dir_name in ["down", "up", "right"]:
+		var btn := Button.new()
+		btn.text = dir_name.capitalize()
+		btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		btn.pressed.connect(_on_anchor_dir_selected.bind(dir_name))
+		dir_hbox.add_child(btn)
+		_anchor_dir_buttons[dir_name] = btn
+
+	parent.add_child(HSeparator.new())
+
+	# Frame navigator
+	parent.add_child(_make_label("Frame:"))
+	var frame_hbox := HBoxContainer.new()
+	frame_hbox.add_theme_constant_override("separation", 4)
+	parent.add_child(frame_hbox)
+
+	var prev_btn := Button.new()
+	prev_btn.text = "<"
+	prev_btn.pressed.connect(func() -> void:
+		if _anchor_current_frame > 0:
+			_anchor_current_frame -= 1
+			_update_anchor_display()
+	)
+	frame_hbox.add_child(prev_btn)
+
+	anchor_frame_label = Label.new()
+	anchor_frame_label.text = "1 / 1"
+	anchor_frame_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	anchor_frame_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	frame_hbox.add_child(anchor_frame_label)
+
+	var next_frame_btn := Button.new()
+	next_frame_btn.text = ">"
+	next_frame_btn.pressed.connect(func() -> void:
+		if _anchor_current_frame < _anchor_frame_count - 1:
+			_anchor_current_frame += 1
+			_update_anchor_display()
+	)
+	frame_hbox.add_child(next_frame_btn)
+
+	parent.add_child(HSeparator.new())
+
+	# Tool selector
+	parent.add_child(_make_label("Tool:"))
+	var tool_hbox := HBoxContainer.new()
+	tool_hbox.add_theme_constant_override("separation", 4)
+	parent.add_child(tool_hbox)
+
+	var tool_configs := [
+		{"key": "grip", "label": "Grip (Magenta)"},
+		{"key": "direction", "label": "Direction (Cyan)"},
+		{"key": "erase", "label": "Erase"},
+	]
+	for cfg in tool_configs:
+		var btn := Button.new()
+		btn.text = cfg["label"]
+		btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		btn.pressed.connect(_on_anchor_tool_selected.bind(cfg["key"]))
+		tool_hbox.add_child(btn)
+		_anchor_tool_buttons[cfg["key"]] = btn
+
+	parent.add_child(HSeparator.new())
+
+	# Anchor info
+	anchor_info_label = Label.new()
+	anchor_info_label.text = "Grip: —\nDirection: —\nWeapon dir: —"
+	anchor_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	anchor_info_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	parent.add_child(anchor_info_label)
+
+	parent.add_child(HSeparator.new())
+
+	# Grid toggle
+	anchor_grid_toggle = CheckButton.new()
+	anchor_grid_toggle.text = "Show Grid"
+	anchor_grid_toggle.toggled.connect(func(_on: bool) -> void: _update_anchor_display())
+	parent.add_child(anchor_grid_toggle)
+
+	# Copy to All Frames
+	var copy_btn := Button.new()
+	copy_btn.text = "Copy to All Frames"
+	copy_btn.pressed.connect(_on_anchor_copy_to_all)
+	parent.add_child(copy_btn)
+
+	# Save Anchor Changes
+	var save_btn := Button.new()
+	save_btn.text = "Save Anchor Changes"
+	save_btn.pressed.connect(_on_anchor_save)
+	parent.add_child(save_btn)
+
+	parent.add_child(HSeparator.new())
+
+	# Log label
+	anchor_log_label = Label.new()
+	anchor_log_label.text = ""
+	anchor_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	anchor_log_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	parent.add_child(anchor_log_label)
+
+
+func _on_anchor_dir_selected(dir_name: String) -> void:
+	_anchor_current_dir = dir_name
+	_anchor_current_frame = 0
+	if _anchor_images.has(dir_name):
+		_anchor_frame_count = _anchor_images[dir_name].get_width() / FRAME_SIZE
+	else:
+		_anchor_frame_count = 0
+	_update_anchor_display()
+
+
+func _on_anchor_tool_selected(tool_name: String) -> void:
+	_anchor_tool = tool_name
+	_update_anchor_button_highlights()
+
+
+func _update_anchor_button_highlights() -> void:
+	for dir_name in _anchor_dir_buttons:
+		var btn: Button = _anchor_dir_buttons[dir_name]
+		btn.modulate = Color.YELLOW if dir_name == _anchor_current_dir else Color.WHITE
+	for tool_name in _anchor_tool_buttons:
+		var btn: Button = _anchor_tool_buttons[tool_name]
+		btn.modulate = Color.YELLOW if tool_name == _anchor_tool else Color.WHITE
+
+
+func _enter_anchor_editor() -> void:
+	_anchor_images.clear()
+	_anchor_current_dir = "down"
+	_anchor_current_frame = 0
+	_anchor_frame_count = 0
+	anchor_log_label.text = ""
+
+	var model_name := current_model_path.get_file().get_basename()
+	var anim_name: String = anim_dropdown.get_item_text(anim_dropdown.selected)
+	var safe_anim_name := anim_name.replace(" ", "_").replace("/", "_").to_lower()
+
+	for dir_info in DIRECTIONS:
+		var dir_name: String = dir_info["name"]
+		var file_path := "%s/%s/%s_%s.png" % [OUTPUT_BASE, model_name, safe_anim_name, dir_name]
+		var global_path := ProjectSettings.globalize_path(file_path)
+		var img := Image.load_from_file(global_path)
+		if img:
+			_anchor_images[dir_name] = img
+			_append_anchor_log("Loaded: %s" % file_path)
+		else:
+			_append_anchor_log("WARNING: Could not load %s" % file_path)
+
+	if _anchor_images.has("down"):
+		_anchor_frame_count = _anchor_images["down"].get_width() / FRAME_SIZE
+	elif not _anchor_images.is_empty():
+		var first_key: String = _anchor_images.keys()[0]
+		_anchor_current_dir = first_key
+		_anchor_frame_count = _anchor_images[first_key].get_width() / FRAME_SIZE
+
+	_append_anchor_log("Frames per direction: %d" % _anchor_frame_count)
+	_append_anchor_log("Note: Re-exporting will overwrite anchor changes.")
+	_update_anchor_display()
+
+
+func _update_anchor_display() -> void:
+	_update_anchor_button_highlights()
+
+	if not _anchor_images.has(_anchor_current_dir) or _anchor_frame_count == 0:
+		anchor_frame_label.text = "0 / 0"
+		anchor_info_label.text = "Grip: —\nDirection: —\nWeapon dir: —"
+		anchor_frame_display.texture = null
+		return
+
+	anchor_frame_label.text = "%d / %d" % [_anchor_current_frame + 1, _anchor_frame_count]
+
+	var sheet: Image = _anchor_images[_anchor_current_dir]
+	var region := Rect2i(_anchor_current_frame * FRAME_SIZE, 0, FRAME_SIZE, FRAME_SIZE)
+	var frame_img := sheet.get_region(region)
+
+	# Scan for existing anchor pixels
+	var grip_pos := Vector2(-1, -1)
+	var dir_pos := Vector2(-1, -1)
+	var grip_color := Color("#FF00AA")
+	var dir_color := Color("#00FFFF")
+	for y in range(frame_img.get_height()):
+		for x in range(frame_img.get_width()):
+			var pixel := frame_img.get_pixel(x, y)
+			if pixel.is_equal_approx(grip_color):
+				grip_pos = Vector2(x, y)
+			elif pixel.is_equal_approx(dir_color):
+				dir_pos = Vector2(x, y)
+
+	# Update info label
+	var grip_text := "(%d, %d)" % [int(grip_pos.x), int(grip_pos.y)] if grip_pos.x >= 0 else "—"
+	var dir_text := "(%d, %d)" % [int(dir_pos.x), int(dir_pos.y)] if dir_pos.x >= 0 else "—"
+	var weapon_dir_text := "—"
+	if grip_pos.x >= 0 and dir_pos.x >= 0:
+		var angle_deg := rad_to_deg(atan2(dir_pos.y - grip_pos.y, dir_pos.x - grip_pos.x))
+		if angle_deg >= 30.0 and angle_deg <= 150.0:
+			weapon_dir_text = "down (%.0f°)" % angle_deg
+		elif angle_deg >= -150.0 and angle_deg <= -30.0:
+			weapon_dir_text = "up (%.0f°)" % angle_deg
+		else:
+			weapon_dir_text = "right (%.0f°)" % angle_deg
+	elif grip_pos.x >= 0:
+		weapon_dir_text = "(position heuristic)"
+	anchor_info_label.text = "Grip: %s\nDirection: %s\nWeapon dir: %s" % [grip_text, dir_text, weapon_dir_text]
+
+	# Create display image (scaled up for visibility)
+	var display := frame_img.duplicate() as Image
+
+	# Draw grid overlay if enabled
+	if anchor_grid_toggle.button_pressed:
+		var grid_color := Color(1.0, 1.0, 1.0, 0.15)
+		for x in range(0, FRAME_SIZE, 8):
+			for y in range(FRAME_SIZE):
+				display.set_pixel(x, y, display.get_pixel(x, y).blend(grid_color))
+		for y in range(0, FRAME_SIZE, 8):
+			for x in range(FRAME_SIZE):
+				display.set_pixel(x, y, display.get_pixel(x, y).blend(grid_color))
+
+	# Draw crosshair markers around anchor pixels for visibility
+	if grip_pos.x >= 0:
+		_draw_crosshair(display, int(grip_pos.x), int(grip_pos.y), grip_color)
+	if dir_pos.x >= 0:
+		_draw_crosshair(display, int(dir_pos.x), int(dir_pos.y), dir_color)
+
+	var tex := ImageTexture.create_from_image(display)
+	anchor_frame_display.texture = tex
+
+
+func _draw_crosshair(img: Image, cx: int, cy: int, color: Color) -> void:
+	## Draw a small crosshair around the given pixel for visibility.
+	var offsets := [Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(2, 0),
+					Vector2i(0, -2), Vector2i(0, -1), Vector2i(0, 1), Vector2i(0, 2)]
+	for ofs in offsets:
+		var px := cx + ofs.x
+		var py := cy + ofs.y
+		if px >= 0 and px < img.get_width() and py >= 0 and py < img.get_height():
+			img.set_pixel(px, py, color)
+
+
+func _on_anchor_frame_input(event: InputEvent) -> void:
+	if not event is InputEventMouseButton:
+		return
+	var mb := event as InputEventMouseButton
+	if mb.button_index != MOUSE_BUTTON_LEFT or not mb.pressed:
+		return
+	if not _anchor_images.has(_anchor_current_dir) or _anchor_frame_count == 0:
+		return
+
+	# Convert click position to pixel coordinates
+	# anchor_frame_display uses STRETCH_KEEP_ASPECT_CENTERED
+	var display_size := anchor_frame_display.size
+	var tex := anchor_frame_display.texture
+	if tex == null:
+		return
+
+	var tex_size := tex.get_size()
+	var tex_aspect := tex_size.x / tex_size.y
+	var display_aspect := display_size.x / display_size.y
+
+	var drawn_w: float
+	var drawn_h: float
+	var offset_x: float
+	var offset_y: float
+
+	if tex_aspect > display_aspect:
+		# Texture wider than display — letterboxed vertically
+		drawn_w = display_size.x
+		drawn_h = display_size.x / tex_aspect
+		offset_x = 0.0
+		offset_y = (display_size.y - drawn_h) / 2.0
+	else:
+		# Texture taller — pillarboxed horizontally
+		drawn_h = display_size.y
+		drawn_w = display_size.y * tex_aspect
+		offset_x = (display_size.x - drawn_w) / 2.0
+		offset_y = 0.0
+
+	var click := mb.position
+	var rel_x := (click.x - offset_x) / drawn_w
+	var rel_y := (click.y - offset_y) / drawn_h
+
+	if rel_x < 0.0 or rel_x > 1.0 or rel_y < 0.0 or rel_y > 1.0:
+		return
+
+	var pixel_x := int(rel_x * FRAME_SIZE)
+	var pixel_y := int(rel_y * FRAME_SIZE)
+	pixel_x = clampi(pixel_x, 0, FRAME_SIZE - 1)
+	pixel_y = clampi(pixel_y, 0, FRAME_SIZE - 1)
+
+	_place_anchor_pixel(pixel_x, pixel_y)
+
+
+func _place_anchor_pixel(x: int, y: int) -> void:
+	if not _anchor_images.has(_anchor_current_dir):
+		return
+	var sheet: Image = _anchor_images[_anchor_current_dir]
+	var grip_color := Color("#FF00AA")
+	var dir_color := Color("#00FFFF")
+
+	match _anchor_tool:
+		"grip":
+			_clear_color_from_frame(sheet, _anchor_current_frame, grip_color)
+			sheet.set_pixel(_anchor_current_frame * FRAME_SIZE + x, y, grip_color)
+		"direction":
+			_clear_color_from_frame(sheet, _anchor_current_frame, dir_color)
+			sheet.set_pixel(_anchor_current_frame * FRAME_SIZE + x, y, dir_color)
+		"erase":
+			var pixel := sheet.get_pixel(_anchor_current_frame * FRAME_SIZE + x, y)
+			if pixel.is_equal_approx(grip_color) or pixel.is_equal_approx(dir_color):
+				sheet.set_pixel(_anchor_current_frame * FRAME_SIZE + x, y, Color.TRANSPARENT)
+
+	_update_anchor_display()
+
+
+func _clear_color_from_frame(sheet: Image, frame_idx: int, color: Color) -> void:
+	var start_x := frame_idx * FRAME_SIZE
+	for y in range(FRAME_SIZE):
+		for x in range(start_x, start_x + FRAME_SIZE):
+			if sheet.get_pixel(x, y).is_equal_approx(color):
+				sheet.set_pixel(x, y, Color.TRANSPARENT)
+
+
+func _on_anchor_copy_to_all() -> void:
+	if not _anchor_images.has(_anchor_current_dir) or _anchor_frame_count == 0:
+		return
+	var sheet: Image = _anchor_images[_anchor_current_dir]
+	var grip_color := Color("#FF00AA")
+	var dir_color := Color("#00FFFF")
+
+	# Find anchor positions in current frame
+	var grip_pos := Vector2i(-1, -1)
+	var dir_pos := Vector2i(-1, -1)
+	var start_x := _anchor_current_frame * FRAME_SIZE
+	for y in range(FRAME_SIZE):
+		for x in range(start_x, start_x + FRAME_SIZE):
+			var pixel := sheet.get_pixel(x, y)
+			if pixel.is_equal_approx(grip_color):
+				grip_pos = Vector2i(x - start_x, y)
+			elif pixel.is_equal_approx(dir_color):
+				dir_pos = Vector2i(x - start_x, y)
+
+	# Apply to all other frames
+	for i in range(_anchor_frame_count):
+		if i == _anchor_current_frame:
+			continue
+		_clear_color_from_frame(sheet, i, grip_color)
+		_clear_color_from_frame(sheet, i, dir_color)
+		if grip_pos.x >= 0:
+			sheet.set_pixel(i * FRAME_SIZE + grip_pos.x, grip_pos.y, grip_color)
+		if dir_pos.x >= 0:
+			sheet.set_pixel(i * FRAME_SIZE + dir_pos.x, dir_pos.y, dir_color)
+
+	_append_anchor_log("Copied anchors to all %d frames (%s)" % [_anchor_frame_count, _anchor_current_dir])
+	_update_anchor_display()
+
+
+func _on_anchor_save() -> void:
+	if _anchor_images.is_empty():
+		_append_anchor_log("Nothing to save.")
+		return
+
+	var model_name := current_model_path.get_file().get_basename()
+	var anim_name: String = anim_dropdown.get_item_text(anim_dropdown.selected)
+	var safe_anim_name := anim_name.replace(" ", "_").replace("/", "_").to_lower()
+	var saved := 0
+
+	for dir_name in _anchor_images:
+		var file_path := "%s/%s/%s_%s.png" % [OUTPUT_BASE, model_name, safe_anim_name, dir_name]
+		var global_path := ProjectSettings.globalize_path(file_path)
+		var err := (_anchor_images[dir_name] as Image).save_png(global_path)
+		if err == OK:
+			_append_anchor_log("Saved: %s" % file_path)
+			saved += 1
+		else:
+			_append_anchor_log("ERROR: Failed to save %s" % file_path)
+
+	_append_anchor_log("Saved %d/%d direction sheets." % [saved, _anchor_images.size()])
+
+
+func _append_anchor_log(text: String) -> void:
+	anchor_log_label.text += text + "\n"
+	print("[SpritePipeline:Anchors] %s" % text)
+
+
+#===============================================================================
+# STEP 6 — APPLY TO SPRITEFRAMES
+#===============================================================================
+
+func _build_step6(parent: VBoxContainer) -> void:
 	parent.add_child(_make_label("Apply exported sheets to SpriteFrames"))
 
 	var path_label := Label.new()
@@ -716,15 +1154,17 @@ func _go_to_step(step: int) -> void:
 		_step_containers[i].visible = (i == step)
 	# Update navigation buttons
 	back_button.visible = step > 0
-	next_button.visible = (step < 4)
+	next_button.visible = (step < 5)
 	next_button.text = "Export" if step == 3 else "Next"
 	# Update step indicator
-	var step_names := ["Model & Animation", "Capture Preview", "Pixel Art Settings", "Export", "Apply to SpriteFrames"]
-	step_indicator_label.text = "Step %d of 5: %s" % [step + 1, step_names[step]]
+	var step_names := ["Model & Animation", "Capture Preview", "Pixel Art Settings", "Export", "Weapon Anchors", "Apply to SpriteFrames"]
+	step_indicator_label.text = "Step %d of 6: %s" % [step + 1, step_names[step]]
 	# Update preview visibility
 	var viewport_area := preview_container.get_parent()  # AspectRatioContainer
 	viewport_area.visible = (step <= 1)
 	pixel_preview_rect.get_parent().visible = (step == 2)
+	if anchor_frame_display:
+		anchor_frame_display.visible = (step == 4)
 	# Trigger step-specific logic
 	match step:
 		0:
@@ -739,12 +1179,30 @@ func _go_to_step(step: int) -> void:
 		3:
 			_start_export()
 		4:
+			_enter_anchor_editor()
+		5:
 			_scan_export_folders()
 
 
 func _on_next_pressed() -> void:
-	if _current_step < 4:
+	if _current_step == 3:
+		# After export: check if anchor editor is enabled
+		if anchor_weapon_anim_toggle and anchor_weapon_anim_toggle.button_pressed:
+			_anchor_enabled = true
+			_go_to_step(4)  # Weapon Anchors
+		else:
+			_anchor_enabled = false
+			_go_to_step(5)  # Skip to Apply
+	elif _current_step < 5:
 		_go_to_step(_current_step + 1)
+
+
+func _on_back_pressed() -> void:
+	if _current_step == 5 and not _anchor_enabled:
+		# Anchors were skipped — go back to export, not anchor editor
+		_go_to_step(3)
+	elif _current_step > 0:
+		_go_to_step(_current_step - 1)
 
 
 #===============================================================================
@@ -1604,7 +2062,7 @@ func _on_done_pressed() -> void:
 
 
 #===============================================================================
-# APPLY TO SPRITEFRAMES (Step 5)
+# APPLY TO SPRITEFRAMES (Step 6)
 #===============================================================================
 
 func _scan_export_folders() -> void:
