@@ -2,13 +2,14 @@ extends Control
 ## Sprite Pipeline Wizard
 ##
 ## Unified tool that chains 3D sprite capture and pixel art conversion
-## into a single 4-step wizard flow with saveable presets.
+## into a single 5-step wizard flow with saveable presets.
 ##
 ## Steps:
 ##   1. Model & Animation — select model, pick animation, configure camera
 ##   2. Capture Preview — auto-capture all 3 directions, confirm
 ##   3. Pixel Art Settings — configure processing, preview result
 ##   4. Export — process all directions, save final pixel art
+##   5. Apply to SpriteFrames — load exported sheets into player_sprites.tres
 ##
 ## Run: scenes/tools/sprite_pipeline.tscn (F6)
 
@@ -22,6 +23,48 @@ const OUTPUT_BASE := "res://assets/sprites/final"
 const PALETTE_DIR := "res://assets/palettes"
 const PRESETS_DIR := "res://assets/sprites/presets"
 
+const SPRITEFRAMES_PATH := "res://resources/player_sprites.tres"
+const FRAME_SIZE := 64
+
+const APPLY_ANIM_GROUPS := [
+	{
+		"folder": "Idle",
+		"fps": 10,
+		"loop": true,
+		"sheets": {
+			"idle_down": "mixamo_com_down.png",
+			"idle_up": "mixamo_com_up.png",
+			"idle_right": "mixamo_com_right.png",
+		},
+	},
+	{
+		"folder": "Walking",
+		"fps": 15,
+		"loop": true,
+		"sheets": {
+			"walk_down": "mixamo_com_down.png",
+			"walk_up": "mixamo_com_up.png",
+			"walk_right": "mixamo_com_right.png",
+		},
+	},
+	{
+		"folder": "Slash",
+		"fps": 20,
+		"loop": false,
+		"sheets": {
+			"attack_down": "mixamo_com_down.png",
+			"attack_up": "mixamo_com_up.png",
+			"attack_right": "mixamo_com_right.png",
+		},
+	},
+]
+
+const ANIMS_TO_REMOVE := [
+	"melee_windup_down", "melee_windup_up", "melee_windup_right",
+	"melee_strike_down", "melee_strike_up", "melee_strike_right",
+	"thrust_down", "thrust_up", "thrust_right",
+]
+
 const DIRECTIONS := [
 	{ "name": "down", "rotation_y": 0.0 },
 	{ "name": "up", "rotation_y": 180.0 },
@@ -32,7 +75,7 @@ const DIRECTIONS := [
 # WIZARD STATE
 #===============================================================================
 
-var _current_step := 0  # 0-3
+var _current_step := 0  # 0-4
 var _step_containers: Array[VBoxContainer] = []  # one per step
 
 ## Step 1 state
@@ -103,6 +146,10 @@ var show_original_toggle: CheckButton
 # Step 4 nodes
 var export_log_label: Label
 
+# Step 5 nodes
+var apply_log_label: Label
+var apply_button: Button
+
 # Shared
 var status_label: Label
 var back_button: Button
@@ -149,14 +196,14 @@ func _build_ui() -> void:
 
 	# Step indicator
 	step_indicator_label = Label.new()
-	step_indicator_label.text = "Step 1 of 4: Model & Animation"
+	step_indicator_label.text = "Step 1 of 5: Model & Animation"
 	step_indicator_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	step_indicator_label.add_theme_font_size_override("font_size", 14)
 	vbox.add_child(step_indicator_label)
 
 	vbox.add_child(HSeparator.new())
 
-	# Build 4 step containers
+	# Build 5 step containers
 	var step1 := VBoxContainer.new()
 	step1.add_theme_constant_override("separation", 8)
 	vbox.add_child(step1)
@@ -180,11 +227,18 @@ func _build_ui() -> void:
 	vbox.add_child(step4)
 	_step_containers.append(step4)
 
+	var step5 := VBoxContainer.new()
+	step5.add_theme_constant_override("separation", 8)
+	step5.visible = false
+	vbox.add_child(step5)
+	_step_containers.append(step5)
+
 	# Build each step's contents
 	_build_step1(step1)
 	_build_step2(step2)
 	_build_step3(step3)
 	_build_step4(step4)
+	_build_step5(step5)
 
 	vbox.add_child(HSeparator.new())
 
@@ -624,6 +678,68 @@ func _build_step4(parent: VBoxContainer) -> void:
 
 
 #===============================================================================
+# STEP 5 — APPLY TO SPRITEFRAMES
+#===============================================================================
+
+func _build_step5(parent: VBoxContainer) -> void:
+	parent.add_child(_make_label("Apply exported sheets to SpriteFrames"))
+
+	var path_label := Label.new()
+	path_label.text = "Target: %s" % SPRITEFRAMES_PATH
+	path_label.add_theme_font_size_override("font_size", 12)
+	path_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	parent.add_child(path_label)
+
+	parent.add_child(HSeparator.new())
+
+	# Animation groups summary
+	parent.add_child(_make_label("Animations to apply:"))
+	for group in APPLY_ANIM_GROUPS:
+		var folder: String = group["folder"]
+		var fps: int = group["fps"]
+		var loop: bool = group["loop"]
+		var sheets: Dictionary = group["sheets"]
+		var anim_names := ", ".join(sheets.keys())
+		var summary := Label.new()
+		summary.text = "  %s (fps=%d, loop=%s): %s" % [folder, fps, loop, anim_names]
+		summary.add_theme_font_size_override("font_size", 12)
+		parent.add_child(summary)
+
+	var remove_label := Label.new()
+	remove_label.text = "Will remove: %s" % ", ".join(ANIMS_TO_REMOVE)
+	remove_label.add_theme_font_size_override("font_size", 11)
+	remove_label.add_theme_color_override("font_color", Color(0.8, 0.5, 0.5))
+	remove_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	remove_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	parent.add_child(remove_label)
+
+	parent.add_child(HSeparator.new())
+
+	apply_button = Button.new()
+	apply_button.text = "Apply to SpriteFrames"
+	apply_button.pressed.connect(_apply_to_spriteframes)
+	parent.add_child(apply_button)
+
+	apply_log_label = Label.new()
+	apply_log_label.text = ""
+	apply_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	apply_log_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	parent.add_child(apply_log_label)
+
+	parent.add_child(HSeparator.new())
+
+	var run_again_btn := Button.new()
+	run_again_btn.text = "Run Again"
+	run_again_btn.pressed.connect(_on_run_again_pressed)
+	parent.add_child(run_again_btn)
+
+	var done_btn := Button.new()
+	done_btn.text = "Done"
+	done_btn.pressed.connect(_on_done_pressed)
+	parent.add_child(done_btn)
+
+
+#===============================================================================
 # WIZARD NAVIGATION
 #===============================================================================
 
@@ -633,11 +749,11 @@ func _go_to_step(step: int) -> void:
 		_step_containers[i].visible = (i == step)
 	# Update navigation buttons
 	back_button.visible = step > 0
-	next_button.visible = (step < 3)
+	next_button.visible = (step < 4)
 	next_button.text = "Export" if step == 3 else "Next"
 	# Update step indicator
-	var step_names := ["Model & Animation", "Capture Preview", "Pixel Art Settings", "Export"]
-	step_indicator_label.text = "Step %d of 4: %s" % [step + 1, step_names[step]]
+	var step_names := ["Model & Animation", "Capture Preview", "Pixel Art Settings", "Export", "Apply to SpriteFrames"]
+	step_indicator_label.text = "Step %d of 5: %s" % [step + 1, step_names[step]]
 	# Update preview visibility
 	var viewport_area := preview_container.get_parent()  # AspectRatioContainer
 	viewport_area.visible = (step <= 1)
@@ -655,10 +771,12 @@ func _go_to_step(step: int) -> void:
 			_update_pixel_preview()
 		3:
 			_start_export()
+		4:
+			pass  # User clicks Apply manually
 
 
 func _on_next_pressed() -> void:
-	if _current_step < 3:
+	if _current_step < 4:
 		_go_to_step(_current_step + 1)
 
 
@@ -1495,6 +1613,8 @@ func _start_export() -> void:
 	_append_log("\nExported %d files to %s/" % [count, output_dir])
 	_set_status("Export complete! %d files saved." % count)
 	back_button.disabled = false
+	next_button.visible = true
+	next_button.text = "Next"
 
 
 func _append_log(text: String) -> void:
@@ -1513,6 +1633,85 @@ func _on_done_pressed() -> void:
 	_clear_model()
 	_go_to_step(0)
 	_scan_models()
+
+
+#===============================================================================
+# APPLY TO SPRITEFRAMES (Step 5)
+#===============================================================================
+
+func _apply_to_spriteframes() -> void:
+	apply_button.disabled = true
+	apply_log_label.text = ""
+	_set_status("Applying sprite sheets to SpriteFrames...")
+
+	var frames := ResourceLoader.load(SPRITEFRAMES_PATH, "", ResourceLoader.CACHE_MODE_IGNORE) as SpriteFrames
+	if frames == null:
+		_append_apply_log("ERROR: Could not load SpriteFrames: %s" % SPRITEFRAMES_PATH)
+		_set_status("Apply failed — could not load SpriteFrames.")
+		apply_button.disabled = false
+		return
+
+	# Remove old placeholder melee animations that block fallback to attack_*
+	_append_apply_log("--- Removing old melee placeholders ---")
+	for anim_name in ANIMS_TO_REMOVE:
+		if frames.has_animation(anim_name):
+			frames.remove_animation(anim_name)
+			_append_apply_log("  Removed: %s" % anim_name)
+
+	var total_anims := 0
+	for group in APPLY_ANIM_GROUPS:
+		var folder: String = group["folder"]
+		var fps: int = group["fps"]
+		var loop: bool = group["loop"]
+		var sheets: Dictionary = group["sheets"]
+
+		_append_apply_log("--- %s (fps=%d, loop=%s) ---" % [folder, fps, loop])
+
+		for anim_name in sheets:
+			var sheet_filename: String = sheets[anim_name]
+			var sheet_path := "%s/%s/%s" % [OUTPUT_BASE, folder, sheet_filename]
+			var abs_path := ProjectSettings.globalize_path(sheet_path)
+
+			var sheet_image := Image.load_from_file(abs_path)
+			if sheet_image == null:
+				_append_apply_log("  ERROR: Failed to load: %s" % abs_path)
+				continue
+
+			var frame_count := sheet_image.get_width() / FRAME_SIZE
+			_append_apply_log("  %s: %d frames from %s" % [anim_name, frame_count, sheet_filename])
+
+			# Remove existing animation and recreate
+			if frames.has_animation(anim_name):
+				frames.remove_animation(anim_name)
+			frames.add_animation(anim_name)
+			frames.set_animation_speed(anim_name, fps)
+			frames.set_animation_loop(anim_name, loop)
+
+			# Use AtlasTexture regions from the full sheet
+			var sheet_texture := ImageTexture.create_from_image(sheet_image)
+			for i in range(frame_count):
+				var atlas_tex := AtlasTexture.new()
+				atlas_tex.atlas = sheet_texture
+				atlas_tex.region = Rect2(i * FRAME_SIZE, 0, FRAME_SIZE, FRAME_SIZE)
+				frames.add_frame(anim_name, atlas_tex)
+
+			total_anims += 1
+
+	var err := ResourceSaver.save(frames, SPRITEFRAMES_PATH)
+	if err != OK:
+		_append_apply_log("\nERROR: Failed to save SpriteFrames (error %d)" % err)
+		_set_status("Apply failed — could not save SpriteFrames.")
+		apply_button.disabled = false
+		return
+
+	_append_apply_log("\nDone! %d animations updated in %s" % [total_anims, SPRITEFRAMES_PATH])
+	_set_status("Apply complete! %d animations updated." % total_anims)
+	apply_button.disabled = false
+
+
+func _append_apply_log(text: String) -> void:
+	apply_log_label.text += text + "\n"
+	print("[SpritePipeline] %s" % text)
 
 
 #===============================================================================
