@@ -40,6 +40,7 @@ static func get_all() -> Dictionary:
 		"parry_stance": _parry_stance(),
 		"toggle_stance": _toggle_stance(),
 		"howl": _howl(),
+		"hilt_bash": _hilt_bash(),
 	}
 
 
@@ -470,6 +471,34 @@ static func _ranged_attack() -> AbilityVisualData:
 		AbilityVisualPhase.create_spawn_projectile(),
 		# Phase 2: Recovery
 		AbilityVisualPhase.create_wait(ENEMY_RECOVERY_WAIT, "recovery"),
+	]
+
+	return data
+
+
+## hilt_bash - Blunt pommel strike with custom hiltbash animation
+## Plays the full hiltbash_{dir} animation with a concurrent lunge, then damage.
+static func _hilt_bash() -> AbilityVisualData:
+	var data := AbilityVisualData.new()
+	data.template_id = "hilt_bash"
+	data.display_name = "Hilt Bash"
+	data.locks_movement = true
+
+	data.phases = [
+		# Phase 0: Show weapon
+		AbilityVisualPhase.create_weapon_visibility(true),
+		# Phase 1: Play hiltbash animation (concurrent with lunge)
+		AbilityVisualPhase.create_body_anim("hiltbash", 0.0, "windup", true),
+		# Phase 2: Lunge toward target (runs alongside animation)
+		AbilityVisualPhase.create_movement("toward_target", DEFAULT_LUNGE_DISTANCE, DEFAULT_LUNGE_DURATION, "lunge"),
+		# Phase 3: Damage event fires after animation + lunge complete
+		AbilityVisualPhase.create_damage_event(),
+		# Phase 4: Weapon linger
+		AbilityVisualPhase.create_wait(WEAPON_LINGER),
+		# Phase 5: Hide weapon
+		AbilityVisualPhase.create_weapon_visibility(false),
+		# Phase 6: Return to idle
+		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
 	return data

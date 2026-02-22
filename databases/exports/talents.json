@@ -269,7 +269,7 @@
       "explosion_falloff": 0,
       "can_move_while_casting": false,
       "interrupt_on_damage": true,
-      "visual_type": "melee_single",
+      "visual_type": "hilt_bash",
       "show_weapon": true,
       "windup_time": 0,
       "hit_effect": "",
