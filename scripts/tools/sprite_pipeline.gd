@@ -72,6 +72,7 @@ var camera_target: Vector3 = Vector3.ZERO
 ## Step 2 state
 var _captured_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
 var _captured_normal_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
+var _captured_shadow_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
 
 ## Step 3 state
 var _palette_colors: PackedColorArray = PackedColorArray()
@@ -120,6 +121,7 @@ var _current_preset: Dictionary = {}
 ## Normal map capture shader — loaded once at startup
 var _normal_capture_shader: Shader = null
 var _normal_capture_material: ShaderMaterial = null
+var _shadow_capture_material: StandardMaterial3D = null
 
 #===============================================================================
 # NODE REFERENCES
@@ -204,6 +206,10 @@ func _ready() -> void:
 	if _normal_capture_shader:
 		_normal_capture_material = ShaderMaterial.new()
 		_normal_capture_material.shader = _normal_capture_shader
+	# Create shadow capture material — flat black, unshaded
+	_shadow_capture_material = StandardMaterial3D.new()
+	_shadow_capture_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	_shadow_capture_material.albedo_color = Color.BLACK
 	await get_tree().process_frame
 	_scan_models()
 
@@ -1827,6 +1833,17 @@ func _apply_normal_capture_materials(node: Node) -> void:
 	for child in node.get_children():
 		_apply_normal_capture_materials(child)
 
+func _apply_shadow_capture_materials(node: Node) -> void:
+	## Override all mesh materials with flat black for shadow silhouette capture.
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var mesh := mesh_instance.mesh
+		if mesh != null:
+			for surface_idx in range(mesh.get_surface_count()):
+				mesh_instance.set_surface_override_material(surface_idx, _shadow_capture_material)
+	for child in node.get_children():
+		_apply_shadow_capture_materials(child)
+
 
 #===============================================================================
 # CAMERA
@@ -1991,6 +2008,7 @@ func _start_capture() -> void:
 		return
 	_captured_sheets.clear()
 	_captured_normal_sheets.clear()
+	_captured_shadow_sheets.clear()
 	next_button.disabled = true
 	back_button.disabled = true
 	await _capture_animation()
