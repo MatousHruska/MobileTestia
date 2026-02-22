@@ -364,7 +364,9 @@ func _update_shadow(delta: float) -> void:
 
 	var x_basis := perp
 	var y_basis := -shadow_dir * (projection_dist / sprite_height)
-	var origin := shadow_dir * (projection_dist / 2.0)
+	# Anchor feet at the bottom of the sprite (0, half_h), not the center
+	var feet_offset := Vector2(0.0, half_h)
+	var origin := feet_offset + shadow_dir * (projection_dist / 2.0)
 
 	shadow_sprite.transform = Transform2D(x_basis, y_basis, origin)
 
