@@ -457,131 +457,70 @@ func _build_ui() -> void:
 
 func _build_step1(parent: VBoxContainer) -> void:
 	# Model selector
-	parent.add_child(_make_label("3D Model:"))
+	var sec := _make_section("Model & Animation")
+	parent.add_child(sec[0])
+	var content: VBoxContainer = sec[1]
+
 	model_dropdown = OptionButton.new()
 	model_dropdown.size_flags_horizontal = SIZE_EXPAND_FILL
 	model_dropdown.item_selected.connect(_on_model_selected)
-	parent.add_child(model_dropdown)
+	content.add_child(_make_field("3D Model", model_dropdown))
 
-	# Animation selector
-	parent.add_child(_make_label("Animation:"))
 	anim_dropdown = OptionButton.new()
 	anim_dropdown.size_flags_horizontal = SIZE_EXPAND_FILL
 	anim_dropdown.item_selected.connect(_on_animation_selected)
-	parent.add_child(anim_dropdown)
+	content.add_child(_make_field("Animation", anim_dropdown))
 
-	# Frame count
-	parent.add_child(_make_label("Frames per direction:"))
 	frame_count_spin = SpinBox.new()
 	frame_count_spin.min_value = 2
 	frame_count_spin.max_value = 60
 	frame_count_spin.value = 8
 	frame_count_spin.step = 1
-	parent.add_child(frame_count_spin)
-
-	parent.add_child(HSeparator.new())
+	content.add_child(_make_field("Frames per direction", frame_count_spin))
 
 	# Preset status
 	preset_status_label = Label.new()
 	preset_status_label.text = "(no preset)"
-	parent.add_child(preset_status_label)
+	preset_status_label.add_theme_font_size_override("font_size", FONT_HINT)
+	preset_status_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	content.add_child(preset_status_label)
 
-	# Camera settings toggle
-	var cam_toggle_btn := Button.new()
-	cam_toggle_btn.text = "Show Camera Settings"
-	cam_toggle_btn.pressed.connect(func() -> void:
-		camera_settings_container.visible = not camera_settings_container.visible
-		cam_toggle_btn.text = "Hide Camera Settings" if camera_settings_container.visible else "Show Camera Settings"
-	)
-	parent.add_child(cam_toggle_btn)
-
-	# Camera settings container (initially hidden)
-	camera_settings_container = VBoxContainer.new()
-	camera_settings_container.visible = false
-	camera_settings_container.add_theme_constant_override("separation", 8)
-	parent.add_child(camera_settings_container)
+	# Camera settings (collapsible)
+	var cam := _make_collapsible("Camera Settings")
+	parent.add_child(cam[0])
+	camera_settings_container = cam[1]
 
 	# Camera elevation
-	camera_settings_container.add_child(_make_label("Camera elevation (degrees):"))
-	var elev_hbox := HBoxContainer.new()
-	camera_settings_container.add_child(elev_hbox)
-	camera_elevation_slider = HSlider.new()
-	camera_elevation_slider.min_value = 10.0
-	camera_elevation_slider.max_value = 80.0
-	camera_elevation_slider.value = 30.0
-	camera_elevation_slider.step = 1.0
-	camera_elevation_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	var elev_data := _make_slider_row(10.0, 80.0, 30.0, 1.0)
+	camera_elevation_slider = elev_data[1]
+	camera_elevation_label = elev_data[2]
 	camera_elevation_slider.value_changed.connect(_on_elevation_changed)
-	elev_hbox.add_child(camera_elevation_slider)
-	camera_elevation_label = Label.new()
-	camera_elevation_label.text = "30"
-	camera_elevation_label.custom_minimum_size.x = 30
-	elev_hbox.add_child(camera_elevation_label)
-	var elev_hint := Label.new()
-	elev_hint.text = "(default: 30)"
-	elev_hint.add_theme_font_size_override("font_size", 10)
-	elev_hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-	camera_settings_container.add_child(elev_hint)
+	camera_settings_container.add_child(_make_field("Elevation (degrees)", elev_data[0]))
 
 	# Camera zoom
-	camera_settings_container.add_child(_make_label("Camera zoom:"))
-	var zoom_hbox := HBoxContainer.new()
-	camera_settings_container.add_child(zoom_hbox)
-	camera_zoom_slider = HSlider.new()
-	camera_zoom_slider.min_value = 0.5
-	camera_zoom_slider.max_value = 15.0
-	camera_zoom_slider.value = 3.0
-	camera_zoom_slider.step = 0.1
-	camera_zoom_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	var zoom_data := _make_slider_row(0.5, 15.0, 3.0, 0.1)
+	camera_zoom_slider = zoom_data[1]
+	camera_zoom_label = zoom_data[2]
 	camera_zoom_slider.value_changed.connect(_on_zoom_changed)
-	zoom_hbox.add_child(camera_zoom_slider)
-	camera_zoom_label = Label.new()
-	camera_zoom_label.text = "3.0"
-	camera_zoom_label.custom_minimum_size.x = 40
-	zoom_hbox.add_child(camera_zoom_label)
-	var zoom_hint := Label.new()
-	zoom_hint.text = "(default: 3.0)"
-	zoom_hint.add_theme_font_size_override("font_size", 10)
-	zoom_hint.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
-	camera_settings_container.add_child(zoom_hint)
+	camera_settings_container.add_child(_make_field("Zoom", zoom_data[0]))
 
 	# Camera target height
-	camera_settings_container.add_child(_make_label("Camera target height:"))
-	var target_y_hbox := HBoxContainer.new()
-	camera_settings_container.add_child(target_y_hbox)
-	camera_target_y_slider = HSlider.new()
-	camera_target_y_slider.min_value = 0.0
-	camera_target_y_slider.max_value = 5.0
-	camera_target_y_slider.value = 1.0
-	camera_target_y_slider.step = 0.05
-	camera_target_y_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	var target_data := _make_slider_row(0.0, 5.0, 1.0, 0.05)
+	camera_target_y_slider = target_data[1]
+	camera_target_y_label = target_data[2]
 	camera_target_y_slider.value_changed.connect(_on_target_y_changed)
-	target_y_hbox.add_child(camera_target_y_slider)
-	camera_target_y_label = Label.new()
-	camera_target_y_label.text = "1.0"
-	camera_target_y_label.custom_minimum_size.x = 40
-	target_y_hbox.add_child(camera_target_y_label)
+	camera_settings_container.add_child(_make_field("Target height", target_data[0]))
 
 	# Direction preview buttons
-	camera_settings_container.add_child(_make_label("Preview direction:"))
-	var dir_hbox := HBoxContainer.new()
-	dir_hbox.add_theme_constant_override("separation", 4)
-	camera_settings_container.add_child(dir_hbox)
-	var front_btn := Button.new()
-	front_btn.text = "Front"
-	front_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	front_btn.pressed.connect(_on_preview_direction.bind(0.0))
-	dir_hbox.add_child(front_btn)
-	var back_btn := Button.new()
-	back_btn.text = "Back"
-	back_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	back_btn.pressed.connect(_on_preview_direction.bind(180.0))
-	dir_hbox.add_child(back_btn)
-	var side_btn := Button.new()
-	side_btn.text = "Side"
-	side_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	side_btn.pressed.connect(_on_preview_direction.bind(90.0))
-	dir_hbox.add_child(side_btn)
+	var dir_group := _make_toggle_group([
+		{"label": "Front", "key": "front"},
+		{"label": "Back", "key": "back"},
+		{"label": "Side", "key": "side"},
+	], func(key: String) -> void:
+		var angles := {"front": 0.0, "back": 180.0, "side": 90.0}
+		_on_preview_direction(angles[key])
+	)
+	camera_settings_container.add_child(_make_field("Preview direction", dir_group))
 
 	# Save preset button
 	var save_preset_btn := Button.new()
@@ -595,57 +534,44 @@ func _build_step1(parent: VBoxContainer) -> void:
 #===============================================================================
 
 func _build_step2(parent: VBoxContainer) -> void:
+	var sec := _make_section("Capture Preview")
+	parent.add_child(sec[0])
+	var content: VBoxContainer = sec[1]
+
 	# Preview mode toggle
-	var mode_hbox := HBoxContainer.new()
-	mode_hbox.add_theme_constant_override("separation", 4)
-	parent.add_child(mode_hbox)
-	var color_btn := Button.new()
-	color_btn.text = "Color"
-	color_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	color_btn.pressed.connect(func() -> void:
-		_capture_preview_mode = "color"
+	var mode_group := _make_toggle_group([
+		{"label": "Color", "key": "color"},
+		{"label": "Normal", "key": "normal"},
+		{"label": "Shadow", "key": "shadow"},
+	], func(key: String) -> void:
+		_capture_preview_mode = key
 		_update_capture_preview()
 	)
-	mode_hbox.add_child(color_btn)
-	var normal_btn := Button.new()
-	normal_btn.text = "Normal"
-	normal_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	normal_btn.pressed.connect(func() -> void:
-		_capture_preview_mode = "normal"
-		_update_capture_preview()
-	)
-	mode_hbox.add_child(normal_btn)
-	var shadow_btn := Button.new()
-	shadow_btn.text = "Shadow"
-	shadow_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	shadow_btn.pressed.connect(func() -> void:
-		_capture_preview_mode = "shadow"
-		_update_capture_preview()
-	)
-	mode_hbox.add_child(shadow_btn)
+	content.add_child(mode_group)
 
-	parent.add_child(_make_label("Capturing 3 directions..."))
+	content.add_child(_make_small_label("Capturing 3 directions..."))
 
-	parent.add_child(_make_label("Down:"))
+	# Direction previews
+	content.add_child(_make_label("Down:"))
 	capture_down_rect = TextureRect.new()
 	capture_down_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	capture_down_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	capture_down_rect.size_flags_horizontal = SIZE_EXPAND_FILL
-	parent.add_child(capture_down_rect)
+	content.add_child(capture_down_rect)
 
-	parent.add_child(_make_label("Up:"))
+	content.add_child(_make_label("Up:"))
 	capture_up_rect = TextureRect.new()
 	capture_up_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	capture_up_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	capture_up_rect.size_flags_horizontal = SIZE_EXPAND_FILL
-	parent.add_child(capture_up_rect)
+	content.add_child(capture_up_rect)
 
-	parent.add_child(_make_label("Right:"))
+	content.add_child(_make_label("Right:"))
 	capture_right_rect = TextureRect.new()
 	capture_right_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	capture_right_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	capture_right_rect.size_flags_horizontal = SIZE_EXPAND_FILL
-	parent.add_child(capture_right_rect)
+	content.add_child(capture_right_rect)
 
 
 #===============================================================================
@@ -653,193 +579,161 @@ func _build_step2(parent: VBoxContainer) -> void:
 #===============================================================================
 
 func _build_step3(parent: VBoxContainer) -> void:
+	# Main settings section
+	var sec := _make_section("Pixel Art Settings")
+	parent.add_child(sec[0])
+	var content: VBoxContainer = sec[1]
+
 	# Direction preview selector
-	parent.add_child(_make_label("Preview direction:"))
-	var dir_btn_hbox := HBoxContainer.new()
-	dir_btn_hbox.add_theme_constant_override("separation", 4)
-	parent.add_child(dir_btn_hbox)
-	var dir_down_btn := Button.new()
-	dir_down_btn.text = "Down"
-	dir_down_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	dir_down_btn.pressed.connect(func() -> void:
-		_preview_direction = "down"
+	var dir_group := _make_toggle_group([
+		{"label": "Down", "key": "down"},
+		{"label": "Up", "key": "up"},
+		{"label": "Right", "key": "right"},
+	], func(key: String) -> void:
+		_preview_direction = key
 		_update_pixel_preview()
 	)
-	dir_btn_hbox.add_child(dir_down_btn)
-	var dir_up_btn := Button.new()
-	dir_up_btn.text = "Up"
-	dir_up_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	dir_up_btn.pressed.connect(func() -> void:
-		_preview_direction = "up"
-		_update_pixel_preview()
-	)
-	dir_btn_hbox.add_child(dir_up_btn)
-	var dir_right_btn := Button.new()
-	dir_right_btn.text = "Right"
-	dir_right_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	dir_right_btn.pressed.connect(func() -> void:
-		_preview_direction = "right"
-		_update_pixel_preview()
-	)
-	dir_btn_hbox.add_child(dir_right_btn)
+	content.add_child(_make_field("Preview direction", dir_group))
 
 	# Preview mode toggle
-	parent.add_child(_make_label("Preview mode:"))
-	var pmode_hbox := HBoxContainer.new()
-	pmode_hbox.add_theme_constant_override("separation", 4)
-	parent.add_child(pmode_hbox)
-	for mode_name in ["Color", "Normal", "Lit"]:
-		var btn := Button.new()
-		btn.text = mode_name
-		btn.size_flags_horizontal = SIZE_EXPAND_FILL
-		var mode_key: String = mode_name.to_lower()
-		btn.pressed.connect(func() -> void:
-			_pixel_preview_mode = mode_key
-			_update_pixel_preview()
-		)
-		pmode_hbox.add_child(btn)
-
-	parent.add_child(HSeparator.new())
+	var mode_group := _make_toggle_group([
+		{"label": "Color", "key": "color"},
+		{"label": "Normal", "key": "normal"},
+		{"label": "Lit", "key": "lit"},
+	], func(key: String) -> void:
+		_pixel_preview_mode = key
+		_update_pixel_preview()
+	)
+	content.add_child(_make_field("Preview mode", mode_group))
 
 	# Output height
-	parent.add_child(_make_label("Output height (px):"))
 	output_height_spin = SpinBox.new()
 	output_height_spin.min_value = 16
 	output_height_spin.max_value = 256
 	output_height_spin.value = 64
 	output_height_spin.step = 8
 	output_height_spin.value_changed.connect(_on_pixel_setting_changed)
-	parent.add_child(output_height_spin)
+	content.add_child(_make_field("Output height (px)", output_height_spin))
 
 	# Alpha threshold
-	parent.add_child(_make_label("Alpha threshold:"))
-	var alpha_hbox := HBoxContainer.new()
-	parent.add_child(alpha_hbox)
-	alpha_threshold_slider = HSlider.new()
-	alpha_threshold_slider.min_value = 0
-	alpha_threshold_slider.max_value = 255
-	alpha_threshold_slider.value = 128
-	alpha_threshold_slider.step = 1
-	alpha_threshold_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	var alpha_data := _make_slider_row(0, 255, 128, 1)
+	alpha_threshold_slider = alpha_data[1]
+	alpha_threshold_label = alpha_data[2]
 	alpha_threshold_slider.value_changed.connect(_on_alpha_threshold_changed)
-	alpha_hbox.add_child(alpha_threshold_slider)
-	alpha_threshold_label = Label.new()
-	alpha_threshold_label.text = "128"
-	alpha_threshold_label.custom_minimum_size.x = 30
-	alpha_hbox.add_child(alpha_threshold_label)
+	content.add_child(_make_field("Alpha threshold", alpha_data[0]))
 
-	parent.add_child(HSeparator.new())
+	# Palette section
+	var palette_sec := _make_section("Palette")
+	parent.add_child(palette_sec[0])
+	var palette_content: VBoxContainer = palette_sec[1]
 
-	# Palette mode
-	parent.add_child(_make_label("Palette mode:"))
 	palette_mode_dropdown = OptionButton.new()
 	palette_mode_dropdown.add_item("None")
 	palette_mode_dropdown.add_item("Load from Palettes")
 	palette_mode_dropdown.add_item("Generate from Captures")
 	palette_mode_dropdown.size_flags_horizontal = SIZE_EXPAND_FILL
 	palette_mode_dropdown.item_selected.connect(_on_palette_mode_changed)
-	parent.add_child(palette_mode_dropdown)
+	palette_content.add_child(_make_field("Mode", palette_mode_dropdown))
 
-	# Palette file dropdown (hidden by default)
 	palette_file_dropdown = OptionButton.new()
 	palette_file_dropdown.size_flags_horizontal = SIZE_EXPAND_FILL
 	palette_file_dropdown.visible = false
 	palette_file_dropdown.item_selected.connect(_on_palette_file_selected)
-	parent.add_child(palette_file_dropdown)
+	palette_content.add_child(palette_file_dropdown)
 
-	# Generate palette controls (hidden by default)
-	parent.add_child(_make_label("Max palette colors:"))
 	max_palette_colors_spin = SpinBox.new()
 	max_palette_colors_spin.min_value = 4
 	max_palette_colors_spin.max_value = 128
 	max_palette_colors_spin.value = 32
 	max_palette_colors_spin.step = 4
 	max_palette_colors_spin.visible = false
-	parent.add_child(max_palette_colors_spin)
+	palette_content.add_child(_make_field("Max colors", max_palette_colors_spin))
 
 	generate_palette_button = Button.new()
-	generate_palette_button.text = "Generate Palette from Captures"
+	generate_palette_button.text = "Generate Palette"
 	generate_palette_button.visible = false
 	generate_palette_button.pressed.connect(_on_generate_palette_pressed)
-	parent.add_child(generate_palette_button)
+	palette_content.add_child(generate_palette_button)
 
-	# Palette preview swatches
 	palette_preview_container = HFlowContainer.new()
 	palette_preview_container.size_flags_horizontal = SIZE_EXPAND_FILL
-	parent.add_child(palette_preview_container)
+	palette_content.add_child(palette_preview_container)
 
-	parent.add_child(HSeparator.new())
+	# Dithering (collapsible)
+	var dither := _make_collapsible("Dithering")
+	parent.add_child(dither[0])
+	var dither_content: VBoxContainer = dither[1]
 
-	# Dithering
 	dithering_toggle = CheckButton.new()
-	dithering_toggle.text = "Dithering"
+	dithering_toggle.text = "Enable"
 	dithering_toggle.toggled.connect(_on_pixel_toggle_changed)
-	parent.add_child(dithering_toggle)
+	dither_content.add_child(dithering_toggle)
 
-	parent.add_child(_make_label("  Strength:"))
-	dithering_strength_slider = HSlider.new()
-	dithering_strength_slider.min_value = 0.0
-	dithering_strength_slider.max_value = 1.0
-	dithering_strength_slider.value = 0.5
-	dithering_strength_slider.step = 0.05
-	dithering_strength_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	var strength_data := _make_slider_row(0.0, 1.0, 0.5, 0.05)
+	dithering_strength_slider = strength_data[1]
 	dithering_strength_slider.value_changed.connect(_on_pixel_setting_changed)
-	parent.add_child(dithering_strength_slider)
+	dither_content.add_child(_make_field("Strength", strength_data[0]))
 
-	parent.add_child(_make_label("  Pattern:"))
 	dithering_pattern_dropdown = OptionButton.new()
 	dithering_pattern_dropdown.add_item("2x2")
 	dithering_pattern_dropdown.add_item("4x4")
 	dithering_pattern_dropdown.add_item("8x8")
 	dithering_pattern_dropdown.selected = 1
 	dithering_pattern_dropdown.item_selected.connect(_on_pixel_setting_changed)
-	parent.add_child(dithering_pattern_dropdown)
+	dither_content.add_child(_make_field("Pattern", dithering_pattern_dropdown))
 
-	# Outline
+	# Outline (collapsible)
+	var outline := _make_collapsible("Outline")
+	parent.add_child(outline[0])
+	var outline_content: VBoxContainer = outline[1]
+
 	outline_toggle = CheckButton.new()
-	outline_toggle.text = "Outline"
+	outline_toggle.text = "Enable"
 	outline_toggle.toggled.connect(_on_pixel_toggle_changed)
-	parent.add_child(outline_toggle)
+	outline_content.add_child(outline_toggle)
 
-	var outline_hbox := HBoxContainer.new()
-	parent.add_child(outline_hbox)
-	outline_hbox.add_child(_make_label("  Color: "))
+	var outline_color_hbox := HBoxContainer.new()
+	outline_color_hbox.add_theme_constant_override("separation", 8)
+	outline_content.add_child(outline_color_hbox)
+	outline_color_hbox.add_child(_make_label("Color:"))
 	outline_color_picker = ColorPickerButton.new()
 	outline_color_picker.color = Color.BLACK
 	outline_color_picker.custom_minimum_size = Vector2(40, 30)
 	outline_color_picker.color_changed.connect(_on_pixel_color_changed)
-	outline_hbox.add_child(outline_color_picker)
+	outline_color_hbox.add_child(outline_color_picker)
 
-	# Denoising
+	# Denoising (collapsible)
+	var denoise := _make_collapsible("Denoising")
+	parent.add_child(denoise[0])
+	var denoise_content: VBoxContainer = denoise[1]
+
 	denoising_toggle = CheckButton.new()
-	denoising_toggle.text = "Denoising"
+	denoising_toggle.text = "Enable"
 	denoising_toggle.toggled.connect(_on_pixel_toggle_changed)
-	parent.add_child(denoising_toggle)
+	denoise_content.add_child(denoising_toggle)
 
-	var denoise_hbox := HBoxContainer.new()
-	parent.add_child(denoise_hbox)
-	denoise_hbox.add_child(_make_label("  Min cluster: "))
 	denoising_min_cluster_spin = SpinBox.new()
 	denoising_min_cluster_spin.min_value = 1
 	denoising_min_cluster_spin.max_value = 50
 	denoising_min_cluster_spin.value = 4
 	denoising_min_cluster_spin.step = 1
 	denoising_min_cluster_spin.value_changed.connect(_on_pixel_setting_changed)
-	denoise_hbox.add_child(denoising_min_cluster_spin)
+	denoise_content.add_child(_make_field("Min cluster size", denoising_min_cluster_spin))
 
-	parent.add_child(HSeparator.new())
+	# Bottom actions
+	var actions_sec := _make_section("Actions")
+	parent.add_child(actions_sec[0])
+	var actions_content: VBoxContainer = actions_sec[1]
 
-	# Save settings to preset
 	var save_settings_btn := Button.new()
 	save_settings_btn.text = "Save Settings to Preset"
 	save_settings_btn.pressed.connect(_save_pixel_art_preset)
-	parent.add_child(save_settings_btn)
+	actions_content.add_child(save_settings_btn)
 
-	# Show original toggle
 	show_original_toggle = CheckButton.new()
 	show_original_toggle.text = "Show Original"
 	show_original_toggle.toggled.connect(_on_pixel_toggle_changed)
-	parent.add_child(show_original_toggle)
+	actions_content.add_child(show_original_toggle)
 
 
 #===============================================================================
@@ -847,27 +741,29 @@ func _build_step3(parent: VBoxContainer) -> void:
 #===============================================================================
 
 func _build_step_light_preview(parent: VBoxContainer) -> void:
-	parent.add_child(_make_label("Light Preview"))
-	parent.add_child(_make_label("Drag the light around to test normal maps."))
+	var sec := _make_section("Light Preview")
+	parent.add_child(sec[0])
+	var content: VBoxContainer = sec[1]
+
+	content.add_child(_make_small_label("Drag the light around to test normal maps."))
 
 	# Direction buttons
-	parent.add_child(_make_label("Direction:"))
-	var dir_hbox := HBoxContainer.new()
-	dir_hbox.add_theme_constant_override("separation", 4)
-	parent.add_child(dir_hbox)
-	for dir_name in ["down", "up", "right"]:
-		var btn := Button.new()
-		btn.text = dir_name.capitalize()
-		btn.size_flags_horizontal = SIZE_EXPAND_FILL
-		btn.pressed.connect(_on_light_preview_direction.bind(dir_name))
-		dir_hbox.add_child(btn)
+	var dir_group := _make_toggle_group([
+		{"label": "Down", "key": "down"},
+		{"label": "Up", "key": "up"},
+		{"label": "Right", "key": "right"},
+	], func(key: String) -> void:
+		_on_light_preview_direction(key)
+	)
+	content.add_child(_make_field("Direction", dir_group))
 
 	# Frame navigation
 	var frame_hbox := HBoxContainer.new()
 	frame_hbox.add_theme_constant_override("separation", 4)
-	parent.add_child(frame_hbox)
+	content.add_child(frame_hbox)
 	var prev_btn := Button.new()
-	prev_btn.text = "<"
+	prev_btn.text = "\u25c0"
+	prev_btn.custom_minimum_size.x = 32
 	prev_btn.pressed.connect(func() -> void:
 		_light_preview_frame = max(0, _light_preview_frame - 1)
 		_update_light_preview_frame()
@@ -879,7 +775,8 @@ func _build_step_light_preview(parent: VBoxContainer) -> void:
 	_light_frame_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	frame_hbox.add_child(_light_frame_label)
 	var next_frame_btn := Button.new()
-	next_frame_btn.text = ">"
+	next_frame_btn.text = "\u25b6"
+	next_frame_btn.custom_minimum_size.x = 32
 	next_frame_btn.pressed.connect(func() -> void:
 		_light_preview_frame = min(_light_preview_frame_count - 1, _light_preview_frame + 1)
 		_update_light_preview_frame()
@@ -893,10 +790,16 @@ func _build_step_light_preview(parent: VBoxContainer) -> void:
 	)
 	frame_hbox.add_child(play_btn)
 
-	parent.add_child(HSeparator.new())
+	# Light controls section
+	var light_sec := _make_section("Light Settings")
+	parent.add_child(light_sec[0])
+	var light_content: VBoxContainer = light_sec[1]
 
-	# Light controls
-	parent.add_child(_make_label("Light Color:"))
+	# Light color
+	var color_hbox := HBoxContainer.new()
+	color_hbox.add_theme_constant_override("separation", 8)
+	light_content.add_child(color_hbox)
+	color_hbox.add_child(_make_label("Color:"))
 	_light_color_picker = ColorPickerButton.new()
 	_light_color_picker.color = Color("#FFAA44")
 	_light_color_picker.custom_minimum_size = Vector2(60, 30)
@@ -904,66 +807,50 @@ func _build_step_light_preview(parent: VBoxContainer) -> void:
 		if _light_preview_light:
 			_light_preview_light.color = c
 	)
-	parent.add_child(_light_color_picker)
+	color_hbox.add_child(_light_color_picker)
 
-	parent.add_child(_make_label("Intensity:"))
-	_light_intensity_slider = HSlider.new()
-	_light_intensity_slider.min_value = 0.0
-	_light_intensity_slider.max_value = 3.0
-	_light_intensity_slider.value = 1.5
-	_light_intensity_slider.step = 0.1
-	_light_intensity_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	# Intensity slider
+	var int_data := _make_slider_row(0.0, 3.0, 1.5, 0.1)
+	_light_intensity_slider = int_data[1]
 	_light_intensity_slider.value_changed.connect(func(v: float) -> void:
 		if _light_preview_light:
 			_light_preview_light.energy = v
 	)
-	parent.add_child(_light_intensity_slider)
+	light_content.add_child(_make_field("Intensity", int_data[0]))
 
-	parent.add_child(_make_label("Height:"))
-	_light_height_slider = HSlider.new()
-	_light_height_slider.min_value = 0.0
-	_light_height_slider.max_value = 200.0
-	_light_height_slider.value = 50.0
-	_light_height_slider.step = 5.0
-	_light_height_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	# Height slider
+	var height_data := _make_slider_row(0.0, 200.0, 50.0, 5.0)
+	_light_height_slider = height_data[1]
 	_light_height_slider.value_changed.connect(func(v: float) -> void:
 		if _light_preview_light:
 			_light_preview_light.height = v
 	)
-	parent.add_child(_light_height_slider)
+	light_content.add_child(_make_field("Height", height_data[0]))
 
-	parent.add_child(_make_label("Ambient:"))
-	_light_ambient_slider = HSlider.new()
-	_light_ambient_slider.min_value = 0.0
-	_light_ambient_slider.max_value = 1.0
-	_light_ambient_slider.value = 0.2
-	_light_ambient_slider.step = 0.05
-	_light_ambient_slider.size_flags_horizontal = SIZE_EXPAND_FILL
+	# Ambient slider
+	var amb_data := _make_slider_row(0.0, 1.0, 0.2, 0.05)
+	_light_ambient_slider = amb_data[1]
 	_light_ambient_slider.value_changed.connect(func(_v: float) -> void:
 		_update_light_preview_ambient()
 	)
-	parent.add_child(_light_ambient_slider)
-
-	parent.add_child(HSeparator.new())
+	light_content.add_child(_make_field("Ambient", amb_data[0]))
 
 	# Presets
-	parent.add_child(_make_label("Light presets:"))
-	var preset_hbox := HBoxContainer.new()
-	preset_hbox.add_theme_constant_override("separation", 4)
-	parent.add_child(preset_hbox)
-	var presets := {
-		"Torch": {"color": Color("#FFAA44"), "intensity": 1.5, "height": 50.0, "ambient": 0.2},
-		"Sunlight": {"color": Color("#FFFDE0"), "intensity": 1.0, "height": 150.0, "ambient": 0.4},
-		"Moonlight": {"color": Color("#8899CC"), "intensity": 0.8, "height": 120.0, "ambient": 0.15},
-		"Spell": {"color": Color("#44FFDD"), "intensity": 2.0, "height": 30.0, "ambient": 0.1},
-	}
-	for preset_name in presets:
-		var btn := Button.new()
-		btn.text = preset_name
-		btn.size_flags_horizontal = SIZE_EXPAND_FILL
-		var preset_data: Dictionary = presets[preset_name]
-		btn.pressed.connect(_apply_light_preset.bind(preset_data))
-		preset_hbox.add_child(btn)
+	var preset_group := _make_toggle_group([
+		{"label": "Torch", "key": "torch"},
+		{"label": "Sun", "key": "sunlight"},
+		{"label": "Moon", "key": "moonlight"},
+		{"label": "Spell", "key": "spell"},
+	], func(key: String) -> void:
+		var presets := {
+			"torch": {"color": Color("#FFAA44"), "intensity": 1.5, "height": 50.0, "ambient": 0.2},
+			"sunlight": {"color": Color("#FFFDE0"), "intensity": 1.0, "height": 150.0, "ambient": 0.4},
+			"moonlight": {"color": Color("#8899CC"), "intensity": 0.8, "height": 120.0, "ambient": 0.15},
+			"spell": {"color": Color("#44FFDD"), "intensity": 2.0, "height": 30.0, "ambient": 0.1},
+		}
+		_apply_light_preset(presets[key])
+	)
+	light_content.add_child(_make_field("Presets", preset_group))
 
 
 #===============================================================================
