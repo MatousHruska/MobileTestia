@@ -559,7 +559,9 @@ func _build_step2(parent: VBoxContainer) -> void:
 	)
 	content.add_child(mode_group)
 
-	content.add_child(_make_small_label("Capturing 3 directions..."))
+	var capture_btn := _make_primary_button("Start Capturing")
+	capture_btn.pressed.connect(_start_capture)
+	content.add_child(capture_btn)
 
 	# Direction previews
 	content.add_child(_make_label("Down:"))
@@ -1552,7 +1554,7 @@ func _go_to_step(step: int) -> void:
 		0:
 			next_button.disabled = (current_anim_player == null)
 		1:
-			_start_capture()
+			next_button.disabled = _captured_sheets.is_empty()
 		2:
 			_scan_palettes()
 			if _current_preset.has("pixel_art"):
