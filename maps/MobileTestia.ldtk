@@ -1935,54 +1935,6 @@
 							],
 							"__worldX": 506,
 							"__worldY": 1654
-						},
-						{
-							"__identifier": "lightsource",
-							"__grid": [33,121],
-							"__pivot": [0.5,0.5],
-							"__tags": ["lighting"],
-							"__tile": null,
-							"__smartColor": "#FFDD00",
-							"iid": "light-0002-0002-0002-000000000002",
-							"width": 16,
-							"height": 16,
-							"defUid": 152,
-							"px": [528,1940],
-							"fieldInstances": [
-								{ "__identifier": "light_color", "__type": "String", "__value": "#8899CC", "__tile": null, "defUid": 153, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["#8899CC"]
-								}] },
-								{ "__identifier": "intensity", "__type": "Float", "__value": 0.8, "__tile": null, "defUid": 154, "realEditorValues": [{ "id": "V_Float", "params": [0.8] }] },
-								{ "__identifier": "radius", "__type": "Int", "__value": 192, "__tile": null, "defUid": 155, "realEditorValues": [{ "id": "V_Int", "params": [192] }] },
-								{ "__identifier": "height", "__type": "Float", "__value": 120, "__tile": null, "defUid": 156, "realEditorValues": [{ "id": "V_Float", "params": [120] }] }
-							],
-							"__worldX": 528,
-							"__worldY": 1940
-						},
-						{
-							"__identifier": "lightsource",
-							"__grid": [54,102],
-							"__pivot": [0.5,0.5],
-							"__tags": ["lighting"],
-							"__tile": null,
-							"__smartColor": "#FFDD00",
-							"iid": "light-0003-0003-0003-000000000003",
-							"width": 16,
-							"height": 16,
-							"defUid": 152,
-							"px": [876,1642],
-							"fieldInstances": [
-								{ "__identifier": "light_color", "__type": "String", "__value": "#44FFDD", "__tile": null, "defUid": 153, "realEditorValues": [{
-									"id": "V_String",
-									"params": ["#44FFDD"]
-								}] },
-								{ "__identifier": "intensity", "__type": "Float", "__value": 2, "__tile": null, "defUid": 154, "realEditorValues": [{ "id": "V_Float", "params": [2] }] },
-								{ "__identifier": "radius", "__type": "Int", "__value": 96, "__tile": null, "defUid": 155, "realEditorValues": [{ "id": "V_Int", "params": [96] }] },
-								{ "__identifier": "height", "__type": "Float", "__value": 30, "__tile": null, "defUid": 156, "realEditorValues": [{ "id": "V_Float", "params": [30] }] }
-							],
-							"__worldX": 876,
-							"__worldY": 1642
 						}
 					]
 				},
