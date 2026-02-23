@@ -1001,31 +1001,30 @@ func _apply_light_preset(preset: Dictionary) -> void:
 #===============================================================================
 
 func _build_step4(parent: VBoxContainer) -> void:
-	parent.add_child(_make_label("Exporting..."))
+	var sec := _make_section("Export")
+	parent.add_child(sec[0])
+	var content: VBoxContainer = sec[1]
 
 	export_log_label = Label.new()
 	export_log_label.text = ""
 	export_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	export_log_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	parent.add_child(export_log_label)
-
-	parent.add_child(HSeparator.new())
+	export_log_label.add_theme_font_size_override("font_size", FONT_HINT)
+	export_log_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	content.add_child(export_log_label)
 
 	anchor_weapon_anim_toggle = CheckButton.new()
 	anchor_weapon_anim_toggle.text = "Weapon Animation (edit anchors next)"
-	parent.add_child(anchor_weapon_anim_toggle)
-
-	parent.add_child(HSeparator.new())
+	content.add_child(anchor_weapon_anim_toggle)
 
 	var run_again_btn := Button.new()
 	run_again_btn.text = "Run Again"
 	run_again_btn.pressed.connect(_on_run_again_pressed)
-	parent.add_child(run_again_btn)
+	content.add_child(run_again_btn)
 
-	var done_btn := Button.new()
-	done_btn.text = "Done"
+	var done_btn := _make_primary_button("Done")
 	done_btn.pressed.connect(_on_done_pressed)
-	parent.add_child(done_btn)
+	content.add_child(done_btn)
 
 
 #===============================================================================
@@ -1033,33 +1032,29 @@ func _build_step4(parent: VBoxContainer) -> void:
 #===============================================================================
 
 func _build_step_anchors(parent: VBoxContainer) -> void:
-	parent.add_child(_make_label("Weapon Anchor Editor"))
-
-	parent.add_child(HSeparator.new())
+	# Navigation section
+	var nav_sec := _make_section("Weapon Anchor Editor")
+	parent.add_child(nav_sec[0])
+	var nav_content: VBoxContainer = nav_sec[1]
 
 	# Direction selector
-	parent.add_child(_make_label("Direction:"))
-	var dir_hbox := HBoxContainer.new()
-	dir_hbox.add_theme_constant_override("separation", 4)
-	parent.add_child(dir_hbox)
-	for dir_name in ["down", "up", "right"]:
-		var btn := Button.new()
-		btn.text = dir_name.capitalize()
-		btn.size_flags_horizontal = SIZE_EXPAND_FILL
-		btn.pressed.connect(_on_anchor_dir_selected.bind(dir_name))
-		dir_hbox.add_child(btn)
-		_anchor_dir_buttons[dir_name] = btn
-
-	parent.add_child(HSeparator.new())
+	var dir_group := _make_toggle_group([
+		{"label": "Down", "key": "down"},
+		{"label": "Up", "key": "up"},
+		{"label": "Right", "key": "right"},
+	], func(key: String) -> void:
+		_on_anchor_dir_selected(key)
+	)
+	nav_content.add_child(_make_field("Direction", dir_group))
 
 	# Frame navigator
-	parent.add_child(_make_label("Frame:"))
 	var frame_hbox := HBoxContainer.new()
 	frame_hbox.add_theme_constant_override("separation", 4)
-	parent.add_child(frame_hbox)
+	nav_content.add_child(frame_hbox)
 
 	var prev_btn := Button.new()
-	prev_btn.text = "<"
+	prev_btn.text = "\u25c0"
+	prev_btn.custom_minimum_size.x = 32
 	prev_btn.pressed.connect(func() -> void:
 		if _anchor_current_frame > 0:
 			_anchor_current_frame -= 1
@@ -1074,7 +1069,8 @@ func _build_step_anchors(parent: VBoxContainer) -> void:
 	frame_hbox.add_child(anchor_frame_label)
 
 	var next_frame_btn := Button.new()
-	next_frame_btn.text = ">"
+	next_frame_btn.text = "\u25b6"
+	next_frame_btn.custom_minimum_size.x = 32
 	next_frame_btn.pressed.connect(func() -> void:
 		if _anchor_current_frame < _anchor_frame_count - 1:
 			_anchor_current_frame += 1
@@ -1082,70 +1078,76 @@ func _build_step_anchors(parent: VBoxContainer) -> void:
 	)
 	frame_hbox.add_child(next_frame_btn)
 
-	parent.add_child(HSeparator.new())
+	# Tool selector section
+	var tool_sec := _make_section("Tool")
+	parent.add_child(tool_sec[0])
+	var tool_content: VBoxContainer = tool_sec[1]
 
-	# Tool selector
-	parent.add_child(_make_label("Tool:"))
-	var tool_hbox := HBoxContainer.new()
-	tool_hbox.add_theme_constant_override("separation", 4)
-	parent.add_child(tool_hbox)
+	var tool_group := _make_toggle_group([
+		{"label": "Grip", "key": "grip"},
+		{"label": "Direction", "key": "direction"},
+		{"label": "Erase", "key": "erase"},
+	], func(key: String) -> void:
+		_on_anchor_tool_selected(key)
+	)
+	tool_content.add_child(tool_group)
 
-	var tool_configs := [
-		{"key": "grip", "label": "Grip (Magenta)"},
-		{"key": "direction", "label": "Direction (Cyan)"},
-		{"key": "erase", "label": "Erase"},
-	]
-	for cfg in tool_configs:
-		var btn := Button.new()
-		btn.text = cfg["label"]
-		btn.size_flags_horizontal = SIZE_EXPAND_FILL
-		btn.pressed.connect(_on_anchor_tool_selected.bind(cfg["key"]))
-		tool_hbox.add_child(btn)
-		_anchor_tool_buttons[cfg["key"]] = btn
-
-	parent.add_child(HSeparator.new())
+	# Color legend
+	var legend_hbox := HBoxContainer.new()
+	legend_hbox.add_theme_constant_override("separation", 12)
+	tool_content.add_child(legend_hbox)
+	var grip_legend := Label.new()
+	grip_legend.text = "\u25a0 Grip"
+	grip_legend.add_theme_color_override("font_color", Color("#FF00AA"))
+	grip_legend.add_theme_font_size_override("font_size", FONT_HINT)
+	legend_hbox.add_child(grip_legend)
+	var dir_legend := Label.new()
+	dir_legend.text = "\u25a0 Direction"
+	dir_legend.add_theme_color_override("font_color", Color("#00FFFF"))
+	dir_legend.add_theme_font_size_override("font_size", FONT_HINT)
+	legend_hbox.add_child(dir_legend)
 
 	# Anchor info
 	anchor_info_label = Label.new()
-	anchor_info_label.text = "Grip: —\nDirection: —\nWeapon dir: —"
+	anchor_info_label.text = "Grip: \u2014\nDirection: \u2014\nWeapon dir: \u2014"
 	anchor_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	anchor_info_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	parent.add_child(anchor_info_label)
+	anchor_info_label.add_theme_font_size_override("font_size", FONT_HINT)
+	anchor_info_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	tool_content.add_child(anchor_info_label)
 
-	parent.add_child(HSeparator.new())
+	# Actions section
+	var act_sec := _make_section("Actions")
+	parent.add_child(act_sec[0])
+	var act_content: VBoxContainer = act_sec[1]
 
-	# Grid toggle
 	anchor_grid_toggle = CheckButton.new()
 	anchor_grid_toggle.text = "Show Grid"
 	anchor_grid_toggle.toggled.connect(func(_on: bool) -> void: _update_anchor_display())
-	parent.add_child(anchor_grid_toggle)
+	act_content.add_child(anchor_grid_toggle)
 
-	# Copy to All Frames
 	var copy_btn := Button.new()
 	copy_btn.text = "Copy to All Frames"
 	copy_btn.pressed.connect(_on_anchor_copy_to_all)
-	parent.add_child(copy_btn)
+	act_content.add_child(copy_btn)
 
-	# Undo
 	var undo_btn := Button.new()
 	undo_btn.text = "Undo Last Placement"
 	undo_btn.pressed.connect(_on_anchor_undo)
-	parent.add_child(undo_btn)
+	act_content.add_child(undo_btn)
 
-	# Save Anchor Changes
-	var save_btn := Button.new()
-	save_btn.text = "Save Anchor Changes"
+	var save_btn := _make_primary_button("Save Anchor Changes")
 	save_btn.pressed.connect(_on_anchor_save)
-	parent.add_child(save_btn)
+	act_content.add_child(save_btn)
 
-	parent.add_child(HSeparator.new())
-
-	# Log label
+	# Log
 	anchor_log_label = Label.new()
 	anchor_log_label.text = ""
 	anchor_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	anchor_log_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	parent.add_child(anchor_log_label)
+	anchor_log_label.add_theme_font_size_override("font_size", FONT_HINT)
+	anchor_log_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	act_content.add_child(anchor_log_label)
 
 
 func _on_anchor_dir_selected(dir_name: String) -> void:
@@ -1164,12 +1166,8 @@ func _on_anchor_tool_selected(tool_name: String) -> void:
 
 
 func _update_anchor_button_highlights() -> void:
-	for dir_name in _anchor_dir_buttons:
-		var btn: Button = _anchor_dir_buttons[dir_name]
-		btn.modulate = Color.YELLOW if dir_name == _anchor_current_dir else Color.WHITE
-	for tool_name in _anchor_tool_buttons:
-		var btn: Button = _anchor_tool_buttons[tool_name]
-		btn.modulate = Color.YELLOW if tool_name == _anchor_tool else Color.WHITE
+	# Toggle group handles highlighting automatically
+	pass
 
 
 func _enter_anchor_editor() -> void:
@@ -1450,46 +1448,42 @@ func _append_anchor_log(text: String) -> void:
 #===============================================================================
 
 func _build_step6(parent: VBoxContainer) -> void:
-	parent.add_child(_make_label("Apply exported sheets to SpriteFrames"))
+	var sec := _make_section("Apply to SpriteFrames")
+	parent.add_child(sec[0])
+	var content: VBoxContainer = sec[1]
 
 	var path_label := Label.new()
 	path_label.text = "Target: %s" % SPRITEFRAMES_PATH
-	path_label.add_theme_font_size_override("font_size", 12)
-	path_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	parent.add_child(path_label)
+	path_label.add_theme_font_size_override("font_size", FONT_HINT)
+	path_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	content.add_child(path_label)
 
-	parent.add_child(HSeparator.new())
-
-	# Dynamic summary — rebuilt when entering Step 7
-	parent.add_child(_make_label("Animations to apply:"))
+	# Dynamic summary
+	content.add_child(_make_label("Animations to apply:"))
 	apply_summary_container = VBoxContainer.new()
 	apply_summary_container.add_theme_constant_override("separation", 2)
-	parent.add_child(apply_summary_container)
+	content.add_child(apply_summary_container)
 
-	parent.add_child(HSeparator.new())
-
-	apply_button = Button.new()
-	apply_button.text = "Apply to SpriteFrames"
+	apply_button = _make_primary_button("Apply to SpriteFrames")
 	apply_button.pressed.connect(_apply_to_spriteframes)
-	parent.add_child(apply_button)
+	content.add_child(apply_button)
 
 	apply_log_label = Label.new()
 	apply_log_label.text = ""
 	apply_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	apply_log_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	parent.add_child(apply_log_label)
-
-	parent.add_child(HSeparator.new())
+	apply_log_label.add_theme_font_size_override("font_size", FONT_HINT)
+	apply_log_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	content.add_child(apply_log_label)
 
 	var run_again_btn := Button.new()
 	run_again_btn.text = "Run Again"
 	run_again_btn.pressed.connect(_on_run_again_pressed)
-	parent.add_child(run_again_btn)
+	content.add_child(run_again_btn)
 
-	var done_btn := Button.new()
-	done_btn.text = "Done"
+	var done_btn := _make_primary_button("Done")
 	done_btn.pressed.connect(_on_done_pressed)
-	parent.add_child(done_btn)
+	content.add_child(done_btn)
 
 
 #===============================================================================
