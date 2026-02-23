@@ -154,6 +154,7 @@ var _shadow_capture_material: StandardMaterial3D = null
 
 # Step indicator
 var step_indicator_label: Label
+var step_indicator: Control  # StepIndicator custom control
 
 # Step 1 nodes
 var model_dropdown: OptionButton
@@ -250,124 +251,153 @@ func _process(delta: float) -> void:
 
 
 func _build_ui() -> void:
+	# Apply theme
+	theme = _build_theme()
+
+	# Background fill
+	var bg_rect := ColorRect.new()
+	bg_rect.color = C_BG
+	bg_rect.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	bg_rect.mouse_filter = MOUSE_FILTER_IGNORE
+	add_child(bg_rect)
+
 	var root_hbox := HBoxContainer.new()
 	root_hbox.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	root_hbox.add_theme_constant_override("separation", 12)
+	root_hbox.add_theme_constant_override("separation", 0)
 	add_child(root_hbox)
 
-	# Left panel — controls
+	# ── Left panel ──────────────────────────────────────────
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size.x = 300
 	root_hbox.add_child(panel)
 
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = SIZE_EXPAND_FILL
-	panel.add_child(scroll)
+	var left_vbox := VBoxContainer.new()
+	left_vbox.size_flags_horizontal = SIZE_EXPAND_FILL
+	left_vbox.size_flags_vertical = SIZE_EXPAND_FILL
+	left_vbox.add_theme_constant_override("separation", 0)
+	panel.add_child(left_vbox)
 
-	var vbox := VBoxContainer.new()
-	vbox.size_flags_horizontal = SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", 8)
-	scroll.add_child(vbox)
-
-	# Title
+	# Title (fixed at top)
+	var title_margin := MarginContainer.new()
+	title_margin.add_theme_constant_override("margin_top", 12)
+	title_margin.add_theme_constant_override("margin_bottom", 4)
+	title_margin.add_theme_constant_override("margin_left", 12)
+	title_margin.add_theme_constant_override("margin_right", 12)
+	left_vbox.add_child(title_margin)
 	var title := Label.new()
 	title.text = "Sprite Pipeline"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 20)
-	vbox.add_child(title)
+	title.add_theme_font_size_override("font_size", FONT_TITLE)
+	title.add_theme_color_override("font_color", C_TEXT)
+	title_margin.add_child(title)
 
-	# Step indicator
+	# Step indicator (fixed, custom draw)
+	var StepIndicatorScript := load("res://scripts/tools/step_indicator.gd")
+	step_indicator = StepIndicatorScript.new()
+	var indicator_margin := MarginContainer.new()
+	indicator_margin.add_theme_constant_override("margin_left", 8)
+	indicator_margin.add_theme_constant_override("margin_right", 8)
+	indicator_margin.add_theme_constant_override("margin_bottom", 8)
+	left_vbox.add_child(indicator_margin)
+	indicator_margin.add_child(step_indicator)
+
+	# Keep the old label reference working (hidden, updated by _go_to_step)
 	step_indicator_label = Label.new()
-	step_indicator_label.text = "Step 1 of 7: Model & Animation"
-	step_indicator_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	step_indicator_label.add_theme_font_size_override("font_size", 14)
-	vbox.add_child(step_indicator_label)
+	step_indicator_label.visible = false
+	left_vbox.add_child(step_indicator_label)
 
-	vbox.add_child(HSeparator.new())
+	# Thin separator under indicator
+	var top_sep := HSeparator.new()
+	left_vbox.add_child(top_sep)
+
+	# Scrollable step content area
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_horizontal = SIZE_EXPAND_FILL
+	scroll.size_flags_vertical = SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	left_vbox.add_child(scroll)
+
+	var scroll_vbox := VBoxContainer.new()
+	scroll_vbox.size_flags_horizontal = SIZE_EXPAND_FILL
+	scroll_vbox.add_theme_constant_override("separation", 8)
+	scroll.add_child(scroll_vbox)
+
+	# Add padding around step content
+	var content_margin := MarginContainer.new()
+	content_margin.size_flags_horizontal = SIZE_EXPAND_FILL
+	content_margin.add_theme_constant_override("margin_top", 8)
+	content_margin.add_theme_constant_override("margin_bottom", 8)
+	content_margin.add_theme_constant_override("margin_left", 12)
+	content_margin.add_theme_constant_override("margin_right", 12)
+	scroll_vbox.add_child(content_margin)
+
+	var steps_vbox := VBoxContainer.new()
+	steps_vbox.size_flags_horizontal = SIZE_EXPAND_FILL
+	steps_vbox.add_theme_constant_override("separation", 8)
+	content_margin.add_child(steps_vbox)
 
 	# Build 7 step containers
-	var step1 := VBoxContainer.new()
-	step1.add_theme_constant_override("separation", 8)
-	vbox.add_child(step1)
-	_step_containers.append(step1)
-
-	var step2 := VBoxContainer.new()
-	step2.add_theme_constant_override("separation", 8)
-	step2.visible = false
-	vbox.add_child(step2)
-	_step_containers.append(step2)
-
-	var step3 := VBoxContainer.new()
-	step3.add_theme_constant_override("separation", 8)
-	step3.visible = false
-	vbox.add_child(step3)
-	_step_containers.append(step3)
-
-	var step4 := VBoxContainer.new()
-	step4.add_theme_constant_override("separation", 8)
-	step4.visible = false
-	vbox.add_child(step4)
-	_step_containers.append(step4)
-
-	var step5 := VBoxContainer.new()
-	step5.add_theme_constant_override("separation", 8)
-	step5.visible = false
-	vbox.add_child(step5)
-	_step_containers.append(step5)
-
-	var step6 := VBoxContainer.new()
-	step6.add_theme_constant_override("separation", 8)
-	step6.visible = false
-	vbox.add_child(step6)
-	_step_containers.append(step6)
-
-	var step7 := VBoxContainer.new()
-	step7.add_theme_constant_override("separation", 8)
-	step7.visible = false
-	vbox.add_child(step7)
-	_step_containers.append(step7)
+	for i in range(7):
+		var step_cont := VBoxContainer.new()
+		step_cont.add_theme_constant_override("separation", 10)
+		step_cont.visible = (i == 0)
+		steps_vbox.add_child(step_cont)
+		_step_containers.append(step_cont)
 
 	# Build each step's contents
-	_build_step1(step1)
-	_build_step2(step2)
-	_build_step3(step3)
-	_build_step_light_preview(step4)  # Light Preview
-	_build_step4(step5)  # Export (now in container index 4)
-	_build_step_anchors(step6)  # Anchors (now in container index 5)
-	_build_step6(step7)  # Apply (now in container index 6)
+	_build_step1(_step_containers[0])
+	_build_step2(_step_containers[1])
+	_build_step3(_step_containers[2])
+	_build_step_light_preview(_step_containers[3])
+	_build_step4(_step_containers[4])
+	_build_step_anchors(_step_containers[5])
+	_build_step6(_step_containers[6])
 
-	vbox.add_child(HSeparator.new())
+	# ── Bottom bar (fixed, not scrolled) ───────────────────
+	var bottom_sep := HSeparator.new()
+	left_vbox.add_child(bottom_sep)
 
 	# Navigation row
+	var nav_margin := MarginContainer.new()
+	nav_margin.add_theme_constant_override("margin_top", 8)
+	nav_margin.add_theme_constant_override("margin_bottom", 4)
+	nav_margin.add_theme_constant_override("margin_left", 12)
+	nav_margin.add_theme_constant_override("margin_right", 12)
+	left_vbox.add_child(nav_margin)
+
 	var nav_hbox := HBoxContainer.new()
 	nav_hbox.add_theme_constant_override("separation", 8)
-	vbox.add_child(nav_hbox)
+	nav_margin.add_child(nav_hbox)
 
-	back_button = Button.new()
-	back_button.text = "Back"
-	back_button.size_flags_horizontal = SIZE_EXPAND_FILL
+	back_button = _make_subtle_button("\u25c0  Back")
 	back_button.visible = false
 	back_button.pressed.connect(_on_back_pressed)
 	nav_hbox.add_child(back_button)
 
-	next_button = Button.new()
-	next_button.text = "Next"
-	next_button.size_flags_horizontal = SIZE_EXPAND_FILL
+	next_button = _make_primary_button("Next  \u25b6")
 	next_button.disabled = true
 	next_button.pressed.connect(_on_next_pressed)
 	nav_hbox.add_child(next_button)
 
-	vbox.add_child(HSeparator.new())
+	# Status bar
+	var status_panel := PanelContainer.new()
+	var status_sb := StyleBoxFlat.new()
+	status_sb.bg_color = C_SECTION
+	status_sb.set_content_margin_all(6)
+	status_sb.content_margin_left = 12
+	status_sb.content_margin_right = 12
+	status_panel.add_theme_stylebox_override("panel", status_sb)
+	left_vbox.add_child(status_panel)
 
-	# Status
 	status_label = Label.new()
 	status_label.text = "Drop .glb files into assets/3d_imports/ and they will appear above."
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	vbox.add_child(status_label)
+	status_label.add_theme_font_size_override("font_size", FONT_HINT)
+	status_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	status_panel.add_child(status_label)
 
-	# Right side — split into two areas stacked vertically
+	# ── Right side — preview areas ──────────────────────────
 	var right_vbox := VBoxContainer.new()
 	right_vbox.size_flags_horizontal = SIZE_EXPAND_FILL
 	right_vbox.size_flags_vertical = SIZE_EXPAND_FILL
@@ -412,7 +442,7 @@ func _build_ui() -> void:
 	anchor_frame_display.gui_input.connect(_on_anchor_frame_input)
 	right_vbox.add_child(anchor_frame_display)
 
-	# Light preview viewport (Step 4 — Light Preview), initially hidden
+	# Light preview viewport (Step 4), initially hidden
 	_light_preview_container = SubViewportContainer.new()
 	_light_preview_container.size_flags_horizontal = SIZE_EXPAND_FILL
 	_light_preview_container.size_flags_vertical = SIZE_EXPAND_FILL
@@ -1586,11 +1616,13 @@ func _go_to_step(step: int) -> void:
 	# Update navigation buttons
 	back_button.visible = step > 0
 	next_button.visible = (step < 6)
-	next_button.text = "Export" if step == 4 else "Next"
+	next_button.text = "Export  \u25b6" if step == 4 else "Next  \u25b6"
 	# Update step indicator
 	var step_names := ["Model & Animation", "Capture Preview", "Pixel Art Settings",
 		"Light Preview", "Export", "Weapon Anchors", "Apply to SpriteFrames"]
 	step_indicator_label.text = "Step %d of 7: %s" % [step + 1, step_names[step]]
+	if step_indicator:
+		step_indicator.set_step(step)
 	# Update preview visibility
 	var viewport_area := preview_container.get_parent()  # AspectRatioContainer
 	viewport_area.visible = (step <= 1)
