@@ -121,6 +121,7 @@ var _frame_editor_frame_label: Label = null
 var _frame_editor_deleted_label: Label = null
 var _frame_editor_delete_btn: Button = null
 var _frame_editor_deleted_count := 0
+var _frame_editor_nudge_all_toggle: CheckButton = null
 
 ## Step 4 (Light Preview) state
 var _light_preview_viewport: SubViewport = null
@@ -891,6 +892,11 @@ func _build_step_frame_editor(parent: VBoxContainer) -> void:
 	down_btn.pressed.connect(func() -> void: _nudge_current_frame(0, 1))
 	nudge_grid.add_child(down_btn)
 
+	# "Nudge all following frames" toggle
+	_frame_editor_nudge_all_toggle = CheckButton.new()
+	_frame_editor_nudge_all_toggle.text = "Nudge all following frames"
+	nudge_content.add_child(_frame_editor_nudge_all_toggle)
+
 	# Delete Frame button (warning-styled)
 	_frame_editor_delete_btn = Button.new()
 	_frame_editor_delete_btn.text = "Delete This Frame"
@@ -987,9 +993,12 @@ func _on_frame_editor_direction_changed(dir_name: String) -> void:
 
 
 func _nudge_current_frame(dx: int, dy: int) -> void:
-	# Shift the current frame's content by (dx, dy) raw pixels in all sheet types.
-	# Pixels that move off the edge become transparent. This modifies the raw
-	# capture sheets so normal maps and shadows stay perfectly in sync.
+	# Shift frame content by (dx, dy) raw pixels in all sheet types.
+	# When "nudge all following" is on, shifts from the current frame to the last.
+	var nudge_all := _frame_editor_nudge_all_toggle and _frame_editor_nudge_all_toggle.button_pressed
+	var first_frame := _frame_editor_frame
+	var last_frame := (_frame_editor_frame_count - 1) if nudge_all else _frame_editor_frame
+
 	var sheet_dicts := [_captured_sheets, _captured_normal_sheets, _captured_shadow_sheets]
 	for sheet_dict in sheet_dicts:
 		for dir_name in sheet_dict.keys():
@@ -999,16 +1008,17 @@ func _nudge_current_frame(dx: int, dy: int) -> void:
 			var frame_w := src_w / _frame_editor_frame_count
 			if frame_w <= 0:
 				continue
-			var fx := _frame_editor_frame * frame_w
-			# Extract the frame region
-			var frame_img := Image.create(frame_w, src_h, false, src.get_format())
-			frame_img.blit_rect(src, Rect2i(fx, 0, frame_w, src_h), Vector2i.ZERO)
-			# Clear the frame region in the sheet (transparent)
-			var clear_img := Image.create(frame_w, src_h, false, src.get_format())
-			clear_img.fill(Color(0, 0, 0, 0))
-			src.blit_rect(clear_img, Rect2i(0, 0, frame_w, src_h), Vector2i(fx, 0))
-			# Blit the frame back with offset — blit_rect clips automatically
-			src.blit_rect(frame_img, Rect2i(0, 0, frame_w, src_h), Vector2i(fx + dx, dy))
+			for fi in range(first_frame, last_frame + 1):
+				var fx := fi * frame_w
+				# Extract the frame region
+				var frame_img := Image.create(frame_w, src_h, false, src.get_format())
+				frame_img.blit_rect(src, Rect2i(fx, 0, frame_w, src_h), Vector2i.ZERO)
+				# Clear the frame region in the sheet (transparent)
+				var clear_img := Image.create(frame_w, src_h, false, src.get_format())
+				clear_img.fill(Color(0, 0, 0, 0))
+				src.blit_rect(clear_img, Rect2i(0, 0, frame_w, src_h), Vector2i(fx, 0))
+				# Blit the frame back with offset — blit_rect clips automatically
+				src.blit_rect(frame_img, Rect2i(0, 0, frame_w, src_h), Vector2i(fx + dx, dy))
 	# Rebuild the preview to show the nudged result
 	_setup_frame_editor()
 
