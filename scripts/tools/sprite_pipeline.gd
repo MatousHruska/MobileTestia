@@ -57,6 +57,30 @@ const DIRECTIONS := [
 ]
 
 #===============================================================================
+# UI THEME CONSTANTS
+#===============================================================================
+
+const C_BG := Color("#1E1E2E")
+const C_PANEL := Color("#252536")
+const C_SECTION := Color("#2A2A3C")
+const C_SURFACE := Color("#33334A")
+const C_SURFACE_HOVER := Color("#3D3D55")
+const C_BORDER := Color("#3A3A50")
+const C_TEXT := Color("#E0E0EC")
+const C_TEXT_SEC := Color("#8888A0")
+const C_TEXT_DIM := Color("#555570")
+const C_ACCENT := Color("#5B9CF5")
+const C_ACCENT_HOVER := Color("#7BB0FF")
+const C_SUCCESS := Color("#5BCC7F")
+const C_WARNING := Color("#F5A85B")
+
+const FONT_TITLE := 18
+const FONT_SECTION := 14
+const FONT_LABEL := 13
+const FONT_HINT := 11
+const FONT_VALUE := 12
+
+#===============================================================================
 # WIZARD STATE
 #===============================================================================
 
@@ -2819,16 +2843,351 @@ func _append_apply_log(text: String) -> void:
 func _make_label(text: String) -> Label:
 	var l := Label.new()
 	l.text = text
+	l.add_theme_color_override("font_color", C_TEXT)
+	l.add_theme_font_size_override("font_size", FONT_LABEL)
 	return l
 
 
 func _make_small_label(text: String) -> Label:
 	var l := Label.new()
 	l.text = text
-	l.add_theme_font_size_override("font_size", 12)
+	l.add_theme_font_size_override("font_size", FONT_HINT)
+	l.add_theme_color_override("font_color", C_TEXT_SEC)
 	return l
 
 
 func _set_status(text: String) -> void:
 	status_label.text = text
 	print("[SpritePipeline] %s" % text)
+
+
+#===============================================================================
+# THEME BUILDER
+#===============================================================================
+
+func _build_theme() -> Theme:
+	var theme := Theme.new()
+
+	# --- PanelContainer ---
+	var panel_sb := StyleBoxFlat.new()
+	panel_sb.bg_color = C_PANEL
+	panel_sb.set_corner_radius_all(0)
+	theme.set_stylebox("panel", "PanelContainer", panel_sb)
+
+	# --- Button: normal ---
+	var btn_normal := StyleBoxFlat.new()
+	btn_normal.bg_color = C_SURFACE
+	btn_normal.set_border_width_all(1)
+	btn_normal.border_color = C_BORDER
+	btn_normal.set_corner_radius_all(4)
+	btn_normal.set_content_margin_all(8)
+	theme.set_stylebox("normal", "Button", btn_normal)
+
+	# --- Button: hover ---
+	var btn_hover := StyleBoxFlat.new()
+	btn_hover.bg_color = C_SURFACE_HOVER
+	btn_hover.set_border_width_all(1)
+	btn_hover.border_color = C_BORDER
+	btn_hover.set_corner_radius_all(4)
+	btn_hover.set_content_margin_all(8)
+	theme.set_stylebox("hover", "Button", btn_hover)
+
+	# --- Button: pressed ---
+	var btn_pressed := StyleBoxFlat.new()
+	btn_pressed.bg_color = C_ACCENT
+	btn_pressed.set_corner_radius_all(4)
+	btn_pressed.set_content_margin_all(8)
+	theme.set_stylebox("pressed", "Button", btn_pressed)
+
+	# --- Button: disabled ---
+	var btn_disabled := StyleBoxFlat.new()
+	btn_disabled.bg_color = Color(C_SURFACE, 0.3)
+	btn_disabled.set_corner_radius_all(4)
+	btn_disabled.set_content_margin_all(8)
+	theme.set_stylebox("disabled", "Button", btn_disabled)
+
+	# --- Button: focus ---
+	var btn_focus := StyleBoxEmpty.new()
+	theme.set_stylebox("focus", "Button", btn_focus)
+
+	# --- Button colors ---
+	theme.set_color("font_color", "Button", C_TEXT)
+	theme.set_color("font_hover_color", "Button", C_TEXT)
+	theme.set_color("font_pressed_color", "Button", Color.WHITE)
+	theme.set_color("font_disabled_color", "Button", C_TEXT_DIM)
+
+	# --- OptionButton ---
+	theme.set_stylebox("normal", "OptionButton", btn_normal)
+	theme.set_stylebox("hover", "OptionButton", btn_hover)
+	theme.set_stylebox("pressed", "OptionButton", btn_pressed)
+	theme.set_stylebox("focus", "OptionButton", btn_focus)
+	theme.set_color("font_color", "OptionButton", C_TEXT)
+	theme.set_color("font_hover_color", "OptionButton", C_TEXT)
+
+	# --- CheckButton ---
+	theme.set_color("font_color", "CheckButton", C_TEXT)
+	theme.set_color("font_hover_color", "CheckButton", C_TEXT)
+	theme.set_color("font_pressed_color", "CheckButton", C_ACCENT)
+
+	# --- Label ---
+	theme.set_color("font_color", "Label", C_TEXT)
+	theme.set_font_size("font_size", "Label", FONT_LABEL)
+
+	# --- HSlider ---
+	var slider_bg := StyleBoxFlat.new()
+	slider_bg.bg_color = C_BORDER
+	slider_bg.set_content_margin_all(0)
+	slider_bg.content_margin_top = 2
+	slider_bg.content_margin_bottom = 2
+	theme.set_stylebox("slider", "HSlider", slider_bg)
+
+	var slider_fill := StyleBoxFlat.new()
+	slider_fill.bg_color = C_ACCENT
+	slider_fill.set_content_margin_all(0)
+	slider_fill.content_margin_top = 2
+	slider_fill.content_margin_bottom = 2
+	theme.set_stylebox("grabber_area", "HSlider", slider_fill)
+
+	# --- LineEdit / SpinBox ---
+	var line_edit_sb := StyleBoxFlat.new()
+	line_edit_sb.bg_color = C_SURFACE
+	line_edit_sb.set_border_width_all(1)
+	line_edit_sb.border_color = C_BORDER
+	line_edit_sb.set_corner_radius_all(4)
+	line_edit_sb.set_content_margin_all(6)
+	theme.set_stylebox("normal", "LineEdit", line_edit_sb)
+	theme.set_stylebox("focus", "LineEdit", line_edit_sb)
+	theme.set_color("font_color", "LineEdit", C_TEXT)
+
+	# --- ScrollContainer ---
+	var scroll_sb := StyleBoxEmpty.new()
+	theme.set_stylebox("panel", "ScrollContainer", scroll_sb)
+
+	# --- HSeparator ---
+	var sep_sb := StyleBoxFlat.new()
+	sep_sb.bg_color = C_BORDER
+	sep_sb.set_content_margin_all(0)
+	sep_sb.content_margin_top = 4
+	sep_sb.content_margin_bottom = 4
+	theme.set_stylebox("separator", "HSeparator", sep_sb)
+	theme.set_constant("separation", "HSeparator", 1)
+
+	return theme
+
+
+#===============================================================================
+# STYLED HELPERS
+#===============================================================================
+
+## Create a section container with a styled header label.
+## Returns [section_container, content_vbox] — add controls to content_vbox.
+func _make_section(title: String) -> Array:
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 4)
+
+	var header := Label.new()
+	header.text = title
+	header.add_theme_font_size_override("font_size", FONT_SECTION)
+	header.add_theme_color_override("font_color", C_ACCENT)
+	outer.add_child(header)
+
+	var panel := PanelContainer.new()
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = C_SECTION
+	sb.set_corner_radius_all(4)
+	sb.set_content_margin_all(8)
+	panel.add_theme_stylebox_override("panel", sb)
+	outer.add_child(panel)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 6)
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_child(content)
+
+	return [outer, content]
+
+
+## Create a label-above-control field pair.
+func _make_field(label_text: String, control: Control) -> VBoxContainer:
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 2)
+	var lbl := _make_label(label_text)
+	vbox.add_child(lbl)
+	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	vbox.add_child(control)
+	return vbox
+
+
+## Create a collapsible section that starts collapsed.
+## Returns [outer_container, content_vbox, toggle_button].
+func _make_collapsible(title: String, start_open: bool = false) -> Array:
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 4)
+
+	var toggle_btn := Button.new()
+	toggle_btn.text = "%s %s" % ["\u25be" if start_open else "\u25b8", title]
+	toggle_btn.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var toggle_sb := StyleBoxFlat.new()
+	toggle_sb.bg_color = Color(C_SECTION, 0.5)
+	toggle_sb.set_corner_radius_all(4)
+	toggle_sb.set_content_margin_all(6)
+	toggle_btn.add_theme_stylebox_override("normal", toggle_sb)
+	var toggle_hover := StyleBoxFlat.new()
+	toggle_hover.bg_color = Color(C_SECTION, 0.8)
+	toggle_hover.set_corner_radius_all(4)
+	toggle_hover.set_content_margin_all(6)
+	toggle_btn.add_theme_stylebox_override("hover", toggle_hover)
+	toggle_btn.add_theme_color_override("font_color", C_ACCENT)
+	toggle_btn.add_theme_font_size_override("font_size", FONT_SECTION)
+	outer.add_child(toggle_btn)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 6)
+	content.visible = start_open
+	outer.add_child(content)
+
+	toggle_btn.pressed.connect(func() -> void:
+		content.visible = not content.visible
+		var arrow := "\u25be" if content.visible else "\u25b8"
+		toggle_btn.text = "%s %s" % [arrow, title]
+	)
+
+	return [outer, content, toggle_btn]
+
+
+## Create a segmented toggle button group.
+func _make_toggle_group(options: Array, callback: Callable) -> HBoxContainer:
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 0)
+	var buttons: Array[Button] = []
+
+	for i in range(options.size()):
+		var opt: Dictionary = options[i]
+		var btn := Button.new()
+		btn.text = opt["label"]
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.toggle_mode = true
+		btn.button_pressed = (i == 0)
+
+		_apply_toggle_style(btn, i == 0)
+
+		var normal_sb := StyleBoxFlat.new()
+		normal_sb.bg_color = C_SURFACE
+		normal_sb.set_border_width_all(1)
+		normal_sb.border_color = C_BORDER
+		normal_sb.set_corner_radius_all(0)
+		normal_sb.set_content_margin_all(6)
+		if i == 0:
+			normal_sb.corner_radius_top_left = 4
+			normal_sb.corner_radius_bottom_left = 4
+		if i == options.size() - 1:
+			normal_sb.corner_radius_top_right = 4
+			normal_sb.corner_radius_bottom_right = 4
+		btn.add_theme_stylebox_override("normal", normal_sb)
+
+		var active_sb := normal_sb.duplicate()
+		active_sb.bg_color = C_ACCENT
+		active_sb.border_color = C_ACCENT
+		btn.add_theme_stylebox_override("pressed", active_sb)
+
+		var hover_sb := normal_sb.duplicate()
+		hover_sb.bg_color = C_SURFACE_HOVER
+		btn.add_theme_stylebox_override("hover", hover_sb)
+
+		buttons.append(btn)
+		hbox.add_child(btn)
+
+	for i in range(buttons.size()):
+		var idx := i
+		var opt: Dictionary = options[i]
+		buttons[i].pressed.connect(func() -> void:
+			for j in range(buttons.size()):
+				buttons[j].button_pressed = (j == idx)
+				_apply_toggle_style(buttons[j], j == idx)
+			callback.call(opt["key"])
+		)
+
+	return hbox
+
+
+func _apply_toggle_style(btn: Button, active: bool) -> void:
+	if active:
+		btn.add_theme_color_override("font_color", Color.WHITE)
+		btn.add_theme_color_override("font_hover_color", Color.WHITE)
+		btn.add_theme_color_override("font_pressed_color", Color.WHITE)
+	else:
+		btn.add_theme_color_override("font_color", C_TEXT)
+		btn.add_theme_color_override("font_hover_color", C_TEXT)
+		btn.add_theme_color_override("font_pressed_color", Color.WHITE)
+
+
+## Create a slider with inline value label. Returns [HBoxContainer, HSlider, Label].
+func _make_slider_row(min_val: float, max_val: float, default_val: float, step_val: float) -> Array:
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 8)
+
+	var slider := HSlider.new()
+	slider.min_value = min_val
+	slider.max_value = max_val
+	slider.value = default_val
+	slider.step = step_val
+	slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(slider)
+
+	var val_label := Label.new()
+	val_label.text = str(default_val)
+	val_label.custom_minimum_size.x = 40
+	val_label.add_theme_font_size_override("font_size", FONT_VALUE)
+	val_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	hbox.add_child(val_label)
+
+	slider.value_changed.connect(func(v: float) -> void:
+		if step_val >= 1.0:
+			val_label.text = str(int(v))
+		else:
+			val_label.text = "%.2f" % v
+	)
+
+	return [hbox, slider, val_label]
+
+
+## Create a styled primary (accent) button.
+func _make_primary_button(text: String) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = C_ACCENT
+	sb.set_corner_radius_all(4)
+	sb.set_content_margin_all(10)
+	btn.add_theme_stylebox_override("normal", sb)
+	var hover_sb := StyleBoxFlat.new()
+	hover_sb.bg_color = C_ACCENT_HOVER
+	hover_sb.set_corner_radius_all(4)
+	hover_sb.set_content_margin_all(10)
+	btn.add_theme_stylebox_override("hover", hover_sb)
+	btn.add_theme_color_override("font_color", Color.WHITE)
+	btn.add_theme_color_override("font_hover_color", Color.WHITE)
+	return btn
+
+
+## Create a styled subtle (outline) button.
+func _make_subtle_button(text: String) -> Button:
+	var btn := Button.new()
+	btn.text = text
+	btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color.TRANSPARENT
+	sb.set_border_width_all(1)
+	sb.border_color = C_BORDER
+	sb.set_corner_radius_all(4)
+	sb.set_content_margin_all(10)
+	btn.add_theme_stylebox_override("normal", sb)
+	var hover_sb := StyleBoxFlat.new()
+	hover_sb.bg_color = Color(C_SURFACE, 0.5)
+	hover_sb.set_border_width_all(1)
+	hover_sb.border_color = C_BORDER
+	hover_sb.set_corner_radius_all(4)
+	hover_sb.set_content_margin_all(10)
+	btn.add_theme_stylebox_override("hover", hover_sb)
+	return btn
