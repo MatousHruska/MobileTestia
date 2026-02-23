@@ -159,6 +159,7 @@ var step_indicator: Control  # StepIndicator custom control
 # Step 1 nodes
 var model_dropdown: OptionButton
 var anim_dropdown: OptionButton
+var anim_info_label: Label
 var frame_count_spin: SpinBox
 var camera_elevation_slider: HSlider
 var camera_elevation_label: Label
@@ -471,6 +472,12 @@ func _build_step1(parent: VBoxContainer) -> void:
 	anim_dropdown.size_flags_horizontal = SIZE_EXPAND_FILL
 	anim_dropdown.item_selected.connect(_on_animation_selected)
 	content.add_child(_make_field("Animation", anim_dropdown))
+
+	anim_info_label = Label.new()
+	anim_info_label.text = ""
+	anim_info_label.add_theme_font_size_override("font_size", FONT_VALUE)
+	anim_info_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	content.add_child(anim_info_label)
 
 	frame_count_spin = SpinBox.new()
 	frame_count_spin.min_value = 2
@@ -1695,6 +1702,7 @@ func _clear_model() -> void:
 		current_model_instance = null
 	current_anim_player = null
 	anim_dropdown.clear()
+	anim_info_label.text = ""
 
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
@@ -1725,11 +1733,26 @@ func _populate_animations() -> void:
 
 func _on_animation_selected(index: int) -> void:
 	if current_anim_player == null or index < 0:
+		anim_info_label.text = ""
 		return
 	var anim_name: String = anim_dropdown.get_item_text(index)
 	current_anim_player.play(anim_name)
 	current_anim_player.seek(0.0, true)
 	next_button.disabled = false
+
+	# Show source animation length info
+	var anim := current_anim_player.get_animation(anim_name)
+	if anim != null:
+		var length_sec := anim.length
+		var step := anim.step
+		if step > 0.0:
+			var source_frames := int(round(length_sec / step))
+			var fps := int(round(1.0 / step))
+			anim_info_label.text = "%d frames  ·  %.2fs  ·  %d fps" % [source_frames, length_sec, fps]
+		else:
+			anim_info_label.text = "%.2fs" % length_sec
+	else:
+		anim_info_label.text = ""
 
 
 #===============================================================================
