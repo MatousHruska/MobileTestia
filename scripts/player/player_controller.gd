@@ -21,7 +21,9 @@ enum Facing { DOWN = 0, UP = 1, LEFT = 2, RIGHT = 3 }
 
 ## Movement settings
 @export_group("Movement")
-@export var move_speed: float = 150.0
+@export var move_speed: float = 150.0  ## Base run speed (pixels/sec)
+@export var walk_speed_ratio: float = 0.4  ## Walk speed as fraction of run speed
+@export var joystick_run_threshold: float = 0.7  ## Joystick displacement above this = run
 @export var acceleration: float = 800.0
 @export var friction: float = 1000.0
 
@@ -34,13 +36,15 @@ enum Facing { DOWN = 0, UP = 1, LEFT = 2, RIGHT = 3 }
 @export var dodge_stamina_cost: float = 25.0
 
 ## State
-var input_direction: Vector2 = Vector2.ZERO
+var input_direction: Vector2 = Vector2.ZERO  ## Normalized movement direction
 var current_facing: Facing = Facing.DOWN
 var is_attacking: bool = false
 var is_dodging: bool = false
 var is_locked: bool = false  ## Prevents input during certain actions
 var is_casting: bool = false  ## Currently channeling a cast
 var is_stance_active: bool = false  ## Currently in toggle stance (Phalanx Stance)
+var is_running: bool = false  ## True when joystick pushed past run threshold
+var _joystick_magnitude: float = 0.0  ## Raw joystick displacement (0.0 to 1.0)
 
 ## Components
 @onready var hitbox_pivot: Node2D = $HitboxPivot
@@ -103,6 +107,8 @@ func _load_settings_from_database() -> void:
 	if not db:
 		return
 	move_speed = db.get_setting("base_move_speed", move_speed)
+	walk_speed_ratio = db.get_setting("walk_speed_ratio", walk_speed_ratio)
+	joystick_run_threshold = db.get_setting("joystick_run_threshold", joystick_run_threshold)
 	dodge_speed = db.get_setting("base_dodge_speed", dodge_speed)
 	dodge_stamina_cost = db.get_setting("base_dodge_stamina_cost", dodge_stamina_cost)
 	attack_lunge_force = db.get_setting("base_lunge_force", attack_lunge_force)
@@ -118,6 +124,8 @@ func _load_settings_from_database() -> void:
 
 	Debug.log("Player", "Loaded settings from database", {
 		"move_speed": move_speed,
+		"walk_speed_ratio": walk_speed_ratio,
+		"joystick_run_threshold": joystick_run_threshold,
 		"dodge_speed": dodge_speed,
 		"attack_lunge_force": attack_lunge_force,
 		"dodge_duration": dodge_duration,
@@ -350,9 +358,15 @@ func _process_movement(delta: float) -> void:
 		return
 
 	if input_direction != Vector2.ZERO:
-		# Calculate effective move speed with equipment bonus
-		var effective_speed := move_speed * (1.0 + PlayerStats.movement_speed / 100.0)
-		# Apply acceleration toward target speed
+		# Calculate effective move speed with movement_speed stat bonus
+		var base_speed := move_speed * (1.0 + PlayerStats.movement_speed / 100.0)
+		# Apply walk/run multiplier (discrete, not analog)
+		var effective_speed: float
+		if is_running:
+			effective_speed = base_speed
+		else:
+			effective_speed = base_speed * walk_speed_ratio
+		# Apply acceleration toward target speed (direction is always normalized)
 		target_velocity = input_direction * effective_speed
 		velocity = velocity.move_toward(target_velocity, acceleration * delta)
 
@@ -365,8 +379,18 @@ func _process_movement(delta: float) -> void:
 
 ## Input handling (called by InputManager or UI)
 func set_input_direction(direction: Vector2) -> void:
-	# Normalize to prevent faster diagonal movement
-	input_direction = direction.limit_length(1.0)
+	var raw := direction.limit_length(1.0)
+	_joystick_magnitude = raw.length()
+
+	# Separate direction from magnitude — direction is always unit-length
+	if _joystick_magnitude > 0.01:
+		input_direction = raw.normalized()
+	else:
+		input_direction = Vector2.ZERO
+		_joystick_magnitude = 0.0
+
+	# Determine walk vs run from joystick displacement
+	is_running = _joystick_magnitude >= joystick_run_threshold
 
 
 func request_attack() -> void:
@@ -709,6 +733,8 @@ func print_state() -> void:
 		"position": global_position,
 		"velocity": velocity,
 		"input_direction": input_direction,
+		"joystick_magnitude": _joystick_magnitude,
+		"is_running": is_running,
 		"facing": Facing.keys()[current_facing],
 		"is_attacking": is_attacking,
 		"is_dodging": is_dodging,

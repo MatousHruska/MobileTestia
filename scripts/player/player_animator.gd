@@ -21,7 +21,7 @@ const WEAPON_ANCHOR_COLOR := Color("#FF00AA")
 const WEAPON_DIRECTION_COLOR := Color("#00FFFF")
 
 ## Current high-level state for priority resolution
-enum State { IDLE, WALK, DASH, ATTACK }
+enum State { IDLE, WALK, RUN, DASH, ATTACK }
 var _current_state: State = State.IDLE
 
 ## Reference to the AbilityVisualPlayer (if parent has one)
@@ -79,10 +79,14 @@ func _process(_delta: float) -> void:
 	if _in_visual_sequence or _current_state == State.ATTACK or _current_state == State.DASH:
 		return
 
-	# Determine walk vs idle from velocity
+	# Determine idle / walk / run from velocity and controller state
 	if _controller.velocity.length_squared() > 1.0:
-		if _current_state != State.WALK:
-			_play_anim(State.WALK)
+		if _controller.is_running:
+			if _current_state != State.RUN:
+				_play_anim(State.RUN)
+		else:
+			if _current_state != State.WALK:
+				_play_anim(State.WALK)
 	else:
 		if _current_state != State.IDLE:
 			_play_anim(State.IDLE)
@@ -137,11 +141,13 @@ func _on_animation_finished() -> void:
 
 func _play_anim(new_state: State) -> void:
 	_current_state = new_state
+	speed_scale = 1.0  # Reset speed scale (run fallback may have changed it)
 
 	var state_prefix: String
 	match new_state:
 		State.IDLE:    state_prefix = "idle"
 		State.WALK:    state_prefix = "walk"
+		State.RUN:     state_prefix = "run"
 		State.DASH:    state_prefix = "dash"
 		State.ATTACK:  state_prefix = "attack"
 
@@ -156,6 +162,14 @@ func _play_anim(new_state: State) -> void:
 
 	if sprite_frames and sprite_frames.has_animation(anim_name):
 		play(anim_name)
+	elif new_state == State.RUN:
+		# Fallback: run uses walk animation with faster speed_scale
+		var walk_anim := "walk_%s" % dir_suffix
+		if sprite_frames and sprite_frames.has_animation(walk_anim):
+			play(walk_anim)
+			speed_scale = 1.5
+		else:
+			Debug.warn("Player", "Animation not found: %s (or walk fallback)" % anim_name)
 	else:
 		# Fallback: try without direction
 		if sprite_frames and sprite_frames.has_animation(state_prefix):

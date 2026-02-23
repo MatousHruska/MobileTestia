@@ -38,6 +38,7 @@ const CAPTURE_OVERSCAN := 1.5
 const KNOWN_ANIM_CONFIG := {
 	"Idle": {"prefix": "idle", "fps": 10, "loop": true},
 	"Walking": {"prefix": "walk", "fps": 15, "loop": true},
+	"Running": {"prefix": "run", "fps": 18, "loop": true},
 	"Slash": {"prefix": "attack", "fps": 20, "loop": false},
 }
 const DEFAULT_APPLY_FPS := 15
