@@ -395,6 +395,7 @@ func _build_ui() -> void:
 	status_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	status_label.add_theme_font_size_override("font_size", FONT_HINT)
 	status_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	status_label.max_lines_visible = 2
 	status_panel.add_child(status_label)
 
 	# ── Right side — preview areas ──────────────────────────
@@ -2955,7 +2956,7 @@ func _make_section(title: String) -> Array:
 ## Create a label-above-control field pair.
 func _make_field(label_text: String, control: Control) -> VBoxContainer:
 	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 2)
+	vbox.add_theme_constant_override("separation", 4)
 	var lbl := _make_label(label_text)
 	vbox.add_child(lbl)
 	control.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -3105,11 +3106,15 @@ func _make_primary_button(text: String) -> Button:
 	sb.bg_color = C_ACCENT
 	sb.set_corner_radius_all(4)
 	sb.set_content_margin_all(10)
+	sb.content_margin_top = 12
+	sb.content_margin_bottom = 12
 	btn.add_theme_stylebox_override("normal", sb)
 	var hover_sb := StyleBoxFlat.new()
 	hover_sb.bg_color = C_ACCENT_HOVER
 	hover_sb.set_corner_radius_all(4)
 	hover_sb.set_content_margin_all(10)
+	hover_sb.content_margin_top = 12
+	hover_sb.content_margin_bottom = 12
 	btn.add_theme_stylebox_override("hover", hover_sb)
 	btn.add_theme_color_override("font_color", Color.WHITE)
 	btn.add_theme_color_override("font_hover_color", Color.WHITE)
@@ -3127,6 +3132,8 @@ func _make_subtle_button(text: String) -> Button:
 	sb.border_color = C_BORDER
 	sb.set_corner_radius_all(4)
 	sb.set_content_margin_all(10)
+	sb.content_margin_top = 12
+	sb.content_margin_bottom = 12
 	btn.add_theme_stylebox_override("normal", sb)
 	var hover_sb := StyleBoxFlat.new()
 	hover_sb.bg_color = Color(C_SURFACE, 0.5)
@@ -3134,5 +3141,7 @@ func _make_subtle_button(text: String) -> Button:
 	hover_sb.border_color = C_BORDER
 	hover_sb.set_corner_radius_all(4)
 	hover_sb.set_content_margin_all(10)
+	hover_sb.content_margin_top = 12
+	hover_sb.content_margin_bottom = 12
 	btn.add_theme_stylebox_override("hover", hover_sb)
 	return btn
