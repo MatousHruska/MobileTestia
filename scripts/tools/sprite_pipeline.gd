@@ -836,6 +836,61 @@ func _build_step_frame_editor(parent: VBoxContainer) -> void:
 	_frame_editor_frame_label.add_theme_color_override("font_color", C_TEXT)
 	content.add_child(_frame_editor_frame_label)
 
+	# Nudge Frame section — shift frame content by 1 raw pixel
+	var nudge_sec := _make_section("Nudge Frame")
+	parent.add_child(nudge_sec[0])
+	var nudge_content: VBoxContainer = nudge_sec[1]
+	nudge_content.add_child(_make_small_label("Shift this frame's content by 1 capture pixel. Affects color, normal & shadow."))
+
+	# Arrow grid: 3x3 with arrows at cross positions
+	var nudge_grid := GridContainer.new()
+	nudge_grid.columns = 3
+	nudge_grid.add_theme_constant_override("h_separation", 2)
+	nudge_grid.add_theme_constant_override("v_separation", 2)
+	nudge_content.add_child(nudge_grid)
+
+	var arrow_size := Vector2(36, 36)
+	# Row 1: empty, up, empty
+	var spacer1 := Control.new()
+	spacer1.custom_minimum_size = arrow_size
+	nudge_grid.add_child(spacer1)
+	var up_btn := Button.new()
+	up_btn.text = "\u25b2"
+	up_btn.custom_minimum_size = arrow_size
+	up_btn.pressed.connect(func() -> void: _nudge_current_frame(0, -1))
+	nudge_grid.add_child(up_btn)
+	var spacer2 := Control.new()
+	spacer2.custom_minimum_size = arrow_size
+	nudge_grid.add_child(spacer2)
+	# Row 2: left, (label), right
+	var left_btn := Button.new()
+	left_btn.text = "\u25c0"
+	left_btn.custom_minimum_size = arrow_size
+	left_btn.pressed.connect(func() -> void: _nudge_current_frame(-1, 0))
+	nudge_grid.add_child(left_btn)
+	var center_label := Label.new()
+	center_label.text = "+1px"
+	center_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	center_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	center_label.custom_minimum_size = arrow_size
+	center_label.add_theme_font_size_override("font_size", FONT_HINT)
+	center_label.add_theme_color_override("font_color", C_TEXT_DIM)
+	nudge_grid.add_child(center_label)
+	var right_btn := Button.new()
+	right_btn.text = "\u25b6"
+	right_btn.custom_minimum_size = arrow_size
+	right_btn.pressed.connect(func() -> void: _nudge_current_frame(1, 0))
+	nudge_grid.add_child(right_btn)
+	# Row 3: empty, down, empty
+	var spacer3 := Control.new()
+	spacer3.custom_minimum_size = arrow_size
+	nudge_grid.add_child(spacer3)
+	var down_btn := Button.new()
+	down_btn.text = "\u25bc"
+	down_btn.custom_minimum_size = arrow_size
+	down_btn.pressed.connect(func() -> void: _nudge_current_frame(0, 1))
+	nudge_grid.add_child(down_btn)
+
 	# Delete Frame button (warning-styled)
 	_frame_editor_delete_btn = Button.new()
 	_frame_editor_delete_btn.text = "Delete This Frame"
@@ -928,6 +983,33 @@ func _update_frame_editor_frame() -> void:
 
 func _on_frame_editor_direction_changed(dir_name: String) -> void:
 	_frame_editor_direction = dir_name
+	_setup_frame_editor()
+
+
+func _nudge_current_frame(dx: int, dy: int) -> void:
+	# Shift the current frame's content by (dx, dy) raw pixels in all sheet types.
+	# Pixels that move off the edge become transparent. This modifies the raw
+	# capture sheets so normal maps and shadows stay perfectly in sync.
+	var sheet_dicts := [_captured_sheets, _captured_normal_sheets, _captured_shadow_sheets]
+	for sheet_dict in sheet_dicts:
+		for dir_name in sheet_dict.keys():
+			var src: Image = sheet_dict[dir_name]
+			var src_w := src.get_width()
+			var src_h := src.get_height()
+			var frame_w := src_w / _frame_editor_frame_count
+			if frame_w <= 0:
+				continue
+			var fx := _frame_editor_frame * frame_w
+			# Extract the frame region
+			var frame_img := Image.create(frame_w, src_h, false, src.get_format())
+			frame_img.blit_rect(src, Rect2i(fx, 0, frame_w, src_h), Vector2i.ZERO)
+			# Clear the frame region in the sheet (transparent)
+			var clear_img := Image.create(frame_w, src_h, false, src.get_format())
+			clear_img.fill(Color(0, 0, 0, 0))
+			src.blit_rect(clear_img, Rect2i(0, 0, frame_w, src_h), Vector2i(fx, 0))
+			# Blit the frame back with offset — blit_rect clips automatically
+			src.blit_rect(frame_img, Rect2i(0, 0, frame_w, src_h), Vector2i(fx + dx, dy))
+	# Rebuild the preview to show the nudged result
 	_setup_frame_editor()
 
 
