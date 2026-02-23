@@ -578,6 +578,15 @@ func _create_talent_node(talent: TalentData) -> Control:
 	node.set_meta("is_pressed", false)
 	container.add_child(node)
 
+	# Icon texture (shown when icon exists, hides name label)
+	var icon_rect := TextureRect.new()
+	icon_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	icon_rect.set_meta("icon_rect", true)
+	container.add_child(icon_rect)
+
 	# Points label in bottom right corner
 	var points_label := Label.new()
 	points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -587,7 +596,7 @@ func _create_talent_node(talent: TalentData) -> Control:
 	points_label.set_meta("points_label", true)
 	container.add_child(points_label)
 
-	# Name label (abbreviated)
+	# Name label (abbreviated, hidden when icon is available)
 	var name_label := Label.new()
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -620,10 +629,11 @@ func _update_talent_node_visual(container: Control, talent: TalentData) -> void:
 	else:
 		color = UITheme.COLOR_LOCKED
 
-	# Find the button child
+	# Find child nodes
 	var node: Button = null
 	var points_label: Label = null
 	var name_label: Label = null
+	var icon_rect: TextureRect = null
 	for child in container.get_children():
 		if child is Button:
 			node = child
@@ -631,6 +641,8 @@ func _update_talent_node_visual(container: Control, talent: TalentData) -> void:
 			points_label = child
 		elif child is Label and child.has_meta("name_label"):
 			name_label = child
+		elif child is TextureRect and child.has_meta("icon_rect"):
+			icon_rect = child
 
 	if not node:
 		return
@@ -644,15 +656,32 @@ func _update_talent_node_visual(container: Control, talent: TalentData) -> void:
 	node.add_theme_stylebox_override("normal", stylebox)
 	node.add_theme_stylebox_override("pressed", stylebox)
 
+	# Load icon texture
+	var has_icon := false
+	if icon_rect:
+		var tex := TalentIconLoader.load_icon(talent.icon_name)
+		if tex:
+			icon_rect.texture = tex
+			icon_rect.visible = true
+			# Dim locked talents
+			icon_rect.modulate = Color(0.4, 0.4, 0.4) if color == UITheme.COLOR_LOCKED else Color.WHITE
+			has_icon = true
+		else:
+			icon_rect.visible = false
+
 	# Update points label
 	if points_label:
 		points_label.text = "%d/%d" % [invested, talent.max_points]
 		points_label.add_theme_color_override("font_color", color)
 
-	# Update name label (abbreviated to 2-3 chars)
+	# Update name label (hidden when icon is available)
 	if name_label:
-		name_label.text = talent.talent_name.substr(0, 3).to_upper()
-		name_label.add_theme_color_override("font_color", UITheme.COLOR_SELECTED)
+		if has_icon:
+			name_label.visible = false
+		else:
+			name_label.visible = true
+			name_label.text = talent.talent_name.substr(0, 3).to_upper()
+			name_label.add_theme_color_override("font_color", UITheme.COLOR_SELECTED)
 
 	# Tooltip
 	node.tooltip_text = "%s\n%s" % [talent.talent_name, talent.description]
@@ -748,8 +777,17 @@ func _create_skillbook_slot(talent: TalentData) -> Button:
 	var cell_size := _get_skillbook_cell_size()
 	slot.custom_minimum_size = Vector2(cell_size, cell_size)
 	slot.toggle_mode = true
-	slot.text = talent.talent_name.substr(0, 2).to_upper()
 	slot.add_theme_font_size_override("font_size", UITheme.FONT_SIZE_LABEL)
+
+	# Try to show icon, fall back to text abbreviation
+	var tex := TalentIconLoader.load_icon(talent.icon_name)
+	if tex:
+		slot.icon = tex
+		slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		slot.expand_icon = true
+		slot.text = ""
+	else:
+		slot.text = talent.talent_name.substr(0, 2).to_upper()
 
 	# Check weapon requirement
 	var weapon_met := _is_weapon_requirement_met(talent)
@@ -845,7 +883,15 @@ func _update_bind_slot_visual(slot: Button, index: int) -> void:
 	var weapon_met := true
 	if talent:
 		weapon_met = _is_weapon_requirement_met(talent)
-		slot.text = talent.talent_name.substr(0, 2).to_upper()
+		# Try to show icon, fall back to text abbreviation
+		var tex := TalentIconLoader.load_icon(talent.icon_name)
+		if tex:
+			slot.icon = tex
+			slot.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			slot.expand_icon = true
+			slot.text = ""
+		else:
+			slot.text = talent.talent_name.substr(0, 2).to_upper()
 		if not weapon_met:
 			var req_name := _get_weapon_category_display_name(talent.required_weapon_category)
 			slot.tooltip_text = talent.talent_name + "\n[Requires: " + req_name + "]"

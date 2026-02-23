@@ -2,6 +2,38 @@
 	"chests": [],
 	"doors": [],
 	"levers": [],
+	"lights": [
+		{
+			"color": "#FFAA44",
+			"height": 50.0,
+			"intensity": 1.5,
+			"position": {
+				"x": 506.0,
+				"y": 1654.0
+			},
+			"radius": 128
+		},
+		{
+			"color": "#8899CC",
+			"height": 120.0,
+			"intensity": 0.8,
+			"position": {
+				"x": 528.0,
+				"y": 1940.0
+			},
+			"radius": 192
+		},
+		{
+			"color": "#44FFDD",
+			"height": 30.0,
+			"intensity": 2.0,
+			"position": {
+				"x": 876.0,
+				"y": 1642.0
+			},
+			"radius": 96
+		}
+	],
 	"locations": [],
 	"lootables": [],
 	"lore_echoes": [],
@@ -77,17 +109,44 @@
 			"id": "sp_test_static",
 			"patrol_group": "",
 			"position": {
-				"x": 1192.0,
-				"y": 1896.0
+				"x": 1768.0,
+				"y": 1848.0
 			},
 			"spawn_group": ""
 		},
 		{
-			"id": "",
+			"id": "sp_test_static",
 			"patrol_group": "",
 			"position": {
-				"x": 1176.0,
-				"y": 1464.0
+				"x": 1832.0,
+				"y": 1912.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_static",
+			"patrol_group": "",
+			"position": {
+				"x": 2008.0,
+				"y": 2056.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_dummy",
+			"patrol_group": "",
+			"position": {
+				"x": 1048.0,
+				"y": 1816.0
+			},
+			"spawn_group": ""
+		},
+		{
+			"id": "sp_test_dummy",
+			"patrol_group": "",
+			"position": {
+				"x": 1048.0,
+				"y": 1864.0
 			},
 			"spawn_group": ""
 		}

@@ -15,6 +15,24 @@ player_frame_config = ExtResource("5_player_frame_config")
 layout_mode = 3
 anchors_preset = 0
 
+[node name="DebugButton" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -170.0
+offset_right = -90.0
+offset_bottom = 90.0
+grow_horizontal = 0
+
+[node name="Button" type="Button" parent="DebugButton"]
+layout_mode = 0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 68.0
+offset_bottom = 68.0
+text = "👁"
+
 [node name="MenuButton" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 1

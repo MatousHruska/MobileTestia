@@ -105,42 +105,7 @@ var _level_prefixes: Dictionary = {
 func _ready() -> void:
 	_log_internal(LogLevel.INFO, "System", "DebugManager initialized", [])
 	_log_internal(LogLevel.INFO, "System", "Log level set to", [LogLevel.keys()[log_level]])
-	_log_internal(LogLevel.INFO, "System", "Debug hotkeys (Numpad): 0=level, *=verbose, -=NPC, +=settings, /=nav, .=navtest, 9=testmotion", [])
-
-
-func _input(event: InputEvent) -> void:
-	# Only process in debug builds
-	if not OS.is_debug_build():
-		return
-
-	if not event is InputEventKey or not event.pressed:
-		return
-
-	var key_event := event as InputEventKey
-
-	# ALL debug keys use NUMPAD ONLY to avoid conflicts with:
-	# - Godot editor (F1-F12)
-	# - Typing in dialogs (regular keys)
-	# - Game input bindings
-	match key_event.keycode:
-		KEY_KP_0:
-			# Cycle through log levels: INFO -> DEBUG -> TRACE -> INFO
-			_cycle_log_level()
-		KEY_KP_MULTIPLY:
-			# Toggle all verbose modes
-			_toggle_all_verbose()
-		KEY_KP_SUBTRACT:
-			# Toggle NPC movement spam specifically
-			_toggle_npc_verbose()
-		KEY_KP_ADD:
-			# Print current debug settings
-			_print_debug_settings()
-		KEY_KP_DIVIDE:
-			# Toggle pathfinding debug visualization
-			_toggle_pathfinding_debug()
-		KEY_KP_PERIOD:
-			# Test pathfinding from player position
-			_test_pathfinding()
+	_log_internal(LogLevel.INFO, "System", "Debug actions available via HUD eye icon menu", [])
 
 
 func _cycle_log_level() -> void:

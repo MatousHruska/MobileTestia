@@ -5,10 +5,12 @@ extends CanvasLayer
 ## Menu scene paths
 const CHARACTER_MENU_SCENE := "res://scenes/ui/menu/character_menu.tscn"
 const CHEST_MENU_SCENE := "res://scenes/ui/chest/chest_menu.tscn"
+const DEBUG_MENU_SCRIPT := "res://scripts/ui/debug/debug_menu.gd"
 
 ## Menu instances (created on-demand)
 var character_menu: CharacterMenu = null
 var chest_menu: ChestMenu = null
+var debug_menu = null  # DebugMenu
 
 ## Quest UI instances
 var quest_reward_popup = null  # QuestRewardPopup
@@ -123,12 +125,41 @@ func toggle_talent_debug() -> void:
 		talent_debug_overlay.toggle()
 
 
+## Debug Menu
+
+func toggle_debug_menu() -> void:
+	_ensure_debug_menu()
+	if debug_menu:
+		debug_menu.toggle()
+
+
+func is_debug_menu_open() -> bool:
+	return debug_menu != null and debug_menu.is_open
+
+
+func close_debug_menu() -> void:
+	if debug_menu:
+		debug_menu.close()
+
+
+func _ensure_debug_menu() -> void:
+	if debug_menu == null:
+		var script = load(DEBUG_MENU_SCRIPT)
+		if script:
+			debug_menu = script.new()
+			debug_menu.name = "DebugMenu"
+			add_child(debug_menu)
+			Debug.info("UI", "DebugMenu instantiated")
+
+
+
 ## Utility
 
 func is_any_menu_open() -> bool:
-	return is_character_menu_open() or is_chest_menu_open()
+	return is_character_menu_open() or is_chest_menu_open() or is_debug_menu_open()
 
 
 func close_all_menus() -> void:
 	close_character_menu()
 	close_chest_menu()
+	close_debug_menu()

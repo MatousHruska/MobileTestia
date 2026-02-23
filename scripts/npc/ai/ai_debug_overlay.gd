@@ -29,12 +29,7 @@ func _ready() -> void:
 	layer = 201  # Above quest overlay
 	_create_ui()
 	visible = false
-	Debug.info("AI", "Debug overlay initialized (press F11 to toggle)")
-
-
-func _input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and event.keycode == KEY_F11:
-		toggle()
+	Debug.info("AI", "Debug overlay initialized (toggle via debug menu)")
 
 
 func _process(delta: float) -> void:
@@ -115,7 +110,7 @@ func _create_ui() -> void:
 
 	# Header
 	var header := Label.new()
-	header.text = "=== AI DEBUG (F11) ==="
+	header.text = "=== AI DEBUG ==="
 	header.add_theme_color_override("font_color", Color.GOLD)
 	_vbox.add_child(header)
 

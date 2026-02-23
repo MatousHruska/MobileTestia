@@ -4,58 +4,49 @@ Quick reference for all debug tools and commands in MobileTestia.
 
 ---
 
-## IMPORTANT: Reserved Keys
+## Debug Menu (HUD Eye Icon)
 
-**DO NOT use these keys for debug bindings:**
-- **F1-F12**: Reserved by Godot editor (run, pause, step, etc.)
-- **Regular keyboard keys**: May conflict with typing in dialogs/chat
-- **WASD, Space, etc.**: Reserved for game input
+All debug actions are available through the **debug menu**, accessible via the **eye icon (👁)** button next to the hamburger menu (☰) in the top-right corner of the HUD.
 
-**ALL debug keys use NUMPAD ONLY** to avoid conflicts.
+The debug menu is **only visible in debug builds** and provides tappable buttons organized into sections:
 
----
+### Overlays (toggles)
+| Button | What it does |
+|--------|-------------|
+| Chunk Borders | Toggle visual overlay showing chunk boundaries and colors |
+| AI Debug | Toggle AI debug panel showing nearest 5 enemies, states, flags |
+| Quest Debug | Toggle quest debug panel showing active quests, objectives, event log |
+| Pathfinding | Toggle pathfinding grid visualization |
 
-## Console Verbosity Controls (Numpad)
+### Snapshots (print to console)
+| Button | What it does |
+|--------|-------------|
+| Chunk State | Print loaded chunks, their states, enemy counts |
+| Loot State | Print tracked loot drops and timeout settings |
+| Enemy Summary | Print alive/dead/in-combat enemy counts |
+| Chunk Perf | Print avg/max load/unload times, peak counts |
+| Game State | Full game state dump (GameState, paused, player, zone, UI) |
+| Chest Persistence | Print all tracked chest states with timestamps |
+| Debug Settings | Print current log level, verbose flags, disabled categories |
 
-These numpad keys control how much debug output is printed to the console:
+### Diagnostics
+| Button | What it does |
+|--------|-------------|
+| Zone Naming | Zone name mismatch diagnostic for save/load issues |
+| Zone Resolution | Trace zone resolution path through save/load cycle |
+| Test Pathfinding | Test pathfinding from player position |
+| Test ends_when Buff | Apply a test buff that ends when player heals to full |
 
-| Key | Action | Description |
-|-----|--------|-------------|
-| **Numpad 0** | Cycle log level | INFO ↔ DEBUG (TRACE disabled - too verbose) |
-| **Numpad \*** | Toggle all verbose | Turn all verbose modes on/off |
-| **Numpad -** | Toggle NPC verbose | NPC movement spam only |
-| **Numpad +** | Print debug settings | Show current log level and verbose flags |
-
-### Default Settings
-- **Log Level**: INFO (hides DEBUG/TRACE messages)
-- **Verbose modes**: All OFF by default (NPC, Chunks, Spawn, SaveLoad)
-
-### When to Enable Verbose Modes
-- **NPC verbose (Numpad -)**: Debugging enemy movement, AI decisions
-- **All verbose (Numpad \*)**: Full trace for chunk loading, spawn, save/load
-
----
-
-## Debug Key Bindings (Numpad)
-
-Press these numpad keys during gameplay (debug builds only):
-
-| Key | System | Action |
-|-----|--------|--------|
-| **Numpad 1** | ChunkManager | Print state snapshot (loaded chunks, states) |
-| **Numpad 2** | ChunkManager | Toggle visual overlay (chunk boundaries, colors) |
-| **Numpad 3** | LootManager | Print tracked loot drops |
-| **Numpad 4** | NPCManager | Print enemy summary (alive, dead, in combat) |
-| **Numpad 5** | ChunkManager | Print performance metrics (load times) |
-| **Numpad 6** | ChunkManager | Zone naming diagnostic (save/load debug) |
-| **Numpad 7** | ChunkManager | Zone resolution trace |
-| **Numpad 8** | GameManager | Full game state dump |
-| **Numpad 9** | BuffSystem | Test ends_when buff system |
-| **Numpad /** | Pathfinding | Toggle pathfinding debug overlay |
+### Log Settings
+| Button | What it does |
+|--------|-------------|
+| Cycle Log Level | Toggle between INFO and DEBUG log levels |
+| All Verbose | Toggle all verbose modes (NPC, chunks, spawn, saveload) |
+| NPC Verbose | Toggle NPC movement spam specifically |
 
 ---
 
-## Debug Overlay (Numpad 2)
+## Debug Overlay (Chunk Borders)
 
 Toggle visual chunk boundaries:
 
@@ -75,13 +66,12 @@ HUD shows: zone, player chunk, loaded count, enemies, locks, load time
 
 ---
 
-## Pathfinding Debug (Numpad /)
+## Pathfinding Debug
 
 Toggle the pathfinding overlay to visualize navigation grid and blocked tiles.
 
 | Key | Action |
 |-----|--------|
-| **Numpad /** | Toggle pathfinding overlay on/off |
 | **L** | Cycle navigation layer view (All → Ground → Flying → Jumping → Ghost) |
 
 ```
@@ -154,7 +144,6 @@ LocationManager.is_current_area_safe()        # Check safe zone
 
 ```gdscript
 NPCManager.print_state()            # Print all NPC info (if available)
-# Or use F4 for enemy summary
 ```
 
 ### Debug System
@@ -187,26 +176,26 @@ Debug.verbose_saveload = true               # Enable save/load tracing
 
 ### "Empty zone after loading save"
 
-1. Press **Numpad 6** - Check zone naming
+1. Open debug menu → **Zone Naming** diagnostic
 2. Look for MISMATCH in zone names
 3. Fix: Scene's `zone_id` must match LDTK level identifier
 
 ### "Chunks not loading"
 
-1. Press **Numpad 6** - Check section 6 (loaded chunks)
+1. Open debug menu → **Zone Naming** (check section 6 for loaded chunks)
 2. If 0 chunks, ChunkManager not initialized
 3. Check zone scene calls `ChunkManager.initialize_for_zone()`
 
 ### "Enemies not appearing"
 
-1. Press **Numpad 4** - Check enemy count
-2. Press **Numpad 2** - Look for spawn point markers
+1. Open debug menu → **Enemy Summary** - Check enemy count
+2. Open debug menu → Toggle **Chunk Borders** - Look for spawn point markers
 3. Check database: spawn_point_id exists
 4. Check Persistence: spawn not cleared
 
 ### "Chunk won't unload"
 
-1. Press **Numpad 2** - Look for red (combat) or orange (leash)
+1. Toggle **Chunk Borders** - Look for red (combat) or orange (leash)
 2. Combat lock: Enemy still targeting player
 3. Leash lock: Enemy returning to home position (only after being in combat)
 4. Kill enemy or wait for it to reach home
@@ -231,14 +220,14 @@ Debug.verbose_saveload = true               # Enable save/load tracing
 
 ### "Slow chunk loading"
 
-1. Press **Numpad 5** - Check avg/max load times
+1. Open debug menu → **Chunk Perf** - Check avg/max load times
 2. Target: < 50ms per chunk
 3. Reduce tilemap complexity or enemy count
 4. Check for resource loading bottlenecks
 
 ### "Save/load breaks game"
 
-1. Press **Numpad 7** - Trace resolution path
+1. Open debug menu → **Zone Resolution** - Trace resolution path
 2. Compare: Scene filename vs zone_id vs chunk files
 3. All must derive from same base name
 
@@ -283,7 +272,7 @@ Tests performed:
 
 ## Tips
 
-- **Numpad 2 is your friend** - Visual overlay shows most issues at a glance
-- **Numpad 6 for save/load issues** - Always run when chunks don't load
-- **Numpad 5 for performance** - Check before and after changes
-- **Combine keys** - Numpad 2 + Numpad 5 = see overlay while checking performance
+- **Chunk Borders overlay is your friend** - Visual overlay shows most issues at a glance
+- **Zone Naming for save/load issues** - Always run when chunks don't load
+- **Chunk Perf for performance** - Check before and after changes
+- **Combine overlays** - Chunk Borders + Chunk Perf = see overlay while checking performance

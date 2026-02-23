@@ -139,6 +139,7 @@ func _build_ui() -> void:
 	_add_action_button("Zone Resolution", _on_zone_resolution)
 	_add_action_button("Test Pathfinding", _on_test_pathfinding)
 	_add_action_button("Test ends_when Buff", _on_test_ends_when)
+	_add_action_button("Respawn All Enemies", _on_respawn_all_enemies)
 	_end_section()
 
 	# ── TALENTS section ──
@@ -465,6 +466,20 @@ func _on_test_ends_when() -> void:
 		Game.debug_test_ends_when_buff()
 
 
+func _on_respawn_all_enemies() -> void:
+	## Reset and force-spawn on all spawn points in the scene
+	if not NPCManager:
+		Debug.info("Debug", "NPCManager not available")
+		return
+	var count := 0
+	for spawn_point in NPCManager.all_spawn_points:
+		if is_instance_valid(spawn_point) and spawn_point is EnemySpawnPoint:
+			spawn_point.reset()
+			spawn_point.force_spawn()
+			count += 1
+	Debug.info("Debug", "Respawned enemies on %d spawn points" % count)
+
+
 ## ─── LOG SETTINGS ────────────────────────────────────────────────────────────
 
 func _on_cycle_log_level() -> void:
@@ -484,16 +499,36 @@ func _on_toggle_npc_verbose() -> void:
 ## ─── TALENT ACTIONS ──────────────────────────────────────────────────────────
 
 func _on_talent_quick_setup_row1() -> void:
-	## One-tap setup: learn Noble Legacy Row 1, max ranks, bind Hilt Bash to attack button
+	## One-tap setup: learn Noble Legacy Row 1 only, max ranks, bind Hilt Bash, equip iron sword
 	var tree_id := "tree_noble_legacy"
-	_ensure_enough_points_for_tree(tree_id)
-	TalentManager.debug_learn_all_in_tree(tree_id)
+	var row_talents := TalentManager.get_talents_at_row(tree_id, 1)
+
+	# Add enough points for Row 1 talents only
+	var points_needed := 0
+	for talent in row_talents:
+		points_needed += talent.max_points - TalentManager.get_invested_points(talent.id)
+	if points_needed > TalentManager.get_available_points():
+		TalentManager.debug_add_points(points_needed - TalentManager.get_available_points())
+
+	# Learn only Row 1 talents to max
+	for talent in row_talents:
+		while TalentManager.can_learn_talent(talent.id):
+			TalentManager.learn_talent(talent.id)
+
 	# Max all active skill ranks
 	for talent in TalentManager.get_skillbook_talents():
 		TalentManager.set_skill_rank(talent.id, TalentManager.MAX_SKILL_RANK)
+
 	# Bind Hilt Bash to attack button (slot 0)
 	TalentManager.bind_skill(0, "tal_noble_hilt_bash")
-	Debug.info("Debug", "Quick Setup Row 1: Noble Legacy learned, ranks maxed, Hilt Bash bound")
+
+	# Equip iron sword if not already equipped
+	var sword := DatabaseLoader.create_equipment("wep_sword_iron")
+	if sword:
+		Inventory.add_item(sword)
+		Inventory.equip_item(sword)
+
+	Debug.info("Debug", "Quick Setup Row 1: Row 1 learned, ranks maxed, Hilt Bash bound, sword equipped")
 
 
 func _on_talent_add_points() -> void:

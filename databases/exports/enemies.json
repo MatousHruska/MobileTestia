@@ -143,6 +143,24 @@
       "module_config": {"mod_conditional_cast": {"ability_id": "abi_blood_howl", "conditions": ["player_damaged_recently:10", "self_not_buffed:status_blood_frenzy"], "cooldown": 30.0, "additional_status_effects": ["status_blood_frenzy_cdr"]}, "mod_circle": {"circle_radius": 140, "circle_speed_mult": 0.8}},
       "navigation_layer": "ground",
       "description": "A desperate, hungry wolf. Circles prey before leaping."
+    },
+    {
+      "id": "ene_practice_dummy",
+      "name": "Practice Dummy",
+      "type": "Normal",
+      "base_health": 9999,
+      "base_damage": 0,
+      "armor": 0,
+      "base_shield": 0,
+      "move_speed": 0,
+      "attack_speed": 0,
+      "detection_range": 250,
+      "xp_reward": 15,
+      "loot_table_id": "loot_zombie",
+      "module_ids": "mod_idle",
+      "module_config": {},
+      "navigation_layer": "ground",
+      "description": ""
     }
   ]
 }

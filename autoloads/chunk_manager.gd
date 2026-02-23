@@ -156,6 +156,9 @@ var _roof_layers: Dictionary = {}
 ## Current interior region the player is in (0 = outside)
 var _current_interior_region: int = 0
 
+## Shared radial gradient texture for PointLight2D spawning
+var _light_gradient_texture: GradientTexture2D = null
+
 #===============================================================================
 # ENEMY TEMP STATE
 #===============================================================================
@@ -986,6 +989,15 @@ func _spawn_chunk_entities(chunk_id: String, chunk_node: Node2D, chunk_coords: V
 			if entity:
 				spawned_entities.append(entity)
 
+	# Spawn lights
+	for light_data in _zone_entities.get("lights", []):
+		var pos: Dictionary = light_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := _spawn_light(light_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
 	# Track spawned entities for cleanup
 	if not spawned_entities.is_empty():
 		_chunk_entities[chunk_id] = spawned_entities
@@ -1717,6 +1729,60 @@ func _spawn_trigger_area(data: Dictionary, parent: Node2D, chunk_origin: Vector2
 	Debug.log("ChunkManager", "Spawned trigger area: %s at %s" % [trigger_id, world_pos])
 
 	return trigger
+
+
+## Get or create the shared radial gradient texture for lights
+func _get_light_texture() -> GradientTexture2D:
+	if _light_gradient_texture != null:
+		return _light_gradient_texture
+	_light_gradient_texture = GradientTexture2D.new()
+	_light_gradient_texture.width = 256
+	_light_gradient_texture.height = 256
+	_light_gradient_texture.fill = GradientTexture2D.FILL_RADIAL
+	_light_gradient_texture.fill_from = Vector2(0.5, 0.5)
+	_light_gradient_texture.fill_to = Vector2(0.5, 0.0)
+	var gradient := Gradient.new()
+	gradient.set_color(0, Color(1, 1, 1, 1))
+	gradient.set_color(1, Color(1, 1, 1, 0))
+	_light_gradient_texture.gradient = gradient
+	return _light_gradient_texture
+
+
+## Spawn a PointLight2D from LDtk LightSource entity data
+func _spawn_light(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk_id: String) -> Node2D:
+	var pos: Dictionary = data.get("position", {})
+	var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+
+	var light := PointLight2D.new()
+	light.name = "Light_%d_%d" % [int(world_pos.x), int(world_pos.y)]
+	light.position = world_pos - chunk_origin
+
+	# Color (hex string from LDtk)
+	var color_str: String = data.get("color", "#FFAA44")
+	light.color = Color.html(color_str)
+
+	# Intensity
+	light.energy = float(data.get("intensity", 1.5))
+
+	# Height (for normal map interaction)
+	light.height = float(data.get("height", 50.0))
+
+	# Texture and scale
+	var texture := _get_light_texture()
+	light.texture = texture
+	var radius: float = float(data.get("radius", 128))
+	light.texture_scale = radius / (texture.width * 0.5)
+
+	# Metadata for chunk cleanup and light detection
+	light.set_meta("chunk_spawned", true)
+	light.set_meta("chunk_id", chunk_id)
+	light.set_meta("world_position", world_pos)
+	light.set_meta("light_radius", radius)
+
+	parent.add_child(light)
+	light.add_to_group("lights")
+	Debug.log("ChunkManager", "Spawned light at %s (color=%s, radius=%.0f)" % [world_pos, color_str, radius])
+	return light
 
 
 ## Clean up entities when a chunk unloads
@@ -2468,6 +2534,8 @@ func debug_print_zone_entities() -> void:
 	for ps in _zone_entities.get("player_spawns", []):
 		var pos: Dictionary = ps.get("position", {})
 		Debug.info("ChunkManager", "    - %s at (%d, %d)" % [ps.get("id", "default"), pos.get("x", 0), pos.get("y", 0)])
+
+	Debug.info("ChunkManager", "  Lights: %d" % _zone_entities.get("lights", []).size())
 
 
 func debug_print_spawned_entities() -> void:

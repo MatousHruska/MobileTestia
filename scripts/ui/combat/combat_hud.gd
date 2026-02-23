@@ -93,6 +93,9 @@ static func calc_skill_value(base_value: float, stat_name: String) -> float:
 	if base_value <= 0:
 		return base_value  # Don't modify zero/negative values
 	var bonus := PlayerStats.get_equipment_bonus(stat_name)
+	# Include talent stat bonuses (e.g., Noble's Reach adds hit_range:5 per point)
+	var talent_bonuses := TalentManager.get_total_stat_bonuses()
+	bonus += talent_bonuses.get(stat_name, 0.0)
 	return base_value * (1.0 + bonus / 100.0)
 
 
@@ -317,6 +320,7 @@ func _bind_talent_to_slot(slot_index: int, talent: TalentData) -> void:
 	var data := {
 		"name": talent.talent_name,
 		"icon": talent.talent_name.substr(0, 2).to_upper(),
+		"icon_name": talent.icon_name,
 		"mana_cost": talent.mana_cost,
 		"stamina_cost": talent.stamina_cost,
 		"cooldown": talent.cooldown,
@@ -345,6 +349,7 @@ func _bind_talent_to_attack_button(talent: TalentData) -> void:
 	var data := {
 		"name": talent.talent_name,
 		"icon": talent.talent_name.substr(0, 2).to_upper(),
+		"icon_name": talent.icon_name,
 		"mana_cost": talent.mana_cost,
 		"stamina_cost": talent.stamina_cost,
 		"cooldown": talent.cooldown,
@@ -1422,14 +1427,33 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 	var skill_range := get_hit_range(talent)
 	var skill_arc := get_hit_arc(talent)
 
-	# Spawn visual hitbox indicator (disabled for testing)
-	#_spawn_skill_visual(talent, damage_result)
+	# Spawn visual hitbox indicator
+	_spawn_skill_visual(talent, damage_result)
 
 	# Find enemies in range
 	var enemies := NPCManager.get_enemies_in_radius(player.global_position, skill_range)
 
 	# Get player facing direction for arc check
 	var facing_vector := _get_player_facing_vector()
+
+	# Fire on_hit procs BEFORE damage loop so conditions (e.g., target_full_hp)
+	# are checked while enemies are still at full HP and the bonus is available
+	# for consume_next_attack_bonus() inside the loop.
+	var first_target: Node2D = null
+	for enemy in enemies:
+		if skill_arc < 360.0:
+			var enemy_pos: Vector2 = enemy.global_position
+			var to_enemy: Vector2 = (enemy_pos - player.global_position).normalized()
+			var angle: float = rad_to_deg(facing_vector.angle_to(to_enemy))
+			if abs(angle) > skill_arc / 2.0:
+				continue
+		if enemy.has_method("take_damage"):
+			first_target = enemy
+			break
+
+	if first_target:
+		TalentProcSystem.on_player_hit_enemy(first_target, damage_result, talent)
+
 
 	# Track first-hit data for debug breakdown
 	var breakdown_target_name: String = ""
@@ -1470,8 +1494,16 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 			if not talent.contact_status_effect.is_empty() and "status_effects" in enemy and enemy.status_effects:
 				enemy.status_effects.apply_status_effect(talent.contact_status_effect)
 
-			# Notify proc system of hit
-			TalentProcSystem.on_player_hit_enemy(enemy, damage_result, talent)
+			# Stagger: interrupt enemy ability + small knockback
+			if talent.contact_status_effect == "status_stagger":
+				if enemy.has_method("interrupt_ability"):
+					enemy.interrupt_ability()
+				if enemy.has_method("apply_knockback") and player:
+					enemy.apply_knockback(player.global_position, 80.0, 0.15)
+
+			# Notify proc system of hit for non-first targets
+			if enemy != first_target:
+				TalentProcSystem.on_player_hit_enemy(enemy, damage_result, talent)
 
 			# Spawn hit effect on enemy
 			_spawn_hit_effect(enemy.global_position, _get_damage_type_string(talent.damage_type))

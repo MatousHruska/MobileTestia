@@ -504,7 +504,7 @@ h. Add trigger areas to trigger_areas.json
 
 ```
 a. Load the zone in-game
-b. Press Numpad 6 to verify zone naming
+b. Open debug menu → Zone Naming to verify zone naming
 c. Walk around to test chunk loading
 d. Test combat lock and leash lock
 e. Test save/load cycle
@@ -670,29 +670,17 @@ func _save_persistence() -> void:
 
 ## Debug Tools
 
-### Debug Key Bindings (Numpad)
+### Debug Menu (HUD Eye Icon)
 
-All debug keys work in debug builds only. Uses **Numpad** to avoid editor conflicts:
+All debug actions are available via the **eye icon (👁)** next to the hamburger menu on the HUD (debug builds only). See `docs/DEBUG_QUICK_REFERENCE.md` for the full list.
 
-| Key | Function | Description |
-|-----|----------|-------------|
-| **Numpad 1** | ChunkManager State | Print loaded chunks, states, storage |
-| **Numpad 2** | Debug Overlay | Toggle visual chunk boundary overlay |
-| **Numpad 3** | LootManager State | Print tracked loot drops |
-| **Numpad 4** | Enemy Summary | Print enemy counts and states |
-| **Numpad 5** | Performance Metrics | Print chunk load times, counts |
-| **Numpad 6** | Zone Naming Diagnostic | Full save/load naming analysis |
-| **Numpad 7** | Zone Resolution Trace | Step-by-step path trace |
-| **Numpad 8** | Full Game State | Comprehensive game state |
-| **Numpad 9** | Test Buff System | Debug buff ends_when system |
+### Debug Overlay (Chunk Borders)
 
-### Debug Overlay (Numpad 2)
-
-Toggle visual overlay showing chunk states:
+Toggle via debug menu → **Chunk Borders**:
 
 ```
 +---------------------------------------+
-| [Chunk Debug] Numpad 2 to toggle      |
+| [Chunk Debug]                         |
 | Zone: zone_ldtk_test                  |
 | Player Chunk: (1, 0)                  |
 | Loaded: 25 chunks                     |
@@ -710,7 +698,7 @@ Chunk colors:
 - White border = Player's chunk
 ```
 
-### Zone Naming Diagnostic (Numpad 6)
+### Zone Naming Diagnostic
 
 ```
 +================================================================+
@@ -734,11 +722,11 @@ Chunk colors:
 
 ```gdscript
 # State inspection
-ChunkManager.debug_print_state()              # Numpad 1
-ChunkManager.debug_toggle_overlay()           # Numpad 2
-ChunkManager.debug_print_perf()               # Numpad 5
-ChunkManager.debug_zone_naming_diagnostic()   # Numpad 6
-ChunkManager.debug_trace_zone_resolution()    # Numpad 7
+ChunkManager.debug_print_state()              # Debug menu → Chunk State
+ChunkManager.debug_toggle_overlay()           # Debug menu → Chunk Borders
+ChunkManager.debug_print_perf()               # Debug menu → Chunk Perf
+ChunkManager.debug_zone_naming_diagnostic()   # Debug menu → Zone Naming
+ChunkManager.debug_trace_zone_resolution()    # Debug menu → Zone Resolution
 
 # Actions
 ChunkManager.debug_teleport_to_chunk(2, 1)    # Teleport
@@ -752,20 +740,20 @@ ChunkManager.debug_reset_perf()               # Reset metrics
 
 ### Chunks Not Loading
 
-1. Press **Numpad 6** for zone naming diagnostic
+1. Debug menu → **Zone Naming** diagnostic
 2. Verify `zone_id` matches LDtk level identifier
 3. Check chunk files exist in `maps/chunk_tiles/`
 4. Verify ChunkManager is initialized
 
 ### Empty Zone After Load
 
-Zone naming mismatch. Press **Numpad 6** and check:
+Zone naming mismatch. Debug menu → **Zone Naming** and check:
 - Scene filename vs zone_id export
 - Chunk file names match expected pattern
 
 ### Enemies Not Spawning
 
-1. Press **Numpad 4** to see enemy summary
+1. Debug menu → **Enemy Summary** to see enemy counts
 2. Check spawn_point_id matches database
 3. Check Persistence - is spawn point cleared?
 4. Verify spawn point is within chunk bounds
@@ -778,7 +766,7 @@ If enemies appear ~1024px off:
 
 ### Combat Lock Not Working
 
-1. Press **Numpad 2** to see chunk states
+1. Debug menu → toggle **Chunk Borders** to see chunk states
 2. Verify enemy has behavior component
 3. Check enemy is within chunk bounds
 
@@ -796,7 +784,7 @@ LEASH state only for `BehaviorState.RETURNING`:
 
 ### Performance Issues
 
-1. Press **Numpad 5** for metrics
+1. Debug menu → **Chunk Perf** for metrics
 2. Target: < 50ms per chunk load
 3. Check loaded count (max ~25)
 4. Verify chunks are unloading
@@ -852,7 +840,7 @@ Chests:     chest_{zone}_{desc}     -> chest_forest_hidden_01
 - [ ] Set `zone_id = "zone_yourname"` (MUST MATCH!)
 - [ ] Add database entries (zones, locations, spawns, chests, lootables, signs, echoes, triggers)
 - [ ] Place Location Area2D nodes
-- [ ] Test with Numpad 6 diagnostic
+- [ ] Test with debug menu → Zone Naming diagnostic
 - [ ] Test chunk loading/unloading
 - [ ] Test save/load cycle
 - [ ] Test interactables (lootables, signs, echoes)
@@ -908,7 +896,7 @@ Ghost enemies (`navigation_layer: ghost`) have special handling:
 
 ### Debug Visualization
 
-Press **Numpad /** to toggle navigation debug overlay:
+Toggle **Pathfinding** in the debug menu (eye icon on HUD):
 - Shows blocked tiles for the currently selected layer
 - Press **L** to cycle through layers (ground → flying → jumping → ghost)
 - Green = walkable, Red = blocked for current layer
@@ -1110,7 +1098,7 @@ The InteriorManager logs region detection every second when active:
 [InteriorManager] Player at (700, 1600), detected region: 1, current: 1
 ```
 
-Press **Numpad 1** (ChunkManager state) to verify interior_region_data is loaded for chunks.
+Use debug menu → **Chunk State** to verify interior_region_data is loaded for chunks.
 
 ### Troubleshooting Interior Revelation
 

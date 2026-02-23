@@ -230,8 +230,8 @@ var attack_radius: float = 24.0
 ## Leash radius
 var leash_radius: float = 300.0
 
-## Base move speed
-var base_move_speed: float = 80.0
+## Base move speed (-1 = not yet synced from owner)
+var base_move_speed: float = -1.0
 
 ## Base damage
 var base_damage: float = 10.0
@@ -311,8 +311,8 @@ func update_from_owner() -> void:
 		attack_radius = owner.attack_radius
 	if "leash_radius" in owner:
 		leash_radius = owner.leash_radius
-	# Only sync base_move_speed once (when it's 0) to avoid feedback from speed_multiplier
-	if base_move_speed == 0.0 and "move_speed" in owner:
+	# Only sync base_move_speed once (when uninitialized) to avoid feedback from speed_multiplier
+	if base_move_speed < 0.0 and "move_speed" in owner:
 		base_move_speed = owner.move_speed
 	if "base_damage" in owner:
 		base_damage = owner.base_damage

@@ -88,6 +88,7 @@ func _ready() -> void:
 	_update_facing(Facing.DOWN)
 	_setup_level_up_effect()
 	_setup_status_effect_manager()
+	PlayerStats.connect_bonus_signals()
 	_setup_animator()
 	_setup_character_visuals()
 	_setup_ability_visual_player()

@@ -31,9 +31,22 @@ var _consecutive_hits: int = 0
 var _next_attack_bonus_percent: float = 0.0
 var _next_attack_bonus_timer: float = 0.0
 
+## Closing the Gap - continuous distance-based damage bonus
+var _closing_gap_bonus: float = 0.0
+var _closing_gap_cap: float = 0.0
+var _closing_gap_nearest_name: String = ""
+const CLOSING_GAP_REFERENCE_DISTANCE: float = 120.0  # pixels to reach max
+const CLOSING_GAP_DECAY_TIME: float = 2.5  # seconds to fully decay
+const CLOSING_GAP_TALENT_ID: String = "tal_noble_closing_gap"
+const CLOSING_GAP_BONUS_PER_POINT: float = 7.0
+
 ## Conditional crit bonus (from "always" procs like Exposed Throat)
 ## This is checked by DamageCalculator before rolling crit
 var bonus_crit_chance: float = 0.0
+
+## Conditional armor % bonus (from "always" procs like Iron Posture)
+## This is checked by DamageCalculator when calculating armor reduction
+var bonus_armor_percent: float = 0.0
 
 ## Parry system state
 var _parry_active: bool = false
@@ -77,7 +90,15 @@ func _connect_signals() -> void:
 	# Player dodge - connect to player controller when available
 	_try_connect_player_signals()
 
+	# Recalculate always-procs when talents change (needed while game is paused in menus)
+	if TalentManager:
+		TalentManager.talent_learned.connect(_on_talent_changed)
+
 	Debug.info("Procs", "Combat signals connected")
+
+
+func _on_talent_changed(_talent_id: String, _new_points: int) -> void:
+	_update_always_procs()
 
 
 func _try_connect_player_signals() -> void:
@@ -131,6 +152,9 @@ func _process(delta: float) -> void:
 	# Recalculate "always" procs (conditional crit, conditional armor, etc.)
 	_update_always_procs()
 
+	# Accumulate/decay Closing the Gap bonus based on movement toward enemies
+	_update_closing_gap(delta)
+
 
 #===============================================================================
 # EVENT HANDLERS
@@ -183,6 +207,10 @@ func _process_procs(trigger: String, target: Node2D) -> void:
 	for talent_id in TalentManager.invested_talents:
 		var points: int = TalentManager.invested_talents[talent_id]
 		if points <= 0:
+			continue
+
+		# Closing the Gap is handled continuously in _update_closing_gap()
+		if talent_id == CLOSING_GAP_TALENT_ID:
 			continue
 
 		var talent := TalentManager.get_talent(talent_id)
@@ -310,6 +338,9 @@ func _execute_single_effect(effect: String, points: int, target: Node2D, talent_
 				for enemy in enemies:
 					if enemy != target and is_instance_valid(enemy) and "status_effects" in enemy and enemy.status_effects:
 						enemy.status_effects.apply_status_effect(status_id)
+						# Stagger AOE: interrupt enemy abilities (no knockback for AOE)
+						if status_id == "status_stagger" and enemy.has_method("interrupt_ability"):
+							enemy.interrupt_ability()
 				Debug.log("Procs", "%s -> AOE %s (radius %s)" % [talent_id, status_id, radius])
 
 		"restore_stamina":
@@ -370,6 +401,7 @@ func _execute_single_effect(effect: String, points: int, target: Node2D, talent_
 func _update_always_procs() -> void:
 	## Recalculate bonuses from "always" trigger talents
 	var new_crit_bonus: float = 0.0
+	var new_armor_pct: float = 0.0
 
 	for talent_id in TalentManager.invested_talents:
 		var points: int = TalentManager.invested_talents[talent_id]
@@ -383,18 +415,64 @@ func _update_always_procs() -> void:
 			continue
 
 		# "always" procs check condition against current target or state
-		# For conditional_crit, we check condition and accumulate bonus
 		var effects := talent.proc_effect.split(";")
 		for effect in effects:
 			effect = effect.strip_edges()
 			var parts := effect.split(":")
-			if parts[0] == "conditional_crit":
-				# Check condition against nearest enemy (combat target)
-				var nearest := _get_nearest_enemy()
-				if _check_condition(talent.proc_condition, nearest):
-					new_crit_bonus += float(parts[1]) * points
+			match parts[0]:
+				"conditional_crit":
+					var nearest := _get_nearest_enemy()
+					if _check_condition(talent.proc_condition, nearest):
+						new_crit_bonus += float(parts[1]) * points
+				"conditional_armor_pct":
+					if _check_condition(talent.proc_condition, null):
+						new_armor_pct += float(parts[1]) * points
 
 	bonus_crit_chance = new_crit_bonus
+
+	# Trigger stat recalculation when conditional armor % changes
+	if new_armor_pct != bonus_armor_percent:
+		bonus_armor_percent = new_armor_pct
+		PlayerStats.recalculate_stats()
+
+
+
+#===============================================================================
+# CLOSING THE GAP - CONTINUOUS DISTANCE-BASED BONUS
+#===============================================================================
+
+func _update_closing_gap(delta: float) -> void:
+	## Accumulate damage bonus while player moves toward nearest enemy, decay otherwise
+	var points := TalentManager.get_invested_points(CLOSING_GAP_TALENT_ID)
+	if points <= 0:
+		_closing_gap_bonus = 0.0
+		_closing_gap_cap = 0.0
+		_closing_gap_nearest_name = ""
+		return
+
+	_closing_gap_cap = CLOSING_GAP_BONUS_PER_POINT * points
+
+	if not Game.player:
+		return
+
+	var nearest := _get_nearest_enemy()
+	if nearest and is_instance_valid(nearest):
+		_closing_gap_nearest_name = nearest.name
+		var direction_to_enemy := (nearest.global_position - Game.player.global_position).normalized()
+		var approach_speed: float = Game.player.velocity.dot(direction_to_enemy)
+
+		if approach_speed > 0:
+			# Moving toward enemy — accumulate bonus proportional to approach speed
+			_closing_gap_bonus += approach_speed * delta * (_closing_gap_cap / CLOSING_GAP_REFERENCE_DISTANCE)
+		else:
+			# Stationary or moving away — gradual decay
+			_closing_gap_bonus -= (_closing_gap_cap / CLOSING_GAP_DECAY_TIME) * delta
+	else:
+		_closing_gap_nearest_name = ""
+		# No enemy nearby — decay
+		_closing_gap_bonus -= (_closing_gap_cap / CLOSING_GAP_DECAY_TIME) * delta
+
+	_closing_gap_bonus = clampf(_closing_gap_bonus, 0.0, _closing_gap_cap)
 
 
 #===============================================================================
@@ -415,16 +493,24 @@ func _apply_temporary_buff(stat: String, value: float, duration: float, talent_i
 #===============================================================================
 
 ## Get and consume the next-attack damage bonus percentage
+## Combines proc bonuses (First Blood, etc.) with Closing the Gap bonus
 func consume_next_attack_bonus() -> float:
-	var bonus := _next_attack_bonus_percent
+	var bonus := _next_attack_bonus_percent + _closing_gap_bonus
 	_next_attack_bonus_percent = 0.0
 	_next_attack_bonus_timer = 0.0
+	_closing_gap_bonus = 0.0
 	return bonus
 
 
 ## Get bonus crit chance from passive talents (does NOT consume)
 func get_bonus_crit_chance() -> float:
 	return bonus_crit_chance
+
+
+## Get bonus armor percent from passive talents (does NOT consume)
+func get_bonus_armor_percent() -> float:
+	return bonus_armor_percent
+
 
 
 ## Report damage breakdown for debug overlay
@@ -629,6 +715,10 @@ func load_save_data(_data: Dictionary) -> void:
 	_last_hit_target = null
 	_next_attack_bonus_percent = 0.0
 	_next_attack_bonus_timer = 0.0
+	_closing_gap_bonus = 0.0
+	_closing_gap_cap = 0.0
+	_closing_gap_nearest_name = ""
+	bonus_armor_percent = 0.0
 	_parry_active = false
 	_parry_window_timer = 0.0
 	_parry_talent = null

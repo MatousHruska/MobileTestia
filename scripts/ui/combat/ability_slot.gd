@@ -34,6 +34,7 @@ enum SlotType { ABILITY, ATTACK, DODGE, QUICK_SLOT }
 var bound_ability_id: String = ""
 var ability_data: Dictionary = {}
 var icon_text: String = ""
+var icon_texture: Texture2D = null
 
 ## State
 var is_pressed_state: bool = false
@@ -82,29 +83,29 @@ func _draw() -> void:
 	var radius := button_radius * current_scale
 	var color := _get_current_color()
 
-	# Draw button circle
+	# Draw button circle (background)
 	draw_circle(center, radius, color)
 
-	# Draw border
-	draw_arc(center, radius, 0, TAU, 32, border_color, border_width)
+	# Always draw icon/text
+	_draw_icon(center, radius)
 
-	# Draw cooldown overlay
+	# Draw cooldown overlay on top of icon
 	if is_on_cooldown and cooldown_duration > 0:
 		var progress := cooldown_remaining / cooldown_duration
-		# Draw from top (-PI/2) clockwise
+		# Sweep arc from top (-PI/2) clockwise
 		var sweep_angle := progress * TAU
 		draw_arc(center, radius * 0.75, -PI/2, -PI/2 + sweep_angle, 24, cooldown_color, radius * 0.4)
 
-		# Draw cooldown text
+		# Cooldown text
 		var cd_text := "%.1f" % cooldown_remaining if cooldown_remaining < 10 else "%d" % int(cooldown_remaining)
 		var font := ThemeDB.fallback_font
 		var font_size := int(radius * 0.5)
 		var text_size := font.get_string_size(cd_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
 		var text_pos := center - text_size / 2 + Vector2(0, text_size.y * 0.35)
 		draw_string(font, text_pos, cd_text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, Color.WHITE)
-	else:
-		# Draw icon/text
-		_draw_icon(center, radius)
+
+	# Draw border on top (visually masks square icon corners beyond the circle)
+	draw_arc(center, radius, 0, TAU, 32, border_color, border_width)
 
 	# Draw mana cost indicator (small text at bottom)
 	if slot_type == SlotType.ABILITY and not is_empty and ability_data.has("mana_cost"):
@@ -114,6 +115,28 @@ func _draw() -> void:
 
 
 func _draw_icon(center: Vector2, radius: float) -> void:
+	# Draw texture icon clipped to circle using polygon with UV mapping
+	if icon_texture:
+		var modulate := Color.WHITE
+		if not has_enough_resource:
+			modulate = Color(0.7, 0.7, 0.7)
+		if not has_valid_weapon:
+			modulate = Color(0.5, 0.5, 0.5)
+
+		var segments := 32
+		var points := PackedVector2Array()
+		var uvs := PackedVector2Array()
+		var colors := PackedColorArray()
+		for i in range(segments):
+			var angle := float(i) * TAU / float(segments)
+			points.append(center + Vector2(cos(angle), sin(angle)) * radius)
+			# Map circle edge to UV space: center=(0.5,0.5), edge at radius=1.0
+			uvs.append((Vector2(cos(angle), sin(angle)) + Vector2.ONE) / 2.0)
+			colors.append(modulate)
+		draw_polygon(points, colors, uvs, icon_texture)
+		return
+
+	# Fall back to text
 	var display_text := icon_text if icon_text != "" else _get_default_icon()
 	var font := ThemeDB.fallback_font
 	var font_size := int(radius * 0.6)
@@ -281,6 +304,11 @@ func bind_ability(ability_id: String, data: Dictionary = {}) -> void:
 	bound_ability_id = ability_id
 	ability_data = data
 
+	# Try to load icon texture from icon_name
+	icon_texture = null
+	if data.has("icon_name"):
+		icon_texture = TalentIconLoader.load_icon(data.icon_name)
+
 	if data.has("icon"):
 		icon_text = data.icon
 	elif data.has("name"):
@@ -300,6 +328,7 @@ func clear_ability() -> void:
 	bound_ability_id = ""
 	ability_data = {}
 	icon_text = ""
+	icon_texture = null
 	is_on_cooldown = false
 	cooldown_remaining = 0.0
 	_update_empty_state()

@@ -185,7 +185,7 @@ Public Sub ValidateAbilities()
             visualType = LCase(Trim(ws.Cells(row, 18).Value))
             If Len(visualType) > 0 Then
                 Dim validVisualTypes() As String
-                validVisualTypes = Split("melee_single,melee_combo_2,melee_combo_3,dash_attack,ranged_aim,ranged_attack,spell_cast,spell_instant,throw,self_buff,howl", ",")
+                validVisualTypes = Split("melee_single,melee_combo_2,melee_combo_3,dash_attack,ranged_aim,ranged_attack,spell_cast,spell_instant,throw,self_buff,howl,hilt_bash", ",")
                 If Not ValidateDropdown(visualType, validVisualTypes) Then
                     LogValidationError errors, errorCount, row, "R", "Invalid visual_type: " & visualType
                 End If

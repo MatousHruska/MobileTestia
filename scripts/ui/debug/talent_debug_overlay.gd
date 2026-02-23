@@ -293,12 +293,31 @@ func _update_next_attack_bonus() -> void:
 		_next_attack_label.text = "Bonus: 0%"
 		return
 
-	var bonus: float = TalentProcSystem._next_attack_bonus_percent
-	var timer: float = TalentProcSystem._next_attack_bonus_timer
+	var lines: Array[String] = []
 
-	if bonus > 0 and timer > 0:
-		_next_attack_label.text = "Bonus: +%.0f%% (timer: %.1fs)" % [bonus, timer]
-		_next_attack_label.add_theme_color_override("font_color", Color.GREEN)
-	else:
+	# Proc bonus line (First Blood, etc.) — only show when active
+	var proc_bonus: float = TalentProcSystem._next_attack_bonus_percent
+	var proc_timer: float = TalentProcSystem._next_attack_bonus_timer
+	if proc_bonus > 0 and proc_timer > 0:
+		lines.append("Proc: +%.0f%% (%.1fs)" % [proc_bonus, proc_timer])
+
+	# Closing the Gap line — show whenever talent is invested
+	var gap_cap: float = TalentProcSystem._closing_gap_cap
+	if gap_cap > 0:
+		var gap_bonus: float = TalentProcSystem._closing_gap_bonus
+		var gap_pct: float = (gap_bonus / gap_cap * 100.0) if gap_cap > 0 else 0.0
+		var gap_name: String = TalentProcSystem._closing_gap_nearest_name
+		var target_str := gap_name if not gap_name.is_empty() else "(no enemy)"
+		lines.append("Gap: +%.1f%%/%.0f%% (%.0f%%) -> %s" % [gap_bonus, gap_cap, gap_pct, target_str])
+
+	# Total line — only show when combined bonus > 0
+	var total := proc_bonus + TalentProcSystem._closing_gap_bonus
+	if total > 0:
+		lines.append("TOTAL: +%.1f%%" % total)
+
+	if lines.is_empty():
 		_next_attack_label.text = "Bonus: 0%"
 		_next_attack_label.remove_theme_color_override("font_color")
+	else:
+		_next_attack_label.text = "\n".join(lines)
+		_next_attack_label.add_theme_color_override("font_color", Color.GREEN)

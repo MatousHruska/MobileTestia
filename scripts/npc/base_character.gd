@@ -288,7 +288,7 @@ func _setup_name_label() -> void:
 func _process_movement(delta: float) -> void:
 	# Debug: Log movement state every 60 frames
 	if Engine.get_process_frames() % 60 == 0 and move_direction != Vector2.ZERO:
-		Debug.log("NPC", "%s move: dir=(%.2f,%.2f) vel=%.1f locked=%s spd=%.0f" % [
+		Debug.trace("NPC", "%s move: dir=(%.2f,%.2f) vel=%.1f locked=%s spd=%.0f" % [
 			name,
 			move_direction.x, move_direction.y,
 			velocity.length(),
@@ -321,12 +321,12 @@ func set_move_direction(direction: Vector2) -> void:
 	move_direction = direction.limit_length(1.0)
 	# Debug: Log when direction changes significantly
 	if old_dir.length() < 0.1 and move_direction.length() > 0.1:
-		Debug.log("NPC", "%s set_move_direction" % name, "%.2f,%.2f" % [move_direction.x, move_direction.y])
+		Debug.trace("NPC", "%s set_move_direction" % name, "%.2f,%.2f" % [move_direction.x, move_direction.y])
 
 
 func stop_movement() -> void:
 	if move_direction != Vector2.ZERO:
-		Debug.log("NPC", "%s stop_movement called" % name)
+		Debug.trace("NPC", "%s stop_movement called" % name)
 	move_direction = Vector2.ZERO
 
 

@@ -10,7 +10,19 @@
       "Bash(grep:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git checkout:*)",
+      "Bash(git pull:*)",
+      "WebSearch",
+      "WebFetch(domain:docs.pixelover.io)",
+      "WebFetch(domain:pixelover.io)",
+      "WebFetch(domain:gamefromscratch.com)",
+      "Bash(cd \"C:/Users/mathr/Documents/MobileTesia/mobile-tesia/MobileTestia\" && git worktree add .claude/worktrees/pixel-art-converter -b claude/pixel-art-converter 2>&1)",
+      "Bash(cd:*)",
+      "WebFetch(domain:docs.godotengine.org)",
+      "Bash(wc:*)",
+      "Bash(find \"/c/Users/mathr/Documents/MobileTesia/mobile-tesia/MobileTestia/docs\" -type f -name \"*.md\" | xargs ls -la 2>/dev/null)",
+      "WebFetch(domain:ldtk.io)"
     ]
   }
 }

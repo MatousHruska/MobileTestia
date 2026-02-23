@@ -151,8 +151,8 @@ var stamina_regen: float = 10.0  # Per second (base)
 ## Equipment bonuses (set by inventory system)
 var _equipment_bonuses: Dictionary = {}
 
-## Buff/debuff modifiers
-var _buff_modifiers: Dictionary = {}
+## Whether status effect signals are connected (to avoid duplicate connections)
+var _status_signals_connected: bool = false
 
 ## Damage tracking (for AI conditions like "player_damaged_recently")
 var last_damage_time: float = -1000.0  # Time.get_ticks_msec()/1000 when last damaged
@@ -179,6 +179,10 @@ func _ready() -> void:
 	current_life = max_life
 	current_mana = max_mana
 	current_stamina = max_stamina
+
+	# Connect talent signal (player status effect signals connected later via connect_bonus_signals)
+	if TalentManager:
+		TalentManager.talent_learned.connect(_on_bonus_source_changed.unbind(2))
 
 
 func _load_base_values_from_database() -> void:
@@ -417,6 +421,48 @@ func get_equipment_bonus(stat: String) -> float:
 	return _equipment_bonuses.get(stat, 0.0)
 
 
+## Get talent stat bonus for a given stat (from passive talent stat_bonuses fields)
+func _get_talent_bonus(stat: String) -> float:
+	if not TalentManager:
+		return 0.0
+	var bonuses := TalentManager.get_total_stat_bonuses()
+	return bonuses.get(stat, 0.0)
+
+
+## Get status effect modifier for a given stat (from active buffs/debuffs on player)
+func _get_status_effect_modifier(stat: String) -> float:
+	if not Game.player or not is_instance_valid(Game.player):
+		return 0.0
+	if not Game.player.has_node("StatusEffectManager"):
+		return 0.0
+	return Game.player.status_effect_manager.get_stat_modifier(stat)
+
+
+## Public method to trigger stat recalculation from external sources
+func recalculate_stats() -> void:
+	_recalculate_derived()
+
+
+## Connect to player status effect signals so stats update when buffs/debuffs change
+## Called by PlayerController after StatusEffectManager is set up
+func connect_bonus_signals() -> void:
+	if Game.player and is_instance_valid(Game.player) and Game.player.has_node("StatusEffectManager"):
+		var sem: StatusEffectManager = Game.player.status_effect_manager
+		if not _status_signals_connected:
+			sem.effect_applied.connect(_on_status_effect_changed.unbind(4))
+			sem.effect_removed.connect(_on_status_effect_changed.unbind(1))
+			_status_signals_connected = true
+			_recalculate_derived()
+
+
+func _on_bonus_source_changed() -> void:
+	_recalculate_derived()
+
+
+func _on_status_effect_changed() -> void:
+	_recalculate_derived()
+
+
 ## Derived stat calculation
 func _recalculate_derived() -> void:
 	var old_max_life := max_life
@@ -441,22 +487,25 @@ func _recalculate_derived() -> void:
 	# crit_damage = crit_damage_base + (luck × crit_damage_per_luck) + equipment
 	critical_damage = _crit_damage_base + (total_luck * _crit_damage_per_luck) + get_equipment_bonus("crit_damage")
 
-	# Offensive stats (from equipment and buffs only - not derived from primary stats)
-	attack_power = get_equipment_bonus("attack_power")
-	spell_power = get_equipment_bonus("spell_power")
-	attack_speed = get_equipment_bonus("attack_speed")
-	critical_chance = _crit_chance_base + get_equipment_bonus("crit_chance")
+	# Offensive stats (equipment + talents + status effects)
+	attack_power = get_equipment_bonus("attack_power") + _get_talent_bonus("attack_power") + _get_status_effect_modifier("attack_power")
+	spell_power = get_equipment_bonus("spell_power") + _get_talent_bonus("spell_power") + _get_status_effect_modifier("spell_power")
+	attack_speed = get_equipment_bonus("attack_speed") + _get_talent_bonus("attack_speed") + _get_status_effect_modifier("attack_speed")
+	critical_chance = _crit_chance_base + get_equipment_bonus("crit_chance") + _get_talent_bonus("crit_chance") + _get_status_effect_modifier("crit_chance")
 
-	# Defensive stats
-	armor = get_equipment_bonus("armor")
-	magic_resistance = get_equipment_bonus("magic_resistance")
-	dodge_chance = get_equipment_bonus("dodge_chance")
+	# Defensive stats (equipment + talents + status effects)
+	armor = get_equipment_bonus("armor") + _get_talent_bonus("armor") + _get_status_effect_modifier("armor")
+	# Apply conditional armor % multiplier (e.g., Iron Posture) after all flat sources
+	if TalentProcSystem:
+		armor *= (1.0 + TalentProcSystem.get_bonus_armor_percent() / 100.0)
+	magic_resistance = get_equipment_bonus("magic_resistance") + _get_talent_bonus("magic_resistance") + _get_status_effect_modifier("magic_resistance")
+	dodge_chance = get_equipment_bonus("dodge_chance") + _get_talent_bonus("dodge_chance") + _get_status_effect_modifier("dodge_chance")
 
-	# Utility stats using database regeneration bases
-	movement_speed = get_equipment_bonus("movement_speed")
-	life_regen = _base_life_regen + get_equipment_bonus("life_regen")
-	mana_regen = _base_mana_regen + get_equipment_bonus("mana_regen")
-	stamina_regen = _base_stamina_regen + get_equipment_bonus("stamina_regen")
+	# Utility stats (equipment + talents + status effects + base regen)
+	movement_speed = get_equipment_bonus("movement_speed") + _get_talent_bonus("movement_speed") + _get_status_effect_modifier("movement_speed")
+	life_regen = _base_life_regen + get_equipment_bonus("life_regen") + _get_talent_bonus("life_regen") + _get_status_effect_modifier("life_regen")
+	mana_regen = _base_mana_regen + get_equipment_bonus("mana_regen") + _get_talent_bonus("mana_regen") + _get_status_effect_modifier("mana_regen")
+	stamina_regen = _base_stamina_regen + get_equipment_bonus("stamina_regen") + _get_talent_bonus("stamina_regen") + _get_status_effect_modifier("stamina_regen")
 
 	# Adjust current values if max changed and emit resource signals
 	if max_life != old_max_life:

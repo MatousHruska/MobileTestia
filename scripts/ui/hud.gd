@@ -18,6 +18,8 @@ signal menu_button_pressed
 @onready var combat_hud: CombatHUD = $Controls/CombatHUD
 @onready var player_frame: Control = $PlayerFrame
 @onready var menu_button: Button = $MenuButton/Button
+@onready var debug_button_container: Control = $DebugButton
+@onready var debug_button: Button = $DebugButton/Button
 
 ## Joystick base sizes (percentage-based) - ~170% larger than original
 const JOYSTICK_AREA_WIDTH_PCT := 0.40    ## Was 0.336
@@ -382,6 +384,13 @@ func _setup_controls() -> void:
 	if menu_button:
 		menu_button.pressed.connect(_on_menu_pressed)
 
+	# Debug button - only visible in debug builds
+	if debug_button_container:
+		if OS.is_debug_build():
+			debug_button.pressed.connect(_on_debug_pressed)
+		else:
+			debug_button_container.visible = false
+
 
 func _on_interact_pressed() -> void:
 	if nearby_npc == null:
@@ -393,6 +402,11 @@ func _on_interact_pressed() -> void:
 		chest.interact_with_ui_manager()
 	elif nearby_npc.has_method("interact"):
 		nearby_npc.interact()
+
+
+func _on_debug_pressed() -> void:
+	Debug.log("UI", "Debug button pressed")
+	UIManager.toggle_debug_menu()
 
 
 func _on_menu_pressed() -> void:

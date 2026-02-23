@@ -282,7 +282,7 @@ Public Sub ValidateTalents()
         visualType = LCase(Trim(ws.Cells(i, COL_TAL_VISUAL_TYPE).value))
         If Len(visualType) > 0 Then
             Dim validVisualTypes() As String
-            validVisualTypes = Split("melee_single,melee_combo_2,melee_combo_3,dash_attack,ranged_aim,ranged_attack,spell_cast,spell_instant,throw,self_buff,howl,parry_stance,toggle_stance", ",")
+            validVisualTypes = Split("melee_single,melee_combo_2,melee_combo_3,dash_attack,ranged_aim,ranged_attack,spell_cast,spell_instant,throw,self_buff,howl,parry_stance,toggle_stance,hilt_bash", ",")
             If Not ValidateDropdown(visualType, validVisualTypes) Then
                 LogValidationError errors, errorCount, i, "visual_type", _
                     "Invalid visual_type: " & visualType
@@ -310,6 +310,16 @@ Public Sub ValidateTalents()
             If Len(reqWeaponCat) > 0 And Not ValidateDropdown(reqWeaponCat, validRequiredWeaponCategories) Then
                 LogValidationError errors, errorCount, i, "Required Weapon Category", _
                     "Invalid category. Valid: melee, melee_1h, melee_2h, ranged, magic"
+            End If
+        End If
+
+        ' Validate icon_name format (should use tal_ prefix or be empty for default)
+        Dim iconName As String
+        iconName = Trim(ws.Cells(i, COL_TAL_ICON_NAME).value)
+        If Len(iconName) > 0 Then
+            If Not ValidateId(iconName, "tal_") Then
+                LogValidationError errors, errorCount, i, "Icon Name", _
+                    "Invalid icon_name format. Use: tal_tree_name (e.g., tal_noble_hilt_bash) or leave empty for default"
             End If
         End If
 
@@ -496,6 +506,7 @@ Public Sub SetupTalentsSheet()
     SafeAddComment ws.Cells(1, 22), "For magic: additional damage per rank (1-20)"
     SafeAddComment ws.Cells(1, 27), "For passive: stat:value_per_point pairs (e.g., strength:2;armor:5)"
     SafeAddComment ws.Cells(1, 29), "Pipe-separated descriptions per rank"
+    SafeAddComment ws.Cells(1, 30), "Icon filename (without .png). Must match tal_ prefix. Loads from assets/icons/{icon_name}.png. Empty = uses talent ID."
     SafeAddComment ws.Cells(1, 31), "Required weapon: melee (any), melee_1h, melee_2h, ranged, magic"
     SafeAddComment ws.Cells(1, 32), "Projectiles: min seconds to charge for full damage (e.g., 0.5)"
     SafeAddComment ws.Cells(1, 33), "Projectiles: damage % for quick shot below min_charge_time (e.g., 30)"
