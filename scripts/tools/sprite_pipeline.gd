@@ -91,6 +91,8 @@ var _step_containers: Array[VBoxContainer] = []  # one per step
 var current_model_path: String = ""
 var current_model_instance: Node = null
 var current_anim_player: AnimationPlayer = null
+var _source_anim_fps := 0
+var _source_anim_frames := 0
 var available_models: Array[String] = []
 var camera_target: Vector3 = Vector3.ZERO
 
@@ -1703,6 +1705,8 @@ func _clear_model() -> void:
 	current_anim_player = null
 	anim_dropdown.clear()
 	anim_info_label.text = ""
+	_source_anim_fps = 0
+	_source_anim_frames = 0
 
 
 func _find_animation_player(node: Node) -> AnimationPlayer:
@@ -1740,18 +1744,23 @@ func _on_animation_selected(index: int) -> void:
 	current_anim_player.seek(0.0, true)
 	next_button.disabled = false
 
-	# Show source animation length info
+	# Show source animation length info and auto-set defaults
 	var anim := current_anim_player.get_animation(anim_name)
 	if anim != null:
 		var length_sec := anim.length
 		var step := anim.step
 		if step > 0.0:
-			var source_frames := int(round(length_sec / step))
-			var fps := int(round(1.0 / step))
-			anim_info_label.text = "%d frames  ·  %.2fs  ·  %d fps" % [source_frames, length_sec, fps]
+			_source_anim_frames = int(round(length_sec / step))
+			_source_anim_fps = int(round(1.0 / step))
+			anim_info_label.text = "%d frames  ·  %.2fs  ·  %d fps" % [_source_anim_frames, length_sec, _source_anim_fps]
+			frame_count_spin.value = clampi(_source_anim_frames, int(frame_count_spin.min_value), int(frame_count_spin.max_value))
 		else:
+			_source_anim_frames = 0
+			_source_anim_fps = 0
 			anim_info_label.text = "%.2fs" % length_sec
 	else:
+		_source_anim_frames = 0
+		_source_anim_fps = 0
 		anim_info_label.text = ""
 
 
@@ -2616,6 +2625,13 @@ func _scan_export_folders() -> void:
 			controls_hbox.add_child(fps_spin)
 			group["fps_spin"] = fps_spin
 
+			if _source_anim_fps > 0:
+				var orig_label := Label.new()
+				orig_label.text = "(original: %d)" % _source_anim_fps
+				orig_label.add_theme_font_size_override("font_size", FONT_HINT)
+				orig_label.add_theme_color_override("font_color", C_TEXT_DIM)
+				controls_hbox.add_child(orig_label)
+
 			var loop_toggle := CheckButton.new()
 			loop_toggle.text = "Loop"
 			loop_toggle.button_pressed = group["loop"]
@@ -2654,7 +2670,8 @@ func _try_add_export_folder(folder_name: String) -> void:
 	# Determine animation config from known mappings or auto-derive
 	var config: Dictionary = KNOWN_ANIM_CONFIG.get(folder_name, {})
 	var prefix: String = config.get("prefix", folder_name.to_lower())
-	var fps: int = config.get("fps", DEFAULT_APPLY_FPS)
+	var default_fps := _source_anim_fps if _source_anim_fps > 0 else DEFAULT_APPLY_FPS
+	var fps: int = config.get("fps", default_fps)
 	var loop: bool = config.get("loop", DEFAULT_APPLY_LOOP)
 
 	# Build sheets mapping: {anim_name -> filename}
