@@ -122,6 +122,8 @@ var _frame_editor_deleted_label: Label = null
 var _frame_editor_delete_btn: Button = null
 var _frame_editor_deleted_count := 0
 var _frame_editor_nudge_all_toggle: CheckButton = null
+var _frame_editor_onion_toggle: CheckButton = null
+var _frame_editor_onion_sprite: Sprite2D = null
 
 ## Step 4 (Light Preview) state
 var _light_preview_viewport: SubViewport = null
@@ -809,7 +811,9 @@ func _build_step_frame_editor(parent: VBoxContainer) -> void:
 	prev_btn.text = "\u25c0"
 	prev_btn.custom_minimum_size.x = 32
 	prev_btn.pressed.connect(func() -> void:
-		_frame_editor_frame = max(0, _frame_editor_frame - 1)
+		_frame_editor_frame = (_frame_editor_frame - 1) % _frame_editor_frame_count
+		if _frame_editor_frame < 0:
+			_frame_editor_frame += _frame_editor_frame_count
 		_update_frame_editor_frame()
 	)
 	frame_hbox.add_child(prev_btn)
@@ -824,7 +828,7 @@ func _build_step_frame_editor(parent: VBoxContainer) -> void:
 	next_frame_btn.text = "\u25b6"
 	next_frame_btn.custom_minimum_size.x = 32
 	next_frame_btn.pressed.connect(func() -> void:
-		_frame_editor_frame = min(_frame_editor_frame_count - 1, _frame_editor_frame + 1)
+		_frame_editor_frame = (_frame_editor_frame + 1) % _frame_editor_frame_count
 		_update_frame_editor_frame()
 	)
 	frame_hbox.add_child(next_frame_btn)
@@ -836,6 +840,14 @@ func _build_step_frame_editor(parent: VBoxContainer) -> void:
 	_frame_editor_frame_label.add_theme_font_size_override("font_size", FONT_LABEL)
 	_frame_editor_frame_label.add_theme_color_override("font_color", C_TEXT)
 	content.add_child(_frame_editor_frame_label)
+
+	# Onion skin toggle
+	_frame_editor_onion_toggle = CheckButton.new()
+	_frame_editor_onion_toggle.text = "Onion Skin (show previous frame)"
+	_frame_editor_onion_toggle.toggled.connect(func(_on: bool) -> void:
+		_update_frame_editor_frame()
+	)
+	content.add_child(_frame_editor_onion_toggle)
 
 	# Nudge Frame section — shift frame content by 1 raw pixel
 	var nudge_sec := _make_section("Nudge Frame")
@@ -962,6 +974,20 @@ func _setup_frame_editor() -> void:
 	atlas_tex.atlas = color_tex
 	atlas_tex.region = Rect2(0, 0, frame_size, frame_size)
 
+	# Onion skin sprite (previous frame, semi-transparent) — added first so it draws behind
+	var onion_atlas := AtlasTexture.new()
+	onion_atlas.atlas = color_tex
+	onion_atlas.region = Rect2(0, 0, frame_size, frame_size)
+	_frame_editor_onion_sprite = Sprite2D.new()
+	_frame_editor_onion_sprite.texture = onion_atlas
+	_frame_editor_onion_sprite.position = Vector2(200, 200)
+	_frame_editor_onion_sprite.scale = Vector2(3, 3)
+	_frame_editor_onion_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_frame_editor_onion_sprite.self_modulate = Color(1, 0.4, 0.4, 0.35)
+	_frame_editor_onion_sprite.visible = false
+	_frame_editor_viewport.add_child(_frame_editor_onion_sprite)
+
+	# Current frame sprite
 	_frame_editor_sprite = Sprite2D.new()
 	_frame_editor_sprite.texture = atlas_tex
 	_frame_editor_sprite.position = Vector2(200, 200)
@@ -979,10 +1005,19 @@ func _setup_frame_editor() -> void:
 
 
 func _update_frame_editor_frame() -> void:
+	var frame_size := int(output_height_spin.value)
 	if _frame_editor_sprite and _frame_editor_sprite.texture is AtlasTexture:
 		var atlas := _frame_editor_sprite.texture as AtlasTexture
-		var frame_size := int(output_height_spin.value)
 		atlas.region = Rect2(_frame_editor_frame * frame_size, 0, frame_size, frame_size)
+	# Onion skin — show previous frame behind the current one
+	if _frame_editor_onion_sprite and _frame_editor_onion_sprite.texture is AtlasTexture:
+		var show_onion := _frame_editor_onion_toggle and _frame_editor_onion_toggle.button_pressed
+		var prev_frame := (_frame_editor_frame - 1) % _frame_editor_frame_count
+		if prev_frame < 0:
+			prev_frame += _frame_editor_frame_count
+		_frame_editor_onion_sprite.visible = show_onion and _frame_editor_frame_count > 1
+		var onion_atlas := _frame_editor_onion_sprite.texture as AtlasTexture
+		onion_atlas.region = Rect2(prev_frame * frame_size, 0, frame_size, frame_size)
 	if _frame_editor_frame_label:
 		_frame_editor_frame_label.text = "Frame %d / %d" % [_frame_editor_frame + 1, _frame_editor_frame_count]
 
