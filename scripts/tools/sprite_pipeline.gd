@@ -2,16 +2,17 @@ extends Control
 ## Sprite Pipeline Wizard
 ##
 ## Unified tool that chains 3D sprite capture and pixel art conversion
-## into a single 7-step wizard flow with saveable presets.
+## into a single 8-step wizard flow with saveable presets.
 ##
 ## Steps:
 ##   1. Model & Animation — select model, pick animation, configure camera
 ##   2. Capture Preview — auto-capture all 3 directions, confirm
 ##   3. Pixel Art Settings — configure processing, preview result
-##   4. Light Preview — interactive light/normal map preview
-##   5. Export — process all directions, save final pixel art
-##   6. Weapon Anchors — place grip/direction pixels on exported frames (optional)
-##   7. Apply to SpriteFrames — load exported sheets into player_sprites.tres
+##   4. Frame Editor — preview processed animation, delete unwanted frames
+##   5. Light Preview — interactive light/normal map preview
+##   6. Export — process all directions, save final pixel art
+##   7. Weapon Anchors — place grip/direction pixels on exported frames (optional)
+##   8. Apply to SpriteFrames — load exported sheets into player_sprites.tres
 ##
 ## Run: scenes/tools/sprite_pipeline.tscn (F6)
 
@@ -84,7 +85,7 @@ const FONT_VALUE := 12
 # WIZARD STATE
 #===============================================================================
 
-var _current_step := 0  # 0-6
+var _current_step := 0  # 0-7
 var _step_containers: Array[VBoxContainer] = []  # one per step
 
 ## Step 1 state
@@ -101,11 +102,25 @@ var _captured_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": 
 var _captured_normal_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
 var _captured_shadow_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
 
-## Step 3 state
+## Step 2 (Pixel Art Settings) state
 var _palette_colors: PackedColorArray = PackedColorArray()
 var _preview_direction := "down"
 var _capture_preview_mode := "color"  # "color" or "normal"
 var _pixel_preview_mode := "color"  # "color", "normal", "lit"
+
+## Step 3 (Frame Editor) state
+var _frame_editor_viewport: SubViewport = null
+var _frame_editor_container: SubViewportContainer = null
+var _frame_editor_sprite: Sprite2D = null
+var _frame_editor_frame := 0
+var _frame_editor_frame_count := 0
+var _frame_editor_playing := false
+var _frame_editor_timer := 0.0
+var _frame_editor_direction := "down"
+var _frame_editor_frame_label: Label = null
+var _frame_editor_deleted_label: Label = null
+var _frame_editor_delete_btn: Button = null
+var _frame_editor_deleted_count := 0
 
 ## Step 4 (Light Preview) state
 var _light_preview_viewport: SubViewport = null
@@ -126,10 +141,10 @@ var _light_ambient_slider: HSlider = null
 var _light_frame_label: Label = null
 var _light_texture_cache: ImageTexture = null  # Cached soft circular light texture
 
-## Step 5 state — actual frame size from export (used by Steps 5/6/7)
+## Step 6 state — actual frame size from export (used by Steps 6/7/8)
 var _export_frame_size := FRAME_SIZE
 
-## Step 5 (Anchor Editor) state
+## Step 6 (Anchor Editor) state
 var _anchor_enabled := false
 var _anchor_images: Dictionary = {}  # {"down": Image, "up": Image, "right": Image}
 var _anchor_current_dir := "down"
@@ -138,7 +153,7 @@ var _anchor_frame_count := 0
 var _anchor_tool := "grip"  # "grip", "direction", "erase"
 var _anchor_undo_state: Dictionary = {}  # {dir_name: Image} — single-level undo snapshot
 
-## Step 6 (Apply) state
+## Step 7 (Apply) state
 var _apply_groups: Array = []  # Dynamically scanned from OUTPUT_BASE folders
 var _exported_folder: String = ""  # Folder name from the most recent export
 
@@ -200,11 +215,11 @@ var denoising_min_cluster_spin: SpinBox
 var pixel_preview_rect: TextureRect
 var show_original_toggle: CheckButton
 
-# Step 4 nodes
+# Step 5 (Export) nodes
 var export_log_label: Label
 var anchor_weapon_anim_toggle: CheckButton  # In export step — gates anchor editor
 
-# Step 5 (Anchor Editor) nodes
+# Step 6 (Anchor Editor) nodes
 var anchor_frame_label: Label
 var anchor_info_label: Label
 var anchor_log_label: Label
@@ -213,7 +228,7 @@ var anchor_grid_toggle: CheckButton
 var _anchor_dir_buttons: Dictionary = {}  # {"down": Button, ...}
 var _anchor_tool_buttons: Dictionary = {}  # {"grip": Button, ...}
 
-# Step 6 nodes
+# Step 7 (Apply) nodes
 var apply_log_label: Label
 var apply_button: Button
 var apply_summary_container: VBoxContainer
@@ -244,7 +259,14 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if _light_preview_playing and _current_step == 3:
+	if _frame_editor_playing and _current_step == 3:
+		_frame_editor_timer += delta
+		var fps := 15.0
+		if _frame_editor_timer >= 1.0 / fps:
+			_frame_editor_timer -= 1.0 / fps
+			_frame_editor_frame = (_frame_editor_frame + 1) % _frame_editor_frame_count
+			_update_frame_editor_frame()
+	if _light_preview_playing and _current_step == 4:
 		_light_preview_timer += delta
 		var fps := 15.0
 		if _light_preview_timer >= 1.0 / fps:
@@ -339,8 +361,8 @@ func _build_ui() -> void:
 	steps_vbox.add_theme_constant_override("separation", 8)
 	content_margin.add_child(steps_vbox)
 
-	# Build 7 step containers
-	for i in range(7):
+	# Build 8 step containers
+	for i in range(8):
 		var step_cont := VBoxContainer.new()
 		step_cont.add_theme_constant_override("separation", 10)
 		step_cont.visible = (i == 0)
@@ -351,10 +373,11 @@ func _build_ui() -> void:
 	_build_step1(_step_containers[0])
 	_build_step2(_step_containers[1])
 	_build_step3(_step_containers[2])
-	_build_step_light_preview(_step_containers[3])
-	_build_step4(_step_containers[4])
-	_build_step_anchors(_step_containers[5])
-	_build_step6(_step_containers[6])
+	_build_step_frame_editor(_step_containers[3])
+	_build_step_light_preview(_step_containers[4])
+	_build_step_export(_step_containers[5])
+	_build_step_anchors(_step_containers[6])
+	_build_step_apply(_step_containers[7])
 
 	# ── Bottom bar (fixed, not scrolled) ───────────────────
 	var bottom_sep := HSeparator.new()
@@ -420,7 +443,7 @@ func _build_ui() -> void:
 	preview_container.stretch = true
 	aspect_box.add_child(preview_container)
 
-	# Bottom: 2D pixel preview (Step 3), initially hidden
+	# Bottom: 2D pixel preview (Step 2), initially hidden
 	var pixel_preview_scroll := ScrollContainer.new()
 	pixel_preview_scroll.size_flags_horizontal = SIZE_EXPAND_FILL
 	pixel_preview_scroll.size_flags_vertical = SIZE_EXPAND_FILL
@@ -435,7 +458,15 @@ func _build_ui() -> void:
 	pixel_preview_rect.size_flags_vertical = SIZE_EXPAND_FILL
 	pixel_preview_scroll.add_child(pixel_preview_rect)
 
-	# Anchor frame display (Step 5), initially hidden
+	# Frame editor viewport (Step 3), initially hidden
+	_frame_editor_container = SubViewportContainer.new()
+	_frame_editor_container.size_flags_horizontal = SIZE_EXPAND_FILL
+	_frame_editor_container.size_flags_vertical = SIZE_EXPAND_FILL
+	_frame_editor_container.stretch = true
+	_frame_editor_container.visible = false
+	right_vbox.add_child(_frame_editor_container)
+
+	# Anchor frame display (Step 6), initially hidden
 	anchor_frame_display = TextureRect.new()
 	anchor_frame_display.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	anchor_frame_display.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -749,7 +780,197 @@ func _build_step3(parent: VBoxContainer) -> void:
 
 
 #===============================================================================
-# STEP 3b — LIGHT PREVIEW
+# STEP 3 — FRAME EDITOR
+#===============================================================================
+
+func _build_step_frame_editor(parent: VBoxContainer) -> void:
+	var sec := _make_section("Frame Editor")
+	parent.add_child(sec[0])
+	var content: VBoxContainer = sec[1]
+
+	content.add_child(_make_small_label("Preview the processed animation and remove unwanted frames."))
+
+	# Direction buttons
+	var dir_group := _make_toggle_group([
+		{"label": "Down", "key": "down"},
+		{"label": "Up", "key": "up"},
+		{"label": "Right", "key": "right"},
+	], func(key: String) -> void:
+		_on_frame_editor_direction_changed(key)
+	)
+	content.add_child(_make_field("Direction", dir_group))
+
+	# Frame navigation
+	var frame_hbox := HBoxContainer.new()
+	frame_hbox.add_theme_constant_override("separation", 4)
+	content.add_child(frame_hbox)
+	var prev_btn := Button.new()
+	prev_btn.text = "\u25c0"
+	prev_btn.custom_minimum_size.x = 32
+	prev_btn.pressed.connect(func() -> void:
+		_frame_editor_frame = max(0, _frame_editor_frame - 1)
+		_update_frame_editor_frame()
+	)
+	frame_hbox.add_child(prev_btn)
+	var play_btn := Button.new()
+	play_btn.text = "Play"
+	play_btn.pressed.connect(func() -> void:
+		_frame_editor_playing = not _frame_editor_playing
+		play_btn.text = "Stop" if _frame_editor_playing else "Play"
+	)
+	frame_hbox.add_child(play_btn)
+	var next_frame_btn := Button.new()
+	next_frame_btn.text = "\u25b6"
+	next_frame_btn.custom_minimum_size.x = 32
+	next_frame_btn.pressed.connect(func() -> void:
+		_frame_editor_frame = min(_frame_editor_frame_count - 1, _frame_editor_frame + 1)
+		_update_frame_editor_frame()
+	)
+	frame_hbox.add_child(next_frame_btn)
+
+	# Frame label
+	_frame_editor_frame_label = Label.new()
+	_frame_editor_frame_label.text = "Frame 1 / 1"
+	_frame_editor_frame_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_frame_editor_frame_label.add_theme_font_size_override("font_size", FONT_LABEL)
+	_frame_editor_frame_label.add_theme_color_override("font_color", C_TEXT)
+	content.add_child(_frame_editor_frame_label)
+
+	# Delete Frame button (warning-styled)
+	_frame_editor_delete_btn = Button.new()
+	_frame_editor_delete_btn.text = "Delete This Frame"
+	var del_sb := StyleBoxFlat.new()
+	del_sb.bg_color = Color("#CC4444")
+	del_sb.set_corner_radius_all(4)
+	del_sb.set_content_margin_all(8)
+	_frame_editor_delete_btn.add_theme_stylebox_override("normal", del_sb)
+	var del_hover := StyleBoxFlat.new()
+	del_hover.bg_color = Color("#DD5555")
+	del_hover.set_corner_radius_all(4)
+	del_hover.set_content_margin_all(8)
+	_frame_editor_delete_btn.add_theme_stylebox_override("hover", del_hover)
+	_frame_editor_delete_btn.pressed.connect(_delete_current_frame)
+	content.add_child(_frame_editor_delete_btn)
+
+	# Deleted count label
+	_frame_editor_deleted_label = Label.new()
+	_frame_editor_deleted_label.text = ""
+	_frame_editor_deleted_label.add_theme_font_size_override("font_size", FONT_HINT)
+	_frame_editor_deleted_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	content.add_child(_frame_editor_deleted_label)
+
+
+#===============================================================================
+# FRAME EDITOR LOGIC
+#===============================================================================
+
+func _setup_frame_editor() -> void:
+	if _frame_editor_viewport:
+		_frame_editor_viewport.queue_free()
+
+	_frame_editor_viewport = SubViewport.new()
+	_frame_editor_viewport.transparent_bg = false
+	_frame_editor_viewport.size = Vector2i(400, 400)
+	_frame_editor_viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+	_frame_editor_container.add_child(_frame_editor_viewport)
+
+	# Dark background
+	var bg := ColorRect.new()
+	bg.color = Color(0.05, 0.05, 0.08, 1.0)
+	bg.size = Vector2(400, 400)
+	_frame_editor_viewport.add_child(bg)
+
+	# Process color sheet for current direction
+	if not _captured_sheets.has(_frame_editor_direction):
+		_frame_editor_direction = "down"
+	if not _captured_sheets.has(_frame_editor_direction):
+		return
+
+	var color_processed := _process_image(_captured_sheets[_frame_editor_direction])
+	var color_tex := ImageTexture.create_from_image(color_processed)
+
+	# Calculate frame info
+	var frame_size := int(output_height_spin.value)
+	_frame_editor_frame_count = color_processed.get_width() / maxi(frame_size, 1)
+	if _frame_editor_frame_count < 1:
+		_frame_editor_frame_count = 1
+	_frame_editor_frame = clampi(_frame_editor_frame, 0, _frame_editor_frame_count - 1)
+
+	# Create sprite showing single frame via AtlasTexture
+	var atlas_tex := AtlasTexture.new()
+	atlas_tex.atlas = color_tex
+	atlas_tex.region = Rect2(0, 0, frame_size, frame_size)
+
+	_frame_editor_sprite = Sprite2D.new()
+	_frame_editor_sprite.texture = atlas_tex
+	_frame_editor_sprite.position = Vector2(200, 200)
+	_frame_editor_sprite.scale = Vector2(3, 3)
+	_frame_editor_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_frame_editor_viewport.add_child(_frame_editor_sprite)
+
+	_update_frame_editor_frame()
+	# Update delete button state
+	_frame_editor_delete_btn.disabled = (_frame_editor_frame_count <= 1)
+	if _frame_editor_deleted_count > 0:
+		_frame_editor_deleted_label.text = "%d frame(s) deleted" % _frame_editor_deleted_count
+	else:
+		_frame_editor_deleted_label.text = ""
+
+
+func _update_frame_editor_frame() -> void:
+	if _frame_editor_sprite and _frame_editor_sprite.texture is AtlasTexture:
+		var atlas := _frame_editor_sprite.texture as AtlasTexture
+		var frame_size := int(output_height_spin.value)
+		atlas.region = Rect2(_frame_editor_frame * frame_size, 0, frame_size, frame_size)
+	if _frame_editor_frame_label:
+		_frame_editor_frame_label.text = "Frame %d / %d" % [_frame_editor_frame + 1, _frame_editor_frame_count]
+
+
+func _on_frame_editor_direction_changed(dir_name: String) -> void:
+	_frame_editor_direction = dir_name
+	_setup_frame_editor()
+
+
+func _delete_current_frame() -> void:
+	if _frame_editor_frame_count <= 1:
+		return  # Don't delete the last frame
+
+	# The capture sheets store raw 512px-per-frame horizontal strips.
+	# Frame width = sheet_width / frame_count (using current frame_count).
+	var sheet_dicts := [_captured_sheets, _captured_normal_sheets, _captured_shadow_sheets]
+	for sheet_dict in sheet_dicts:
+		for dir_name in sheet_dict.keys():
+			var src: Image = sheet_dict[dir_name]
+			var src_w := src.get_width()
+			var src_h := src.get_height()
+			var frame_w := src_w / _frame_editor_frame_count
+			if frame_w <= 0:
+				continue
+			# Create new image without the deleted frame
+			var new_w := src_w - frame_w
+			if new_w <= 0:
+				continue
+			var new_img := Image.create(new_w, src_h, false, src.get_format())
+			# Copy frames before the deleted one
+			var x_before := _frame_editor_frame * frame_w
+			if x_before > 0:
+				new_img.blit_rect(src, Rect2i(0, 0, x_before, src_h), Vector2i.ZERO)
+			# Copy frames after the deleted one
+			var x_after := (_frame_editor_frame + 1) * frame_w
+			if x_after < src_w:
+				new_img.blit_rect(src, Rect2i(x_after, 0, src_w - x_after, src_h), Vector2i(x_before, 0))
+			sheet_dict[dir_name] = new_img
+
+	_frame_editor_frame_count -= 1
+	_frame_editor_deleted_count += 1
+	_frame_editor_frame = clampi(_frame_editor_frame, 0, _frame_editor_frame_count - 1)
+
+	# Rebuild the preview
+	_setup_frame_editor()
+
+
+#===============================================================================
+# STEP 4 — LIGHT PREVIEW
 #===============================================================================
 
 func _build_step_light_preview(parent: VBoxContainer) -> void:
@@ -1009,10 +1230,10 @@ func _apply_light_preset(preset: Dictionary) -> void:
 
 
 #===============================================================================
-# STEP 4 — EXPORT
+# STEP 5 — EXPORT
 #===============================================================================
 
-func _build_step4(parent: VBoxContainer) -> void:
+func _build_step_export(parent: VBoxContainer) -> void:
 	var sec := _make_section("Export")
 	parent.add_child(sec[0])
 	var content: VBoxContainer = sec[1]
@@ -1040,7 +1261,7 @@ func _build_step4(parent: VBoxContainer) -> void:
 
 
 #===============================================================================
-# STEP 5 — WEAPON ANCHOR EDITOR (index 5)
+# STEP 6 — WEAPON ANCHOR EDITOR (index 6)
 #===============================================================================
 
 func _build_step_anchors(parent: VBoxContainer) -> void:
@@ -1456,10 +1677,10 @@ func _append_anchor_log(text: String) -> void:
 
 
 #===============================================================================
-# STEP 6 — APPLY TO SPRITEFRAMES (index 6)
+# STEP 7 — APPLY TO SPRITEFRAMES (index 7)
 #===============================================================================
 
-func _build_step6(parent: VBoxContainer) -> void:
+func _build_step_apply(parent: VBoxContainer) -> void:
 	var sec := _make_section("Apply to SpriteFrames")
 	parent.add_child(sec[0])
 	var content: VBoxContainer = sec[1]
@@ -1508,10 +1729,10 @@ func _go_to_step(step: int) -> void:
 		_step_containers[i].visible = (i == step)
 	# Update navigation buttons
 	back_button.visible = step > 0
-	next_button.visible = (step < 6)
-	next_button.text = "Export  \u25b6" if step == 4 else "Next  \u25b6"
+	next_button.visible = (step < 7)
+	next_button.text = "Export  \u25b6" if step == 5 else "Next  \u25b6"
 	# Style Next button for Export step
-	if step == 4:
+	if step == 5:
 		# Export step — style Next/Export button as warning
 		var warning_sb := StyleBoxFlat.new()
 		warning_sb.bg_color = C_WARNING
@@ -1537,18 +1758,23 @@ func _go_to_step(step: int) -> void:
 		next_button.add_theme_stylebox_override("hover", accent_hover)
 	# Update step indicator
 	var step_names := ["Model & Animation", "Capture Preview", "Pixel Art Settings",
-		"Light Preview", "Export", "Weapon Anchors", "Apply to SpriteFrames"]
-	step_indicator_label.text = "Step %d of 7: %s" % [step + 1, step_names[step]]
+		"Frame Editor", "Light Preview", "Export", "Weapon Anchors", "Apply to SpriteFrames"]
+	step_indicator_label.text = "Step %d of 8: %s" % [step + 1, step_names[step]]
 	if step_indicator:
 		step_indicator.set_step(step)
 	# Update preview visibility
 	var viewport_area := preview_container.get_parent()  # AspectRatioContainer
 	viewport_area.visible = (step <= 1)
 	pixel_preview_rect.get_parent().visible = (step == 2)
+	if _frame_editor_container:
+		_frame_editor_container.visible = (step == 3)
 	if anchor_frame_display:
-		anchor_frame_display.visible = (step == 5)
+		anchor_frame_display.visible = (step == 6)
 	if _light_preview_container:
-		_light_preview_container.visible = (step == 3)
+		_light_preview_container.visible = (step == 4)
+	# Stop frame editor playback when leaving step 3
+	if step != 3:
+		_frame_editor_playing = false
 	# Trigger step-specific logic
 	match step:
 		0:
@@ -1561,31 +1787,34 @@ func _go_to_step(step: int) -> void:
 				_apply_pixel_art_preset(_current_preset["pixel_art"])
 			_update_pixel_preview()
 		3:
-			_setup_light_preview()
+			_frame_editor_deleted_count = 0
+			_setup_frame_editor()
 		4:
-			_start_export()
+			_setup_light_preview()
 		5:
-			_enter_anchor_editor()
+			_start_export()
 		6:
+			_enter_anchor_editor()
+		7:
 			_scan_export_folders()
 
 
 func _on_next_pressed() -> void:
-	if _current_step == 4:
+	if _current_step == 5:
 		# After export: check if anchor editor is enabled
 		if anchor_weapon_anim_toggle and anchor_weapon_anim_toggle.button_pressed:
 			_anchor_enabled = true
-			_go_to_step(5)  # Weapon Anchors
+			_go_to_step(6)  # Weapon Anchors
 		else:
 			_anchor_enabled = false
-			_go_to_step(6)  # Skip to Apply
-	elif _current_step < 6:
+			_go_to_step(7)  # Skip to Apply
+	elif _current_step < 7:
 		_go_to_step(_current_step + 1)
 
 
 func _on_back_pressed() -> void:
-	if _current_step == 6 and not _anchor_enabled:
-		_go_to_step(4)  # Anchors were skipped — go back to export
+	if _current_step == 7 and not _anchor_enabled:
+		_go_to_step(5)  # Anchors were skipped — go back to export
 	elif _current_step > 0:
 		_go_to_step(_current_step - 1)
 
@@ -2259,7 +2488,7 @@ func _update_capture_preview() -> void:
 
 
 #===============================================================================
-# IMAGE PROCESSING (Step 3) — delegates to PixelArtProcessing utility
+# IMAGE PROCESSING (Step 2) — delegates to PixelArtProcessing utility
 #===============================================================================
 
 func _process_image(source: Image) -> Image:
@@ -2339,7 +2568,7 @@ func _on_pixel_color_changed(_color: Color) -> void:
 
 
 #===============================================================================
-# PALETTE (Step 3)
+# PALETTE (Step 2)
 #===============================================================================
 
 func _on_palette_mode_changed(index: int) -> void:
@@ -2477,7 +2706,7 @@ func _on_generate_palette_pressed() -> void:
 
 
 #===============================================================================
-# EXPORT (Step 4)
+# EXPORT (Step 5)
 #===============================================================================
 
 func _start_export() -> void:
@@ -2578,7 +2807,7 @@ func _on_done_pressed() -> void:
 
 
 #===============================================================================
-# APPLY TO SPRITEFRAMES (Step 6)
+# APPLY TO SPRITEFRAMES (Step 7)
 #===============================================================================
 
 func _scan_export_folders() -> void:
