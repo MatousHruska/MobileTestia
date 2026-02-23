@@ -1498,6 +1498,31 @@ func _go_to_step(step: int) -> void:
 	back_button.visible = step > 0
 	next_button.visible = (step < 6)
 	next_button.text = "Export  \u25b6" if step == 4 else "Next  \u25b6"
+	# Style Next button for Export step
+	if step == 4:
+		# Export step — style Next/Export button as warning
+		var warning_sb := StyleBoxFlat.new()
+		warning_sb.bg_color = C_WARNING
+		warning_sb.set_corner_radius_all(4)
+		warning_sb.set_content_margin_all(10)
+		next_button.add_theme_stylebox_override("normal", warning_sb)
+		var warning_hover := StyleBoxFlat.new()
+		warning_hover.bg_color = Color(C_WARNING, 0.8)
+		warning_hover.set_corner_radius_all(4)
+		warning_hover.set_content_margin_all(10)
+		next_button.add_theme_stylebox_override("hover", warning_hover)
+	else:
+		# Reset to primary accent style
+		var accent_sb := StyleBoxFlat.new()
+		accent_sb.bg_color = C_ACCENT
+		accent_sb.set_corner_radius_all(4)
+		accent_sb.set_content_margin_all(10)
+		next_button.add_theme_stylebox_override("normal", accent_sb)
+		var accent_hover := StyleBoxFlat.new()
+		accent_hover.bg_color = C_ACCENT_HOVER
+		accent_hover.set_corner_radius_all(4)
+		accent_hover.set_content_margin_all(10)
+		next_button.add_theme_stylebox_override("hover", accent_hover)
 	# Update step indicator
 	var step_names := ["Model & Animation", "Capture Preview", "Pixel Art Settings",
 		"Light Preview", "Export", "Weapon Anchors", "Apply to SpriteFrames"]
@@ -2771,6 +2796,13 @@ func _make_small_label(text: String) -> Label:
 
 func _set_status(text: String) -> void:
 	status_label.text = text
+	# Color based on content
+	if text.begins_with("Error") or text.begins_with("Failed"):
+		status_label.add_theme_color_override("font_color", C_WARNING)
+	elif text.begins_with("Done") or text.begins_with("Saved") or text.begins_with("Export"):
+		status_label.add_theme_color_override("font_color", C_SUCCESS)
+	else:
+		status_label.add_theme_color_override("font_color", C_TEXT_SEC)
 	print("[SpritePipeline] %s" % text)
 
 
