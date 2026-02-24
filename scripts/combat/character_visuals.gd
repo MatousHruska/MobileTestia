@@ -40,6 +40,7 @@ var overlay_sprite: AnimatedSprite2D = null
 var shadow_sprite: AnimatedSprite2D = null
 var _shadow_has_animations: bool = false  # True if SpriteFrames has _shadow anims
 var _shadow_animation_valid: bool = true  # False when no matching shadow anim found
+var _shadow_last_body_anim: StringName = &""  # Tracks body animation for auto-sync
 
 #===============================================================================
 # DIRECTION STATE
@@ -276,10 +277,22 @@ func _process(delta: float) -> void:
 	if body_sprite == null:
 		return
 
-	# Keep shadow frame in sync with body
-	if shadow_sprite and shadow_sprite.visible and _shadow_has_animations:
-		if body_sprite.sprite_frames and shadow_sprite.sprite_frames:
-			shadow_sprite.frame = body_sprite.frame
+	# Auto-detect body animation changes and sync shadow
+	if shadow_sprite and _shadow_has_animations:
+		var current_body_anim := body_sprite.animation
+		if current_body_anim != _shadow_last_body_anim:
+			_shadow_last_body_anim = current_body_anim
+			# Strip direction suffix to get base name for shadow lookup
+			var base_name := current_body_anim as String
+			for dir_suffix in ["_down", "_up", "_right"]:
+				if base_name.ends_with(dir_suffix):
+					base_name = base_name.substr(0, base_name.length() - dir_suffix.length())
+					break
+			_sync_shadow_animation(base_name)
+		# Keep shadow frame in sync with body
+		if shadow_sprite.visible:
+			if body_sprite.sprite_frames and shadow_sprite.sprite_frames:
+				shadow_sprite.frame = body_sprite.frame
 	# Flip shadow to match body
 	if shadow_sprite:
 		shadow_sprite.flip_h = is_flipped
