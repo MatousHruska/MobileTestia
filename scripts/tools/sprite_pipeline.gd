@@ -101,6 +101,8 @@ var camera_target: Vector3 = Vector3.ZERO
 var _captured_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
 var _captured_normal_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
 var _captured_shadow_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
+var _capture_scope := "all"  # "all", "down", "up", "right"
+var _capture_btn: Button = null
 
 ## Step 2 (Pixel Art Settings) state
 var _palette_colors: PackedColorArray = PackedColorArray()
@@ -124,6 +126,7 @@ var _frame_editor_deleted_count := 0
 var _frame_editor_nudge_all_toggle: CheckButton = null
 var _frame_editor_onion_toggle: CheckButton = null
 var _frame_editor_onion_sprite: Sprite2D = null
+var _frame_editor_all_directions_toggle: CheckButton = null
 
 ## Step 4 (Light Preview) state
 var _light_preview_viewport: SubViewport = null
@@ -593,9 +596,25 @@ func _build_step2(parent: VBoxContainer) -> void:
 	)
 	content.add_child(mode_group)
 
-	var capture_btn := _make_primary_button("Start Capturing")
-	capture_btn.pressed.connect(_start_capture)
-	content.add_child(capture_btn)
+	# Capture scope — which directions to capture
+	var scope_group := _make_toggle_group([
+		{"label": "All", "key": "all"},
+		{"label": "Down", "key": "down"},
+		{"label": "Up", "key": "up"},
+		{"label": "Right", "key": "right"},
+	], func(key: String) -> void:
+		_capture_scope = key
+		if _capture_btn:
+			if key == "all":
+				_capture_btn.text = "Capture All"
+			else:
+				_capture_btn.text = "Capture %s" % key.capitalize()
+	)
+	content.add_child(_make_field("Capture", scope_group))
+
+	_capture_btn = _make_primary_button("Capture All")
+	_capture_btn.pressed.connect(_start_capture)
+	content.add_child(_capture_btn)
 
 	# Direction previews
 	content.add_child(_make_label("Down:"))
@@ -849,6 +868,12 @@ func _build_step_frame_editor(parent: VBoxContainer) -> void:
 	)
 	content.add_child(_frame_editor_onion_toggle)
 
+	# Apply to all directions toggle
+	_frame_editor_all_directions_toggle = CheckButton.new()
+	_frame_editor_all_directions_toggle.text = "Apply to all directions"
+	_frame_editor_all_directions_toggle.button_pressed = true  # Default ON
+	content.add_child(_frame_editor_all_directions_toggle)
+
 	# Nudge Frame section — shift frame content by 1 raw pixel
 	var nudge_sec := _make_section("Nudge Frame")
 	parent.add_child(nudge_sec[0])
@@ -1034,9 +1059,13 @@ func _nudge_current_frame(dx: int, dy: int) -> void:
 	var first_frame := _frame_editor_frame
 	var last_frame := (_frame_editor_frame_count - 1) if nudge_all else _frame_editor_frame
 
+	var apply_all := _frame_editor_all_directions_toggle and _frame_editor_all_directions_toggle.button_pressed
 	var sheet_dicts := [_captured_sheets, _captured_normal_sheets, _captured_shadow_sheets]
 	for sheet_dict in sheet_dicts:
-		for dir_name in sheet_dict.keys():
+		var dirs_to_edit: Array = sheet_dict.keys() if apply_all else [_frame_editor_direction]
+		for dir_name in dirs_to_edit:
+			if not sheet_dict.has(dir_name):
+				continue
 			var src: Image = sheet_dict[dir_name]
 			var src_w := src.get_width()
 			var src_h := src.get_height()
@@ -1064,9 +1093,13 @@ func _delete_current_frame() -> void:
 
 	# The capture sheets store raw 512px-per-frame horizontal strips.
 	# Frame width = sheet_width / frame_count (using current frame_count).
+	var apply_all := _frame_editor_all_directions_toggle and _frame_editor_all_directions_toggle.button_pressed
 	var sheet_dicts := [_captured_sheets, _captured_normal_sheets, _captured_shadow_sheets]
 	for sheet_dict in sheet_dicts:
-		for dir_name in sheet_dict.keys():
+		var dirs_to_edit: Array = sheet_dict.keys() if apply_all else [_frame_editor_direction]
+		for dir_name in dirs_to_edit:
+			if not sheet_dict.has(dir_name):
+				continue
 			var src: Image = sheet_dict[dir_name]
 			var src_w := src.get_width()
 			var src_h := src.get_height()
@@ -2378,9 +2411,14 @@ func _start_capture() -> void:
 		_set_status("ERROR: No model or animation loaded.")
 		_go_to_step(0)
 		return
-	_captured_sheets.clear()
-	_captured_normal_sheets.clear()
-	_captured_shadow_sheets.clear()
+	if _capture_scope == "all":
+		_captured_sheets.clear()
+		_captured_normal_sheets.clear()
+		_captured_shadow_sheets.clear()
+	else:
+		_captured_sheets.erase(_capture_scope)
+		_captured_normal_sheets.erase(_capture_scope)
+		_captured_shadow_sheets.erase(_capture_scope)
 	next_button.disabled = true
 	back_button.disabled = true
 	await _capture_animation()
@@ -2406,8 +2444,17 @@ func _capture_animation() -> void:
 	var anim_length := anim.length
 	var direction_rects := [capture_down_rect, capture_up_rect, capture_right_rect]
 
-	for dir_idx in range(DIRECTIONS.size()):
-		var dir_config: Dictionary = DIRECTIONS[dir_idx]
+	var directions_to_capture: Array = []
+	if _capture_scope == "all":
+		directions_to_capture = DIRECTIONS.duplicate()
+	else:
+		for d in DIRECTIONS:
+			if d["name"] == _capture_scope:
+				directions_to_capture.append(d)
+				break
+
+	for dir_idx in range(directions_to_capture.size()):
+		var dir_config: Dictionary = directions_to_capture[dir_idx]
 		var dir_name: String = dir_config["name"]
 		var rot_y: float = dir_config["rotation_y"]
 
@@ -2545,7 +2592,10 @@ func _capture_animation() -> void:
 	_position_camera(camera_elevation_slider.value)
 	preview_container.stretch = true
 
-	_set_status("Captured all 3 directions. Review and click Next.")
+	if _capture_scope == "all":
+		_set_status("Captured all 3 directions. Review and click Next.")
+	else:
+		_set_status("Captured %s direction. Review and click Next." % _capture_scope)
 
 
 func _compute_camera_pan(detect_img: Image, detect_size: int, detect_cam_size: float) -> Vector3:
