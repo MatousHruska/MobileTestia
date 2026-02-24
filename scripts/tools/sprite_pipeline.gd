@@ -474,6 +474,15 @@ func _build_ui() -> void:
 	_frame_editor_container.visible = false
 	right_vbox.add_child(_frame_editor_container)
 
+	# Frame counter label directly below the preview viewport
+	_frame_editor_frame_label = Label.new()
+	_frame_editor_frame_label.text = "Frame 1 / 1"
+	_frame_editor_frame_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_frame_editor_frame_label.add_theme_font_size_override("font_size", FONT_LABEL)
+	_frame_editor_frame_label.add_theme_color_override("font_color", C_TEXT)
+	_frame_editor_frame_label.visible = false
+	right_vbox.add_child(_frame_editor_frame_label)
+
 	# Anchor frame display (Step 6), initially hidden
 	anchor_frame_display = TextureRect.new()
 	anchor_frame_display.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
@@ -853,14 +862,6 @@ func _build_step_frame_editor(parent: VBoxContainer) -> void:
 		_update_frame_editor_frame()
 	)
 	frame_hbox.add_child(next_frame_btn)
-
-	# Frame label
-	_frame_editor_frame_label = Label.new()
-	_frame_editor_frame_label.text = "Frame 1 / 1"
-	_frame_editor_frame_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_frame_editor_frame_label.add_theme_font_size_override("font_size", FONT_LABEL)
-	_frame_editor_frame_label.add_theme_color_override("font_color", C_TEXT)
-	content.add_child(_frame_editor_frame_label)
 
 	# Onion skin toggle
 	_frame_editor_onion_toggle = CheckButton.new()
@@ -1956,6 +1957,8 @@ func _go_to_step(step: int) -> void:
 	pixel_preview_rect.get_parent().visible = (step == 2)
 	if _frame_editor_container:
 		_frame_editor_container.visible = (step == 3)
+	if _frame_editor_frame_label:
+		_frame_editor_frame_label.visible = (step == 3)
 	if anchor_frame_display:
 		anchor_frame_display.visible = (step == 6)
 	if _light_preview_container:
