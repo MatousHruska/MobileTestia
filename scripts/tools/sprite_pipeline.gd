@@ -238,6 +238,8 @@ var _anchor_tool_buttons: Dictionary = {}  # {"grip": Button, ...}
 var apply_log_label: Label
 var apply_button: Button
 var apply_summary_container: VBoxContainer
+var _apply_progress_bar: ProgressBar = null
+var _apply_progress_label: Label = null
 
 # Shared
 var status_label: Label
@@ -1861,6 +1863,32 @@ func _build_step_apply(parent: VBoxContainer) -> void:
 	apply_button.pressed.connect(_apply_to_spriteframes)
 	content.add_child(apply_button)
 
+	# Progress bar (hidden until apply starts)
+	_apply_progress_bar = ProgressBar.new()
+	_apply_progress_bar.min_value = 0.0
+	_apply_progress_bar.max_value = 1.0
+	_apply_progress_bar.value = 0.0
+	_apply_progress_bar.show_percentage = true
+	_apply_progress_bar.size_flags_horizontal = SIZE_EXPAND_FILL
+	_apply_progress_bar.custom_minimum_size.y = 20
+	var bar_bg := StyleBoxFlat.new()
+	bar_bg.bg_color = C_SURFACE
+	bar_bg.set_corner_radius_all(4)
+	_apply_progress_bar.add_theme_stylebox_override("background", bar_bg)
+	var bar_fill := StyleBoxFlat.new()
+	bar_fill.bg_color = C_ACCENT
+	bar_fill.set_corner_radius_all(4)
+	_apply_progress_bar.add_theme_stylebox_override("fill", bar_fill)
+	_apply_progress_bar.visible = false
+	content.add_child(_apply_progress_bar)
+
+	_apply_progress_label = Label.new()
+	_apply_progress_label.text = ""
+	_apply_progress_label.add_theme_font_size_override("font_size", FONT_HINT)
+	_apply_progress_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	_apply_progress_label.visible = false
+	content.add_child(_apply_progress_label)
+
 	apply_log_label = Label.new()
 	apply_log_label.text = ""
 	apply_log_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -3100,9 +3128,17 @@ func _apply_to_spriteframes() -> void:
 	apply_log_label.text = ""
 	_set_status("Applying sprite sheets to SpriteFrames...")
 
+	# Show progress bar
+	_apply_progress_bar.value = 0.0
+	_apply_progress_bar.visible = true
+	_apply_progress_label.text = "Preparing..."
+	_apply_progress_label.visible = true
+
 	if _apply_groups.is_empty():
 		_append_apply_log("ERROR: No animation groups to apply.")
 		_set_status("Apply failed — no groups found.")
+		_apply_progress_bar.visible = false
+		_apply_progress_label.visible = false
 		apply_button.disabled = false
 		return
 
@@ -3110,8 +3146,16 @@ func _apply_to_spriteframes() -> void:
 	if frames == null:
 		_append_apply_log("ERROR: Could not load SpriteFrames: %s" % SPRITEFRAMES_PATH)
 		_set_status("Apply failed — could not load SpriteFrames.")
+		_apply_progress_bar.visible = false
+		_apply_progress_label.visible = false
 		apply_button.disabled = false
 		return
+
+	# Count total animations for progress tracking
+	var total_sheet_count := 0
+	for group in _apply_groups:
+		total_sheet_count += (group["sheets"] as Dictionary).size()
+	var processed_count := 0
 
 	# Remove old placeholder melee animations that block fallback to attack_*
 	_append_apply_log("--- Removing old melee placeholders ---")
@@ -3130,6 +3174,12 @@ func _apply_to_spriteframes() -> void:
 		_append_apply_log("--- %s (fps=%d, loop=%s) ---" % [folder, fps, loop])
 
 		for anim_name in sheets:
+			# Update progress
+			processed_count += 1
+			_apply_progress_bar.value = float(processed_count) / float(total_sheet_count)
+			_apply_progress_label.text = "Applying %s (%d/%d)..." % [anim_name, processed_count, total_sheet_count]
+			await get_tree().process_frame
+
 			var sheet_filename: String = sheets[anim_name]
 			var sheet_path := "%s/%s/%s" % [OUTPUT_BASE, folder, sheet_filename]
 			var abs_path := ProjectSettings.globalize_path(sheet_path)
@@ -3206,15 +3256,23 @@ func _apply_to_spriteframes() -> void:
 				_append_apply_log("    + shadow: %s (%s)" % [shadow_filename, shadow_anim_name])
 				total_anims += 1
 
+	# Saving phase
+	_apply_progress_bar.value = 1.0
+	_apply_progress_label.text = "Saving SpriteFrames..."
+	await get_tree().process_frame
+
 	var err := ResourceSaver.save(frames, SPRITEFRAMES_PATH)
 	if err != OK:
 		_append_apply_log("\nERROR: Failed to save SpriteFrames (error %d)" % err)
 		_set_status("Apply failed — could not save SpriteFrames.")
+		_apply_progress_bar.visible = false
+		_apply_progress_label.visible = false
 		apply_button.disabled = false
 		return
 
 	_append_apply_log("\nDone! %d animations updated in %s" % [total_anims, SPRITEFRAMES_PATH])
 	_set_status("Apply complete! %d animations updated." % total_anims)
+	_apply_progress_label.text = "Complete!"
 	apply_button.disabled = false
 
 
