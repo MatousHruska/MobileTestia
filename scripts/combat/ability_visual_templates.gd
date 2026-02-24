@@ -41,6 +41,7 @@ static func get_all() -> Dictionary:
 		"toggle_stance": _toggle_stance(),
 		"howl": _howl(),
 		"hilt_bash": _hilt_bash(),
+		"kick_attack": _kick_attack(),
 	}
 
 
@@ -217,8 +218,8 @@ static func _parry_stance() -> AbilityVisualData:
 	data.phases = [
 		# Phase 0: Show weapon (guard position)
 		AbilityVisualPhase.create_weapon_visibility(true),
-		# Phase 1: Enter parry stance animation
-		AbilityVisualPhase.create_body_anim("melee_windup", 0.0, "windup"),
+		# Phase 1: Enter blocking stance animation (uses blocking_{dir} sprites)
+		AbilityVisualPhase.create_body_anim("blocking", 0.0, "windup"),
 		# Phase 2: Hold parry window (duration overridden by talent data)
 		AbilityVisualPhase.create_wait(0.5, "parry_window"),
 		# Phase 3: Parry window expired — hide weapon and return to idle
@@ -498,6 +499,33 @@ static func _hilt_bash() -> AbilityVisualData:
 		# Phase 5: Hide weapon
 		AbilityVisualPhase.create_weapon_visibility(false),
 		# Phase 6: Return to idle
+		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
+	]
+
+	return data
+
+
+## kick_attack - Forward kick with lunge (Warlord's Kick)
+## Plays the full kicking_{dir} animation with a concurrent lunge, then damage.
+## No weapon shown by default — the kick uses feet, not a blade.
+static func _kick_attack() -> AbilityVisualData:
+	var data := AbilityVisualData.new()
+	data.template_id = "kick_attack"
+	data.display_name = "Kick Attack"
+	data.locks_movement = true
+
+	data.phases = [
+		# Phase 0: Hide weapon (kick uses feet — overrideable via show_weapon)
+		AbilityVisualPhase.create_weapon_visibility(false),
+		# Phase 1: Play kicking animation (concurrent with lunge)
+		AbilityVisualPhase.create_body_anim("kicking", 0.0, "windup", true),
+		# Phase 2: Lunge toward target (runs alongside animation)
+		AbilityVisualPhase.create_movement("toward_target", DEFAULT_LUNGE_DISTANCE, DEFAULT_LUNGE_DURATION, "lunge"),
+		# Phase 3: Damage event fires after animation + lunge complete
+		AbilityVisualPhase.create_damage_event(),
+		# Phase 4: Brief linger after hit
+		AbilityVisualPhase.create_wait(WEAPON_LINGER),
+		# Phase 5: Return to idle
 		AbilityVisualPhase.create_body_anim("idle", 0.0, "recovery"),
 	]
 
