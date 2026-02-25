@@ -786,6 +786,7 @@ func _build_step3(parent: VBoxContainer) -> void:
 	dithering_toggle.text = "Enable"
 	dithering_toggle.toggled.connect(_on_pixel_toggle_changed)
 	dither_content.add_child(dithering_toggle)
+	_style_checkbutton_transparent(dithering_toggle)
 
 	var strength_data := _make_slider_row(0.0, 1.0, 0.5, 0.05)
 	dithering_strength_slider = strength_data[1]
@@ -809,6 +810,7 @@ func _build_step3(parent: VBoxContainer) -> void:
 	outline_toggle.text = "Enable"
 	outline_toggle.toggled.connect(_on_pixel_toggle_changed)
 	outline_content.add_child(outline_toggle)
+	_style_checkbutton_transparent(outline_toggle)
 
 	var outline_color_hbox := HBoxContainer.new()
 	outline_color_hbox.add_theme_constant_override("separation", 8)
@@ -829,6 +831,7 @@ func _build_step3(parent: VBoxContainer) -> void:
 	denoising_toggle.text = "Enable"
 	denoising_toggle.toggled.connect(_on_pixel_toggle_changed)
 	denoise_content.add_child(denoising_toggle)
+	_style_checkbutton_transparent(denoising_toggle)
 
 	denoising_min_cluster_spin = SpinBox.new()
 	denoising_min_cluster_spin.min_value = 1
@@ -852,6 +855,7 @@ func _build_step3(parent: VBoxContainer) -> void:
 	show_original_toggle.text = "Show Original"
 	show_original_toggle.toggled.connect(_on_pixel_toggle_changed)
 	actions_content.add_child(show_original_toggle)
+	_style_checkbutton_transparent(show_original_toggle)
 
 
 #===============================================================================
@@ -1324,14 +1328,21 @@ func _setup_light_preview() -> void:
 	if not _captured_sheets.has(_light_preview_direction):
 		return
 
-	var color_processed := _process_image(_captured_sheets[_light_preview_direction])
+	var color_processed: Image
+	if _loaded_from_spritesheet:
+		color_processed = _captured_sheets[_light_preview_direction]
+	else:
+		color_processed = _process_image(_captured_sheets[_light_preview_direction])
 	var normal_processed: Image = null
 	if _captured_normal_sheets.has(_light_preview_direction):
-		normal_processed = PixelArtProcessing.process_normal_map(
-			_captured_normal_sheets[_light_preview_direction],
-			int(output_height_spin.value),
-			int(alpha_threshold_slider.value)
-		)
+		if _loaded_from_spritesheet:
+			normal_processed = _captured_normal_sheets[_light_preview_direction]
+		else:
+			normal_processed = PixelArtProcessing.process_normal_map(
+				_captured_normal_sheets[_light_preview_direction],
+				int(output_height_spin.value),
+				int(alpha_threshold_slider.value)
+			)
 
 	# Create CanvasTexture pairing diffuse + normal
 	var color_tex := ImageTexture.create_from_image(color_processed)
@@ -1461,6 +1472,7 @@ func _build_step_export(parent: VBoxContainer) -> void:
 	anchor_weapon_anim_toggle = CheckButton.new()
 	anchor_weapon_anim_toggle.text = "Weapon Animation (edit anchors next)"
 	content.add_child(anchor_weapon_anim_toggle)
+	_style_checkbutton_transparent(anchor_weapon_anim_toggle)
 
 	var run_again_btn := Button.new()
 	run_again_btn.text = "Run Again"
@@ -1570,6 +1582,7 @@ func _build_step_anchors(parent: VBoxContainer) -> void:
 	anchor_grid_toggle.text = "Show Grid"
 	anchor_grid_toggle.toggled.connect(func(_on: bool) -> void: _update_anchor_display())
 	act_content.add_child(anchor_grid_toggle)
+	_style_checkbutton_transparent(anchor_grid_toggle)
 
 	var copy_btn := Button.new()
 	copy_btn.text = "Copy to All Frames"
@@ -1734,10 +1747,13 @@ func _on_anchor_frame_input(event: InputEvent) -> void:
 	var mb := event as InputEventMouseButton
 	if not mb.pressed:
 		return
-	# Left click = grip, Right click = direction
+	# Left click = grip (or erase if erase tool selected), Right click = direction
 	var tool_override := ""
 	if mb.button_index == MOUSE_BUTTON_LEFT:
-		tool_override = "grip"
+		if _anchor_tool == "erase":
+			tool_override = "erase"
+		else:
+			tool_override = "grip"
 	elif mb.button_index == MOUSE_BUTTON_RIGHT:
 		tool_override = "direction"
 	else:
@@ -2257,6 +2273,10 @@ func _on_load_spritesheet() -> void:
 	_captured_sheets.clear()
 	_captured_normal_sheets.clear()
 	_captured_shadow_sheets.clear()
+
+	if anim_dropdown.selected < 0:
+		_load_spritesheet_status.text = "No animation selected"
+		return
 
 	var model_name := current_model_path.get_file().get_basename()
 	var anim_name: String = anim_dropdown.get_item_text(anim_dropdown.selected)
