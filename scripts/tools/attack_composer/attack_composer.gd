@@ -99,6 +99,102 @@ func _ready() -> void:
 	_set_status("Ready. Select a model and animation to begin.")
 
 
+func _input(event: InputEvent) -> void:
+	if not event is InputEventKey or not event.pressed:
+		return
+	var key := event as InputEventKey
+
+	match key.keycode:
+		KEY_SPACE:
+			_on_play_toggle()
+			get_viewport().set_input_as_handled()
+		KEY_LEFT:
+			_on_step_back()
+			get_viewport().set_input_as_handled()
+		KEY_RIGHT:
+			_on_step_forward()
+			get_viewport().set_input_as_handled()
+		KEY_HOME:
+			_on_stop()
+			get_viewport().set_input_as_handled()
+		KEY_END:
+			if _current_composition and not _current_composition.frames.is_empty():
+				_playing = false
+				_play_btn.text = "\u25b6"
+				_preview_frame_index = _current_composition.frames.size() - 1
+				_selected_frame = _preview_frame_index
+				_timeline_panel.selected_frame = _selected_frame
+				_timeline_panel.queue_redraw()
+				_update_preview_frame()
+				_update_frame_props_ui()
+			get_viewport().set_input_as_handled()
+		KEY_DELETE:
+			_delete_selected_frame()
+			get_viewport().set_input_as_handled()
+		KEY_0:
+			if key.ctrl_pressed:
+				# Reset zoom
+				_timeline_panel.pixels_per_ms = 2.0
+				_timeline_panel.queue_redraw()
+				get_viewport().set_input_as_handled()
+
+
+func _delete_selected_frame() -> void:
+	if _current_composition == null or _selected_frame < 0:
+		return
+	if _current_composition.frames.size() <= 1:
+		_set_status("Cannot delete the last frame.")
+		return
+
+	var deleted_idx := _selected_frame
+	_current_composition.frames.remove_at(deleted_idx)
+
+	# Update sequence-level indices
+	if _current_composition.damage_frame == deleted_idx:
+		_current_composition.damage_frame = -1
+	elif _current_composition.damage_frame > deleted_idx:
+		_current_composition.damage_frame -= 1
+
+	if _current_composition.movement_start_frame > deleted_idx:
+		_current_composition.movement_start_frame -= 1
+	elif _current_composition.movement_start_frame == deleted_idx:
+		_current_composition.movement_start_frame = -1
+
+	if _current_composition.movement_end_frame > deleted_idx:
+		_current_composition.movement_end_frame -= 1
+	elif _current_composition.movement_end_frame == deleted_idx:
+		_current_composition.movement_end_frame = -1
+
+	# Rebuild thumbnails
+	if _frame_textures.has("down"):
+		var down_textures: Array = _frame_textures["down"]
+		if deleted_idx < down_textures.size():
+			down_textures.remove_at(deleted_idx)
+		_timeline_panel.frame_thumbnails.clear()
+		for tex in down_textures:
+			_timeline_panel.frame_thumbnails.append(tex)
+
+	# Also remove from all direction frame arrays
+	for direction in DIRECTIONS:
+		if _frame_images.has(direction):
+			var imgs: Array = _frame_images[direction]
+			if deleted_idx < imgs.size():
+				imgs.remove_at(deleted_idx)
+		if _frame_textures.has(direction):
+			var texs: Array = _frame_textures[direction]
+			if deleted_idx < texs.size():
+				texs.remove_at(deleted_idx)
+
+	# Adjust selection
+	_selected_frame = mini(_selected_frame, _current_composition.frames.size() - 1)
+	_preview_frame_index = _selected_frame
+	_timeline_panel.selected_frame = _selected_frame
+	_timeline_panel.queue_redraw()
+	_update_preview_frame()
+	_update_frame_props_ui()
+	_set_status("Deleted frame %d. %d frames remaining." % [deleted_idx, _current_composition.frames.size()])
+
+
 # ── UI Construction ────────────────────────────────────────────────────
 
 func _build_ui() -> void:
@@ -567,6 +663,9 @@ func _build_frame_props_section() -> void:
 	_fps_label = _make_label("~ 15.2 fps", C_TEXT_DIM)
 	_frame_props_container.add_child(_fps_label)
 
+	# Delete frame button
+	_frame_props_container.add_child(_make_button("Delete Frame (Del)", _delete_selected_frame))
+
 	# Weapon visible
 	_weapon_check = CheckButton.new()
 	_weapon_check.text = "Weapon Visible"
@@ -579,6 +678,9 @@ func _build_frame_props_section() -> void:
 	_frame_props_container.add_child(_make_label("Effect"))
 	_effect_dropdown = _make_option_button()
 	_effect_dropdown.add_item("(none)", 0)
+	for eid in ["slash_arc", "slash_arc_wide", "thrust_line", "impact_spark",
+			"bowstring_snap", "cast_circle", "spell_burst", "buff_burst", "howl_aura"]:
+		_effect_dropdown.add_item(eid)
 	_effect_dropdown.item_selected.connect(_on_effect_selected)
 	_frame_props_container.add_child(_effect_dropdown)
 

@@ -340,10 +340,17 @@ func _gui_input(event: InputEvent) -> void:
 				_dragging_edge = false
 				_scrubbing = false
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
-			pixels_per_ms = minf(pixels_per_ms * 1.15, 10.0)
+			if mb.shift_pressed:
+				# Shift+wheel = horizontal scroll
+				scroll_offset_ms = maxf(0, scroll_offset_ms - 50)
+			else:
+				pixels_per_ms = minf(pixels_per_ms * 1.15, 10.0)
 			queue_redraw()
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
-			pixels_per_ms = maxf(pixels_per_ms / 1.15, 0.3)
+			if mb.shift_pressed:
+				scroll_offset_ms = minf(_get_total_ms(), scroll_offset_ms + 50)
+			else:
+				pixels_per_ms = maxf(pixels_per_ms / 1.15, 0.3)
 			queue_redraw()
 
 	elif event is InputEventMouseMotion:
