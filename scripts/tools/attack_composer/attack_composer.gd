@@ -76,6 +76,9 @@ var _damage_frame_spin: SpinBox
 var _preview_viewport: SubViewport
 var _preview_sprite: Sprite2D
 var _preview_checker: ColorRect
+var _weapon_sprite: Sprite2D
+var _weapon_set: Dictionary = {}
+var _echo_sprites: Array[Sprite2D] = []
 var _direction_buttons: Array[Button] = []
 var _frame_label: Label
 var _frame_nav_prev: Button
@@ -223,6 +226,16 @@ func _build_ui() -> void:
 	_preview_sprite.centered = true
 	_preview_sprite.position = Vector2(64, 64)
 	_preview_viewport.add_child(_preview_sprite)
+
+	# Weapon sprite (layered above body)
+	_weapon_sprite = Sprite2D.new()
+	_weapon_sprite.centered = true
+	_weapon_sprite.visible = false
+	_weapon_sprite.z_index = 1
+	_preview_viewport.add_child(_weapon_sprite)
+
+	# Load default weapon set
+	_weapon_set = PlaceholderWeaponSprites.create_sword_set()
 
 	# Controls bar below preview
 	var controls_bar := PanelContainer.new()
@@ -713,6 +726,33 @@ func _build_frame_props_section() -> void:
 	_damage_frame_spin.value_changed.connect(_on_damage_frame_changed)
 	_seq_props_container.add_child(_damage_frame_spin)
 
+	# Generate & Save section
+	var save_sep := HSeparator.new()
+	save_sep.add_theme_stylebox_override("separator", _make_separator_style())
+	_left_scroll_content.add_child(save_sep)
+
+	var save_container := VBoxContainer.new()
+	save_container.add_theme_constant_override("separation", 6)
+	_left_scroll_content.add_child(save_container)
+
+	save_container.add_child(_make_section_label("Save & Export"))
+	save_container.add_child(_make_button("Generate Runtime Data", _on_generate_runtime))
+	save_container.add_child(_make_button("Save Composition", _on_save_composition))
+	save_container.add_child(_make_button("Save Runtime Data", _on_save_runtime))
+	save_container.add_child(_make_button("Save Both", _on_save_both, true))
+
+	# Load section
+	var load_sep := HSeparator.new()
+	load_sep.add_theme_stylebox_override("separator", _make_separator_style())
+	_left_scroll_content.add_child(load_sep)
+
+	var load_container := VBoxContainer.new()
+	load_container.add_theme_constant_override("separation", 6)
+	_left_scroll_content.add_child(load_container)
+
+	load_container.add_child(_make_section_label("Load Composition"))
+	load_container.add_child(_make_button("Refresh", _scan_saved_compositions))
+
 
 func _scan_animations() -> void:
 	_anim_dropdown.clear()
@@ -882,6 +922,12 @@ func _update_preview_frame() -> void:
 		_preview_sprite.texture = textures[_preview_frame_index]
 	_frame_label.text = "Frame %d / %d" % [_preview_frame_index + 1, textures.size()]
 
+	# Update weapon
+	_update_weapon_preview()
+
+	# Update echo ghosts
+	_update_echo_preview()
+
 
 func _update_direction_highlight() -> void:
 	for i in DIRECTIONS.size():
@@ -904,6 +950,109 @@ func _on_direction_pressed(dir: String) -> void:
 	_preview_direction = dir
 	_update_preview_frame()
 	_update_direction_highlight()
+
+
+const WEAPON_ANCHOR_COLOR := Color("#FF00AA")
+const WEAPON_DIRECTION_COLOR := Color("#00FFFF")
+
+
+func _update_weapon_preview() -> void:
+	if _current_composition == null or _preview_frame_index < 0:
+		_weapon_sprite.visible = false
+		return
+
+	if _preview_frame_index >= _current_composition.frames.size():
+		_weapon_sprite.visible = false
+		return
+
+	var frame := _current_composition.frames[_preview_frame_index]
+	if not frame.weapon_visible:
+		_weapon_sprite.visible = false
+		return
+
+	# Get weapon texture for current direction
+	var weapon_tex: Texture2D = _weapon_set.get(_preview_direction)
+	if weapon_tex == null:
+		_weapon_sprite.visible = false
+		return
+
+	_weapon_sprite.texture = weapon_tex
+	_weapon_sprite.visible = true
+
+	# Find anchor pixels in the current body frame
+	if not _frame_images.has(_preview_direction):
+		return
+	var images: Array = _frame_images[_preview_direction]
+	if _preview_frame_index >= images.size():
+		return
+
+	var img: Image = images[_preview_frame_index]
+	var anchors := _find_anchors_in_image(img)
+	var grip: Vector2 = anchors.get("grip", Vector2.INF)
+
+	if grip == Vector2.INF:
+		# No anchor found — center weapon
+		_weapon_sprite.position = _preview_sprite.position
+		return
+
+	# Position weapon at grip anchor
+	var grip_key := "grip_%s" % _preview_direction
+	var weapon_grip: Vector2 = _weapon_set.get(grip_key, Vector2.ZERO)
+	_weapon_sprite.position = _preview_sprite.position + grip - Vector2(_frame_size.x / 2.0, _frame_size.y / 2.0)
+	_weapon_sprite.offset = -weapon_grip
+
+
+func _find_anchors_in_image(img: Image) -> Dictionary:
+	var result := {}
+	for y in range(img.get_height()):
+		for x in range(img.get_width()):
+			var pixel := img.get_pixel(x, y)
+			if pixel.is_equal_approx(WEAPON_ANCHOR_COLOR) and not result.has("grip"):
+				result["grip"] = Vector2(x, y)
+			elif pixel.is_equal_approx(WEAPON_DIRECTION_COLOR) and not result.has("direction"):
+				result["direction"] = Vector2(x, y)
+			if result.size() == 2:
+				return result
+	return result
+
+
+func _update_echo_preview() -> void:
+	# Clear old echoes
+	for ghost in _echo_sprites:
+		if is_instance_valid(ghost):
+			ghost.queue_free()
+	_echo_sprites.clear()
+
+	if _current_composition == null or _preview_frame_index < 0:
+		return
+	if _preview_frame_index >= _current_composition.frames.size():
+		return
+
+	var frame := _current_composition.frames[_preview_frame_index]
+	if not frame.echo_enabled:
+		return
+
+	if not _frame_textures.has(_preview_direction):
+		return
+	var textures: Array = _frame_textures[_preview_direction]
+
+	var count := frame.echo_count
+	var spacing := frame.echo_spacing_px
+
+	for i in count:
+		var echo_frame_idx := _preview_frame_index - (i + 1)
+		if echo_frame_idx < 0:
+			continue
+
+		var ghost := Sprite2D.new()
+		ghost.centered = true
+		ghost.texture = textures[echo_frame_idx]
+		ghost.position = _preview_sprite.position - Vector2(0, spacing * (i + 1))
+		var t := float(i) / float(count - 1) if count > 1 else 0.0
+		ghost.modulate.a = lerpf(frame.echo_opacity_start, frame.echo_opacity_end, t)
+		ghost.z_index = -1
+		_preview_viewport.add_child(ghost)
+		_echo_sprites.append(ghost)
 
 
 func _on_frame_prev() -> void:
@@ -1096,3 +1245,101 @@ func _on_damage_frame_changed(value: float) -> void:
 		return
 	_current_composition.damage_frame = int(value)
 	_timeline_panel.queue_redraw()
+
+
+# ── Save & Load ────────────────────────────────────────────────────────
+
+const COMPOSITIONS_DIR := "res://resources/compositions"
+const SEQUENCES_DIR := "res://resources/sequences"
+
+
+func _ensure_dirs() -> void:
+	for dir_path in [COMPOSITIONS_DIR, SEQUENCES_DIR]:
+		if not DirAccess.dir_exists_absolute(dir_path):
+			DirAccess.make_dir_recursive_absolute(dir_path)
+
+
+func _on_generate_runtime() -> void:
+	if _current_composition == null:
+		_set_status("No composition loaded.")
+		return
+	var data := CompositionConverter.convert(_current_composition)
+	var output := CompositionConverter.phases_to_string(data)
+	print("=== Generated Runtime Data for '%s' ===" % _current_composition.composition_id)
+	print(output)
+	_set_status("Generated %d phases. Check output panel." % data.phases.size())
+
+
+func _on_save_composition() -> void:
+	if _current_composition == null:
+		_set_status("No composition loaded.")
+		return
+	_ensure_dirs()
+	var path := "%s/%s.tres" % [COMPOSITIONS_DIR, _current_composition.composition_id]
+	var err := ResourceSaver.save(_current_composition, path)
+	if err == OK:
+		_set_status("Saved composition to %s" % path)
+	else:
+		_set_status("Error saving composition: %s" % error_string(err))
+
+
+func _on_save_runtime() -> void:
+	if _current_composition == null:
+		_set_status("No composition loaded.")
+		return
+	_ensure_dirs()
+	var data := CompositionConverter.convert(_current_composition)
+	var path := "%s/%s.tres" % [SEQUENCES_DIR, _current_composition.composition_id]
+	var err := ResourceSaver.save(data, path)
+	if err == OK:
+		_set_status("Saved runtime data to %s" % path)
+	else:
+		_set_status("Error saving runtime data: %s" % error_string(err))
+
+
+func _on_save_both() -> void:
+	_on_save_composition()
+	_on_save_runtime()
+
+
+func _scan_saved_compositions() -> void:
+	_ensure_dirs()
+	var dir := DirAccess.open(COMPOSITIONS_DIR)
+	if dir == null:
+		_set_status("Cannot open compositions directory")
+		return
+
+	var files: Array[String] = []
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if file_name.ends_with(".tres"):
+			files.append(file_name.get_basename())
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+	if files.is_empty():
+		_set_status("No saved compositions found.")
+	else:
+		_set_status("Found %d saved composition(s)." % files.size())
+		for f in files:
+			print("  - %s" % f)
+
+
+func _load_composition(composition_id: String) -> void:
+	var path := "%s/%s.tres" % [COMPOSITIONS_DIR, composition_id]
+	if not ResourceLoader.exists(path):
+		_set_status("Composition not found: %s" % path)
+		return
+	var loaded := load(path)
+	if loaded is AttackCompositionData:
+		_current_composition = loaded
+		_selected_frame = 0
+		_preview_frame_index = 0
+		_timeline_panel.composition = _current_composition
+		_timeline_panel.selected_frame = 0
+		_timeline_panel.queue_redraw()
+		_update_frame_props_ui()
+		_set_status("Loaded composition: %s" % composition_id)
+	else:
+		_set_status("Invalid composition resource: %s" % path)
