@@ -2034,7 +2034,9 @@ func _on_next_pressed() -> void:
 
 
 func _on_back_pressed() -> void:
-	if _current_step == 7 and not _anchor_enabled:
+	if _current_step == 3 and _loaded_from_spritesheet:
+		_go_to_step(0)  # Spritesheet loaded — skip back over capture/pixel art
+	elif _current_step == 7 and not _anchor_enabled:
 		_go_to_step(5)  # Anchors were skipped — go back to export
 	elif _current_step > 0:
 		_go_to_step(_current_step - 1)
@@ -3107,6 +3109,7 @@ func _append_log(text: String) -> void:
 
 
 func _on_run_again_pressed() -> void:
+	_loaded_from_spritesheet = false
 	_captured_sheets.clear()
 	_captured_normal_sheets.clear()
 	_captured_shadow_sheets.clear()
@@ -3114,6 +3117,7 @@ func _on_run_again_pressed() -> void:
 
 
 func _on_done_pressed() -> void:
+	_loaded_from_spritesheet = false
 	_captured_sheets.clear()
 	_captured_normal_sheets.clear()
 	_captured_shadow_sheets.clear()
