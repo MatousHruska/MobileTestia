@@ -162,6 +162,7 @@ var _anchor_undo_state: Dictionary = {}  # {dir_name: Image} — single-level un
 ## Step 7 (Apply) state
 var _apply_groups: Array = []  # Dynamically scanned from OUTPUT_BASE folders
 var _exported_folder: String = ""  # Folder name from the most recent export
+var _loaded_from_spritesheet := false  # True when sheets loaded from export dir (skip processing)
 
 ## Preset
 var _current_preset: Dictionary = {}
@@ -224,6 +225,8 @@ var show_original_toggle: CheckButton
 # Step 5 (Export) nodes
 var export_log_label: Label
 var anchor_weapon_anim_toggle: CheckButton  # In export step — gates anchor editor
+var _load_spritesheet_btn: Button = null
+var _load_spritesheet_status: Label = null
 
 # Step 6 (Anchor Editor) nodes
 var anchor_frame_label: Label
@@ -542,6 +545,26 @@ func _build_step1(parent: VBoxContainer) -> void:
 	preset_status_label.add_theme_font_size_override("font_size", FONT_HINT)
 	preset_status_label.add_theme_color_override("font_color", C_TEXT_SEC)
 	content.add_child(preset_status_label)
+
+	# Load from spritesheet
+	var load_sheet_sec := _make_section("Load Existing Spritesheet")
+	parent.add_child(load_sheet_sec[0])
+	var load_sheet_content: VBoxContainer = load_sheet_sec[1]
+	load_sheet_content.add_child(_make_small_label("Load already-exported spritesheets and skip to Frame Editor."))
+
+	_load_spritesheet_btn = Button.new()
+	_load_spritesheet_btn.text = "Load from Spritesheet"
+	_load_spritesheet_btn.disabled = true  # Enabled when model+anim selected
+	_load_spritesheet_btn.pressed.connect(_on_load_spritesheet)
+	load_sheet_content.add_child(_load_spritesheet_btn)
+
+	_load_spritesheet_status = Label.new()
+	_load_spritesheet_status.text = ""
+	_load_spritesheet_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_load_spritesheet_status.size_flags_horizontal = SIZE_EXPAND_FILL
+	_load_spritesheet_status.add_theme_font_size_override("font_size", FONT_HINT)
+	_load_spritesheet_status.add_theme_color_override("font_color", C_TEXT_SEC)
+	load_sheet_content.add_child(_load_spritesheet_status)
 
 	# Camera settings (collapsible)
 	var cam := _make_collapsible("Camera Settings")
@@ -2100,6 +2123,10 @@ func _on_model_selected(index: int) -> void:
 
 	_clear_model()
 
+	if _load_spritesheet_btn:
+		_load_spritesheet_btn.disabled = true
+		_load_spritesheet_status.text = ""
+
 	var packed_scene := ResourceLoader.load(res_path) as PackedScene
 	if packed_scene == null:
 		_set_status("ERROR: Could not load %s. Make sure Godot has imported it." % res_path)
@@ -2187,6 +2214,13 @@ func _on_animation_selected(index: int) -> void:
 		_source_anim_frames = 0
 		_source_anim_fps = 0
 		anim_info_label.text = ""
+
+	if _load_spritesheet_btn:
+		_load_spritesheet_btn.disabled = (current_anim_player == null)
+
+
+func _on_load_spritesheet() -> void:
+	pass  # Implemented in Task 3
 
 
 #===============================================================================
