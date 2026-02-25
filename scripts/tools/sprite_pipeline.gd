@@ -286,7 +286,7 @@ func _process(delta: float) -> void:
 			_update_light_preview_frame()
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if _current_step != 6:
 		return
 	if not event is InputEventKey or not event.pressed:
