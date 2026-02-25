@@ -162,6 +162,7 @@ var _anchor_undo_state: Dictionary = {}  # {dir_name: Image} — single-level un
 ## Step 7 (Apply) state
 var _apply_groups: Array = []  # Dynamically scanned from OUTPUT_BASE folders
 var _exported_folder: String = ""  # Folder name from the most recent export
+var _apply_scope := "all"  # "all", "down", "up", "right"
 var _loaded_from_spritesheet := false  # True when sheets loaded from export dir (skip processing)
 
 ## Preset
@@ -1935,6 +1936,17 @@ func _build_step_apply(parent: VBoxContainer) -> void:
 	apply_summary_container.add_theme_constant_override("separation", 2)
 	content.add_child(apply_summary_container)
 
+	# Direction scope
+	var apply_scope_group := _make_toggle_group([
+		{"label": "All", "key": "all"},
+		{"label": "Down", "key": "down"},
+		{"label": "Up", "key": "up"},
+		{"label": "Right", "key": "right"},
+	], func(key: String) -> void:
+		_apply_scope = key
+	)
+	content.add_child(_make_field("Apply directions", apply_scope_group))
+
 	apply_button = _make_primary_button("Apply to SpriteFrames")
 	apply_button.pressed.connect(_apply_to_spriteframes)
 	content.add_child(apply_button)
@@ -3339,6 +3351,10 @@ func _apply_to_spriteframes() -> void:
 		_append_apply_log("--- %s (fps=%d, loop=%s) ---" % [folder, fps, loop])
 
 		for anim_name in sheets:
+			# Filter by direction scope
+			if _apply_scope != "all":
+				if not anim_name.ends_with("_%s" % _apply_scope):
+					continue
 			# Update progress
 			processed_count += 1
 			_apply_progress_bar.value = float(processed_count) / float(total_sheet_count)
