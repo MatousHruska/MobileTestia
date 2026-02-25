@@ -870,12 +870,14 @@ func _build_step_frame_editor(parent: VBoxContainer) -> void:
 		_update_frame_editor_frame()
 	)
 	content.add_child(_frame_editor_onion_toggle)
+	_style_checkbutton_transparent(_frame_editor_onion_toggle)
 
 	# Apply to all directions toggle
 	_frame_editor_all_directions_toggle = CheckButton.new()
 	_frame_editor_all_directions_toggle.text = "Apply to all directions"
 	_frame_editor_all_directions_toggle.button_pressed = true  # Default ON
 	content.add_child(_frame_editor_all_directions_toggle)
+	_style_checkbutton_transparent(_frame_editor_all_directions_toggle)
 
 	# Nudge Frame section — shift frame content by 1 raw pixel
 	var nudge_sec := _make_section("Nudge Frame")
@@ -936,6 +938,7 @@ func _build_step_frame_editor(parent: VBoxContainer) -> void:
 	_frame_editor_nudge_all_toggle = CheckButton.new()
 	_frame_editor_nudge_all_toggle.text = "Nudge all following frames"
 	nudge_content.add_child(_frame_editor_nudge_all_toggle)
+	_style_checkbutton_transparent(_frame_editor_nudge_all_toggle)
 
 	# Delete Frame button (warning-styled)
 	_frame_editor_delete_btn = Button.new()
@@ -3574,6 +3577,15 @@ func _apply_toggle_style(btn: Button, active: bool) -> void:
 		btn.add_theme_color_override("font_color", C_TEXT)
 		btn.add_theme_color_override("font_hover_color", C_TEXT)
 		btn.add_theme_color_override("font_pressed_color", Color.WHITE)
+
+
+func _style_checkbutton_transparent(cb: CheckButton) -> void:
+	## Remove background fill from CheckButton so only the indicator shows state.
+	for state in ["normal", "pressed", "hover", "focus"]:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color.TRANSPARENT
+		sb.set_content_margin_all(4)
+		cb.add_theme_stylebox_override(state, sb)
 
 
 ## Create a slider with inline value label. Returns [HBoxContainer, HSlider, Label].
