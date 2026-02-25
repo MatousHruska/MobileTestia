@@ -1713,7 +1713,15 @@ func _on_anchor_frame_input(event: InputEvent) -> void:
 	if not event is InputEventMouseButton:
 		return
 	var mb := event as InputEventMouseButton
-	if mb.button_index != MOUSE_BUTTON_LEFT or not mb.pressed:
+	if not mb.pressed:
+		return
+	# Left click = grip, Right click = direction
+	var tool_override := ""
+	if mb.button_index == MOUSE_BUTTON_LEFT:
+		tool_override = "grip"
+	elif mb.button_index == MOUSE_BUTTON_RIGHT:
+		tool_override = "direction"
+	else:
 		return
 	if not _anchor_images.has(_anchor_current_dir) or _anchor_frame_count == 0:
 		return
@@ -1735,13 +1743,11 @@ func _on_anchor_frame_input(event: InputEvent) -> void:
 	var offset_y: float
 
 	if tex_aspect > display_aspect:
-		# Texture wider than display — letterboxed vertically
 		drawn_w = display_size.x
 		drawn_h = display_size.x / tex_aspect
 		offset_x = 0.0
 		offset_y = (display_size.y - drawn_h) / 2.0
 	else:
-		# Texture taller — pillarboxed horizontally
 		drawn_h = display_size.y
 		drawn_w = display_size.y * tex_aspect
 		offset_x = (display_size.x - drawn_w) / 2.0
@@ -1759,19 +1765,20 @@ func _on_anchor_frame_input(event: InputEvent) -> void:
 	pixel_x = clampi(pixel_x, 0, _export_frame_size - 1)
 	pixel_y = clampi(pixel_y, 0, _export_frame_size - 1)
 
-	_place_anchor_pixel(pixel_x, pixel_y)
+	_place_anchor_pixel(pixel_x, pixel_y, tool_override)
 
 
-func _place_anchor_pixel(x: int, y: int) -> void:
+func _place_anchor_pixel(x: int, y: int, tool_name: String = "") -> void:
 	if not _anchor_images.has(_anchor_current_dir):
 		return
+	var active_tool := tool_name if tool_name != "" else _anchor_tool
 	# Save undo snapshot before modifying
 	_anchor_undo_state[_anchor_current_dir] = (_anchor_images[_anchor_current_dir] as Image).duplicate()
 	var sheet: Image = _anchor_images[_anchor_current_dir]
 	var grip_color := Color("#FF00AA")
 	var dir_color := Color("#00FFFF")
 
-	match _anchor_tool:
+	match active_tool:
 		"grip":
 			_clear_color_from_frame(sheet, _anchor_current_frame, grip_color)
 			sheet.set_pixel(_anchor_current_frame * _export_frame_size + x, y, grip_color)
