@@ -88,7 +88,7 @@ var _stop_btn: Button
 var _time_label: Label
 var _speed_slider: HSlider
 
-const DIRECTIONS := ["down", "up", "right"]
+const DIRECTIONS: Array[String] = ["down", "up", "right"]
 
 
 func _ready() -> void:
@@ -361,7 +361,7 @@ func _build_ui() -> void:
 
 	# Direction buttons
 	for dir_name in DIRECTIONS:
-		var short := dir_name.substr(0, 1).to_upper()
+		var short: String = dir_name.substr(0, 1).to_upper()
 		var btn := _make_button(short, _on_direction_pressed.bind(dir_name))
 		btn.custom_minimum_size.x = 32
 		_direction_buttons.append(btn)
@@ -1034,7 +1034,7 @@ func _update_preview_frame() -> void:
 func _update_direction_highlight() -> void:
 	for i in DIRECTIONS.size():
 		var btn: Button = _direction_buttons[i]
-		var is_active := DIRECTIONS[i] == _preview_direction
+		var is_active: bool = DIRECTIONS[i] == _preview_direction
 		var sb := StyleBoxFlat.new()
 		sb.bg_color = C_ACCENT if is_active else C_SURFACE
 		sb.corner_radius_top_left = 4
