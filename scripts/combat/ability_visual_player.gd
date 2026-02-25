@@ -36,6 +36,9 @@ signal play_body_animation(anim_name: String)
 ## Emitted on MOVEMENT phase (for the character controller to execute)
 signal movement_requested(direction: String, distance: float, duration: float)
 
+## Emitted when a frame with echo data is reached (for speed echo rendering)
+signal echo_requested(frame_index: int, echo_config: Dictionary)
+
 #===============================================================================
 # STATE
 #===============================================================================
@@ -84,6 +87,14 @@ var _in_concurrent_block: bool = false
 
 ## The phase index of the concurrent partner (to know where to advance after)
 var _concurrent_end_index: int = -1
+
+## Per-frame timing state (for data-driven compositions from Attack Composer)
+var _frame_timing_active: bool = false
+var _frame_timing_array: Array = []  # Array of duration_ms ints
+var _frame_timing_index: int = 0
+var _frame_timing_timer: float = 0.0
+var _frame_timing_start_index: int = 0
+var _frame_timing_phase: AbilityVisualPhase = null
 
 
 #===============================================================================
@@ -134,6 +145,10 @@ func cancel() -> void:
 		return
 	var template_id := _current_data.template_id if _current_data else ""
 	_reset_timers()
+	_frame_timing_active = false
+	_frame_timing_phase = null
+	if _sprite:
+		_sprite.speed_scale = 1.0
 	is_playing = false
 	_current_data = null
 	_current_phase_index = -1
@@ -173,10 +188,41 @@ func _process(delta: float) -> void:
 	if _phase_held:
 		return
 
+	# Tick per-frame timing if active
+	if _frame_timing_active:
+		_tick_frame_timing(delta)
+
 	if _in_concurrent_block:
 		_tick_concurrent_block(delta)
 	else:
 		_tick_single_phase(delta)
+
+
+func _tick_frame_timing(delta: float) -> void:
+	_frame_timing_timer -= delta
+	if _frame_timing_timer <= 0.0:
+		_frame_timing_index += 1
+		if _frame_timing_index >= _frame_timing_array.size():
+			# All frames played — stop frame timing, let phase timer resolve
+			_frame_timing_active = false
+			_frame_timing_phase = null
+			if _sprite:
+				_sprite.speed_scale = 1.0
+		else:
+			_frame_timing_timer += _frame_timing_array[_frame_timing_index] / 1000.0
+			if _sprite:
+				_sprite.frame = _frame_timing_start_index + _frame_timing_index
+			_check_echo_for_current_frame()
+
+
+func _check_echo_for_current_frame() -> void:
+	if _frame_timing_phase == null:
+		return
+	var echo_data: Array = _frame_timing_phase.context_data.get("echo_data", [])
+	var current_frame := _frame_timing_start_index + _frame_timing_index
+	for echo_config in echo_data:
+		if echo_config.get("frame_index", -1) == current_frame:
+			echo_requested.emit(current_frame, echo_config)
 
 
 func _tick_single_phase(delta: float) -> void:
@@ -343,7 +389,23 @@ func _execute_phase_single(phase: AbilityVisualPhase) -> void:
 		AbilityVisualPhase.PhaseType.BODY_ANIM:
 			var resolved_name := _resolve_animation_name(phase.anim_name, facing_direction)
 			play_body_animation.emit(resolved_name)
-			if phase.duration > 0.0:
+			if phase.context_data.has("frame_timings"):
+				# Data-driven per-frame timing from Attack Composer
+				_frame_timing_active = true
+				_frame_timing_array = phase.context_data["frame_timings"]
+				_frame_timing_index = 0
+				_frame_timing_start_index = phase.context_data.get("frame_start_index", 0)
+				_frame_timing_phase = phase
+				_frame_timing_timer = _frame_timing_array[0] / 1000.0
+				_primary_timer = phase.duration
+				_primary_waiting_for_anim = false
+				# Pause the sprite's auto-playback and set initial frame
+				if _sprite:
+					_sprite.speed_scale = 0.0
+					_sprite.frame = _frame_timing_start_index
+				# Check for echo on first frame
+				_check_echo_for_current_frame()
+			elif phase.duration > 0.0:
 				_primary_timer = phase.duration
 				_primary_waiting_for_anim = false
 			elif _is_looping_animation(resolved_name):
@@ -418,6 +480,10 @@ func _on_animation_finished() -> void:
 
 func _finish_sequence() -> void:
 	var template_id := _current_data.template_id if _current_data else ""
+	_frame_timing_active = false
+	_frame_timing_phase = null
+	if _sprite:
+		_sprite.speed_scale = 1.0
 	is_playing = false
 	_current_data = null
 	_current_phase_index = -1

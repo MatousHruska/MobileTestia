@@ -572,11 +572,17 @@ func play_hit_flash(duration: float = 0.15) -> void:
 # ABILITY VISUAL PLAYER WIRING
 #===============================================================================
 
+## Speed echo ghost sprites (from Attack Composer compositions)
+var _echo_sprites: Array[Sprite2D] = []
+
+
 ## Connect to an AbilityVisualPlayer's signals
 func connect_to_visual_player(visual_player: Node) -> void:
 	visual_player.weapon_visibility_changed.connect(set_weapon_visible)
 	visual_player.play_body_animation.connect(_on_play_body_animation)
 	visual_player.effect_event.connect(_on_effect_event)
+	if visual_player.has_signal("echo_requested"):
+		visual_player.echo_requested.connect(_on_echo_requested)
 
 
 func _on_play_body_animation(anim_name: String) -> void:
@@ -604,6 +610,51 @@ func _on_effect_event(effect_id: String) -> void:
 			if child is Sprite2D:
 				child.flip_h = true
 	spawn_effect(effect_node)
+
+
+func _on_echo_requested(frame_index: int, config: Dictionary) -> void:
+	_clear_echoes()
+	var count: int = config.get("count", 3)
+	var opacity_start: float = config.get("opacity_start", 0.5)
+	var opacity_end: float = config.get("opacity_end", 0.1)
+	var spacing: float = config.get("spacing_px", 8.0)
+
+	if not body_sprite or not body_sprite.sprite_frames:
+		return
+
+	var current_anim := body_sprite.animation
+	var current_frame_idx := body_sprite.frame
+
+	if not body_sprite.sprite_frames.has_animation(current_anim):
+		return
+
+	var tex := body_sprite.sprite_frames.get_frame_texture(current_anim, current_frame_idx)
+	if not tex:
+		return
+
+	for i in count:
+		var ghost := Sprite2D.new()
+		ghost.texture = tex
+		var t := float(i) / float(count - 1) if count > 1 else 0.0
+		ghost.modulate.a = lerpf(opacity_start, opacity_end, t)
+		ghost.position = body_sprite.position - Vector2(0, spacing * (i + 1))
+		ghost.z_index = body_sprite.z_index - 1
+		if is_flipped:
+			ghost.flip_h = true
+		add_child(ghost)
+		_echo_sprites.append(ghost)
+
+	# Auto-cleanup after a short delay
+	var tween := create_tween()
+	tween.tween_interval(0.15)
+	tween.tween_callback(_clear_echoes)
+
+
+func _clear_echoes() -> void:
+	for ghost in _echo_sprites:
+		if is_instance_valid(ghost):
+			ghost.queue_free()
+	_echo_sprites.clear()
 
 
 #===============================================================================
