@@ -286,6 +286,25 @@ func _process(delta: float) -> void:
 			_update_light_preview_frame()
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if _current_step != 6:
+		return
+	if not event is InputEventKey or not event.pressed:
+		return
+	var key := event as InputEventKey
+	match key.keycode:
+		KEY_LEFT:
+			if _anchor_current_frame > 0:
+				_anchor_current_frame -= 1
+				_update_anchor_display()
+				get_viewport().set_input_as_handled()
+		KEY_RIGHT:
+			if _anchor_current_frame < _anchor_frame_count - 1:
+				_anchor_current_frame += 1
+				_update_anchor_display()
+				get_viewport().set_input_as_handled()
+
+
 func _build_ui() -> void:
 	# Apply theme
 	theme = _build_theme()
