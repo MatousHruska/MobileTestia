@@ -9,11 +9,11 @@ const C_TEXT_DIM := Color("#555570")
 const C_TEXT := Color("#E0E0EC")
 const C_BG := Color("#252536")
 
-var total_steps := 8
+var total_steps := 7
 var current_step := 0  # 0-indexed
 var step_names: PackedStringArray = [
 	"Model & Animation", "Capture Preview", "Pixel Art Settings",
-	"Frame Editor", "Light Preview", "Export", "Weapon Anchors", "Apply to SpriteFrames"
+	"Frame Editor", "Light Preview", "Export", "Apply to SpriteFrames"
 ]
 
 func _ready() -> void:

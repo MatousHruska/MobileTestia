@@ -9,6 +9,9 @@ extends Resource
 ## Whether the weapon sprite is visible during this frame
 @export var weapon_visible: bool = true
 
+## Whether the weapon renders in front of (true, z=1) or behind (false, z=-1) the body
+@export var weapon_z_front: bool = true
+
 ## Effect asset ID to spawn when this frame plays (empty = no effect)
 @export var effect_id: String = ""
 

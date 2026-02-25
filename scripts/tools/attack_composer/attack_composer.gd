@@ -33,6 +33,7 @@ var _frame_textures: Dictionary = {}  # {direction_string: Array[ImageTexture]}
 var _preview_direction := "down"
 var _preview_frame_index: int = 0
 var _selected_frame: int = -1
+var _selected_frames: Array[int] = []
 var _available_models: Array[String] = []
 var _available_anims: Array[String] = []
 var _current_model: String = ""
@@ -44,6 +45,15 @@ var _playing := false
 var _playback_ms := 0.0
 var _playback_speed := 1.0
 
+# ── Anchor painting state ─────────────────────────────────────────────
+var _anchor_draw_enabled: bool = false
+var _anchor_onion_skin_enabled: bool = false
+var _anchor_images_dirty: bool = false
+
+# ── Undo state ────────────────────────────────────────────────────────
+var _undo_stack: Array = []  # Array of Dictionary {composition, images}
+const MAX_UNDO := 50
+
 # ── UI references ──────────────────────────────────────────────────────
 var _status_label: Label
 var _left_scroll_content: VBoxContainer
@@ -52,11 +62,14 @@ var _timeline_panel: TimelinePanel
 var _model_dropdown: OptionButton
 var _anim_dropdown: OptionButton
 var _load_info_label: Label
+var _composition_dropdown: OptionButton
+var _load_composition_btn: Button
 var _frame_props_container: VBoxContainer
 var _duration_spinbox: SpinBox
 var _fps_label: Label
 var _total_duration_label: Label
 var _weapon_check: CheckButton
+var _weapon_z_front_check: CheckButton
 var _effect_dropdown: OptionButton
 var _effect_anchor_dropdown: OptionButton
 var _effect_offset_x: SpinBox
@@ -80,6 +93,18 @@ var _weapon_sprite: Sprite2D
 var _weapon_set: Dictionary = {}
 var _echo_sprites: Array[Sprite2D] = []
 var _direction_buttons: Array[Button] = []
+var _frame_props_header: Button
+var _seq_props_header: Button
+var _undo_btn: Button
+var _draw_anchors_check: CheckButton
+var _onion_skin_check: CheckButton
+var _onion_skin_container: VBoxContainer
+var _save_spritesheets_btn: Button
+var _crosshair_sprite: Sprite2D
+var _onion_weapon_sprite: Sprite2D
+var _viewport_container_ref: SubViewportContainer
+var _anchor_label: Label
+var _weapon_debug: String = ""
 var _frame_label: Label
 var _frame_nav_prev: Button
 var _frame_nav_next: Button
@@ -96,6 +121,7 @@ func _ready() -> void:
 	_build_loading_section()
 	_build_frame_props_section()
 	_scan_animations()
+	_refresh_composition_dropdown()
 	_set_status("Ready. Select a model and animation to begin.")
 
 
@@ -123,7 +149,9 @@ func _input(event: InputEvent) -> void:
 				_play_btn.text = "\u25b6"
 				_preview_frame_index = _current_composition.frames.size() - 1
 				_selected_frame = _preview_frame_index
+				_selected_frames = [_selected_frame]
 				_timeline_panel.selected_frame = _selected_frame
+				_timeline_panel.selected_frames = _selected_frames
 				_timeline_panel.queue_redraw()
 				_update_preview_frame()
 				_update_frame_props_ui()
@@ -131,6 +159,10 @@ func _input(event: InputEvent) -> void:
 		KEY_DELETE:
 			_delete_selected_frame()
 			get_viewport().set_input_as_handled()
+		KEY_Z:
+			if key.ctrl_pressed:
+				_undo()
+				get_viewport().set_input_as_handled()
 		KEY_0:
 			if key.ctrl_pressed:
 				# Reset zoom
@@ -146,6 +178,7 @@ func _delete_selected_frame() -> void:
 		_set_status("Cannot delete the last frame.")
 		return
 
+	_push_undo()
 	var deleted_idx := _selected_frame
 	_current_composition.frames.remove_at(deleted_idx)
 
@@ -187,12 +220,107 @@ func _delete_selected_frame() -> void:
 
 	# Adjust selection
 	_selected_frame = mini(_selected_frame, _current_composition.frames.size() - 1)
+	_selected_frames = [_selected_frame]
 	_preview_frame_index = _selected_frame
 	_timeline_panel.selected_frame = _selected_frame
+	_timeline_panel.selected_frames = _selected_frames
 	_timeline_panel.queue_redraw()
 	_update_preview_frame()
 	_update_frame_props_ui()
 	_set_status("Deleted frame %d. %d frames remaining." % [deleted_idx, _current_composition.frames.size()])
+
+
+# ── Undo ──────────────────────────────────────────────────────────────
+
+func _push_undo() -> void:
+	if _current_composition == null:
+		return
+	# Deep-copy each frame individually since Resource.duplicate doesn't deep-copy arrays of resources
+	var comp_snapshot := AttackCompositionData.new()
+	comp_snapshot.composition_id = _current_composition.composition_id
+	comp_snapshot.display_name = _current_composition.display_name
+	comp_snapshot.animation_name = _current_composition.animation_name
+	comp_snapshot.movement_type = _current_composition.movement_type
+	comp_snapshot.movement_distance = _current_composition.movement_distance
+	comp_snapshot.movement_start_frame = _current_composition.movement_start_frame
+	comp_snapshot.movement_end_frame = _current_composition.movement_end_frame
+	comp_snapshot.damage_frame = _current_composition.damage_frame
+	for frame in _current_composition.frames:
+		comp_snapshot.frames.append(frame.duplicate())
+
+	var entry: Dictionary = {"composition": comp_snapshot}
+
+	# When anchor drawing is active, also snapshot all frame images
+	if _anchor_draw_enabled and not _frame_images.is_empty():
+		var images_snapshot: Dictionary = {}
+		for dir_name in _frame_images:
+			var originals: Array = _frame_images[dir_name]
+			var copies: Array[Image] = []
+			for img: Image in originals:
+				copies.append(img.duplicate())
+			images_snapshot[dir_name] = copies
+		entry["images"] = images_snapshot
+
+	_undo_stack.append(entry)
+	if _undo_stack.size() > MAX_UNDO:
+		_undo_stack.remove_at(0)
+	_update_undo_button()
+
+
+func _undo() -> void:
+	if _undo_stack.is_empty():
+		_set_status("Nothing to undo.")
+		return
+	var entry: Dictionary = _undo_stack.pop_back()
+	var snapshot: AttackCompositionData = entry["composition"]
+	_current_composition.composition_id = snapshot.composition_id
+	_current_composition.display_name = snapshot.display_name
+	_current_composition.animation_name = snapshot.animation_name
+	_current_composition.movement_type = snapshot.movement_type
+	_current_composition.movement_distance = snapshot.movement_distance
+	_current_composition.movement_start_frame = snapshot.movement_start_frame
+	_current_composition.movement_end_frame = snapshot.movement_end_frame
+	_current_composition.damage_frame = snapshot.damage_frame
+	_current_composition.frames.clear()
+	for frame in snapshot.frames:
+		_current_composition.frames.append(frame)
+
+	# Restore frame images if snapshot includes them
+	if entry.has("images"):
+		var images_snapshot: Dictionary = entry["images"]
+		for dir_name in images_snapshot:
+			_frame_images[dir_name] = images_snapshot[dir_name]
+			# Recreate textures from restored images
+			var new_textures: Array[ImageTexture] = []
+			for img: Image in images_snapshot[dir_name]:
+				new_textures.append(ImageTexture.create_from_image(img))
+			_frame_textures[dir_name] = new_textures
+
+	# Adjust selection
+	_selected_frame = clampi(_selected_frame, 0, _current_composition.frames.size() - 1)
+	_selected_frames = [_selected_frame]
+	_preview_frame_index = _selected_frame
+	_timeline_panel.composition = _current_composition
+	_timeline_panel.selected_frame = _selected_frame
+	_timeline_panel.selected_frames = _selected_frames
+	# Rebuild thumbnails
+	if _frame_textures.has("down"):
+		_timeline_panel.frame_thumbnails.clear()
+		var down_textures: Array = _frame_textures["down"]
+		for i in _current_composition.frames.size():
+			if i < down_textures.size():
+				_timeline_panel.frame_thumbnails.append(down_textures[i])
+	_timeline_panel.queue_redraw()
+	_update_preview_frame()
+	_update_frame_props_ui()
+	_update_undo_button()
+	_set_status("Undo. (%d remaining)" % _undo_stack.size())
+
+
+func _update_undo_button() -> void:
+	if _undo_btn:
+		_undo_btn.disabled = _undo_stack.is_empty()
+		_undo_btn.tooltip_text = "Undo (Ctrl+Z) — %d steps" % _undo_stack.size()
 
 
 # ── UI Construction ────────────────────────────────────────────────────
@@ -302,25 +430,28 @@ func _build_ui() -> void:
 	viewport_container.size_flags_vertical = SIZE_EXPAND_FILL
 	viewport_container.stretch = true
 	viewport_container.stretch_shrink = 1
+	viewport_container.mouse_filter = MOUSE_FILTER_STOP
+	viewport_container.gui_input.connect(_on_preview_viewport_input)
 	preview_vbox.add_child(viewport_container)
+	_viewport_container_ref = viewport_container
 
 	_preview_viewport = SubViewport.new()
 	_preview_viewport.transparent_bg = false
 	_preview_viewport.size = Vector2i(128, 128)
 	_preview_viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
 	_preview_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_preview_viewport.size_changed.connect(_on_preview_viewport_resized)
 	viewport_container.add_child(_preview_viewport)
 
-	# Checkerboard background
+	# Checkerboard background — fills the entire viewport (resized manually)
 	_preview_checker = ColorRect.new()
 	_preview_checker.color = C_SECTION
-	_preview_checker.size = Vector2(128, 128)
+	_preview_checker.size = Vector2(_preview_viewport.size)
 	_preview_viewport.add_child(_preview_checker)
 
-	# The sprite to display the current frame
+	# The sprite to display the current frame (centered and scaled dynamically)
 	_preview_sprite = Sprite2D.new()
 	_preview_sprite.centered = true
-	_preview_sprite.position = Vector2(64, 64)
 	_preview_viewport.add_child(_preview_sprite)
 
 	# Weapon sprite (layered above body)
@@ -329,6 +460,21 @@ func _build_ui() -> void:
 	_weapon_sprite.visible = false
 	_weapon_sprite.z_index = 1
 	_preview_viewport.add_child(_weapon_sprite)
+
+	# Onion weapon sprite — ghost of previous frame's weapon at 30% opacity
+	_onion_weapon_sprite = Sprite2D.new()
+	_onion_weapon_sprite.centered = true
+	_onion_weapon_sprite.visible = false
+	_onion_weapon_sprite.z_index = 1
+	_onion_weapon_sprite.modulate = Color(1, 1, 1, 0.3)
+	_preview_viewport.add_child(_onion_weapon_sprite)
+
+	# Crosshair overlay — drawn on top of everything to show anchor positions
+	_crosshair_sprite = Sprite2D.new()
+	_crosshair_sprite.centered = true
+	_crosshair_sprite.visible = false
+	_crosshair_sprite.z_index = 3
+	_preview_viewport.add_child(_crosshair_sprite)
 
 	# Load default weapon set
 	_weapon_set = PlaceholderWeaponSprites.create_sword_set()
@@ -389,6 +535,25 @@ func _build_ui() -> void:
 	_frame_nav_next.custom_minimum_size.x = 32
 	controls_inner.add_child(_frame_nav_next)
 
+	# Spacer before undo
+	var spacer2 := Control.new()
+	spacer2.custom_minimum_size.x = 12
+	controls_inner.add_child(spacer2)
+
+	# Undo button
+	_undo_btn = _make_button("\u21b6", _undo)
+	_undo_btn.custom_minimum_size.x = 32
+	_undo_btn.tooltip_text = "Undo (Ctrl+Z)"
+	_undo_btn.disabled = true
+	controls_inner.add_child(_undo_btn)
+
+	# Anchor detection indicator
+	_anchor_label = Label.new()
+	_anchor_label.add_theme_font_size_override("font_size", FONT_HINT)
+	_anchor_label.add_theme_color_override("font_color", C_TEXT_DIM)
+	_anchor_label.text = ""
+	controls_inner.add_child(_anchor_label)
+
 	# Transport bar
 	_build_transport_bar(_right_vbox)
 
@@ -405,8 +570,10 @@ func _build_ui() -> void:
 	_timeline_panel.size_flags_horizontal = SIZE_EXPAND_FILL
 	_timeline_panel.size_flags_vertical = SIZE_EXPAND_FILL
 	_timeline_panel.frame_selected.connect(_on_timeline_frame_selected)
+	_timeline_panel.frames_selected.connect(_on_timeline_frames_selected)
 	_timeline_panel.frame_duration_changed.connect(_on_timeline_duration_changed)
 	_timeline_panel.playhead_moved.connect(_on_timeline_playhead_moved)
+	_timeline_panel.before_mutation.connect(_push_undo)
 	timeline_container.add_child(_timeline_panel)
 
 
@@ -462,6 +629,45 @@ func _make_button(text: String, callable: Callable, accent: bool = false) -> But
 	btn.add_theme_color_override("font_color", C_TEXT)
 	btn.pressed.connect(callable)
 	return btn
+
+
+## Creates a collapsible section with a toggle header button and content VBox.
+## Returns an Array: [wrapper: VBoxContainer, content: VBoxContainer]
+## The wrapper can be shown/hidden to control the entire section's visibility.
+func _make_collapsible_section(title: String, parent: Control, collapsed: bool = true) -> Array:
+	var wrapper := VBoxContainer.new()
+	wrapper.add_theme_constant_override("separation", 0)
+	parent.add_child(wrapper)
+
+	var header := Button.new()
+	header.text = ("%s  %s" % ["\u25b6" if collapsed else "\u25bc", title])
+	header.add_theme_font_size_override("font_size", FONT_SECTION)
+	header.add_theme_color_override("font_color", C_ACCENT)
+	header.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var header_sb := StyleBoxFlat.new()
+	header_sb.bg_color = Color.TRANSPARENT
+	header_sb.content_margin_left = 0
+	header_sb.content_margin_right = 0
+	header_sb.content_margin_top = 2
+	header_sb.content_margin_bottom = 2
+	header.add_theme_stylebox_override("normal", header_sb)
+	var header_hover := header_sb.duplicate()
+	header_hover.bg_color = C_SURFACE
+	header.add_theme_stylebox_override("hover", header_hover)
+	header.add_theme_stylebox_override("pressed", header_sb)
+	wrapper.add_child(header)
+
+	var content := VBoxContainer.new()
+	content.add_theme_constant_override("separation", 6)
+	content.visible = not collapsed
+	wrapper.add_child(content)
+
+	header.pressed.connect(func():
+		content.visible = not content.visible
+		var arrow := "\u25bc" if content.visible else "\u25b6"
+		header.text = "%s  %s" % [arrow, title]
+	)
+	return [wrapper, content]
 
 
 func _make_option_button() -> OptionButton:
@@ -591,8 +797,10 @@ func _on_stop() -> void:
 	_play_btn.text = "\u25b6"
 	_preview_frame_index = 0
 	_selected_frame = 0
+	_selected_frames = [0]
 	_timeline_panel.playhead_ms = 0.0
 	_timeline_panel.selected_frame = 0
+	_timeline_panel.selected_frames = [0]
 	_timeline_panel.queue_redraw()
 	_update_preview_frame()
 	_update_frame_props_ui()
@@ -614,40 +822,43 @@ func _on_step_forward() -> void:
 # ── Loading Section ────────────────────────────────────────────────────
 
 func _build_loading_section() -> void:
-	_left_scroll_content.add_child(_make_section_label("Spritesheet"))
+	var parts: Array = _make_collapsible_section("Spritesheet", _left_scroll_content, false)
+	var section: VBoxContainer = parts[1]
 
 	# Animation dropdown (folder names like Slash, Blocking, etc.)
-	_left_scroll_content.add_child(_make_label("Animation"))
+	section.add_child(_make_label("Animation"))
 	_anim_dropdown = _make_option_button()
 	_anim_dropdown.item_selected.connect(_on_anim_selected)
-	_left_scroll_content.add_child(_anim_dropdown)
+	section.add_child(_anim_dropdown)
 
 	# Model dropdown (model prefixes within animation folder)
-	_left_scroll_content.add_child(_make_label("Model"))
+	section.add_child(_make_label("Model"))
 	_model_dropdown = _make_option_button()
-	_left_scroll_content.add_child(_model_dropdown)
+	section.add_child(_model_dropdown)
 
 	# Load button
-	_left_scroll_content.add_child(_make_button("Load Spritesheet", _on_load_pressed, true))
+	section.add_child(_make_button("Load Spritesheet", _on_load_pressed, true))
 
 	# Info label
 	_load_info_label = _make_label("", C_TEXT_DIM)
 	_load_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_left_scroll_content.add_child(_load_info_label)
+	section.add_child(_load_info_label)
 
-	# Separator
-	var sep := HSeparator.new()
-	sep.add_theme_stylebox_override("separator", _make_separator_style())
-	_left_scroll_content.add_child(sep)
+	# Load saved composition
+	section.add_child(_make_label("Saved Compositions"))
+	_composition_dropdown = _make_option_button()
+	section.add_child(_composition_dropdown)
+	_load_composition_btn = _make_button("Load Composition", _on_load_composition_pressed, false)
+	section.add_child(_load_composition_btn)
 
 
 func _build_frame_props_section() -> void:
-	_frame_props_container = VBoxContainer.new()
-	_frame_props_container.add_theme_constant_override("separation", 6)
-	_frame_props_container.visible = false
-	_left_scroll_content.add_child(_frame_props_container)
-
-	_frame_props_container.add_child(_make_section_label("Frame Properties"))
+	# ── Frame Properties (collapsed by default, shown when a frame is selected) ──
+	var frame_parts: Array = _make_collapsible_section("Frame Properties", _left_scroll_content)
+	var frame_wrapper: VBoxContainer = frame_parts[0]
+	_frame_props_container = frame_parts[1]
+	_frame_props_header = frame_wrapper.get_child(0)
+	frame_wrapper.visible = false  # Hidden until data is loaded
 
 	# Duration
 	_frame_props_container.add_child(_make_label("Duration (ms)"))
@@ -673,6 +884,50 @@ func _build_frame_props_section() -> void:
 	_weapon_check.add_theme_color_override("font_color", C_TEXT_SEC)
 	_weapon_check.toggled.connect(_on_weapon_toggled)
 	_frame_props_container.add_child(_weapon_check)
+
+	# Weapon z-index (in front / behind body)
+	_weapon_z_front_check = CheckButton.new()
+	_weapon_z_front_check.text = "Weapon In Front"
+	_weapon_z_front_check.add_theme_font_size_override("font_size", FONT_LABEL)
+	_weapon_z_front_check.add_theme_color_override("font_color", C_TEXT_SEC)
+	_weapon_z_front_check.toggled.connect(_on_weapon_z_front_toggled)
+	_frame_props_container.add_child(_weapon_z_front_check)
+
+	# Draw Anchors toggle
+	_draw_anchors_check = CheckButton.new()
+	_draw_anchors_check.text = "Draw Anchors"
+	_draw_anchors_check.add_theme_font_size_override("font_size", FONT_LABEL)
+	_draw_anchors_check.add_theme_color_override("font_color", C_TEXT_SEC)
+	_draw_anchors_check.toggled.connect(_on_draw_anchors_toggled)
+	_frame_props_container.add_child(_draw_anchors_check)
+
+	# Onion skin container (shown when Draw Anchors is on)
+	_onion_skin_container = VBoxContainer.new()
+	_onion_skin_container.add_theme_constant_override("separation", 4)
+	_onion_skin_container.visible = false
+	_frame_props_container.add_child(_onion_skin_container)
+
+	_onion_skin_check = CheckButton.new()
+	_onion_skin_check.text = "Weapon Onion Skin"
+	_onion_skin_check.add_theme_font_size_override("font_size", FONT_LABEL)
+	_onion_skin_check.add_theme_color_override("font_color", C_TEXT_SEC)
+	_onion_skin_check.toggled.connect(_on_onion_skin_toggled)
+	_onion_skin_container.add_child(_onion_skin_check)
+
+	# Color legend
+	var anchor_legend := HBoxContainer.new()
+	anchor_legend.add_theme_constant_override("separation", 12)
+	_onion_skin_container.add_child(anchor_legend)
+	var grip_legend := Label.new()
+	grip_legend.text = "\u25a0 Grip (L-click)"
+	grip_legend.add_theme_color_override("font_color", Color("#FF00AA"))
+	grip_legend.add_theme_font_size_override("font_size", FONT_HINT)
+	anchor_legend.add_child(grip_legend)
+	var dir_legend := Label.new()
+	dir_legend.text = "\u25a0 Dir (R-click)"
+	dir_legend.add_theme_color_override("font_color", Color("#00FFFF"))
+	dir_legend.add_theme_font_size_override("font_size", FONT_HINT)
+	anchor_legend.add_child(dir_legend)
 
 	# Effect
 	_frame_props_container.add_child(_make_label("Effect"))
@@ -763,26 +1018,16 @@ func _build_frame_props_section() -> void:
 	_echo_spacing_spin.value_changed.connect(_on_echo_setting_changed)
 	_echo_settings_container.add_child(_echo_spacing_spin)
 
-	# Separator before sequence props
-	var sep := HSeparator.new()
-	sep.add_theme_stylebox_override("separator", _make_separator_style())
-	_frame_props_container.add_child(sep)
-
 	# Total duration
 	_total_duration_label = _make_label("Total: 0.000s", C_TEXT)
 	_frame_props_container.add_child(_total_duration_label)
 
-	# Sequence-level properties
-	var sep2 := HSeparator.new()
-	sep2.add_theme_stylebox_override("separator", _make_separator_style())
-	_left_scroll_content.add_child(sep2)
-
-	_seq_props_container = VBoxContainer.new()
-	_seq_props_container.add_theme_constant_override("separation", 6)
-	_seq_props_container.visible = false
-	_left_scroll_content.add_child(_seq_props_container)
-
-	_seq_props_container.add_child(_make_section_label("Sequence Properties"))
+	# ── Sequence Properties (collapsed by default) ──
+	var seq_parts: Array = _make_collapsible_section("Sequence Properties", _left_scroll_content)
+	var seq_wrapper: VBoxContainer = seq_parts[0]
+	_seq_props_container = seq_parts[1]
+	_seq_props_header = seq_wrapper.get_child(0)
+	seq_wrapper.visible = false  # Hidden until data is loaded
 
 	_seq_props_container.add_child(_make_label("Movement Type"))
 	_movement_type_dropdown = _make_option_button()
@@ -828,32 +1073,22 @@ func _build_frame_props_section() -> void:
 	_damage_frame_spin.value_changed.connect(_on_damage_frame_changed)
 	_seq_props_container.add_child(_damage_frame_spin)
 
-	# Generate & Save section
-	var save_sep := HSeparator.new()
-	save_sep.add_theme_stylebox_override("separator", _make_separator_style())
-	_left_scroll_content.add_child(save_sep)
+	# ── Save & Export (collapsed by default) ──
+	var save_parts: Array = _make_collapsible_section("Save & Export", _left_scroll_content)
+	var save_section: VBoxContainer = save_parts[1]
+	_save_spritesheets_btn = _make_button("Save Spritesheets", _on_save_spritesheets)
+	_save_spritesheets_btn.disabled = true
+	_save_spritesheets_btn.tooltip_text = "Save modified spritesheets (anchors baked into PNGs)"
+	save_section.add_child(_save_spritesheets_btn)
+	save_section.add_child(_make_button("Generate Runtime Data", _on_generate_runtime))
+	save_section.add_child(_make_button("Save Composition", _on_save_composition))
+	save_section.add_child(_make_button("Save Runtime Data", _on_save_runtime))
+	save_section.add_child(_make_button("Save Both", _on_save_both, true))
 
-	var save_container := VBoxContainer.new()
-	save_container.add_theme_constant_override("separation", 6)
-	_left_scroll_content.add_child(save_container)
-
-	save_container.add_child(_make_section_label("Save & Export"))
-	save_container.add_child(_make_button("Generate Runtime Data", _on_generate_runtime))
-	save_container.add_child(_make_button("Save Composition", _on_save_composition))
-	save_container.add_child(_make_button("Save Runtime Data", _on_save_runtime))
-	save_container.add_child(_make_button("Save Both", _on_save_both, true))
-
-	# Load section
-	var load_sep := HSeparator.new()
-	load_sep.add_theme_stylebox_override("separator", _make_separator_style())
-	_left_scroll_content.add_child(load_sep)
-
-	var load_container := VBoxContainer.new()
-	load_container.add_theme_constant_override("separation", 6)
-	_left_scroll_content.add_child(load_container)
-
-	load_container.add_child(_make_section_label("Load Composition"))
-	load_container.add_child(_make_button("Refresh", _scan_saved_compositions))
+	# ── Load Composition (collapsed by default) ──
+	var load_parts: Array = _make_collapsible_section("Load Composition", _left_scroll_content)
+	var load_section: VBoxContainer = load_parts[1]
+	load_section.add_child(_make_button("Refresh", _refresh_composition_dropdown))
 
 
 func _scan_animations() -> void:
@@ -986,6 +1221,9 @@ func _on_load_pressed() -> void:
 
 	_preview_frame_index = 0
 	_selected_frame = 0
+	_selected_frames = [0]
+	_undo_stack.clear()
+	_update_undo_button()
 
 	_load_info_label.text = "Loaded: %s (%d frames, %dx%d)" % [anim_folder, frame_count, _frame_size.x, _frame_size.y]
 	_set_status("Spritesheet loaded. %d frames at %dx%d." % [frame_count, _frame_size.x, _frame_size.y])
@@ -994,14 +1232,14 @@ func _on_load_pressed() -> void:
 
 
 func _on_spritesheet_loaded() -> void:
-	# Resize viewport to match frame size
-	_preview_viewport.size = Vector2i(_frame_size.x, _frame_size.y)
-	_preview_checker.size = Vector2(_frame_size.x, _frame_size.y)
-	_preview_sprite.position = Vector2(_frame_size.x / 2.0, _frame_size.y / 2.0)
+	# Reposition sprite to center of viewport (viewport size is managed by stretch)
+	_reposition_preview_sprite()
 
 	# Feed data to timeline
 	_timeline_panel.composition = _current_composition
 	_timeline_panel.selected_frame = 0
+	_selected_frames = [0]
+	_timeline_panel.selected_frames = [0]
 	# Create thumbnails from the "down" direction frames
 	_timeline_panel.frame_thumbnails.clear()
 	if _frame_textures.has("down"):
@@ -1027,8 +1265,17 @@ func _update_preview_frame() -> void:
 	# Update weapon
 	_update_weapon_preview()
 
+	# Update anchor detection indicator
+	_update_anchor_indicator()
+
 	# Update echo ghosts
 	_update_echo_preview()
+
+	# Update crosshair overlay (anchor drawing mode)
+	_update_crosshair_overlay()
+
+	# Update onion weapon ghost (previous frame's weapon)
+	_update_onion_weapon()
 
 
 func _update_direction_highlight() -> void:
@@ -1061,47 +1308,82 @@ const WEAPON_DIRECTION_COLOR := Color("#00FFFF")
 func _update_weapon_preview() -> void:
 	if _current_composition == null or _preview_frame_index < 0:
 		_weapon_sprite.visible = false
+		_weapon_debug = "no composition"
 		return
 
 	if _preview_frame_index >= _current_composition.frames.size():
 		_weapon_sprite.visible = false
+		_weapon_debug = "frame out of range"
 		return
 
 	var frame := _current_composition.frames[_preview_frame_index]
 	if not frame.weapon_visible:
 		_weapon_sprite.visible = false
+		_weapon_debug = "weapon_visible=false"
 		return
-
-	# Get weapon texture for current direction
-	var weapon_tex: Texture2D = _weapon_set.get(_preview_direction)
-	if weapon_tex == null:
-		_weapon_sprite.visible = false
-		return
-
-	_weapon_sprite.texture = weapon_tex
-	_weapon_sprite.visible = true
 
 	# Find anchor pixels in the current body frame
 	if not _frame_images.has(_preview_direction):
+		_weapon_sprite.visible = false
+		_weapon_debug = "no images for dir=%s" % _preview_direction
 		return
 	var images: Array = _frame_images[_preview_direction]
 	if _preview_frame_index >= images.size():
+		_weapon_sprite.visible = false
+		_weapon_debug = "frame idx >= images"
 		return
 
 	var img: Image = images[_preview_frame_index]
 	var anchors := _find_anchors_in_image(img)
-	var grip: Vector2 = anchors.get("grip", Vector2.INF)
+	var grip_px: Vector2 = anchors.get("grip", Vector2.INF)
 
-	if grip == Vector2.INF:
-		# No anchor found — center weapon
-		_weapon_sprite.position = _preview_sprite.position
+	if grip_px == Vector2.INF:
+		_weapon_sprite.visible = false
+		_weapon_debug = "no grip pixel found"
 		return
 
-	# Position weapon at grip anchor
-	var grip_key := "grip_%s" % _preview_direction
-	var weapon_grip: Vector2 = _weapon_set.get(grip_key, Vector2.ZERO)
-	_weapon_sprite.position = _preview_sprite.position + grip - Vector2(_frame_size.x / 2.0, _frame_size.y / 2.0)
-	_weapon_sprite.offset = -weapon_grip
+	# Always use the "right" texture as base and rotate to exact angle
+	var weapon_tex: Texture2D = _weapon_set.get("right")
+	if weapon_tex == null:
+		_weapon_sprite.visible = false
+		_weapon_debug = "no 'right' tex in weapon_set"
+		return
+
+	_weapon_sprite.texture = weapon_tex
+	_weapon_sprite.visible = true
+	_weapon_sprite.scale = _preview_sprite.scale
+
+	# Compute rotation from grip → direction pixel
+	var direction_px: Vector2 = anchors.get("direction", Vector2.INF)
+	if direction_px != Vector2.INF:
+		_weapon_sprite.rotation = atan2(direction_px.y - grip_px.y, direction_px.x - grip_px.x)
+	else:
+		_weapon_sprite.rotation = 0.0
+
+	# Position: grip pixel in image coords → viewport coords
+	var anchor_offset := (grip_px - Vector2(_frame_size) / 2.0) * _preview_sprite.scale
+	_weapon_sprite.position = _preview_sprite.position + anchor_offset
+
+	# Offset: shift texture so the "right" grip point sits at the position
+	var weapon_grip: Vector2 = _weapon_set.get("grip_right", Vector2.ZERO)
+	if weapon_grip != Vector2.ZERO:
+		var tex_size := weapon_tex.get_size()
+		_weapon_sprite.offset = Vector2(tex_size.x / 2.0 - weapon_grip.x, tex_size.y / 2.0 - weapon_grip.y)
+	else:
+		_weapon_sprite.offset = Vector2.ZERO
+
+	# Z-index preview: "behind" shown as semi-transparent instead of z=-1,
+	# because the preview body is a single sprite so z=-1 hides the weapon entirely.
+	# In-game, layered body parts allow true partial occlusion.
+	if frame.weapon_z_front:
+		_weapon_sprite.z_index = 1
+		_weapon_sprite.modulate = Color(1.0, 1.0, 1.0, 0.9)
+	else:
+		_weapon_sprite.z_index = 1
+		_weapon_sprite.modulate = Color(0.6, 0.6, 1.0, 0.4)
+	var angle_deg := rad_to_deg(_weapon_sprite.rotation)
+	_weapon_debug = "OK %.0fdeg pos=%s" % [angle_deg, str(_weapon_sprite.position)]
+
 
 
 func _find_anchors_in_image(img: Image) -> Dictionary:
@@ -1109,13 +1391,19 @@ func _find_anchors_in_image(img: Image) -> Dictionary:
 	for y in range(img.get_height()):
 		for x in range(img.get_width()):
 			var pixel := img.get_pixel(x, y)
-			if pixel.is_equal_approx(WEAPON_ANCHOR_COLOR) and not result.has("grip"):
+			# Compare RGB only — alpha can vary depending on image format
+			if _rgb_approx(pixel, WEAPON_ANCHOR_COLOR) and not result.has("grip"):
 				result["grip"] = Vector2(x, y)
-			elif pixel.is_equal_approx(WEAPON_DIRECTION_COLOR) and not result.has("direction"):
+			elif _rgb_approx(pixel, WEAPON_DIRECTION_COLOR) and not result.has("direction"):
 				result["direction"] = Vector2(x, y)
 			if result.size() == 2:
 				return result
 	return result
+
+
+## Compare two colors by RGB channels only, ignoring alpha.
+func _rgb_approx(a: Color, b: Color) -> bool:
+	return absf(a.r - b.r) < 0.02 and absf(a.g - b.g) < 0.02 and absf(a.b - b.b) < 0.02
 
 
 func _update_echo_preview() -> void:
@@ -1149,7 +1437,8 @@ func _update_echo_preview() -> void:
 		var ghost := Sprite2D.new()
 		ghost.centered = true
 		ghost.texture = textures[echo_frame_idx]
-		ghost.position = _preview_sprite.position - Vector2(0, spacing * (i + 1))
+		ghost.scale = _preview_sprite.scale
+		ghost.position = _preview_sprite.position - Vector2(0, spacing * _preview_sprite.scale.y * (i + 1))
 		var t := float(i) / float(count - 1) if count > 1 else 0.0
 		ghost.modulate.a = lerpf(frame.echo_opacity_start, frame.echo_opacity_end, t)
 		ghost.z_index = -1
@@ -1157,12 +1446,82 @@ func _update_echo_preview() -> void:
 		_echo_sprites.append(ghost)
 
 
+func _update_anchor_indicator() -> void:
+	if _anchor_label == null:
+		return
+	if _frame_images.is_empty() or not _frame_images.has(_preview_direction):
+		_anchor_label.text = ""
+		return
+	var images: Array = _frame_images[_preview_direction]
+	if _preview_frame_index < 0 or _preview_frame_index >= images.size():
+		_anchor_label.text = ""
+		return
+
+	var img: Image = images[_preview_frame_index]
+	var anchors := _find_anchors_in_image(img)
+	var has_grip := anchors.has("grip")
+	var has_dir := anchors.has("direction")
+
+	var parts: Array[String] = []
+	if has_grip:
+		var g: Vector2 = anchors["grip"]
+		parts.append("Grip(%d,%d)" % [int(g.x), int(g.y)])
+	if has_dir:
+		var d: Vector2 = anchors["direction"]
+		parts.append("Dir(%d,%d)" % [int(d.x), int(d.y)])
+
+	var anchor_text := " | ".join(parts) if not parts.is_empty() else "No anchors"
+	# Append weapon status directly in the label
+	var weapon_short := _weapon_debug.substr(0, mini(30, _weapon_debug.length()))
+	_anchor_label.text = "%s [W:%s]" % [anchor_text, weapon_short]
+	if parts.is_empty():
+		_anchor_label.add_theme_color_override("font_color", C_WARNING)
+	elif parts.size() == 1:
+		_anchor_label.add_theme_color_override("font_color", C_WARNING)
+	else:
+		_anchor_label.add_theme_color_override("font_color", C_SUCCESS)
+
+
+func _on_preview_viewport_resized() -> void:
+	if _preview_checker == null:
+		return
+	_preview_checker.size = Vector2(_preview_viewport.size)
+	_reposition_preview_sprite()
+
+
+func _reposition_preview_sprite() -> void:
+	var vp_size := Vector2(_preview_viewport.size)
+	# Center the sprite in the viewport
+	var center := vp_size / 2.0
+	_preview_sprite.position = center
+
+	# Scale to fit within the viewport with some padding (80%)
+	if _frame_size != Vector2i.ZERO:
+		var scale_x := (vp_size.x * 0.8) / float(_frame_size.x)
+		var scale_y := (vp_size.y * 0.8) / float(_frame_size.y)
+		var uniform_scale := minf(scale_x, scale_y)
+		# Snap to integer scale if possible for crisp pixel art
+		if uniform_scale >= 2.0:
+			uniform_scale = floorf(uniform_scale)
+		_preview_sprite.scale = Vector2(uniform_scale, uniform_scale)
+	else:
+		_preview_sprite.scale = Vector2.ONE
+
+	# Reposition weapon, echo ghosts, crosshair, and onion skin too
+	_update_weapon_preview()
+	_update_echo_preview()
+	_update_crosshair_overlay()
+	_update_onion_weapon()
+
+
 func _on_frame_prev() -> void:
 	if _current_composition == null:
 		return
 	_preview_frame_index = max(0, _preview_frame_index - 1)
 	_selected_frame = _preview_frame_index
+	_selected_frames = [_selected_frame]
 	_timeline_panel.selected_frame = _selected_frame
+	_timeline_panel.selected_frames = _selected_frames
 	_timeline_panel.queue_redraw()
 	_update_preview_frame()
 	_update_frame_props_ui()
@@ -1174,7 +1533,9 @@ func _on_frame_next() -> void:
 	var max_frame := _current_composition.frames.size() - 1
 	_preview_frame_index = min(max_frame, _preview_frame_index + 1)
 	_selected_frame = _preview_frame_index
+	_selected_frames = [_selected_frame]
 	_timeline_panel.selected_frame = _selected_frame
+	_timeline_panel.selected_frames = _selected_frames
 	_timeline_panel.queue_redraw()
 	_update_preview_frame()
 	_update_frame_props_ui()
@@ -1185,6 +1546,8 @@ func show_frame(index: int) -> void:
 		return
 	_preview_frame_index = clampi(index, 0, _current_composition.frames.size() - 1)
 	_selected_frame = _preview_frame_index
+	_selected_frames = [_selected_frame]
+	_timeline_panel.selected_frames = _selected_frames
 	_update_preview_frame()
 
 
@@ -1192,9 +1555,20 @@ func show_frame(index: int) -> void:
 
 func _on_timeline_frame_selected(index: int) -> void:
 	_selected_frame = index
+	_selected_frames = [index]
 	_preview_frame_index = index
 	_update_preview_frame()
 	_update_frame_props_ui()
+
+
+func _on_timeline_frames_selected(indices: Array[int]) -> void:
+	_selected_frames = indices
+	if not indices.is_empty():
+		_selected_frame = indices[-1]
+		_preview_frame_index = _selected_frame
+		_update_preview_frame()
+		_update_frame_props_ui()
+	_set_status("%d frames selected." % indices.size())
 
 
 func _on_timeline_duration_changed(_index: int, _new_ms: int) -> void:
@@ -1214,6 +1588,7 @@ func _on_timeline_playhead_moved(ms: float) -> void:
 		if ms < cumulative:
 			_preview_frame_index = i
 			_selected_frame = i
+			_selected_frames = [i]
 			_update_preview_frame()
 			return
 
@@ -1221,13 +1596,14 @@ func _on_timeline_playhead_moved(ms: float) -> void:
 # ── Frame property handlers ────────────────────────────────────────────
 
 func _update_frame_props_ui() -> void:
-	if _current_composition == null or _selected_frame < 0 or _selected_frame >= _current_composition.frames.size():
-		_frame_props_container.visible = false
-		_seq_props_container.visible = false
+	var has_data := _current_composition != null and _selected_frame >= 0 and _selected_frame < _current_composition.frames.size()
+	# Show/hide the wrapper containers (header + content)
+	var frame_wrapper := _frame_props_container.get_parent()
+	var seq_wrapper := _seq_props_container.get_parent()
+	frame_wrapper.visible = has_data
+	seq_wrapper.visible = has_data
+	if not has_data:
 		return
-
-	_frame_props_container.visible = true
-	_seq_props_container.visible = true
 
 	var frame := _current_composition.frames[_selected_frame]
 
@@ -1235,6 +1611,7 @@ func _update_frame_props_ui() -> void:
 	_duration_spinbox.set_value_no_signal(frame.duration_ms)
 	_fps_label.text = "~ %.1f fps" % (1000.0 / maxf(frame.duration_ms, 1))
 	_weapon_check.set_pressed_no_signal(frame.weapon_visible)
+	_weapon_z_front_check.set_pressed_no_signal(frame.weapon_z_front)
 	_echo_check.set_pressed_no_signal(frame.echo_enabled)
 	_echo_settings_container.visible = frame.echo_enabled
 	_echo_count_spin.set_value_no_signal(frame.echo_count)
@@ -1271,63 +1648,108 @@ func _update_frame_props_ui() -> void:
 	_total_duration_label.text = "Total: %.3fs" % _current_composition.get_total_duration_sec()
 
 
+func _get_target_frames() -> Array[int]:
+	if _selected_frames.size() > 1:
+		return _selected_frames
+	if _selected_frame >= 0:
+		return [_selected_frame]
+	return []
+
+
 func _on_duration_changed(value: float) -> void:
-	if _current_composition == null or _selected_frame < 0:
+	var targets := _get_target_frames()
+	if _current_composition == null or targets.is_empty():
 		return
-	_current_composition.frames[_selected_frame].duration_ms = int(value)
+	_push_undo()
+	for idx in targets:
+		_current_composition.frames[idx].duration_ms = int(value)
 	_fps_label.text = "~ %.1f fps" % (1000.0 / maxf(value, 1))
 	_total_duration_label.text = "Total: %.3fs" % _current_composition.get_total_duration_sec()
 	_timeline_panel.queue_redraw()
 
 
 func _on_weapon_toggled(pressed: bool) -> void:
-	if _current_composition == null or _selected_frame < 0:
+	var targets := _get_target_frames()
+	if _current_composition == null or targets.is_empty():
 		return
-	_current_composition.frames[_selected_frame].weapon_visible = pressed
+	_push_undo()
+	for idx in targets:
+		_current_composition.frames[idx].weapon_visible = pressed
+	_update_preview_frame()
+	_timeline_panel.queue_redraw()
+
+
+func _on_weapon_z_front_toggled(pressed: bool) -> void:
+	var targets := _get_target_frames()
+	if _current_composition == null or targets.is_empty():
+		return
+	_push_undo()
+	for idx in targets:
+		_current_composition.frames[idx].weapon_z_front = pressed
+	_update_preview_frame()
 	_timeline_panel.queue_redraw()
 
 
 func _on_effect_selected(index: int) -> void:
-	if _current_composition == null or _selected_frame < 0:
+	var targets := _get_target_frames()
+	if _current_composition == null or targets.is_empty():
 		return
+	_push_undo()
 	var text := _effect_dropdown.get_item_text(index)
-	_current_composition.frames[_selected_frame].effect_id = "" if text == "(none)" else text
+	var effect_id := "" if text == "(none)" else text
+	for idx in targets:
+		_current_composition.frames[idx].effect_id = effect_id
 	_timeline_panel.queue_redraw()
 
 
 func _on_effect_anchor_selected(index: int) -> void:
-	if _current_composition == null or _selected_frame < 0:
+	var targets := _get_target_frames()
+	if _current_composition == null or targets.is_empty():
 		return
-	_current_composition.frames[_selected_frame].effect_anchor = _effect_anchor_dropdown.get_item_text(index)
+	_push_undo()
+	var anchor_text := _effect_anchor_dropdown.get_item_text(index)
+	for idx in targets:
+		_current_composition.frames[idx].effect_anchor = anchor_text
 
 
 func _on_effect_offset_changed(_value: float) -> void:
-	if _current_composition == null or _selected_frame < 0:
+	var targets := _get_target_frames()
+	if _current_composition == null or targets.is_empty():
 		return
-	_current_composition.frames[_selected_frame].effect_offset = Vector2(_effect_offset_x.value, _effect_offset_y.value)
+	_push_undo()
+	var offset := Vector2(_effect_offset_x.value, _effect_offset_y.value)
+	for idx in targets:
+		_current_composition.frames[idx].effect_offset = offset
 
 
 func _on_echo_toggled(pressed: bool) -> void:
-	if _current_composition == null or _selected_frame < 0:
+	var targets := _get_target_frames()
+	if _current_composition == null or targets.is_empty():
 		return
-	_current_composition.frames[_selected_frame].echo_enabled = pressed
+	_push_undo()
+	for idx in targets:
+		_current_composition.frames[idx].echo_enabled = pressed
 	_echo_settings_container.visible = pressed
 	_timeline_panel.queue_redraw()
 
 
 func _on_echo_setting_changed(_value: float) -> void:
-	if _current_composition == null or _selected_frame < 0:
+	var targets := _get_target_frames()
+	if _current_composition == null or targets.is_empty():
 		return
-	var frame := _current_composition.frames[_selected_frame]
-	frame.echo_count = int(_echo_count_spin.value)
-	frame.echo_opacity_start = _echo_opacity_start_slider.value
-	frame.echo_opacity_end = _echo_opacity_end_slider.value
-	frame.echo_spacing_px = _echo_spacing_spin.value
+	_push_undo()
+	for idx in targets:
+		var frame := _current_composition.frames[idx]
+		frame.echo_count = int(_echo_count_spin.value)
+		frame.echo_opacity_start = _echo_opacity_start_slider.value
+		frame.echo_opacity_end = _echo_opacity_end_slider.value
+		frame.echo_spacing_px = _echo_spacing_spin.value
 
 
 func _on_movement_type_selected(index: int) -> void:
 	if _current_composition == null:
 		return
+	_push_undo()
 	var text := _movement_type_dropdown.get_item_text(index)
 	_current_composition.movement_type = "" if text == "none" else text
 	_timeline_panel.queue_redraw()
@@ -1336,6 +1758,7 @@ func _on_movement_type_selected(index: int) -> void:
 func _on_seq_prop_changed(_value: float) -> void:
 	if _current_composition == null:
 		return
+	_push_undo()
 	_current_composition.movement_distance = _movement_distance_spin.value
 	_current_composition.movement_start_frame = int(_movement_start_spin.value)
 	_current_composition.movement_end_frame = int(_movement_end_spin.value)
@@ -1345,6 +1768,7 @@ func _on_seq_prop_changed(_value: float) -> void:
 func _on_damage_frame_changed(value: float) -> void:
 	if _current_composition == null:
 		return
+	_push_undo()
 	_current_composition.damage_frame = int(value)
 	_timeline_panel.queue_redraw()
 
@@ -1380,6 +1804,7 @@ func _on_save_composition() -> void:
 	var path := "%s/%s.tres" % [COMPOSITIONS_DIR, _current_composition.composition_id]
 	var err := ResourceSaver.save(_current_composition, path)
 	if err == OK:
+		_refresh_composition_dropdown()
 		_set_status("Saved composition to %s" % path)
 	else:
 		_set_status("Error saving composition: %s" % error_string(err))
@@ -1404,11 +1829,11 @@ func _on_save_both() -> void:
 	_on_save_runtime()
 
 
-func _scan_saved_compositions() -> void:
+func _refresh_composition_dropdown() -> void:
 	_ensure_dirs()
+	_composition_dropdown.clear()
 	var dir := DirAccess.open(COMPOSITIONS_DIR)
 	if dir == null:
-		_set_status("Cannot open compositions directory")
 		return
 
 	var files: Array[String] = []
@@ -1419,29 +1844,384 @@ func _scan_saved_compositions() -> void:
 			files.append(file_name.get_basename())
 		file_name = dir.get_next()
 	dir.list_dir_end()
+	files.sort()
 
-	if files.is_empty():
-		_set_status("No saved compositions found.")
-	else:
-		_set_status("Found %d saved composition(s)." % files.size())
-		for f in files:
-			print("  - %s" % f)
+	for f in files:
+		_composition_dropdown.add_item(f)
+	_load_composition_btn.disabled = files.is_empty()
 
 
-func _load_composition(composition_id: String) -> void:
+func _on_load_composition_pressed() -> void:
+	var idx := _composition_dropdown.selected
+	if idx < 0:
+		_set_status("No composition selected.")
+		return
+	var composition_id: String = _composition_dropdown.get_item_text(idx)
+
+	# Load the composition resource
 	var path := "%s/%s.tres" % [COMPOSITIONS_DIR, composition_id]
 	if not ResourceLoader.exists(path):
 		_set_status("Composition not found: %s" % path)
 		return
 	var loaded := load(path)
-	if loaded is AttackCompositionData:
-		_current_composition = loaded
+	if not loaded is AttackCompositionData:
+		_set_status("Invalid composition resource: %s" % path)
+		return
+	var comp: AttackCompositionData = loaded
+
+	# Derive model name from composition_id by stripping the animation suffix
+	# composition_id = "{model}_{animation_name}" (e.g., "mixamo_com_hiltbash")
+	var anim_lower: String = comp.animation_name
+	var model_name := ""
+	if composition_id.ends_with("_" + anim_lower):
+		model_name = composition_id.substr(0, composition_id.length() - anim_lower.length() - 1)
+
+	# Find the actual animation folder (case-insensitive match against available anims)
+	var anim_folder := ""
+	for folder in _available_anims:
+		if folder.to_lower() == anim_lower:
+			anim_folder = folder
+			break
+
+	if anim_folder.is_empty() or model_name.is_empty():
+		_set_status("Cannot determine spritesheet for composition '%s'. Load spritesheet manually." % composition_id)
+		# Still apply the composition data without spritesheet
+		_current_composition = comp
 		_selected_frame = 0
+		_selected_frames = [0]
 		_preview_frame_index = 0
+		_undo_stack.clear()
+		_update_undo_button()
 		_timeline_panel.composition = _current_composition
 		_timeline_panel.selected_frame = 0
+		_timeline_panel.selected_frames = [0]
 		_timeline_panel.queue_redraw()
 		_update_frame_props_ui()
-		_set_status("Loaded composition: %s" % composition_id)
+		return
+
+	# Load spritesheets for all directions
+	_frame_images.clear()
+	_frame_textures.clear()
+	var frame_count := -1
+
+	for direction in DIRECTIONS:
+		var sheet_path := "%s/%s/%s_%s.png" % [SPRITES_BASE, anim_folder, model_name, direction]
+		if not ResourceLoader.exists(sheet_path):
+			_set_status("Missing spritesheet: %s" % sheet_path)
+			return
+
+		var tex := load(sheet_path) as Texture2D
+		if tex == null:
+			_set_status("Failed to load: %s" % sheet_path)
+			return
+
+		var sheet_image := tex.get_image()
+		if sheet_image == null:
+			_set_status("Failed to get image data from: %s" % sheet_path)
+			return
+
+		var sheet_w := sheet_image.get_width()
+		var sheet_h := sheet_image.get_height()
+		var fw := sheet_h
+		var count := sheet_w / fw
+
+		if frame_count < 0:
+			frame_count = count
+			_frame_size = Vector2i(fw, sheet_h)
+		elif count != frame_count:
+			_set_status("Frame count mismatch: %s has %d frames (expected %d)" % [direction, count, frame_count])
+			return
+
+		var images: Array[Image] = []
+		var textures: Array[ImageTexture] = []
+		for i in count:
+			var frame_img := Image.create(fw, sheet_h, false, sheet_image.get_format())
+			frame_img.blit_rect(sheet_image, Rect2i(i * fw, 0, fw, sheet_h), Vector2i.ZERO)
+			images.append(frame_img)
+			textures.append(ImageTexture.create_from_image(frame_img))
+
+		_frame_images[direction] = images
+		_frame_textures[direction] = textures
+
+	# Apply composition and set up state
+	_current_anim = anim_folder
+	_current_model = model_name
+	_current_composition = comp
+	_preview_frame_index = 0
+	_selected_frame = 0
+	_selected_frames = [0]
+	_undo_stack.clear()
+	_update_undo_button()
+
+	# Sync dropdowns to match
+	for i in _available_anims.size():
+		if _available_anims[i] == anim_folder:
+			_anim_dropdown.select(i)
+			_on_anim_selected(i)
+			break
+	for i in _available_models.size():
+		if _available_models[i] == model_name:
+			_model_dropdown.select(i)
+			break
+
+	_load_info_label.text = "Loaded: %s (%d frames, %dx%d)" % [anim_folder, frame_count, _frame_size.x, _frame_size.y]
+	_on_spritesheet_loaded()
+	_set_status("Loaded composition '%s' with spritesheets." % composition_id)
+
+
+# ── Anchor Painting ───────────────────────────────────────────────────
+
+func _on_preview_viewport_input(event: InputEvent) -> void:
+	if not _anchor_draw_enabled:
+		return
+	if not event is InputEventMouseButton:
+		return
+	var mb := event as InputEventMouseButton
+	if not mb.pressed:
+		return
+
+	# Left-click = grip, Right-click = direction
+	var tool_name: String
+	if mb.button_index == MOUSE_BUTTON_LEFT:
+		tool_name = "grip"
+	elif mb.button_index == MOUSE_BUTTON_RIGHT:
+		tool_name = "direction"
 	else:
-		_set_status("Invalid composition resource: %s" % path)
+		return
+
+	# Convert container click coords → viewport pixel coords → frame pixel coords
+	var container_size := _viewport_container_ref.size
+	var vp_size := Vector2(_preview_viewport.size)
+	if container_size.x <= 0 or container_size.y <= 0:
+		return
+
+	var vp_click := mb.position * (vp_size / container_size)
+
+	# Viewport coords → frame pixel coords
+	# The sprite is centered at _preview_sprite.position, scaled by _preview_sprite.scale
+	var sprite_pos := _preview_sprite.position
+	var sprite_scale := _preview_sprite.scale
+	if sprite_scale.x <= 0 or sprite_scale.y <= 0:
+		return
+
+	var pixel := (vp_click - sprite_pos) / sprite_scale + Vector2(_frame_size) / 2.0
+	var px := int(pixel.x)
+	var py := int(pixel.y)
+
+	# Bounds check
+	if px < 0 or px >= _frame_size.x or py < 0 or py >= _frame_size.y:
+		return
+
+	_push_undo()
+	_place_anchor_on_frame(px, py, tool_name)
+	_viewport_container_ref.accept_event()
+
+
+func _place_anchor_on_frame(x: int, y: int, tool_name: String) -> void:
+	if not _frame_images.has(_preview_direction):
+		return
+	var images: Array = _frame_images[_preview_direction]
+	if _preview_frame_index < 0 or _preview_frame_index >= images.size():
+		return
+
+	var img: Image = images[_preview_frame_index]
+	var color: Color
+	if tool_name == "grip":
+		color = WEAPON_ANCHOR_COLOR
+	else:
+		color = WEAPON_DIRECTION_COLOR
+
+	# Clear existing pixels of that color from this frame
+	_clear_anchor_color(img, color)
+	# Place the new anchor pixel
+	img.set_pixel(x, y, color)
+
+	# Recreate texture for this frame
+	var textures: Array = _frame_textures[_preview_direction]
+	textures[_preview_frame_index] = ImageTexture.create_from_image(img)
+
+	# Update timeline thumbnails if this is the "down" direction
+	if _preview_direction == "down":
+		_timeline_panel.frame_thumbnails.clear()
+		var down_textures: Array = _frame_textures["down"]
+		for tex in down_textures:
+			_timeline_panel.frame_thumbnails.append(tex)
+		_timeline_panel.queue_redraw()
+
+	_anchor_images_dirty = true
+	if _save_spritesheets_btn:
+		_save_spritesheets_btn.disabled = false
+
+	_update_preview_frame()
+
+
+func _clear_anchor_color(img: Image, color: Color) -> void:
+	for y in range(img.get_height()):
+		for x in range(img.get_width()):
+			var pixel := img.get_pixel(x, y)
+			if _rgb_approx(pixel, color):
+				img.set_pixel(x, y, Color.TRANSPARENT)
+
+
+func _on_draw_anchors_toggled(pressed: bool) -> void:
+	_anchor_draw_enabled = pressed
+	_onion_skin_container.visible = pressed
+	if not pressed:
+		_anchor_onion_skin_enabled = false
+		if _onion_skin_check:
+			_onion_skin_check.set_pressed_no_signal(false)
+		_onion_weapon_sprite.visible = false
+		_crosshair_sprite.visible = false
+	_update_crosshair_overlay()
+	if pressed:
+		_set_status("Anchor drawing ON. L-click = grip, R-click = direction.")
+	else:
+		_set_status("Anchor drawing OFF.")
+
+
+func _on_onion_skin_toggled(pressed: bool) -> void:
+	_anchor_onion_skin_enabled = pressed
+	_update_onion_weapon()
+
+
+func _update_crosshair_overlay() -> void:
+	if not _anchor_draw_enabled:
+		if _crosshair_sprite:
+			_crosshair_sprite.visible = false
+		return
+	if _frame_images.is_empty() or not _frame_images.has(_preview_direction):
+		_crosshair_sprite.visible = false
+		return
+	var images: Array = _frame_images[_preview_direction]
+	if _preview_frame_index < 0 or _preview_frame_index >= images.size():
+		_crosshair_sprite.visible = false
+		return
+
+	var img: Image = images[_preview_frame_index]
+	var anchors := _find_anchors_in_image(img)
+
+	if anchors.is_empty():
+		_crosshair_sprite.visible = false
+		return
+
+	# Create transparent overlay at frame size
+	var overlay := Image.create(_frame_size.x, _frame_size.y, true, Image.FORMAT_RGBA8)
+	# Draw crosshairs at anchor positions
+	if anchors.has("grip"):
+		var g: Vector2 = anchors["grip"]
+		_draw_crosshair_on_image(overlay, int(g.x), int(g.y), WEAPON_ANCHOR_COLOR)
+	if anchors.has("direction"):
+		var d: Vector2 = anchors["direction"]
+		_draw_crosshair_on_image(overlay, int(d.x), int(d.y), WEAPON_DIRECTION_COLOR)
+
+	_crosshair_sprite.texture = ImageTexture.create_from_image(overlay)
+	_crosshair_sprite.position = _preview_sprite.position
+	_crosshair_sprite.scale = _preview_sprite.scale
+	_crosshair_sprite.visible = true
+
+
+func _draw_crosshair_on_image(img: Image, cx: int, cy: int, color: Color) -> void:
+	## Draw a small crosshair (4-pixel arms) around the given pixel.
+	var offsets: Array[Vector2i] = [
+		Vector2i(-2, 0), Vector2i(-1, 0), Vector2i(1, 0), Vector2i(2, 0),
+		Vector2i(0, -2), Vector2i(0, -1), Vector2i(0, 1), Vector2i(0, 2)]
+	for ofs in offsets:
+		var px: int = cx + ofs.x
+		var py: int = cy + ofs.y
+		if px >= 0 and px < img.get_width() and py >= 0 and py < img.get_height():
+			img.set_pixel(px, py, color)
+	# Also draw the center pixel
+	if cx >= 0 and cx < img.get_width() and cy >= 0 and cy < img.get_height():
+		img.set_pixel(cx, cy, color)
+
+
+func _update_onion_weapon() -> void:
+	if not _anchor_onion_skin_enabled or _preview_frame_index <= 0:
+		if _onion_weapon_sprite:
+			_onion_weapon_sprite.visible = false
+		return
+	if _current_composition == null or _preview_frame_index >= _current_composition.frames.size():
+		_onion_weapon_sprite.visible = false
+		return
+	if not _frame_images.has(_preview_direction):
+		_onion_weapon_sprite.visible = false
+		return
+
+	var prev_idx := _preview_frame_index - 1
+	var images: Array = _frame_images[_preview_direction]
+	if prev_idx < 0 or prev_idx >= images.size():
+		_onion_weapon_sprite.visible = false
+		return
+
+	var prev_img: Image = images[prev_idx]
+	var anchors := _find_anchors_in_image(prev_img)
+	var grip_px: Vector2 = anchors.get("grip", Vector2.INF)
+	if grip_px == Vector2.INF:
+		_onion_weapon_sprite.visible = false
+		return
+
+	# Use same weapon texture as main weapon sprite
+	var weapon_tex: Texture2D = _weapon_set.get("right")
+	if weapon_tex == null:
+		_onion_weapon_sprite.visible = false
+		return
+
+	_onion_weapon_sprite.texture = weapon_tex
+	_onion_weapon_sprite.visible = true
+	_onion_weapon_sprite.scale = _preview_sprite.scale
+	_onion_weapon_sprite.modulate = Color(1, 1, 1, 0.3)
+
+	# Compute rotation from grip → direction pixel (same as _update_weapon_preview)
+	var direction_px: Vector2 = anchors.get("direction", Vector2.INF)
+	if direction_px != Vector2.INF:
+		_onion_weapon_sprite.rotation = atan2(direction_px.y - grip_px.y, direction_px.x - grip_px.x)
+	else:
+		_onion_weapon_sprite.rotation = 0.0
+
+	# Position: grip pixel → viewport coords
+	var anchor_offset := (grip_px - Vector2(_frame_size) / 2.0) * _preview_sprite.scale
+	_onion_weapon_sprite.position = _preview_sprite.position + anchor_offset
+
+	# Offset weapon grip point
+	var weapon_grip: Vector2 = _weapon_set.get("grip_right", Vector2.ZERO)
+	if weapon_grip != Vector2.ZERO:
+		var tex_size := weapon_tex.get_size()
+		_onion_weapon_sprite.offset = Vector2(tex_size.x / 2.0 - weapon_grip.x, tex_size.y / 2.0 - weapon_grip.y)
+	else:
+		_onion_weapon_sprite.offset = Vector2.ZERO
+
+
+func _on_save_spritesheets() -> void:
+	if _frame_images.is_empty() or _current_anim == "" or _current_model == "":
+		_set_status("No spritesheet loaded to save.")
+		return
+
+	var saved := 0
+	for direction in DIRECTIONS:
+		if not _frame_images.has(direction):
+			continue
+		var images: Array = _frame_images[direction]
+		if images.is_empty():
+			continue
+
+		# Reassemble horizontal spritesheet from individual frame images
+		var fw := _frame_size.x
+		var fh := _frame_size.y
+		var sheet := Image.create(fw * images.size(), fh, false, (images[0] as Image).get_format())
+		for i in images.size():
+			sheet.blit_rect(images[i], Rect2i(0, 0, fw, fh), Vector2i(i * fw, 0))
+
+		var file_path := "%s/%s/%s_%s.png" % [SPRITES_BASE, _current_anim, _current_model, direction]
+		var global_path := ProjectSettings.globalize_path(file_path)
+		var err := sheet.save_png(global_path)
+		if err == OK:
+			saved += 1
+		else:
+			_set_status("Error saving %s: %s" % [file_path, error_string(err)])
+			return
+
+	_anchor_images_dirty = false
+	if _save_spritesheets_btn:
+		_save_spritesheets_btn.disabled = true
+
+	_set_status("Saved %d spritesheet(s) to %s/%s/." % [saved, SPRITES_BASE, _current_anim])

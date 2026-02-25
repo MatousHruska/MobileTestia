@@ -5,8 +5,10 @@ extends Control
 ## and additional tracks for weapon/effect/echo/movement/damage.
 
 signal frame_selected(index: int)
+signal frames_selected(indices: Array[int])
 signal frame_duration_changed(index: int, new_ms: int)
 signal playhead_moved(ms: float)
+signal before_mutation()  # Emitted before any data change, for undo snapshots
 
 # ── Theme (matches composer) ───────────────────────────────────────────
 const C_BG := Color("#1E1E2E")
@@ -38,6 +40,7 @@ const FONT_SIZE := 11
 var composition: AttackCompositionData = null
 var frame_thumbnails: Array[ImageTexture] = []
 var selected_frame: int = -1
+var selected_frames: Array[int] = []
 var playhead_ms: float = 0.0
 var pixels_per_ms: float = 2.0
 var scroll_offset_ms: float = 0.0
@@ -172,8 +175,10 @@ func _draw_body_track() -> void:
 		if x + w < LABEL_WIDTH or x > size.x:
 			continue
 
-		# Block background
-		var block_color := C_SURFACE if i != selected_frame else C_ACCENT.darkened(0.3)
+		# Block background (primary = bright, multi-selected = dim blue, normal = surface)
+		var is_primary := (i == selected_frame)
+		var is_selected := (i in selected_frames)
+		var block_color := C_ACCENT.darkened(0.3) if is_primary else (C_ACCENT.darkened(0.5) if is_selected else C_SURFACE)
 		draw_rect(Rect2(x, y + 1, w - 1, BODY_TRACK_HEIGHT - 2), block_color)
 
 		# Thumbnail
@@ -189,9 +194,11 @@ func _draw_body_track() -> void:
 			draw_string(_font, Vector2(x + w - 14, y + BODY_TRACK_HEIGHT - 4), idx_text,
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 9, C_TEXT_DIM)
 
-		# Selection border
-		if i == selected_frame:
+		# Selection border (thicker for primary, thinner for multi-selected)
+		if is_primary:
 			draw_rect(Rect2(x, y + 1, w - 1, BODY_TRACK_HEIGHT - 2), C_ACCENT, false, 2.0)
+		elif is_selected:
+			draw_rect(Rect2(x, y + 1, w - 1, BODY_TRACK_HEIGHT - 2), C_ACCENT.darkened(0.2), false, 1.0)
 
 	# Track border
 	draw_line(Vector2(LABEL_WIDTH, y + BODY_TRACK_HEIGHT),
@@ -225,6 +232,10 @@ func _draw_weapon_track() -> void:
 			continue
 		var color := C_WEAPON_ON if composition.frames[i].weapon_visible else C_WEAPON_OFF
 		draw_rect(Rect2(x, y + 2, w - 1, SUB_TRACK_HEIGHT - 4), color)
+		# Show "B" marker on frames where weapon renders behind body
+		if not composition.frames[i].weapon_z_front and composition.frames[i].weapon_visible:
+			draw_string(_font, Vector2(x + 2, y + SUB_TRACK_HEIGHT - 4), "B",
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 9, C_TEXT)
 
 
 func _draw_effect_track() -> void:
@@ -335,7 +346,7 @@ func _gui_input(event: InputEvent) -> void:
 		var mb := event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
-				_handle_click(mb.position)
+				_handle_click(mb.position, mb.shift_pressed)
 			else:
 				_dragging_edge = false
 				_scrubbing = false
@@ -363,7 +374,7 @@ func _gui_input(event: InputEvent) -> void:
 			_update_cursor(mm.position)
 
 
-func _handle_click(pos: Vector2) -> void:
+func _handle_click(pos: Vector2, shift: bool = false) -> void:
 	# Ruler click → scrub
 	if pos.y < RULER_HEIGHT:
 		_scrubbing = true
@@ -377,17 +388,30 @@ func _handle_click(pos: Vector2) -> void:
 		for i in composition.frames.size():
 			var right_edge := _get_frame_x(i) + _get_frame_width(i)
 			if absf(pos.x - right_edge) < 5.0:
+				before_mutation.emit()
 				_dragging_edge = true
 				_drag_frame_index = i
 				_drag_start_x = pos.x
 				_drag_start_ms = composition.frames[i].duration_ms
 				return
 
-		# Normal click → select frame
+		# Click → select frame (shift = range select)
 		var idx := _frame_at_x(pos.x, body_y, BODY_TRACK_HEIGHT, pos.y)
 		if idx >= 0:
-			selected_frame = idx
-			frame_selected.emit(idx)
+			if shift and selected_frame >= 0:
+				# Range select from last selected to clicked
+				var from_idx := mini(selected_frame, idx)
+				var to_idx := maxi(selected_frame, idx)
+				selected_frames.clear()
+				for i in range(from_idx, to_idx + 1):
+					selected_frames.append(i)
+				selected_frame = idx
+				frames_selected.emit(selected_frames.duplicate())
+			else:
+				# Normal click — single select
+				selected_frame = idx
+				selected_frames = [idx]
+				frame_selected.emit(idx)
 			queue_redraw()
 		return
 
@@ -401,6 +425,7 @@ func _handle_sub_track_click(pos: Vector2) -> void:
 	if pos.y >= weapon_y and pos.y <= weapon_y + SUB_TRACK_HEIGHT:
 		var idx := _frame_at_x(pos.x, weapon_y, SUB_TRACK_HEIGHT, pos.y)
 		if idx >= 0:
+			before_mutation.emit()
 			composition.frames[idx].weapon_visible = not composition.frames[idx].weapon_visible
 			queue_redraw()
 		return
@@ -410,6 +435,7 @@ func _handle_sub_track_click(pos: Vector2) -> void:
 	if pos.y >= echo_y and pos.y <= echo_y + SUB_TRACK_HEIGHT:
 		var idx := _frame_at_x(pos.x, echo_y, SUB_TRACK_HEIGHT, pos.y)
 		if idx >= 0:
+			before_mutation.emit()
 			composition.frames[idx].echo_enabled = not composition.frames[idx].echo_enabled
 			queue_redraw()
 		return
@@ -419,6 +445,7 @@ func _handle_sub_track_click(pos: Vector2) -> void:
 	if pos.y >= damage_y and pos.y <= damage_y + SUB_TRACK_HEIGHT:
 		var idx := _frame_at_x(pos.x, damage_y, SUB_TRACK_HEIGHT, pos.y)
 		if idx >= 0:
+			before_mutation.emit()
 			composition.damage_frame = idx
 			queue_redraw()
 		return
