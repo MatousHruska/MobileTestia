@@ -1511,7 +1511,8 @@ func _build_step_anchors(parent: VBoxContainer) -> void:
 
 	var prev_btn := Button.new()
 	prev_btn.text = "\u25c0"
-	prev_btn.custom_minimum_size.x = 32
+	prev_btn.custom_minimum_size = Vector2(48, 36)
+	prev_btn.focus_mode = FOCUS_NONE
 	prev_btn.pressed.connect(func() -> void:
 		if _anchor_current_frame > 0:
 			_anchor_current_frame -= 1
@@ -1527,7 +1528,8 @@ func _build_step_anchors(parent: VBoxContainer) -> void:
 
 	var next_frame_btn := Button.new()
 	next_frame_btn.text = "\u25b6"
-	next_frame_btn.custom_minimum_size.x = 32
+	next_frame_btn.custom_minimum_size = Vector2(48, 36)
+	next_frame_btn.focus_mode = FOCUS_NONE
 	next_frame_btn.pressed.connect(func() -> void:
 		if _anchor_current_frame < _anchor_frame_count - 1:
 			_anchor_current_frame += 1
@@ -1801,6 +1803,7 @@ func _on_anchor_frame_input(event: InputEvent) -> void:
 	pixel_y = clampi(pixel_y, 0, _export_frame_size - 1)
 
 	_place_anchor_pixel(pixel_x, pixel_y, tool_override)
+	anchor_frame_display.accept_event()
 
 
 func _place_anchor_pixel(x: int, y: int, tool_name: String = "") -> void:
