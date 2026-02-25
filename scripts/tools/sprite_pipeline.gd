@@ -1013,7 +1013,11 @@ func _setup_frame_editor() -> void:
 	if not _captured_sheets.has(_frame_editor_direction):
 		return
 
-	var color_processed := _process_image(_captured_sheets[_frame_editor_direction])
+	var color_processed: Image
+	if _loaded_from_spritesheet:
+		color_processed = _captured_sheets[_frame_editor_direction]
+	else:
+		color_processed = _process_image(_captured_sheets[_frame_editor_direction])
 	var color_tex := ImageTexture.create_from_image(color_processed)
 
 	# Calculate frame info
@@ -2220,7 +2224,63 @@ func _on_animation_selected(index: int) -> void:
 
 
 func _on_load_spritesheet() -> void:
-	pass  # Implemented in Task 3
+	_loaded_from_spritesheet = false
+	_load_spritesheet_status.text = ""
+	_captured_sheets.clear()
+	_captured_normal_sheets.clear()
+	_captured_shadow_sheets.clear()
+
+	var model_name := current_model_path.get_file().get_basename()
+	var anim_name: String = anim_dropdown.get_item_text(anim_dropdown.selected)
+	var safe_anim_name := anim_name.replace(" ", "_").replace("/", "_").to_lower()
+	var base_dir := "%s/%s" % [OUTPUT_BASE, model_name]
+
+	var color_count := 0
+	var normal_count := 0
+	var shadow_count := 0
+	var detected_frame_size := 0
+
+	for dir_info in DIRECTIONS:
+		var dir_name: String = dir_info["name"]
+		# Color sheet
+		var color_path := "%s/%s_%s.png" % [base_dir, safe_anim_name, dir_name]
+		var global_color := ProjectSettings.globalize_path(color_path)
+		var color_img := Image.load_from_file(global_color)
+		if color_img:
+			_captured_sheets[dir_name] = color_img
+			color_count += 1
+			if detected_frame_size == 0:
+				detected_frame_size = color_img.get_height()
+		# Normal map
+		var normal_path := "%s/%s_%s_normal.png" % [base_dir, safe_anim_name, dir_name]
+		var global_normal := ProjectSettings.globalize_path(normal_path)
+		var normal_img := Image.load_from_file(global_normal)
+		if normal_img:
+			_captured_normal_sheets[dir_name] = normal_img
+			normal_count += 1
+		# Shadow map
+		var shadow_path := "%s/%s_%s_shadow.png" % [base_dir, safe_anim_name, dir_name]
+		var global_shadow := ProjectSettings.globalize_path(shadow_path)
+		var shadow_img := Image.load_from_file(global_shadow)
+		if shadow_img:
+			_captured_shadow_sheets[dir_name] = shadow_img
+			shadow_count += 1
+
+	if color_count == 0:
+		_load_spritesheet_status.text = "No exported sheets found for %s/%s" % [model_name, safe_anim_name]
+		return
+
+	# Set frame size from detected image height
+	if detected_frame_size > 0:
+		output_height_spin.value = detected_frame_size
+		_export_frame_size = detected_frame_size
+
+	_loaded_from_spritesheet = true
+	_load_spritesheet_status.text = "Loaded %d color + %d normal + %d shadow sheets (%dpx frames)" % [
+		color_count, normal_count, shadow_count, detected_frame_size]
+
+	# Jump directly to Frame Editor (step 3)
+	_go_to_step(3)
 
 
 #===============================================================================
@@ -2970,7 +3030,11 @@ func _start_export() -> void:
 	var count := 0
 	for dir_name in _captured_sheets:
 		_set_status("Processing %s..." % dir_name)
-		var processed := _process_image(_captured_sheets[dir_name])
+		var processed: Image
+		if _loaded_from_spritesheet:
+			processed = _captured_sheets[dir_name]
+		else:
+			processed = _process_image(_captured_sheets[dir_name])
 
 		var output_path := "%s/%s_%s.png" % [output_dir, safe_anim_name, dir_name]
 		var global_path := ProjectSettings.globalize_path(output_path)
@@ -2985,11 +3049,15 @@ func _start_export() -> void:
 	var normal_count := 0
 	for dir_name in _captured_normal_sheets:
 		_set_status("Processing normal map %s..." % dir_name)
-		var processed_normal := PixelArtProcessing.process_normal_map(
-			_captured_normal_sheets[dir_name],
-			int(output_height_spin.value),
-			int(alpha_threshold_slider.value)
-		)
+		var processed_normal: Image
+		if _loaded_from_spritesheet:
+			processed_normal = _captured_normal_sheets[dir_name]
+		else:
+			processed_normal = PixelArtProcessing.process_normal_map(
+				_captured_normal_sheets[dir_name],
+				int(output_height_spin.value),
+				int(alpha_threshold_slider.value)
+			)
 		var output_path := "%s/%s_%s_normal.png" % [output_dir, safe_anim_name, dir_name]
 		var global_path := ProjectSettings.globalize_path(output_path)
 		var err := processed_normal.save_png(global_path)
@@ -3005,12 +3073,16 @@ func _start_export() -> void:
 		_set_status("Processing shadow %s..." % dir_name)
 		# Shadow processing: just downscale + alpha threshold (no dithering/palette/outline)
 		var shadow_source: Image = _captured_shadow_sheets[dir_name]
-		var result := shadow_source.duplicate() as Image
-		var target_height := int(output_height_spin.value)
-		var scale_factor := float(target_height) / float(result.get_height())
-		var target_width := int(float(result.get_width()) * scale_factor)
-		result.resize(target_width, target_height, Image.INTERPOLATE_NEAREST)
-		PixelArtProcessing.apply_alpha_threshold(result, int(alpha_threshold_slider.value))
+		var result: Image
+		if _loaded_from_spritesheet:
+			result = shadow_source
+		else:
+			result = shadow_source.duplicate() as Image
+			var target_height := int(output_height_spin.value)
+			var scale_factor := float(target_height) / float(result.get_height())
+			var target_width := int(float(result.get_width()) * scale_factor)
+			result.resize(target_width, target_height, Image.INTERPOLATE_NEAREST)
+			PixelArtProcessing.apply_alpha_threshold(result, int(alpha_threshold_slider.value))
 
 		var output_path := "%s/%s_%s_shadow.png" % [output_dir, safe_anim_name, dir_name]
 		var global_path := ProjectSettings.globalize_path(output_path)
