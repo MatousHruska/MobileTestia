@@ -25,6 +25,8 @@ const FONT_HINT := 11
 const FONT_VALUE := 12
 
 const SPRITES_BASE := "res://assets/sprites/final"
+const WEAPONS_DIR := "res://assets/sprites/weapons"
+const EFFECTS_DIR := "res://assets/sprites/effects"
 
 # ── State ──────────────────────────────────────────────────────────────
 var _current_composition: AttackCompositionData = null
@@ -70,6 +72,7 @@ var _fps_label: Label
 var _total_duration_label: Label
 var _weapon_check: CheckButton
 var _weapon_z_front_check: CheckButton
+var _weapon_dropdown: OptionButton
 var _effect_dropdown: OptionButton
 var _effect_anchor_dropdown: OptionButton
 var _effect_offset_x: SpinBox
@@ -476,8 +479,12 @@ func _build_ui() -> void:
 	_crosshair_sprite.z_index = 3
 	_preview_viewport.add_child(_crosshair_sprite)
 
-	# Load default weapon set
-	_weapon_set = PlaceholderWeaponSprites.create_sword_set()
+	# Load default weapon set — prefer real weapon assets, fall back to placeholder
+	var scanned_weapons := _scan_weapon_folders()
+	if not scanned_weapons.is_empty():
+		_weapon_set = _load_weapon_from_folder(scanned_weapons[0])
+	if _weapon_set.is_empty():
+		_weapon_set = PlaceholderWeaponSprites.create_sword_set()
 
 	# Controls bar below preview
 	var controls_bar := PanelContainer.new()
@@ -893,6 +900,21 @@ func _build_frame_props_section() -> void:
 	_weapon_z_front_check.toggled.connect(_on_weapon_z_front_toggled)
 	_frame_props_container.add_child(_weapon_z_front_check)
 
+	# Weapon selector dropdown
+	_frame_props_container.add_child(_make_label("Weapon"))
+	_weapon_dropdown = _make_option_button()
+	var scanned_w := _scan_weapon_folders()
+	for wid in scanned_w:
+		_weapon_dropdown.add_item("[Asset] " + wid)
+	_weapon_dropdown.add_item("[Placeholder] sword")
+	# Select the entry matching the weapon we loaded at startup
+	if not scanned_w.is_empty():
+		_weapon_dropdown.select(0)
+	else:
+		_weapon_dropdown.select(_weapon_dropdown.item_count - 1)
+	_weapon_dropdown.item_selected.connect(_on_weapon_dropdown_selected)
+	_frame_props_container.add_child(_weapon_dropdown)
+
 	# Draw Anchors toggle
 	_draw_anchors_check = CheckButton.new()
 	_draw_anchors_check.text = "Draw Anchors"
@@ -933,9 +955,14 @@ func _build_frame_props_section() -> void:
 	_frame_props_container.add_child(_make_label("Effect"))
 	_effect_dropdown = _make_option_button()
 	_effect_dropdown.add_item("(none)", 0)
+	# Real effect assets first
+	var scanned_effects := _scan_effect_folders()
+	for eid in scanned_effects:
+		_effect_dropdown.add_item("[Asset] " + eid)
+	# Placeholder effects as fallback
 	for eid in ["slash_arc", "slash_arc_wide", "thrust_line", "impact_spark",
 			"bowstring_snap", "cast_circle", "spell_burst", "buff_burst", "howl_aura"]:
-		_effect_dropdown.add_item(eid)
+		_effect_dropdown.add_item("[Placeholder] " + eid)
 	_effect_dropdown.item_selected.connect(_on_effect_selected)
 	_frame_props_container.add_child(_effect_dropdown)
 
@@ -1696,7 +1723,15 @@ func _on_effect_selected(index: int) -> void:
 		return
 	_push_undo()
 	var text := _effect_dropdown.get_item_text(index)
-	var effect_id := "" if text == "(none)" else text
+	var effect_id := ""
+	if text != "(none)":
+		# Strip "[Asset] " or "[Placeholder] " prefix to get clean effect ID
+		if text.begins_with("[Asset] "):
+			effect_id = text.substr(8)
+		elif text.begins_with("[Placeholder] "):
+			effect_id = text.substr(14)
+		else:
+			effect_id = text
 	for idx in targets:
 		_current_composition.frames[idx].effect_id = effect_id
 	_timeline_panel.queue_redraw()
@@ -2225,3 +2260,79 @@ func _on_save_spritesheets() -> void:
 		_save_spritesheets_btn.disabled = true
 
 	_set_status("Saved %d spritesheet(s) to %s/%s/." % [saved, SPRITES_BASE, _current_anim])
+
+
+# ── Asset scanning ────────────────────────────────────────────────────
+
+func _scan_weapon_folders() -> Array[String]:
+	var weapon_ids: Array[String] = []
+	var dir := DirAccess.open(WEAPONS_DIR)
+	if dir == null:
+		return weapon_ids
+	dir.list_dir_begin()
+	var folder := dir.get_next()
+	while folder != "":
+		if dir.current_is_dir() and not folder.begins_with("."):
+			var weapon_path: String = WEAPONS_DIR + "/" + folder + "/weapon.png"
+			var meta_path: String = WEAPONS_DIR + "/" + folder + "/metadata.json"
+			if FileAccess.file_exists(weapon_path) and FileAccess.file_exists(meta_path):
+				weapon_ids.append(folder)
+		folder = dir.get_next()
+	return weapon_ids
+
+
+func _load_weapon_from_folder(weapon_id: String) -> Dictionary:
+	var dir_path: String = WEAPONS_DIR + "/" + weapon_id
+	var img := Image.load_from_file(ProjectSettings.globalize_path(dir_path + "/weapon.png"))
+	if img == null:
+		return {}
+	var tex := ImageTexture.create_from_image(img)
+
+	var meta_file := FileAccess.open(dir_path + "/metadata.json", FileAccess.READ)
+	if meta_file == null:
+		return {}
+	var meta: Dictionary = JSON.parse_string(meta_file.get_as_text())
+	meta_file.close()
+	if meta == null:
+		return {}
+
+	var grip := Vector2(meta["grip"][0], meta["grip"][1])
+	var tip := Vector2(meta["tip"][0], meta["tip"][1])
+
+	# Return same format as PlaceholderWeaponSprites sets.
+	# Single texture for all directions (rotation handled by anchor system).
+	return {
+		"down": tex, "up": tex, "right": tex,
+		"grip_down": grip, "grip_up": grip, "grip_right": grip,
+		"tip_down": tip, "tip_up": tip, "tip_right": tip,
+	}
+
+
+func _scan_effect_folders() -> Array[String]:
+	var effect_ids: Array[String] = []
+	var dir := DirAccess.open(EFFECTS_DIR)
+	if dir == null:
+		return effect_ids
+	dir.list_dir_begin()
+	var folder := dir.get_next()
+	while folder != "":
+		if dir.current_is_dir() and not folder.begins_with("."):
+			var meta_path: String = EFFECTS_DIR + "/" + folder + "/metadata.json"
+			if FileAccess.file_exists(meta_path):
+				effect_ids.append(folder)
+		folder = dir.get_next()
+	return effect_ids
+
+
+func _on_weapon_dropdown_selected(index: int) -> void:
+	var text := _weapon_dropdown.get_item_text(index)
+	if text.begins_with("[Asset] "):
+		var weapon_id := text.substr(8)
+		var loaded := _load_weapon_from_folder(weapon_id)
+		if not loaded.is_empty():
+			_weapon_set = loaded
+			_update_preview_frame()
+			return
+	# Fallback to placeholder sword
+	_weapon_set = PlaceholderWeaponSprites.create_sword_set()
+	_update_preview_frame()
