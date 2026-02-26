@@ -34,3 +34,8 @@ extends Resource
 
 ## Pixel spacing between ghost copies
 @export var echo_spacing_px: float = 8.0
+
+## Per-frame alpha mask for weapon transparency painting.
+## Same dimensions as weapon texture. null = fully opaque (no mask).
+## FORMAT_R8: 255 = opaque, 0 = fully transparent.
+@export var alpha_mask: Image = null
