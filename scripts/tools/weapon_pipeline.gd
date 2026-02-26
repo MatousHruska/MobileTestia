@@ -933,6 +933,18 @@ func _update_anchor_preview() -> void:
 	stack.custom_minimum_size = Vector2(zoomed_w, zoomed_h)
 	stack.size = Vector2(zoomed_w, zoomed_h)
 
+	# Try to load existing alpha mask for this weapon
+	if _alpha_mask_image == null and not _weapon_id.is_empty():
+		var alpha_res_path: String = WEAPONS_DIR + "/" + _weapon_id + "/alpha_mask.png"
+		if ResourceLoader.exists(alpha_res_path):
+			var alpha_global_path: String = ProjectSettings.globalize_path(alpha_res_path)
+			var loaded_mask := Image.load_from_file(alpha_global_path)
+			if loaded_mask != null and loaded_mask.get_width() == _processed_image.get_width() and loaded_mask.get_height() == _processed_image.get_height():
+				_alpha_mask_image = loaded_mask
+				# Ensure R8 format
+				if _alpha_mask_image.get_format() != Image.FORMAT_R8:
+					_alpha_mask_image.convert(Image.FORMAT_R8)
+
 	# Update labels
 	_update_anchor_labels()
 	_anchor_overlay.queue_redraw()
@@ -1191,6 +1203,16 @@ func _export_weapon() -> void:
 		_set_status("Error: Failed to save weapon.png (err %d)" % save_err)
 		return
 
+	# Save alpha mask if custom values exist
+	var has_alpha := _has_custom_alpha()
+	if _alpha_mask_image != null and has_alpha:
+		var alpha_res_path: String = res_dir + "/alpha_mask.png"
+		var alpha_global_path: String = ProjectSettings.globalize_path(alpha_res_path)
+		var alpha_err := _alpha_mask_image.save_png(alpha_global_path)
+		if alpha_err != OK:
+			_set_status("Error: Failed to save alpha_mask.png (err %d)" % alpha_err)
+			return
+
 	# Build and save metadata
 	var metadata := {
 		"weapon_id": _weapon_id,
@@ -1199,6 +1221,7 @@ func _export_weapon() -> void:
 		"tip": [_tip_point.x, _tip_point.y],
 		"source_size": [_source_image.get_width(), _source_image.get_height()],
 		"export_size": [_processed_image.get_width(), _processed_image.get_height()],
+		"has_alpha_mask": has_alpha,
 		"processing": {
 			"target_height": _target_height,
 			"alpha_threshold": _alpha_threshold,
@@ -1224,14 +1247,25 @@ func _export_weapon() -> void:
 	file.store_string(json_str)
 	file.close()
 
-	_export_status_label.text = "Exported to:\n%s/\n  weapon.png (%dx%d)\n  metadata.json" % [
-		res_dir,
-		_processed_image.get_width(),
-		_processed_image.get_height(),
+	var export_files := "  weapon.png (%dx%d)\n  metadata.json" % [
+		_processed_image.get_width(), _processed_image.get_height(),
 	]
+	if has_alpha:
+		export_files += "\n  alpha_mask.png"
+	_export_status_label.text = "Exported to:\n%s/\n%s" % [res_dir, export_files]
 	_export_status_label.add_theme_color_override("font_color", C_SUCCESS)
 	_set_status("Done! Exported to %s" % res_dir)
 	print("WeaponPipeline: Exported to %s" % res_dir)
+
+
+func _has_custom_alpha() -> bool:
+	if _alpha_mask_image == null:
+		return false
+	for y in range(_alpha_mask_image.get_height()):
+		for x in range(_alpha_mask_image.get_width()):
+			if _alpha_mask_image.get_pixel(x, y).r < 0.99:
+				return true
+	return false
 
 
 #===============================================================================
