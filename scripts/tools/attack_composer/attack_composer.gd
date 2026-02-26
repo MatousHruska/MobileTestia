@@ -255,7 +255,10 @@ func _push_undo() -> void:
 	comp_snapshot.movement_end_frame = _current_composition.movement_end_frame
 	comp_snapshot.damage_frame = _current_composition.damage_frame
 	for frame in _current_composition.frames:
-		comp_snapshot.frames.append(frame.duplicate())
+		var frame_copy := frame.duplicate()
+		if frame.alpha_mask != null:
+			frame_copy.alpha_mask = frame.alpha_mask.duplicate()
+		comp_snapshot.frames.append(frame_copy)
 
 	var entry: Dictionary = {"composition": comp_snapshot}
 
