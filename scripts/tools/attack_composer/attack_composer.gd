@@ -2115,6 +2115,20 @@ func _on_load_composition_pressed() -> void:
 # ── Anchor Painting ───────────────────────────────────────────────────
 
 func _on_preview_viewport_input(event: InputEvent) -> void:
+	# Alpha painting mode (handles click + drag)
+	if _alpha_paint_enabled:
+		var is_click := event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
+		var is_drag := event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		if is_click or is_drag:
+			var pos: Vector2 = event.position
+			var weapon_px := _viewport_to_weapon_pixel(pos)
+			if weapon_px != Vector2i(-1, -1):
+				if is_click:
+					_push_undo()
+				_paint_weapon_alpha(weapon_px.x, weapon_px.y)
+				_viewport_container_ref.accept_event()
+			return
+
 	if not _anchor_draw_enabled:
 		return
 	if not event is InputEventMouseButton:
@@ -2260,6 +2274,52 @@ func _on_copy_alpha_to_next() -> void:
 	_push_undo()
 	_current_composition.frames[next_idx].alpha_mask = frame.alpha_mask.duplicate()
 	_set_status("Alpha mask copied to frame %d." % next_idx)
+
+
+func _viewport_to_weapon_pixel(container_pos: Vector2) -> Vector2i:
+	if _weapon_sprite == null or not _weapon_sprite.visible or _weapon_sprite.texture == null:
+		return Vector2i(-1, -1)
+	var container_size := _viewport_container_ref.size
+	var vp_size := Vector2(_preview_viewport.size)
+	if container_size.x <= 0 or container_size.y <= 0:
+		return Vector2i(-1, -1)
+	# Container -> viewport coords
+	var vp_click := container_pos * (vp_size / container_size)
+	# Viewport -> weapon local space (undo position, rotation, scale)
+	var local := (vp_click - _weapon_sprite.position).rotated(-_weapon_sprite.rotation) / _weapon_sprite.scale
+	# Local space -> texture pixel (undo offset and centering)
+	var tex_size := Vector2(_weapon_sprite.texture.get_size())
+	var tex_px := local - _weapon_sprite.offset + tex_size / 2.0
+	var px := int(tex_px.x)
+	var py := int(tex_px.y)
+	if px < 0 or px >= int(tex_size.x) or py < 0 or py >= int(tex_size.y):
+		return Vector2i(-1, -1)
+	return Vector2i(px, py)
+
+
+func _paint_weapon_alpha(px: int, py: int) -> void:
+	if _current_composition == null or _selected_frame < 0:
+		return
+	var frame := _current_composition.frames[_selected_frame]
+	# Get weapon texture to check if pixel has content
+	var weapon_tex: Texture2D = _weapon_set.get("right")
+	if weapon_tex == null:
+		return
+	var weapon_img := weapon_tex.get_image()
+	if weapon_img == null:
+		return
+	if px < 0 or px >= weapon_img.get_width() or py < 0 or py >= weapon_img.get_height():
+		return
+	if weapon_img.get_pixel(px, py).a < 0.01:
+		return  # Only paint on non-transparent weapon pixels
+	# Initialize mask if needed
+	if frame.alpha_mask == null:
+		frame.alpha_mask = Image.create(
+			weapon_img.get_width(), weapon_img.get_height(),
+			false, Image.FORMAT_R8)
+		frame.alpha_mask.fill(Color(1, 1, 1))
+	frame.alpha_mask.set_pixel(px, py, Color(_alpha_paint_value / 255.0, 0, 0))
+	_update_weapon_preview()
 
 
 func _update_crosshair_overlay() -> void:
