@@ -957,12 +957,34 @@ func _on_tip_button_pressed() -> void:
 
 
 func _on_anchor_overlay_input(event: InputEvent) -> void:
+	if _processed_image == null:
+		return
+
+	# Alpha painting: handle click and drag
+	if _alpha_paint_mode:
+		if event is InputEventMouseButton:
+			var mb: InputEventMouseButton = event as InputEventMouseButton
+			if mb.button_index == MOUSE_BUTTON_LEFT and mb.pressed:
+				var local_pos: Vector2 = mb.position
+				var px: int = clampi(int(local_pos.x) / ANCHOR_ZOOM, 0, _processed_image.get_width() - 1)
+				var py: int = clampi(int(local_pos.y) / ANCHOR_ZOOM, 0, _processed_image.get_height() - 1)
+				_paint_alpha_pixel(px, py)
+		elif event is InputEventMouseMotion:
+			if Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+				var mm: InputEventMouseMotion = event as InputEventMouseMotion
+				var local_pos: Vector2 = mm.position
+				var px: int = clampi(int(local_pos.x) / ANCHOR_ZOOM, 0, _processed_image.get_width() - 1)
+				var py: int = clampi(int(local_pos.y) / ANCHOR_ZOOM, 0, _processed_image.get_height() - 1)
+				_paint_alpha_pixel(px, py)
+		return
+
+	# Anchor placement mode
 	if not event is InputEventMouseButton:
 		return
 	var mb: InputEventMouseButton = event as InputEventMouseButton
 	if mb.button_index != MOUSE_BUTTON_LEFT or not mb.pressed:
 		return
-	if _placement_mode.is_empty() or _processed_image == null:
+	if _placement_mode.is_empty():
 		return
 
 	# Convert click position to pixel coordinates
@@ -982,6 +1004,16 @@ func _on_anchor_overlay_input(event: InputEvent) -> void:
 		_set_status("Tip point placed at (%d, %d)." % [px, py])
 
 	_update_anchor_labels()
+	_anchor_overlay.queue_redraw()
+
+
+func _paint_alpha_pixel(px: int, py: int) -> void:
+	if _alpha_mask_image == null or _processed_image == null:
+		return
+	var weapon_pixel := _processed_image.get_pixel(px, py)
+	if weapon_pixel.a < 0.01:
+		return  # Only paint on non-transparent weapon pixels
+	_alpha_mask_image.set_pixel(px, py, Color(_alpha_paint_value / 255.0, 0, 0))
 	_anchor_overlay.queue_redraw()
 
 
