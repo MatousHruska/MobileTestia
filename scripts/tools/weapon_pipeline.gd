@@ -1054,6 +1054,29 @@ func _on_anchor_overlay_draw() -> void:
 	if _tip_point != Vector2i(-1, -1):
 		_draw_crosshair(_tip_point, C_TIP, zoom)
 
+	# Draw alpha mask overlay
+	if _alpha_paint_mode and _alpha_mask_image != null:
+		for y in range(img_h):
+			for x in range(img_w):
+				var weapon_pixel := _processed_image.get_pixel(x, y)
+				if weapon_pixel.a < 0.01:
+					continue
+				var mask_val: float = _alpha_mask_image.get_pixel(x, y).r
+				if mask_val > 0.99:
+					continue  # Fully opaque, no overlay needed
+				var rect := Rect2(x * zoom, y * zoom, zoom, zoom)
+				# Red-tinted overlay proportional to transparency
+				_anchor_overlay.draw_rect(rect, Color(1.0, 0.2, 0.2, (1.0 - mask_val) * 0.6))
+				# Checkerboard pattern for strongly transparent pixels
+				if mask_val < 0.5:
+					var half := zoom * 0.5
+					_anchor_overlay.draw_rect(
+						Rect2(x * zoom, y * zoom, half, half),
+						Color(0, 0, 0, 0.3))
+					_anchor_overlay.draw_rect(
+						Rect2(x * zoom + half, y * zoom + half, half, half),
+						Color(0, 0, 0, 0.3))
+
 
 func _draw_crosshair(pixel_pos: Vector2i, color: Color, zoom: float) -> void:
 	var cx: float = pixel_pos.x * zoom + zoom * 0.5
