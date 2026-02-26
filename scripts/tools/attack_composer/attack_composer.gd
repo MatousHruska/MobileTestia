@@ -2291,13 +2291,13 @@ func _load_weapon_from_folder(weapon_id: String) -> Dictionary:
 	var meta_file := FileAccess.open(dir_path + "/metadata.json", FileAccess.READ)
 	if meta_file == null:
 		return {}
-	var meta: Dictionary = JSON.parse_string(meta_file.get_as_text())
+	var meta: Variant = JSON.parse_string(meta_file.get_as_text())
 	meta_file.close()
-	if meta == null:
+	if not meta is Dictionary or not meta.has("grip") or not meta.has("tip"):
 		return {}
 
-	var grip := Vector2(meta["grip"][0], meta["grip"][1])
-	var tip := Vector2(meta["tip"][0], meta["tip"][1])
+	var grip := Vector2(float(meta["grip"][0]), float(meta["grip"][1]))
+	var tip := Vector2(float(meta["tip"][0]), float(meta["tip"][1]))
 
 	# Return same format as PlaceholderWeaponSprites sets.
 	# Single texture for all directions (rotation handled by anchor system).

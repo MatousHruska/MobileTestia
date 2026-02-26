@@ -610,7 +610,7 @@ func _on_effect_event(effect_id: String) -> void:
 	# Mirror the effect sprite when facing left (flipped "right" direction)
 	if is_flipped:
 		for child in effect_node.get_children():
-			if child is Sprite2D:
+			if child is Sprite2D or child is AnimatedSprite2D:
 				child.flip_h = true
 	spawn_effect(effect_node)
 
