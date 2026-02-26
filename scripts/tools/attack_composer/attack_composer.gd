@@ -52,6 +52,13 @@ var _anchor_draw_enabled: bool = false
 var _anchor_onion_skin_enabled: bool = false
 var _anchor_images_dirty: bool = false
 
+# ── Alpha painting state ─────────────────────────────────────────────
+var _alpha_paint_enabled: bool = false
+var _alpha_paint_value: int = 128
+var _alpha_draw_check: CheckButton = null
+var _alpha_buttons_container: VBoxContainer = null
+var _alpha_buttons: Array[Button] = []
+
 # ── Undo state ────────────────────────────────────────────────────────
 var _undo_stack: Array = []  # Array of Dictionary {composition, images}
 const MAX_UNDO := 50
@@ -96,8 +103,7 @@ var _weapon_sprite: Sprite2D
 var _weapon_set: Dictionary = {}
 var _echo_sprites: Array[Sprite2D] = []
 var _direction_buttons: Array[Button] = []
-var _frame_props_header: Button
-var _seq_props_header: Button
+var _frame_section_wrapper: VBoxContainer  # Visibility wrapper for all frame sub-sections
 var _undo_btn: Button
 var _draw_anchors_check: CheckButton
 var _onion_skin_check: CheckButton
@@ -860,12 +866,33 @@ func _build_loading_section() -> void:
 
 
 func _build_frame_props_section() -> void:
-	# ── Frame Properties (collapsed by default, shown when a frame is selected) ──
-	var frame_parts: Array = _make_collapsible_section("Frame Properties", _left_scroll_content)
-	var frame_wrapper: VBoxContainer = frame_parts[0]
-	_frame_props_container = frame_parts[1]
-	_frame_props_header = frame_wrapper.get_child(0)
-	frame_wrapper.visible = false  # Hidden until data is loaded
+	# ── Frame sub-sections wrapper (hidden until data is loaded) ──
+	_frame_section_wrapper = VBoxContainer.new()
+	_frame_section_wrapper.add_theme_constant_override("separation", 0)
+	_frame_section_wrapper.visible = false
+	_left_scroll_content.add_child(_frame_section_wrapper)
+
+	_build_frame_subsection()
+	_build_weapon_subsection()
+	_build_effect_subsection()
+	_build_echo_subsection()
+
+	# Total duration (always visible at the bottom of the frame sections)
+	_total_duration_label = _make_label("Total: 0.000s", C_TEXT)
+	_frame_section_wrapper.add_child(_total_duration_label)
+
+	# ── Sequence Properties (collapsed by default) ──
+	var seq_parts: Array = _make_collapsible_section("Sequence Properties", _left_scroll_content)
+	var seq_wrapper: VBoxContainer = seq_parts[0]
+	_seq_props_container = seq_parts[1]
+	seq_wrapper.visible = false  # Hidden until data is loaded
+
+	_build_seq_and_save_sections()
+
+
+func _build_frame_subsection() -> void:
+	var parts: Array = _make_collapsible_section("Frame", _frame_section_wrapper, false)
+	_frame_props_container = parts[1]
 
 	# Duration
 	_frame_props_container.add_child(_make_label("Duration (ms)"))
@@ -884,13 +911,18 @@ func _build_frame_props_section() -> void:
 	# Delete frame button
 	_frame_props_container.add_child(_make_button("Delete Frame (Del)", _delete_selected_frame))
 
+
+func _build_weapon_subsection() -> void:
+	var parts: Array = _make_collapsible_section("Weapon", _frame_section_wrapper, false)
+	var section: VBoxContainer = parts[1]
+
 	# Weapon visible
 	_weapon_check = CheckButton.new()
 	_weapon_check.text = "Weapon Visible"
 	_weapon_check.add_theme_font_size_override("font_size", FONT_LABEL)
 	_weapon_check.add_theme_color_override("font_color", C_TEXT_SEC)
 	_weapon_check.toggled.connect(_on_weapon_toggled)
-	_frame_props_container.add_child(_weapon_check)
+	section.add_child(_weapon_check)
 
 	# Weapon z-index (in front / behind body)
 	_weapon_z_front_check = CheckButton.new()
@@ -898,10 +930,10 @@ func _build_frame_props_section() -> void:
 	_weapon_z_front_check.add_theme_font_size_override("font_size", FONT_LABEL)
 	_weapon_z_front_check.add_theme_color_override("font_color", C_TEXT_SEC)
 	_weapon_z_front_check.toggled.connect(_on_weapon_z_front_toggled)
-	_frame_props_container.add_child(_weapon_z_front_check)
+	section.add_child(_weapon_z_front_check)
 
 	# Weapon selector dropdown
-	_frame_props_container.add_child(_make_label("Weapon"))
+	section.add_child(_make_label("Weapon"))
 	_weapon_dropdown = _make_option_button()
 	var scanned_w := _scan_weapon_folders()
 	for wid in scanned_w:
@@ -913,7 +945,7 @@ func _build_frame_props_section() -> void:
 	else:
 		_weapon_dropdown.select(_weapon_dropdown.item_count - 1)
 	_weapon_dropdown.item_selected.connect(_on_weapon_dropdown_selected)
-	_frame_props_container.add_child(_weapon_dropdown)
+	section.add_child(_weapon_dropdown)
 
 	# Draw Anchors toggle
 	_draw_anchors_check = CheckButton.new()
@@ -921,13 +953,13 @@ func _build_frame_props_section() -> void:
 	_draw_anchors_check.add_theme_font_size_override("font_size", FONT_LABEL)
 	_draw_anchors_check.add_theme_color_override("font_color", C_TEXT_SEC)
 	_draw_anchors_check.toggled.connect(_on_draw_anchors_toggled)
-	_frame_props_container.add_child(_draw_anchors_check)
+	section.add_child(_draw_anchors_check)
 
 	# Onion skin container (shown when Draw Anchors is on)
 	_onion_skin_container = VBoxContainer.new()
 	_onion_skin_container.add_theme_constant_override("separation", 4)
 	_onion_skin_container.visible = false
-	_frame_props_container.add_child(_onion_skin_container)
+	section.add_child(_onion_skin_container)
 
 	_onion_skin_check = CheckButton.new()
 	_onion_skin_check.text = "Weapon Onion Skin"
@@ -951,8 +983,85 @@ func _build_frame_props_section() -> void:
 	dir_legend.add_theme_font_size_override("font_size", FONT_HINT)
 	anchor_legend.add_child(dir_legend)
 
-	# Effect
-	_frame_props_container.add_child(_make_label("Effect"))
+	# ── Draw Alpha toggle and controls ──
+	_alpha_draw_check = CheckButton.new()
+	_alpha_draw_check.text = "Draw Alpha"
+	_alpha_draw_check.add_theme_font_size_override("font_size", FONT_LABEL)
+	_alpha_draw_check.add_theme_color_override("font_color", C_TEXT_SEC)
+	_alpha_draw_check.toggled.connect(_on_alpha_draw_toggled)
+	section.add_child(_alpha_draw_check)
+
+	_alpha_buttons_container = VBoxContainer.new()
+	_alpha_buttons_container.add_theme_constant_override("separation", 4)
+	_alpha_buttons_container.visible = false
+	section.add_child(_alpha_buttons_container)
+
+	# Alpha level buttons row
+	var alpha_levels_hbox := HBoxContainer.new()
+	alpha_levels_hbox.add_theme_constant_override("separation", 4)
+	_alpha_buttons_container.add_child(alpha_levels_hbox)
+
+	var alpha_values: Array[Dictionary] = [
+		{"label": "0%", "value": 0},
+		{"label": "25%", "value": 64},
+		{"label": "50%", "value": 128},
+		{"label": "75%", "value": 191},
+		{"label": "100%", "value": 255},
+	]
+	_alpha_buttons.clear()
+	for entry in alpha_values:
+		var alpha_btn := Button.new()
+		alpha_btn.text = entry["label"]
+		alpha_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		alpha_btn.custom_minimum_size.y = 28
+		alpha_btn.add_theme_font_size_override("font_size", FONT_HINT)
+		var alpha_sb := StyleBoxFlat.new()
+		alpha_sb.bg_color = Color(1, 1, 1, entry["value"] / 255.0)
+		alpha_sb.border_width_left = 1
+		alpha_sb.border_width_right = 1
+		alpha_sb.border_width_top = 1
+		alpha_sb.border_width_bottom = 1
+		alpha_sb.border_color = C_BORDER
+		alpha_sb.corner_radius_top_left = 3
+		alpha_sb.corner_radius_top_right = 3
+		alpha_sb.corner_radius_bottom_left = 3
+		alpha_sb.corner_radius_bottom_right = 3
+		alpha_btn.add_theme_stylebox_override("normal", alpha_sb)
+		# Dark text for light backgrounds, light text for dark backgrounds
+		if entry["value"] > 128:
+			alpha_btn.add_theme_color_override("font_color", Color.BLACK)
+		else:
+			alpha_btn.add_theme_color_override("font_color", Color.WHITE)
+		alpha_btn.pressed.connect(_on_alpha_level_btn.bind(entry["value"]))
+		alpha_levels_hbox.add_child(alpha_btn)
+		_alpha_buttons.append(alpha_btn)
+
+	# Hint label
+	var alpha_hint := Label.new()
+	alpha_hint.text = "L-click on weapon to paint alpha"
+	alpha_hint.add_theme_font_size_override("font_size", FONT_HINT)
+	alpha_hint.add_theme_color_override("font_color", C_TEXT_DIM)
+	_alpha_buttons_container.add_child(alpha_hint)
+
+	# Action buttons row
+	var alpha_actions_hbox := HBoxContainer.new()
+	alpha_actions_hbox.add_theme_constant_override("separation", 4)
+	_alpha_buttons_container.add_child(alpha_actions_hbox)
+
+	var clear_mask_btn := _make_button("Clear Mask", _on_clear_frame_alpha)
+	clear_mask_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	alpha_actions_hbox.add_child(clear_mask_btn)
+
+	var copy_next_btn := _make_button("Copy \u2192 Next", _on_copy_alpha_to_next)
+	copy_next_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	alpha_actions_hbox.add_child(copy_next_btn)
+
+
+func _build_effect_subsection() -> void:
+	var parts: Array = _make_collapsible_section("Effect", _frame_section_wrapper)
+	var section: VBoxContainer = parts[1]
+
+	section.add_child(_make_label("Effect"))
 	_effect_dropdown = _make_option_button()
 	_effect_dropdown.add_item("(none)", 0)
 	# Real effect assets first
@@ -964,19 +1073,19 @@ func _build_frame_props_section() -> void:
 			"bowstring_snap", "cast_circle", "spell_burst", "buff_burst", "howl_aura"]:
 		_effect_dropdown.add_item("[Placeholder] " + eid)
 	_effect_dropdown.item_selected.connect(_on_effect_selected)
-	_frame_props_container.add_child(_effect_dropdown)
+	section.add_child(_effect_dropdown)
 
-	_frame_props_container.add_child(_make_label("Effect Anchor"))
+	section.add_child(_make_label("Effect Anchor"))
 	_effect_anchor_dropdown = _make_option_button()
 	_effect_anchor_dropdown.add_item("weapon_tip")
 	_effect_anchor_dropdown.add_item("center")
 	_effect_anchor_dropdown.add_item("feet")
 	_effect_anchor_dropdown.item_selected.connect(_on_effect_anchor_selected)
-	_frame_props_container.add_child(_effect_anchor_dropdown)
+	section.add_child(_effect_anchor_dropdown)
 
 	var offset_hbox := HBoxContainer.new()
 	offset_hbox.add_theme_constant_override("separation", 4)
-	_frame_props_container.add_child(offset_hbox)
+	section.add_child(offset_hbox)
 	offset_hbox.add_child(_make_label("Offset X"))
 	_effect_offset_x = SpinBox.new()
 	_effect_offset_x.min_value = -64
@@ -994,18 +1103,22 @@ func _build_frame_props_section() -> void:
 	_effect_offset_y.value_changed.connect(_on_effect_offset_changed)
 	offset_hbox.add_child(_effect_offset_y)
 
-	# Echo
+
+func _build_echo_subsection() -> void:
+	var parts: Array = _make_collapsible_section("Echo", _frame_section_wrapper)
+	var section: VBoxContainer = parts[1]
+
 	_echo_check = CheckButton.new()
 	_echo_check.text = "Speed Echo"
 	_echo_check.add_theme_font_size_override("font_size", FONT_LABEL)
 	_echo_check.add_theme_color_override("font_color", C_TEXT_SEC)
 	_echo_check.toggled.connect(_on_echo_toggled)
-	_frame_props_container.add_child(_echo_check)
+	section.add_child(_echo_check)
 
 	_echo_settings_container = VBoxContainer.new()
 	_echo_settings_container.add_theme_constant_override("separation", 4)
 	_echo_settings_container.visible = false
-	_frame_props_container.add_child(_echo_settings_container)
+	section.add_child(_echo_settings_container)
 
 	_echo_settings_container.add_child(_make_label("Echo Count"))
 	_echo_count_spin = SpinBox.new()
@@ -1045,17 +1158,8 @@ func _build_frame_props_section() -> void:
 	_echo_spacing_spin.value_changed.connect(_on_echo_setting_changed)
 	_echo_settings_container.add_child(_echo_spacing_spin)
 
-	# Total duration
-	_total_duration_label = _make_label("Total: 0.000s", C_TEXT)
-	_frame_props_container.add_child(_total_duration_label)
 
-	# ── Sequence Properties (collapsed by default) ──
-	var seq_parts: Array = _make_collapsible_section("Sequence Properties", _left_scroll_content)
-	var seq_wrapper: VBoxContainer = seq_parts[0]
-	_seq_props_container = seq_parts[1]
-	_seq_props_header = seq_wrapper.get_child(0)
-	seq_wrapper.visible = false  # Hidden until data is loaded
-
+func _build_seq_and_save_sections() -> void:
 	_seq_props_container.add_child(_make_label("Movement Type"))
 	_movement_type_dropdown = _make_option_button()
 	_movement_type_dropdown.add_item("none")
@@ -1380,10 +1484,16 @@ func _update_weapon_preview() -> void:
 	_weapon_sprite.visible = true
 	_weapon_sprite.scale = _preview_sprite.scale
 
-	# Compute rotation from grip → direction pixel
+	# Compute rotation from grip → direction pixel, accounting for the weapon
+	# texture's inherent orientation (grip→tip angle in the source image).
+	var weapon_grip: Vector2 = _weapon_set.get("grip_right", Vector2.ZERO)
+	var weapon_tip: Vector2 = _weapon_set.get("tip_right", Vector2.ZERO)
+	var inherent_angle := atan2(weapon_tip.y - weapon_grip.y, weapon_tip.x - weapon_grip.x)
+
 	var direction_px: Vector2 = anchors.get("direction", Vector2.INF)
 	if direction_px != Vector2.INF:
-		_weapon_sprite.rotation = atan2(direction_px.y - grip_px.y, direction_px.x - grip_px.x)
+		var desired_angle := atan2(direction_px.y - grip_px.y, direction_px.x - grip_px.x)
+		_weapon_sprite.rotation = desired_angle - inherent_angle
 	else:
 		_weapon_sprite.rotation = 0.0
 
@@ -1391,8 +1501,7 @@ func _update_weapon_preview() -> void:
 	var anchor_offset := (grip_px - Vector2(_frame_size) / 2.0) * _preview_sprite.scale
 	_weapon_sprite.position = _preview_sprite.position + anchor_offset
 
-	# Offset: shift texture so the "right" grip point sits at the position
-	var weapon_grip: Vector2 = _weapon_set.get("grip_right", Vector2.ZERO)
+	# Offset: shift texture so the weapon grip point sits at the position
 	if weapon_grip != Vector2.ZERO:
 		var tex_size := weapon_tex.get_size()
 		_weapon_sprite.offset = Vector2(tex_size.x / 2.0 - weapon_grip.x, tex_size.y / 2.0 - weapon_grip.y)
@@ -1624,10 +1733,9 @@ func _on_timeline_playhead_moved(ms: float) -> void:
 
 func _update_frame_props_ui() -> void:
 	var has_data := _current_composition != null and _selected_frame >= 0 and _selected_frame < _current_composition.frames.size()
-	# Show/hide the wrapper containers (header + content)
-	var frame_wrapper := _frame_props_container.get_parent()
+	# Show/hide the wrapper containers
+	_frame_section_wrapper.visible = has_data
 	var seq_wrapper := _seq_props_container.get_parent()
-	frame_wrapper.visible = has_data
 	seq_wrapper.visible = has_data
 	if not has_data:
 		return
@@ -2117,6 +2225,41 @@ func _on_draw_anchors_toggled(pressed: bool) -> void:
 func _on_onion_skin_toggled(pressed: bool) -> void:
 	_anchor_onion_skin_enabled = pressed
 	_update_onion_weapon()
+
+
+func _on_alpha_draw_toggled(enabled: bool) -> void:
+	_alpha_paint_enabled = enabled
+	_alpha_buttons_container.visible = enabled
+	_update_weapon_preview()
+
+
+func _on_alpha_level_btn(value: int) -> void:
+	_alpha_paint_value = value
+
+
+func _on_clear_frame_alpha() -> void:
+	if _current_composition == null or _selected_frame < 0:
+		return
+	_push_undo()
+	var frame := _current_composition.frames[_selected_frame]
+	frame.alpha_mask = null
+	_update_weapon_preview()
+
+
+func _on_copy_alpha_to_next() -> void:
+	if _current_composition == null or _selected_frame < 0:
+		return
+	var frame := _current_composition.frames[_selected_frame]
+	if frame.alpha_mask == null:
+		_set_status("No alpha mask on current frame to copy.")
+		return
+	var next_idx := _selected_frame + 1
+	if next_idx >= _current_composition.frames.size():
+		_set_status("No next frame to copy to.")
+		return
+	_push_undo()
+	_current_composition.frames[next_idx].alpha_mask = frame.alpha_mask.duplicate()
+	_set_status("Alpha mask copied to frame %d." % next_idx)
 
 
 func _update_crosshair_overlay() -> void:
