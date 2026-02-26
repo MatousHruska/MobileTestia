@@ -1342,9 +1342,9 @@ func _setup_frame_editor() -> void:
 	var color_processed := _process_image(_captured_sheets[_frame_editor_direction])
 	var color_tex := ImageTexture.create_from_image(color_processed)
 
-	# Calculate frame info
+	# Calculate frame info — use authoritative count from capture, not re-derived from image width
 	var frame_size := int(output_height_spin.value)
-	_frame_editor_frame_count = color_processed.get_width() / maxi(frame_size, 1)
+	_frame_editor_frame_count = _capture_frame_count
 	if _frame_editor_frame_count < 1:
 		_frame_editor_frame_count = 1
 	_frame_editor_frame = clampi(_frame_editor_frame, 0, _frame_editor_frame_count - 1)
@@ -1386,11 +1386,11 @@ func _setup_frame_editor() -> void:
 
 func _update_frame_editor_frame() -> void:
 	var frame_size := int(output_height_spin.value)
-	if _frame_editor_sprite and _frame_editor_sprite.texture is AtlasTexture:
+	if is_instance_valid(_frame_editor_sprite) and _frame_editor_sprite.texture is AtlasTexture:
 		var atlas := _frame_editor_sprite.texture as AtlasTexture
 		atlas.region = Rect2(_frame_editor_frame * frame_size, 0, frame_size, frame_size)
 	# Onion skin — show previous frame behind the current one
-	if _frame_editor_onion_sprite and _frame_editor_onion_sprite.texture is AtlasTexture:
+	if is_instance_valid(_frame_editor_onion_sprite) and _frame_editor_onion_sprite.texture is AtlasTexture:
 		var show_onion := _frame_editor_onion_toggle and _frame_editor_onion_toggle.button_pressed
 		var prev_frame := (_frame_editor_frame - 1) % _frame_editor_frame_count
 		if prev_frame < 0:
