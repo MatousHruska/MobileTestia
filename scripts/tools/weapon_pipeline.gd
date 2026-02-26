@@ -26,17 +26,17 @@ const CATEGORIES: PackedStringArray = [
 #===============================================================================
 
 const C_BG := Color("#1E1E2E")
-const C_PANEL := Color("#2A2A3E")
-const C_SECTION := Color("#252538")
-const C_SURFACE := Color("#363650")
-const C_SURFACE_HOVER := Color("#454568")
-const C_BORDER := Color("#4A4A6A")
-const C_TEXT := Color("#E0E0F0")
-const C_TEXT_DIM := Color("#8888AA")
+const C_PANEL := Color("#252536")
+const C_SECTION := Color("#2A2A3C")
+const C_SURFACE := Color("#33334A")
+const C_SURFACE_HOVER := Color("#3D3D55")
+const C_BORDER := Color("#3A3A50")
+const C_TEXT := Color("#E0E0EC")
+const C_TEXT_DIM := Color("#555570")
 const C_ACCENT := Color("#5B9CF5")
 const C_ACCENT_HOVER := Color("#7BB0FF")
-const C_SUCCESS := Color("#66BB6A")
-const C_WARNING := Color("#FFA726")
+const C_SUCCESS := Color("#5BCC7F")
+const C_WARNING := Color("#F5A85B")
 const C_DANGER := Color("#EF5350")
 const C_GRIP := Color("#FF00AA")
 const C_TIP := Color("#00FFFF")
@@ -59,7 +59,6 @@ var _step_containers: Array[VBoxContainer] = []
 ## Step 1 state
 var _source_image: Image = null
 var _source_texture: ImageTexture = null
-var _source_path: String = ""
 var _weapon_id: String = ""
 var _weapon_category: String = "melee_1h"
 
@@ -109,7 +108,6 @@ var _target_height_spin: SpinBox = null
 var _alpha_threshold_spin: SpinBox = null
 var _dithering_toggle: CheckButton = null
 var _dithering_strength_slider: HSlider = null
-var _dithering_strength_label: Label = null
 var _dithering_pattern_dropdown: OptionButton = null
 var _palette_toggle: CheckButton = null
 var _palette_file_button: Button = null
@@ -142,6 +140,7 @@ var _anchor_container: PanelContainer = null
 
 func _ready() -> void:
 	_build_ui()
+	_go_to_step(0)
 
 
 #===============================================================================
@@ -518,7 +517,6 @@ func _build_step_processing(parent: VBoxContainer) -> void:
 
 	var strength_data := _make_slider_row(0.0, 1.0, 0.5, 0.05)
 	_dithering_strength_slider = strength_data[1]
-	_dithering_strength_label = strength_data[2]
 	_dithering_strength_slider.value_changed.connect(func(v: float) -> void:
 		_dithering_strength = v
 		_process_pixel_art()
@@ -738,7 +736,6 @@ func _on_next_pressed() -> void:
 #===============================================================================
 
 func _on_file_selected(path: String) -> void:
-	_source_path = path
 	_source_image = Image.load_from_file(path)
 	if _source_image == null:
 		_source_texture = null
