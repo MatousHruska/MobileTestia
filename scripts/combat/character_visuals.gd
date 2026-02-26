@@ -600,7 +600,10 @@ func _on_play_body_animation(anim_name: String) -> void:
 
 func _on_effect_event(effect_id: String) -> void:
 	Debug.log("Visuals", "Effect requested: %s" % effect_id)
-	var effect_node := PlaceholderEffectSprites.create_effect(effect_id, current_direction)
+	# Try real effect asset first, then fall back to placeholder
+	var effect_node: Node2D = _load_real_effect(effect_id, current_direction)
+	if effect_node == null:
+		effect_node = PlaceholderEffectSprites.create_effect(effect_id, current_direction)
 	if not effect_node:
 		Debug.warn("Visuals", "Effect creation returned null for '%s'" % effect_id)
 		return
@@ -610,6 +613,65 @@ func _on_effect_event(effect_id: String) -> void:
 			if child is Sprite2D:
 				child.flip_h = true
 	spawn_effect(effect_node)
+
+
+const EFFECTS_DIR := "res://assets/sprites/effects"
+
+## Try to load a real effect spritesheet from assets/sprites/effects/{effect_id}/
+## Returns null if no real asset exists (caller should fall back to placeholder).
+func _load_real_effect(effect_id: String, direction: String) -> Node2D:
+	var meta_path: String = EFFECTS_DIR + "/" + effect_id + "/metadata.json"
+	if not FileAccess.file_exists(meta_path):
+		return null
+
+	var meta_file := FileAccess.open(meta_path, FileAccess.READ)
+	if meta_file == null:
+		return null
+	var meta: Variant = JSON.parse_string(meta_file.get_as_text())
+	meta_file.close()
+	if not meta is Dictionary:
+		return null
+
+	var sheet_path: String = EFFECTS_DIR + "/" + effect_id + "/" + effect_id + "_" + direction + ".png"
+	if not ResourceLoader.exists(sheet_path):
+		return null
+
+	var sheet_tex: Texture2D = load(sheet_path)
+	if sheet_tex == null:
+		return null
+
+	var sheet_img: Image = sheet_tex.get_image()
+	var frame_count: int = meta.get("frame_count", 1)
+	var frame_size: int = meta.get("frame_size", 32)
+	var duration_ms: int = meta.get("duration_ms", 200)
+	var fps: float = float(frame_count) / maxf(float(duration_ms) / 1000.0, 0.001)
+
+	# Build SpriteFrames resource with individual frame textures
+	var sprite_frames := SpriteFrames.new()
+	sprite_frames.add_animation("play")
+	sprite_frames.set_animation_speed("play", fps)
+	sprite_frames.set_animation_loop("play", false)
+
+	for f in frame_count:
+		var frame_img := Image.create(frame_size, frame_size, false, Image.FORMAT_RGBA8)
+		frame_img.blit_rect(sheet_img, Rect2i(f * frame_size, 0, frame_size, frame_size), Vector2i.ZERO)
+		var tex := ImageTexture.create_from_image(frame_img)
+		sprite_frames.add_frame("play", tex)
+
+	# Create AnimatedSprite2D that plays once and auto-frees
+	var sprite := AnimatedSprite2D.new()
+	sprite.sprite_frames = sprite_frames
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	var duration_sec: float = float(duration_ms) / 1000.0
+	sprite.ready.connect(func() -> void:
+		sprite.play("play")
+		var tw := sprite.create_tween()
+		tw.tween_callback(sprite.queue_free).set_delay(duration_sec + 0.05)
+	)
+
+	var root := Node2D.new()
+	root.add_child(sprite)
+	return root
 
 
 func _on_echo_requested(frame_index: int, config: Dictionary) -> void:

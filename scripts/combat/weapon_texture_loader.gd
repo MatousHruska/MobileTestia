@@ -31,10 +31,32 @@ static func load_weapon_textures(sprite_id: String, weapon_category: String) -> 
 
 
 ## Try loading textures from assets/sprites/weapons/{sprite_id}/
+## Supports two formats:
+##   New: weapon.png + metadata.json (single texture, grip/tip in metadata)
+##   Legacy: down.png + up.png + right.png + grip.json (per-direction textures)
 static func _load_from_disk(sprite_id: String) -> Dictionary:
 	var base_path := WEAPON_SPRITES_BASE + sprite_id + "/"
 
-	# Check all three direction textures exist
+	# --- New format: weapon.png + metadata.json ---
+	var new_weapon_path := base_path + "weapon.png"
+	var new_meta_path := base_path + "metadata.json"
+	if FileAccess.file_exists(new_meta_path) and ResourceLoader.exists(new_weapon_path):
+		var tex: Texture2D = load(new_weapon_path)
+		if tex != null:
+			var meta_file := FileAccess.open(new_meta_path, FileAccess.READ)
+			if meta_file != null:
+				var meta: Variant = JSON.parse_string(meta_file.get_as_text())
+				meta_file.close()
+				if meta is Dictionary and meta.has("grip") and meta.has("tip"):
+					var grip := Vector2(float(meta["grip"][0]), float(meta["grip"][1]))
+					var tip := Vector2(float(meta["tip"][0]), float(meta["tip"][1]))
+					return {
+						"down": tex, "up": tex, "right": tex,
+						"grip_down": grip, "grip_up": grip, "grip_right": grip,
+						"tip_down": tip, "tip_up": tip, "tip_right": tip,
+					}
+
+	# --- Legacy format: per-direction PNGs ---
 	var down_path := base_path + "down.png"
 	var up_path := base_path + "up.png"
 	var right_path := base_path + "right.png"
