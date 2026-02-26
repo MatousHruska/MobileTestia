@@ -1508,6 +1508,27 @@ func _update_weapon_preview() -> void:
 	else:
 		_weapon_sprite.offset = Vector2.ZERO
 
+	# Apply per-frame alpha mask visualization
+	var global_mask: Image = _weapon_set.get("alpha_mask")
+	var frame_mask: Image = frame.alpha_mask
+
+	if global_mask != null or frame_mask != null:
+		var base_img := weapon_tex.get_image()
+		if base_img != null:
+			var composited := base_img.duplicate()
+			for y in range(composited.get_height()):
+				for x in range(composited.get_width()):
+					var alpha_mult := 1.0
+					if global_mask != null and x < global_mask.get_width() and y < global_mask.get_height():
+						alpha_mult *= global_mask.get_pixel(x, y).r
+					if frame_mask != null and x < frame_mask.get_width() and y < frame_mask.get_height():
+						alpha_mult *= frame_mask.get_pixel(x, y).r
+					if alpha_mult < 0.99:
+						var px := composited.get_pixel(x, y)
+						px.a *= alpha_mult
+						composited.set_pixel(x, y, px)
+			_weapon_sprite.texture = ImageTexture.create_from_image(composited)
+
 	# Z-index preview: "behind" shown as semi-transparent instead of z=-1,
 	# because the preview body is a single sprite so z=-1 hides the weapon entirely.
 	# In-game, layered body parts allow true partial occlusion.
