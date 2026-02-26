@@ -2526,12 +2526,19 @@ func _load_weapon_from_folder(weapon_id: String) -> Dictionary:
 	var grip := Vector2(float(meta["grip"][0]), float(meta["grip"][1]))
 	var tip := Vector2(float(meta["tip"][0]), float(meta["tip"][1]))
 
+	# Load optional global alpha mask
+	var alpha_mask: Image = null
+	var alpha_path: String = dir_path + "/alpha_mask.png"
+	if FileAccess.file_exists(alpha_path):
+		alpha_mask = Image.load_from_file(ProjectSettings.globalize_path(alpha_path))
+
 	# Return same format as PlaceholderWeaponSprites sets.
 	# Single texture for all directions (rotation handled by anchor system).
 	return {
 		"down": tex, "up": tex, "right": tex,
 		"grip_down": grip, "grip_up": grip, "grip_right": grip,
 		"tip_down": tip, "tip_up": tip, "tip_right": tip,
+		"alpha_mask": alpha_mask,
 	}
 
 
