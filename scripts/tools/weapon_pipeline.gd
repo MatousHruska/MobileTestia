@@ -83,6 +83,13 @@ var _grip_point: Vector2i = Vector2i(-1, -1)
 var _tip_point: Vector2i = Vector2i(-1, -1)
 var _placement_mode: String = ""  # "", "grip", "tip"
 
+## Alpha mask state
+var _alpha_mask_image: Image = null
+var _alpha_paint_mode: bool = false
+var _alpha_paint_value: int = 128  # Current brush R8 value (0, 64, 128, 191, 255)
+var _alpha_buttons: Array[Button] = []
+var _alpha_paint_toggle_btn: Button = null
+
 #===============================================================================
 # NODE REFERENCES
 #===============================================================================
@@ -659,6 +666,52 @@ func _build_step_anchor(parent: VBoxContainer) -> void:
 	_tip_label.add_theme_color_override("font_color", C_TIP)
 	anchor_content.add_child(_tip_label)
 
+	# Draw Alpha Mask section
+	var alpha_sec := _make_section("Draw Alpha Mask")
+	parent.add_child(alpha_sec[0])
+	var alpha_content: VBoxContainer = alpha_sec[1]
+
+	alpha_content.add_child(_make_small_label(
+		"Paint transparency on weapon pixels. L-click to paint."
+	))
+
+	var alpha_row := HBoxContainer.new()
+	alpha_row.add_theme_constant_override("separation", 4)
+	alpha_content.add_child(alpha_row)
+
+	_alpha_buttons.clear()
+	var alpha_levels: Array[Array] = [
+		[0, "0%"], [64, "25%"], [128, "50%"], [191, "75%"], [255, "100%"],
+	]
+	for entry in alpha_levels:
+		var value: int = entry[0]
+		var label_text: String = entry[1]
+		var btn := Button.new()
+		btn.text = label_text
+		btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		var btn_sb := StyleBoxFlat.new()
+		btn_sb.bg_color = Color(C_ACCENT.r, C_ACCENT.g, C_ACCENT.b, value / 255.0)
+		btn_sb.set_corner_radius_all(4)
+		btn_sb.set_content_margin_all(6)
+		btn.add_theme_stylebox_override("normal", btn_sb)
+		var btn_hover_sb := StyleBoxFlat.new()
+		btn_hover_sb.bg_color = Color(C_ACCENT_HOVER.r, C_ACCENT_HOVER.g, C_ACCENT_HOVER.b, clampf(value / 255.0 + 0.15, 0.0, 1.0))
+		btn_hover_sb.set_corner_radius_all(4)
+		btn_hover_sb.set_content_margin_all(6)
+		btn.add_theme_stylebox_override("hover", btn_hover_sb)
+		btn.add_theme_font_size_override("font_size", FONT_HINT)
+		btn.pressed.connect(_on_alpha_level_selected.bind(value))
+		alpha_row.add_child(btn)
+		_alpha_buttons.append(btn)
+
+	_alpha_paint_toggle_btn = _make_primary_button("Enable Alpha Painting")
+	_alpha_paint_toggle_btn.pressed.connect(_on_alpha_paint_toggled)
+	alpha_content.add_child(_alpha_paint_toggle_btn)
+
+	var clear_alpha_btn := _make_subtle_button("Clear Mask")
+	clear_alpha_btn.pressed.connect(_on_clear_alpha_mask)
+	alpha_content.add_child(clear_alpha_btn)
+
 	# Export section
 	var export_sec := _make_section("Export")
 	parent.add_child(export_sec[0])
@@ -999,6 +1052,28 @@ func _update_anchor_labels() -> void:
 		_tip_label.text = "Tip: (%d, %d)" % [_tip_point.x, _tip_point.y]
 	else:
 		_tip_label.text = "Tip: --"
+
+
+func _on_alpha_level_selected(value: int) -> void:
+	_alpha_paint_value = value
+	_anchor_overlay.queue_redraw()
+
+
+func _on_alpha_paint_toggled() -> void:
+	_alpha_paint_mode = not _alpha_paint_mode
+	_alpha_paint_toggle_btn.text = "Disable Alpha Painting" if _alpha_paint_mode else "Enable Alpha Painting"
+	if _alpha_paint_mode and _alpha_mask_image == null and _processed_image != null:
+		_alpha_mask_image = Image.create(
+			_processed_image.get_width(), _processed_image.get_height(),
+			false, Image.FORMAT_R8)
+		_alpha_mask_image.fill(Color(1, 1, 1))  # 255 = opaque
+	_anchor_overlay.queue_redraw()
+
+
+func _on_clear_alpha_mask() -> void:
+	if _alpha_mask_image != null:
+		_alpha_mask_image.fill(Color(1, 1, 1))
+		_anchor_overlay.queue_redraw()
 
 
 func _style_anchor_button(btn: Button, color: Color) -> void:
