@@ -40,7 +40,7 @@ const LABEL_WIDTH := 60.0
 const FONT_SIZE := 11
 
 # ── State ──────────────────────────────────────────────────────────────
-var composition: AttackCompositionData = null
+var sequence: DirectionSequence = null
 var frame_thumbnails: Array[ImageTexture] = []
 var selected_frame: int = -1
 var selected_frames: Array[int] = []
@@ -67,7 +67,7 @@ func _ready() -> void:
 
 
 func _draw() -> void:
-	if composition == null or composition.frames.is_empty():
+	if sequence == null or sequence.frames.is_empty():
 		# Empty state
 		var center := size / 2.0
 		draw_string(_font, Vector2(center.x - 60, center.y), "Load a spritesheet",
@@ -88,22 +88,21 @@ func _draw() -> void:
 
 func _get_frame_x(frame_index: int) -> float:
 	var ms := 0
-	for i in mini(frame_index, composition.frames.size()):
-		ms += composition.frames[i].duration_ms
+	for i in mini(frame_index, sequence.frames.size()):
+		ms += sequence.frames[i].duration_ms
 	return LABEL_WIDTH + (ms - scroll_offset_ms) * pixels_per_ms
 
 
 func _get_frame_width(frame_index: int) -> float:
-	if frame_index < 0 or frame_index >= composition.frames.size():
+	if frame_index < 0 or frame_index >= sequence.frames.size():
 		return 0.0
-	return composition.frames[frame_index].duration_ms * pixels_per_ms
+	return sequence.frames[frame_index].duration_ms * pixels_per_ms
 
 
 func _get_total_ms() -> float:
-	var total := 0
-	for frame in composition.frames:
-		total += frame.duration_ms
-	return float(total)
+	if sequence == null:
+		return 0.0
+	return float(sequence.get_total_duration_ms())
 
 
 func get_visible_ms() -> float:
@@ -134,8 +133,8 @@ func _frame_at_x(x: float, track_y_start: float, track_height: float, mouse_y: f
 	if ms < 0:
 		return -1
 	var cumulative := 0.0
-	for i in composition.frames.size():
-		cumulative += composition.frames[i].duration_ms
+	for i in sequence.frames.size():
+		cumulative += sequence.frames[i].duration_ms
 		if ms < cumulative:
 			return i
 	return -1
@@ -186,7 +185,7 @@ func _draw_body_track() -> void:
 		HORIZONTAL_ALIGNMENT_LEFT, -1, FONT_SIZE, C_TEXT_SEC)
 
 	# Frame blocks
-	for i in composition.frames.size():
+	for i in sequence.frames.size():
 		var x := _get_frame_x(i)
 		var w := _get_frame_width(i)
 
@@ -240,29 +239,29 @@ func _draw_sub_track_bg(track_index: int, label: String) -> void:
 
 func _draw_weapon_track() -> void:
 	_draw_sub_track_bg(0, "Weapon")
-	if composition == null:
+	if sequence == null:
 		return
 	var y := _get_track_y(0)
-	for i in composition.frames.size():
+	for i in sequence.frames.size():
 		var x := _get_frame_x(i)
 		var w := _get_frame_width(i)
 		if x + w < LABEL_WIDTH or x > size.x:
 			continue
-		var color := C_WEAPON_ON if composition.frames[i].weapon_visible else C_WEAPON_OFF
+		var color := C_WEAPON_ON if sequence.frames[i].weapon_visible else C_WEAPON_OFF
 		draw_rect(Rect2(x, y + 2, w - 1, SUB_TRACK_HEIGHT - 4), color)
 		# Show "B" marker on frames where weapon renders behind body
-		if not composition.frames[i].weapon_z_front and composition.frames[i].weapon_visible:
+		if not sequence.frames[i].weapon_z_front and sequence.frames[i].weapon_visible:
 			draw_string(_font, Vector2(x + 2, y + SUB_TRACK_HEIGHT - 4), "B",
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 9, C_TEXT)
 
 
 func _draw_effect_track() -> void:
 	_draw_sub_track_bg(1, "Effect")
-	if composition == null:
+	if sequence == null:
 		return
 	var y := _get_track_y(1)
-	for i in composition.frames.size():
-		if composition.frames[i].effect_id.is_empty():
+	for i in sequence.frames.size():
+		if sequence.frames[i].effect_id.is_empty():
 			continue
 		var x := _get_frame_x(i)
 		var w := _get_frame_width(i)
@@ -282,11 +281,11 @@ func _draw_effect_track() -> void:
 
 func _draw_echo_track() -> void:
 	_draw_sub_track_bg(2, "Echo")
-	if composition == null:
+	if sequence == null:
 		return
 	var y := _get_track_y(2)
-	for i in composition.frames.size():
-		if not composition.frames[i].echo_enabled:
+	for i in sequence.frames.size():
+		if not sequence.frames[i].echo_enabled:
 			continue
 		var x := _get_frame_x(i)
 		var w := _get_frame_width(i)
@@ -297,11 +296,11 @@ func _draw_echo_track() -> void:
 
 func _draw_movement_track() -> void:
 	_draw_sub_track_bg(3, "Move")
-	if composition == null:
+	if sequence == null:
 		return
-	var start := composition.movement_start_frame
-	var end := composition.movement_end_frame
-	if start < 0 or end < 0 or start >= composition.frames.size() or end >= composition.frames.size():
+	var start := sequence.movement_start_frame
+	var end := sequence.movement_end_frame
+	if start < 0 or end < 0 or start >= sequence.frames.size() or end >= sequence.frames.size():
 		return
 	var y := _get_track_y(3)
 	var x1 := _get_frame_x(start)
@@ -310,17 +309,17 @@ func _draw_movement_track() -> void:
 		return
 	draw_rect(Rect2(x1, y + 4, x2 - x1, SUB_TRACK_HEIGHT - 8), C_MOVEMENT_BAR)
 	# Label
-	if composition.movement_type != "":
+	if sequence.movement_type != "":
 		draw_string(_font, Vector2(x1 + 4, y + SUB_TRACK_HEIGHT / 2.0 + 3),
-			composition.movement_type, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, C_TEXT)
+			sequence.movement_type, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, C_TEXT)
 
 
 func _draw_damage_track() -> void:
 	_draw_sub_track_bg(4, "Damage")
-	if composition == null:
+	if sequence == null:
 		return
-	var dmg := composition.damage_frame
-	if dmg < 0 or dmg >= composition.frames.size():
+	var dmg := sequence.damage_frame
+	if dmg < 0 or dmg >= sequence.frames.size():
 		return
 	var y := _get_track_y(4)
 	var x := _get_frame_x(dmg)
@@ -357,7 +356,7 @@ func _draw_playhead() -> void:
 # ── Input ──────────────────────────────────────────────────────────────
 
 func _gui_input(event: InputEvent) -> void:
-	if composition == null:
+	if sequence == null:
 		return
 
 	if event is InputEventMouseButton:
@@ -417,14 +416,14 @@ func _handle_click(pos: Vector2, shift: bool = false) -> void:
 	var body_y := RULER_HEIGHT
 	if pos.y >= body_y and pos.y <= body_y + BODY_TRACK_HEIGHT:
 		# Check edge proximity
-		for i in composition.frames.size():
+		for i in sequence.frames.size():
 			var right_edge := _get_frame_x(i) + _get_frame_width(i)
 			if absf(pos.x - right_edge) < 5.0:
 				before_mutation.emit()
 				_dragging_edge = true
 				_drag_frame_index = i
 				_drag_start_x = pos.x
-				_drag_start_ms = composition.frames[i].duration_ms
+				_drag_start_ms = sequence.frames[i].duration_ms
 				return
 
 		# Click → select frame (shift = range select)
@@ -458,7 +457,7 @@ func _handle_sub_track_click(pos: Vector2) -> void:
 		var idx := _frame_at_x(pos.x, weapon_y, SUB_TRACK_HEIGHT, pos.y)
 		if idx >= 0:
 			before_mutation.emit()
-			composition.frames[idx].weapon_visible = not composition.frames[idx].weapon_visible
+			sequence.frames[idx].weapon_visible = not sequence.frames[idx].weapon_visible
 			queue_redraw()
 		return
 
@@ -467,7 +466,7 @@ func _handle_sub_track_click(pos: Vector2) -> void:
 	if pos.y >= effect_y and pos.y <= effect_y + SUB_TRACK_HEIGHT:
 		var idx := _frame_at_x(pos.x, effect_y, SUB_TRACK_HEIGHT, pos.y)
 		if idx >= 0:
-			if not composition.frames[idx].effect_id.is_empty():
+			if not sequence.frames[idx].effect_id.is_empty():
 				# Start dragging existing effect diamond
 				_dragging_effect = true
 				_drag_effect_from = idx
@@ -482,7 +481,7 @@ func _handle_sub_track_click(pos: Vector2) -> void:
 		var idx := _frame_at_x(pos.x, echo_y, SUB_TRACK_HEIGHT, pos.y)
 		if idx >= 0:
 			before_mutation.emit()
-			composition.frames[idx].echo_enabled = not composition.frames[idx].echo_enabled
+			sequence.frames[idx].echo_enabled = not sequence.frames[idx].echo_enabled
 			queue_redraw()
 		return
 
@@ -492,20 +491,20 @@ func _handle_sub_track_click(pos: Vector2) -> void:
 		var idx := _frame_at_x(pos.x, damage_y, SUB_TRACK_HEIGHT, pos.y)
 		if idx >= 0:
 			before_mutation.emit()
-			composition.damage_frame = idx
+			sequence.damage_frame = idx
 			queue_redraw()
 		return
 
 
 func _handle_edge_drag(pos: Vector2) -> void:
-	if _drag_frame_index < 0 or _drag_frame_index >= composition.frames.size():
+	if _drag_frame_index < 0 or _drag_frame_index >= sequence.frames.size():
 		return
 	var delta_px := pos.x - _drag_start_x
 	var delta_ms := int(delta_px / pixels_per_ms)
 	# Snap to 8ms
 	var new_ms := maxi(8, _drag_start_ms + delta_ms)
 	new_ms = int(round(new_ms / 8.0)) * 8
-	composition.frames[_drag_frame_index].duration_ms = new_ms
+	sequence.frames[_drag_frame_index].duration_ms = new_ms
 	frame_duration_changed.emit(_drag_frame_index, new_ms)
 	queue_redraw()
 
@@ -521,7 +520,7 @@ func _handle_scrub(pos: Vector2) -> void:
 func _update_cursor(pos: Vector2) -> void:
 	var body_y := RULER_HEIGHT
 	if pos.y >= body_y and pos.y <= body_y + BODY_TRACK_HEIGHT:
-		for i in composition.frames.size():
+		for i in sequence.frames.size():
 			var right_edge := _get_frame_x(i) + _get_frame_width(i)
 			if absf(pos.x - right_edge) < 5.0:
 				mouse_default_cursor_shape = CURSOR_HSIZE
