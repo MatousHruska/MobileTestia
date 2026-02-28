@@ -5,18 +5,19 @@ class_name CompositionConverter
 ## DAMAGE_EVENT at the appropriate points.
 
 
-## Convert an AttackCompositionData into an AbilityVisualData ready for runtime.
-static func convert(comp: AttackCompositionData) -> AbilityVisualData:
+## Convert a specific direction of an AttackCompositionData into AbilityVisualData.
+static func convert(comp: AttackCompositionData, direction: String = "down") -> AbilityVisualData:
 	var data := AbilityVisualData.new()
 	data.template_id = comp.composition_id
 	data.display_name = comp.display_name
 	data.locks_movement = comp.locks_movement
 
+	var seq := comp.get_sequence(direction)
 	var phases: Array[AbilityVisualPhase] = []
-	var frames := comp.frames
-	if frames.is_empty():
+	if seq == null or seq.frames.is_empty():
 		data.phases = phases
 		return data
+	var frames := seq.frames
 
 	# Group consecutive frames by weapon_visible state
 	var groups := _group_frames_by_weapon(frames)
@@ -37,6 +38,7 @@ static func convert(comp: AttackCompositionData) -> AbilityVisualData:
 		var frame_timings: Array = []
 		var total_ms := 0
 		var echo_data: Array = []
+		var effect_data: Array = []
 		for i in range(start_idx, end_idx + 1):
 			var frame := frames[i]
 			frame_timings.append(frame.duration_ms)
@@ -49,17 +51,15 @@ static func convert(comp: AttackCompositionData) -> AbilityVisualData:
 					"opacity_end": frame.echo_opacity_end,
 					"spacing_px": frame.echo_spacing_px,
 				})
-
-		# Insert EFFECT phases for frames with effects (concurrent with body anim)
-		for i in range(start_idx, end_idx + 1):
-			var frame := frames[i]
 			if not frame.effect_id.is_empty():
-				var effect_phase := AbilityVisualPhase.create_effect(frame.effect_id, 0.0, true)
-				effect_phase.context_data = {
+				effect_data.append({
+					"frame_index": i,
+					"effect_id": frame.effect_id,
 					"anchor": frame.effect_anchor,
 					"offset": frame.effect_offset,
-				}
-				phases.append(effect_phase)
+					"rotation_deg": frame.effect_rotation_deg,
+					"z_index": frame.effect_z_index,
+				})
 
 		# Create BODY_ANIM phase with frame_timings in context_data
 		var body_dur := total_ms / 1000.0
@@ -71,11 +71,13 @@ static func convert(comp: AttackCompositionData) -> AbilityVisualData:
 		}
 		if not echo_data.is_empty():
 			body_phase.context_data["echo_data"] = echo_data
+		if not effect_data.is_empty():
+			body_phase.context_data["effect_data"] = effect_data
 
 		# Check if movement overlaps this group
 		var move_concurrent := false
-		if comp.movement_type != "" and comp.movement_start_frame >= 0 and comp.movement_end_frame >= 0:
-			if comp.movement_start_frame >= start_idx and comp.movement_start_frame <= end_idx:
+		if seq.movement_type != "" and seq.movement_start_frame >= 0 and seq.movement_end_frame >= 0:
+			if seq.movement_start_frame >= start_idx and seq.movement_start_frame <= end_idx:
 				move_concurrent = true
 
 		if move_concurrent:
@@ -84,17 +86,17 @@ static func convert(comp: AttackCompositionData) -> AbilityVisualData:
 			phases.append(body_phase)
 
 			var move_dur := 0.0
-			for i in range(comp.movement_start_frame, mini(comp.movement_end_frame + 1, frames.size())):
+			for i in range(seq.movement_start_frame, mini(seq.movement_end_frame + 1, frames.size())):
 				move_dur += frames[i].duration_ms
 			move_dur /= 1000.0
 			var move_phase := AbilityVisualPhase.create_movement(
-				"toward_target", comp.movement_distance, move_dur, "lunge")
+				"toward_target", seq.movement_distance, move_dur, "lunge")
 			phases.append(move_phase)
 		else:
 			phases.append(body_phase)
 
 		# Insert DAMAGE_EVENT if damage frame is in this group
-		if comp.damage_frame >= start_idx and comp.damage_frame <= end_idx:
+		if seq.damage_frame >= start_idx and seq.damage_frame <= end_idx:
 			phases.append(AbilityVisualPhase.create_damage_event())
 
 	# Hide weapon at end if it was visible
