@@ -50,6 +50,13 @@ var _shadow_last_body_anim: StringName = &""  # Tracks body animation for auto-s
 var current_direction: String = "down"
 var is_flipped: bool = false
 
+## Weapon z-order override from composed animations (-1 = behind, 1 = front, 0 = no override)
+var _weapon_z_override: int = 0
+
+## Per-frame alpha masks for weapon transparency (from Attack Composer)
+var _weapon_alpha_masks: Dictionary = {}   # frame_index → Image
+var _weapon_alpha_cache: Dictionary = {}   # frame_index → ImageTexture (pre-composited)
+
 #===============================================================================
 # WEAPON ANCHOR
 #===============================================================================
@@ -332,15 +339,82 @@ func _update_weapon_position(anchors: Dictionary) -> void:
 			weapon_sprite.visible = false
 			return
 
-	# Determine weapon texture direction:
-	# - Both pixels present → angle from grip to direction pixel (explicit)
-	# - Only grip → position heuristic (backward compat)
+	# ── Rotation path ──────────────────────────────────────────────────
+	# Use the "right" texture with continuous rotation when:
+	#   (a) a direction pixel exists (explicit angle), OR
+	#   (b) alpha masks are loaded (masks are in "right" texture space,
+	#       so we MUST use the rotation path to composite them correctly)
+	var _use_rotation_path := not _weapon_texture_set.is_empty() and (
+		direction_pixel != Vector2.INF or not _weapon_alpha_masks.is_empty()
+	)
+
+	if _use_rotation_path:
+		var right_tex: Texture2D = _weapon_texture_set.get("right")
+		if right_tex == null:
+			weapon_sprite.visible = false
+			return
+
+		weapon_sprite.texture = right_tex
+
+		# Compute rotation: desired_angle - inherent_angle
+		var weapon_grip: Vector2 = _weapon_texture_set.get("grip_right", Vector2.ZERO)
+		var weapon_tip: Vector2 = _weapon_texture_set.get("tip_right", Vector2.ZERO)
+		var inherent_angle := atan2(weapon_tip.y - weapon_grip.y, weapon_tip.x - weapon_grip.x)
+
+		var desired_angle: float
+		var weapon_dir: String
+		if direction_pixel != Vector2.INF:
+			# Explicit angle from direction pixel
+			desired_angle = atan2(direction_pixel.y - anchor.y, direction_pixel.x - anchor.x)
+			weapon_dir = _weapon_direction_from_angle(anchor, direction_pixel)
+		else:
+			# Synthesize angle from anchor position heuristic (for alpha mask support)
+			weapon_dir = _weapon_direction_from_anchor(anchor)
+			match weapon_dir:
+				"down": desired_angle = PI / 2.0
+				"up": desired_angle = -PI / 2.0
+				_: desired_angle = 0.0  # "right"
+
+		var rotation_angle: float
+		if is_flipped:
+			# flip_h mirrors the texture's inherent angle to (PI - inherent_angle).
+			# desired_angle is already in mirrored space (anchor X coords negated
+			# during scanning), so we compensate for the flipped inherent angle.
+			rotation_angle = desired_angle - (PI - inherent_angle)
+		else:
+			rotation_angle = desired_angle - inherent_angle
+		weapon_sprite.rotation = rotation_angle
+		weapon_sprite.flip_h = is_flipped
+
+		# Grip offset using the "right" texture grip point
+		if weapon_grip != Vector2.ZERO:
+			var tex_size := right_tex.get_size()
+			var ofs := Vector2(tex_size.x / 2.0 - weapon_grip.x, tex_size.y / 2.0 - weapon_grip.y)
+			if is_flipped:
+				ofs.x = -ofs.x
+			weapon_sprite.offset = ofs
+		else:
+			weapon_sprite.offset = Vector2.ZERO
+
+		# Z-index: use composed data override if active, otherwise direction-based
+		if _weapon_z_override != 0:
+			weapon_sprite.z_index = _weapon_z_override
+		else:
+			weapon_sprite.z_index = -1 if weapon_dir == "up" else 1
+
+		weapon_sprite.visible = true
+		weapon_sprite.position = anchor
+		_apply_weapon_alpha_mask()
+		return
+
+	# ── Legacy path (no direction pixel) ───────────────────────────────
+	# Clear any leftover rotation from the rotation path above.
+	weapon_sprite.rotation = 0.0
+
+	# Determine weapon texture direction from position heuristic
 	var weapon_dir: String
 	var weapon_flip := is_flipped
-	if direction_pixel != Vector2.INF:
-		weapon_dir = _weapon_direction_from_angle(anchor, direction_pixel)
-	else:
-		weapon_dir = _weapon_direction_from_anchor(anchor)
+	weapon_dir = _weapon_direction_from_anchor(anchor)
 	if abs(anchor.x) > abs(anchor.y):
 		# Horizontal dominant — flip when anchor is to the left
 		weapon_flip = anchor.x < 0
@@ -357,8 +431,11 @@ func _update_weapon_position(anchors: Dictionary) -> void:
 		weapon_sprite.visible = false
 		return
 
-	# Adjust z-index: weapon behind body when facing up (character's back to camera)
-	weapon_sprite.z_index = -1 if weapon_dir == "up" else 1
+	# Adjust z-index: use composed data override if active, otherwise direction-based default
+	if _weapon_z_override != 0:
+		weapon_sprite.z_index = _weapon_z_override
+	else:
+		weapon_sprite.z_index = -1 if weapon_dir == "up" else 1
 
 	weapon_sprite.visible = true
 	weapon_sprite.position = anchor
@@ -539,6 +616,73 @@ func set_weapon_visible(vis: bool) -> void:
 		weapon_sprite.visible = false
 
 
+## Set weapon z-order from composed animation data
+func _on_weapon_z_changed(in_front: bool) -> void:
+	_weapon_z_override = 1 if in_front else -1
+
+
+## Clear weapon z-order override when sequence finishes
+func _on_sequence_finished(_template_id: String) -> void:
+	_weapon_z_override = 0
+	_weapon_alpha_masks.clear()
+	_weapon_alpha_cache.clear()
+
+
+## Handle alpha mask data from AbilityVisualPlayer
+func _on_weapon_alpha_masks_changed(masks: Dictionary) -> void:
+	_weapon_alpha_masks = masks
+	_weapon_alpha_cache.clear()
+	if not masks.is_empty():
+		Debug.log("Visuals", "Received %d weapon alpha masks, keys: %s" % [masks.size(), str(masks.keys())])
+	else:
+		Debug.log("Visuals", "Weapon alpha masks cleared")
+
+
+## Apply per-frame alpha mask to the weapon texture.
+## Alpha masks are painted in the Attack Composer on the UNROTATED weapon image
+## (same image for all directions). At runtime, direction variants are pixel-rotated
+## ("right" = 90° CCW). We composite on the unrotated "down" texture, then rotate
+## the result to match the "right" variant orientation.
+func _apply_weapon_alpha_mask() -> void:
+	if _weapon_alpha_masks.is_empty() or body_sprite == null or weapon_sprite == null:
+		return
+	var current_frame: int = body_sprite.frame
+	if not _weapon_alpha_masks.has(current_frame):
+		return
+	if _weapon_alpha_cache.has(current_frame):
+		weapon_sprite.texture = _weapon_alpha_cache[current_frame]
+		return
+	# Use "down" (unrotated) texture — masks are in unrotated coordinate space.
+	# The "down" texture already has the global alpha_mask.png baked in by
+	# WeaponTextureLoader, so we only need to apply the per-frame mask.
+	var base_tex: Texture2D = _weapon_texture_set.get("down")
+	if base_tex == null:
+		return
+	var base_img: Image = base_tex.get_image()
+	if base_img == null:
+		return
+	var mask: Image = _weapon_alpha_masks[current_frame]
+	var composited: Image = base_img.duplicate() as Image
+	if composited == null:
+		return
+	# Ensure image is in a writable uncompressed format
+	if composited.is_compressed():
+		composited.decompress()
+	for y in range(mini(composited.get_height(), mask.get_height())):
+		for x in range(mini(composited.get_width(), mask.get_width())):
+			var alpha_mult := mask.get_pixel(x, y).r
+			if alpha_mult < 0.99:
+				var px: Color = composited.get_pixel(x, y)
+				px.a *= alpha_mult
+				composited.set_pixel(x, y, px)
+	# Rotate to match "right" variant orientation (90° CCW), since the
+	# rotation path always uses the "right" texture + sprite rotation.
+	composited.rotate_90(COUNTERCLOCKWISE)
+	var cached_tex := ImageTexture.create_from_image(composited)
+	_weapon_alpha_cache[current_frame] = cached_tex
+	weapon_sprite.texture = cached_tex
+
+
 #===============================================================================
 # EFFECT ANCHOR
 #===============================================================================
@@ -583,6 +727,12 @@ func connect_to_visual_player(visual_player: Node) -> void:
 	visual_player.effect_event.connect(_on_effect_event)
 	if visual_player.has_signal("echo_requested"):
 		visual_player.echo_requested.connect(_on_echo_requested)
+	if visual_player.has_signal("weapon_z_changed"):
+		visual_player.weapon_z_changed.connect(_on_weapon_z_changed)
+	if visual_player.has_signal("sequence_finished"):
+		visual_player.sequence_finished.connect(_on_sequence_finished)
+	if visual_player.has_signal("weapon_alpha_masks_changed"):
+		visual_player.weapon_alpha_masks_changed.connect(_on_weapon_alpha_masks_changed)
 
 
 func _on_play_body_animation(anim_name: String) -> void:
@@ -598,8 +748,8 @@ func _on_play_body_animation(anim_name: String) -> void:
 		Debug.warn("Visuals", "Animation not found after resolve: %s (from %s)" % [resolved, anim_name])
 
 
-func _on_effect_event(effect_id: String) -> void:
-	Debug.log("Visuals", "Effect requested: %s" % effect_id)
+func _on_effect_event(effect_id: String, context: Dictionary = {}) -> void:
+	Debug.log("Visuals", "Effect requested: %s (context: %s)" % [effect_id, str(context)])
 	# Try real effect asset first, then fall back to placeholder
 	var effect_node: Node2D = _load_real_effect(effect_id, current_direction)
 	if effect_node == null:
@@ -607,12 +757,53 @@ func _on_effect_event(effect_id: String) -> void:
 	if not effect_node:
 		Debug.warn("Visuals", "Effect creation returned null for '%s'" % effect_id)
 		return
-	# Mirror the effect sprite when facing left (flipped "right" direction)
+	# Mirror the entire effect when facing left.
+	# Using scale.x = -1 on the node mirrors children, rotation, and local
+	# space in one operation — no need to individually flip_h each sprite.
 	if is_flipped:
+		effect_node.scale.x = -1
+
+	# Apply composed effect context (rotation, z_index, anchor offset)
+	var anchor_type: String = "weapon_tip"
+	if not context.is_empty():
+		var rot_deg: float = context.get("rotation_deg", 0.0)
+		if rot_deg != 0.0:
+			effect_node.rotation = deg_to_rad(rot_deg)
+		var z_idx: int = context.get("z_index", 2)
 		for child in effect_node.get_children():
-			if child is Sprite2D or child is AnimatedSprite2D:
-				child.flip_h = true
-	spawn_effect(effect_node)
+			child.z_index = z_idx
+		var offset: Variant = context.get("offset", Vector2.ZERO)
+		var offset_vec := Vector2.ZERO
+		if offset is Vector2:
+			offset_vec = offset
+		elif offset is Array and offset.size() == 2:
+			offset_vec = Vector2(offset[0], offset[1])
+		# Mirror offset X for left-facing (effect anchor is already positioned
+		# correctly via flipped blade tip, but the additional offset from
+		# composition data needs to be mirrored too)
+		if is_flipped:
+			offset_vec.x = -offset_vec.x
+		effect_node.position += offset_vec
+		anchor_type = context.get("anchor", "weapon_tip")
+
+	# Parent to the correct node based on anchor type:
+	# - "weapon_tip": child of effect_anchor (follows weapon during animation)
+	# - "center"/"feet": child of CharacterVisuals root (stays fixed on character)
+	if anchor_type == "weapon_tip":
+		spawn_effect(effect_node)
+	else:
+		# Position relative to character root (not weapon tip)
+		if anchor_type == "feet":
+			var feet_offset := Vector2.ZERO
+			if body_sprite and body_sprite.sprite_frames:
+				var anims := body_sprite.sprite_frames.get_animation_names()
+				if not anims.is_empty():
+					var tex := body_sprite.sprite_frames.get_frame_texture(anims[0], 0)
+					if tex:
+						feet_offset.y = tex.get_height() / 2.0
+			effect_node.position += feet_offset
+		# "center" needs no extra adjustment — (0,0) on CharacterVisuals IS the center
+		add_child(effect_node)
 
 
 const EFFECTS_DIR := "res://assets/sprites/effects"
@@ -646,6 +837,12 @@ func _load_real_effect(effect_id: String, direction: String) -> Node2D:
 	var duration_ms: int = meta.get("duration_ms", 200)
 	var fps: float = float(frame_count) / maxf(float(duration_ms) / 1000.0, 0.001)
 
+	# Load optional alpha mask
+	var alpha_mask: Image = null
+	var alpha_path: String = EFFECTS_DIR + "/" + effect_id + "/alpha_mask.png"
+	if FileAccess.file_exists(alpha_path):
+		alpha_mask = Image.load_from_file(ProjectSettings.globalize_path(alpha_path))
+
 	# Build SpriteFrames resource with individual frame textures
 	var sprite_frames := SpriteFrames.new()
 	sprite_frames.add_animation("play")
@@ -655,6 +852,15 @@ func _load_real_effect(effect_id: String, direction: String) -> Node2D:
 	for f in frame_count:
 		var frame_img := Image.create(frame_size, frame_size, false, Image.FORMAT_RGBA8)
 		frame_img.blit_rect(sheet_img, Rect2i(f * frame_size, 0, frame_size, frame_size), Vector2i.ZERO)
+		# Apply alpha mask if present
+		if alpha_mask != null and alpha_mask.get_width() == frame_size and alpha_mask.get_height() == frame_size:
+			for y in range(frame_size):
+				for x in range(frame_size):
+					var mask_val: float = alpha_mask.get_pixel(x, y).r
+					if mask_val < 0.99:
+						var px: Color = frame_img.get_pixel(x, y)
+						px.a *= mask_val
+						frame_img.set_pixel(x, y, px)
 		var tex := ImageTexture.create_from_image(frame_img)
 		sprite_frames.add_frame("play", tex)
 

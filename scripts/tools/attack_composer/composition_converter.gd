@@ -19,6 +19,18 @@ static func convert(comp: AttackCompositionData, direction: String = "down") -> 
 		return data
 	var frames := seq.frames
 
+	# Collect per-frame alpha masks (weapon transparency painted in the composer)
+	var alpha_mask_data: Array = []
+	for i in range(frames.size()):
+		var frame := frames[i]
+		if frame.alpha_mask != null:
+			alpha_mask_data.append({
+				"frame_index": i,
+				"width": frame.alpha_mask.get_width(),
+				"height": frame.alpha_mask.get_height(),
+				"data": frame.alpha_mask.get_data(),  # PackedByteArray
+			})
+
 	# Group consecutive frames by weapon_visible state
 	var groups := _group_frames_by_weapon(frames)
 
@@ -39,6 +51,8 @@ static func convert(comp: AttackCompositionData, direction: String = "down") -> 
 		var total_ms := 0
 		var echo_data: Array = []
 		var effect_data: Array = []
+		var prev_effect_id: String = ""
+		var pending_effect: Dictionary = {}
 		for i in range(start_idx, end_idx + 1):
 			var frame := frames[i]
 			frame_timings.append(frame.duration_ms)
@@ -52,14 +66,38 @@ static func convert(comp: AttackCompositionData, direction: String = "down") -> 
 					"spacing_px": frame.echo_spacing_px,
 				})
 			if not frame.effect_id.is_empty():
-				effect_data.append({
-					"frame_index": i,
-					"effect_id": frame.effect_id,
-					"anchor": frame.effect_anchor,
-					"offset": frame.effect_offset,
-					"rotation_deg": frame.effect_rotation_deg,
-					"z_index": frame.effect_z_index,
-				})
+				if frame.effect_id != prev_effect_id:
+					# New effect run — flush previous pending entry
+					if not pending_effect.is_empty():
+						effect_data.append(pending_effect)
+					pending_effect = {
+						"frame_index": i,
+						"effect_id": frame.effect_id,
+						"anchor": frame.effect_anchor,
+						"offset": frame.effect_offset,
+						"rotation_deg": frame.effect_rotation_deg,
+						"z_index": frame.effect_z_index,
+					}
+				else:
+					# Same run — pick up non-default properties from later frames
+					# (user may configure properties on any frame in the run)
+					if frame.effect_anchor != "weapon_tip":
+						pending_effect["anchor"] = frame.effect_anchor
+					if frame.effect_offset != Vector2.ZERO:
+						pending_effect["offset"] = frame.effect_offset
+					if frame.effect_rotation_deg != 0.0:
+						pending_effect["rotation_deg"] = frame.effect_rotation_deg
+					if frame.effect_z_index != 2:  # CompositionFrame default
+						pending_effect["z_index"] = frame.effect_z_index
+			else:
+				# Gap in effect — flush pending entry
+				if not pending_effect.is_empty():
+					effect_data.append(pending_effect)
+					pending_effect = {}
+			prev_effect_id = frame.effect_id
+		# Flush last pending effect run
+		if not pending_effect.is_empty():
+			effect_data.append(pending_effect)
 
 		# Create BODY_ANIM phase with frame_timings in context_data
 		var body_dur := total_ms / 1000.0
@@ -73,6 +111,26 @@ static func convert(comp: AttackCompositionData, direction: String = "down") -> 
 			body_phase.context_data["echo_data"] = echo_data
 		if not effect_data.is_empty():
 			body_phase.context_data["effect_data"] = effect_data
+
+		# Embed damage frame index if it falls within this group
+		if seq.damage_frame >= start_idx and seq.damage_frame <= end_idx:
+			body_phase.context_data["damage_frame"] = seq.damage_frame
+
+		# Collect per-frame weapon z-order data (frames where weapon goes behind body)
+		var weapon_behind_frames: Array = []
+		for i in range(start_idx, end_idx + 1):
+			if not frames[i].weapon_z_front:
+				weapon_behind_frames.append(i)
+		if not weapon_behind_frames.is_empty():
+			body_phase.context_data["weapon_behind_frames"] = weapon_behind_frames
+
+		# Attach alpha masks that fall within this group
+		var group_masks: Array = []
+		for mask_entry in alpha_mask_data:
+			if mask_entry["frame_index"] >= start_idx and mask_entry["frame_index"] <= end_idx:
+				group_masks.append(mask_entry)
+		if not group_masks.is_empty():
+			body_phase.context_data["weapon_alpha_masks"] = group_masks
 
 		# Check if movement overlaps this group
 		var move_concurrent := false
@@ -90,14 +148,10 @@ static func convert(comp: AttackCompositionData, direction: String = "down") -> 
 				move_dur += frames[i].duration_ms
 			move_dur /= 1000.0
 			var move_phase := AbilityVisualPhase.create_movement(
-				"toward_target", seq.movement_distance, move_dur, "lunge")
+				"toward_target", seq.movement_distance, move_dur)
 			phases.append(move_phase)
 		else:
 			phases.append(body_phase)
-
-		# Insert DAMAGE_EVENT if damage frame is in this group
-		if seq.damage_frame >= start_idx and seq.damage_frame <= end_idx:
-			phases.append(AbilityVisualPhase.create_damage_event())
 
 	# Hide weapon at end if it was visible
 	if prev_weapon_visible:
@@ -151,6 +205,10 @@ static func phases_to_string(data: AbilityVisualData) -> String:
 				desc = "BODY_ANIM(\"%s\", %.3fs)" % [p.anim_name, p.duration]
 				if p.context_data.has("frame_timings"):
 					desc += " timings=%s" % str(p.context_data["frame_timings"])
+				if p.context_data.has("damage_frame"):
+					desc += " dmg@%d" % p.context_data["damage_frame"]
+				if p.context_data.has("weapon_behind_frames"):
+					desc += " z_behind=%s" % str(p.context_data["weapon_behind_frames"])
 			AbilityVisualPhase.PhaseType.MOVEMENT:
 				desc = "MOVEMENT(\"%s\", %.0fpx, %.3fs)" % [p.move_direction, p.move_distance, p.duration]
 			AbilityVisualPhase.PhaseType.DAMAGE_EVENT:

@@ -24,11 +24,14 @@ signal damage_event()
 ## Emitted on SPAWN_PROJECTILE phase - combat system spawns projectile
 signal spawn_projectile_event(context: Dictionary)
 
-## Emitted on EFFECT phase - VFX system spawns effect
-signal effect_event(effect_id: String)
+## Emitted on EFFECT phase or per-frame effect data - VFX system spawns effect
+signal effect_event(effect_id: String, context: Dictionary)
 
 ## Emitted on WEAPON_VISIBILITY phase
 signal weapon_visibility_changed(visible: bool)
+
+## Emitted when weapon z-order changes (from composed per-frame data)
+signal weapon_z_changed(in_front: bool)
 
 ## Emitted when any body animation phase starts (for the sprite system)
 signal play_body_animation(anim_name: String)
@@ -38,6 +41,9 @@ signal movement_requested(direction: String, distance: float, duration: float)
 
 ## Emitted when a frame with echo data is reached (for speed echo rendering)
 signal echo_requested(frame_index: int, echo_config: Dictionary)
+
+## Emitted when composed phase starts with alpha mask data (frame_index → Image)
+signal weapon_alpha_masks_changed(masks: Dictionary)
 
 #===============================================================================
 # STATE
@@ -154,6 +160,7 @@ func cancel() -> void:
 	_current_phase_index = -1
 	_phase_held = false
 	_in_concurrent_block = false
+	weapon_alpha_masks_changed.emit({})
 	sequence_finished.emit(template_id)
 
 
@@ -213,6 +220,9 @@ func _tick_frame_timing(delta: float) -> void:
 			if _sprite:
 				_sprite.frame = _frame_timing_start_index + _frame_timing_index
 			_check_echo_for_current_frame()
+			_check_effect_for_current_frame()
+			_check_damage_for_current_frame()
+			_check_weapon_z_for_current_frame()
 
 
 func _check_echo_for_current_frame() -> void:
@@ -223,6 +233,58 @@ func _check_echo_for_current_frame() -> void:
 	for echo_config in echo_data:
 		if echo_config.get("frame_index", -1) == current_frame:
 			echo_requested.emit(current_frame, echo_config)
+
+
+func _check_effect_for_current_frame() -> void:
+	if _frame_timing_phase == null:
+		return
+	var eff_data: Array = _frame_timing_phase.context_data.get("effect_data", [])
+	var current_frame := _frame_timing_start_index + _frame_timing_index
+	for eff_config in eff_data:
+		if eff_config.get("frame_index", -1) == current_frame:
+			effect_event.emit(eff_config.get("effect_id", ""), {
+				"anchor": eff_config.get("anchor", "weapon_tip"),
+				"offset": eff_config.get("offset", Vector2.ZERO),
+				"rotation_deg": eff_config.get("rotation_deg", 0.0),
+				"z_index": eff_config.get("z_index", 2),
+			})
+
+
+func _check_damage_for_current_frame() -> void:
+	if _frame_timing_phase == null:
+		return
+	var dmg_frame: int = _frame_timing_phase.context_data.get("damage_frame", -1)
+	if dmg_frame < 0:
+		return
+	var current_frame := _frame_timing_start_index + _frame_timing_index
+	if current_frame == dmg_frame:
+		damage_event.emit()
+
+
+func _check_weapon_z_for_current_frame() -> void:
+	if _frame_timing_phase == null:
+		return
+	# Always emit during composed playback so the override is active.
+	# Default to in_front=true when no explicit behind-frames data exists.
+	var behind_frames: Array = _frame_timing_phase.context_data.get("weapon_behind_frames", [])
+	var current_frame := _frame_timing_start_index + _frame_timing_index
+	var in_front := not behind_frames.has(current_frame)
+	weapon_z_changed.emit(in_front)
+
+
+func _emit_weapon_alpha_masks() -> void:
+	if _frame_timing_phase == null:
+		weapon_alpha_masks_changed.emit({})
+		return
+	var entries: Array = _frame_timing_phase.context_data.get("weapon_alpha_masks", [])
+	if entries.is_empty():
+		weapon_alpha_masks_changed.emit({})
+		return
+	var masks: Dictionary = {}
+	for entry in entries:
+		var img := Image.create_from_data(entry["width"], entry["height"], false, Image.FORMAT_R8, entry["data"])
+		masks[entry["frame_index"]] = img
+	weapon_alpha_masks_changed.emit(masks)
 
 
 func _tick_single_phase(delta: float) -> void:
@@ -294,7 +356,29 @@ func _execute_phase_in_slot(phase: AbilityVisualPhase, is_primary: bool) -> void
 		AbilityVisualPhase.PhaseType.BODY_ANIM:
 			var resolved_name := _resolve_animation_name(phase.anim_name, facing_direction)
 			play_body_animation.emit(resolved_name)
-			if phase.duration > 0.0:
+			# Enable per-frame timing if this composed phase has frame_timings
+			if phase.context_data.has("frame_timings"):
+				_frame_timing_active = true
+				_frame_timing_array = phase.context_data["frame_timings"]
+				_frame_timing_index = 0
+				_frame_timing_start_index = phase.context_data.get("frame_start_index", 0)
+				_frame_timing_phase = phase
+				_frame_timing_timer = _frame_timing_array[0] / 1000.0
+				if is_primary:
+					_primary_timer = phase.duration
+				else:
+					_concurrent_timer = phase.duration
+				_primary_waiting_for_anim = false
+				_concurrent_waiting_for_anim = false
+				if _sprite:
+					_sprite.speed_scale = 0.0
+					_sprite.frame = _frame_timing_start_index
+				_check_echo_for_current_frame()
+				_check_effect_for_current_frame()
+				_check_damage_for_current_frame()
+				_check_weapon_z_for_current_frame()
+				_emit_weapon_alpha_masks()
+			elif phase.duration > 0.0:
 				if is_primary:
 					_primary_timer = phase.duration
 				else:
@@ -348,7 +432,7 @@ func _execute_phase_in_slot(phase: AbilityVisualPhase, is_primary: bool) -> void
 				_concurrent_resolved = true
 
 		AbilityVisualPhase.PhaseType.EFFECT:
-			effect_event.emit(phase.effect_id)
+			effect_event.emit(phase.effect_id, phase.context_data)
 			if phase.duration > 0.0:
 				if is_primary:
 					_primary_timer = phase.duration
@@ -403,8 +487,12 @@ func _execute_phase_single(phase: AbilityVisualPhase) -> void:
 				if _sprite:
 					_sprite.speed_scale = 0.0
 					_sprite.frame = _frame_timing_start_index
-				# Check for echo on first frame
+				# Check for echo, effect, damage, weapon z, and alpha masks on first frame
 				_check_echo_for_current_frame()
+				_check_effect_for_current_frame()
+				_check_damage_for_current_frame()
+				_check_weapon_z_for_current_frame()
+				_emit_weapon_alpha_masks()
 			elif phase.duration > 0.0:
 				_primary_timer = phase.duration
 				_primary_waiting_for_anim = false
@@ -435,7 +523,7 @@ func _execute_phase_single(phase: AbilityVisualPhase) -> void:
 			_advance_to_next_phase()
 
 		AbilityVisualPhase.PhaseType.EFFECT:
-			effect_event.emit(phase.effect_id)
+			effect_event.emit(phase.effect_id, phase.context_data)
 			if phase.duration > 0.0:
 				_primary_timer = phase.duration
 			else:
@@ -490,6 +578,7 @@ func _finish_sequence() -> void:
 	_phase_held = false
 	_in_concurrent_block = false
 	_reset_timers()
+	weapon_alpha_masks_changed.emit({})
 	sequence_finished.emit(template_id)
 
 
