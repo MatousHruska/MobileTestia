@@ -257,22 +257,30 @@ func _delete_selected_frame() -> void:
 func _push_undo() -> void:
 	if _current_composition == null:
 		return
-	# Deep-copy each frame individually since Resource.duplicate doesn't deep-copy arrays of resources
 	var comp_snapshot := AttackCompositionData.new()
 	comp_snapshot.composition_id = _current_composition.composition_id
 	comp_snapshot.display_name = _current_composition.display_name
 	comp_snapshot.runtime_template_id = _current_composition.runtime_template_id
 	comp_snapshot.animation_name = _current_composition.animation_name
-	comp_snapshot.movement_type = _current_composition.movement_type
-	comp_snapshot.movement_distance = _current_composition.movement_distance
-	comp_snapshot.movement_start_frame = _current_composition.movement_start_frame
-	comp_snapshot.movement_end_frame = _current_composition.movement_end_frame
-	comp_snapshot.damage_frame = _current_composition.damage_frame
-	for frame in _current_composition.frames:
-		var frame_copy := frame.duplicate()
-		if frame.alpha_mask != null:
-			frame_copy.alpha_mask = frame.alpha_mask.duplicate()
-		comp_snapshot.frames.append(frame_copy)
+	comp_snapshot.locks_movement = _current_composition.locks_movement
+
+	# Deep-copy all direction sequences
+	for dir_name in AttackCompositionData.DIRECTIONS:
+		var src_seq := _current_composition.get_sequence(dir_name)
+		if src_seq == null:
+			continue
+		var seq_copy := DirectionSequence.new()
+		seq_copy.movement_type = src_seq.movement_type
+		seq_copy.movement_distance = src_seq.movement_distance
+		seq_copy.movement_start_frame = src_seq.movement_start_frame
+		seq_copy.movement_end_frame = src_seq.movement_end_frame
+		seq_copy.damage_frame = src_seq.damage_frame
+		for frame in src_seq.frames:
+			var frame_copy := frame.duplicate()
+			if frame.alpha_mask != null:
+				frame_copy.alpha_mask = frame.alpha_mask.duplicate()
+			seq_copy.frames.append(frame_copy)
+		comp_snapshot.direction_sequences[dir_name] = seq_copy
 
 	var entry: Dictionary = {"composition": comp_snapshot}
 
@@ -299,47 +307,39 @@ func _undo() -> void:
 		return
 	var entry: Dictionary = _undo_stack.pop_back()
 	var snapshot: AttackCompositionData = entry["composition"]
+
 	_current_composition.composition_id = snapshot.composition_id
 	_current_composition.display_name = snapshot.display_name
 	_current_composition.runtime_template_id = snapshot.runtime_template_id
 	_current_composition.animation_name = snapshot.animation_name
-	_current_composition.movement_type = snapshot.movement_type
-	_current_composition.movement_distance = snapshot.movement_distance
-	_current_composition.movement_start_frame = snapshot.movement_start_frame
-	_current_composition.movement_end_frame = snapshot.movement_end_frame
-	_current_composition.damage_frame = snapshot.damage_frame
-	_current_composition.frames.clear()
-	for frame in snapshot.frames:
-		_current_composition.frames.append(frame)
+	_current_composition.locks_movement = snapshot.locks_movement
+
+	# Restore all direction sequences
+	_current_composition.direction_sequences.clear()
+	for dir_name in snapshot.direction_sequences:
+		_current_composition.direction_sequences[dir_name] = snapshot.direction_sequences[dir_name]
 
 	# Restore frame images if snapshot includes them
 	if entry.has("images"):
 		var images_snapshot: Dictionary = entry["images"]
 		for dir_name in images_snapshot:
 			_frame_images[dir_name] = images_snapshot[dir_name]
-			# Recreate textures from restored images
 			var new_textures: Array[ImageTexture] = []
 			for img: Image in images_snapshot[dir_name]:
 				new_textures.append(ImageTexture.create_from_image(img))
 			_frame_textures[dir_name] = new_textures
 
-	# Adjust selection
-	_selected_frame = clampi(_selected_frame, 0, _current_composition.frames.size() - 1)
+	# Adjust selection to active direction
+	var seq := _active_sequence()
+	if seq:
+		_selected_frame = clampi(_selected_frame, 0, maxi(0, seq.frames.size() - 1))
+	else:
+		_selected_frame = 0
 	_selected_frames = [_selected_frame]
 	_preview_frame_index = _selected_frame
-	_timeline_panel.composition = _current_composition
-	_timeline_panel.selected_frame = _selected_frame
-	_timeline_panel.selected_frames = _selected_frames
-	# Rebuild thumbnails
-	if _frame_textures.has("down"):
-		_timeline_panel.frame_thumbnails.clear()
-		var down_textures: Array = _frame_textures["down"]
-		for i in _current_composition.frames.size():
-			if i < down_textures.size():
-				_timeline_panel.frame_thumbnails.append(down_textures[i])
-	_timeline_panel.queue_redraw()
-	_update_preview_frame()
-	_update_frame_props_ui()
+
+	# Refresh timeline with active direction
+	_switch_to_direction(_preview_direction)
 	_update_undo_button()
 	_set_status("Undo. (%d remaining)" % _undo_stack.size())
 
