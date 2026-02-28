@@ -166,10 +166,11 @@ func _input(event: InputEvent) -> void:
 			_on_stop()
 			get_viewport().set_input_as_handled()
 		KEY_END:
-			if _current_composition and not _current_composition.frames.is_empty():
+			var seq := _active_sequence()
+			if seq and not seq.frames.is_empty():
 				_playing = false
 				_play_btn.text = "\u25b6"
-				_preview_frame_index = _current_composition.frames.size() - 1
+				_preview_frame_index = seq.frames.size() - 1
 				_selected_frame = _preview_frame_index
 				_selected_frames = [_selected_frame]
 				_timeline_panel.selected_frame = _selected_frame
@@ -194,62 +195,55 @@ func _input(event: InputEvent) -> void:
 
 
 func _delete_selected_frame() -> void:
-	if _current_composition == null or _selected_frame < 0:
+	var seq := _active_sequence()
+	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
 		return
-	if _current_composition.frames.size() <= 1:
+	if seq.frames.size() <= 1:
 		_set_status("Cannot delete the last frame.")
 		return
 
 	_push_undo()
 	var deleted_idx := _selected_frame
-	_current_composition.frames.remove_at(deleted_idx)
 
-	# Update sequence-level indices
-	if _current_composition.damage_frame == deleted_idx:
-		_current_composition.damage_frame = -1
-	elif _current_composition.damage_frame > deleted_idx:
-		_current_composition.damage_frame -= 1
+	# Delete from all edit directions (All mode or single)
+	for dir_name in _edit_directions():
+		var s := _current_composition.get_sequence(dir_name)
+		if s == null or deleted_idx >= s.frames.size() or s.frames.size() <= 1:
+			continue
+		s.frames.remove_at(deleted_idx)
+		# Adjust sequence-level indices
+		if s.damage_frame == deleted_idx:
+			s.damage_frame = -1
+		elif s.damage_frame > deleted_idx:
+			s.damage_frame -= 1
+		if s.movement_start_frame > deleted_idx:
+			s.movement_start_frame -= 1
+		elif s.movement_start_frame == deleted_idx:
+			s.movement_start_frame = -1
+		if s.movement_end_frame > deleted_idx:
+			s.movement_end_frame -= 1
+		elif s.movement_end_frame == deleted_idx:
+			s.movement_end_frame = -1
 
-	if _current_composition.movement_start_frame > deleted_idx:
-		_current_composition.movement_start_frame -= 1
-	elif _current_composition.movement_start_frame == deleted_idx:
-		_current_composition.movement_start_frame = -1
-
-	if _current_composition.movement_end_frame > deleted_idx:
-		_current_composition.movement_end_frame -= 1
-	elif _current_composition.movement_end_frame == deleted_idx:
-		_current_composition.movement_end_frame = -1
-
-	# Rebuild thumbnails
-	if _frame_textures.has("down"):
-		var down_textures: Array = _frame_textures["down"]
-		if deleted_idx < down_textures.size():
-			down_textures.remove_at(deleted_idx)
-		_timeline_panel.frame_thumbnails.clear()
-		for tex in down_textures:
-			_timeline_panel.frame_thumbnails.append(tex)
-
-	# Also remove from all direction frame arrays
-	for direction in DIRECTIONS:
-		if _frame_images.has(direction):
-			var imgs: Array = _frame_images[direction]
+	# Remove from frame images/textures for edited directions
+	for dir_name in _edit_directions():
+		if _frame_images.has(dir_name):
+			var imgs: Array = _frame_images[dir_name]
 			if deleted_idx < imgs.size():
 				imgs.remove_at(deleted_idx)
-		if _frame_textures.has(direction):
-			var texs: Array = _frame_textures[direction]
+		if _frame_textures.has(dir_name):
+			var texs: Array = _frame_textures[dir_name]
 			if deleted_idx < texs.size():
 				texs.remove_at(deleted_idx)
 
 	# Adjust selection
-	_selected_frame = mini(_selected_frame, _current_composition.frames.size() - 1)
+	seq = _active_sequence()
+	if seq:
+		_selected_frame = mini(_selected_frame, maxi(0, seq.frames.size() - 1))
 	_selected_frames = [_selected_frame]
 	_preview_frame_index = _selected_frame
-	_timeline_panel.selected_frame = _selected_frame
-	_timeline_panel.selected_frames = _selected_frames
-	_timeline_panel.queue_redraw()
-	_update_preview_frame()
-	_update_frame_props_ui()
-	_set_status("Deleted frame %d. %d frames remaining." % [deleted_idx, _current_composition.frames.size()])
+	_switch_to_direction(_preview_direction)
+	_set_status("Deleted frame %d." % deleted_idx)
 
 
 # ── Undo ──────────────────────────────────────────────────────────────
@@ -819,8 +813,11 @@ func _build_transport_bar(parent: VBoxContainer) -> void:
 func _process(delta: float) -> void:
 	if not _playing or _current_composition == null:
 		return
+	var seq := _active_sequence()
+	if seq == null:
+		return
 	_playback_ms += delta * 1000.0 * _playback_speed
-	var total := _current_composition.get_total_duration_sec() * 1000.0
+	var total := seq.get_total_duration_sec() * 1000.0
 	if total <= 0:
 		return
 	if _playback_ms >= total:
@@ -830,12 +827,13 @@ func _process(delta: float) -> void:
 
 
 func _update_playhead() -> void:
-	if _current_composition == null:
+	var seq := _active_sequence()
+	if seq == null:
 		return
 	# Determine which frame the playhead is in
 	var cumulative := 0.0
-	for i in _current_composition.frames.size():
-		cumulative += _current_composition.frames[i].duration_ms
+	for i in seq.frames.size():
+		cumulative += seq.frames[i].duration_ms
 		if _playback_ms < cumulative:
 			if _preview_frame_index != i:
 				_preview_frame_index = i
@@ -847,7 +845,7 @@ func _update_playhead() -> void:
 	_timeline_panel.queue_redraw()
 
 	# Update time label
-	var total_ms := _current_composition.get_total_duration_sec() * 1000.0
+	var total_ms := seq.get_total_duration_sec() * 1000.0
 	_time_label.text = "%d:%03d / %d:%03d" % [
 		int(_playback_ms / 1000.0), int(fmod(_playback_ms, 1000.0)),
 		int(total_ms / 1000.0), int(fmod(total_ms, 1000.0))
@@ -855,12 +853,13 @@ func _update_playhead() -> void:
 
 
 func _advance_effect_animation(delta: float) -> void:
-	if _current_composition == null or _preview_frame_index < 0:
+	var seq := _active_sequence()
+	if seq == null or _preview_frame_index < 0:
 		return
-	if _preview_frame_index >= _current_composition.frames.size():
+	if _preview_frame_index >= seq.frames.size():
 		return
 
-	var frame := _current_composition.frames[_preview_frame_index]
+	var frame := seq.frames[_preview_frame_index]
 	var eid := frame.effect_id
 
 	# Detect effect change — reset animation timer
@@ -1609,17 +1608,18 @@ const WEAPON_DIRECTION_COLOR := Color("#00FFFF")
 
 
 func _update_weapon_preview() -> void:
-	if _current_composition == null or _preview_frame_index < 0:
+	var seq := _active_sequence()
+	if seq == null or _preview_frame_index < 0:
 		_weapon_sprite.visible = false
 		_weapon_debug = "no composition"
 		return
 
-	if _preview_frame_index >= _current_composition.frames.size():
+	if _preview_frame_index >= seq.frames.size():
 		_weapon_sprite.visible = false
 		_weapon_debug = "frame out of range"
 		return
 
-	var frame := _current_composition.frames[_preview_frame_index]
+	var frame := seq.frames[_preview_frame_index]
 	if not frame.weapon_visible:
 		_weapon_sprite.visible = false
 		_weapon_debug = "weapon_visible=false"
@@ -1742,12 +1742,13 @@ func _update_echo_preview() -> void:
 			ghost.queue_free()
 	_echo_sprites.clear()
 
-	if _current_composition == null or _preview_frame_index < 0:
+	var seq := _active_sequence()
+	if seq == null or _preview_frame_index < 0:
 		return
-	if _preview_frame_index >= _current_composition.frames.size():
+	if _preview_frame_index >= seq.frames.size():
 		return
 
-	var frame := _current_composition.frames[_preview_frame_index]
+	var frame := seq.frames[_preview_frame_index]
 	if not frame.echo_enabled:
 		return
 
@@ -1858,9 +1859,10 @@ func _on_frame_prev() -> void:
 
 
 func _on_frame_next() -> void:
-	if _current_composition == null:
+	var seq := _active_sequence()
+	if seq == null:
 		return
-	var max_frame := _current_composition.frames.size() - 1
+	var max_frame := seq.frames.size() - 1
 	_preview_frame_index = min(max_frame, _preview_frame_index + 1)
 	_selected_frame = _preview_frame_index
 	_selected_frames = [_selected_frame]
@@ -1872,9 +1874,10 @@ func _on_frame_next() -> void:
 
 
 func show_frame(index: int) -> void:
-	if _current_composition == null:
+	var seq := _active_sequence()
+	if seq == null:
 		return
-	_preview_frame_index = clampi(index, 0, _current_composition.frames.size() - 1)
+	_preview_frame_index = clampi(index, 0, seq.frames.size() - 1)
 	_selected_frame = _preview_frame_index
 	_selected_frames = [_selected_frame]
 	_timeline_panel.selected_frames = _selected_frames
@@ -1902,10 +1905,11 @@ func _on_timeline_frames_selected(indices: Array[int]) -> void:
 
 
 func _on_timeline_effect_toggled(index: int) -> void:
-	if _current_composition == null or index < 0 or index >= _current_composition.frames.size():
+	var seq := _active_sequence()
+	if seq == null or index < 0 or index >= seq.frames.size():
 		return
 	_push_undo()
-	var frame := _current_composition.frames[index]
+	var frame := seq.frames[index]
 	if not frame.effect_id.is_empty():
 		# Already has an effect — clear it
 		frame.effect_id = ""
@@ -1928,15 +1932,16 @@ func _on_timeline_effect_toggled(index: int) -> void:
 
 
 func _on_timeline_effect_moved(from_index: int, to_index: int) -> void:
-	if _current_composition == null:
+	var seq := _active_sequence()
+	if seq == null:
 		return
-	if from_index < 0 or from_index >= _current_composition.frames.size():
+	if from_index < 0 or from_index >= seq.frames.size():
 		return
-	if to_index < 0 or to_index >= _current_composition.frames.size():
+	if to_index < 0 or to_index >= seq.frames.size():
 		return
 	_push_undo()
-	var src := _current_composition.frames[from_index]
-	var dst := _current_composition.frames[to_index]
+	var src := seq.frames[from_index]
+	var dst := seq.frames[to_index]
 	# Move effect data from source to destination
 	dst.effect_id = src.effect_id
 	dst.effect_anchor = src.effect_anchor
@@ -1967,18 +1972,20 @@ func _on_timeline_scroll_changed(offset_ms: float, total_ms: float, visible_ms: 
 
 func _on_timeline_duration_changed(_index: int, _new_ms: int) -> void:
 	# Timeline handles redraw internally; just update status
-	if _current_composition:
-		var total := _current_composition.get_total_duration_sec()
+	var seq := _active_sequence()
+	if seq:
+		var total := seq.get_total_duration_sec()
 		_set_status("Total: %.3fs" % total)
 
 
 func _on_timeline_playhead_moved(ms: float) -> void:
 	# Determine which frame the playhead is in
-	if _current_composition == null:
+	var seq := _active_sequence()
+	if seq == null:
 		return
 	var cumulative := 0.0
-	for i in _current_composition.frames.size():
-		cumulative += _current_composition.frames[i].duration_ms
+	for i in seq.frames.size():
+		cumulative += seq.frames[i].duration_ms
 		if ms < cumulative:
 			_preview_frame_index = i
 			_selected_frame = i
@@ -2569,27 +2576,29 @@ func _on_alpha_level_btn(value: int) -> void:
 
 
 func _on_clear_frame_alpha() -> void:
-	if _current_composition == null or _selected_frame < 0:
+	var seq := _active_sequence()
+	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
 		return
 	_push_undo()
-	var frame := _current_composition.frames[_selected_frame]
+	var frame := seq.frames[_selected_frame]
 	frame.alpha_mask = null
 	_update_weapon_preview()
 
 
 func _on_copy_alpha_to_next() -> void:
-	if _current_composition == null or _selected_frame < 0:
+	var seq := _active_sequence()
+	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
 		return
-	var frame := _current_composition.frames[_selected_frame]
+	var frame := seq.frames[_selected_frame]
 	if frame.alpha_mask == null:
 		_set_status("No alpha mask on current frame to copy.")
 		return
 	var next_idx := _selected_frame + 1
-	if next_idx >= _current_composition.frames.size():
+	if next_idx >= seq.frames.size():
 		_set_status("No next frame to copy to.")
 		return
 	_push_undo()
-	_current_composition.frames[next_idx].alpha_mask = frame.alpha_mask.duplicate()
+	seq.frames[next_idx].alpha_mask = frame.alpha_mask.duplicate()
 	_set_status("Alpha mask copied to frame %d." % next_idx)
 
 
@@ -2615,9 +2624,10 @@ func _viewport_to_weapon_pixel(container_pos: Vector2) -> Vector2i:
 
 
 func _paint_weapon_alpha(px: int, py: int) -> void:
-	if _current_composition == null or _selected_frame < 0:
+	var seq := _active_sequence()
+	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
 		return
-	var frame := _current_composition.frames[_selected_frame]
+	var frame := seq.frames[_selected_frame]
 	# Get weapon texture to check if pixel has content
 	var weapon_tex: Texture2D = _weapon_set.get("right")
 	if weapon_tex == null:
@@ -2695,7 +2705,8 @@ func _update_onion_weapon() -> void:
 		if _onion_weapon_sprite:
 			_onion_weapon_sprite.visible = false
 		return
-	if _current_composition == null or _preview_frame_index >= _current_composition.frames.size():
+	var seq := _active_sequence()
+	if seq == null or _preview_frame_index >= seq.frames.size():
 		_onion_weapon_sprite.visible = false
 		return
 	if not _frame_images.has(_preview_direction):
@@ -2906,14 +2917,15 @@ func _load_effect_assets(effect_id: String) -> Dictionary:
 
 
 func _update_effect_preview() -> void:
-	if _current_composition == null or _preview_frame_index < 0:
+	var seq := _active_sequence()
+	if seq == null or _preview_frame_index < 0:
 		_effect_sprite.visible = false
 		return
-	if _preview_frame_index >= _current_composition.frames.size():
+	if _preview_frame_index >= seq.frames.size():
 		_effect_sprite.visible = false
 		return
 
-	var frame := _current_composition.frames[_preview_frame_index]
+	var frame := seq.frames[_preview_frame_index]
 	if frame.effect_id.is_empty():
 		_effect_sprite.visible = false
 		return
