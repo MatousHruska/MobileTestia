@@ -626,6 +626,9 @@ func _build_ui() -> void:
 	_timeline_panel.before_mutation.connect(_push_undo)
 	_timeline_panel.effect_toggled.connect(_on_timeline_effect_toggled)
 	_timeline_panel.effect_moved.connect(_on_timeline_effect_moved)
+	_timeline_panel.weapon_toggled.connect(_on_timeline_weapon_toggled)
+	_timeline_panel.echo_toggled.connect(_on_timeline_echo_toggled)
+	_timeline_panel.damage_moved.connect(_on_timeline_damage_moved)
 	_timeline_panel.scroll_changed.connect(_on_timeline_scroll_changed)
 	timeline_container.add_child(_timeline_panel)
 
@@ -1905,59 +1908,99 @@ func _on_timeline_frames_selected(indices: Array[int]) -> void:
 
 
 func _on_timeline_effect_toggled(index: int) -> void:
-	var seq := _active_sequence()
-	if seq == null or index < 0 or index >= seq.frames.size():
+	var active_seq := _active_sequence()
+	if active_seq == null or index < 0 or index >= active_seq.frames.size():
 		return
 	_push_undo()
-	var frame := seq.frames[index]
-	if not frame.effect_id.is_empty():
-		# Already has an effect — clear it
-		frame.effect_id = ""
+	# Determine the new effect_id from the active direction's current state
+	var active_frame := active_seq.frames[index]
+	var new_effect_id := ""
+	if not active_frame.effect_id.is_empty():
+		new_effect_id = ""  # Toggle off
 	else:
-		# No effect — apply the currently selected effect from the dropdown
+		# Apply the currently selected effect from the dropdown
 		var sel := _effect_dropdown.selected
 		if sel > 0:
 			var text := _effect_dropdown.get_item_text(sel)
 			if text.begins_with("[Asset] "):
-				frame.effect_id = text.substr(8)
+				new_effect_id = text.substr(8)
 			elif text.begins_with("[Placeholder] "):
-				frame.effect_id = text.substr(14)
+				new_effect_id = text.substr(14)
 			else:
-				frame.effect_id = text
+				new_effect_id = text
+	# Apply to all edit directions
+	for dir_name in _edit_directions():
+		var seq := _current_composition.get_sequence(dir_name)
+		if seq and index < seq.frames.size():
+			seq.frames[index].effect_id = new_effect_id
 	_timeline_panel.queue_redraw()
-	# Refresh preview if toggled frame is the one being viewed
 	if index == _preview_frame_index:
 		_update_effect_preview()
 		_update_frame_props_ui()
 
 
 func _on_timeline_effect_moved(from_index: int, to_index: int) -> void:
-	var seq := _active_sequence()
-	if seq == null:
+	var active_seq := _active_sequence()
+	if active_seq == null:
 		return
-	if from_index < 0 or from_index >= seq.frames.size():
+	if from_index < 0 or from_index >= active_seq.frames.size():
 		return
-	if to_index < 0 or to_index >= seq.frames.size():
+	if to_index < 0 or to_index >= active_seq.frames.size():
 		return
 	_push_undo()
-	var src := seq.frames[from_index]
-	var dst := seq.frames[to_index]
-	# Move effect data from source to destination
-	dst.effect_id = src.effect_id
-	dst.effect_anchor = src.effect_anchor
-	dst.effect_offset = src.effect_offset
-	dst.effect_z_index = src.effect_z_index
-	dst.effect_rotation_deg = src.effect_rotation_deg
-	# Clear source
-	src.effect_id = ""
-	src.effect_anchor = "weapon_tip"
-	src.effect_offset = Vector2.ZERO
-	src.effect_z_index = 2
-	src.effect_rotation_deg = 0.0
+	# Move effect data in all edit directions
+	for dir_name in _edit_directions():
+		var seq := _current_composition.get_sequence(dir_name)
+		if seq == null or from_index >= seq.frames.size() or to_index >= seq.frames.size():
+			continue
+		var src := seq.frames[from_index]
+		var dst := seq.frames[to_index]
+		dst.effect_id = src.effect_id
+		dst.effect_anchor = src.effect_anchor
+		dst.effect_offset = src.effect_offset
+		dst.effect_z_index = src.effect_z_index
+		dst.effect_rotation_deg = src.effect_rotation_deg
+		src.effect_id = ""
+		src.effect_anchor = "weapon_tip"
+		src.effect_offset = Vector2.ZERO
+		src.effect_z_index = 2
+		src.effect_rotation_deg = 0.0
 	_timeline_panel.queue_redraw()
 	if _preview_frame_index == from_index or _preview_frame_index == to_index:
 		_update_effect_preview()
 		_update_frame_props_ui()
+
+
+func _on_timeline_weapon_toggled(index: int) -> void:
+	_push_undo()
+	for dir_name in _edit_directions():
+		var seq := _current_composition.get_sequence(dir_name)
+		if seq and index < seq.frames.size():
+			seq.frames[index].weapon_visible = not seq.frames[index].weapon_visible
+	_timeline_panel.queue_redraw()
+	if index == _preview_frame_index:
+		_update_preview_frame()
+
+
+func _on_timeline_echo_toggled(index: int) -> void:
+	_push_undo()
+	for dir_name in _edit_directions():
+		var seq := _current_composition.get_sequence(dir_name)
+		if seq and index < seq.frames.size():
+			seq.frames[index].echo_enabled = not seq.frames[index].echo_enabled
+	_timeline_panel.queue_redraw()
+	if index == _preview_frame_index:
+		_update_frame_props_ui()
+
+
+func _on_timeline_damage_moved(index: int) -> void:
+	_push_undo()
+	for dir_name in _edit_directions():
+		var seq := _current_composition.get_sequence(dir_name)
+		if seq:
+			seq.damage_frame = index
+	_timeline_panel.queue_redraw()
+	_update_frame_props_ui()
 
 
 func _on_timeline_scrollbar_changed(value: float) -> void:

@@ -12,6 +12,9 @@ signal before_mutation()  # Emitted before any data change, for undo snapshots
 signal effect_toggled(index: int)  # Emitted when user clicks the effect track on a frame
 signal effect_moved(from_index: int, to_index: int)  # Emitted when user drags an effect diamond to another frame
 signal scroll_changed(offset_ms: float, total_ms: float, visible_ms: float)
+signal weapon_toggled(index: int)  # Emitted when user clicks the weapon track on a frame
+signal echo_toggled(index: int)    # Emitted when user clicks the echo track on a frame
+signal damage_moved(index: int)    # Emitted when user clicks the damage track on a frame
 
 # ── Theme (matches composer) ───────────────────────────────────────────
 const C_BG := Color("#1E1E2E")
@@ -451,14 +454,12 @@ func _handle_click(pos: Vector2, shift: bool = false) -> void:
 
 
 func _handle_sub_track_click(pos: Vector2) -> void:
-	# Weapon track (index 0) — toggle weapon_visible
+	# Weapon track (index 0) — toggle weapon_visible (routed via signal for All-mode support)
 	var weapon_y := _get_track_y(0)
 	if pos.y >= weapon_y and pos.y <= weapon_y + SUB_TRACK_HEIGHT:
 		var idx := _frame_at_x(pos.x, weapon_y, SUB_TRACK_HEIGHT, pos.y)
 		if idx >= 0:
-			before_mutation.emit()
-			sequence.frames[idx].weapon_visible = not sequence.frames[idx].weapon_visible
-			queue_redraw()
+			weapon_toggled.emit(idx)
 		return
 
 	# Effect track (index 1) — click to toggle, drag to move
@@ -475,24 +476,20 @@ func _handle_sub_track_click(pos: Vector2) -> void:
 				effect_toggled.emit(idx)
 		return
 
-	# Echo track (index 2) — toggle echo_enabled
+	# Echo track (index 2) — toggle echo_enabled (routed via signal for All-mode support)
 	var echo_y := _get_track_y(2)
 	if pos.y >= echo_y and pos.y <= echo_y + SUB_TRACK_HEIGHT:
 		var idx := _frame_at_x(pos.x, echo_y, SUB_TRACK_HEIGHT, pos.y)
 		if idx >= 0:
-			before_mutation.emit()
-			sequence.frames[idx].echo_enabled = not sequence.frames[idx].echo_enabled
-			queue_redraw()
+			echo_toggled.emit(idx)
 		return
 
-	# Damage track (index 4) — move damage marker
+	# Damage track (index 4) — move damage marker (routed via signal for All-mode support)
 	var damage_y := _get_track_y(4)
 	if pos.y >= damage_y and pos.y <= damage_y + SUB_TRACK_HEIGHT:
 		var idx := _frame_at_x(pos.x, damage_y, SUB_TRACK_HEIGHT, pos.y)
 		if idx >= 0:
-			before_mutation.emit()
-			sequence.damage_frame = idx
-			queue_redraw()
+			damage_moved.emit(idx)
 		return
 
 
