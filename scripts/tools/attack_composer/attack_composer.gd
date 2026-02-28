@@ -2001,7 +2001,8 @@ func _on_timeline_playhead_moved(ms: float) -> void:
 # ── Frame property handlers ────────────────────────────────────────────
 
 func _update_frame_props_ui() -> void:
-	var has_data := _current_composition != null and _selected_frame >= 0 and _selected_frame < _current_composition.frames.size()
+	var seq := _active_sequence()
+	var has_data := seq != null and _selected_frame >= 0 and _selected_frame < seq.frames.size()
 	# Show/hide the wrapper containers
 	_frame_section_wrapper.visible = has_data
 	var seq_wrapper := _seq_props_container.get_parent()
@@ -2009,7 +2010,7 @@ func _update_frame_props_ui() -> void:
 	if not has_data:
 		return
 
-	var frame := _current_composition.frames[_selected_frame]
+	var frame := seq.frames[_selected_frame]
 
 	# Block signals during UI update to avoid feedback loops
 	_duration_spinbox.set_value_no_signal(frame.duration_ms)
@@ -2047,24 +2048,24 @@ func _update_frame_props_ui() -> void:
 		if not found:
 			_effect_dropdown.select(0)
 
-	# Sequence props
-	var max_idx := _current_composition.frames.size() - 1
+	# Sequence props — read from active direction's sequence
+	var max_idx := seq.frames.size() - 1
 	_movement_start_spin.max_value = max_idx
 	_movement_end_spin.max_value = max_idx
 	_damage_frame_spin.max_value = max_idx
-	_movement_distance_spin.set_value_no_signal(_current_composition.movement_distance)
-	_movement_start_spin.set_value_no_signal(_current_composition.movement_start_frame)
-	_movement_end_spin.set_value_no_signal(_current_composition.movement_end_frame)
-	_damage_frame_spin.set_value_no_signal(_current_composition.damage_frame)
+	_movement_distance_spin.set_value_no_signal(seq.movement_distance)
+	_movement_start_spin.set_value_no_signal(seq.movement_start_frame)
+	_movement_end_spin.set_value_no_signal(seq.movement_end_frame)
+	_damage_frame_spin.set_value_no_signal(seq.damage_frame)
 
 	# Movement type
-	var mt := _current_composition.movement_type
+	var mt := seq.movement_type
 	for i in _movement_type_dropdown.item_count:
 		if _movement_type_dropdown.get_item_text(i) == (mt if mt != "" else "none"):
 			_movement_type_dropdown.select(i)
 			break
 
-	_total_duration_label.text = "Total: %.3fs" % _current_composition.get_total_duration_sec()
+	_total_duration_label.text = "Total: %.3fs" % seq.get_total_duration_sec()
 
 
 func _get_target_frames() -> Array[int]:
@@ -2075,125 +2076,112 @@ func _get_target_frames() -> Array[int]:
 	return []
 
 
-func _on_duration_changed(value: float) -> void:
-	var targets := _get_target_frames()
-	if _current_composition == null or targets.is_empty():
+## Returns the active DirectionSequence for the current preview direction.
+func _active_sequence() -> DirectionSequence:
+	if _current_composition == null:
+		return null
+	return _current_composition.get_sequence(_preview_direction)
+
+
+## Returns direction keys to edit: all 3 if "All" mode, else just the active one.
+func _edit_directions() -> Array[String]:
+	if _edit_all_directions:
+		return AttackCompositionData.DIRECTIONS.duplicate()
+	return [_preview_direction]
+
+
+## Apply a callable to target frames across all edit directions.
+## The callable receives a CompositionFrame as its argument.
+func _apply_to_target_frames(callable: Callable) -> void:
+	var indices := _get_target_frames()
+	if indices.is_empty() or _current_composition == null:
 		return
 	_push_undo()
-	for idx in targets:
-		_current_composition.frames[idx].duration_ms = int(value)
+	for dir_name in _edit_directions():
+		var seq := _current_composition.get_sequence(dir_name)
+		if seq == null:
+			continue
+		for idx in indices:
+			if idx < seq.frames.size():
+				callable.call(seq.frames[idx])
+
+
+func _on_duration_changed(value: float) -> void:
+	_apply_to_target_frames(func(frame: CompositionFrame): frame.duration_ms = int(value))
 	_fps_label.text = "~ %.1f fps" % (1000.0 / maxf(value, 1))
-	_total_duration_label.text = "Total: %.3fs" % _current_composition.get_total_duration_sec()
+	var seq := _active_sequence()
+	if seq:
+		_total_duration_label.text = "Total: %.3fs" % seq.get_total_duration_sec()
 	_timeline_panel.queue_redraw()
+	_timeline_panel._emit_scroll_changed()
 
 
 func _on_weapon_toggled(pressed: bool) -> void:
-	var targets := _get_target_frames()
-	if _current_composition == null or targets.is_empty():
-		return
-	_push_undo()
-	for idx in targets:
-		_current_composition.frames[idx].weapon_visible = pressed
+	_apply_to_target_frames(func(frame: CompositionFrame): frame.weapon_visible = pressed)
 	_update_preview_frame()
 	_timeline_panel.queue_redraw()
 
 
 func _on_weapon_z_front_toggled(pressed: bool) -> void:
-	var targets := _get_target_frames()
-	if _current_composition == null or targets.is_empty():
-		return
-	_push_undo()
-	for idx in targets:
-		_current_composition.frames[idx].weapon_z_front = pressed
+	_apply_to_target_frames(func(frame: CompositionFrame): frame.weapon_z_front = pressed)
 	_update_preview_frame()
 	_timeline_panel.queue_redraw()
 
 
 func _on_effect_selected(index: int) -> void:
-	var targets := _get_target_frames()
-	if _current_composition == null or targets.is_empty():
-		return
-	_push_undo()
 	var text := _effect_dropdown.get_item_text(index)
 	var effect_id := ""
 	if text != "(none)":
-		# Strip "[Asset] " or "[Placeholder] " prefix to get clean effect ID
 		if text.begins_with("[Asset] "):
 			effect_id = text.substr(8)
 		elif text.begins_with("[Placeholder] "):
 			effect_id = text.substr(14)
 		else:
 			effect_id = text
-	for idx in targets:
-		_current_composition.frames[idx].effect_id = effect_id
+	_apply_to_target_frames(func(frame: CompositionFrame): frame.effect_id = effect_id)
 	_timeline_panel.queue_redraw()
 	_update_effect_preview()
 
 
 func _on_effect_anchor_selected(index: int) -> void:
-	var targets := _get_target_frames()
-	if _current_composition == null or targets.is_empty():
-		return
-	_push_undo()
 	var anchor_text := _effect_anchor_dropdown.get_item_text(index)
-	for idx in targets:
-		_current_composition.frames[idx].effect_anchor = anchor_text
+	_apply_to_target_frames(func(frame: CompositionFrame): frame.effect_anchor = anchor_text)
 	_update_effect_preview()
 
 
 func _on_effect_offset_changed(_value: float) -> void:
-	var targets := _get_target_frames()
-	if _current_composition == null or targets.is_empty():
-		return
-	_push_undo()
 	var offset := Vector2(_effect_offset_x.value, _effect_offset_y.value)
-	for idx in targets:
-		_current_composition.frames[idx].effect_offset = offset
+	_apply_to_target_frames(func(frame: CompositionFrame): frame.effect_offset = offset)
 	_update_effect_preview()
 
 
 func _on_effect_z_index_changed(value: float) -> void:
-	var targets := _get_target_frames()
-	if _current_composition == null or targets.is_empty():
-		return
-	_push_undo()
-	for idx in targets:
-		_current_composition.frames[idx].effect_z_index = int(value)
+	_apply_to_target_frames(func(frame: CompositionFrame): frame.effect_z_index = int(value))
 	_update_effect_preview()
 
 
 func _on_effect_rotation_changed(value: float) -> void:
-	var targets := _get_target_frames()
-	if _current_composition == null or targets.is_empty():
-		return
-	_push_undo()
-	for idx in targets:
-		_current_composition.frames[idx].effect_rotation_deg = value
+	_apply_to_target_frames(func(frame: CompositionFrame): frame.effect_rotation_deg = value)
 	_update_effect_preview()
 
 
 func _on_echo_toggled(pressed: bool) -> void:
-	var targets := _get_target_frames()
-	if _current_composition == null or targets.is_empty():
-		return
-	_push_undo()
-	for idx in targets:
-		_current_composition.frames[idx].echo_enabled = pressed
+	_apply_to_target_frames(func(frame: CompositionFrame): frame.echo_enabled = pressed)
 	_echo_settings_container.visible = pressed
 	_timeline_panel.queue_redraw()
 
 
 func _on_echo_setting_changed(_value: float) -> void:
-	var targets := _get_target_frames()
-	if _current_composition == null or targets.is_empty():
-		return
-	_push_undo()
-	for idx in targets:
-		var frame := _current_composition.frames[idx]
-		frame.echo_count = int(_echo_count_spin.value)
-		frame.echo_opacity_start = _echo_opacity_start_slider.value
-		frame.echo_opacity_end = _echo_opacity_end_slider.value
-		frame.echo_spacing_px = _echo_spacing_spin.value
+	var count := int(_echo_count_spin.value)
+	var op_start := _echo_opacity_start_slider.value
+	var op_end := _echo_opacity_end_slider.value
+	var spacing := _echo_spacing_spin.value
+	_apply_to_target_frames(func(frame: CompositionFrame):
+		frame.echo_count = count
+		frame.echo_opacity_start = op_start
+		frame.echo_opacity_end = op_end
+		frame.echo_spacing_px = spacing
+	)
 
 
 func _on_movement_type_selected(index: int) -> void:
@@ -2201,7 +2189,11 @@ func _on_movement_type_selected(index: int) -> void:
 		return
 	_push_undo()
 	var text := _movement_type_dropdown.get_item_text(index)
-	_current_composition.movement_type = "" if text == "none" else text
+	var mt: String = "" if text == "none" else text
+	for dir_name in _edit_directions():
+		var seq := _current_composition.get_sequence(dir_name)
+		if seq:
+			seq.movement_type = mt
 	_timeline_panel.queue_redraw()
 
 
@@ -2209,9 +2201,12 @@ func _on_seq_prop_changed(_value: float) -> void:
 	if _current_composition == null:
 		return
 	_push_undo()
-	_current_composition.movement_distance = _movement_distance_spin.value
-	_current_composition.movement_start_frame = int(_movement_start_spin.value)
-	_current_composition.movement_end_frame = int(_movement_end_spin.value)
+	for dir_name in _edit_directions():
+		var seq := _current_composition.get_sequence(dir_name)
+		if seq:
+			seq.movement_distance = _movement_distance_spin.value
+			seq.movement_start_frame = int(_movement_start_spin.value)
+			seq.movement_end_frame = int(_movement_end_spin.value)
 	_timeline_panel.queue_redraw()
 
 
@@ -2219,7 +2214,10 @@ func _on_damage_frame_changed(value: float) -> void:
 	if _current_composition == null:
 		return
 	_push_undo()
-	_current_composition.damage_frame = int(value)
+	for dir_name in _edit_directions():
+		var seq := _current_composition.get_sequence(dir_name)
+		if seq:
+			seq.damage_frame = int(value)
 	_timeline_panel.queue_redraw()
 
 
