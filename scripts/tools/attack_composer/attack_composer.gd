@@ -34,6 +34,7 @@ var _current_composition: AttackCompositionData = null
 var _frame_images: Dictionary = {}  # {direction_string: Array[Image]}
 var _frame_textures: Dictionary = {}  # {direction_string: Array[ImageTexture]}
 var _preview_direction := "down"
+var _edit_all_directions: bool = false  # When true, edits apply to all directions
 var _preview_frame_index: int = 0
 var _selected_frame: int = -1
 var _selected_frames: Array[int] = []
@@ -110,6 +111,7 @@ var _weapon_sprite: Sprite2D
 var _weapon_set: Dictionary = {}
 var _echo_sprites: Array[Sprite2D] = []
 var _direction_buttons: Array[Button] = []
+var _all_directions_btn: Button
 var _frame_section_wrapper: VBoxContainer  # Visibility wrapper for all frame sub-sections
 var _undo_btn: Button
 var _draw_anchors_check: CheckButton
@@ -553,6 +555,11 @@ func _build_ui() -> void:
 	controls_inner.add_theme_constant_override("separation", 6)
 	controls_inner.alignment = BoxContainer.ALIGNMENT_CENTER
 	controls_margin.add_child(controls_inner)
+
+	# "All" direction button
+	_all_directions_btn = _make_button("All", _on_all_directions_pressed)
+	_all_directions_btn.custom_minimum_size.x = 40
+	controls_inner.add_child(_all_directions_btn)
 
 	# Direction buttons
 	for dir_name in DIRECTIONS:
@@ -1536,9 +1543,23 @@ func _update_preview_frame() -> void:
 
 
 func _update_direction_highlight() -> void:
+	# "All" button highlight
+	var all_sb := StyleBoxFlat.new()
+	all_sb.bg_color = Color("#B8860B") if _edit_all_directions else C_SURFACE
+	all_sb.corner_radius_top_left = 4
+	all_sb.corner_radius_top_right = 4
+	all_sb.corner_radius_bottom_left = 4
+	all_sb.corner_radius_bottom_right = 4
+	all_sb.content_margin_left = 8
+	all_sb.content_margin_right = 8
+	all_sb.content_margin_top = 4
+	all_sb.content_margin_bottom = 4
+	_all_directions_btn.add_theme_stylebox_override("normal", all_sb)
+
+	# Direction buttons
 	for i in DIRECTIONS.size():
 		var btn: Button = _direction_buttons[i]
-		var is_active: bool = DIRECTIONS[i] == _preview_direction
+		var is_active: bool = not _edit_all_directions and DIRECTIONS[i] == _preview_direction
 		var sb := StyleBoxFlat.new()
 		sb.bg_color = C_ACCENT if is_active else C_SURFACE
 		sb.corner_radius_top_left = 4
@@ -1552,10 +1573,46 @@ func _update_direction_highlight() -> void:
 		btn.add_theme_stylebox_override("normal", sb)
 
 
-func _on_direction_pressed(dir: String) -> void:
-	_preview_direction = dir
-	_update_preview_frame()
+func _on_all_directions_pressed() -> void:
+	_edit_all_directions = true
+	_preview_direction = "down"
+	_switch_to_direction("down")
 	_update_direction_highlight()
+
+
+func _on_direction_pressed(dir: String) -> void:
+	_edit_all_directions = false
+	_preview_direction = dir
+	_switch_to_direction(dir)
+	_update_direction_highlight()
+
+
+func _switch_to_direction(dir: String) -> void:
+	if _current_composition == null:
+		return
+	var seq := _current_composition.get_sequence(dir)
+	if seq == null:
+		return
+	_timeline_panel.sequence = seq
+	# Update timeline thumbnails for this direction
+	if _frame_textures.has(dir):
+		var thumbs: Array[ImageTexture] = []
+		for tex in _frame_textures[dir]:
+			thumbs.append(tex)
+		_timeline_panel.frame_thumbnails = thumbs
+	else:
+		_timeline_panel.frame_thumbnails = []
+	# Clamp selection to new direction's frame count
+	var max_idx := maxi(0, seq.frames.size() - 1)
+	if _selected_frame > max_idx:
+		_selected_frame = max_idx
+		_selected_frames = [_selected_frame]
+		_preview_frame_index = _selected_frame
+	_timeline_panel.selected_frame = _selected_frame
+	_timeline_panel.selected_frames = _selected_frames
+	_timeline_panel.queue_redraw()
+	_update_preview_frame()
+	_update_frame_props_ui()
 
 
 const WEAPON_ANCHOR_COLOR := Color("#FF00AA")
