@@ -1493,24 +1493,13 @@ func _on_load_pressed() -> void:
 
 
 func _on_spritesheet_loaded() -> void:
-	# Reposition sprite to center of viewport (viewport size is managed by stretch)
 	_reposition_preview_sprite()
 
-	# Feed data to timeline
-	_timeline_panel.composition = _current_composition
-	_timeline_panel.selected_frame = 0
-	_selected_frames = [0]
-	_timeline_panel.selected_frames = [0]
-	# Create thumbnails from the "down" direction frames
-	_timeline_panel.frame_thumbnails.clear()
-	if _frame_textures.has("down"):
-		for tex in _frame_textures["down"]:
-			_timeline_panel.frame_thumbnails.append(tex)
-	_timeline_panel.queue_redraw()
-
-	_update_preview_frame()
+	# Initialize direction state and switch to "down"
+	_preview_direction = "down"
+	_edit_all_directions = false
+	_switch_to_direction("down")
 	_update_direction_highlight()
-	_update_frame_props_ui()
 
 
 # ── Preview ────────────────────────────────────────────────────────────
@@ -2238,12 +2227,12 @@ func _on_generate_runtime() -> void:
 		_set_status("No composition loaded.")
 		return
 	var template_id := _get_runtime_template_id()
-	var data := CompositionConverter.convert(_current_composition)
+	var data := CompositionConverter.convert(_current_composition, _preview_direction)
 	data.template_id = template_id
 	var output := CompositionConverter.phases_to_string(data)
-	print("=== Generated Runtime Data for '%s' (template: %s) ===" % [_current_composition.composition_id, template_id])
+	print("=== Generated Runtime Data for '%s' dir=%s (template: %s) ===" % [_current_composition.composition_id, _preview_direction, template_id])
 	print(output)
-	_set_status("Generated %d phases for template '%s'. Check output panel." % [data.phases.size(), template_id])
+	_set_status("Generated %d phases for template '%s' (%s). Check output panel." % [data.phases.size(), template_id, _preview_direction])
 
 
 func _on_save_composition() -> void:
@@ -2279,14 +2268,18 @@ func _on_save_runtime() -> void:
 		return
 	_ensure_dirs()
 	var template_id := _get_runtime_template_id()
-	var data := CompositionConverter.convert(_current_composition)
-	data.template_id = template_id
-	var path := "%s/%s.tres" % [SEQUENCES_DIR, template_id]
-	var err := ResourceSaver.save(data, path)
-	if err == OK:
-		_set_status("Saved runtime data to %s" % path)
-	else:
-		_set_status("Error saving runtime data: %s" % error_string(err))
+	var saved_count := 0
+	for dir_name in AttackCompositionData.DIRECTIONS:
+		var data := CompositionConverter.convert(_current_composition, dir_name)
+		data.template_id = template_id
+		var path := "%s/%s_%s.tres" % [SEQUENCES_DIR, template_id, dir_name]
+		var err := ResourceSaver.save(data, path)
+		if err == OK:
+			saved_count += 1
+		else:
+			_set_status("Error saving runtime data for %s: %s" % [dir_name, error_string(err)])
+			return
+	_set_status("Saved runtime data for %d directions to %s/" % [saved_count, SEQUENCES_DIR])
 
 
 func _on_save_both() -> void:
@@ -2334,6 +2327,10 @@ func _on_load_composition_pressed() -> void:
 		return
 	var comp: AttackCompositionData = loaded
 
+	# Migrate from legacy flat format if needed
+	comp.migrate_from_legacy()
+	comp.ensure_all_directions()
+
 	# Derive model name from composition_id by stripping the animation suffix
 	# composition_id = "{model}_{animation_name}" (e.g., "mixamo_com_hiltbash")
 	var anim_lower: String = comp.animation_name
@@ -2350,18 +2347,16 @@ func _on_load_composition_pressed() -> void:
 
 	if anim_folder.is_empty() or model_name.is_empty():
 		_set_status("Cannot determine spritesheet for composition '%s'. Load spritesheet manually." % composition_id)
-		# Still apply the composition data without spritesheet
 		_current_composition = comp
 		_selected_frame = 0
 		_selected_frames = [0]
 		_preview_frame_index = 0
 		_undo_stack.clear()
 		_update_undo_button()
-		_timeline_panel.composition = _current_composition
-		_timeline_panel.selected_frame = 0
-		_timeline_panel.selected_frames = [0]
-		_timeline_panel.queue_redraw()
-		_update_frame_props_ui()
+		_preview_direction = "down"
+		_edit_all_directions = false
+		_switch_to_direction("down")
+		_update_direction_highlight()
 		return
 
 	# Load spritesheets for all directions
