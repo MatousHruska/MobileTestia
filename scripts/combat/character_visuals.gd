@@ -750,12 +750,10 @@ func _on_play_body_animation(anim_name: String) -> void:
 
 func _on_effect_event(effect_id: String, context: Dictionary = {}) -> void:
 	Debug.log("Visuals", "Effect requested: %s (context: %s)" % [effect_id, str(context)])
-	# Try real effect asset first, then fall back to placeholder
+	# Load real effect spritesheet from assets/sprites/effects/{effect_id}/
 	var effect_node: Node2D = _load_real_effect(effect_id, current_direction)
-	if effect_node == null:
-		effect_node = PlaceholderEffectSprites.create_effect(effect_id, current_direction)
 	if not effect_node:
-		Debug.warn("Visuals", "Effect creation returned null for '%s'" % effect_id)
+		Debug.warn("Visuals", "Effect asset not found for '%s'" % effect_id)
 		return
 	# Mirror the entire effect when facing left.
 	# Using scale.x = -1 on the node mirrors children, rotation, and local
@@ -768,6 +766,10 @@ func _on_effect_event(effect_id: String, context: Dictionary = {}) -> void:
 	if not context.is_empty():
 		var rot_deg: float = context.get("rotation_deg", 0.0)
 		if rot_deg != 0.0:
+			# Negate rotation when flipped: Scale(-1,1) * Rotate(-θ) produces
+			# the correct horizontal mirror (= Mirror_x * Rotate(θ)).
+			if is_flipped:
+				rot_deg = -rot_deg
 			effect_node.rotation = deg_to_rad(rot_deg)
 		var z_idx: int = context.get("z_index", 2)
 		for child in effect_node.get_children():
