@@ -880,7 +880,7 @@ func _load_real_effect(effect_id: String, direction: String) -> Node2D:
 	return root
 
 
-func _on_echo_requested(frame_index: int, config: Dictionary) -> void:
+func _on_echo_requested(_frame_index: int, config: Dictionary) -> void:
 	_clear_echoes()
 	var count: int = config.get("count", 3)
 	var opacity_start: float = config.get("opacity_start", 0.5)
