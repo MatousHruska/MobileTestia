@@ -19,7 +19,7 @@
       "allowed_affix_tags": "weapon,melee",
       "description": "",
       "weapon_category": "melee_1h",
-      "sprite_id": "sword_iron"
+      "sprite_id": "testsword"
     },
     {
       "id": "wep_sword_steel",

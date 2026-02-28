@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="AbilityVisualData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/ability_visual_phase.gd" id="1_hxeg4"]
+[ext_resource type="Script" path="res://scripts/combat/ability_visual_data.gd" id="2_rulv6"]
+
+[sub_resource type="Resource" id="Resource_hxeg4"]
+script = ExtResource("1_hxeg4")
+type = 5
+
+[sub_resource type="Resource" id="Resource_rulv6"]
+script = ExtResource("1_hxeg4")
+duration = 1.216
+anim_name = "slash"
+concurrent = true
+override_key = "composed_body"
+context_data = {
+"damage_frame": 33,
+"effect_data": [{
+"anchor": "center",
+"effect_id": "s0131",
+"frame_index": 17,
+"offset": Vector2(0, 28),
+"rotation_deg": -180.0,
+"z_index": 0
+}],
+"frame_start_index": 0,
+"frame_timings": [24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 64, 64, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 64, 64, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24]
+}
+
+[sub_resource type="Resource" id="Resource_jvcg4"]
+script = ExtResource("1_hxeg4")
+type = 1
+duration = 0.216
+move_distance = 10.0
+
+[sub_resource type="Resource" id="Resource_gt3bf"]
+script = ExtResource("1_hxeg4")
+type = 5
+weapon_visible = false
+
+[sub_resource type="Resource" id="Resource_ak54b"]
+script = ExtResource("1_hxeg4")
+anim_name = "idle"
+override_key = "recovery"
+
+[resource]
+script = ExtResource("2_rulv6")
+template_id = "basic_strike"
+display_name = "mixamo_com Slash"
+phases = Array[ExtResource("1_hxeg4")]([SubResource("Resource_hxeg4"), SubResource("Resource_rulv6"), SubResource("Resource_jvcg4"), SubResource("Resource_gt3bf"), SubResource("Resource_ak54b")])

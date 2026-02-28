@@ -267,19 +267,20 @@ func play_ability_visual(template_id: String, overrides: Dictionary = {}, target
 		Debug.warn("Combat", "Tried to play visual while one is active")
 		return
 
-	var template: AbilityVisualData = AbilityVisualTemplates.get_all().get(template_id)
+	# Snap facing first so we know the direction for template selection
+	if input_direction != Vector2.ZERO:
+		_snap_facing_to_cardinal(input_direction)
+
+	var direction := _facing_to_direction_string(current_facing)
+	var template: AbilityVisualData = AbilityVisualTemplates.get_template(template_id, direction)
 	if not template:
 		Debug.warn("Combat", "Unknown visual template: %s" % template_id)
 		# Fallback to legacy attack
 		request_attack()
 		return
 
-	# Snap facing if we have input
-	if input_direction != Vector2.ZERO:
-		_snap_facing_to_cardinal(input_direction)
-
 	# Sync facing direction so animations resolve to the correct variant
-	ability_visual_player.facing_direction = _facing_to_direction_string(current_facing)
+	ability_visual_player.facing_direction = direction
 
 	ability_visual_player.play(template, target_pos, overrides)
 
@@ -348,6 +349,12 @@ func _process_movement(delta: float) -> void:
 		# During dodge, use dodge velocity
 		if is_dodging:
 			velocity = _dodge_direction * dodge_speed
+		elif _lunge_timer > 0:
+			# Visual sequencer movement (lunge during ability animations)
+			velocity = _lunge_velocity
+		else:
+			# Locked with no active dodge/lunge — stop all movement
+			velocity = Vector2.ZERO
 		return
 
 	var target_velocity := Vector2.ZERO

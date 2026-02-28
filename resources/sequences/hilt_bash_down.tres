@@ -1,0 +1,50 @@
+[gd_resource type="Resource" script_class="AbilityVisualData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/ability_visual_phase.gd" id="1_d284a"]
+[ext_resource type="Script" path="res://scripts/combat/ability_visual_data.gd" id="2_aly1d"]
+
+[sub_resource type="Resource" id="Resource_d284a"]
+script = ExtResource("1_d284a")
+type = 5
+
+[sub_resource type="Resource" id="Resource_aly1d"]
+script = ExtResource("1_d284a")
+duration = 1.136
+anim_name = "hiltbash"
+concurrent = true
+override_key = "composed_body"
+context_data = {
+"damage_frame": 17,
+"effect_data": [{
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 15,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}],
+"frame_start_index": 0,
+"frame_timings": [32, 32, 32, 32, 32, 32, 32, 64, 64, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 64, 64, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32]
+}
+
+[sub_resource type="Resource" id="Resource_dh20c"]
+script = ExtResource("1_d284a")
+type = 1
+duration = 0.16
+move_distance = 10.0
+
+[sub_resource type="Resource" id="Resource_8ppa0"]
+script = ExtResource("1_d284a")
+type = 5
+weapon_visible = false
+
+[sub_resource type="Resource" id="Resource_830nr"]
+script = ExtResource("1_d284a")
+anim_name = "idle"
+override_key = "recovery"
+
+[resource]
+script = ExtResource("2_aly1d")
+template_id = "hilt_bash"
+display_name = "mixamo_com HiltBash"
+phases = Array[ExtResource("1_d284a")]([SubResource("Resource_d284a"), SubResource("Resource_aly1d"), SubResource("Resource_dh20c"), SubResource("Resource_8ppa0"), SubResource("Resource_830nr")])

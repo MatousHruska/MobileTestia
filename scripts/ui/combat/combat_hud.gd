@@ -1525,6 +1525,8 @@ func _apply_skill_damage(talent: TalentData, damage_result: Dictionary) -> void:
 
 func _spawn_skill_visual(talent: TalentData, _damage_result: Dictionary) -> void:
 	## Spawn visual indicator for skill hitbox
+	if not OS.is_debug_build() or not Debug.show_hitboxes:
+		return
 	var visual := HitboxVisual.new()
 
 	# Get range and arc with equipment bonuses

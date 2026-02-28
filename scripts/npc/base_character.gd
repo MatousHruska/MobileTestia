@@ -165,7 +165,7 @@ func play_ability_visual(template_id: String, overrides: Dictionary = {}, target
 	if ability_visual_player.is_playing:
 		return
 
-	var template: AbilityVisualData = AbilityVisualTemplates.get_all().get(template_id)
+	var template: AbilityVisualData = AbilityVisualTemplates.get_template(template_id)
 	if not template:
 		# Fallback to legacy play_attack()
 		play_attack()

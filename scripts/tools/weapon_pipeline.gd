@@ -16,6 +16,7 @@ extends Control
 #===============================================================================
 
 const WEAPONS_DIR := "res://assets/sprites/weapons"
+const TOOLS_MENU_PATH := "res://scenes/tools/tools_menu.tscn"
 
 const CATEGORIES: PackedStringArray = [
 	"melee_1h", "melee_2h", "dagger", "ranged", "magic",
@@ -727,6 +728,12 @@ func _build_step_anchor(parent: VBoxContainer) -> void:
 	_export_status_label.add_theme_font_size_override("font_size", FONT_HINT)
 	_export_status_label.add_theme_color_override("font_color", C_TEXT_DIM)
 	export_content.add_child(_export_status_label)
+
+	var tools_menu_btn := _make_subtle_button("\u2190 Tools Menu")
+	tools_menu_btn.pressed.connect(func() -> void:
+		get_tree().change_scene_to_file(TOOLS_MENU_PATH)
+	)
+	export_content.add_child(tools_menu_btn)
 
 
 #===============================================================================

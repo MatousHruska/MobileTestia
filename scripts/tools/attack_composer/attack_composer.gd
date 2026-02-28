@@ -58,12 +58,30 @@ var _anchor_draw_enabled: bool = false
 var _anchor_onion_skin_enabled: bool = false
 var _anchor_images_dirty: bool = false
 
-# ── Alpha painting state ─────────────────────────────────────────────
+# ── Preview zoom/pan state ────────────────────────────────────────────
+var _preview_zoom: float = 1.0
+var _preview_pan: Vector2 = Vector2.ZERO
+var _pan_dragging: bool = false
+var _pan_drag_start: Vector2 = Vector2.ZERO
+var _zoom_label: Label = null
+
+# ── Alpha painting state (weapon) ────────────────────────────────────
 var _alpha_paint_enabled: bool = false
 var _alpha_paint_value: int = 128
+var _alpha_brush_size: int = 1
 var _alpha_draw_check: CheckButton = null
 var _alpha_buttons_container: VBoxContainer = null
 var _alpha_buttons: Array[Button] = []
+var _alpha_brush_buttons: Array[Button] = []
+
+# ── Alpha painting state (effect) ────────────────────────────────────
+var _effect_alpha_paint_enabled: bool = false
+var _effect_alpha_paint_value: int = 128
+var _effect_alpha_brush_size: int = 1
+var _effect_alpha_draw_check: CheckButton = null
+var _effect_alpha_buttons_container: VBoxContainer = null
+var _effect_alpha_buttons: Array[Button] = []
+var _effect_alpha_brush_buttons: Array[Button] = []
 
 # ── Undo state ────────────────────────────────────────────────────────
 var _undo_stack: Array = []  # Array of Dictionary {composition, images}
@@ -273,6 +291,8 @@ func _push_undo() -> void:
 			var frame_copy := frame.duplicate()
 			if frame.alpha_mask != null:
 				frame_copy.alpha_mask = frame.alpha_mask.duplicate()
+			if frame.effect_alpha_mask != null:
+				frame_copy.effect_alpha_mask = frame.effect_alpha_mask.duplicate()
 			seq_copy.frames.append(frame_copy)
 		comp_snapshot.direction_sequences[dir_name] = seq_copy
 
@@ -596,6 +616,24 @@ func _build_ui() -> void:
 	_undo_btn.tooltip_text = "Undo (Ctrl+Z)"
 	_undo_btn.disabled = true
 	controls_inner.add_child(_undo_btn)
+
+	# Zoom controls
+	var spacer3 := Control.new()
+	spacer3.custom_minimum_size.x = 8
+	controls_inner.add_child(spacer3)
+
+	_zoom_label = Label.new()
+	_zoom_label.add_theme_font_size_override("font_size", FONT_HINT)
+	_zoom_label.add_theme_color_override("font_color", C_ACCENT)
+	_zoom_label.text = ""
+	_zoom_label.custom_minimum_size.x = 36
+	_zoom_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	controls_inner.add_child(_zoom_label)
+
+	var zoom_reset_btn := _make_button("1:1", _on_zoom_reset)
+	zoom_reset_btn.custom_minimum_size.x = 32
+	zoom_reset_btn.tooltip_text = "Reset zoom and pan"
+	controls_inner.add_child(zoom_reset_btn)
 
 	# Anchor detection indicator
 	_anchor_label = Label.new()
@@ -1142,6 +1180,29 @@ func _build_weapon_subsection() -> void:
 		alpha_levels_hbox.add_child(alpha_btn)
 		_alpha_buttons.append(alpha_btn)
 
+	# Brush size buttons row
+	var brush_label := Label.new()
+	brush_label.text = "Brush Size"
+	brush_label.add_theme_font_size_override("font_size", FONT_HINT)
+	brush_label.add_theme_color_override("font_color", C_TEXT_DIM)
+	_alpha_buttons_container.add_child(brush_label)
+
+	var brush_hbox := HBoxContainer.new()
+	brush_hbox.add_theme_constant_override("separation", 4)
+	_alpha_buttons_container.add_child(brush_hbox)
+
+	_alpha_brush_buttons.clear()
+	for bsize in [1, 3, 5]:
+		var brush_btn := Button.new()
+		brush_btn.text = "%dpx" % bsize
+		brush_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		brush_btn.custom_minimum_size.y = 28
+		brush_btn.add_theme_font_size_override("font_size", FONT_HINT)
+		brush_btn.pressed.connect(_on_alpha_brush_size.bind(bsize))
+		brush_hbox.add_child(brush_btn)
+		_alpha_brush_buttons.append(brush_btn)
+	_update_alpha_brush_highlight()
+
 	# Hint label
 	var alpha_hint := Label.new()
 	alpha_hint.text = "L-click on weapon to paint alpha"
@@ -1228,6 +1289,105 @@ func _build_effect_subsection() -> void:
 	_effect_rotation_spin.size_flags_horizontal = SIZE_EXPAND_FILL
 	_effect_rotation_spin.value_changed.connect(_on_effect_rotation_changed)
 	section.add_child(_effect_rotation_spin)
+
+	# ── Draw Alpha toggle and controls (effect) ──
+	_effect_alpha_draw_check = CheckButton.new()
+	_effect_alpha_draw_check.text = "Draw Alpha"
+	_effect_alpha_draw_check.add_theme_font_size_override("font_size", FONT_LABEL)
+	_effect_alpha_draw_check.add_theme_color_override("font_color", C_TEXT_SEC)
+	_effect_alpha_draw_check.toggled.connect(_on_effect_alpha_draw_toggled)
+	section.add_child(_effect_alpha_draw_check)
+
+	_effect_alpha_buttons_container = VBoxContainer.new()
+	_effect_alpha_buttons_container.add_theme_constant_override("separation", 4)
+	_effect_alpha_buttons_container.visible = false
+	section.add_child(_effect_alpha_buttons_container)
+
+	# Alpha level buttons row
+	var eff_alpha_hbox := HBoxContainer.new()
+	eff_alpha_hbox.add_theme_constant_override("separation", 4)
+	_effect_alpha_buttons_container.add_child(eff_alpha_hbox)
+
+	var eff_alpha_values: Array[Dictionary] = [
+		{"label": "0%", "value": 0},
+		{"label": "25%", "value": 64},
+		{"label": "50%", "value": 128},
+		{"label": "75%", "value": 191},
+		{"label": "100%", "value": 255},
+	]
+	_effect_alpha_buttons.clear()
+	for entry in eff_alpha_values:
+		var alpha_btn := Button.new()
+		alpha_btn.text = entry["label"]
+		alpha_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		alpha_btn.custom_minimum_size.y = 28
+		alpha_btn.add_theme_font_size_override("font_size", FONT_HINT)
+		var alpha_sb := StyleBoxFlat.new()
+		alpha_sb.bg_color = Color(1, 1, 1, entry["value"] / 255.0)
+		alpha_sb.border_width_left = 1
+		alpha_sb.border_width_right = 1
+		alpha_sb.border_width_top = 1
+		alpha_sb.border_width_bottom = 1
+		alpha_sb.border_color = C_BORDER
+		alpha_sb.corner_radius_top_left = 3
+		alpha_sb.corner_radius_top_right = 3
+		alpha_sb.corner_radius_bottom_left = 3
+		alpha_sb.corner_radius_bottom_right = 3
+		alpha_btn.add_theme_stylebox_override("normal", alpha_sb)
+		if entry["value"] > 128:
+			alpha_btn.add_theme_color_override("font_color", Color.BLACK)
+		else:
+			alpha_btn.add_theme_color_override("font_color", Color.WHITE)
+		alpha_btn.pressed.connect(_on_effect_alpha_level_btn.bind(entry["value"]))
+		eff_alpha_hbox.add_child(alpha_btn)
+		_effect_alpha_buttons.append(alpha_btn)
+
+	# Brush size buttons row (effect)
+	var eff_brush_label := Label.new()
+	eff_brush_label.text = "Brush Size"
+	eff_brush_label.add_theme_font_size_override("font_size", FONT_HINT)
+	eff_brush_label.add_theme_color_override("font_color", C_TEXT_DIM)
+	_effect_alpha_buttons_container.add_child(eff_brush_label)
+
+	var eff_brush_hbox := HBoxContainer.new()
+	eff_brush_hbox.add_theme_constant_override("separation", 4)
+	_effect_alpha_buttons_container.add_child(eff_brush_hbox)
+
+	_effect_alpha_brush_buttons.clear()
+	for bsize in [1, 3, 5]:
+		var brush_btn := Button.new()
+		brush_btn.text = "%dpx" % bsize
+		brush_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		brush_btn.custom_minimum_size.y = 28
+		brush_btn.add_theme_font_size_override("font_size", FONT_HINT)
+		brush_btn.pressed.connect(_on_effect_alpha_brush_size.bind(bsize))
+		eff_brush_hbox.add_child(brush_btn)
+		_effect_alpha_brush_buttons.append(brush_btn)
+	_update_effect_alpha_brush_highlight()
+
+	# Hint label
+	var eff_alpha_hint := Label.new()
+	eff_alpha_hint.text = "L-click on effect to paint alpha"
+	eff_alpha_hint.add_theme_font_size_override("font_size", FONT_HINT)
+	eff_alpha_hint.add_theme_color_override("font_color", C_TEXT_DIM)
+	_effect_alpha_buttons_container.add_child(eff_alpha_hint)
+
+	# Action buttons row
+	var eff_alpha_actions := HBoxContainer.new()
+	eff_alpha_actions.add_theme_constant_override("separation", 4)
+	_effect_alpha_buttons_container.add_child(eff_alpha_actions)
+
+	var eff_clear_btn := _make_button("Clear Mask", _on_clear_effect_alpha)
+	eff_clear_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	eff_alpha_actions.add_child(eff_clear_btn)
+
+	var eff_copy_btn := _make_button("Copy \u2192 Next", _on_copy_effect_alpha_to_next)
+	eff_copy_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	eff_alpha_actions.add_child(eff_copy_btn)
+
+	var eff_save_btn := _make_button("Save to Asset", _on_save_effect_alpha)
+	eff_save_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	eff_alpha_actions.add_child(eff_save_btn)
 
 
 func _build_echo_subsection() -> void:
@@ -1495,7 +1655,14 @@ func _on_load_pressed() -> void:
 
 
 func _on_spritesheet_loaded() -> void:
+	# Reset zoom/pan when loading new spritesheets
+	_preview_zoom = 1.0
+	_preview_pan = Vector2.ZERO
 	_reposition_preview_sprite()
+
+	# Enable spritesheet saving now that images are loaded
+	if _save_spritesheets_btn:
+		_save_spritesheets_btn.disabled = false
 
 	# Initialize direction state and switch to "down"
 	_preview_direction = "down"
@@ -1824,11 +1991,11 @@ func _on_preview_viewport_resized() -> void:
 
 func _reposition_preview_sprite() -> void:
 	var vp_size := Vector2(_preview_viewport.size)
-	# Center the sprite in the viewport
-	var center := vp_size / 2.0
+	# Center the sprite in the viewport, offset by pan
+	var center := vp_size / 2.0 + _preview_pan
 	_preview_sprite.position = center
 
-	# Scale to fit within the viewport with some padding (80%)
+	# Scale to fit within the viewport with some padding (80%), then apply zoom
 	if _frame_size != Vector2i.ZERO:
 		var scale_x := (vp_size.x * 0.8) / float(_frame_size.x)
 		var scale_y := (vp_size.y * 0.8) / float(_frame_size.y)
@@ -1836,9 +2003,16 @@ func _reposition_preview_sprite() -> void:
 		# Snap to integer scale if possible for crisp pixel art
 		if uniform_scale >= 2.0:
 			uniform_scale = floorf(uniform_scale)
-		_preview_sprite.scale = Vector2(uniform_scale, uniform_scale)
+		_preview_sprite.scale = Vector2(uniform_scale, uniform_scale) * _preview_zoom
 	else:
-		_preview_sprite.scale = Vector2.ONE
+		_preview_sprite.scale = Vector2.ONE * _preview_zoom
+
+	# Update zoom label
+	if _zoom_label:
+		if absf(_preview_zoom - 1.0) < 0.01:
+			_zoom_label.text = ""
+		else:
+			_zoom_label.text = "%.0f%%" % (_preview_zoom * 100.0)
 
 	# Reposition weapon, echo ghosts, crosshair, onion skin, and effect too
 	_update_weapon_preview()
@@ -1846,6 +2020,12 @@ func _reposition_preview_sprite() -> void:
 	_update_crosshair_overlay()
 	_update_onion_weapon()
 	_update_effect_preview()
+
+
+func _on_zoom_reset() -> void:
+	_preview_zoom = 1.0
+	_preview_pan = Vector2.ZERO
+	_reposition_preview_sprite()
 
 
 func _on_frame_prev() -> void:
@@ -2482,7 +2662,48 @@ func _on_load_composition_pressed() -> void:
 # ── Anchor Painting ───────────────────────────────────────────────────
 
 func _on_preview_viewport_input(event: InputEvent) -> void:
-	# Alpha painting mode (handles click + drag)
+	# ── Zoom (mouse wheel) ────────────────────────────────────────────
+	if event is InputEventMouseButton:
+		var mb_zoom := event as InputEventMouseButton
+		if mb_zoom.pressed and (mb_zoom.button_index == MOUSE_BUTTON_WHEEL_UP or mb_zoom.button_index == MOUSE_BUTTON_WHEEL_DOWN):
+			var zoom_dir := 1.0 if mb_zoom.button_index == MOUSE_BUTTON_WHEEL_UP else -1.0
+			var old_zoom := _preview_zoom
+			_preview_zoom = clampf(_preview_zoom + zoom_dir * 0.25 * _preview_zoom, 0.5, 20.0)
+			# Zoom toward cursor position for natural feel
+			var container_size := _viewport_container_ref.size
+			var vp_size := Vector2(_preview_viewport.size)
+			if container_size.x > 0 and container_size.y > 0:
+				var vp_cursor := mb_zoom.position * (vp_size / container_size)
+				var vp_center := vp_size / 2.0
+				# Adjust pan so the point under the cursor stays fixed
+				var zoom_ratio := _preview_zoom / old_zoom
+				_preview_pan = vp_cursor - (vp_cursor - vp_center - _preview_pan) * zoom_ratio - vp_center
+			_reposition_preview_sprite()
+			_viewport_container_ref.accept_event()
+			return
+
+	# ── Pan (middle-click drag) ───────────────────────────────────────
+	if event is InputEventMouseButton:
+		var mb_pan := event as InputEventMouseButton
+		if mb_pan.button_index == MOUSE_BUTTON_MIDDLE:
+			if mb_pan.pressed:
+				_pan_dragging = true
+				_pan_drag_start = mb_pan.position
+			else:
+				_pan_dragging = false
+			_viewport_container_ref.accept_event()
+			return
+	if event is InputEventMouseMotion and _pan_dragging:
+		var motion := event as InputEventMouseMotion
+		var container_size := _viewport_container_ref.size
+		var vp_size := Vector2(_preview_viewport.size)
+		if container_size.x > 0 and container_size.y > 0:
+			_preview_pan += motion.relative * (vp_size / container_size)
+		_reposition_preview_sprite()
+		_viewport_container_ref.accept_event()
+		return
+
+	# Alpha painting mode — weapon (handles click + drag)
 	if _alpha_paint_enabled:
 		var is_click: bool = event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
 		var is_drag: bool = event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
@@ -2493,6 +2714,20 @@ func _on_preview_viewport_input(event: InputEvent) -> void:
 				if is_click:
 					_push_undo()
 				_paint_weapon_alpha(weapon_px.x, weapon_px.y)
+				_viewport_container_ref.accept_event()
+			return
+
+	# Alpha painting mode — effect (handles click + drag)
+	if _effect_alpha_paint_enabled:
+		var is_click: bool = event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
+		var is_drag: bool = event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		if is_click or is_drag:
+			var pos: Vector2 = event.position
+			var effect_px := _viewport_to_effect_pixel(pos)
+			if effect_px != Vector2i(-1, -1):
+				if is_click:
+					_push_undo()
+				_paint_effect_alpha(effect_px.x, effect_px.y)
 				_viewport_container_ref.accept_event()
 			return
 
@@ -2618,6 +2853,21 @@ func _on_alpha_level_btn(value: int) -> void:
 	_alpha_paint_value = value
 
 
+func _on_alpha_brush_size(bsize: int) -> void:
+	_alpha_brush_size = bsize
+	_update_alpha_brush_highlight()
+
+
+func _update_alpha_brush_highlight() -> void:
+	for i in _alpha_brush_buttons.size():
+		var btn := _alpha_brush_buttons[i]
+		var sizes := [1, 3, 5]
+		if i < sizes.size() and sizes[i] == _alpha_brush_size:
+			btn.add_theme_color_override("font_color", Color.YELLOW)
+		else:
+			btn.remove_theme_color_override("font_color")
+
+
 func _on_clear_frame_alpha() -> void:
 	var seq := _active_sequence()
 	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
@@ -2678,18 +2928,153 @@ func _paint_weapon_alpha(px: int, py: int) -> void:
 	var weapon_img := weapon_tex.get_image()
 	if weapon_img == null:
 		return
-	if px < 0 or px >= weapon_img.get_width() or py < 0 or py >= weapon_img.get_height():
-		return
-	if weapon_img.get_pixel(px, py).a < 0.01:
-		return  # Only paint on non-transparent weapon pixels
+	var w := weapon_img.get_width()
+	var h := weapon_img.get_height()
 	# Initialize mask if needed
 	if frame.alpha_mask == null:
-		frame.alpha_mask = Image.create(
-			weapon_img.get_width(), weapon_img.get_height(),
-			false, Image.FORMAT_R8)
+		frame.alpha_mask = Image.create(w, h, false, Image.FORMAT_R8)
 		frame.alpha_mask.fill(Color(1, 1, 1))
-	frame.alpha_mask.set_pixel(px, py, Color(_alpha_paint_value / 255.0, 0, 0))
+	var radius := (_alpha_brush_size - 1) / 2
+	var paint_color := Color(_alpha_paint_value / 255.0, 0, 0)
+	for bx in range(px - radius, px + radius + 1):
+		for by in range(py - radius, py + radius + 1):
+			if bx < 0 or bx >= w or by < 0 or by >= h:
+				continue
+			if weapon_img.get_pixel(bx, by).a < 0.01:
+				continue  # Only paint on non-transparent weapon pixels
+			frame.alpha_mask.set_pixel(bx, by, paint_color)
 	_update_weapon_preview()
+
+
+# ── Effect alpha painting ────────────────────────────────────────────
+
+func _on_effect_alpha_draw_toggled(enabled: bool) -> void:
+	_effect_alpha_paint_enabled = enabled
+	_effect_alpha_buttons_container.visible = enabled
+	_update_effect_preview()
+
+
+func _on_effect_alpha_level_btn(value: int) -> void:
+	_effect_alpha_paint_value = value
+
+
+func _on_effect_alpha_brush_size(bsize: int) -> void:
+	_effect_alpha_brush_size = bsize
+	_update_effect_alpha_brush_highlight()
+
+
+func _update_effect_alpha_brush_highlight() -> void:
+	for i in _effect_alpha_brush_buttons.size():
+		var btn := _effect_alpha_brush_buttons[i]
+		var sizes := [1, 3, 5]
+		if i < sizes.size() and sizes[i] == _effect_alpha_brush_size:
+			btn.add_theme_color_override("font_color", Color.YELLOW)
+		else:
+			btn.remove_theme_color_override("font_color")
+
+
+func _on_clear_effect_alpha() -> void:
+	var seq := _active_sequence()
+	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
+		return
+	_push_undo()
+	var frame := seq.frames[_selected_frame]
+	frame.effect_alpha_mask = null
+	_update_effect_preview()
+
+
+func _on_copy_effect_alpha_to_next() -> void:
+	var seq := _active_sequence()
+	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
+		return
+	var frame := seq.frames[_selected_frame]
+	if frame.effect_alpha_mask == null:
+		_set_status("No effect alpha mask on current frame to copy.")
+		return
+	var next_idx := _selected_frame + 1
+	if next_idx >= seq.frames.size():
+		_set_status("No next frame to copy to.")
+		return
+	_push_undo()
+	seq.frames[next_idx].effect_alpha_mask = frame.effect_alpha_mask.duplicate()
+	_set_status("Effect alpha mask copied to frame %d." % next_idx)
+
+
+func _on_save_effect_alpha() -> void:
+	var seq := _active_sequence()
+	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
+		return
+	var frame := seq.frames[_selected_frame]
+	if frame.effect_alpha_mask == null:
+		_set_status("No effect alpha mask to save.")
+		return
+	if frame.effect_id.is_empty():
+		_set_status("No effect assigned to save mask for.")
+		return
+	var dir_path: String = EFFECTS_DIR + "/" + frame.effect_id
+	var save_path: String = dir_path + "/alpha_mask.png"
+	var global_path := ProjectSettings.globalize_path(save_path)
+	var err := frame.effect_alpha_mask.save_png(global_path)
+	if err == OK:
+		# Invalidate cache so it reloads with the new mask
+		_effect_cache.erase(frame.effect_id)
+		_set_status("Effect alpha mask saved to %s" % save_path)
+	else:
+		_set_status("Failed to save effect alpha mask (error %d)" % err)
+
+
+func _viewport_to_effect_pixel(container_pos: Vector2) -> Vector2i:
+	if _effect_sprite == null or not _effect_sprite.visible or _effect_sprite.texture == null:
+		return Vector2i(-1, -1)
+	var container_size := _viewport_container_ref.size
+	var vp_size := Vector2(_preview_viewport.size)
+	if container_size.x <= 0 or container_size.y <= 0:
+		return Vector2i(-1, -1)
+	# Container -> viewport coords
+	var vp_click := container_pos * (vp_size / container_size)
+	# Viewport -> effect local space (undo position, rotation, scale)
+	var local := (vp_click - _effect_sprite.position).rotated(-_effect_sprite.rotation) / _effect_sprite.scale
+	# Local space -> texture pixel (effect sprite is centered)
+	var tex_size := Vector2(_effect_sprite.texture.get_size())
+	var tex_px := local + tex_size / 2.0
+	var px := int(tex_px.x)
+	var py := int(tex_px.y)
+	if px < 0 or px >= int(tex_size.x) or py < 0 or py >= int(tex_size.y):
+		return Vector2i(-1, -1)
+	return Vector2i(px, py)
+
+
+func _paint_effect_alpha(px: int, py: int) -> void:
+	var seq := _active_sequence()
+	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
+		return
+	var frame := seq.frames[_selected_frame]
+	if frame.effect_id.is_empty():
+		return
+	var assets := _load_effect_assets(frame.effect_id)
+	if assets.is_empty():
+		return
+	var frame_size: int = assets["frame_size"]
+	# Get source image for transparency check
+	var sheet_img: Image = null
+	var sheet_tex: Texture2D = assets.get("sheet_texture")
+	if sheet_tex != null:
+		sheet_img = sheet_tex.get_image()
+	# Initialize mask if needed
+	if frame.effect_alpha_mask == null:
+		frame.effect_alpha_mask = Image.create(frame_size, frame_size, false, Image.FORMAT_R8)
+		frame.effect_alpha_mask.fill(Color(1, 1, 1))
+	var radius := (_effect_alpha_brush_size - 1) / 2
+	var paint_color := Color(_effect_alpha_paint_value / 255.0, 0, 0)
+	for bx in range(px - radius, px + radius + 1):
+		for by in range(py - radius, py + radius + 1):
+			if bx < 0 or bx >= frame_size or by < 0 or by >= frame_size:
+				continue
+			if sheet_img != null and bx < sheet_img.get_width() and by < sheet_img.get_height():
+				if sheet_img.get_pixel(bx, by).a < 0.01:
+					continue  # Only paint on non-transparent effect pixels
+			frame.effect_alpha_mask.set_pixel(bx, by, paint_color)
+	_update_effect_preview()
 
 
 func _update_crosshair_overlay() -> void:
@@ -2835,8 +3220,6 @@ func _on_save_spritesheets() -> void:
 			return
 
 	_anchor_images_dirty = false
-	if _save_spritesheets_btn:
-		_save_spritesheets_btn.disabled = true
 
 	_set_status("Saved %d spritesheet(s) to %s/%s/." % [saved, SPRITES_BASE, _current_anim])
 
@@ -2937,7 +3320,12 @@ func _load_effect_assets(effect_id: String) -> Dictionary:
 	if not FileAccess.file_exists(sheet_path):
 		return {}
 
-	var sheet_img := Image.load_from_file(ProjectSettings.globalize_path(sheet_path))
+	# Load through Godot's import pipeline (same as runtime) so the composer
+	# preview matches in-game rendering (import settings like fix_alpha_border apply).
+	var raw_tex: Texture2D = load(sheet_path)
+	if raw_tex == null:
+		return {}
+	var sheet_img: Image = raw_tex.get_image()
 	if sheet_img == null:
 		return {}
 	var sheet_tex := ImageTexture.create_from_image(sheet_img)
@@ -2947,6 +3335,12 @@ func _load_effect_assets(effect_id: String) -> Dictionary:
 	atlas.atlas = sheet_tex
 	atlas.region = Rect2(0, 0, frame_size, frame_size)
 
+	# Load optional global alpha mask
+	var alpha_mask: Image = null
+	var alpha_path: String = dir_path + "/alpha_mask.png"
+	if FileAccess.file_exists(alpha_path):
+		alpha_mask = Image.load_from_file(ProjectSettings.globalize_path(alpha_path))
+
 	var result := {
 		"texture": atlas,
 		"sheet_texture": sheet_tex,
@@ -2954,6 +3348,7 @@ func _load_effect_assets(effect_id: String) -> Dictionary:
 		"frame_size": frame_size,
 		"fps": fps,
 		"direction": _preview_direction,
+		"alpha_mask": alpha_mask,
 	}
 	_effect_cache[effect_id] = result
 	return result
@@ -2984,17 +3379,45 @@ func _update_effect_preview() -> void:
 		_effect_sprite.visible = false
 		return
 
-	_effect_sprite.texture = assets["texture"]
 	_effect_sprite.visible = true
 	_effect_sprite.scale = _preview_sprite.scale
 	_effect_sprite.z_index = frame.effect_z_index
 	_effect_sprite.rotation = deg_to_rad(frame.effect_rotation_deg)
 
+	var eff_fs: int = assets["frame_size"]
+
 	# When not playing, reset atlas to first frame
 	if not _playing:
-		var fs: int = assets["frame_size"]
 		var atlas: AtlasTexture = assets["texture"]
-		atlas.region = Rect2(0, 0, fs, fs)
+		atlas.region = Rect2(0, 0, eff_fs, eff_fs)
+
+	# Apply alpha mask compositing (global + per-frame)
+	var global_mask: Image = assets.get("alpha_mask")
+	var frame_mask: Image = frame.effect_alpha_mask
+
+	if global_mask != null or frame_mask != null:
+		# Extract current frame from spritesheet
+		var sheet_tex: Texture2D = assets["sheet_texture"]
+		var sheet_img := sheet_tex.get_image()
+		if sheet_img != null:
+			var atlas_tex: AtlasTexture = assets["texture"]
+			var region := atlas_tex.region
+			var frame_img := Image.create(eff_fs, eff_fs, false, Image.FORMAT_RGBA8)
+			frame_img.blit_rect(sheet_img, Rect2i(int(region.position.x), 0, eff_fs, eff_fs), Vector2i.ZERO)
+			for y in range(eff_fs):
+				for x in range(eff_fs):
+					var alpha_mult := 1.0
+					if global_mask != null and x < global_mask.get_width() and y < global_mask.get_height():
+						alpha_mult *= global_mask.get_pixel(x, y).r
+					if frame_mask != null and x < frame_mask.get_width() and y < frame_mask.get_height():
+						alpha_mult *= frame_mask.get_pixel(x, y).r
+					if alpha_mult < 0.99:
+						var px: Color = frame_img.get_pixel(x, y)
+						px.a *= alpha_mult
+						frame_img.set_pixel(x, y, px)
+			_effect_sprite.texture = ImageTexture.create_from_image(frame_img)
+	else:
+		_effect_sprite.texture = assets["texture"]
 
 	# Resolve anchor position
 	var anchor_pos: Vector2 = _preview_sprite.position  # default: center

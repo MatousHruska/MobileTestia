@@ -82,3 +82,6 @@ run_fix.py
 
 # Old standalone Excel files (VBA source is in databases/vba/, master DB is .xlsm)
 databases/*.xlsx
+
+# Debug screenshots and test images
+debug/

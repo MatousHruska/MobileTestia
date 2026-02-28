@@ -1,13 +1,16 @@
 extends Control
 ## Effect Capture Pipeline Wizard
 ##
-## 5-step tool for importing 3D effect animations (.glb), capturing them
-## from 3 directions via SubViewport, converting to pixel art with softer
-## defaults tuned for VFX, editing frames, and exporting directional spritesheets.
+## 5-step tool for importing effect animations, converting to pixel art with
+## softer defaults tuned for VFX, editing frames, and exporting directional
+## spritesheets. Supports two source modes:
+##
+##   3D Capture — load .glb models, animate, capture from 3 camera directions
+##   2D Import  — load numbered PNG frame sequences from a folder
 ##
 ## Steps:
-##   1. Model & Animation Selection — pick model, animation, configure camera
-##   2. Capture Preview — auto-capture 3 directions, review thumbnails
+##   1. Source Selection — pick 3D model+animation OR browse to 2D frames folder
+##   2. Capture Preview — (3D only) auto-capture 3 directions, review thumbnails
 ##   3. Pixel Art Processing — configure processing with effect-tuned defaults
 ##   4. Frame Editor — preview animation, delete frames across all directions
 ##   5. Export — save directional spritesheets + metadata.json
@@ -20,6 +23,7 @@ extends Control
 
 const IMPORT_DIR := "res://assets/3d_imports"
 const OUTPUT_BASE := "res://assets/sprites/effects"
+const TOOLS_MENU_PATH := "res://scenes/tools/tools_menu.tscn"
 
 ## Overscan factor for detection pass — renders a wider view to find the full
 ## effect extent, then re-renders at normal zoom with the camera panned
@@ -64,6 +68,9 @@ const FONT_VALUE := 12
 var _current_step := 0  # 0-4
 var _step_containers: Array[VBoxContainer] = []  # one per step
 
+## Source mode: "3d" or "2d"
+var _source_mode: String = "3d"
+
 ## Step 1 state
 var current_model_path: String = ""
 var current_model_instance: Node = null
@@ -102,11 +109,16 @@ var _export_frame_size := 32
 var step_indicator_label: Label
 var step_indicator: Control  # StepIndicator custom control
 
-# Step 1 nodes
+# Step 1 nodes — shared
+var effect_id_edit: LineEdit
+var _step1_3d_container: VBoxContainer = null
+var _step1_2d_container: VBoxContainer = null
+var _step1_camera_container: VBoxContainer = null  # collapsible camera section
+
+# Step 1 nodes — 3D mode
 var model_dropdown: OptionButton
 var anim_dropdown: OptionButton
 var anim_info_label: Label
-var effect_id_edit: LineEdit
 var frame_count_spin: SpinBox
 var camera_elevation_slider: HSlider
 var camera_elevation_label: Label
@@ -118,6 +130,17 @@ var preview_container: SubViewportContainer
 var sub_viewport: SubViewport
 var camera: Camera3D
 var model_slot: Node3D
+
+# Step 1 nodes — 2D mode
+var _2d_folder_edit: LineEdit = null
+var _2d_detection_label: Label = null
+var _2d_effect_id_edit: LineEdit = null
+var _2d_fps_spin: SpinBox = null
+var _2d_duration_label: Label = null
+var _2d_preview_rect: TextureRect = null
+var _2d_folder_dialog: FileDialog = null
+var _2d_detected_frames: PackedStringArray = []
+var _2d_detected_size: Vector2i = Vector2i.ZERO
 
 # Step 2 nodes
 var capture_down_rect: TextureRect
@@ -323,7 +346,7 @@ func _build_ui() -> void:
 	left_vbox.add_child(status_panel)
 
 	status_label = Label.new()
-	status_label.text = "Drop .glb files into assets/3d_imports/ and they will appear above."
+	status_label.text = "Select a source mode: 3D Capture or 2D Import."
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	status_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	status_label.add_theme_font_size_override("font_size", FONT_HINT)
@@ -388,8 +411,26 @@ func _build_ui() -> void:
 #===============================================================================
 
 func _build_step1(parent: VBoxContainer) -> void:
+	# --- Source mode toggle ---
+	var mode_sec := _make_section("Source")
+	parent.add_child(mode_sec[0])
+	var mode_content: VBoxContainer = mode_sec[1]
+
+	var mode_group := _make_toggle_group([
+		{"label": "3D Capture", "key": "3d"},
+		{"label": "2D Import", "key": "2d"},
+	], func(key: String) -> void:
+		_on_source_mode_changed(key)
+	)
+	mode_content.add_child(mode_group)
+
+	# === 3D MODE CONTAINER ===
+	_step1_3d_container = VBoxContainer.new()
+	_step1_3d_container.add_theme_constant_override("separation", 10)
+	parent.add_child(_step1_3d_container)
+
 	var sec := _make_section("Model & Animation")
-	parent.add_child(sec[0])
+	_step1_3d_container.add_child(sec[0])
 	var content: VBoxContainer = sec[1]
 
 	# Model selector
@@ -411,7 +452,7 @@ func _build_step1(parent: VBoxContainer) -> void:
 	anim_info_label.add_theme_color_override("font_color", C_TEXT_SEC)
 	content.add_child(anim_info_label)
 
-	# Effect ID
+	# Effect ID (3D mode)
 	effect_id_edit = LineEdit.new()
 	effect_id_edit.placeholder_text = "e.g. slash_arc"
 	effect_id_edit.size_flags_horizontal = SIZE_EXPAND_FILL
@@ -425,9 +466,10 @@ func _build_step1(parent: VBoxContainer) -> void:
 	frame_count_spin.step = 1
 	content.add_child(_make_field("Frames per direction", frame_count_spin))
 
-	# Camera settings (collapsible)
+	# Camera settings (collapsible) — stored so we can hide in 2D mode
 	var cam := _make_collapsible("Camera Settings")
-	parent.add_child(cam[0])
+	_step1_camera_container = cam[0]
+	parent.add_child(_step1_camera_container)
 	var cam_content: VBoxContainer = cam[1]
 
 	# Camera elevation
@@ -461,6 +503,82 @@ func _build_step1(parent: VBoxContainer) -> void:
 		_on_preview_direction(angles[key])
 	)
 	cam_content.add_child(_make_field("Preview direction", dir_group))
+
+	# === 2D MODE CONTAINER ===
+	_step1_2d_container = VBoxContainer.new()
+	_step1_2d_container.add_theme_constant_override("separation", 10)
+	_step1_2d_container.visible = false
+	parent.add_child(_step1_2d_container)
+
+	var sec_2d := _make_section("2D Frame Import")
+	_step1_2d_container.add_child(sec_2d[0])
+	var content_2d: VBoxContainer = sec_2d[1]
+
+	content_2d.add_child(_make_small_label("Select a folder containing numbered PNG frames (e.g. S0101.png, S0102.png, ...)."))
+
+	# Folder path + Browse button
+	var folder_hbox := HBoxContainer.new()
+	folder_hbox.add_theme_constant_override("separation", 4)
+	content_2d.add_child(folder_hbox)
+
+	_2d_folder_edit = LineEdit.new()
+	_2d_folder_edit.placeholder_text = "Path to frames folder... (Enter to scan)"
+	_2d_folder_edit.size_flags_horizontal = SIZE_EXPAND_FILL
+	_2d_folder_edit.text_submitted.connect(_on_2d_folder_text_submitted)
+	folder_hbox.add_child(_2d_folder_edit)
+
+	var browse_btn := Button.new()
+	browse_btn.text = "Browse"
+	browse_btn.pressed.connect(_on_2d_browse_pressed)
+	folder_hbox.add_child(browse_btn)
+
+	# Detection info
+	_2d_detection_label = Label.new()
+	_2d_detection_label.text = "No folder selected."
+	_2d_detection_label.add_theme_font_size_override("font_size", FONT_VALUE)
+	_2d_detection_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	_2d_detection_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_2d_detection_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	content_2d.add_child(_2d_detection_label)
+
+	# Effect ID (2D mode)
+	_2d_effect_id_edit = LineEdit.new()
+	_2d_effect_id_edit.placeholder_text = "e.g. slash_arc"
+	_2d_effect_id_edit.size_flags_horizontal = SIZE_EXPAND_FILL
+	content_2d.add_child(_make_field("Effect ID", _2d_effect_id_edit))
+
+	# FPS
+	_2d_fps_spin = SpinBox.new()
+	_2d_fps_spin.min_value = 1
+	_2d_fps_spin.max_value = 60
+	_2d_fps_spin.value = 12
+	_2d_fps_spin.step = 1
+	_2d_fps_spin.value_changed.connect(_on_2d_fps_changed)
+	content_2d.add_child(_make_field("FPS", _2d_fps_spin))
+
+	# Duration label
+	_2d_duration_label = Label.new()
+	_2d_duration_label.text = ""
+	_2d_duration_label.add_theme_font_size_override("font_size", FONT_HINT)
+	_2d_duration_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	content_2d.add_child(_2d_duration_label)
+
+	# First frame preview
+	_2d_preview_rect = TextureRect.new()
+	_2d_preview_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_2d_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_2d_preview_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	_2d_preview_rect.size_flags_horizontal = SIZE_EXPAND_FILL
+	_2d_preview_rect.custom_minimum_size.y = 64
+	content_2d.add_child(_2d_preview_rect)
+
+	# FileDialog for folder selection
+	_2d_folder_dialog = FileDialog.new()
+	_2d_folder_dialog.file_mode = FileDialog.FILE_MODE_OPEN_DIR
+	_2d_folder_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	_2d_folder_dialog.title = "Select Frames Folder"
+	_2d_folder_dialog.dir_selected.connect(_on_2d_folder_selected)
+	add_child(_2d_folder_dialog)
 
 
 #===============================================================================
@@ -757,6 +875,12 @@ func _build_step5(parent: VBoxContainer) -> void:
 	done_btn.pressed.connect(_on_done_pressed)
 	content.add_child(done_btn)
 
+	var tools_menu_btn := _make_subtle_button("\u2190 Tools Menu")
+	tools_menu_btn.pressed.connect(func() -> void:
+		get_tree().change_scene_to_file(TOOLS_MENU_PATH)
+	)
+	content.add_child(tools_menu_btn)
+
 
 #===============================================================================
 # WIZARD NAVIGATION
@@ -794,14 +918,20 @@ func _go_to_step(step: int) -> void:
 		accent_hover.set_content_margin_all(10)
 		next_button.add_theme_stylebox_override("hover", accent_hover)
 	# Update step indicator
-	var step_names := ["Model & Animation", "Capture Preview", "Pixel Art Processing",
+	var step_names_3d := ["Model & Animation", "Capture Preview", "Pixel Art Processing",
 		"Frame Editor", "Export"]
+	var step_names_2d := ["2D Import", "", "Pixel Art Processing",
+		"Frame Editor", "Export"]
+	var step_names := step_names_2d if _source_mode == "2d" else step_names_3d
 	step_indicator_label.text = "Step %d of 5: %s" % [step + 1, step_names[step]]
 	if step_indicator:
 		step_indicator.set_step(step)
-	# Update preview visibility
+	# Update preview visibility — hide 3D viewport in 2D mode
 	var viewport_area := preview_container.get_parent()  # AspectRatioContainer
-	viewport_area.visible = (step <= 1)
+	if _source_mode == "2d":
+		viewport_area.visible = false
+	else:
+		viewport_area.visible = (step <= 1)
 	pixel_preview_rect.get_parent().visible = (step == 2)
 	if _frame_editor_container:
 		_frame_editor_container.visible = (step == 3)
@@ -815,7 +945,7 @@ func _go_to_step(step: int) -> void:
 	# Trigger step-specific logic
 	match step:
 		0:
-			next_button.disabled = (current_anim_player == null)
+			_update_next_button_state()
 		1:
 			next_button.disabled = _captured_sheets.is_empty()
 		2:
@@ -828,11 +958,22 @@ func _go_to_step(step: int) -> void:
 
 
 func _on_next_pressed() -> void:
+	if _current_step == 0 and _source_mode == "2d":
+		# 2D mode: load frames, skip capture step, jump to processing
+		_load_2d_frames()
+		if _captured_sheets.is_empty():
+			return  # Loading failed
+		_go_to_step(2)
+		return
 	if _current_step < 4:
 		_go_to_step(_current_step + 1)
 
 
 func _on_back_pressed() -> void:
+	if _current_step == 2 and _source_mode == "2d":
+		# 2D mode: skip back over capture step to step 0
+		_go_to_step(0)
+		return
 	if _current_step > 0:
 		_go_to_step(_current_step - 1)
 
@@ -1010,6 +1151,216 @@ func _on_animation_selected(index: int) -> void:
 	var model_base := current_model_path.get_file().get_basename().to_lower().replace(" ", "_")
 	var anim_safe := anim_name.replace(" ", "_").replace("/", "_").to_lower()
 	effect_id_edit.text = "%s_%s" % [model_base, anim_safe]
+
+
+#===============================================================================
+# 2D IMPORT MODE
+#===============================================================================
+
+func _on_source_mode_changed(mode: String) -> void:
+	_source_mode = mode
+	_captured_sheets.clear()
+	var is_2d := (mode == "2d")
+	if _step1_3d_container:
+		_step1_3d_container.visible = not is_2d
+	if _step1_camera_container:
+		_step1_camera_container.visible = not is_2d
+	if _step1_2d_container:
+		_step1_2d_container.visible = is_2d
+	# Show/hide the 3D viewport preview
+	var viewport_area := preview_container.get_parent()  # AspectRatioContainer
+	if _current_step == 0:
+		viewport_area.visible = not is_2d
+	# Update step indicator names
+	if step_indicator:
+		if is_2d:
+			step_indicator.step_names = PackedStringArray([
+				"2D Import", "", "Pixel Art Processing",
+				"Frame Editor", "Export"
+			])
+		else:
+			step_indicator.step_names = PackedStringArray([
+				"Model & Animation", "Capture Preview", "Pixel Art Processing",
+				"Frame Editor", "Export"
+			])
+		step_indicator.queue_redraw()
+	# Update Next button state
+	_update_next_button_state()
+	# Update status hint
+	if is_2d:
+		_set_status("Select a folder with numbered PNG frames.")
+	else:
+		_set_status("Select a 3D model and animation.")
+
+
+func _update_next_button_state() -> void:
+	if _source_mode == "2d":
+		next_button.disabled = _2d_detected_frames.is_empty()
+	else:
+		next_button.disabled = (current_anim_player == null)
+
+
+func _on_2d_browse_pressed() -> void:
+	if _2d_folder_dialog:
+		_2d_folder_dialog.popup_centered(Vector2i(800, 600))
+
+
+func _on_2d_folder_selected(path: String) -> void:
+	_2d_folder_edit.text = path
+	_scan_2d_folder(path)
+
+
+func _on_2d_folder_text_submitted(text: String) -> void:
+	if text.strip_edges().is_empty():
+		_2d_detected_frames.clear()
+		_2d_detected_size = Vector2i.ZERO
+		_2d_detection_label.text = "No folder selected."
+		_2d_detection_label.add_theme_color_override("font_color", C_TEXT_SEC)
+		_2d_preview_rect.texture = null
+		_update_next_button_state()
+		return
+	_scan_2d_folder(text.strip_edges())
+
+
+func _on_2d_fps_changed(_value: float) -> void:
+	_update_2d_duration_label()
+
+
+func _update_2d_duration_label() -> void:
+	if _2d_detected_frames.is_empty():
+		_2d_duration_label.text = ""
+		return
+	var fps := _2d_fps_spin.value if _2d_fps_spin else 12.0
+	if fps <= 0.0:
+		fps = 12.0
+	var duration_ms := int((float(_2d_detected_frames.size()) / fps) * 1000.0)
+	_2d_duration_label.text = "Duration: %dms  (%.2fs)" % [duration_ms, duration_ms / 1000.0]
+
+
+func _scan_2d_folder(folder_path: String) -> void:
+	_2d_detected_frames.clear()
+	_2d_detected_size = Vector2i.ZERO
+
+	var dir := DirAccess.open(folder_path)
+	if dir == null:
+		_2d_detection_label.text = "Could not open folder."
+		_2d_detection_label.add_theme_color_override("font_color", C_WARNING)
+		_2d_preview_rect.texture = null
+		_update_next_button_state()
+		return
+
+	# Collect all PNG files (exclude GIFs)
+	var pngs: PackedStringArray = []
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if not dir.current_is_dir() and file_name.to_lower().ends_with(".png"):
+			pngs.append(file_name)
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+	if pngs.is_empty():
+		_2d_detection_label.text = "No PNG files found in folder."
+		_2d_detection_label.add_theme_color_override("font_color", C_WARNING)
+		_2d_preview_rect.texture = null
+		_update_next_button_state()
+		return
+
+	# Sort alphabetically to get frames in order
+	pngs.sort()
+	_2d_detected_frames = pngs
+
+	# Load first frame to get dimensions
+	var first_path := "%s/%s" % [folder_path, pngs[0]]
+	var first_img := Image.new()
+	var err := first_img.load(first_path)
+	if err != OK:
+		_2d_detection_label.text = "Error loading %s" % pngs[0]
+		_2d_detection_label.add_theme_color_override("font_color", C_WARNING)
+		_2d_preview_rect.texture = null
+		_update_next_button_state()
+		return
+
+	_2d_detected_size = Vector2i(first_img.get_width(), first_img.get_height())
+	_2d_detection_label.text = "Found %d frames, %dx%d pixels" % [
+		pngs.size(), _2d_detected_size.x, _2d_detected_size.y]
+	_2d_detection_label.add_theme_color_override("font_color", C_SUCCESS)
+
+	# Auto-populate effect ID from folder name
+	var folder_name := folder_path.get_file()
+	if folder_name.is_empty():
+		folder_name = folder_path.trim_suffix("/").get_file()
+	_2d_effect_id_edit.text = folder_name.to_lower().replace(" ", "_").replace("-", "_")
+
+	# Show first frame as preview
+	_2d_preview_rect.texture = ImageTexture.create_from_image(first_img)
+
+	_update_2d_duration_label()
+	_update_next_button_state()
+
+
+func _load_2d_frames() -> void:
+	var folder_path: String = _2d_folder_edit.text.strip_edges()
+	if _2d_detected_frames.is_empty():
+		_set_status("ERROR: No frames detected. Scan a folder first.")
+		return
+
+	_set_status("Loading %d frames..." % _2d_detected_frames.size())
+	_captured_sheets.clear()
+
+	# Load all frames and find max dimensions
+	var frames: Array[Image] = []
+	var max_w := 0
+	var max_h := 0
+
+	for file_name in _2d_detected_frames:
+		var path := "%s/%s" % [folder_path, file_name]
+		var img := Image.new()
+		var err := img.load(path)
+		if err != OK:
+			_set_status("ERROR: Failed to load %s" % file_name)
+			return
+		img.convert(Image.FORMAT_RGBA8)
+		if img.get_width() > max_w:
+			max_w = img.get_width()
+		if img.get_height() > max_h:
+			max_h = img.get_height()
+		frames.append(img)
+
+	# Determine square frame size (max dimension)
+	var frame_size := maxi(max_w, max_h)
+	if frame_size <= 0:
+		_set_status("ERROR: Invalid frame dimensions.")
+		return
+
+	# Stitch into horizontal spritesheet, centering each frame
+	var sheet_width := frame_size * frames.size()
+	var sheet := Image.create(sheet_width, frame_size, false, Image.FORMAT_RGBA8)
+	sheet.fill(Color.TRANSPARENT)
+
+	for i in range(frames.size()):
+		var img: Image = frames[i]
+		# Center the frame within the square cell
+		var offset_x := (frame_size - img.get_width()) / 2
+		var offset_y := (frame_size - img.get_height()) / 2
+		sheet.blit_rect(img, Rect2i(0, 0, img.get_width(), img.get_height()),
+			Vector2i(i * frame_size + offset_x, offset_y))
+
+	# Store the same sheet for all 3 directions (2D effects are non-directional)
+	_captured_sheets["down"] = sheet
+	_captured_sheets["up"] = sheet.duplicate()
+	_captured_sheets["right"] = sheet.duplicate()
+	_capture_frame_count = frames.size()
+
+	# Copy effect ID from 2D field to the shared field
+	effect_id_edit.text = _2d_effect_id_edit.text
+
+	# Set the frame editor FPS from the 2D FPS control
+	if _frame_editor_fps_spin and _2d_fps_spin:
+		_frame_editor_fps_spin.value = _2d_fps_spin.value
+
+	_set_status("Loaded %d frames (%dx%d) into spritesheet." % [
+		frames.size(), frame_size, frame_size])
 
 
 #===============================================================================
@@ -1528,14 +1879,32 @@ func _append_log(text: String) -> void:
 
 func _on_run_again_pressed() -> void:
 	_captured_sheets.clear()
+	_clear_2d_state()
 	_go_to_step(0)
 
 
 func _on_done_pressed() -> void:
 	_captured_sheets.clear()
 	_clear_model()
+	_clear_2d_state()
 	_go_to_step(0)
 	_scan_models()
+
+
+func _clear_2d_state() -> void:
+	_2d_detected_frames.clear()
+	_2d_detected_size = Vector2i.ZERO
+	if _2d_detection_label:
+		_2d_detection_label.text = "No folder selected."
+		_2d_detection_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	if _2d_folder_edit:
+		_2d_folder_edit.text = ""
+	if _2d_preview_rect:
+		_2d_preview_rect.texture = null
+	if _2d_duration_label:
+		_2d_duration_label.text = ""
+	if _2d_effect_id_edit:
+		_2d_effect_id_edit.text = ""
 
 
 #===============================================================================

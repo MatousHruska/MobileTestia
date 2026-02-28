@@ -24,6 +24,7 @@ const CAPTURES_DIR := "res://assets/sprites/captures"
 const OUTPUT_BASE := "res://assets/sprites/final"
 const PALETTE_DIR := "res://assets/palettes"
 const PRESETS_DIR := "res://assets/sprites/presets"
+const TOOLS_MENU_PATH := "res://scenes/tools/tools_menu.tscn"
 
 const SPRITEFRAMES_PATH := "res://resources/player_sprites.tres"
 const FRAME_SIZE := 64
@@ -1508,6 +1509,12 @@ func _build_step_apply(parent: VBoxContainer) -> void:
 	done_btn.pressed.connect(_on_done_pressed)
 	content.add_child(done_btn)
 
+	var tools_menu_btn := _make_subtle_button("\u2190 Tools Menu")
+	tools_menu_btn.pressed.connect(func() -> void:
+		get_tree().change_scene_to_file(TOOLS_MENU_PATH)
+	)
+	content.add_child(tools_menu_btn)
+
 
 #===============================================================================
 # WIZARD NAVIGATION
@@ -2896,12 +2903,17 @@ func _apply_to_spriteframes() -> void:
 			if FileAccess.file_exists(shadow_abs_path):
 				shadow_image = Image.load_from_file(shadow_abs_path)
 
-			# Build texture: CanvasTexture if normal exists, plain ImageTexture otherwise
-			var sheet_texture := ImageTexture.create_from_image(sheet_image)
+			# Build texture: use load() for external PNG references (stores path, not pixels)
+			var sheet_texture: Texture2D = load(sheet_path)
+			if sheet_texture == null:
+				push_warning("Sheet not yet imported, using inline: %s" % sheet_path)
+				sheet_texture = ImageTexture.create_from_image(sheet_image)
 			var atlas_source: Texture2D
 
 			if normal_image:
-				var normal_texture := ImageTexture.create_from_image(normal_image)
+				var normal_texture: Texture2D = load(normal_path)
+				if normal_texture == null:
+					normal_texture = ImageTexture.create_from_image(normal_image)
 				var canvas_tex := CanvasTexture.new()
 				canvas_tex.diffuse_texture = sheet_texture
 				canvas_tex.normal_texture = normal_texture
@@ -2927,7 +2939,9 @@ func _apply_to_spriteframes() -> void:
 				frames.set_animation_speed(shadow_anim_name, fps)
 				frames.set_animation_loop(shadow_anim_name, loop)
 
-				var shadow_texture := ImageTexture.create_from_image(shadow_image)
+				var shadow_texture: Texture2D = load(shadow_path)
+				if shadow_texture == null:
+					shadow_texture = ImageTexture.create_from_image(shadow_image)
 				for i in range(frame_count):
 					var atlas_tex := AtlasTexture.new()
 					atlas_tex.atlas = shadow_texture

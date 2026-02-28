@@ -1,0 +1,130 @@
+[gd_resource type="Resource" script_class="AbilityVisualData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/ability_visual_phase.gd" id="1_3rybu"]
+[ext_resource type="Script" path="res://scripts/combat/ability_visual_data.gd" id="2_tybk8"]
+
+[sub_resource type="Resource" id="Resource_dbvrg"]
+script = ExtResource("1_3rybu")
+type = 5
+
+[sub_resource type="Resource" id="Resource_oic43"]
+script = ExtResource("1_3rybu")
+duration = 1.136
+anim_name = "hiltbash"
+override_key = "composed_body"
+context_data = {
+"effect_data": [{
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 17,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 18,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 19,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 20,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 21,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 22,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 23,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 24,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 25,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 26,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 27,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 28,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}, {
+"anchor": "center",
+"effect_id": "s0111",
+"frame_index": 29,
+"offset": Vector2(0, 22),
+"rotation_deg": 180.0,
+"z_index": 2
+}],
+"frame_start_index": 0,
+"frame_timings": [32, 32, 32, 32, 32, 32, 32, 64, 64, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 64, 64, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32]
+}
+
+[sub_resource type="Resource" id="Resource_xhjkb"]
+script = ExtResource("1_3rybu")
+type = 2
+
+[sub_resource type="Resource" id="Resource_o27b2"]
+script = ExtResource("1_3rybu")
+type = 5
+weapon_visible = false
+
+[sub_resource type="Resource" id="Resource_347lp"]
+script = ExtResource("1_3rybu")
+anim_name = "idle"
+override_key = "recovery"
+
+[resource]
+script = ExtResource("2_tybk8")
+template_id = "mixamo_com_hiltbash"
+display_name = "mixamo_com HiltBash"
+phases = Array[ExtResource("1_3rybu")]([SubResource("Resource_dbvrg"), SubResource("Resource_oic43"), SubResource("Resource_xhjkb"), SubResource("Resource_o27b2"), SubResource("Resource_347lp")])

@@ -42,6 +42,9 @@ var verbose_chunks: bool = false  # Chunk loading details
 var verbose_spawn: bool = false  # Spawn point details
 var verbose_saveload: bool = false  # SAVELOAD debug prints
 
+## Debug visualization flags
+var show_hitboxes: bool = true  # Show attack hitbox circles on enemy attacks
+
 ## Performance timers
 var _perf_timers: Dictionary = {}
 

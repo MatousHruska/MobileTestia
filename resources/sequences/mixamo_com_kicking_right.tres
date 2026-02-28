@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="AbilityVisualData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/ability_visual_phase.gd" id="1_bstfl"]
+[ext_resource type="Script" path="res://scripts/combat/ability_visual_data.gd" id="2_ulp3q"]
+
+[sub_resource type="Resource" id="Resource_bstfl"]
+script = ExtResource("1_bstfl")
+type = 5
+
+[sub_resource type="Resource" id="Resource_ulp3q"]
+script = ExtResource("1_bstfl")
+duration = 1.48
+anim_name = "kicking"
+concurrent = true
+override_key = "composed_body"
+context_data = {
+"damage_frame": 26,
+"frame_start_index": 0,
+"frame_timings": [24, 24, 24, 24, 24, 64, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 64, 64, 64, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24]
+}
+
+[sub_resource type="Resource" id="Resource_rqqau"]
+script = ExtResource("1_bstfl")
+type = 1
+duration = 0.16
+move_distance = 10.0
+
+[sub_resource type="Resource" id="Resource_pj5f7"]
+script = ExtResource("1_bstfl")
+type = 5
+weapon_visible = false
+
+[sub_resource type="Resource" id="Resource_ujul8"]
+script = ExtResource("1_bstfl")
+anim_name = "idle"
+override_key = "recovery"
+
+[resource]
+script = ExtResource("2_ulp3q")
+template_id = "mixamo_com_kicking"
+display_name = "mixamo_com Kicking"
+phases = Array[ExtResource("1_bstfl")]([SubResource("Resource_bstfl"), SubResource("Resource_ulp3q"), SubResource("Resource_rqqau"), SubResource("Resource_pj5f7"), SubResource("Resource_ujul8")])

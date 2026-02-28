@@ -1696,7 +1696,7 @@ func _get_damage_type_for_effect(effect_type: String) -> String:
 
 func _show_debug_hitbox(center: Vector2, radius: float, color: Color, duration: float = 0.3) -> void:
 	"""Show a debug circle for attack range visualization"""
-	if not OS.is_debug_build():
+	if not OS.is_debug_build() or not Debug.show_hitboxes:
 		return
 
 	var debug_circle = _create_debug_circle(radius, color)
@@ -1711,7 +1711,7 @@ func _show_debug_hitbox(center: Vector2, radius: float, color: Color, duration: 
 
 func _show_debug_line(start: Vector2, end: Vector2, color: Color, duration: float = 0.3) -> void:
 	"""Show a debug line for dash/projectile path visualization"""
-	if not OS.is_debug_build():
+	if not OS.is_debug_build() or not Debug.show_hitboxes:
 		return
 
 	var debug_line = _create_debug_line(start, end, color)

@@ -120,6 +120,7 @@ func _build_ui() -> void:
 	_add_toggle_button("quest_overlay", "Quest Debug", _on_toggle_quest_overlay)
 	_add_toggle_button("talent_overlay", "Talent Debug", _on_toggle_talent_overlay)
 	_add_toggle_button("pathfinding_overlay", "Pathfinding", _on_toggle_pathfinding)
+	_add_toggle_button("hitbox_overlay", "Hitboxes", _on_toggle_hitboxes)
 	_end_section()
 
 	# ── SNAPSHOTS section ──
@@ -355,6 +356,9 @@ func _refresh_toggle_states() -> void:
 	else:
 		_set_toggle_state("pathfinding_overlay", false)
 
+	# Hitboxes
+	_set_toggle_state("hitbox_overlay", Debug.show_hitboxes)
+
 	# Verbose modes
 	_set_toggle_state("verbose_all", Debug.verbose_npc or Debug.verbose_chunks or Debug.verbose_spawn)
 	_set_toggle_state("verbose_npc", Debug.verbose_npc)
@@ -393,6 +397,12 @@ func _on_toggle_pathfinding() -> void:
 		var new_state: bool = not pathfinding_service.is_debug_enabled()
 		pathfinding_service.set_debug_enabled(new_state)
 		Debug.info("Debug", "Pathfinding debug: %s" % ("ON" if new_state else "OFF"))
+	_refresh_toggle_states()
+
+
+func _on_toggle_hitboxes() -> void:
+	Debug.show_hitboxes = not Debug.show_hitboxes
+	Debug.info("Debug", "Hitbox overlay: %s" % ("ON" if Debug.show_hitboxes else "OFF"))
 	_refresh_toggle_states()
 
 

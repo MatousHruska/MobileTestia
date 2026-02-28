@@ -22,6 +22,13 @@ extends Resource
 ## Pixel offset from the anchor point
 @export var effect_offset: Vector2 = Vector2.ZERO
 
+## Z-index for the effect sprite in the preview viewport
+## Default 2 = above weapon (z=1), below crosshair overlay (z=3)
+@export var effect_z_index: int = 2
+
+## Rotation of the effect sprite in degrees (0 = no rotation)
+@export var effect_rotation_deg: float = 0.0
+
 ## Whether ghost afterimages are rendered during this frame
 @export var echo_enabled: bool = false
 
@@ -39,3 +46,8 @@ extends Resource
 ## Same dimensions as weapon texture. null = fully opaque (no mask).
 ## FORMAT_R8: 255 = opaque, 0 = fully transparent.
 @export var alpha_mask: Image = null
+
+## Per-frame alpha mask for effect transparency painting.
+## Same dimensions as effect frame (frame_size × frame_size). null = fully opaque.
+## FORMAT_R8: 255 = opaque, 0 = fully transparent.
+@export var effect_alpha_mask: Image = null

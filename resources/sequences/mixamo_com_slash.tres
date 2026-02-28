@@ -1,0 +1,175 @@
+[gd_resource type="Resource" script_class="AbilityVisualData" format=3]
+
+[ext_resource type="Script" path="res://scripts/combat/ability_visual_phase.gd" id="1_u2w5w"]
+[ext_resource type="Script" path="res://scripts/combat/ability_visual_data.gd" id="2_wui2j"]
+
+[sub_resource type="Resource" id="Resource_u2w5w"]
+script = ExtResource("1_u2w5w")
+type = 5
+
+[sub_resource type="Resource" id="Resource_wui2j"]
+script = ExtResource("1_u2w5w")
+duration = 1.088
+anim_name = "slash"
+override_key = "composed_body"
+context_data = {
+"effect_data": [{
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 16,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 17,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 18,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 19,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 20,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 21,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 22,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 23,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 24,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 25,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 26,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 27,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 28,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 29,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 30,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 31,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 32,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 33,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 34,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}, {
+"anchor": "weapon_tip",
+"effect_id": "s0111",
+"frame_index": 35,
+"offset": Vector2(50, 0),
+"rotation_deg": 120.0,
+"z_index": 2
+}],
+"frame_start_index": 0,
+"frame_timings": [16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 64, 64, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16, 64, 64, 64, 64, 16, 16, 16, 16, 16, 16, 16, 16, 16, 16]
+}
+
+[sub_resource type="Resource" id="Resource_w0p5a"]
+script = ExtResource("1_u2w5w")
+type = 5
+weapon_visible = false
+
+[sub_resource type="Resource" id="Resource_cspml"]
+script = ExtResource("1_u2w5w")
+anim_name = "idle"
+override_key = "recovery"
+
+[resource]
+script = ExtResource("2_wui2j")
+template_id = "mixamo_com_slash"
+display_name = "mixamo_com Slash"
+phases = Array[ExtResource("1_u2w5w")]([SubResource("Resource_u2w5w"), SubResource("Resource_wui2j"), SubResource("Resource_w0p5a"), SubResource("Resource_cspml")])
