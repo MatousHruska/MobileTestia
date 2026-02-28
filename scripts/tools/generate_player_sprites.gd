@@ -1312,7 +1312,17 @@ func _draw_ghost(img: Image, direction: String, h_offset: int, v_offset: int) ->
 #===============================================================================
 
 func _generate_sprite_frames_resource() -> void:
-	## Create a SpriteFrames .tres that references the generated PNGs
+	## Create a SpriteFrames .tres that references the generated PNGs.
+	## Uses load() to create ext_resource references instead of embedding
+	## pixel data — keeps the .tres tiny (~50 KB vs 153 MB).
+
+	# Force Godot to detect and import the PNGs we just saved
+	print("  Triggering filesystem scan for PNG import...")
+	EditorInterface.get_resource_filesystem().scan()
+	# Wait for the scan to complete before loading textures
+	while EditorInterface.get_resource_filesystem().is_scanning():
+		await EditorInterface.get_resource_filesystem().filesystem_changed
+
 	var frames := SpriteFrames.new()
 
 	# Remove default animation if it exists
@@ -1329,15 +1339,13 @@ func _generate_sprite_frames_resource() -> void:
 		frames.set_animation_speed(anim_name, fps)
 		frames.set_animation_loop(anim_name, is_loop)
 
-		# Load the spritesheet and extract individual frames
+		# Reference the spritesheet PNG via load() — creates ext_resource path
 		var sheet_path := "%s/%s.png" % [SPRITE_DIR, anim_name]
-		var sheet_image := Image.load_from_file(ProjectSettings.globalize_path(sheet_path))
-		if sheet_image == null:
-			push_error("Failed to load spritesheet: %s" % sheet_path)
+		var sheet_texture: Texture2D = load(sheet_path)
+		if sheet_texture == null:
+			push_error("Failed to load spritesheet (not imported?): %s" % sheet_path)
 			continue
 
-		# Use AtlasTexture to reference frame regions from a shared sheet texture
-		var sheet_texture := ImageTexture.create_from_image(sheet_image)
 		for i in range(frame_count):
 			var atlas_tex := AtlasTexture.new()
 			atlas_tex.atlas = sheet_texture

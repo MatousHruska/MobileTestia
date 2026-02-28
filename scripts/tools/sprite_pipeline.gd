@@ -2903,17 +2903,23 @@ func _apply_to_spriteframes() -> void:
 			if FileAccess.file_exists(shadow_abs_path):
 				shadow_image = Image.load_from_file(shadow_abs_path)
 
-			# Build texture: use load() for external PNG references (stores path, not pixels)
+			# Use load() for external PNG references — stores a path (~50 bytes) instead
+			# of embedding raw pixel data as PackedByteArray (~5 MB per sheet).
+			# Critical for mobile: keeps .tres tiny and lets textures go through
+			# the import pipeline (ETC2/ASTC compression).
 			var sheet_texture: Texture2D = load(sheet_path)
 			if sheet_texture == null:
-				push_warning("Sheet not yet imported, using inline: %s" % sheet_path)
-				sheet_texture = ImageTexture.create_from_image(sheet_image)
+				_append_apply_log("  ERROR: PNG not yet imported by Godot: %s" % sheet_path)
+				_append_apply_log("         Close the running scene, wait for Godot to reimport, then retry.")
+				continue
 			var atlas_source: Texture2D
 
 			if normal_image:
 				var normal_texture: Texture2D = load(normal_path)
 				if normal_texture == null:
-					normal_texture = ImageTexture.create_from_image(normal_image)
+					_append_apply_log("  ERROR: Normal map not yet imported: %s" % normal_path)
+					_append_apply_log("         Close the running scene, wait for Godot to reimport, then retry.")
+					continue
 				var canvas_tex := CanvasTexture.new()
 				canvas_tex.diffuse_texture = sheet_texture
 				canvas_tex.normal_texture = normal_texture
@@ -2941,7 +2947,8 @@ func _apply_to_spriteframes() -> void:
 
 				var shadow_texture: Texture2D = load(shadow_path)
 				if shadow_texture == null:
-					shadow_texture = ImageTexture.create_from_image(shadow_image)
+					_append_apply_log("  ERROR: Shadow map not yet imported: %s" % shadow_path)
+					continue
 				for i in range(frame_count):
 					var atlas_tex := AtlasTexture.new()
 					atlas_tex.atlas = shadow_texture

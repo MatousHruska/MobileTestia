@@ -135,12 +135,19 @@ func _run() -> void:
 			if FileAccess.file_exists(shadow_abs_path):
 				shadow_image = Image.load_from_file(shadow_abs_path)
 
-			# Build texture: CanvasTexture if normal exists, plain ImageTexture otherwise
-			var sheet_texture := ImageTexture.create_from_image(sheet_image)
+			# Use load() for external PNG references — stores a path (~50 bytes)
+			# instead of embedding raw pixel data (~5 MB per sheet).
+			var sheet_texture: Texture2D = load(sheet_path)
+			if sheet_texture == null:
+				push_error("Sheet not yet imported by Godot: %s" % sheet_path)
+				continue
 			var atlas_source: Texture2D
 
 			if normal_image:
-				var normal_texture := ImageTexture.create_from_image(normal_image)
+				var normal_texture: Texture2D = load(normal_path)
+				if normal_texture == null:
+					push_error("Normal map not yet imported: %s" % normal_path)
+					continue
 				var canvas_tex := CanvasTexture.new()
 				canvas_tex.diffuse_texture = sheet_texture
 				canvas_tex.normal_texture = normal_texture
@@ -166,7 +173,10 @@ func _run() -> void:
 				frames.set_animation_speed(shadow_anim_name, fps)
 				frames.set_animation_loop(shadow_anim_name, loop)
 
-				var shadow_texture := ImageTexture.create_from_image(shadow_image)
+				var shadow_texture: Texture2D = load(shadow_path)
+				if shadow_texture == null:
+					push_error("Shadow map not yet imported: %s" % shadow_path)
+					continue
 				for i in range(frame_count):
 					var atlas_tex := AtlasTexture.new()
 					atlas_tex.atlas = shadow_texture

@@ -274,6 +274,12 @@ func _draw_dummy_side(img: Image, frame_idx: int) -> void:
 #===============================================================================
 
 func _generate_sprite_frames_resource() -> void:
+	# Force Godot to detect and import the PNGs we just saved
+	print("  Triggering filesystem scan for PNG import...")
+	EditorInterface.get_resource_filesystem().scan()
+	while EditorInterface.get_resource_filesystem().is_scanning():
+		await EditorInterface.get_resource_filesystem().filesystem_changed
+
 	var frames := SpriteFrames.new()
 
 	if frames.has_animation("default"):
@@ -289,21 +295,18 @@ func _generate_sprite_frames_resource() -> void:
 		frames.set_animation_speed(anim_name, fps)
 		frames.set_animation_loop(anim_name, is_loop)
 
+		# Reference the spritesheet PNG via load() — creates ext_resource path
 		var sheet_path := "%s/%s.png" % [SPRITE_DIR, anim_name]
-		var sheet_image := Image.load_from_file(ProjectSettings.globalize_path(sheet_path))
-		if sheet_image == null:
-			push_error("Failed to load spritesheet: %s" % sheet_path)
+		var sheet_texture: Texture2D = load(sheet_path)
+		if sheet_texture == null:
+			push_error("Failed to load spritesheet (not imported?): %s" % sheet_path)
 			continue
 
 		for i in range(frame_count):
-			var frame_image := Image.create(SPRITE_SIZE, SPRITE_SIZE, false, Image.FORMAT_RGBA8)
-			frame_image.blit_rect(
-				sheet_image,
-				Rect2i(i * SPRITE_SIZE, 0, SPRITE_SIZE, SPRITE_SIZE),
-				Vector2i.ZERO
-			)
-			var texture := ImageTexture.create_from_image(frame_image)
-			frames.add_frame(anim_name, texture)
+			var atlas_tex := AtlasTexture.new()
+			atlas_tex.atlas = sheet_texture
+			atlas_tex.region = Rect2(i * SPRITE_SIZE, 0, SPRITE_SIZE, SPRITE_SIZE)
+			frames.add_frame(anim_name, atlas_tex)
 
 	var err := ResourceSaver.save(frames, SPRITEFRAMES_PATH)
 	if err != OK:

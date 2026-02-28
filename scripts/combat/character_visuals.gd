@@ -57,6 +57,11 @@ var _weapon_z_override: int = 0
 var _weapon_alpha_masks: Dictionary = {}   # frame_index → Image
 var _weapon_alpha_cache: Dictionary = {}   # frame_index → ImageTexture (pre-composited)
 
+## Cached weapon anchor positions per (animation, frame_index) pair.
+## Avoids GPU→CPU readback + full-frame pixel scan every frame.
+## Cleared when sprite_frames resource changes.
+var _anchor_cache: Dictionary = {}   # "anim:frame" → Dictionary
+
 #===============================================================================
 # WEAPON ANCHOR
 #===============================================================================
@@ -521,36 +526,56 @@ func _find_weapon_anchors() -> Dictionary:
 	if not body_sprite.sprite_frames.has_animation(current_anim):
 		return {}
 
+	# Check cache first — avoids GPU→CPU readback + pixel scan every frame.
+	# Cache stores raw (unflipped) pixel coords; flipping is applied after lookup.
+	var cache_key := "%s:%d" % [current_anim, current_frame_idx]
+	var cached: Dictionary = _anchor_cache.get(cache_key, {})
+	if not cached.is_empty() or _anchor_cache.has(cache_key):
+		# Apply flip to cached raw positions
+		var flipped_result := {}
+		for key in cached:
+			var pos: Vector2 = cached[key]
+			if is_flipped:
+				pos.x = -pos.x
+			flipped_result[key] = pos
+		return flipped_result
+
 	var tex := body_sprite.sprite_frames.get_frame_texture(current_anim, current_frame_idx)
 	if tex == null:
+		_anchor_cache[cache_key] = {}
 		return {}
 
 	var img := tex.get_image()
 	if img == null:
+		_anchor_cache[cache_key] = {}
 		return {}
 
-	var result := {}
+	# Scan pixels for anchor markers — store RAW (unflipped) positions in cache.
+	var raw_result := {}
 	var half_w := img.get_width() / 2.0
 	var half_h := img.get_height() / 2.0
 
 	for y in range(img.get_height()):
 		for x in range(img.get_width()):
 			var pixel := img.get_pixel(x, y)
-			if pixel.is_equal_approx(WEAPON_ANCHOR_COLOR) and not result.has("grip"):
-				var local_x: float = x - half_w
-				var local_y: float = y - half_h
-				if is_flipped:
-					local_x = -local_x
-				result["grip"] = Vector2(local_x, local_y)
-			elif pixel.is_equal_approx(WEAPON_DIRECTION_COLOR) and not result.has("direction"):
-				var local_x: float = x - half_w
-				var local_y: float = y - half_h
-				if is_flipped:
-					local_x = -local_x
-				result["direction"] = Vector2(local_x, local_y)
-			if result.size() == 2:
-				return result
+			if pixel.is_equal_approx(WEAPON_ANCHOR_COLOR) and not raw_result.has("grip"):
+				raw_result["grip"] = Vector2(x - half_w, y - half_h)
+			elif pixel.is_equal_approx(WEAPON_DIRECTION_COLOR) and not raw_result.has("direction"):
+				raw_result["direction"] = Vector2(x - half_w, y - half_h)
+			if raw_result.size() == 2:
+				break
+		if raw_result.size() == 2:
+			break
 
+	_anchor_cache[cache_key] = raw_result
+
+	# Return flipped copy for this call
+	var result := {}
+	for key in raw_result:
+		var pos: Vector2 = raw_result[key]
+		if is_flipped:
+			pos.x = -pos.x
+		result[key] = pos
 	return result
 
 
