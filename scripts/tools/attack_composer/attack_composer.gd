@@ -27,6 +27,7 @@ const FONT_VALUE := 12
 const SPRITES_BASE := "res://assets/sprites/final"
 const WEAPONS_DIR := "res://assets/sprites/weapons"
 const EFFECTS_DIR := "res://assets/sprites/effects"
+const TOOLS_MENU_PATH := "res://scenes/tools/tools_menu.tscn"
 
 # ── State ──────────────────────────────────────────────────────────────
 var _current_composition: AttackCompositionData = null
@@ -46,6 +47,10 @@ var _frame_size: Vector2i = Vector2i.ZERO
 var _playing := false
 var _playback_ms := 0.0
 var _playback_speed := 1.0
+
+# ── Effect animation state ────────────────────────────────────────────
+var _effect_anim_ms := 0.0    # Elapsed time within current effect animation
+var _effect_anim_id := ""     # Effect ID that's currently animating (to detect changes)
 
 # ── Anchor painting state ─────────────────────────────────────────────
 var _anchor_draw_enabled: bool = false
@@ -68,6 +73,7 @@ var _status_label: Label
 var _left_scroll_content: VBoxContainer
 var _right_vbox: VBoxContainer
 var _timeline_panel: TimelinePanel
+var _timeline_scrollbar: HScrollBar
 var _model_dropdown: OptionButton
 var _anim_dropdown: OptionButton
 var _load_info_label: Label
@@ -96,6 +102,7 @@ var _movement_distance_spin: SpinBox
 var _movement_start_spin: SpinBox
 var _movement_end_spin: SpinBox
 var _damage_frame_spin: SpinBox
+var _template_id_input: LineEdit
 var _preview_viewport: SubViewport
 var _preview_sprite: Sprite2D
 var _preview_checker: ColorRect
@@ -110,6 +117,10 @@ var _onion_skin_check: CheckButton
 var _onion_skin_container: VBoxContainer
 var _save_spritesheets_btn: Button
 var _crosshair_sprite: Sprite2D
+var _effect_sprite: Sprite2D
+var _effect_cache: Dictionary = {}  # { effect_id: { "texture": Texture2D, "frame_size": int, ... } }
+var _effect_z_index_spin: SpinBox
+var _effect_rotation_spin: SpinBox
 var _onion_weapon_sprite: Sprite2D
 var _viewport_container_ref: SubViewportContainer
 var _anchor_label: Label
@@ -248,6 +259,7 @@ func _push_undo() -> void:
 	var comp_snapshot := AttackCompositionData.new()
 	comp_snapshot.composition_id = _current_composition.composition_id
 	comp_snapshot.display_name = _current_composition.display_name
+	comp_snapshot.runtime_template_id = _current_composition.runtime_template_id
 	comp_snapshot.animation_name = _current_composition.animation_name
 	comp_snapshot.movement_type = _current_composition.movement_type
 	comp_snapshot.movement_distance = _current_composition.movement_distance
@@ -287,6 +299,7 @@ func _undo() -> void:
 	var snapshot: AttackCompositionData = entry["composition"]
 	_current_composition.composition_id = snapshot.composition_id
 	_current_composition.display_name = snapshot.display_name
+	_current_composition.runtime_template_id = snapshot.runtime_template_id
 	_current_composition.animation_name = snapshot.animation_name
 	_current_composition.movement_type = snapshot.movement_type
 	_current_composition.movement_distance = snapshot.movement_distance
@@ -408,6 +421,19 @@ func _build_ui() -> void:
 	sep2.add_theme_stylebox_override("separator", _make_separator_style())
 	left_vbox.add_child(sep2)
 
+	# Tools Menu button
+	var tools_menu_margin := MarginContainer.new()
+	tools_menu_margin.add_theme_constant_override("margin_left", 12)
+	tools_menu_margin.add_theme_constant_override("margin_right", 12)
+	tools_menu_margin.add_theme_constant_override("margin_top", 4)
+	tools_menu_margin.add_theme_constant_override("margin_bottom", 0)
+	left_vbox.add_child(tools_menu_margin)
+
+	var tools_menu_btn := _make_button("\u2190 Tools Menu", func() -> void:
+		get_tree().change_scene_to_file(TOOLS_MENU_PATH)
+	)
+	tools_menu_margin.add_child(tools_menu_btn)
+
 	# Status bar
 	var status_margin := MarginContainer.new()
 	status_margin.add_theme_constant_override("margin_left", 12)
@@ -480,6 +506,13 @@ func _build_ui() -> void:
 	_onion_weapon_sprite.z_index = 1
 	_onion_weapon_sprite.modulate = Color(1, 1, 1, 0.3)
 	_preview_viewport.add_child(_onion_weapon_sprite)
+
+	# Effect sprite — renders the first frame of the assigned effect
+	_effect_sprite = Sprite2D.new()
+	_effect_sprite.centered = true
+	_effect_sprite.visible = false
+	_effect_sprite.z_index = 2
+	_preview_viewport.add_child(_effect_sprite)
 
 	# Crosshair overlay — drawn on top of everything to show anchor positions
 	_crosshair_sprite = Sprite2D.new()
@@ -590,7 +623,18 @@ func _build_ui() -> void:
 	_timeline_panel.frame_duration_changed.connect(_on_timeline_duration_changed)
 	_timeline_panel.playhead_moved.connect(_on_timeline_playhead_moved)
 	_timeline_panel.before_mutation.connect(_push_undo)
+	_timeline_panel.effect_toggled.connect(_on_timeline_effect_toggled)
+	_timeline_panel.effect_moved.connect(_on_timeline_effect_moved)
+	_timeline_panel.scroll_changed.connect(_on_timeline_scroll_changed)
 	timeline_container.add_child(_timeline_panel)
+
+	_timeline_scrollbar = HScrollBar.new()
+	_timeline_scrollbar.custom_minimum_size.y = 16
+	_timeline_scrollbar.min_value = 0
+	_timeline_scrollbar.max_value = 1000
+	_timeline_scrollbar.page = 500
+	_timeline_scrollbar.value_changed.connect(_on_timeline_scrollbar_changed)
+	_right_vbox.add_child(_timeline_scrollbar)
 
 
 # ── Helpers ────────────────────────────────────────────────────────────
@@ -775,6 +819,7 @@ func _process(delta: float) -> void:
 	if _playback_ms >= total:
 		_playback_ms = fmod(_playback_ms, total)  # Loop
 	_update_playhead()
+	_advance_effect_animation(delta)
 
 
 func _update_playhead() -> void:
@@ -802,14 +847,63 @@ func _update_playhead() -> void:
 	]
 
 
+func _advance_effect_animation(delta: float) -> void:
+	if _current_composition == null or _preview_frame_index < 0:
+		return
+	if _preview_frame_index >= _current_composition.frames.size():
+		return
+
+	var frame := _current_composition.frames[_preview_frame_index]
+	var eid := frame.effect_id
+
+	# Detect effect change — reset animation timer
+	if eid != _effect_anim_id:
+		_effect_anim_id = eid
+		_effect_anim_ms = 0.0
+
+	if eid.is_empty():
+		return
+
+	# Advance timer
+	_effect_anim_ms += delta * 1000.0 * _playback_speed
+
+	# Look up cached assets for frame count and FPS
+	var assets := _load_effect_assets(eid)
+	if assets.is_empty():
+		return
+
+	var frame_count: int = assets["frame_count"]
+	var fps: float = assets["fps"]
+	var frame_size: int = assets["frame_size"]
+	if frame_count <= 1 or fps <= 0:
+		return
+
+	# Compute which effect frame to show
+	var ms_per_frame := 1000.0 / fps
+	var effect_frame := int(_effect_anim_ms / ms_per_frame)
+	# Clamp to last frame (don't loop the effect — it plays once per trigger)
+	effect_frame = mini(effect_frame, frame_count - 1)
+
+	# Update the atlas region to show the correct frame
+	var atlas: AtlasTexture = assets["texture"]
+	atlas.region = Rect2(effect_frame * frame_size, 0, frame_size, frame_size)
+
+
 func _on_play_toggle() -> void:
 	_playing = not _playing
 	_play_btn.text = "\u23f8" if _playing else "\u25b6"
+	if _playing:
+		_effect_anim_ms = 0.0
+		_effect_anim_id = ""
+	else:
+		_update_effect_preview()  # Reset atlas to frame 0
 
 
 func _on_stop() -> void:
 	_playing = false
 	_playback_ms = 0.0
+	_effect_anim_ms = 0.0
+	_effect_anim_id = ""
 	_play_btn.text = "\u25b6"
 	_preview_frame_index = 0
 	_selected_frame = 0
@@ -1106,6 +1200,26 @@ func _build_effect_subsection() -> void:
 	_effect_offset_y.value_changed.connect(_on_effect_offset_changed)
 	offset_hbox.add_child(_effect_offset_y)
 
+	section.add_child(_make_label("Z Index"))
+	_effect_z_index_spin = SpinBox.new()
+	_effect_z_index_spin.min_value = -5
+	_effect_z_index_spin.max_value = 10
+	_effect_z_index_spin.step = 1
+	_effect_z_index_spin.value = 2
+	_effect_z_index_spin.size_flags_horizontal = SIZE_EXPAND_FILL
+	_effect_z_index_spin.value_changed.connect(_on_effect_z_index_changed)
+	section.add_child(_effect_z_index_spin)
+
+	section.add_child(_make_label("Rotation (°)"))
+	_effect_rotation_spin = SpinBox.new()
+	_effect_rotation_spin.min_value = -180
+	_effect_rotation_spin.max_value = 180
+	_effect_rotation_spin.step = 5
+	_effect_rotation_spin.value = 0
+	_effect_rotation_spin.size_flags_horizontal = SIZE_EXPAND_FILL
+	_effect_rotation_spin.value_changed.connect(_on_effect_rotation_changed)
+	section.add_child(_effect_rotation_spin)
+
 
 func _build_echo_subsection() -> void:
 	var parts: Array = _make_collapsible_section("Echo", _frame_section_wrapper)
@@ -1210,6 +1324,15 @@ func _build_seq_and_save_sections() -> void:
 	# ── Save & Export (collapsed by default) ──
 	var save_parts: Array = _make_collapsible_section("Save & Export", _left_scroll_content)
 	var save_section: VBoxContainer = save_parts[1]
+
+	save_section.add_child(_make_label("Template ID (runtime)"))
+	_template_id_input = LineEdit.new()
+	_template_id_input.placeholder_text = "e.g. hilt_bash"
+	_template_id_input.add_theme_font_size_override("font_size", FONT_LABEL)
+	_template_id_input.add_theme_color_override("font_color", C_TEXT)
+	_template_id_input.size_flags_horizontal = SIZE_EXPAND_FILL
+	save_section.add_child(_template_id_input)
+
 	_save_spritesheets_btn = _make_button("Save Spritesheets", _on_save_spritesheets)
 	_save_spritesheets_btn.disabled = true
 	_save_spritesheets_btn.tooltip_text = "Save modified spritesheets (anchors baked into PNGs)"
@@ -1308,18 +1431,15 @@ func _on_load_pressed() -> void:
 
 	for direction in DIRECTIONS:
 		var path := "%s/%s/%s_%s.png" % [SPRITES_BASE, anim_folder, model_name, direction]
-		if not ResourceLoader.exists(path):
+		var abs_path := ProjectSettings.globalize_path(path)
+		if not FileAccess.file_exists(abs_path):
 			_set_status("Missing spritesheet: %s" % path)
 			return
 
-		var tex := load(path) as Texture2D
-		if tex == null:
+		var sheet_image := Image.new()
+		var err := sheet_image.load(abs_path)
+		if err != OK:
 			_set_status("Failed to load: %s" % path)
-			return
-
-		var sheet_image := tex.get_image()
-		if sheet_image == null:
-			_set_status("Failed to get image data from: %s" % path)
 			return
 
 		# Square frames: frame_width = sheet_height
@@ -1410,6 +1530,9 @@ func _update_preview_frame() -> void:
 
 	# Update onion weapon ghost (previous frame's weapon)
 	_update_onion_weapon()
+
+	# Update effect preview
+	_update_effect_preview()
 
 
 func _update_direction_highlight() -> void:
@@ -1527,7 +1650,7 @@ func _update_weapon_preview() -> void:
 					if frame_mask != null and x < frame_mask.get_width() and y < frame_mask.get_height():
 						alpha_mult *= frame_mask.get_pixel(x, y).r
 					if alpha_mult < 0.99:
-						var px := composited.get_pixel(x, y)
+						var px: Color = composited.get_pixel(x, y)
 						px.a *= alpha_mult
 						composited.set_pixel(x, y, px)
 			_weapon_sprite.texture = ImageTexture.create_from_image(composited)
@@ -1667,11 +1790,12 @@ func _reposition_preview_sprite() -> void:
 	else:
 		_preview_sprite.scale = Vector2.ONE
 
-	# Reposition weapon, echo ghosts, crosshair, and onion skin too
+	# Reposition weapon, echo ghosts, crosshair, onion skin, and effect too
 	_update_weapon_preview()
 	_update_echo_preview()
 	_update_crosshair_overlay()
 	_update_onion_weapon()
+	_update_effect_preview()
 
 
 func _on_frame_prev() -> void:
@@ -1731,6 +1855,70 @@ func _on_timeline_frames_selected(indices: Array[int]) -> void:
 	_set_status("%d frames selected." % indices.size())
 
 
+func _on_timeline_effect_toggled(index: int) -> void:
+	if _current_composition == null or index < 0 or index >= _current_composition.frames.size():
+		return
+	_push_undo()
+	var frame := _current_composition.frames[index]
+	if not frame.effect_id.is_empty():
+		# Already has an effect — clear it
+		frame.effect_id = ""
+	else:
+		# No effect — apply the currently selected effect from the dropdown
+		var sel := _effect_dropdown.selected
+		if sel > 0:
+			var text := _effect_dropdown.get_item_text(sel)
+			if text.begins_with("[Asset] "):
+				frame.effect_id = text.substr(8)
+			elif text.begins_with("[Placeholder] "):
+				frame.effect_id = text.substr(14)
+			else:
+				frame.effect_id = text
+	_timeline_panel.queue_redraw()
+	# Refresh preview if toggled frame is the one being viewed
+	if index == _preview_frame_index:
+		_update_effect_preview()
+		_update_frame_props_ui()
+
+
+func _on_timeline_effect_moved(from_index: int, to_index: int) -> void:
+	if _current_composition == null:
+		return
+	if from_index < 0 or from_index >= _current_composition.frames.size():
+		return
+	if to_index < 0 or to_index >= _current_composition.frames.size():
+		return
+	_push_undo()
+	var src := _current_composition.frames[from_index]
+	var dst := _current_composition.frames[to_index]
+	# Move effect data from source to destination
+	dst.effect_id = src.effect_id
+	dst.effect_anchor = src.effect_anchor
+	dst.effect_offset = src.effect_offset
+	dst.effect_z_index = src.effect_z_index
+	dst.effect_rotation_deg = src.effect_rotation_deg
+	# Clear source
+	src.effect_id = ""
+	src.effect_anchor = "weapon_tip"
+	src.effect_offset = Vector2.ZERO
+	src.effect_z_index = 2
+	src.effect_rotation_deg = 0.0
+	_timeline_panel.queue_redraw()
+	if _preview_frame_index == from_index or _preview_frame_index == to_index:
+		_update_effect_preview()
+		_update_frame_props_ui()
+
+
+func _on_timeline_scrollbar_changed(value: float) -> void:
+	_timeline_panel.set_scroll_from_scrollbar(value)
+
+
+func _on_timeline_scroll_changed(offset_ms: float, total_ms: float, visible_ms: float) -> void:
+	_timeline_scrollbar.max_value = maxf(total_ms, visible_ms)
+	_timeline_scrollbar.page = visible_ms
+	_timeline_scrollbar.set_value_no_signal(offset_ms)
+
+
 func _on_timeline_duration_changed(_index: int, _new_ms: int) -> void:
 	# Timeline handles redraw internally; just update status
 	if _current_composition:
@@ -1781,11 +1969,26 @@ func _update_frame_props_ui() -> void:
 	# Effect
 	_effect_offset_x.set_value_no_signal(frame.effect_offset.x)
 	_effect_offset_y.set_value_no_signal(frame.effect_offset.y)
+	_effect_z_index_spin.set_value_no_signal(frame.effect_z_index)
+	_effect_rotation_spin.set_value_no_signal(frame.effect_rotation_deg)
 	# Select effect anchor
 	for i in _effect_anchor_dropdown.item_count:
 		if _effect_anchor_dropdown.get_item_text(i) == frame.effect_anchor:
 			_effect_anchor_dropdown.select(i)
 			break
+	# Sync effect dropdown to current frame's effect_id
+	if frame.effect_id.is_empty():
+		_effect_dropdown.select(0)  # "(none)"
+	else:
+		var found := false
+		for i in _effect_dropdown.item_count:
+			var text := _effect_dropdown.get_item_text(i)
+			if text == "[Asset] " + frame.effect_id or text == "[Placeholder] " + frame.effect_id:
+				_effect_dropdown.select(i)
+				found = true
+				break
+		if not found:
+			_effect_dropdown.select(0)
 
 	# Sequence props
 	var max_idx := _current_composition.frames.size() - 1
@@ -1867,6 +2070,7 @@ func _on_effect_selected(index: int) -> void:
 	for idx in targets:
 		_current_composition.frames[idx].effect_id = effect_id
 	_timeline_panel.queue_redraw()
+	_update_effect_preview()
 
 
 func _on_effect_anchor_selected(index: int) -> void:
@@ -1877,6 +2081,7 @@ func _on_effect_anchor_selected(index: int) -> void:
 	var anchor_text := _effect_anchor_dropdown.get_item_text(index)
 	for idx in targets:
 		_current_composition.frames[idx].effect_anchor = anchor_text
+	_update_effect_preview()
 
 
 func _on_effect_offset_changed(_value: float) -> void:
@@ -1887,6 +2092,27 @@ func _on_effect_offset_changed(_value: float) -> void:
 	var offset := Vector2(_effect_offset_x.value, _effect_offset_y.value)
 	for idx in targets:
 		_current_composition.frames[idx].effect_offset = offset
+	_update_effect_preview()
+
+
+func _on_effect_z_index_changed(value: float) -> void:
+	var targets := _get_target_frames()
+	if _current_composition == null or targets.is_empty():
+		return
+	_push_undo()
+	for idx in targets:
+		_current_composition.frames[idx].effect_z_index = int(value)
+	_update_effect_preview()
+
+
+func _on_effect_rotation_changed(value: float) -> void:
+	var targets := _get_target_frames()
+	if _current_composition == null or targets.is_empty():
+		return
+	_push_undo()
+	for idx in targets:
+		_current_composition.frames[idx].effect_rotation_deg = value
+	_update_effect_preview()
 
 
 func _on_echo_toggled(pressed: bool) -> void:
@@ -1956,11 +2182,13 @@ func _on_generate_runtime() -> void:
 	if _current_composition == null:
 		_set_status("No composition loaded.")
 		return
+	var template_id := _get_runtime_template_id()
 	var data := CompositionConverter.convert(_current_composition)
+	data.template_id = template_id
 	var output := CompositionConverter.phases_to_string(data)
-	print("=== Generated Runtime Data for '%s' ===" % _current_composition.composition_id)
+	print("=== Generated Runtime Data for '%s' (template: %s) ===" % [_current_composition.composition_id, template_id])
 	print(output)
-	_set_status("Generated %d phases. Check output panel." % data.phases.size())
+	_set_status("Generated %d phases for template '%s'. Check output panel." % [data.phases.size(), template_id])
 
 
 func _on_save_composition() -> void:
@@ -1977,13 +2205,28 @@ func _on_save_composition() -> void:
 		_set_status("Error saving composition: %s" % error_string(err))
 
 
+func _get_runtime_template_id() -> String:
+	## Returns the template ID for runtime export.
+	## Uses the Template ID field if set, otherwise falls back to composition_id.
+	var custom_id := _template_id_input.text.strip_edges()
+	if not custom_id.is_empty():
+		# Also persist to composition so it's saved
+		_current_composition.runtime_template_id = custom_id
+		return custom_id
+	if not _current_composition.runtime_template_id.is_empty():
+		return _current_composition.runtime_template_id
+	return _current_composition.composition_id
+
+
 func _on_save_runtime() -> void:
 	if _current_composition == null:
 		_set_status("No composition loaded.")
 		return
 	_ensure_dirs()
+	var template_id := _get_runtime_template_id()
 	var data := CompositionConverter.convert(_current_composition)
-	var path := "%s/%s.tres" % [SEQUENCES_DIR, _current_composition.composition_id]
+	data.template_id = template_id
+	var path := "%s/%s.tres" % [SEQUENCES_DIR, template_id]
 	var err := ResourceSaver.save(data, path)
 	if err == OK:
 		_set_status("Saved runtime data to %s" % path)
@@ -2073,18 +2316,15 @@ func _on_load_composition_pressed() -> void:
 
 	for direction in DIRECTIONS:
 		var sheet_path := "%s/%s/%s_%s.png" % [SPRITES_BASE, anim_folder, model_name, direction]
-		if not ResourceLoader.exists(sheet_path):
+		var abs_sheet_path := ProjectSettings.globalize_path(sheet_path)
+		if not FileAccess.file_exists(abs_sheet_path):
 			_set_status("Missing spritesheet: %s" % sheet_path)
 			return
 
-		var tex := load(sheet_path) as Texture2D
-		if tex == null:
+		var sheet_image := Image.new()
+		var err := sheet_image.load(abs_sheet_path)
+		if err != OK:
 			_set_status("Failed to load: %s" % sheet_path)
-			return
-
-		var sheet_image := tex.get_image()
-		if sheet_image == null:
-			_set_status("Failed to get image data from: %s" % sheet_path)
 			return
 
 		var sheet_w := sheet_image.get_width()
@@ -2131,6 +2371,9 @@ func _on_load_composition_pressed() -> void:
 			_model_dropdown.select(i)
 			break
 
+	# Sync template ID field from saved composition
+	_template_id_input.text = comp.runtime_template_id
+
 	_load_info_label.text = "Loaded: %s (%d frames, %dx%d)" % [anim_folder, frame_count, _frame_size.x, _frame_size.y]
 	_on_spritesheet_loaded()
 	_set_status("Loaded composition '%s' with spritesheets." % composition_id)
@@ -2141,8 +2384,8 @@ func _on_load_composition_pressed() -> void:
 func _on_preview_viewport_input(event: InputEvent) -> void:
 	# Alpha painting mode (handles click + drag)
 	if _alpha_paint_enabled:
-		var is_click := event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
-		var is_drag := event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
+		var is_click: bool = event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
+		var is_drag: bool = event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
 		if is_click or is_drag:
 			var pos: Vector2 = event.position
 			var weapon_px := _viewport_to_weapon_pixel(pos)
@@ -2433,10 +2676,16 @@ func _update_onion_weapon() -> void:
 	_onion_weapon_sprite.scale = _preview_sprite.scale
 	_onion_weapon_sprite.modulate = Color(1, 1, 1, 0.3)
 
-	# Compute rotation from grip → direction pixel (same as _update_weapon_preview)
+	# Compute rotation from grip → direction pixel, subtracting the weapon's
+	# inherent grip→tip angle (same formula as _update_weapon_preview)
+	var weapon_grip: Vector2 = _weapon_set.get("grip_right", Vector2.ZERO)
+	var weapon_tip: Vector2 = _weapon_set.get("tip_right", Vector2.ZERO)
+	var inherent_angle := atan2(weapon_tip.y - weapon_grip.y, weapon_tip.x - weapon_grip.x)
+
 	var direction_px: Vector2 = anchors.get("direction", Vector2.INF)
 	if direction_px != Vector2.INF:
-		_onion_weapon_sprite.rotation = atan2(direction_px.y - grip_px.y, direction_px.x - grip_px.x)
+		var desired_angle := atan2(direction_px.y - grip_px.y, direction_px.x - grip_px.x)
+		_onion_weapon_sprite.rotation = desired_angle - inherent_angle
 	else:
 		_onion_weapon_sprite.rotation = 0.0
 
@@ -2444,8 +2693,7 @@ func _update_onion_weapon() -> void:
 	var anchor_offset := (grip_px - Vector2(_frame_size) / 2.0) * _preview_sprite.scale
 	_onion_weapon_sprite.position = _preview_sprite.position + anchor_offset
 
-	# Offset weapon grip point
-	var weapon_grip: Vector2 = _weapon_set.get("grip_right", Vector2.ZERO)
+	# Offset weapon so grip point sits at the anchor position
 	if weapon_grip != Vector2.ZERO:
 		var tex_size := weapon_tex.get_size()
 		_onion_weapon_sprite.offset = Vector2(tex_size.x / 2.0 - weapon_grip.x, tex_size.y / 2.0 - weapon_grip.y)
@@ -2556,6 +2804,137 @@ func _scan_effect_folders() -> Array[String]:
 				effect_ids.append(folder)
 		folder = dir.get_next()
 	return effect_ids
+
+
+func _load_effect_assets(effect_id: String) -> Dictionary:
+	if _effect_cache.has(effect_id):
+		return _effect_cache[effect_id]
+
+	var dir_path: String = EFFECTS_DIR + "/" + effect_id
+	var meta_path: String = dir_path + "/metadata.json"
+	var meta_file := FileAccess.open(meta_path, FileAccess.READ)
+	if meta_file == null:
+		return {}
+	var meta: Variant = JSON.parse_string(meta_file.get_as_text())
+	meta_file.close()
+	if not meta is Dictionary:
+		return {}
+
+	var frame_count: int = int(meta.get("frame_count", 1))
+	var frame_size: int = int(meta.get("frame_size", 32))
+	var fps: float = float(meta.get("fps", 12.0))
+
+	# Load the directional spritesheet — prefer current preview direction, fall back to "down"
+	var sheet_name: String = "%s_%s.png" % [effect_id, _preview_direction]
+	var sheet_path: String = dir_path + "/" + sheet_name
+	if not FileAccess.file_exists(sheet_path):
+		sheet_name = "%s_down.png" % effect_id
+		sheet_path = dir_path + "/" + sheet_name
+	if not FileAccess.file_exists(sheet_path):
+		return {}
+
+	var sheet_img := Image.load_from_file(ProjectSettings.globalize_path(sheet_path))
+	if sheet_img == null:
+		return {}
+	var sheet_tex := ImageTexture.create_from_image(sheet_img)
+
+	# Build an AtlasTexture for the first frame
+	var atlas := AtlasTexture.new()
+	atlas.atlas = sheet_tex
+	atlas.region = Rect2(0, 0, frame_size, frame_size)
+
+	var result := {
+		"texture": atlas,
+		"sheet_texture": sheet_tex,
+		"frame_count": frame_count,
+		"frame_size": frame_size,
+		"fps": fps,
+		"direction": _preview_direction,
+	}
+	_effect_cache[effect_id] = result
+	return result
+
+
+func _update_effect_preview() -> void:
+	if _current_composition == null or _preview_frame_index < 0:
+		_effect_sprite.visible = false
+		return
+	if _preview_frame_index >= _current_composition.frames.size():
+		_effect_sprite.visible = false
+		return
+
+	var frame := _current_composition.frames[_preview_frame_index]
+	if frame.effect_id.is_empty():
+		_effect_sprite.visible = false
+		return
+
+	# Check if cached entry is for a different direction — invalidate if so
+	if _effect_cache.has(frame.effect_id):
+		var cached: Dictionary = _effect_cache[frame.effect_id]
+		if cached.get("direction", "") != _preview_direction:
+			_effect_cache.erase(frame.effect_id)
+
+	var assets := _load_effect_assets(frame.effect_id)
+	if assets.is_empty():
+		_effect_sprite.visible = false
+		return
+
+	_effect_sprite.texture = assets["texture"]
+	_effect_sprite.visible = true
+	_effect_sprite.scale = _preview_sprite.scale
+	_effect_sprite.z_index = frame.effect_z_index
+	_effect_sprite.rotation = deg_to_rad(frame.effect_rotation_deg)
+
+	# When not playing, reset atlas to first frame
+	if not _playing:
+		var fs: int = assets["frame_size"]
+		var atlas: AtlasTexture = assets["texture"]
+		atlas.region = Rect2(0, 0, fs, fs)
+
+	# Resolve anchor position
+	var anchor_pos: Vector2 = _preview_sprite.position  # default: center
+
+	match frame.effect_anchor:
+		"weapon_tip":
+			# Use grip + direction anchors to compute the weapon tip in viewport coords
+			if _frame_images.has(_preview_direction):
+				var images: Array = _frame_images[_preview_direction]
+				if _preview_frame_index < images.size():
+					var img: Image = images[_preview_frame_index]
+					var anchors := _find_anchors_in_image(img)
+					var grip_px: Vector2 = anchors.get("grip", Vector2.INF)
+					var dir_px: Vector2 = anchors.get("direction", Vector2.INF)
+					if grip_px != Vector2.INF:
+						# Get the weapon tip in viewport space
+						var weapon_tex: Texture2D = _weapon_set.get("right")
+						var weapon_grip: Vector2 = _weapon_set.get("grip_right", Vector2.ZERO)
+						var weapon_tip: Vector2 = _weapon_set.get("tip_right", Vector2.ZERO)
+						if weapon_tex != null and weapon_tip != Vector2.ZERO:
+							# Grip position in viewport coords
+							var grip_vp := _preview_sprite.position + (grip_px - Vector2(_frame_size) / 2.0) * _preview_sprite.scale
+							# Compute rotation (same as weapon preview)
+							var inherent_angle := atan2(weapon_tip.y - weapon_grip.y, weapon_tip.x - weapon_grip.x)
+							var desired_angle := 0.0
+							if dir_px != Vector2.INF:
+								desired_angle = atan2(dir_px.y - grip_px.y, dir_px.x - grip_px.x)
+							var rot := desired_angle - inherent_angle
+							# Tip offset from grip in weapon-local space, rotated
+							var tip_local := (weapon_tip - weapon_grip) * _preview_sprite.scale
+							var tip_rotated := tip_local.rotated(rot)
+							anchor_pos = grip_vp + tip_rotated
+						else:
+							# No weapon data — fall back to grip pixel
+							anchor_pos = _preview_sprite.position + (grip_px - Vector2(_frame_size) / 2.0) * _preview_sprite.scale
+		"center":
+			anchor_pos = _preview_sprite.position
+		"feet":
+			# Bottom center of the character sprite
+			if _frame_size != Vector2i.ZERO:
+				anchor_pos = _preview_sprite.position + Vector2(0, float(_frame_size.y) / 2.0) * _preview_sprite.scale
+
+	# Apply user offset (in pixels, scaled to viewport)
+	anchor_pos += frame.effect_offset * _preview_sprite.scale
+	_effect_sprite.position = anchor_pos
 
 
 func _on_weapon_dropdown_selected(index: int) -> void:

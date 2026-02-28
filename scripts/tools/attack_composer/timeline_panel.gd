@@ -9,6 +9,9 @@ signal frames_selected(indices: Array[int])
 signal frame_duration_changed(index: int, new_ms: int)
 signal playhead_moved(ms: float)
 signal before_mutation()  # Emitted before any data change, for undo snapshots
+signal effect_toggled(index: int)  # Emitted when user clicks the effect track on a frame
+signal effect_moved(from_index: int, to_index: int)  # Emitted when user drags an effect diamond to another frame
+signal scroll_changed(offset_ms: float, total_ms: float, visible_ms: float)
 
 # ── Theme (matches composer) ───────────────────────────────────────────
 const C_BG := Color("#1E1E2E")
@@ -51,6 +54,8 @@ var _drag_frame_index: int = -1
 var _drag_start_x: float = 0.0
 var _drag_start_ms: int = 0
 var _scrubbing: bool = false
+var _dragging_effect: bool = false
+var _drag_effect_from: int = -1
 
 var _font: Font
 
@@ -99,6 +104,19 @@ func _get_total_ms() -> float:
 	for frame in composition.frames:
 		total += frame.duration_ms
 	return float(total)
+
+
+func get_visible_ms() -> float:
+	return (size.x - LABEL_WIDTH) / pixels_per_ms
+
+
+func set_scroll_from_scrollbar(value_ms: float) -> void:
+	scroll_offset_ms = clampf(value_ms, 0.0, maxf(0.0, _get_total_ms() - get_visible_ms()))
+	queue_redraw()
+
+
+func _emit_scroll_changed() -> void:
+	scroll_changed.emit(scroll_offset_ms, _get_total_ms(), get_visible_ms())
 
 
 func _ms_to_x(ms: float) -> float:
@@ -348,6 +366,18 @@ func _gui_input(event: InputEvent) -> void:
 			if mb.pressed:
 				_handle_click(mb.position, mb.shift_pressed)
 			else:
+				if _dragging_effect:
+					# Resolve effect drag — find destination frame
+					var effect_y := _get_track_y(1)
+					var dest := _frame_at_x(mb.position.x, effect_y, SUB_TRACK_HEIGHT, effect_y + SUB_TRACK_HEIGHT / 2.0)
+					if dest >= 0 and dest != _drag_effect_from:
+						effect_moved.emit(_drag_effect_from, dest)
+					elif dest == _drag_effect_from:
+						# Click-release on same diamond = toggle off
+						effect_toggled.emit(_drag_effect_from)
+					_dragging_effect = false
+					_drag_effect_from = -1
+					queue_redraw()
 				_dragging_edge = false
 				_scrubbing = false
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_UP and mb.pressed:
@@ -356,12 +386,14 @@ func _gui_input(event: InputEvent) -> void:
 				scroll_offset_ms = maxf(0, scroll_offset_ms - 50)
 			else:
 				pixels_per_ms = minf(pixels_per_ms * 1.15, 10.0)
+			_emit_scroll_changed()
 			queue_redraw()
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
 			if mb.shift_pressed:
 				scroll_offset_ms = minf(_get_total_ms(), scroll_offset_ms + 50)
 			else:
 				pixels_per_ms = maxf(pixels_per_ms / 1.15, 0.3)
+			_emit_scroll_changed()
 			queue_redraw()
 
 	elif event is InputEventMouseMotion:
@@ -428,6 +460,20 @@ func _handle_sub_track_click(pos: Vector2) -> void:
 			before_mutation.emit()
 			composition.frames[idx].weapon_visible = not composition.frames[idx].weapon_visible
 			queue_redraw()
+		return
+
+	# Effect track (index 1) — click to toggle, drag to move
+	var effect_y := _get_track_y(1)
+	if pos.y >= effect_y and pos.y <= effect_y + SUB_TRACK_HEIGHT:
+		var idx := _frame_at_x(pos.x, effect_y, SUB_TRACK_HEIGHT, pos.y)
+		if idx >= 0:
+			if not composition.frames[idx].effect_id.is_empty():
+				# Start dragging existing effect diamond
+				_dragging_effect = true
+				_drag_effect_from = idx
+			else:
+				# Empty frame — toggle effect on
+				effect_toggled.emit(idx)
 		return
 
 	# Echo track (index 2) — toggle echo_enabled
