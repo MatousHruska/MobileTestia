@@ -205,7 +205,7 @@ func _process_level(level: Dictionary) -> Dictionary:
 	# Extract entities from the entire level
 	var entities := _extract_entities(level, zone_id)
 
-	print("  Extracted %d spawn points, %d chests, %d transitions, %d doors, %d levers, %d npcs, %d lootables, %d signs, %d echoes, %d triggers, %d patrol_waypoints, %d lights" % [
+	print("  Extracted %d spawn points, %d chests, %d transitions, %d doors, %d levers, %d npcs, %d lootables, %d signs, %d echoes, %d triggers, %d patrol_waypoints, %d lights, %d decorations" % [
 		entities.spawn_points.size(),
 		entities.chests.size(),
 		entities.transitions.size(),
@@ -217,7 +217,8 @@ func _process_level(level: Dictionary) -> Dictionary:
 		entities.lore_echoes.size(),
 		entities.trigger_areas.size(),
 		entities.patrol_waypoints.size(),
-		entities.lights.size()
+		entities.lights.size(),
+		entities.decorations.size()
 	])
 
 	return {
@@ -603,7 +604,9 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 		# Patrol system
 		"patrol_waypoints": [],
 		# Lighting
-		"lights": []
+		"lights": [],
+		# Decorations
+		"decorations": []
 	}
 
 	for layer in level.get("layerInstances", []):
