@@ -95,7 +95,9 @@ func _run() -> void:
 		# Patrol system
 		"patrol_waypoints": [],
 		# Lighting
-		"lights": []
+		"lights": [],
+		# Decorations
+		"decorations": []
 	}
 
 	var levels: Array = ldtk_data.get("levels", [])
@@ -765,6 +767,19 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 						"light_type": fields.get("light_type", "torch")
 					})
 
+				# Decorations
+				"decoration":
+					result.decorations.append({
+						"zone_id": zone_id,
+						"position_x": position.x,
+						"position_y": position.y,
+						"decoration_id": fields.get("decoration_id", ""),
+						"scale": float(fields.get("scale", 1.0)),
+						"flip_x": fields.get("flip_x", false),
+						"z_mode": fields.get("z_mode", "y_sort"),
+						"shadow_mode": fields.get("shadow_mode", "baked")
+					})
+
 	return result
 
 
@@ -970,6 +985,19 @@ func _export_entities_summary(entities: Dictionary) -> void:
 			"light_type": light.get("light_type", "torch")
 		})
 
+	# Process decorations
+	for deco in entities.decorations:
+		var zone_id: String = deco.get("zone_id", "unknown")
+		_ensure_zone_data(zones_data, zone_id)
+		zones_data[zone_id].decorations.append({
+			"position": {"x": deco.get("position_x", 0), "y": deco.get("position_y", 0)},
+			"decoration_id": deco.get("decoration_id", ""),
+			"scale": deco.get("scale", 1.0),
+			"flip_x": deco.get("flip_x", false),
+			"z_mode": deco.get("z_mode", "y_sort"),
+			"shadow_mode": deco.get("shadow_mode", "baked")
+		})
+
 	# Export each zone's entities to a separate JSON file
 	for zone_id in zones_data:
 		_export_zone_entities(zone_id, zones_data[zone_id])
@@ -982,7 +1010,7 @@ func _export_entities_summary(entities: Dictionary) -> void:
 		entity_count += zd.doors.size() + zd.levers.size() + zd.pressure_plates.size()
 		entity_count += zd.npcs.size() + zd.lootables.size() + zd.signs.size()
 		entity_count += zd.lore_echoes.size() + zd.trigger_areas.size() + zd.patrol_waypoints.size()
-		entity_count += zd.lights.size()
+		entity_count += zd.lights.size() + zd.decorations.size()
 		print("  %s: %d total entities" % [zone_id, entity_count])
 		print("    spawns: %d, chests: %d, transitions: %d, player_spawns: %d" % [
 			zd.spawn_points.size(), zd.chests.size(), zd.transitions.size(), zd.player_spawns.size()
@@ -1001,6 +1029,8 @@ func _export_entities_summary(entities: Dictionary) -> void:
 			])
 		if zd.lights.size() > 0:
 			print("    lights: %d" % [zd.lights.size()])
+		if zd.decorations.size() > 0:
+			print("    decorations: %d" % [zd.decorations.size()])
 
 
 func _ensure_zone_data(zones_data: Dictionary, zone_id: String) -> void:
@@ -1024,7 +1054,9 @@ func _ensure_zone_data(zones_data: Dictionary, zone_id: String) -> void:
 			# Patrol system
 			"patrol_waypoints": [],
 			# Lighting
-			"lights": []
+			"lights": [],
+			# Decorations
+			"decorations": []
 		}
 
 
