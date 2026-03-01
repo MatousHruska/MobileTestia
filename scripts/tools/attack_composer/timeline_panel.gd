@@ -252,9 +252,9 @@ func _draw_weapon_track() -> void:
 			continue
 		var color := C_WEAPON_ON if sequence.frames[i].weapon_visible else C_WEAPON_OFF
 		draw_rect(Rect2(x, y + 2, w - 1, SUB_TRACK_HEIGHT - 4), color)
-		# Show "B" marker on frames where weapon renders behind body
-		if not sequence.frames[i].weapon_z_front and sequence.frames[i].weapon_visible:
-			draw_string(_font, Vector2(x + 2, y + SUB_TRACK_HEIGHT - 4), "B",
+		# Show "C" marker on frames that have a body clip mask
+		if sequence.frames[i].body_clip_mask != null and sequence.frames[i].weapon_visible:
+			draw_string(_font, Vector2(x + 2, y + SUB_TRACK_HEIGHT - 4), "C",
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 9, C_TEXT)
 
 
