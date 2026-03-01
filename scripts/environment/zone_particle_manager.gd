@@ -13,6 +13,8 @@ func setup(camera: Camera2D) -> void:
 
 func _process(_delta: float) -> void:
 	# Follow camera position so particles cover the viewport
+	if not _camera or not is_instance_valid(_camera):
+		_camera = get_viewport().get_camera_2d()
 	if _camera and is_instance_valid(_camera):
 		global_position = _camera.global_position
 

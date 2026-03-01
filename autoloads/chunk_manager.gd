@@ -1799,7 +1799,7 @@ func _spawn_light(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 	var light_type: String = data.get("light_type", "torch")
 	match light_type:
 		"torch", "campfire":
-			_start_flicker(light, base_energy, 0.15, 0.08)
+			_start_flicker(light, base_energy, 0.15, 0.4)
 		"crystal":
 			_start_flicker(light, base_energy, 0.08, 2.0)
 		"lava":
