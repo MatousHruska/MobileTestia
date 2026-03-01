@@ -112,6 +112,14 @@ var angle_mode_group: HBoxContainer
 var _3d_container: VBoxContainer
 var _2d_container: VBoxContainer
 
+# Step 1 camera sliders
+var _camera_zoom_slider: HSlider
+var _camera_elevation_slider: HSlider
+var _camera_target_y_slider: HSlider
+var camera_target := Vector3(0.0, 1.0, 0.0)
+var _2d_info_label: Label
+var _2d_file_dialog: FileDialog = null
+
 # Capture materials
 var _normal_capture_shader: Shader
 var _normal_capture_material: ShaderMaterial = null
@@ -317,11 +325,73 @@ func _build_ui() -> void:
 
 
 func _build_viewport() -> void:
-	pass  # Will be built in Task 3
+	sub_viewport = SubViewport.new()
+	sub_viewport.transparent_bg = true
+	sub_viewport.size = Vector2i(512, 512)
+	sub_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	sub_viewport.msaa_3d = Viewport.MSAA_4X
+	preview_container.add_child(sub_viewport)
+
+	# Camera
+	camera = Camera3D.new()
+	camera.projection = Camera3D.PROJECTION_ORTHOGONAL
+	camera.size = 3.0
+	camera.far = 100.0
+	sub_viewport.add_child(camera)
+	camera_target = Vector3(0.0, 1.0, 0.0)
+	_position_camera(30.0)
+
+	# Environment
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color.TRANSPARENT
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color.WHITE
+	env.ambient_light_energy = 0.6
+	var world_env := WorldEnvironment.new()
+	world_env.environment = env
+	sub_viewport.add_child(world_env)
+
+	# Directional fill light
+	var dir_light := DirectionalLight3D.new()
+	dir_light.rotation_degrees = Vector3(-45, 30, 0)
+	dir_light.light_energy = 0.5
+	dir_light.shadow_enabled = false
+	sub_viewport.add_child(dir_light)
+
+	# Model slot
+	model_slot = Node3D.new()
+	model_slot.name = "ModelSlot"
+	sub_viewport.add_child(model_slot)
 
 
 func _scan_models() -> void:
-	pass  # Will be built in Task 3
+	available_models.clear()
+	if model_dropdown:
+		model_dropdown.clear()
+
+	var global_dir := ProjectSettings.globalize_path(IMPORT_DIR)
+	var dir := DirAccess.open(global_dir)
+	if dir == null:
+		DirAccess.make_dir_recursive_absolute(global_dir)
+		_set_status("Created %s — drop your .glb files there and restart." % IMPORT_DIR)
+		return
+
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		var lower := file_name.to_lower()
+		if lower.ends_with(".glb") or lower.ends_with(".gltf") or lower.ends_with(".fbx"):
+			available_models.append(file_name)
+			model_dropdown.add_item(file_name)
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+	if available_models.is_empty():
+		_set_status("No models found. Place .glb/.gltf/.fbx files in assets/3d_imports/")
+	else:
+		_set_status("Found %d model(s). Select one to begin." % available_models.size())
+		_on_model_selected(0)
 
 
 func _set_status(text: String) -> void:
@@ -408,13 +478,306 @@ func _on_back_pressed() -> void:
 
 
 #===============================================================================
+# SOURCE MODE & ANGLE MODE HANDLERS
+#===============================================================================
+
+func _on_source_mode_changed(mode_key: String) -> void:
+	_source_mode = mode_key
+	if mode_key == "3d":
+		_3d_container.visible = true
+		_2d_container.visible = false
+		preview_container.visible = true
+	else:
+		_3d_container.visible = false
+		_2d_container.visible = true
+		preview_container.visible = false
+
+
+func _on_angle_mode_changed(mode_key: String) -> void:
+	_angle_mode = mode_key
+
+
+#===============================================================================
+# MODEL LOADING
+#===============================================================================
+
+func _on_model_selected(index: int) -> void:
+	if index < 0 or index >= available_models.size():
+		return
+
+	var file_name: String = available_models[index]
+	var res_path := "%s/%s" % [IMPORT_DIR, file_name]
+	current_model_path = res_path
+
+	_clear_model()
+
+	var packed_scene := ResourceLoader.load(res_path) as PackedScene
+	if packed_scene == null:
+		_set_status("ERROR: Could not load %s. Make sure Godot has imported it." % res_path)
+		return
+
+	current_model_instance = packed_scene.instantiate()
+	model_slot.add_child(current_model_instance)
+
+	_apply_unlit_materials(current_model_instance)
+
+	_set_status("Loaded: %s" % file_name)
+
+	# Auto-suggest decoration ID from filename
+	var suggested_id := file_name.get_basename().to_lower().replace(" ", "_").replace("-", "_")
+	if deco_id_input and deco_id_input.text.is_empty():
+		deco_id_input.text = suggested_id
+		_decoration_id = suggested_id
+
+
+func _clear_model() -> void:
+	if current_model_instance != null:
+		current_model_instance.queue_free()
+		current_model_instance = null
+
+
+#===============================================================================
+# 2D IMAGE IMPORT
+#===============================================================================
+
+func _on_2d_browse_pressed() -> void:
+	if _2d_file_dialog:
+		_2d_file_dialog.popup_centered(Vector2i(800, 600))
+
+
+func _on_2d_file_selected(path: String) -> void:
+	var img := Image.new()
+	var err := img.load(path)
+	if err != OK:
+		_2d_info_label.text = "Failed to load image: %s" % path
+		_2d_info_label.add_theme_color_override("font_color", C_WARN)
+		_imported_image = null
+		return
+
+	img.convert(Image.FORMAT_RGBA8)
+	_imported_image = img
+
+	_2d_info_label.text = "Loaded: %s (%dx%d)" % [path.get_file(), img.get_width(), img.get_height()]
+	_2d_info_label.add_theme_color_override("font_color", C_SUCCESS)
+
+	# Auto-suggest decoration ID from filename
+	var suggested_id := path.get_file().get_basename().to_lower().replace(" ", "_").replace("-", "_")
+	if deco_id_input and deco_id_input.text.is_empty():
+		deco_id_input.text = suggested_id
+		_decoration_id = suggested_id
+
+	_set_status("Imported 2D image: %s" % path.get_file())
+
+
+#===============================================================================
+# CAMERA HELPERS
+#===============================================================================
+
+func _position_camera(elevation_deg: float) -> void:
+	if camera == null:
+		return
+	var elevation_rad := deg_to_rad(elevation_deg)
+	var distance := maxf(camera.size * 2.0, 5.0)
+	var offset_y := sin(elevation_rad) * distance
+	var offset_z := cos(elevation_rad) * distance
+	camera.position = camera_target + Vector3(0.0, offset_y, offset_z)
+	camera.look_at(camera_target, Vector3.UP)
+
+
+func _on_zoom_changed(value: float) -> void:
+	if camera:
+		camera.size = value
+	_position_camera(_camera_elevation_slider.value if _camera_elevation_slider else 30.0)
+
+
+func _on_elevation_changed(value: float) -> void:
+	_position_camera(value)
+
+
+func _on_target_y_changed(value: float) -> void:
+	camera_target = Vector3(0.0, value, 0.0)
+	_position_camera(_camera_elevation_slider.value if _camera_elevation_slider else 30.0)
+
+
+#===============================================================================
+# MATERIAL HELPERS
+#===============================================================================
+
+func _apply_unlit_materials(node: Node) -> void:
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var mesh := mesh_instance.mesh
+		if mesh != null:
+			for surface_idx in range(mesh.get_surface_count()):
+				var original_mat := mesh_instance.get_active_material(surface_idx)
+				var unlit_mat := StandardMaterial3D.new()
+				unlit_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+
+				if original_mat is StandardMaterial3D:
+					var orig := original_mat as StandardMaterial3D
+					unlit_mat.albedo_color = orig.albedo_color
+					if orig.albedo_texture != null:
+						unlit_mat.albedo_texture = orig.albedo_texture
+					unlit_mat.transparency = orig.transparency
+					unlit_mat.alpha_scissor_threshold = orig.alpha_scissor_threshold
+				elif original_mat is BaseMaterial3D:
+					var orig := original_mat as BaseMaterial3D
+					unlit_mat.albedo_color = orig.albedo_color
+					unlit_mat.transparency = orig.transparency
+
+				mesh_instance.set_surface_override_material(surface_idx, unlit_mat)
+
+	for child in node.get_children():
+		_apply_unlit_materials(child)
+
+
+func _save_current_materials(node: Node) -> void:
+	## Save all current surface override materials so they can be restored after capture passes.
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var mesh := mesh_instance.mesh
+		if mesh != null:
+			for surface_idx in range(mesh.get_surface_count()):
+				_saved_unlit_materials.append({
+					"mesh_instance": mesh_instance,
+					"surface_idx": surface_idx,
+					"material": mesh_instance.get_surface_override_material(surface_idx),
+				})
+	for child in node.get_children():
+		_save_current_materials(child)
+
+
+func _restore_saved_materials() -> void:
+	## Restore the previously saved surface override materials.
+	for entry in _saved_unlit_materials:
+		var mi: MeshInstance3D = entry["mesh_instance"]
+		mi.set_surface_override_material(entry["surface_idx"], entry["material"])
+	_saved_unlit_materials.clear()
+
+
+func _apply_normal_capture_materials(node: Node) -> void:
+	## Override all mesh materials with the normal capture shader.
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var mesh := mesh_instance.mesh
+		if mesh != null:
+			for surface_idx in range(mesh.get_surface_count()):
+				mesh_instance.set_surface_override_material(surface_idx, _normal_capture_material)
+	for child in node.get_children():
+		_apply_normal_capture_materials(child)
+
+
+func _apply_shadow_capture_materials(node: Node) -> void:
+	## Override all mesh materials with flat black for shadow silhouette capture.
+	if node is MeshInstance3D:
+		var mesh_instance := node as MeshInstance3D
+		var mesh := mesh_instance.mesh
+		if mesh != null:
+			for surface_idx in range(mesh.get_surface_count()):
+				mesh_instance.set_surface_override_material(surface_idx, _shadow_capture_material)
+	for child in node.get_children():
+		_apply_shadow_capture_materials(child)
+
+
+#===============================================================================
 # STEP BUILDERS (placeholders — filled in by subsequent tasks)
 #===============================================================================
 
 func _build_step1(parent: VBoxContainer) -> void:
-	parent.add_child(_make_label("Step 1: Source Selection (placeholder)"))
-	parent.add_child(_make_small_label(
-		"Choose 3D model or 2D image source, set decoration ID and angle mode."))
+	# -- Source mode toggle --
+	var mode_group := _make_toggle_group([
+		{"label": "3D Model", "key": "3d"},
+		{"label": "2D Image", "key": "2d"},
+	], _on_source_mode_changed)
+	parent.add_child(_make_field("Source Mode", mode_group))
+
+	# -- Decoration ID --
+	deco_id_input = LineEdit.new()
+	deco_id_input.placeholder_text = "e.g. barrel, torch_wall, crate_large"
+	deco_id_input.size_flags_horizontal = SIZE_EXPAND_FILL
+	deco_id_input.text_changed.connect(func(text: String) -> void:
+		_decoration_id = text.strip_edges()
+	)
+	parent.add_child(_make_field("Decoration ID", deco_id_input))
+
+	# -- 3D container --
+	_3d_container = VBoxContainer.new()
+	_3d_container.add_theme_constant_override("separation", 10)
+	parent.add_child(_3d_container)
+
+	# Model dropdown
+	var model_sec := _make_section("3D Model")
+	_3d_container.add_child(model_sec[0])
+	var model_content: VBoxContainer = model_sec[1]
+
+	model_dropdown = OptionButton.new()
+	model_dropdown.size_flags_horizontal = SIZE_EXPAND_FILL
+	model_dropdown.item_selected.connect(_on_model_selected)
+	model_content.add_child(_make_field("Model File", model_dropdown))
+
+	# View angles toggle
+	var angle_group := _make_toggle_group([
+		{"label": "Single Front", "key": "single"},
+		{"label": "Front + Back", "key": "two"},
+		{"label": "4 Directions", "key": "four"},
+	], _on_angle_mode_changed)
+	_3d_container.add_child(_make_field("View Angles", angle_group))
+
+	# Collapsible camera settings
+	var cam := _make_collapsible("Camera Settings")
+	_3d_container.add_child(cam[0])
+	var cam_content: VBoxContainer = cam[1]
+
+	# Zoom slider
+	var zoom_data := _make_slider_row(1.0, 8.0, 3.0, 0.1)
+	_camera_zoom_slider = zoom_data[1]
+	_camera_zoom_slider.value_changed.connect(_on_zoom_changed)
+	cam_content.add_child(_make_field("Zoom", zoom_data[0]))
+
+	# Elevation slider
+	var elev_data := _make_slider_row(0.0, 90.0, 30.0, 1.0)
+	_camera_elevation_slider = elev_data[1]
+	_camera_elevation_slider.value_changed.connect(_on_elevation_changed)
+	cam_content.add_child(_make_field("Elevation (degrees)", elev_data[0]))
+
+	# Target Y slider
+	var target_data := _make_slider_row(0.0, 3.0, 1.0, 0.05)
+	_camera_target_y_slider = target_data[1]
+	_camera_target_y_slider.value_changed.connect(_on_target_y_changed)
+	cam_content.add_child(_make_field("Target Height", target_data[0]))
+
+	# -- 2D container (initially hidden) --
+	_2d_container = VBoxContainer.new()
+	_2d_container.add_theme_constant_override("separation", 10)
+	_2d_container.visible = false
+	parent.add_child(_2d_container)
+
+	var sec_2d := _make_section("2D Image Source")
+	_2d_container.add_child(sec_2d[0])
+	var content_2d: VBoxContainer = sec_2d[1]
+
+	var browse_btn := _make_primary_button("Browse Image...")
+	browse_btn.pressed.connect(_on_2d_browse_pressed)
+	content_2d.add_child(browse_btn)
+
+	_2d_info_label = Label.new()
+	_2d_info_label.text = "No image selected."
+	_2d_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_2d_info_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	_2d_info_label.add_theme_font_size_override("font_size", FONT_HINT)
+	_2d_info_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	content_2d.add_child(_2d_info_label)
+
+	# FileDialog for image selection
+	_2d_file_dialog = FileDialog.new()
+	_2d_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+	_2d_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+	_2d_file_dialog.title = "Select Image File"
+	_2d_file_dialog.add_filter("*.png", "PNG Images")
+	_2d_file_dialog.add_filter("*.jpg", "JPEG Images")
+	_2d_file_dialog.add_filter("*.jpeg", "JPEG Images")
+	_2d_file_dialog.file_selected.connect(_on_2d_file_selected)
+	add_child(_2d_file_dialog)
 
 
 func _build_step2(parent: VBoxContainer) -> void:
