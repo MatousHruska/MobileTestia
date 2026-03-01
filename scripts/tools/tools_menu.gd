@@ -48,6 +48,11 @@ const TOOLS := [
 		"description": "Compose attack animations with weapon, effects & timing",
 		"scene": "res://scenes/tools/attack_composer.tscn",
 	},
+	{
+		"label": "Decoration Pipeline",
+		"description": "Convert 3D models or 2D images into pixel art decorations with LDtk atlas",
+		"scene": "res://scenes/tools/decoration_pipeline.tscn",
+	},
 ]
 
 #===============================================================================
