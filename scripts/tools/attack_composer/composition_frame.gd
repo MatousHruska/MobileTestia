@@ -9,9 +9,6 @@ extends Resource
 ## Whether the weapon sprite is visible during this frame
 @export var weapon_visible: bool = true
 
-## Whether the weapon renders in front of (true, z=1) or behind (false, z=-1) the body
-@export var weapon_z_front: bool = true
-
 ## Effect asset ID to spawn when this frame plays (empty = no effect)
 @export var effect_id: String = ""
 
@@ -42,10 +39,14 @@ extends Resource
 ## Pixel spacing between ghost copies
 @export var echo_spacing_px: float = 8.0
 
-## Per-frame alpha mask for weapon transparency painting.
-## Same dimensions as weapon texture. null = fully opaque (no mask).
-## FORMAT_R8: 255 = opaque, 0 = fully transparent.
-@export var alpha_mask: Image = null
+## Per-frame body clip mask for weapon occlusion.
+## Same dimensions as body sprite frame. null = no clipping.
+## FORMAT_R8: 255 = body pixel (clips weapon), 0 = no clip.
+@export var body_clip_mask: Image = null
+
+## When true, auto-generate body_clip_mask from body sprite alpha on export/preview.
+## When false, use hand-painted body_clip_mask (or null = no clipping).
+@export var body_clip_auto: bool = false
 
 ## Per-frame alpha mask for effect transparency painting.
 ## Same dimensions as effect frame (frame_size × frame_size). null = fully opaque.
