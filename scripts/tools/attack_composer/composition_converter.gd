@@ -6,7 +6,9 @@ class_name CompositionConverter
 
 
 ## Convert a specific direction of an AttackCompositionData into AbilityVisualData.
-static func convert(comp: AttackCompositionData, direction: String = "down") -> AbilityVisualData:
+## frame_images: optional Array[Image] of body sprite frames for this direction,
+## used to extract per-frame weapon anchor positions for persistence.
+static func convert(comp: AttackCompositionData, direction: String = "down", frame_images: Array = []) -> AbilityVisualData:
 	var data := AbilityVisualData.new()
 	data.template_id = comp.composition_id
 	data.display_name = comp.display_name
@@ -19,17 +21,37 @@ static func convert(comp: AttackCompositionData, direction: String = "down") -> 
 		return data
 	var frames := seq.frames
 
-	# Collect per-frame alpha masks (weapon transparency painted in the composer)
-	var alpha_mask_data: Array = []
+	# Collect per-frame body clip masks (body occlusion painted/auto-generated in the composer)
+	var body_clip_data: Array = []
 	for i in range(frames.size()):
 		var frame := frames[i]
-		if frame.alpha_mask != null:
-			alpha_mask_data.append({
+		var mask: Image = null
+		if frame.body_clip_auto and i < frame_images.size():
+			# Auto-generate: any body pixel with alpha > 0 becomes a clip pixel
+			mask = _generate_body_clip_mask(frame_images[i])
+		elif frame.body_clip_mask != null:
+			mask = frame.body_clip_mask
+		if mask != null:
+			body_clip_data.append({
 				"frame_index": i,
-				"width": frame.alpha_mask.get_width(),
-				"height": frame.alpha_mask.get_height(),
-				"data": frame.alpha_mask.get_data(),  # PackedByteArray
+				"width": mask.get_width(),
+				"height": mask.get_height(),
+				"data": mask.get_data(),  # PackedByteArray
 			})
+
+	# Collect per-frame anchor positions from body sprite images
+	var anchor_positions: Array = []
+	if not frame_images.is_empty():
+		for i in range(mini(frames.size(), frame_images.size())):
+			var img: Image = frame_images[i]
+			var anchors := _find_anchors_in_image(img)
+			if not anchors.is_empty():
+				var entry := { "frame_index": i }
+				if anchors.has("grip"):
+					entry["grip"] = [int(anchors["grip"].x), int(anchors["grip"].y)]
+				if anchors.has("direction"):
+					entry["direction"] = [int(anchors["direction"].x), int(anchors["direction"].y)]
+				anchor_positions.append(entry)
 
 	# Group consecutive frames by weapon_visible state
 	var groups := _group_frames_by_weapon(frames)
@@ -116,21 +138,21 @@ static func convert(comp: AttackCompositionData, direction: String = "down") -> 
 		if seq.damage_frame >= start_idx and seq.damage_frame <= end_idx:
 			body_phase.context_data["damage_frame"] = seq.damage_frame
 
-		# Collect per-frame weapon z-order data (frames where weapon goes behind body)
-		var weapon_behind_frames: Array = []
-		for i in range(start_idx, end_idx + 1):
-			if not frames[i].weapon_z_front:
-				weapon_behind_frames.append(i)
-		if not weapon_behind_frames.is_empty():
-			body_phase.context_data["weapon_behind_frames"] = weapon_behind_frames
+		# Attach body clip masks that fall within this group
+		var group_clip_masks: Array = []
+		for clip_entry in body_clip_data:
+			if clip_entry["frame_index"] >= start_idx and clip_entry["frame_index"] <= end_idx:
+				group_clip_masks.append(clip_entry)
+		if not group_clip_masks.is_empty():
+			body_phase.context_data["body_clip_masks"] = group_clip_masks
 
-		# Attach alpha masks that fall within this group
-		var group_masks: Array = []
-		for mask_entry in alpha_mask_data:
-			if mask_entry["frame_index"] >= start_idx and mask_entry["frame_index"] <= end_idx:
-				group_masks.append(mask_entry)
-		if not group_masks.is_empty():
-			body_phase.context_data["weapon_alpha_masks"] = group_masks
+		# Attach per-frame anchor positions (preserves weapon placement across sprite regeneration)
+		var group_anchors: Array = []
+		for anchor_entry in anchor_positions:
+			if anchor_entry["frame_index"] >= start_idx and anchor_entry["frame_index"] <= end_idx:
+				group_anchors.append(anchor_entry)
+		if not group_anchors.is_empty():
+			body_phase.context_data["weapon_anchors"] = group_anchors
 
 		# Check if movement overlaps this group
 		var move_concurrent := false
@@ -207,8 +229,6 @@ static func phases_to_string(data: AbilityVisualData) -> String:
 					desc += " timings=%s" % str(p.context_data["frame_timings"])
 				if p.context_data.has("damage_frame"):
 					desc += " dmg@%d" % p.context_data["damage_frame"]
-				if p.context_data.has("weapon_behind_frames"):
-					desc += " z_behind=%s" % str(p.context_data["weapon_behind_frames"])
 			AbilityVisualPhase.PhaseType.MOVEMENT:
 				desc = "MOVEMENT(\"%s\", %.0fpx, %.3fs)" % [p.move_direction, p.move_distance, p.duration]
 			AbilityVisualPhase.PhaseType.DAMAGE_EVENT:
@@ -225,3 +245,38 @@ static func phases_to_string(data: AbilityVisualData) -> String:
 			desc += " [concurrent]"
 		lines.append("  %d. %s" % [i + 1, desc])
 	return "\n".join(lines)
+
+
+## Scan a body sprite image for weapon anchor (magenta) and direction (cyan) pixels.
+## Returns { "grip": Vector2(x,y), "direction": Vector2(x,y) } with only found keys.
+static func _find_anchors_in_image(img: Image) -> Dictionary:
+	var result := {}
+	for y in range(img.get_height()):
+		for x in range(img.get_width()):
+			var pixel := img.get_pixel(x, y)
+			if _rgb_approx(pixel, Color("#FF00AA")) and not result.has("grip"):
+				result["grip"] = Vector2(x, y)
+			elif _rgb_approx(pixel, Color("#00FFFF")) and not result.has("direction"):
+				result["direction"] = Vector2(x, y)
+			if result.size() == 2:
+				return result
+	return result
+
+
+## Compare two colors by RGB channels only (ignoring alpha), with tolerance.
+static func _rgb_approx(a: Color, b: Color, tolerance := 0.02) -> bool:
+	return absf(a.r - b.r) < tolerance and absf(a.g - b.g) < tolerance and absf(a.b - b.b) < tolerance
+
+
+## Generate a binary body clip mask from a body frame image.
+## Any pixel with alpha > 0 becomes a clip pixel (255), otherwise 0.
+static func _generate_body_clip_mask(body_img: Image) -> Image:
+	var w := body_img.get_width()
+	var h := body_img.get_height()
+	var mask := Image.create(w, h, false, Image.FORMAT_R8)
+	mask.fill(Color(0, 0, 0))  # Default: no clip
+	for y in range(h):
+		for x in range(w):
+			if body_img.get_pixel(x, y).a > 0.01:
+				mask.set_pixel(x, y, Color(1, 0, 0))  # R=1 → clip (255)
+	return mask
