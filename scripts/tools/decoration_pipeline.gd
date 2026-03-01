@@ -485,9 +485,22 @@ func _go_to_step(step: int) -> void:
 		next_button.add_theme_stylebox_override("hover", accent_hover)
 
 	# Step-specific entry logic
-	if step == 4:
-		_refresh_preview_angle_buttons()
-		_update_composite_preview()
+	match step:
+		1:  # Entering Capture step — reset status label
+			if _capture_status_label:
+				_capture_status_label.text = "Press capture to render from all selected angles."
+		2:  # Entering Pixel Art Processing — refresh preview
+			_update_pixel_preview()
+		3:  # Entering Normal & Shadow — show 2D-only controls if applicable
+			if _2d_normal_container:
+				_2d_normal_container.visible = (_source_mode == "2d")
+		4:  # Entering Preview — refresh angle buttons and composite
+			_refresh_preview_angle_buttons()
+			_update_composite_preview()
+
+	# Viewport visibility: only show 3D viewport during steps 0-1 in 3D mode
+	if preview_container:
+		preview_container.visible = (_source_mode == "3d" and step <= 1)
 
 	# Update step indicator
 	if step_indicator:
@@ -495,20 +508,38 @@ func _go_to_step(step: int) -> void:
 
 
 func _on_next_pressed() -> void:
-	var last_step := STEP_NAMES.size() - 1
-
-	# 2D mode: skip capture step (step 1) — jump from source (0) to processing (2)
-	if _current_step == 0 and _source_mode == "2d":
-		_go_to_step(2)
-		return
-
-	# Last step: trigger export
-	if _current_step == last_step:
-		_start_export()
-		return
-
-	if _current_step < last_step:
-		_go_to_step(_current_step + 1)
+	match _current_step:
+		0:  # Source Selection — validate inputs before proceeding
+			if _decoration_id.strip_edges().is_empty():
+				_set_status("Enter a decoration ID first.")
+				return
+			if _source_mode == "3d" and current_model_instance == null:
+				_set_status("Load a 3D model first.")
+				return
+			if _source_mode == "2d" and _imported_image == null:
+				_set_status("Import a 2D image first.")
+				return
+			if _source_mode == "2d":
+				_go_to_step(2)  # Skip capture step
+			else:
+				_go_to_step(1)
+			return
+		1:  # Capture — must have captured frames
+			if _captured_color.is_empty():
+				_set_status("Capture frames first.")
+				return
+		2:  # Pixel Art Processing — no mandatory validation
+			pass
+		3:  # Normal & Shadow — must have processed outputs
+			if _processed_color.is_empty():
+				_set_status("Generate normals/shadows first.")
+				return
+		4:  # Preview — no validation
+			pass
+		5:  # Export — trigger export and return
+			_start_export()
+			return
+	_go_to_step(_current_step + 1)
 
 
 func _on_back_pressed() -> void:
