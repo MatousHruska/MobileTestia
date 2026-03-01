@@ -1,5 +1,5 @@
-extends Node
 class_name EnvironmentManagerClass
+extends Node
 ## Manages zone atmosphere — applies ZoneMood settings to CanvasModulate and WorldEnvironment.
 
 var _canvas_modulate: CanvasModulate

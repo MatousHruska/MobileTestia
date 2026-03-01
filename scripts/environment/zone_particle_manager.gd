@@ -1,5 +1,5 @@
-extends Node2D
 class_name ZoneParticleManager
+extends Node2D
 ## Manages zone-wide particle effects (snow, dust motes, embers).
 ## Attaches to the camera to follow the player.
 

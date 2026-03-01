@@ -1,5 +1,5 @@
-extends RefCounted
 class_name DecorationSpawner
+extends RefCounted
 ## Loads and spawns decoration entities with normal maps, occluders, and baked shadows.
 ## Resources are cached per decoration_id for reuse across instances.
 

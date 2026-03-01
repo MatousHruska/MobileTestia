@@ -1,6 +1,6 @@
 @tool
-extends Resource
 class_name ZoneMood
+extends Resource
 ## Defines the atmospheric mood for a zone — ambient lighting, bloom, particles, shadow mode.
 
 @export_group("Ambient")
