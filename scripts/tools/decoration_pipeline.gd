@@ -13,6 +13,8 @@ const DECORATIONS_DIR := "res://assets/decorations"
 const ATLAS_DIR := "res://assets/decorations/_atlas"
 const TOOLS_MENU_PATH := "res://scenes/tools/tools_menu.tscn"
 const CAPTURE_OVERSCAN := 1.5
+const ATLAS_TILE_SIZE := 64
+const ATLAS_COLUMNS := 8
 
 const STEP_NAMES := [
 	"Source Selection",
@@ -154,6 +156,9 @@ var _show_occluder_check: CheckButton
 var _composite_preview_rect: TextureRect
 var _dimensions_label: Label
 var _current_preview_angle := "front"
+
+# Step 6 refs
+var _export_log: RichTextLabel
 
 # Capture materials
 var _normal_capture_shader: Shader
@@ -499,8 +504,7 @@ func _on_next_pressed() -> void:
 
 	# Last step: trigger export
 	if _current_step == last_step:
-		_set_status("Exporting...")
-		# Export logic will be implemented in Task 8
+		_start_export()
 		return
 
 	if _current_step < last_step:
@@ -1314,9 +1318,231 @@ func _build_step5(parent: VBoxContainer) -> void:
 
 
 func _build_step6(parent: VBoxContainer) -> void:
-	parent.add_child(_make_label("Step 6: Export & Atlas (placeholder)"))
-	parent.add_child(_make_small_label(
-		"Export sprites, normal maps, shadows, occluder data, and update LDtk atlas."))
+	# ── Export Section ─────────────────────────────────────────────────
+	var export_sec := _make_section("Export Decoration")
+	parent.add_child(export_sec[0])
+	var export_content: VBoxContainer = export_sec[1]
+
+	export_content.add_child(_make_small_label(
+		"Exports processed sprites (color, normal, shadow) and occluder polygons " +
+		"to the decorations asset folder. Each angle variant is saved as a separate " +
+		"sub-folder under assets/decorations/."))
+
+	var export_btn := _make_primary_button("Export Decoration")
+	export_btn.pressed.connect(_start_export)
+	export_content.add_child(export_btn)
+
+	# ── Atlas Section ──────────────────────────────────────────────────
+	var atlas_sec := _make_section("Atlas Generation")
+	parent.add_child(atlas_sec[0])
+	var atlas_content: VBoxContainer = atlas_sec[1]
+
+	atlas_content.add_child(_make_small_label(
+		"Regenerates the LDtk tileset atlas from all decorations in the asset folder. " +
+		"Run this after exporting to update the atlas with the new decoration."))
+
+	var atlas_btn := _make_primary_button("Regenerate Atlas")
+	atlas_btn.pressed.connect(_regenerate_atlas)
+	atlas_content.add_child(atlas_btn)
+
+	# ── Export Log ─────────────────────────────────────────────────────
+	_export_log = RichTextLabel.new()
+	_export_log.bbcode_enabled = true
+	_export_log.scroll_following = true
+	_export_log.custom_minimum_size = Vector2(0, 150)
+	_export_log.add_theme_font_size_override("normal_font_size", FONT_HINT)
+	_export_log.add_theme_color_override("default_color", C_TEXT)
+	_export_log.size_flags_horizontal = SIZE_EXPAND_FILL
+	var log_sb := StyleBoxFlat.new()
+	log_sb.bg_color = C_SURFACE
+	log_sb.set_corner_radius_all(4)
+	log_sb.set_content_margin_all(6)
+	_export_log.add_theme_stylebox_override("normal", log_sb)
+	parent.add_child(_export_log)
+
+	# ── Action Buttons Row ─────────────────────────────────────────────
+	parent.add_child(HSeparator.new())
+
+	var action_row := HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", 8)
+	parent.add_child(action_row)
+
+	var another_btn := _make_subtle_button("Process Another")
+	another_btn.pressed.connect(func() -> void: _go_to_step(0))
+	action_row.add_child(another_btn)
+
+	var done_btn := _make_primary_button("Done")
+	done_btn.pressed.connect(func() -> void:
+		get_tree().change_scene_to_file(TOOLS_MENU_PATH)
+	)
+	action_row.add_child(done_btn)
+
+
+#===============================================================================
+# EXPORT & ATLAS GENERATION
+#===============================================================================
+
+func _start_export() -> void:
+	_export_log.clear()
+	_append_log("[b]Starting export...[/b]")
+
+	var angles: Array
+	if _source_mode == "3d":
+		angles = ANGLE_CONFIGS[_angle_mode]
+	else:
+		angles = [{"name": "front", "suffix": ""}]
+
+	for angle_config in angles:
+		var angle_name: String = angle_config["name"]
+		var suffix: String = angle_config.get("suffix", "")
+		var deco_id := _decoration_id + suffix
+
+		if not _processed_color.has(angle_name):
+			_append_log("[color=yellow]Skipping %s — no processed image.[/color]" % angle_name)
+			continue
+
+		# Create output directory
+		var output_dir := "%s/%s" % [DECORATIONS_DIR, deco_id]
+		var global_dir := ProjectSettings.globalize_path(output_dir)
+		DirAccess.make_dir_recursive_absolute(global_dir)
+
+		# Save sprite.png
+		var global_sprite := ProjectSettings.globalize_path(output_dir + "/sprite.png")
+		_processed_color[angle_name].save_png(global_sprite)
+		_append_log("Saved: %s/sprite.png" % deco_id)
+
+		# Save normal.png
+		if _processed_normal.has(angle_name):
+			var global_normal := ProjectSettings.globalize_path(output_dir + "/normal.png")
+			_processed_normal[angle_name].save_png(global_normal)
+			_append_log("Saved: %s/normal.png" % deco_id)
+
+		# Save shadow.png
+		if _processed_shadow.has(angle_name):
+			var global_shadow := ProjectSettings.globalize_path(output_dir + "/shadow.png")
+			_processed_shadow[angle_name].save_png(global_shadow)
+			_append_log("Saved: %s/shadow.png" % deco_id)
+
+		# Save occluder.tres
+		if _processed_occluder_points.has(angle_name):
+			var points: PackedVector2Array = _processed_occluder_points[angle_name]
+			if points.size() >= 3:
+				var occluder := OccluderPolygon2D.new()
+				occluder.polygon = points
+				ResourceSaver.save(occluder, output_dir + "/occluder.tres")
+				_append_log("Saved: %s/occluder.tres (%d vertices)" % [deco_id, points.size()])
+
+	_append_log("")
+	_append_log("[b]Export complete.[/b] Now regenerating atlas...")
+	_regenerate_atlas()
+
+
+func _append_log(text: String) -> void:
+	_export_log.append_text(text + "\n")
+
+
+func _regenerate_atlas() -> void:
+	var global_decos_dir := ProjectSettings.globalize_path(DECORATIONS_DIR)
+	var dir := DirAccess.open(global_decos_dir)
+	if dir == null:
+		_append_log("[color=red]ERROR: Cannot open decorations directory.[/color]")
+		return
+
+	# Scan all decoration folders (skip _atlas and hidden folders)
+	var deco_entries: Array[Dictionary] = []
+	dir.list_dir_begin()
+	var folder_name := dir.get_next()
+	while folder_name != "":
+		if dir.current_is_dir() and folder_name != "_atlas" and not folder_name.begins_with("."):
+			var sprite_path := "%s/%s/sprite.png" % [DECORATIONS_DIR, folder_name]
+			var global_sprite := ProjectSettings.globalize_path(sprite_path)
+			var img := Image.load_from_file(global_sprite)
+			if img:
+				deco_entries.append({
+					"decoration_id": folder_name,
+					"image": img,
+					"width": img.get_width(),
+					"height": img.get_height(),
+					"has_normal": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/normal.png" % [DECORATIONS_DIR, folder_name])),
+					"has_shadow": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/shadow.png" % [DECORATIONS_DIR, folder_name])),
+					"has_occluder": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/occluder.tres" % [DECORATIONS_DIR, folder_name])),
+				})
+		folder_name = dir.get_next()
+	dir.list_dir_end()
+
+	deco_entries.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return a["decoration_id"] < b["decoration_id"]
+	)
+
+	if deco_entries.is_empty():
+		_append_log("[color=yellow]No decorations found to atlas.[/color]")
+		return
+
+	# Build atlas grid
+	var columns := mini(deco_entries.size(), ATLAS_COLUMNS)
+	var rows := ceili(float(deco_entries.size()) / float(columns))
+	var atlas_width := columns * ATLAS_TILE_SIZE
+	var atlas_height := rows * ATLAS_TILE_SIZE
+	var atlas := Image.create(atlas_width, atlas_height, false, Image.FORMAT_RGBA8)
+	atlas.fill(Color.TRANSPARENT)
+
+	var metadata := {
+		"tile_size": ATLAS_TILE_SIZE,
+		"columns": columns,
+		"rows": rows,
+		"decorations": []
+	}
+
+	for i in range(deco_entries.size()):
+		var entry: Dictionary = deco_entries[i]
+		var tile_x := i % columns
+		var tile_y := i / columns
+		var dest_x := tile_x * ATLAS_TILE_SIZE
+		var dest_y := tile_y * ATLAS_TILE_SIZE
+
+		# Scale sprite to fit within tile, centered
+		var img: Image = entry["image"].duplicate() as Image
+		var scale := minf(
+			float(ATLAS_TILE_SIZE) / float(img.get_width()),
+			float(ATLAS_TILE_SIZE) / float(img.get_height())
+		)
+		if scale < 1.0:
+			img.resize(int(img.get_width() * scale), int(img.get_height() * scale), Image.INTERPOLATE_NEAREST)
+		var offset_x := (ATLAS_TILE_SIZE - img.get_width()) / 2
+		var offset_y := (ATLAS_TILE_SIZE - img.get_height()) / 2
+		atlas.blit_rect(img, Rect2i(0, 0, img.get_width(), img.get_height()),
+			Vector2i(dest_x + offset_x, dest_y + offset_y))
+
+		metadata["decorations"].append({
+			"decoration_id": entry["decoration_id"],
+			"tile_x": tile_x,
+			"tile_y": tile_y,
+			"source_width": entry["width"],
+			"source_height": entry["height"],
+			"has_normal": entry["has_normal"],
+			"has_shadow": entry["has_shadow"],
+			"has_occluder": entry["has_occluder"],
+		})
+
+	# Save atlas
+	var atlas_dir_global := ProjectSettings.globalize_path(ATLAS_DIR)
+	DirAccess.make_dir_recursive_absolute(atlas_dir_global)
+
+	var atlas_png := ProjectSettings.globalize_path(ATLAS_DIR + "/decoration_atlas.png")
+	atlas.save_png(atlas_png)
+	_append_log("Atlas: %s (%dx%d, %d decorations)" % ["decoration_atlas.png", atlas_width, atlas_height, deco_entries.size()])
+
+	# Save metadata JSON
+	var json_path := ProjectSettings.globalize_path(ATLAS_DIR + "/decoration_atlas.json")
+	var json_string := JSON.stringify(metadata, "  ")
+	var file := FileAccess.open(json_path, FileAccess.WRITE)
+	if file:
+		file.store_string(json_string)
+		file.close()
+		_append_log("Metadata: decoration_atlas.json")
+
+	_append_log("[color=green][b]Atlas generation complete![/b][/color]")
+	_set_status("Export and atlas generation complete.")
 
 
 #===============================================================================
