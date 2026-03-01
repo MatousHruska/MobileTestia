@@ -124,6 +124,16 @@ var _2d_file_dialog: FileDialog = null
 var _capture_status_label: Label
 var _capture_preview_grid: GridContainer
 
+# Step 3 refs
+var _output_height_slider: HSlider
+var _alpha_threshold_slider: HSlider
+var _dither_check: CheckButton
+var _dither_strength_slider: HSlider
+var _outline_check: CheckButton
+var _denoise_check: CheckButton
+var _denoise_slider: HSlider
+var _pixel_preview_rect: TextureRect
+
 # Capture materials
 var _normal_capture_shader: Shader
 var _normal_capture_material: ShaderMaterial = null
@@ -1040,9 +1050,64 @@ func _build_step2(parent: VBoxContainer) -> void:
 
 
 func _build_step3(parent: VBoxContainer) -> void:
-	parent.add_child(_make_label("Step 3: Pixel Art Processing (placeholder)"))
-	parent.add_child(_make_small_label(
+	var sec := _make_section("Pixel Art Settings")
+	parent.add_child(sec[0])
+	var content: VBoxContainer = sec[1]
+
+	content.add_child(_make_small_label(
 		"Configure downscaling, palette, outline, and dithering settings."))
+
+	# Output height slider (8-128, default 32, step 1)
+	var height_data := _make_slider_row(8.0, 128.0, 32.0, 1.0)
+	_output_height_slider = height_data[1]
+	content.add_child(_make_field("Output Height (px)", height_data[0]))
+
+	# Alpha threshold slider (1-255, default 64, step 1)
+	var alpha_data := _make_slider_row(1.0, 255.0, 64.0, 1.0)
+	_alpha_threshold_slider = alpha_data[1]
+	content.add_child(_make_field("Alpha Threshold", alpha_data[0]))
+
+	# Dithering checkbox
+	_dither_check = CheckButton.new()
+	_dither_check.text = "Ordered Dithering"
+	_style_checkbutton_transparent(_dither_check)
+	content.add_child(_dither_check)
+
+	# Dither strength slider (0.0-1.0, default 0.3, step 0.05)
+	var dither_data := _make_slider_row(0.0, 1.0, 0.3, 0.05)
+	_dither_strength_slider = dither_data[1]
+	content.add_child(_make_field("Dither Strength", dither_data[0]))
+
+	# Outline checkbox
+	_outline_check = CheckButton.new()
+	_outline_check.text = "Outline"
+	_style_checkbutton_transparent(_outline_check)
+	content.add_child(_outline_check)
+
+	# Denoising checkbox (default ON)
+	_denoise_check = CheckButton.new()
+	_denoise_check.text = "Denoising"
+	_denoise_check.button_pressed = true
+	_style_checkbutton_transparent(_denoise_check)
+	content.add_child(_denoise_check)
+
+	# Min cluster size slider (1-10, default 2, step 1)
+	var denoise_data := _make_slider_row(1.0, 10.0, 2.0, 1.0)
+	_denoise_slider = denoise_data[1]
+	content.add_child(_make_field("Min Cluster Size", denoise_data[0]))
+
+	# Update Preview button
+	var preview_btn := _make_primary_button("Update Preview")
+	preview_btn.pressed.connect(_update_pixel_preview)
+	content.add_child(preview_btn)
+
+	# Preview TextureRect
+	_pixel_preview_rect = TextureRect.new()
+	_pixel_preview_rect.custom_minimum_size = Vector2(200, 200)
+	_pixel_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_pixel_preview_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_pixel_preview_rect.size_flags_horizontal = SIZE_EXPAND_FILL
+	content.add_child(_pixel_preview_rect)
 
 
 func _build_step4(parent: VBoxContainer) -> void:
@@ -1061,6 +1126,50 @@ func _build_step6(parent: VBoxContainer) -> void:
 	parent.add_child(_make_label("Step 6: Export & Atlas (placeholder)"))
 	parent.add_child(_make_small_label(
 		"Export sprites, normal maps, shadows, occluder data, and update LDtk atlas."))
+
+
+#===============================================================================
+# PIXEL ART PROCESSING
+#===============================================================================
+
+## Process a source image through the pixel art pipeline using current slider values.
+func _process_decoration_image(source: Image) -> Image:
+	var target_height := int(_output_height_slider.value)
+	var result := source.duplicate() as Image
+	# Downscale with nearest-neighbor interpolation
+	var scale_factor := float(target_height) / float(result.get_height())
+	var target_width := int(float(result.get_width()) * scale_factor)
+	result.resize(target_width, target_height, Image.INTERPOLATE_NEAREST)
+	# Alpha threshold
+	PixelArtProcessing.apply_alpha_threshold(result, int(_alpha_threshold_slider.value))
+	# Dithering (if enabled)
+	if _dither_check.button_pressed:
+		PixelArtProcessing.apply_ordered_dithering(result, _dither_strength_slider.value, 1)  # 4x4 Bayer
+		PixelArtProcessing.apply_auto_quantize(result)
+	# Outline (if enabled)
+	if _outline_check.button_pressed:
+		PixelArtProcessing.apply_outline(result, Color.BLACK)
+	# Denoising (if enabled)
+	if _denoise_check.button_pressed:
+		PixelArtProcessing.apply_denoising(result, int(_denoise_slider.value))
+	return result
+
+
+## Update the pixel art preview with the processed source image.
+func _update_pixel_preview() -> void:
+	# Get source image: first captured angle (3D) or imported image (2D)
+	var source: Image = null
+	if _source_mode == "3d":
+		if not _captured_color.is_empty():
+			source = _captured_color.values()[0]
+	else:
+		source = _imported_image
+	if source == null:
+		_set_status("No source image to process.")
+		return
+	var processed := _process_decoration_image(source)
+	_pixel_preview_rect.texture = ImageTexture.create_from_image(processed)
+	_set_status("Preview: %dx%d px" % [processed.get_width(), processed.get_height()])
 
 
 #===============================================================================
