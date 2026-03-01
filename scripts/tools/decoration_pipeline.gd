@@ -145,6 +145,16 @@ var _shadow_preview_rect: TextureRect
 var _occluder_simplify_slider: HSlider
 var _occluder_info_label: Label
 
+# Step 5 refs
+var _preview_angle_toggle: HBoxContainer
+var _show_sprite_check: CheckButton
+var _show_normal_check: CheckButton
+var _show_shadow_check: CheckButton
+var _show_occluder_check: CheckButton
+var _composite_preview_rect: TextureRect
+var _dimensions_label: Label
+var _current_preview_angle := "front"
+
 # Capture materials
 var _normal_capture_shader: Shader
 var _normal_capture_material: ShaderMaterial = null
@@ -468,6 +478,11 @@ func _go_to_step(step: int) -> void:
 		accent_hover.set_corner_radius_all(4)
 		accent_hover.set_content_margin_all(10)
 		next_button.add_theme_stylebox_override("hover", accent_hover)
+
+	# Step-specific entry logic
+	if step == 4:
+		_refresh_preview_angle_buttons()
+		_update_composite_preview()
 
 	# Update step indicator
 	if step_indicator:
@@ -1217,9 +1232,85 @@ func _build_step4(parent: VBoxContainer) -> void:
 
 
 func _build_step5(parent: VBoxContainer) -> void:
-	parent.add_child(_make_label("Step 5: Preview & Adjust (placeholder)"))
-	parent.add_child(_make_small_label(
-		"Preview final sprites with lighting, adjust occluder polygons."))
+	# ── Composite Preview Section ──────────────────────────────────────
+	var preview_sec := _make_section("Composite Preview")
+	parent.add_child(preview_sec[0])
+	var preview_content: VBoxContainer = preview_sec[1]
+
+	preview_content.add_child(_make_small_label(
+		"Preview the final sprite with all generated layers. " +
+		"Toggle layers on/off and switch between angles."))
+
+	# Angle selector toggle group — starts with just "front", rebuilt on step entry
+	preview_content.add_child(_make_label("Angle"))
+	_preview_angle_toggle = HBoxContainer.new()
+	_preview_angle_toggle.add_theme_constant_override("separation", 0)
+	preview_content.add_child(_preview_angle_toggle)
+	# Populate with a default single button
+	var default_btn := Button.new()
+	default_btn.text = "front"
+	default_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	default_btn.toggle_mode = true
+	default_btn.button_pressed = true
+	_apply_toggle_style(default_btn, true)
+	var default_sb := StyleBoxFlat.new()
+	default_sb.bg_color = C_ACCENT
+	default_sb.set_border_width_all(1)
+	default_sb.border_color = C_ACCENT
+	default_sb.set_corner_radius_all(4)
+	default_sb.set_content_margin_all(6)
+	default_btn.add_theme_stylebox_override("normal", default_sb)
+	default_btn.add_theme_stylebox_override("pressed", default_sb)
+	_preview_angle_toggle.add_child(default_btn)
+
+	# ── Layer Visibility (collapsible, start open) ─────────────────────
+	var layer_col := _make_collapsible("Layer Visibility", true)
+	preview_content.add_child(layer_col[0])
+	var layer_content: VBoxContainer = layer_col[1]
+
+	_show_sprite_check = CheckButton.new()
+	_show_sprite_check.text = "Sprite"
+	_show_sprite_check.button_pressed = true
+	_style_checkbutton_transparent(_show_sprite_check)
+	_show_sprite_check.toggled.connect(func(_on: bool) -> void: _update_composite_preview())
+	layer_content.add_child(_show_sprite_check)
+
+	_show_normal_check = CheckButton.new()
+	_show_normal_check.text = "Normal Map"
+	_show_normal_check.button_pressed = false
+	_style_checkbutton_transparent(_show_normal_check)
+	_show_normal_check.toggled.connect(func(_on: bool) -> void: _update_composite_preview())
+	layer_content.add_child(_show_normal_check)
+
+	_show_shadow_check = CheckButton.new()
+	_show_shadow_check.text = "Shadow"
+	_show_shadow_check.button_pressed = true
+	_style_checkbutton_transparent(_show_shadow_check)
+	_show_shadow_check.toggled.connect(func(_on: bool) -> void: _update_composite_preview())
+	layer_content.add_child(_show_shadow_check)
+
+	_show_occluder_check = CheckButton.new()
+	_show_occluder_check.text = "Occluder Outline"
+	_show_occluder_check.button_pressed = true
+	_style_checkbutton_transparent(_show_occluder_check)
+	_show_occluder_check.toggled.connect(func(_on: bool) -> void: _update_composite_preview())
+	layer_content.add_child(_show_occluder_check)
+
+	# ── Composite Preview TextureRect ──────────────────────────────────
+	_composite_preview_rect = TextureRect.new()
+	_composite_preview_rect.custom_minimum_size = Vector2(200, 200)
+	_composite_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_composite_preview_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_composite_preview_rect.size_flags_horizontal = SIZE_EXPAND_FILL
+	preview_content.add_child(_composite_preview_rect)
+
+	# ── Dimensions Label ───────────────────────────────────────────────
+	_dimensions_label = Label.new()
+	_dimensions_label.text = ""
+	_dimensions_label.add_theme_font_size_override("font_size", FONT_HINT)
+	_dimensions_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	_dimensions_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	preview_content.add_child(_dimensions_label)
 
 
 func _build_step6(parent: VBoxContainer) -> void:
@@ -1602,6 +1693,221 @@ func _point_line_distance(point: Vector2, line_start: Vector2, line_end: Vector2
 	var t := clampf((point - line_start).dot(line_vec) / line_len_sq, 0.0, 1.0)
 	var projection := line_start + line_vec * t
 	return point.distance_to(projection)
+
+
+#===============================================================================
+# STEP 5 — COMPOSITE PREVIEW LOGIC
+#===============================================================================
+
+## Called when the user taps an angle button in step 5.
+func _on_preview_angle_changed(angle_key: String) -> void:
+	_current_preview_angle = angle_key
+	_update_composite_preview()
+
+
+## Rebuild the angle toggle buttons to match the current angle mode.
+func _refresh_preview_angle_buttons() -> void:
+	# Determine available angles from current config
+	var angles: Array
+	if _source_mode == "3d":
+		angles = ANGLE_CONFIGS[_angle_mode]
+	else:
+		angles = [ANGLE_CONFIGS["single"][0]]
+
+	# Clear existing children
+	for child in _preview_angle_toggle.get_children():
+		child.queue_free()
+
+	# Build new toggle buttons
+	var buttons: Array[Button] = []
+	for i in range(angles.size()):
+		var angle_cfg: Dictionary = angles[i]
+		var angle_name: String = angle_cfg["name"]
+		var btn := Button.new()
+		btn.text = angle_name
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.toggle_mode = true
+		btn.button_pressed = (i == 0)
+		_apply_toggle_style(btn, i == 0)
+
+		var normal_sb := StyleBoxFlat.new()
+		normal_sb.bg_color = C_SURFACE
+		normal_sb.set_border_width_all(1)
+		normal_sb.border_color = C_BORDER
+		normal_sb.set_corner_radius_all(0)
+		normal_sb.set_content_margin_all(6)
+		if i == 0:
+			normal_sb.corner_radius_top_left = 4
+			normal_sb.corner_radius_bottom_left = 4
+		if i == angles.size() - 1:
+			normal_sb.corner_radius_top_right = 4
+			normal_sb.corner_radius_bottom_right = 4
+		btn.add_theme_stylebox_override("normal", normal_sb)
+
+		var active_sb := normal_sb.duplicate()
+		active_sb.bg_color = C_ACCENT
+		active_sb.border_color = C_ACCENT
+		btn.add_theme_stylebox_override("pressed", active_sb)
+
+		var hover_sb := normal_sb.duplicate()
+		hover_sb.bg_color = C_SURFACE_HOVER
+		btn.add_theme_stylebox_override("hover", hover_sb)
+
+		buttons.append(btn)
+		_preview_angle_toggle.add_child(btn)
+
+	# Wire callbacks (separate loop to capture button array)
+	for i in range(buttons.size()):
+		var idx := i
+		var angle_cfg: Dictionary = angles[i]
+		var angle_name: String = angle_cfg["name"]
+		buttons[i].pressed.connect(func() -> void:
+			for j in range(buttons.size()):
+				buttons[j].button_pressed = (j == idx)
+				_apply_toggle_style(buttons[j], j == idx)
+			_on_preview_angle_changed(angle_name)
+		)
+
+	# Set current angle to first
+	if angles.size() > 0:
+		_current_preview_angle = (angles[0] as Dictionary)["name"]
+	else:
+		_current_preview_angle = "front"
+
+
+## Build the composite preview image from all enabled layers for the current angle.
+func _update_composite_preview() -> void:
+	if _processed_color.is_empty():
+		_dimensions_label.text = "No processed data. Run Step 4 first."
+		_composite_preview_rect.texture = null
+		return
+
+	# Get the processed color for the current angle
+	var angle_key := _current_preview_angle
+	if not _processed_color.has(angle_key):
+		# Fallback to first available angle
+		angle_key = _processed_color.keys()[0] as String
+
+	var color_img: Image = _processed_color[angle_key]
+	var sprite_w := color_img.get_width()
+	var sprite_h := color_img.get_height()
+
+	# Determine shadow bounds to size the composite
+	var shadow_img: Image = null
+	if _processed_shadow.has(angle_key):
+		shadow_img = _processed_shadow[angle_key]
+
+	# Composite size: slightly larger than sprite to show shadow offset
+	var shadow_offset_y := 0
+	if shadow_img:
+		shadow_offset_y = int(_shadow_offset_slider.value) if _shadow_offset_slider else 2
+	var comp_w := sprite_w + 4  # 2px padding each side
+	var comp_h := sprite_h + absi(shadow_offset_y) + 4  # padding + shadow room
+	var composite := Image.create(comp_w, comp_h, false, Image.FORMAT_RGBA8)
+
+	# Fill with dark background
+	composite.fill(Color(0.2, 0.2, 0.3, 1.0))
+
+	# Origin offset: center the sprite horizontally, add top padding
+	var origin_x := 2
+	var origin_y := 2 + (absi(shadow_offset_y) if shadow_offset_y < 0 else 0)
+
+	# Layer 1: Shadow
+	if _show_shadow_check.button_pressed and shadow_img:
+		var sx := origin_x
+		var sy := origin_y + (shadow_offset_y if shadow_offset_y > 0 else 0)
+		_alpha_blend_image(composite, shadow_img, sx, sy)
+
+	# Layer 2: Sprite (color)
+	if _show_sprite_check.button_pressed:
+		_alpha_blend_image(composite, color_img, origin_x, origin_y)
+
+	# Layer 3: Normal map (replaces sprite pixels where both are opaque)
+	if _show_normal_check.button_pressed and _processed_normal.has(angle_key):
+		var normal_img: Image = _processed_normal[angle_key]
+		for y in range(normal_img.get_height()):
+			for x in range(normal_img.get_width()):
+				var nc := normal_img.get_pixel(x, y)
+				if nc.a > 0.5:
+					var cx := origin_x + x
+					var cy := origin_y + y
+					if cx >= 0 and cx < comp_w and cy >= 0 and cy < comp_h:
+						composite.set_pixel(cx, cy, Color(nc.r, nc.g, nc.b, 1.0))
+
+	# Layer 4: Occluder outline (yellow polygon lines via Bresenham)
+	if _show_occluder_check.button_pressed and _processed_occluder_points.has(angle_key):
+		var occluder_pts: PackedVector2Array = _processed_occluder_points[angle_key]
+		if occluder_pts.size() >= 2:
+			var outline_color := Color(1.0, 1.0, 0.0, 1.0)  # Yellow
+			for i in range(occluder_pts.size()):
+				var from := occluder_pts[i] + Vector2(origin_x, origin_y)
+				var to := occluder_pts[(i + 1) % occluder_pts.size()] + Vector2(origin_x, origin_y)
+				_draw_line_on_image(composite, from, to, outline_color)
+
+	# Display the composite
+	_composite_preview_rect.texture = ImageTexture.create_from_image(composite)
+
+	# Update dimensions label
+	_dimensions_label.text = "%dx%d px (angle: %s)" % [sprite_w, sprite_h, angle_key]
+
+
+## Alpha-blend a source image onto a destination at the given offset.
+func _alpha_blend_image(dest: Image, src: Image, offset_x: int, offset_y: int) -> void:
+	var dw := dest.get_width()
+	var dh := dest.get_height()
+	for y in range(src.get_height()):
+		for x in range(src.get_width()):
+			var sc := src.get_pixel(x, y)
+			if sc.a < 0.01:
+				continue
+			var dx := offset_x + x
+			var dy := offset_y + y
+			if dx < 0 or dx >= dw or dy < 0 or dy >= dh:
+				continue
+			var dc := dest.get_pixel(dx, dy)
+			# Standard alpha blending: out = src * src.a + dst * (1 - src.a)
+			var out_r := sc.r * sc.a + dc.r * (1.0 - sc.a)
+			var out_g := sc.g * sc.a + dc.g * (1.0 - sc.a)
+			var out_b := sc.b * sc.a + dc.b * (1.0 - sc.a)
+			var out_a := sc.a + dc.a * (1.0 - sc.a)
+			dest.set_pixel(dx, dy, Color(out_r, out_g, out_b, out_a))
+
+
+## Draw a line on an image using Bresenham's algorithm.
+func _draw_line_on_image(image: Image, from: Vector2, to: Vector2, color: Color) -> void:
+	var x0 := int(from.x)
+	var y0 := int(from.y)
+	var x1 := int(to.x)
+	var y1 := int(to.y)
+	var w := image.get_width()
+	var h := image.get_height()
+
+	var dx := absi(x1 - x0)
+	var dy := -absi(y1 - y0)
+	var sx := 1 if x0 < x1 else -1
+	var sy := 1 if y0 < y1 else -1
+	var err := dx + dy  # Note: dy is negative
+
+	while true:
+		# Draw pixel if within bounds
+		if x0 >= 0 and x0 < w and y0 >= 0 and y0 < h:
+			image.set_pixel(x0, y0, color)
+
+		# Check for end of line
+		if x0 == x1 and y0 == y1:
+			break
+
+		var e2 := 2 * err
+		if e2 >= dy:
+			if x0 == x1:
+				break
+			err += dy
+			x0 += sx
+		if e2 <= dx:
+			if y0 == y1:
+				break
+			err += dx
+			y0 += sy
 
 
 #===============================================================================
