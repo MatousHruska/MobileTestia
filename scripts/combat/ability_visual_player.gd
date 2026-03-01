@@ -30,9 +30,6 @@ signal effect_event(effect_id: String, context: Dictionary)
 ## Emitted on WEAPON_VISIBILITY phase
 signal weapon_visibility_changed(visible: bool)
 
-## Emitted when weapon z-order changes (from composed per-frame data)
-signal weapon_z_changed(in_front: bool)
-
 ## Emitted when any body animation phase starts (for the sprite system)
 signal play_body_animation(anim_name: String)
 
@@ -42,8 +39,11 @@ signal movement_requested(direction: String, distance: float, duration: float)
 ## Emitted when a frame with echo data is reached (for speed echo rendering)
 signal echo_requested(frame_index: int, echo_config: Dictionary)
 
-## Emitted when composed phase starts with alpha mask data (frame_index → Image)
-signal weapon_alpha_masks_changed(masks: Dictionary)
+## Emitted when composed phase starts with body clip mask data (frame_index → Image)
+signal body_clip_masks_changed(masks: Dictionary)
+
+## Emitted when composed phase starts with per-frame anchor data (frame_index → { "grip": [x,y], ... })
+signal composition_anchors_changed(anchors: Dictionary)
 
 #===============================================================================
 # STATE
@@ -160,7 +160,8 @@ func cancel() -> void:
 	_current_phase_index = -1
 	_phase_held = false
 	_in_concurrent_block = false
-	weapon_alpha_masks_changed.emit({})
+	body_clip_masks_changed.emit({})
+	composition_anchors_changed.emit({})
 	sequence_finished.emit(template_id)
 
 
@@ -222,7 +223,6 @@ func _tick_frame_timing(delta: float) -> void:
 			_check_echo_for_current_frame()
 			_check_effect_for_current_frame()
 			_check_damage_for_current_frame()
-			_check_weapon_z_for_current_frame()
 
 
 func _check_echo_for_current_frame() -> void:
@@ -261,30 +261,39 @@ func _check_damage_for_current_frame() -> void:
 		damage_event.emit()
 
 
-func _check_weapon_z_for_current_frame() -> void:
+func _emit_composition_anchors() -> void:
 	if _frame_timing_phase == null:
+		composition_anchors_changed.emit({})
 		return
-	# Always emit during composed playback so the override is active.
-	# Default to in_front=true when no explicit behind-frames data exists.
-	var behind_frames: Array = _frame_timing_phase.context_data.get("weapon_behind_frames", [])
-	var current_frame := _frame_timing_start_index + _frame_timing_index
-	var in_front := not behind_frames.has(current_frame)
-	weapon_z_changed.emit(in_front)
-
-
-func _emit_weapon_alpha_masks() -> void:
-	if _frame_timing_phase == null:
-		weapon_alpha_masks_changed.emit({})
-		return
-	var entries: Array = _frame_timing_phase.context_data.get("weapon_alpha_masks", [])
+	var entries: Array = _frame_timing_phase.context_data.get("weapon_anchors", [])
 	if entries.is_empty():
-		weapon_alpha_masks_changed.emit({})
+		composition_anchors_changed.emit({})
+		return
+	var anchors: Dictionary = {}
+	for entry in entries:
+		var data := {}
+		if entry.has("grip"):
+			data["grip"] = entry["grip"]
+		if entry.has("direction"):
+			data["direction"] = entry["direction"]
+		# Explicit int() cast — after .tres serialization, keys may become other types
+		anchors[int(entry["frame_index"])] = data
+	composition_anchors_changed.emit(anchors)
+
+
+func _emit_body_clip_masks() -> void:
+	if _frame_timing_phase == null:
+		body_clip_masks_changed.emit({})
+		return
+	var entries: Array = _frame_timing_phase.context_data.get("body_clip_masks", [])
+	if entries.is_empty():
+		body_clip_masks_changed.emit({})
 		return
 	var masks: Dictionary = {}
 	for entry in entries:
 		var img := Image.create_from_data(entry["width"], entry["height"], false, Image.FORMAT_R8, entry["data"])
 		masks[entry["frame_index"]] = img
-	weapon_alpha_masks_changed.emit(masks)
+	body_clip_masks_changed.emit(masks)
 
 
 func _tick_single_phase(delta: float) -> void:
@@ -376,8 +385,8 @@ func _execute_phase_in_slot(phase: AbilityVisualPhase, is_primary: bool) -> void
 				_check_echo_for_current_frame()
 				_check_effect_for_current_frame()
 				_check_damage_for_current_frame()
-				_check_weapon_z_for_current_frame()
-				_emit_weapon_alpha_masks()
+				_emit_body_clip_masks()
+				_emit_composition_anchors()
 			elif phase.duration > 0.0:
 				if is_primary:
 					_primary_timer = phase.duration
@@ -487,12 +496,12 @@ func _execute_phase_single(phase: AbilityVisualPhase) -> void:
 				if _sprite:
 					_sprite.speed_scale = 0.0
 					_sprite.frame = _frame_timing_start_index
-				# Check for echo, effect, damage, weapon z, and alpha masks on first frame
+				# Check for echo, effect, damage, clip masks, and anchors on first frame
 				_check_echo_for_current_frame()
 				_check_effect_for_current_frame()
 				_check_damage_for_current_frame()
-				_check_weapon_z_for_current_frame()
-				_emit_weapon_alpha_masks()
+				_emit_body_clip_masks()
+				_emit_composition_anchors()
 			elif phase.duration > 0.0:
 				_primary_timer = phase.duration
 				_primary_waiting_for_anim = false
@@ -578,7 +587,8 @@ func _finish_sequence() -> void:
 	_phase_held = false
 	_in_concurrent_block = false
 	_reset_timers()
-	weapon_alpha_masks_changed.emit({})
+	body_clip_masks_changed.emit({})
+	composition_anchors_changed.emit({})
 	sequence_finished.emit(template_id)
 
 
