@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ZoneMood" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/environment/zone_mood.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+ambient_color = Color(0.73, 0.67, 0.6, 1)
+bloom_enabled = true
+bloom_intensity = 0.3
+bloom_threshold = 0.9
+particle_type = ""
+particle_tint = Color(1, 1, 1, 1)
+realtime_shadows = false
