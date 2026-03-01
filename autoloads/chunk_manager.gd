@@ -430,6 +430,10 @@ func load_chunk(chunk_id: String, coords: Vector2i = Vector2i.ZERO) -> void:
 			_enemy_temp_storage[chunk_id].size(), chunk_id
 		])
 
+	# Ensure deferred databases (quests, NPCs, interactables, etc.) are loaded
+	# before spawning entities that depend on them
+	DatabaseLoader.ensure_deferred_loaded()
+
 	# Spawn entities for this chunk
 	if chunk_data.node:
 		_spawn_chunk_entities(chunk_id, chunk_data.node, coords)
@@ -1762,7 +1766,8 @@ func _spawn_light(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 	light.color = Color.html(color_str)
 
 	# Intensity
-	light.energy = float(data.get("intensity", 1.5))
+	var base_energy: float = float(data.get("intensity", 1.5))
+	light.energy = base_energy
 
 	# Height (for normal map interaction)
 	light.height = float(data.get("height", 50.0))
@@ -1773,6 +1778,24 @@ func _spawn_light(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 	var radius: float = float(data.get("radius", 128))
 	light.texture_scale = radius / (texture.width * 0.5)
 
+	# Shadow — enabled based on zone mood setting
+	var env_mgr = get_node_or_null("/root/EnvironmentManager")
+	if env_mgr and env_mgr.current_mood:
+		light.shadow_enabled = env_mgr.current_mood.realtime_shadows
+	else:
+		light.shadow_enabled = false
+
+	# Flicker animation based on light type
+	var light_type: String = data.get("light_type", "torch")
+	match light_type:
+		"torch", "campfire":
+			_start_flicker(light, base_energy, 0.15, 0.08)
+		"crystal":
+			_start_flicker(light, base_energy, 0.08, 2.0)
+		"lava":
+			_start_flicker(light, base_energy, 0.1, 1.5)
+		# "moonlight", "static" — no animation
+
 	# Metadata for chunk cleanup and light detection
 	light.set_meta("chunk_spawned", true)
 	light.set_meta("chunk_id", chunk_id)
@@ -1781,8 +1804,18 @@ func _spawn_light(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 
 	parent.add_child(light)
 	light.add_to_group("lights")
-	Debug.log("ChunkManager", "Spawned light at %s (color=%s, radius=%.0f)" % [world_pos, color_str, radius])
+	Debug.log("ChunkManager", "Spawned light at %s (type=%s, color=%s, radius=%.0f)" % [world_pos, light_type, color_str, radius])
 	return light
+
+
+func _start_flicker(light: PointLight2D, base_energy: float, intensity_range: float, speed: float) -> void:
+	## Animate light energy with a random flicker effect using a looping tween.
+	var tween := create_tween()
+	tween.set_loops()
+	var min_e := base_energy - intensity_range
+	var max_e := base_energy + intensity_range
+	tween.tween_property(light, "energy", max_e, speed * randf_range(0.8, 1.2)).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(light, "energy", min_e, speed * randf_range(0.8, 1.2)).set_trans(Tween.TRANS_SINE)
 
 
 ## Clean up entities when a chunk unloads

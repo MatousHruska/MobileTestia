@@ -761,7 +761,8 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 						"color": color_val if color_val != null else "#FFAA44",
 						"intensity": float(fields.get("intensity", 1.5)),
 						"radius": int(fields.get("radius", 128)),
-						"height": float(fields.get("height", 50.0))
+						"height": float(fields.get("height", 50.0)),
+						"light_type": fields.get("light_type", "torch")
 					})
 
 	return result
@@ -965,7 +966,8 @@ func _export_entities_summary(entities: Dictionary) -> void:
 			"color": light.get("color", "#FFAA44"),
 			"intensity": light.get("intensity", 1.5),
 			"radius": light.get("radius", 128),
-			"height": light.get("height", 50.0)
+			"height": light.get("height", 50.0),
+			"light_type": light.get("light_type", "torch")
 		})
 
 	# Export each zone's entities to a separate JSON file
