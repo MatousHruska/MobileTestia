@@ -120,6 +120,10 @@ var camera_target := Vector3(0.0, 1.0, 0.0)
 var _2d_info_label: Label
 var _2d_file_dialog: FileDialog = null
 
+# Step 2 refs
+var _capture_status_label: Label
+var _capture_preview_grid: GridContainer
+
 # Capture materials
 var _normal_capture_shader: Shader
 var _normal_capture_material: ShaderMaterial = null
@@ -600,6 +604,233 @@ func _on_target_y_changed(value: float) -> void:
 
 
 #===============================================================================
+# CAPTURE PIPELINE (Step 2)
+#===============================================================================
+
+const CAPTURE_OUTPUT_SIZE := 512
+
+func _start_capture() -> void:
+	## Entry point for the capture button. Guards, clears, captures, re-enables nav.
+	if current_model_instance == null:
+		_set_status("ERROR: Load a 3D model in Step 1 first.")
+		return
+
+	# Clear previous captures
+	_captured_color.clear()
+	_captured_normal.clear()
+	_captured_shadow.clear()
+
+	# Disable nav buttons during capture
+	back_button.disabled = true
+	next_button.disabled = true
+
+	_capture_status_label.text = "Capturing..."
+	_capture_status_label.add_theme_color_override("font_color", C_TEXT_SEC)
+
+	await _capture_decoration()
+
+	# Re-enable nav buttons
+	back_button.disabled = (_current_step == 0)
+	next_button.disabled = false
+
+	_capture_status_label.text = "Capture complete — %d angle(s) captured." % _captured_color.size()
+	_capture_status_label.add_theme_color_override("font_color", C_SUCCESS)
+	_set_status("Capture complete. Review thumbnails, then click Next.")
+
+
+func _capture_decoration() -> void:
+	## For each angle in the current angle mode, perform:
+	##   1. Rotate model
+	##   2. Detection pass (overscan) to find model bounds
+	##   3. Compute camera pan to center model
+	##   4. Color pass
+	##   5. Normal map pass
+	##   6. Shadow pass
+	## Results stored in _captured_color / _captured_normal / _captured_shadow.
+	var angles: Array = ANGLE_CONFIGS[_angle_mode]
+	var output_size := CAPTURE_OUTPUT_SIZE
+	var elevation := _camera_elevation_slider.value if _camera_elevation_slider else 30.0
+	var original_cam_size := camera.size
+	var original_cam_target := camera_target
+	var original_vp_size := sub_viewport.size
+
+	for angle_idx in range(angles.size()):
+		var angle_config: Dictionary = angles[angle_idx]
+		var angle_name: String = angle_config["name"]
+		var rotation_y: float = angle_config["rotation_y"]
+
+		_capture_status_label.text = "Capturing %s (%d/%d)..." % [angle_name, angle_idx + 1, angles.size()]
+
+		# 1. Rotate model to this angle
+		if current_model_instance is Node3D:
+			(current_model_instance as Node3D).rotation_degrees.y = rotation_y
+
+		# 2. Detection pass: render at overscan to find model bounds
+		var detect_size := int(output_size * CAPTURE_OVERSCAN)
+		sub_viewport.size = Vector2i(detect_size, detect_size)
+		camera.size = original_cam_size * CAPTURE_OVERSCAN
+		camera_target = original_cam_target
+		_position_camera(elevation)
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+
+		var detect_img := sub_viewport.get_texture().get_image()
+		detect_img.convert(Image.FORMAT_RGBA8)
+
+		# 3. Compute camera pan to center model
+		var cam_shift := _compute_camera_pan(detect_img, detect_size, original_cam_size * CAPTURE_OVERSCAN)
+
+		# 4. Color pass: normal zoom with centered camera
+		sub_viewport.size = Vector2i(output_size, output_size)
+		camera.size = original_cam_size
+		camera_target = original_cam_target + cam_shift
+		_position_camera(elevation)
+		await RenderingServer.frame_post_draw
+		await RenderingServer.frame_post_draw
+
+		var color_img := sub_viewport.get_texture().get_image()
+		color_img.convert(Image.FORMAT_RGBA8)
+		_captured_color[angle_name] = color_img
+
+		# 5. Normal map pass: swap materials, render, restore
+		if _normal_capture_material:
+			_save_current_materials(current_model_instance)
+			_apply_normal_capture_materials(current_model_instance)
+			await RenderingServer.frame_post_draw
+			await RenderingServer.frame_post_draw
+
+			var normal_img := sub_viewport.get_texture().get_image()
+			normal_img.convert(Image.FORMAT_RGBA8)
+			_captured_normal[angle_name] = normal_img
+
+			_restore_saved_materials()
+
+		# 6. Shadow pass: top-down camera, shadow materials, render, restore
+		if _shadow_capture_material:
+			var shadow_cam := _create_shadow_camera()
+			sub_viewport.add_child(shadow_cam)
+			shadow_cam.current = true
+
+			_save_current_materials(current_model_instance)
+			_apply_shadow_capture_materials(current_model_instance)
+			await RenderingServer.frame_post_draw
+			await RenderingServer.frame_post_draw
+
+			var shadow_img := sub_viewport.get_texture().get_image()
+			shadow_img.convert(Image.FORMAT_RGBA8)
+			_captured_shadow[angle_name] = shadow_img
+
+			_restore_saved_materials()
+			shadow_cam.queue_free()
+			camera.current = true
+
+	# Restore model rotation and camera settings
+	if current_model_instance is Node3D:
+		(current_model_instance as Node3D).rotation_degrees.y = 0.0
+
+	sub_viewport.size = original_vp_size
+	camera.size = original_cam_size
+	camera_target = original_cam_target
+	_position_camera(elevation)
+
+	_update_capture_preview()
+
+
+func _compute_camera_pan(detect_img: Image, detect_size: int, detect_cam_size: float) -> Vector3:
+	## Given a detection-pass render (wider view), find the bounding box of opaque
+	## pixels and compute a world-space camera shift to center the model.
+	## Returns Vector3.ZERO if no shift is needed.
+	var w := detect_img.get_width()
+	var h := detect_img.get_height()
+	var min_x := w
+	var min_y := h
+	var max_x := 0
+	var max_y := 0
+
+	for y in range(h):
+		for x in range(w):
+			if detect_img.get_pixel(x, y).a > 0.1:
+				if x < min_x:
+					min_x = x
+				if x > max_x:
+					max_x = x
+				if y < min_y:
+					min_y = y
+				if y > max_y:
+					max_y = y
+
+	# No opaque pixels — no shift needed
+	if max_x < min_x:
+		return Vector3.ZERO
+
+	# Bounding box center offset from viewport center (in pixels)
+	var center_px_x := (min_x + max_x) / 2.0
+	var center_px_y := (min_y + max_y) / 2.0
+	var offset_px_x := center_px_x - detect_size / 2.0
+	var offset_px_y := center_px_y - detect_size / 2.0
+
+	# If offset is small (model is already centered), skip the shift
+	var threshold := detect_size * 0.02  # ~2% of viewport = no meaningful shift
+	if absf(offset_px_x) < threshold and absf(offset_px_y) < threshold:
+		return Vector3.ZERO
+
+	# Convert pixel offset to world units using the camera's orientation.
+	# For orthogonal camera: 1 pixel = cam_size / viewport_size world units.
+	var world_per_pixel := detect_cam_size / float(detect_size)
+	var cam_right := camera.global_transform.basis.x
+	var cam_up := camera.global_transform.basis.y
+
+	# Screen-right = camera-right, screen-down = negative camera-up
+	return cam_right * (offset_px_x * world_per_pixel) - cam_up * (offset_px_y * world_per_pixel)
+
+
+func _create_shadow_camera() -> Camera3D:
+	## Create a temporary top-down orthographic camera for shadow capture.
+	var shadow_cam := Camera3D.new()
+	shadow_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	shadow_cam.size = camera.size  # Match main camera's view width
+	shadow_cam.far = 100.0
+	shadow_cam.position = camera_target + Vector3(0.0, 10.0, 0.0)  # High above
+	shadow_cam.rotation_degrees = Vector3(-90.0, 0.0, 0.0)  # Look straight down
+	return shadow_cam
+
+
+func _update_capture_preview() -> void:
+	## Clear and rebuild the capture preview grid with thumbnails for each angle.
+	# Clear existing children
+	for child in _capture_preview_grid.get_children():
+		child.queue_free()
+
+	# Add thumbnails for each captured angle
+	var angles: Array = ANGLE_CONFIGS[_angle_mode]
+	for angle_config in angles:
+		var angle_name: String = angle_config["name"]
+		if not _captured_color.has(angle_name):
+			continue
+
+		var vbox := VBoxContainer.new()
+		vbox.add_theme_constant_override("separation", 4)
+		vbox.size_flags_horizontal = SIZE_EXPAND_FILL
+
+		var lbl := Label.new()
+		lbl.text = angle_name.capitalize()
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl.add_theme_font_size_override("font_size", FONT_HINT)
+		lbl.add_theme_color_override("font_color", C_TEXT_SEC)
+		vbox.add_child(lbl)
+
+		var tex_rect := TextureRect.new()
+		tex_rect.texture = ImageTexture.create_from_image(_captured_color[angle_name])
+		tex_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex_rect.custom_minimum_size = Vector2(120, 120)
+		tex_rect.size_flags_horizontal = SIZE_EXPAND_FILL
+		vbox.add_child(tex_rect)
+
+		_capture_preview_grid.add_child(vbox)
+
+
+#===============================================================================
 # MATERIAL HELPERS
 #===============================================================================
 
@@ -781,9 +1012,31 @@ func _build_step1(parent: VBoxContainer) -> void:
 
 
 func _build_step2(parent: VBoxContainer) -> void:
-	parent.add_child(_make_label("Step 2: Capture / Import (placeholder)"))
-	parent.add_child(_make_small_label(
-		"Capture color, normal, and shadow images from 3D model at selected angles."))
+	var sec := _make_section("3D Capture")
+	parent.add_child(sec[0])
+	var content: VBoxContainer = sec[1]
+
+	content.add_child(_make_small_label(
+		"Capture color, normal map, and shadow images from the 3D model at each selected viewing angle."))
+
+	var capture_btn := _make_primary_button("Capture All Angles")
+	capture_btn.pressed.connect(_start_capture)
+	content.add_child(capture_btn)
+
+	_capture_status_label = Label.new()
+	_capture_status_label.text = ""
+	_capture_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_capture_status_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	_capture_status_label.add_theme_font_size_override("font_size", FONT_HINT)
+	_capture_status_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	content.add_child(_capture_status_label)
+
+	_capture_preview_grid = GridContainer.new()
+	_capture_preview_grid.columns = 2
+	_capture_preview_grid.add_theme_constant_override("h_separation", 8)
+	_capture_preview_grid.add_theme_constant_override("v_separation", 8)
+	_capture_preview_grid.size_flags_horizontal = SIZE_EXPAND_FILL
+	content.add_child(_capture_preview_grid)
 
 
 func _build_step3(parent: VBoxContainer) -> void:
