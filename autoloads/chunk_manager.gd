@@ -1806,6 +1806,11 @@ func _spawn_light(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 			_start_flicker(light, base_energy, 0.1, 1.5)
 		# "moonlight", "static" — no animation
 
+	# Torch spark particles
+	if light_type in ["torch", "campfire"]:
+		var sparks := _create_torch_sparks()
+		light.add_child(sparks)
+
 	# Metadata for chunk cleanup and light detection
 	light.set_meta("chunk_spawned", true)
 	light.set_meta("chunk_id", chunk_id)
@@ -1826,6 +1831,40 @@ func _start_flicker(light: PointLight2D, base_energy: float, intensity_range: fl
 	var max_e := base_energy + intensity_range
 	tween.tween_property(light, "energy", max_e, speed * randf_range(0.8, 1.2)).set_trans(Tween.TRANS_SINE)
 	tween.tween_property(light, "energy", min_e, speed * randf_range(0.8, 1.2)).set_trans(Tween.TRANS_SINE)
+
+
+func _create_torch_sparks() -> GPUParticles2D:
+	var particles := GPUParticles2D.new()
+	particles.name = "TorchSparks"
+	particles.amount = 5
+	particles.lifetime = 1.0
+	particles.visibility_rect = Rect2(-32, -64, 64, 80)
+
+	var mat := ParticleProcessMaterial.new()
+	mat.direction = Vector3(0, -1, 0)
+	mat.spread = 30.0
+	mat.gravity = Vector3(0, -20, 0)
+	mat.initial_velocity_min = 10.0
+	mat.initial_velocity_max = 25.0
+	mat.scale_min = 0.3
+	mat.scale_max = 0.8
+
+	# Orange to red fade
+	var gradient := Gradient.new()
+	gradient.set_color(0, Color(1.0, 0.7, 0.2, 0.9))
+	gradient.set_color(1, Color(1.0, 0.3, 0.1, 0.0))
+	var gradient_tex := GradientTexture1D.new()
+	gradient_tex.gradient = gradient
+	mat.color_ramp = gradient_tex
+
+	particles.process_material = mat
+
+	# Tiny dot texture
+	var img := Image.create(3, 3, false, Image.FORMAT_RGBA8)
+	img.fill(Color.WHITE)
+	particles.texture = ImageTexture.create_from_image(img)
+
+	return particles
 
 
 ## Clean up entities when a chunk unloads
