@@ -727,6 +727,7 @@ func _capture_decoration() -> void:
 	var original_cam_size := camera.size
 	var original_cam_target := camera_target
 	var original_vp_size := sub_viewport.size
+	preview_container.stretch = false
 
 	for angle_idx in range(angles.size()):
 		var angle_config: Dictionary = angles[angle_idx]
@@ -806,6 +807,7 @@ func _capture_decoration() -> void:
 	camera.size = original_cam_size
 	camera_target = original_cam_target
 	_position_camera(elevation)
+	preview_container.stretch = true
 
 	_update_capture_preview()
 
@@ -2069,10 +2071,10 @@ func _update_composite_preview() -> void:
 	var origin_x := 2
 	var origin_y := 2 + (absi(shadow_offset_y) if shadow_offset_y < 0 else 0)
 
-	# Layer 1: Shadow
+	# Layer 1: Shadow (offset is already baked into the shadow image pixels)
 	if _show_shadow_check.button_pressed and shadow_img:
 		var sx := origin_x
-		var sy := origin_y + (shadow_offset_y if shadow_offset_y > 0 else 0)
+		var sy := origin_y - (absi(shadow_offset_y) if shadow_offset_y < 0 else 0)
 		_alpha_blend_image(composite, shadow_img, sx, sy)
 
 	# Layer 2: Sprite (color)
