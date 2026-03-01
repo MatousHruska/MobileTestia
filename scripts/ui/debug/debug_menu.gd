@@ -158,6 +158,15 @@ func _build_ui() -> void:
 	_add_action_button("Print Talent State", _on_talent_print_state)
 	_end_section()
 
+	# ── ENVIRONMENT section ──
+	_begin_section("environment", "ENVIRONMENT")
+	_add_action_button("Deep Cave Mood", _on_mood_deep_cave)
+	_add_action_button("Snowy Mountain Mood", _on_mood_snowy_mountain)
+	_add_action_button("Lava Cave Mood", _on_mood_lava_cave)
+	_add_action_button("Town Safe Mood", _on_mood_town_safe)
+	_add_action_button("Clear Mood", _on_mood_clear)
+	_end_section()
+
 	# ── LOG SETTINGS section ──
 	_begin_section("log_settings", "LOG SETTINGS")
 	_add_action_button("Cycle Log Level", _on_cycle_log_level)
@@ -488,6 +497,32 @@ func _on_respawn_all_enemies() -> void:
 			spawn_point.force_spawn()
 			count += 1
 	Debug.info("Debug", "Respawned enemies on %d spawn points" % count)
+
+
+## ─── ENVIRONMENT ─────────────────────────────────────────────────────────────
+
+func _on_mood_deep_cave() -> void:
+	var mood := load("res://resources/zone_moods/deep_cave.tres") as ZoneMood
+	if mood:
+		EnvironmentManager.apply_mood(mood)
+
+func _on_mood_snowy_mountain() -> void:
+	var mood := load("res://resources/zone_moods/snowy_mountain.tres") as ZoneMood
+	if mood:
+		EnvironmentManager.apply_mood(mood)
+
+func _on_mood_lava_cave() -> void:
+	var mood := load("res://resources/zone_moods/lava_cave.tres") as ZoneMood
+	if mood:
+		EnvironmentManager.apply_mood(mood)
+
+func _on_mood_town_safe() -> void:
+	var mood := load("res://resources/zone_moods/town_safe.tres") as ZoneMood
+	if mood:
+		EnvironmentManager.apply_mood(mood)
+
+func _on_mood_clear() -> void:
+	EnvironmentManager.clear_mood()
 
 
 ## ─── LOG SETTINGS ────────────────────────────────────────────────────────────
