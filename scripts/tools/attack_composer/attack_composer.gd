@@ -65,14 +65,14 @@ var _pan_dragging: bool = false
 var _pan_drag_start: Vector2 = Vector2.ZERO
 var _zoom_label: Label = null
 
-# ── Alpha painting state (weapon) ────────────────────────────────────
-var _alpha_paint_enabled: bool = false
-var _alpha_paint_value: int = 128
-var _alpha_brush_size: int = 1
-var _alpha_draw_check: CheckButton = null
-var _alpha_buttons_container: VBoxContainer = null
-var _alpha_buttons: Array[Button] = []
-var _alpha_brush_buttons: Array[Button] = []
+# ── Body clip mask painting state ────────────────────────────────────
+var _body_clip_paint_enabled: bool = false
+var _body_clip_brush_size: int = 1
+var _body_clip_paint_erase: bool = false  # false=paint clip, true=erase clip
+var _body_clip_draw_check: CheckButton = null
+var _body_clip_auto_check: CheckButton = null
+var _body_clip_buttons_container: VBoxContainer = null
+var _body_clip_brush_buttons: Array[Button] = []
 
 # ── Alpha painting state (effect) ────────────────────────────────────
 var _effect_alpha_paint_enabled: bool = false
@@ -103,7 +103,6 @@ var _duration_spinbox: SpinBox
 var _fps_label: Label
 var _total_duration_label: Label
 var _weapon_check: CheckButton
-var _weapon_z_front_check: CheckButton
 var _weapon_dropdown: OptionButton
 var _effect_dropdown: OptionButton
 var _effect_anchor_dropdown: OptionButton
@@ -289,8 +288,9 @@ func _push_undo() -> void:
 		seq_copy.damage_frame = src_seq.damage_frame
 		for frame in src_seq.frames:
 			var frame_copy := frame.duplicate()
-			if frame.alpha_mask != null:
-				frame_copy.alpha_mask = frame.alpha_mask.duplicate()
+			if frame.body_clip_mask != null:
+				frame_copy.body_clip_mask = frame.body_clip_mask.duplicate()
+			frame_copy.body_clip_auto = frame.body_clip_auto
 			if frame.effect_alpha_mask != null:
 				frame_copy.effect_alpha_mask = frame.effect_alpha_mask.duplicate()
 			seq_copy.frames.append(frame_copy)
@@ -1068,14 +1068,6 @@ func _build_weapon_subsection() -> void:
 	_weapon_check.toggled.connect(_on_weapon_toggled)
 	section.add_child(_weapon_check)
 
-	# Weapon z-index (in front / behind body)
-	_weapon_z_front_check = CheckButton.new()
-	_weapon_z_front_check.text = "Weapon In Front"
-	_weapon_z_front_check.add_theme_font_size_override("font_size", FONT_LABEL)
-	_weapon_z_front_check.add_theme_color_override("font_color", C_TEXT_SEC)
-	_weapon_z_front_check.toggled.connect(_on_weapon_z_front_toggled)
-	section.add_child(_weapon_z_front_check)
-
 	# Weapon selector dropdown
 	section.add_child(_make_label("Weapon"))
 	_weapon_dropdown = _make_option_button()
@@ -1127,101 +1119,88 @@ func _build_weapon_subsection() -> void:
 	dir_legend.add_theme_font_size_override("font_size", FONT_HINT)
 	anchor_legend.add_child(dir_legend)
 
-	# ── Draw Alpha toggle and controls ──
-	_alpha_draw_check = CheckButton.new()
-	_alpha_draw_check.text = "Draw Alpha"
-	_alpha_draw_check.add_theme_font_size_override("font_size", FONT_LABEL)
-	_alpha_draw_check.add_theme_color_override("font_color", C_TEXT_SEC)
-	_alpha_draw_check.toggled.connect(_on_alpha_draw_toggled)
-	section.add_child(_alpha_draw_check)
+	# ── Body Clip Mask toggle and controls ──
+	_body_clip_draw_check = CheckButton.new()
+	_body_clip_draw_check.text = "Body Clip Mask"
+	_body_clip_draw_check.add_theme_font_size_override("font_size", FONT_LABEL)
+	_body_clip_draw_check.add_theme_color_override("font_color", C_TEXT_SEC)
+	_body_clip_draw_check.toggled.connect(_on_body_clip_draw_toggled)
+	section.add_child(_body_clip_draw_check)
 
-	_alpha_buttons_container = VBoxContainer.new()
-	_alpha_buttons_container.add_theme_constant_override("separation", 4)
-	_alpha_buttons_container.visible = false
-	section.add_child(_alpha_buttons_container)
+	_body_clip_buttons_container = VBoxContainer.new()
+	_body_clip_buttons_container.add_theme_constant_override("separation", 4)
+	_body_clip_buttons_container.visible = false
+	section.add_child(_body_clip_buttons_container)
 
-	# Alpha level buttons row
-	var alpha_levels_hbox := HBoxContainer.new()
-	alpha_levels_hbox.add_theme_constant_override("separation", 4)
-	_alpha_buttons_container.add_child(alpha_levels_hbox)
+	# Auto-generate toggle
+	_body_clip_auto_check = CheckButton.new()
+	_body_clip_auto_check.text = "Auto from Body"
+	_body_clip_auto_check.add_theme_font_size_override("font_size", FONT_LABEL)
+	_body_clip_auto_check.add_theme_color_override("font_color", C_TEXT_SEC)
+	_body_clip_auto_check.toggled.connect(_on_body_clip_auto_toggled)
+	_body_clip_buttons_container.add_child(_body_clip_auto_check)
 
-	var alpha_values: Array[Dictionary] = [
-		{"label": "0%", "value": 0},
-		{"label": "25%", "value": 64},
-		{"label": "50%", "value": 128},
-		{"label": "75%", "value": 191},
-		{"label": "100%", "value": 255},
-	]
-	_alpha_buttons.clear()
-	for entry in alpha_values:
-		var alpha_btn := Button.new()
-		alpha_btn.text = entry["label"]
-		alpha_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-		alpha_btn.custom_minimum_size.y = 28
-		alpha_btn.add_theme_font_size_override("font_size", FONT_HINT)
-		var alpha_sb := StyleBoxFlat.new()
-		alpha_sb.bg_color = Color(1, 1, 1, entry["value"] / 255.0)
-		alpha_sb.border_width_left = 1
-		alpha_sb.border_width_right = 1
-		alpha_sb.border_width_top = 1
-		alpha_sb.border_width_bottom = 1
-		alpha_sb.border_color = C_BORDER
-		alpha_sb.corner_radius_top_left = 3
-		alpha_sb.corner_radius_top_right = 3
-		alpha_sb.corner_radius_bottom_left = 3
-		alpha_sb.corner_radius_bottom_right = 3
-		alpha_btn.add_theme_stylebox_override("normal", alpha_sb)
-		# Dark text for light backgrounds, light text for dark backgrounds
-		if entry["value"] > 128:
-			alpha_btn.add_theme_color_override("font_color", Color.BLACK)
-		else:
-			alpha_btn.add_theme_color_override("font_color", Color.WHITE)
-		alpha_btn.pressed.connect(_on_alpha_level_btn.bind(entry["value"]))
-		alpha_levels_hbox.add_child(alpha_btn)
-		_alpha_buttons.append(alpha_btn)
+	# Paint/Erase toggle row
+	var clip_mode_hbox := HBoxContainer.new()
+	clip_mode_hbox.add_theme_constant_override("separation", 4)
+	_body_clip_buttons_container.add_child(clip_mode_hbox)
+	var paint_btn := Button.new()
+	paint_btn.text = "Paint Clip"
+	paint_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	paint_btn.custom_minimum_size.y = 28
+	paint_btn.add_theme_font_size_override("font_size", FONT_HINT)
+	paint_btn.pressed.connect(func(): _body_clip_paint_erase = false)
+	clip_mode_hbox.add_child(paint_btn)
+	var erase_btn := Button.new()
+	erase_btn.text = "Erase Clip"
+	erase_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	erase_btn.custom_minimum_size.y = 28
+	erase_btn.add_theme_font_size_override("font_size", FONT_HINT)
+	erase_btn.pressed.connect(func(): _body_clip_paint_erase = true)
+	clip_mode_hbox.add_child(erase_btn)
 
 	# Brush size buttons row
-	var brush_label := Label.new()
-	brush_label.text = "Brush Size"
-	brush_label.add_theme_font_size_override("font_size", FONT_HINT)
-	brush_label.add_theme_color_override("font_color", C_TEXT_DIM)
-	_alpha_buttons_container.add_child(brush_label)
+	var clip_brush_label := Label.new()
+	clip_brush_label.text = "Brush Size"
+	clip_brush_label.add_theme_font_size_override("font_size", FONT_HINT)
+	clip_brush_label.add_theme_color_override("font_color", C_TEXT_DIM)
+	_body_clip_buttons_container.add_child(clip_brush_label)
 
-	var brush_hbox := HBoxContainer.new()
-	brush_hbox.add_theme_constant_override("separation", 4)
-	_alpha_buttons_container.add_child(brush_hbox)
+	var clip_brush_hbox := HBoxContainer.new()
+	clip_brush_hbox.add_theme_constant_override("separation", 4)
+	_body_clip_buttons_container.add_child(clip_brush_hbox)
 
-	_alpha_brush_buttons.clear()
+	_body_clip_brush_buttons.clear()
 	for bsize in [1, 3, 5]:
 		var brush_btn := Button.new()
 		brush_btn.text = "%dpx" % bsize
 		brush_btn.size_flags_horizontal = SIZE_EXPAND_FILL
 		brush_btn.custom_minimum_size.y = 28
 		brush_btn.add_theme_font_size_override("font_size", FONT_HINT)
-		brush_btn.pressed.connect(_on_alpha_brush_size.bind(bsize))
-		brush_hbox.add_child(brush_btn)
-		_alpha_brush_buttons.append(brush_btn)
-	_update_alpha_brush_highlight()
+		brush_btn.pressed.connect(_on_body_clip_brush_size.bind(bsize))
+		clip_brush_hbox.add_child(brush_btn)
+		_body_clip_brush_buttons.append(brush_btn)
+	_update_body_clip_brush_highlight()
 
 	# Hint label
-	var alpha_hint := Label.new()
-	alpha_hint.text = "L-click on weapon to paint alpha"
-	alpha_hint.add_theme_font_size_override("font_size", FONT_HINT)
-	alpha_hint.add_theme_color_override("font_color", C_TEXT_DIM)
-	_alpha_buttons_container.add_child(alpha_hint)
+	var clip_hint := Label.new()
+	clip_hint.text = "L-click on body to paint/erase clip region"
+	clip_hint.add_theme_font_size_override("font_size", FONT_HINT)
+	clip_hint.add_theme_color_override("font_color", C_TEXT_DIM)
+	_body_clip_buttons_container.add_child(clip_hint)
 
 	# Action buttons row
-	var alpha_actions_hbox := HBoxContainer.new()
-	alpha_actions_hbox.add_theme_constant_override("separation", 4)
-	_alpha_buttons_container.add_child(alpha_actions_hbox)
+	var clip_actions_hbox := HBoxContainer.new()
+	clip_actions_hbox.add_theme_constant_override("separation", 4)
+	_body_clip_buttons_container.add_child(clip_actions_hbox)
 
-	var clear_mask_btn := _make_button("Clear Mask", _on_clear_frame_alpha)
-	clear_mask_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	alpha_actions_hbox.add_child(clear_mask_btn)
+	var clear_clip_btn := _make_button("Clear Mask", _on_clear_body_clip)
+	clear_clip_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	clip_actions_hbox.add_child(clear_clip_btn)
 
-	var copy_next_btn := _make_button("Copy \u2192 Next", _on_copy_alpha_to_next)
-	copy_next_btn.size_flags_horizontal = SIZE_EXPAND_FILL
-	alpha_actions_hbox.add_child(copy_next_btn)
+	var copy_clip_btn := _make_button("Copy \u2192 Next", _on_copy_body_clip_to_next)
+	copy_clip_btn.size_flags_horizontal = SIZE_EXPAND_FILL
+	clip_actions_hbox.add_child(copy_clip_btn)
 
 
 func _build_effect_subsection() -> void:
@@ -1651,6 +1630,8 @@ func _on_load_pressed() -> void:
 	_load_info_label.text = "Loaded: %s (%d frames, %dx%d)" % [anim_folder, frame_count, _frame_size.x, _frame_size.y]
 	_set_status("Spritesheet loaded. %d frames at %dx%d." % [frame_count, _frame_size.x, _frame_size.y])
 
+	# Restore anchor pixels from SpriteFrames metadata (for stripped PNGs)
+	_repaint_anchors_from_metadata()
 	_on_spritesheet_loaded()
 
 
@@ -1850,36 +1831,65 @@ func _update_weapon_preview() -> void:
 	else:
 		_weapon_sprite.offset = Vector2.ZERO
 
-	# Apply per-frame alpha mask visualization
-	var global_mask: Image = _weapon_set.get("alpha_mask")
-	var frame_mask: Image = frame.alpha_mask
+	# Apply body clip mask visualization
+	var clip_mask: Image = null
+	if frame.body_clip_auto:
+		# Auto-generate from body frame alpha
+		var body_images: Array = _frame_images.get(_preview_direction, [])
+		if _preview_frame_index >= 0 and _preview_frame_index < body_images.size():
+			clip_mask = CompositionConverter._generate_body_clip_mask(body_images[_preview_frame_index])
+	elif frame.body_clip_mask != null:
+		clip_mask = frame.body_clip_mask
 
-	if global_mask != null or frame_mask != null:
+	if clip_mask != null:
+		# Clip weapon preview: hide weapon pixels that overlap body clip region
 		var base_img := weapon_tex.get_image()
 		if base_img != null:
 			var composited := base_img.duplicate()
-			for y in range(composited.get_height()):
-				for x in range(composited.get_width()):
-					var alpha_mult := 1.0
-					if global_mask != null and x < global_mask.get_width() and y < global_mask.get_height():
-						alpha_mult *= global_mask.get_pixel(x, y).r
-					if frame_mask != null and x < frame_mask.get_width() and y < frame_mask.get_height():
-						alpha_mult *= frame_mask.get_pixel(x, y).r
-					if alpha_mult < 0.99:
-						var px: Color = composited.get_pixel(x, y)
-						px.a *= alpha_mult
-						composited.set_pixel(x, y, px)
+			var body_size := Vector2(_frame_size)
+			var wp_rot := _weapon_sprite.rotation
+			var wp_ofs := _weapon_sprite.offset
+			# Weapon position relative to body center (in pixel space)
+			var wp_pos := grip_px - body_size / 2.0
+			for wy in range(composited.get_height()):
+				for wx in range(composited.get_width()):
+					var wpx: Color = composited.get_pixel(wx, wy)
+					if wpx.a < 0.01:
+						continue
+					var weapon_local := Vector2(wx, wy) - Vector2(composited.get_width(), composited.get_height()) / 2.0 + wp_ofs
+					var body_local: Vector2 = weapon_local.rotated(wp_rot) + wp_pos
+					var body_px := Vector2i(
+						int(body_local.x + body_size.x / 2.0),
+						int(body_local.y + body_size.y / 2.0)
+					)
+					if body_px.x < 0 or body_px.x >= int(body_size.x):
+						continue
+					if body_px.y < 0 or body_px.y >= int(body_size.y):
+						continue
+					if body_px.x >= clip_mask.get_width() or body_px.y >= clip_mask.get_height():
+						continue
+					if clip_mask.get_pixel(body_px.x, body_px.y).r > 0.5:
+						wpx.a = 0.0
+						composited.set_pixel(wx, wy, wpx)
 			_weapon_sprite.texture = ImageTexture.create_from_image(composited)
 
-	# Z-index preview: "behind" shown as semi-transparent instead of z=-1,
-	# because the preview body is a single sprite so z=-1 hides the weapon entirely.
-	# In-game, layered body parts allow true partial occlusion.
-	if frame.weapon_z_front:
-		_weapon_sprite.z_index = 1
-		_weapon_sprite.modulate = Color(1.0, 1.0, 1.0, 0.9)
-	else:
-		_weapon_sprite.z_index = 1
-		_weapon_sprite.modulate = Color(0.6, 0.6, 1.0, 0.4)
+	# Tinted overlay on body sprite to show clip regions when painting is active
+	if _body_clip_paint_enabled and clip_mask != null:
+		var body_images_for_overlay: Array = _frame_images.get(_preview_direction, [])
+		if _preview_frame_index >= 0 and _preview_frame_index < body_images_for_overlay.size():
+			var body_img: Image = body_images_for_overlay[_preview_frame_index].duplicate()
+			for y in range(mini(body_img.get_height(), clip_mask.get_height())):
+				for x in range(mini(body_img.get_width(), clip_mask.get_width())):
+					if clip_mask.get_pixel(x, y).r > 0.5:
+						var px: Color = body_img.get_pixel(x, y)
+						# Tint clipped body pixels red
+						px = px.lerp(Color(1.0, 0.2, 0.2, px.a), 0.4)
+						body_img.set_pixel(x, y, px)
+			_preview_sprite.texture = ImageTexture.create_from_image(body_img)
+
+	# Weapon always in front — no z-ordering toggle
+	_weapon_sprite.z_index = 1
+	_weapon_sprite.modulate = Color(1.0, 1.0, 1.0, 0.9)
 	var angle_deg := rad_to_deg(_weapon_sprite.rotation)
 	_weapon_debug = "OK %.0fdeg pos=%s" % [angle_deg, str(_weapon_sprite.position)]
 
@@ -1903,6 +1913,56 @@ func _find_anchors_in_image(img: Image) -> Dictionary:
 ## Compare two colors by RGB channels only, ignoring alpha.
 func _rgb_approx(a: Color, b: Color) -> bool:
 	return absf(a.r - b.r) < 0.02 and absf(a.g - b.g) < 0.02 and absf(a.b - b.b) < 0.02
+
+
+## Re-paint anchor pixels from SpriteFrames metadata onto loaded body images.
+## After PNGs are stripped of colored pixels, this restores them for editing.
+func _repaint_anchors_from_metadata() -> void:
+	if _frame_images.is_empty() or _current_anim.is_empty():
+		return
+	# Try to load the SpriteFrames resource that may contain anchor metadata
+	var sf_path := "res://resources/player_sprites.tres"
+	if not ResourceLoader.exists(sf_path):
+		return
+	var sf: SpriteFrames = load(sf_path)
+	if sf == null:
+		return
+	var anchor_data: Dictionary = sf.get_meta("anchor_data", {})
+	if anchor_data.is_empty():
+		return
+
+	var total_repainted := 0
+	for direction in DIRECTIONS:
+		if not _frame_images.has(direction):
+			continue
+		# Build the animation name: {anim_folder_lowercase}_{direction}
+		var anim_name := _current_anim.to_lower() + "_" + direction
+		var anim_anchors: Dictionary = anchor_data.get(anim_name, {})
+		if anim_anchors.is_empty():
+			continue
+		var dir_repainted := 0
+		var images: Array = _frame_images[direction]
+		for fi in range(images.size()):
+			var frame_data: Dictionary = anim_anchors.get(str(fi), {})
+			if frame_data.has("grip"):
+				var gp: Array = frame_data["grip"]
+				if gp[0] >= 0 and gp[0] < images[fi].get_width() and gp[1] >= 0 and gp[1] < images[fi].get_height():
+					images[fi].set_pixel(gp[0], gp[1], WEAPON_ANCHOR_COLOR)
+					dir_repainted += 1
+			if frame_data.has("direction"):
+				var dp: Array = frame_data["direction"]
+				if dp[0] >= 0 and dp[0] < images[fi].get_width() and dp[1] >= 0 and dp[1] < images[fi].get_height():
+					images[fi].set_pixel(dp[0], dp[1], WEAPON_DIRECTION_COLOR)
+					dir_repainted += 1
+		# Refresh textures only for directions that had pixels repainted
+		if dir_repainted > 0 and _frame_textures.has(direction):
+			var new_textures: Array[ImageTexture] = []
+			for img: Image in images:
+				new_textures.append(ImageTexture.create_from_image(img))
+			_frame_textures[direction] = new_textures
+		total_repainted += dir_repainted
+	if total_repainted > 0:
+		_set_status("Restored %d anchor pixels from SpriteFrames metadata." % total_repainted)
 
 
 func _update_echo_preview() -> void:
@@ -2235,7 +2295,8 @@ func _update_frame_props_ui() -> void:
 	_duration_spinbox.set_value_no_signal(frame.duration_ms)
 	_fps_label.text = "~ %.1f fps" % (1000.0 / maxf(frame.duration_ms, 1))
 	_weapon_check.set_pressed_no_signal(frame.weapon_visible)
-	_weapon_z_front_check.set_pressed_no_signal(frame.weapon_z_front)
+	if _body_clip_auto_check:
+		_body_clip_auto_check.set_pressed_no_signal(frame.body_clip_auto)
 	_echo_check.set_pressed_no_signal(frame.echo_enabled)
 	_echo_settings_container.visible = frame.echo_enabled
 	_echo_count_spin.set_value_no_signal(frame.echo_count)
@@ -2337,12 +2398,6 @@ func _on_duration_changed(value: float) -> void:
 
 func _on_weapon_toggled(pressed: bool) -> void:
 	_apply_to_target_frames(func(frame: CompositionFrame): frame.weapon_visible = pressed)
-	_update_preview_frame()
-	_timeline_panel.queue_redraw()
-
-
-func _on_weapon_z_front_toggled(pressed: bool) -> void:
-	_apply_to_target_frames(func(frame: CompositionFrame): frame.weapon_z_front = pressed)
 	_update_preview_frame()
 	_timeline_panel.queue_redraw()
 
@@ -2457,7 +2512,8 @@ func _on_generate_runtime() -> void:
 		_set_status("No composition loaded.")
 		return
 	var template_id := _get_runtime_template_id()
-	var data := CompositionConverter.convert(_current_composition, _preview_direction)
+	var images: Array = _frame_images.get(_preview_direction, [])
+	var data := CompositionConverter.convert(_current_composition, _preview_direction, images)
 	data.template_id = template_id
 	var output := CompositionConverter.phases_to_string(data)
 	print("=== Generated Runtime Data for '%s' dir=%s (template: %s) ===" % [_current_composition.composition_id, _preview_direction, template_id])
@@ -2500,7 +2556,8 @@ func _on_save_runtime() -> void:
 	var template_id := _get_runtime_template_id()
 	var saved_count := 0
 	for dir_name in AttackCompositionData.DIRECTIONS:
-		var data := CompositionConverter.convert(_current_composition, dir_name)
+		var images: Array = _frame_images.get(dir_name, [])
+		var data := CompositionConverter.convert(_current_composition, dir_name, images)
 		data.template_id = template_id
 		var path := "%s/%s_%s.tres" % [SEQUENCES_DIR, template_id, dir_name]
 		var err := ResourceSaver.save(data, path)
@@ -2655,6 +2712,8 @@ func _on_load_composition_pressed() -> void:
 	_template_id_input.text = comp.runtime_template_id
 
 	_load_info_label.text = "Loaded: %s (%d frames, %dx%d)" % [anim_folder, frame_count, _frame_size.x, _frame_size.y]
+	# Restore anchor pixels from SpriteFrames metadata (for stripped PNGs)
+	_repaint_anchors_from_metadata()
 	_on_spritesheet_loaded()
 	_set_status("Loaded composition '%s' with spritesheets." % composition_id)
 
@@ -2703,17 +2762,17 @@ func _on_preview_viewport_input(event: InputEvent) -> void:
 		_viewport_container_ref.accept_event()
 		return
 
-	# Alpha painting mode — weapon (handles click + drag)
-	if _alpha_paint_enabled:
+	# Body clip mask painting mode (handles click + drag)
+	if _body_clip_paint_enabled:
 		var is_click: bool = event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
 		var is_drag: bool = event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
 		if is_click or is_drag:
 			var pos: Vector2 = event.position
-			var weapon_px := _viewport_to_weapon_pixel(pos)
-			if weapon_px != Vector2i(-1, -1):
+			var body_px := _viewport_to_body_pixel(pos)
+			if body_px != Vector2i(-1, -1):
 				if is_click:
 					_push_undo()
-				_paint_weapon_alpha(weapon_px.x, weapon_px.y)
+				_paint_body_clip(body_px.x, body_px.y)
 				_viewport_container_ref.accept_event()
 			return
 
@@ -2843,56 +2902,60 @@ func _on_onion_skin_toggled(pressed: bool) -> void:
 	_update_onion_weapon()
 
 
-func _on_alpha_draw_toggled(enabled: bool) -> void:
-	_alpha_paint_enabled = enabled
-	_alpha_buttons_container.visible = enabled
-	_update_weapon_preview()
+func _on_body_clip_draw_toggled(enabled: bool) -> void:
+	_body_clip_paint_enabled = enabled
+	_body_clip_buttons_container.visible = enabled
+	_update_preview_frame()
 
 
-func _on_alpha_level_btn(value: int) -> void:
-	_alpha_paint_value = value
+func _on_body_clip_auto_toggled(pressed: bool) -> void:
+	_apply_to_target_frames(func(frame: CompositionFrame): frame.body_clip_auto = pressed)
+	_update_preview_frame()
 
 
-func _on_alpha_brush_size(bsize: int) -> void:
-	_alpha_brush_size = bsize
-	_update_alpha_brush_highlight()
+func _on_body_clip_brush_size(bsize: int) -> void:
+	_body_clip_brush_size = bsize
+	_update_body_clip_brush_highlight()
 
 
-func _update_alpha_brush_highlight() -> void:
-	for i in _alpha_brush_buttons.size():
-		var btn := _alpha_brush_buttons[i]
+func _update_body_clip_brush_highlight() -> void:
+	for i in _body_clip_brush_buttons.size():
+		var btn := _body_clip_brush_buttons[i]
 		var sizes := [1, 3, 5]
-		if i < sizes.size() and sizes[i] == _alpha_brush_size:
+		if i < sizes.size() and sizes[i] == _body_clip_brush_size:
 			btn.add_theme_color_override("font_color", Color.YELLOW)
 		else:
 			btn.remove_theme_color_override("font_color")
 
 
-func _on_clear_frame_alpha() -> void:
+func _on_clear_body_clip() -> void:
 	var seq := _active_sequence()
 	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
 		return
 	_push_undo()
 	var frame := seq.frames[_selected_frame]
-	frame.alpha_mask = null
-	_update_weapon_preview()
+	frame.body_clip_mask = null
+	frame.body_clip_auto = false
+	_update_preview_frame()
 
 
-func _on_copy_alpha_to_next() -> void:
+func _on_copy_body_clip_to_next() -> void:
 	var seq := _active_sequence()
 	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
 		return
 	var frame := seq.frames[_selected_frame]
-	if frame.alpha_mask == null:
-		_set_status("No alpha mask on current frame to copy.")
+	if frame.body_clip_mask == null and not frame.body_clip_auto:
+		_set_status("No body clip mask on current frame to copy.")
 		return
 	var next_idx := _selected_frame + 1
 	if next_idx >= seq.frames.size():
 		_set_status("No next frame to copy to.")
 		return
 	_push_undo()
-	seq.frames[next_idx].alpha_mask = frame.alpha_mask.duplicate()
-	_set_status("Alpha mask copied to frame %d." % next_idx)
+	if frame.body_clip_mask != null:
+		seq.frames[next_idx].body_clip_mask = frame.body_clip_mask.duplicate()
+	seq.frames[next_idx].body_clip_auto = frame.body_clip_auto
+	_set_status("Body clip mask copied to frame %d." % next_idx)
 
 
 func _viewport_to_weapon_pixel(container_pos: Vector2) -> Vector2i:
@@ -2916,34 +2979,59 @@ func _viewport_to_weapon_pixel(container_pos: Vector2) -> Vector2i:
 	return Vector2i(px, py)
 
 
-func _paint_weapon_alpha(px: int, py: int) -> void:
+func _viewport_to_body_pixel(container_pos: Vector2) -> Vector2i:
+	if _preview_sprite == null or _preview_sprite.texture == null:
+		return Vector2i(-1, -1)
+	var container_size := _viewport_container_ref.size
+	var vp_size := Vector2(_preview_viewport.size)
+	if container_size.x <= 0 or container_size.y <= 0:
+		return Vector2i(-1, -1)
+	# Container -> viewport coords
+	var vp_click := container_pos * (vp_size / container_size)
+	# Viewport -> body local space (undo position and scale; body has no rotation)
+	var local := (vp_click - _preview_sprite.position) / _preview_sprite.scale
+	# Local space -> body frame pixel (undo centering)
+	var frame_px := local + Vector2(_frame_size) / 2.0
+	var px := int(frame_px.x)
+	var py := int(frame_px.y)
+	if px < 0 or px >= _frame_size.x or py < 0 or py >= _frame_size.y:
+		return Vector2i(-1, -1)
+	return Vector2i(px, py)
+
+
+func _paint_body_clip(px: int, py: int) -> void:
 	var seq := _active_sequence()
 	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
 		return
 	var frame := seq.frames[_selected_frame]
-	# Get weapon texture to check if pixel has content
-	var weapon_tex: Texture2D = _weapon_set.get("right")
-	if weapon_tex == null:
+	# Get body frame to check if pixel has content
+	var images: Array = _frame_images.get(_preview_direction, [])
+	if _preview_frame_index < 0 or _preview_frame_index >= images.size():
 		return
-	var weapon_img := weapon_tex.get_image()
-	if weapon_img == null:
+	var body_img: Image = images[_preview_frame_index]
+	var w := body_img.get_width()
+	var h := body_img.get_height()
+	# Only paint on non-transparent body pixels
+	if body_img.get_pixel(px, py).a < 0.01:
 		return
-	var w := weapon_img.get_width()
-	var h := weapon_img.get_height()
 	# Initialize mask if needed
-	if frame.alpha_mask == null:
-		frame.alpha_mask = Image.create(w, h, false, Image.FORMAT_R8)
-		frame.alpha_mask.fill(Color(1, 1, 1))
-	var radius := (_alpha_brush_size - 1) / 2
-	var paint_color := Color(_alpha_paint_value / 255.0, 0, 0)
+	if frame.body_clip_mask == null:
+		frame.body_clip_mask = Image.create(w, h, false, Image.FORMAT_R8)
+		frame.body_clip_mask.fill(Color(0, 0, 0))  # Default: no clip
+	var radius := (_body_clip_brush_size - 1) / 2
+	var paint_color: Color
+	if _body_clip_paint_erase:
+		paint_color = Color(0, 0, 0)  # Erase: no clip
+	else:
+		paint_color = Color(1, 0, 0)  # Paint: clip (R=255)
 	for bx in range(px - radius, px + radius + 1):
 		for by in range(py - radius, py + radius + 1):
 			if bx < 0 or bx >= w or by < 0 or by >= h:
 				continue
-			if weapon_img.get_pixel(bx, by).a < 0.01:
-				continue  # Only paint on non-transparent weapon pixels
-			frame.alpha_mask.set_pixel(bx, by, paint_color)
-	_update_weapon_preview()
+			if body_img.get_pixel(bx, by).a < 0.01:
+				continue  # Only paint on visible body pixels
+			frame.body_clip_mask.set_pixel(bx, by, paint_color)
+	_update_preview_frame()
 
 
 # ── Effect alpha painting ────────────────────────────────────────────
