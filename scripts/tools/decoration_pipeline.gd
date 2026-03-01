@@ -134,6 +134,17 @@ var _denoise_check: CheckButton
 var _denoise_slider: HSlider
 var _pixel_preview_rect: TextureRect
 
+# Step 4 refs
+var _2d_normal_container: VBoxContainer
+var _normal_height_slider: HSlider
+var _normal_invert_check: CheckButton
+var _normal_preview_rect: TextureRect
+var _shadow_offset_slider: HSlider
+var _shadow_opacity_slider: HSlider
+var _shadow_preview_rect: TextureRect
+var _occluder_simplify_slider: HSlider
+var _occluder_info_label: Label
+
 # Capture materials
 var _normal_capture_shader: Shader
 var _normal_capture_material: ShaderMaterial = null
@@ -505,6 +516,9 @@ func _on_source_mode_changed(mode_key: String) -> void:
 		_3d_container.visible = false
 		_2d_container.visible = true
 		preview_container.visible = false
+	# Update Step 4 2D-only normal map controls visibility
+	if _2d_normal_container:
+		_2d_normal_container.visible = (mode_key == "2d")
 
 
 func _on_angle_mode_changed(mode_key: String) -> void:
@@ -1111,9 +1125,95 @@ func _build_step3(parent: VBoxContainer) -> void:
 
 
 func _build_step4(parent: VBoxContainer) -> void:
-	parent.add_child(_make_label("Step 4: Normal & Shadow (placeholder)"))
-	parent.add_child(_make_small_label(
-		"Generate and adjust normal maps and baked shadow images."))
+	# ── Normal Map Section ──────────────────────────────────────────────
+	var normal_sec := _make_section("Normal Map")
+	parent.add_child(normal_sec[0])
+	var normal_content: VBoxContainer = normal_sec[1]
+
+	normal_content.add_child(_make_small_label(
+		"3D sources use captured normal maps downscaled via bilinear interpolation. " +
+		"2D sources generate normals from a Sobel filter on luminance."))
+
+	# 2D-only controls container (hidden for 3D sources)
+	_2d_normal_container = VBoxContainer.new()
+	_2d_normal_container.add_theme_constant_override("separation", 6)
+	_2d_normal_container.visible = (_source_mode == "2d")
+	normal_content.add_child(_2d_normal_container)
+
+	# Height Scale slider (0.1-5.0, default 1.0, step 0.1)
+	var height_data := _make_slider_row(0.1, 5.0, 1.0, 0.1)
+	_normal_height_slider = height_data[1]
+	_2d_normal_container.add_child(_make_field("Height Scale", height_data[0]))
+
+	# Invert Heights checkbox
+	_normal_invert_check = CheckButton.new()
+	_normal_invert_check.text = "Invert Heights"
+	_style_checkbutton_transparent(_normal_invert_check)
+	_2d_normal_container.add_child(_normal_invert_check)
+
+	# Normal map preview
+	_normal_preview_rect = TextureRect.new()
+	_normal_preview_rect.custom_minimum_size = Vector2(120, 120)
+	_normal_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_normal_preview_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_normal_preview_rect.size_flags_horizontal = SIZE_EXPAND_FILL
+	normal_content.add_child(_normal_preview_rect)
+
+	# ── Baked Shadow Section ────────────────────────────────────────────
+	var shadow_sec := _make_section("Baked Shadow")
+	parent.add_child(shadow_sec[0])
+	var shadow_content: VBoxContainer = shadow_sec[1]
+
+	shadow_content.add_child(_make_small_label(
+		"Generate a shadow image offset below the sprite. " +
+		"3D sources use the captured shadow pass; 2D generates from alpha silhouette."))
+
+	# Shadow Offset Y slider (-8 to 8, default 2, step 1)
+	var offset_data := _make_slider_row(-8.0, 8.0, 2.0, 1.0)
+	_shadow_offset_slider = offset_data[1]
+	shadow_content.add_child(_make_field("Shadow Offset Y", offset_data[0]))
+
+	# Shadow Opacity slider (0.1-1.0, default 0.5, step 0.05)
+	var opacity_data := _make_slider_row(0.1, 1.0, 0.5, 0.05)
+	_shadow_opacity_slider = opacity_data[1]
+	shadow_content.add_child(_make_field("Shadow Opacity", opacity_data[0]))
+
+	# Shadow preview
+	_shadow_preview_rect = TextureRect.new()
+	_shadow_preview_rect.custom_minimum_size = Vector2(120, 120)
+	_shadow_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_shadow_preview_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_shadow_preview_rect.size_flags_horizontal = SIZE_EXPAND_FILL
+	shadow_content.add_child(_shadow_preview_rect)
+
+	# ── Occluder Polygon Section ────────────────────────────────────────
+	var occluder_sec := _make_section("Occluder Polygon")
+	parent.add_child(occluder_sec[0])
+	var occluder_content: VBoxContainer = occluder_sec[1]
+
+	occluder_content.add_child(_make_small_label(
+		"Auto-trace the sprite silhouette into a simplified polygon for light occlusion."))
+
+	# Simplification slider (0.5-5.0, default 2.0, step 0.5)
+	var simplify_data := _make_slider_row(0.5, 5.0, 2.0, 0.5)
+	_occluder_simplify_slider = simplify_data[1]
+	occluder_content.add_child(_make_field("Simplification", simplify_data[0]))
+
+	# Info label for vertex count
+	_occluder_info_label = Label.new()
+	_occluder_info_label.text = ""
+	_occluder_info_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_occluder_info_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	_occluder_info_label.add_theme_font_size_override("font_size", FONT_HINT)
+	_occluder_info_label.add_theme_color_override("font_color", C_TEXT_SEC)
+	occluder_content.add_child(_occluder_info_label)
+
+	# ── Generate Button ─────────────────────────────────────────────────
+	parent.add_child(HSeparator.new())
+
+	var gen_btn := _make_primary_button("Generate Normal + Shadow + Occluder")
+	gen_btn.pressed.connect(_generate_normal_shadow_occluder)
+	parent.add_child(gen_btn)
 
 
 func _build_step5(parent: VBoxContainer) -> void:
@@ -1170,6 +1270,338 @@ func _update_pixel_preview() -> void:
 	var processed := _process_decoration_image(source)
 	_pixel_preview_rect.texture = ImageTexture.create_from_image(processed)
 	_set_status("Preview: %dx%d px" % [processed.get_width(), processed.get_height()])
+
+
+#===============================================================================
+# NORMAL MAP, SHADOW & OCCLUDER GENERATION
+#===============================================================================
+
+## Master generation — processes all angles to produce normal maps, shadows, and occluder polygons.
+func _generate_normal_shadow_occluder() -> void:
+	# Determine which angles to process
+	var angles: Array
+	if _source_mode == "3d":
+		angles = ANGLE_CONFIGS[_angle_mode]
+	else:
+		# 2D mode: use just the front angle config
+		angles = [ANGLE_CONFIGS["single"][0]]
+
+	# Clear previous results
+	_processed_color.clear()
+	_processed_normal.clear()
+	_processed_shadow.clear()
+	_processed_occluder_points.clear()
+
+	var target_height := int(_output_height_slider.value)
+	var alpha_thresh := int(_alpha_threshold_slider.value)
+	var simplification := _occluder_simplify_slider.value
+	var total_occluder_verts := 0
+
+	for angle_cfg in angles:
+		var angle_name: String = angle_cfg["name"]
+		_set_status("Processing angle: %s..." % angle_name)
+
+		# 1. Get source color image
+		var source_color: Image = null
+		if _source_mode == "3d":
+			if _captured_color.has(angle_name):
+				source_color = _captured_color[angle_name]
+		else:
+			source_color = _imported_image
+		if source_color == null:
+			_set_status("Missing source for angle '%s'. Run capture/import first." % angle_name)
+			return
+
+		# 2. Process color through pixel art pipeline
+		var processed_color := _process_decoration_image(source_color)
+		_processed_color[angle_name] = processed_color
+
+		# 3. Process normal map
+		var processed_normal: Image
+		if _source_mode == "3d":
+			# 3D: use captured normal map + PixelArtProcessing downscale
+			if _captured_normal.has(angle_name):
+				processed_normal = PixelArtProcessing.process_normal_map(
+					_captured_normal[angle_name], target_height, alpha_thresh)
+			else:
+				# Fallback: generate from luminance if no captured normal
+				processed_normal = _generate_normal_from_luminance(
+					processed_color,
+					_normal_height_slider.value,
+					_normal_invert_check.button_pressed)
+		else:
+			# 2D: Sobel filter on luminance
+			processed_normal = _generate_normal_from_luminance(
+				processed_color,
+				_normal_height_slider.value,
+				_normal_invert_check.button_pressed)
+		_processed_normal[angle_name] = processed_normal
+
+		# 4. Process shadow
+		var processed_shadow: Image
+		if _source_mode == "3d" and _captured_shadow.has(angle_name):
+			processed_shadow = _apply_shadow_styling(_captured_shadow[angle_name], target_height)
+		else:
+			processed_shadow = _generate_shadow_from_alpha(processed_color)
+		_processed_shadow[angle_name] = processed_shadow
+
+		# 5. Trace occluder polygon
+		var occluder_poly := _trace_occluder_polygon(processed_color, simplification)
+		_processed_occluder_points[angle_name] = occluder_poly
+		total_occluder_verts += occluder_poly.size()
+
+	# Update preview thumbnails with first angle results
+	var first_angle: String = (angles[0] as Dictionary)["name"]
+	if _processed_normal.has(first_angle):
+		_normal_preview_rect.texture = ImageTexture.create_from_image(_processed_normal[first_angle])
+	if _processed_shadow.has(first_angle):
+		_shadow_preview_rect.texture = ImageTexture.create_from_image(_processed_shadow[first_angle])
+
+	# Update occluder info
+	var angle_count := angles.size()
+	if angle_count == 1:
+		_occluder_info_label.text = "Occluder: %d vertices" % total_occluder_verts
+	else:
+		_occluder_info_label.text = "Occluder: %d angles, %d total vertices (avg %.0f/angle)" % [
+			angle_count, total_occluder_verts, float(total_occluder_verts) / float(angle_count)]
+
+	_set_status("Generated normals, shadows, and occluders for %d angle(s)." % angle_count)
+
+
+#-------------------------------------------------------------------------------
+# Sobel-filter normal map (for 2D sources)
+#-------------------------------------------------------------------------------
+
+## Generate a normal map from sprite luminance using a Sobel filter.
+## Transparent pixels receive a neutral normal (0.5, 0.5, 1.0) with alpha 0.
+func _generate_normal_from_luminance(sprite: Image, height_scale: float, invert: bool) -> Image:
+	var w := sprite.get_width()
+	var h := sprite.get_height()
+	var result := Image.create(w, h, false, Image.FORMAT_RGBA8)
+
+	for y in range(h):
+		for x in range(w):
+			var center_color := sprite.get_pixel(x, y)
+			if center_color.a < 0.5:
+				# Transparent pixel — neutral normal, transparent
+				result.set_pixel(x, y, Color(0.5, 0.5, 1.0, 0.0))
+				continue
+
+			# Sample 3x3 neighborhood luminance
+			var tl := _get_luminance(sprite, x - 1, y - 1, invert)
+			var tc := _get_luminance(sprite, x,     y - 1, invert)
+			var tr := _get_luminance(sprite, x + 1, y - 1, invert)
+			var ml := _get_luminance(sprite, x - 1, y,     invert)
+			var mr := _get_luminance(sprite, x + 1, y,     invert)
+			var bl := _get_luminance(sprite, x - 1, y + 1, invert)
+			var bc := _get_luminance(sprite, x,     y + 1, invert)
+			var br := _get_luminance(sprite, x + 1, y + 1, invert)
+
+			# Sobel X kernel: right column minus left column (weighted)
+			var dx := ((tr + 2.0 * mr + br) - (tl + 2.0 * ml + bl)) * height_scale
+			# Sobel Y kernel: bottom row minus top row (weighted)
+			var dy := ((bl + 2.0 * bc + br) - (tl + 2.0 * tc + tr)) * height_scale
+
+			# Normal vector: (-dx, -dy, 1.0), then normalize
+			var normal := Vector3(-dx, -dy, 1.0).normalized()
+
+			# Encode to color: map [-1,1] to [0,1]
+			var nx := normal.x * 0.5 + 0.5
+			var ny := normal.y * 0.5 + 0.5
+			var nz := normal.z * 0.5 + 0.5
+			result.set_pixel(x, y, Color(nx, ny, nz, 1.0))
+
+	return result
+
+
+## Get luminance of a pixel, clamping coordinates to image bounds.
+## Returns 0.5 (neutral) for transparent pixels.
+func _get_luminance(image: Image, x: int, y: int, invert: bool) -> float:
+	x = clampi(x, 0, image.get_width() - 1)
+	y = clampi(y, 0, image.get_height() - 1)
+	var color := image.get_pixel(x, y)
+	if color.a < 0.5:
+		return 0.5  # Neutral for transparent
+	var lum := color.r * 0.299 + color.g * 0.587 + color.b * 0.114
+	if invert:
+		lum = 1.0 - lum
+	return lum
+
+
+#-------------------------------------------------------------------------------
+# Shadow generation
+#-------------------------------------------------------------------------------
+
+## Generate a shadow image from sprite alpha silhouette (for 2D sources).
+## Creates a dark offset copy of the sprite's opaque regions.
+func _generate_shadow_from_alpha(sprite: Image) -> Image:
+	var w := sprite.get_width()
+	var h := sprite.get_height()
+	var offset_y := int(_shadow_offset_slider.value)
+	var opacity := _shadow_opacity_slider.value
+
+	# Create image with extra space for the offset
+	var extra := absi(offset_y)
+	var shadow_h := h + extra
+	var result := Image.create(w, shadow_h, false, Image.FORMAT_RGBA8)
+	result.fill(Color(0, 0, 0, 0))
+
+	# Compute y-shift: positive offset pushes shadow downward
+	var y_shift := extra if offset_y >= 0 else 0
+
+	for y in range(h):
+		for x in range(w):
+			if sprite.get_pixel(x, y).a >= 0.5:
+				var dest_y := y + y_shift
+				if dest_y >= 0 and dest_y < shadow_h:
+					result.set_pixel(x, dest_y, Color(0.0, 0.0, 0.0, opacity))
+
+	return result
+
+
+## Style a 3D-captured shadow image: downscale, offset, and apply opacity.
+func _apply_shadow_styling(shadow_source: Image, target_height: int) -> Image:
+	var offset_y := int(_shadow_offset_slider.value)
+	var opacity := _shadow_opacity_slider.value
+
+	# Downscale the captured shadow to match target pixel art size
+	var source := shadow_source.duplicate() as Image
+	var scale_factor := float(target_height) / float(source.get_height())
+	var target_width := int(float(source.get_width()) * scale_factor)
+	source.resize(target_width, target_height, Image.INTERPOLATE_NEAREST)
+
+	var w := source.get_width()
+	var h := source.get_height()
+	var extra := absi(offset_y)
+	var shadow_h := h + extra
+	var result := Image.create(w, shadow_h, false, Image.FORMAT_RGBA8)
+	result.fill(Color(0, 0, 0, 0))
+
+	var y_shift := extra if offset_y >= 0 else 0
+
+	for y in range(h):
+		for x in range(w):
+			var color := source.get_pixel(x, y)
+			if color.a >= 0.5:
+				var dest_y := y + y_shift
+				if dest_y >= 0 and dest_y < shadow_h:
+					# Use the darkness from the captured shadow, apply opacity
+					var darkness := 1.0 - color.r  # shadow pass is dark = shadow
+					result.set_pixel(x, dest_y, Color(0.0, 0.0, 0.0, darkness * opacity))
+
+	return result
+
+
+#-------------------------------------------------------------------------------
+# Occluder polygon tracing
+#-------------------------------------------------------------------------------
+
+## Trace the silhouette of a sprite into a simplified polygon for light occlusion.
+## Returns a PackedVector2Array of vertex positions in pixel coordinates.
+func _trace_occluder_polygon(sprite: Image, simplification: float) -> PackedVector2Array:
+	var w := sprite.get_width()
+	var h := sprite.get_height()
+
+	# 1. Find all edge pixels (opaque with at least one transparent 4-connected neighbor)
+	var edge_pixels: Array[Vector2] = []
+	for y in range(h):
+		for x in range(w):
+			if sprite.get_pixel(x, y).a < 0.5:
+				continue
+			# Check 4-connected neighbors for transparency
+			var is_edge := false
+			if x == 0 or sprite.get_pixel(x - 1, y).a < 0.5:
+				is_edge = true
+			elif x == w - 1 or sprite.get_pixel(x + 1, y).a < 0.5:
+				is_edge = true
+			elif y == 0 or sprite.get_pixel(x, y - 1).a < 0.5:
+				is_edge = true
+			elif y == h - 1 or sprite.get_pixel(x, y + 1).a < 0.5:
+				is_edge = true
+			if is_edge:
+				edge_pixels.append(Vector2(x, y))
+
+	if edge_pixels.size() < 3:
+		return PackedVector2Array(edge_pixels)
+
+	# 2. Compute centroid of edge pixels
+	var centroid := Vector2.ZERO
+	for p in edge_pixels:
+		centroid += p
+	centroid /= float(edge_pixels.size())
+
+	# 3. Sort edge pixels by angle from centroid (convex hull approximation)
+	edge_pixels.sort_custom(func(a: Vector2, b: Vector2) -> bool:
+		var angle_a := (a - centroid).angle()
+		var angle_b := (b - centroid).angle()
+		return angle_a < angle_b
+	)
+
+	var sorted := PackedVector2Array(edge_pixels)
+
+	# 4. Apply Douglas-Peucker simplification
+	var simplified := _douglas_peucker(sorted, simplification)
+	return simplified
+
+
+## Douglas-Peucker recursive line simplification.
+## Reduces the number of points in a polygon while preserving shape.
+func _douglas_peucker(points: PackedVector2Array, epsilon: float) -> PackedVector2Array:
+	if points.size() < 3:
+		return points
+
+	# Find the point with the maximum distance from the line between first and last
+	var max_dist := 0.0
+	var max_idx := 0
+	var first := points[0]
+	var last := points[points.size() - 1]
+
+	for i in range(1, points.size() - 1):
+		var dist := _point_line_distance(points[i], first, last)
+		if dist > max_dist:
+			max_dist = dist
+			max_idx = i
+
+	# If max distance exceeds epsilon, recurse on both halves
+	if max_dist > epsilon:
+		var left_half := PackedVector2Array()
+		for i in range(max_idx + 1):
+			left_half.append(points[i])
+		var right_half := PackedVector2Array()
+		for i in range(max_idx, points.size()):
+			right_half.append(points[i])
+
+		var left_result := _douglas_peucker(left_half, epsilon)
+		var right_result := _douglas_peucker(right_half, epsilon)
+
+		# Combine, removing duplicate junction point
+		var combined := PackedVector2Array()
+		for i in range(left_result.size() - 1):
+			combined.append(left_result[i])
+		for i in range(right_result.size()):
+			combined.append(right_result[i])
+		return combined
+	else:
+		# All points are close enough to the line — keep only endpoints
+		var result := PackedVector2Array()
+		result.append(first)
+		result.append(last)
+		return result
+
+
+## Perpendicular distance from a point to a line segment defined by two endpoints.
+func _point_line_distance(point: Vector2, line_start: Vector2, line_end: Vector2) -> float:
+	var line_vec := line_end - line_start
+	var line_len_sq := line_vec.length_squared()
+
+	if line_len_sq < 0.0001:
+		# Degenerate line segment — just return distance to the start point
+		return point.distance_to(line_start)
+
+	# Project point onto line, clamping t to [0, 1]
+	var t := clampf((point - line_start).dot(line_vec) / line_len_sq, 0.0, 1.0)
+	var projection := line_start + line_vec * t
+	return point.distance_to(projection)
 
 
 #===============================================================================
