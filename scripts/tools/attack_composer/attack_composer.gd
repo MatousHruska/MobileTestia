@@ -70,7 +70,7 @@ var _body_clip_paint_enabled: bool = false
 var _body_clip_brush_size: int = 1
 var _body_clip_paint_erase: bool = false  # false=paint clip, true=erase clip
 var _body_clip_draw_check: CheckButton = null
-var _body_clip_auto_check: CheckButton = null
+var _body_clip_generate_btn: Button = null
 var _body_clip_buttons_container: VBoxContainer = null
 var _body_clip_brush_buttons: Array[Button] = []
 
@@ -102,8 +102,6 @@ var _frame_props_container: VBoxContainer
 var _duration_spinbox: SpinBox
 var _fps_label: Label
 var _total_duration_label: Label
-var _weapon_check: CheckButton
-var _weapon_dropdown: OptionButton
 var _effect_dropdown: OptionButton
 var _effect_anchor_dropdown: OptionButton
 var _effect_offset_x: SpinBox
@@ -290,7 +288,6 @@ func _push_undo() -> void:
 			var frame_copy := frame.duplicate()
 			if frame.body_clip_mask != null:
 				frame_copy.body_clip_mask = frame.body_clip_mask.duplicate()
-			frame_copy.body_clip_auto = frame.body_clip_auto
 			if frame.effect_alpha_mask != null:
 				frame_copy.effect_alpha_mask = frame.effect_alpha_mask.duplicate()
 			seq_copy.frames.append(frame_copy)
@@ -537,12 +534,8 @@ func _build_ui() -> void:
 	_crosshair_sprite.z_index = 3
 	_preview_viewport.add_child(_crosshair_sprite)
 
-	# Load default weapon set — prefer real weapon assets, fall back to placeholder
-	var scanned_weapons := _scan_weapon_folders()
-	if not scanned_weapons.is_empty():
-		_weapon_set = _load_weapon_from_folder(scanned_weapons[0])
-	if _weapon_set.is_empty():
-		_weapon_set = PlaceholderWeaponSprites.create_sword_set()
+	# Always use placeholder sword — compositions are weapon-agnostic
+	_weapon_set = PlaceholderWeaponSprites.create_sword_set()
 
 	# Controls bar below preview
 	var controls_bar := PanelContainer.new()
@@ -664,7 +657,6 @@ func _build_ui() -> void:
 	_timeline_panel.before_mutation.connect(_push_undo)
 	_timeline_panel.effect_toggled.connect(_on_timeline_effect_toggled)
 	_timeline_panel.effect_moved.connect(_on_timeline_effect_moved)
-	_timeline_panel.weapon_toggled.connect(_on_timeline_weapon_toggled)
 	_timeline_panel.echo_toggled.connect(_on_timeline_echo_toggled)
 	_timeline_panel.damage_moved.connect(_on_timeline_damage_moved)
 	_timeline_panel.scroll_changed.connect(_on_timeline_scroll_changed)
@@ -1060,29 +1052,6 @@ func _build_weapon_subsection() -> void:
 	var parts: Array = _make_collapsible_section("Weapon", _frame_section_wrapper, false)
 	var section: VBoxContainer = parts[1]
 
-	# Weapon visible
-	_weapon_check = CheckButton.new()
-	_weapon_check.text = "Weapon Visible"
-	_weapon_check.add_theme_font_size_override("font_size", FONT_LABEL)
-	_weapon_check.add_theme_color_override("font_color", C_TEXT_SEC)
-	_weapon_check.toggled.connect(_on_weapon_toggled)
-	section.add_child(_weapon_check)
-
-	# Weapon selector dropdown
-	section.add_child(_make_label("Weapon"))
-	_weapon_dropdown = _make_option_button()
-	var scanned_w := _scan_weapon_folders()
-	for wid in scanned_w:
-		_weapon_dropdown.add_item("[Asset] " + wid)
-	_weapon_dropdown.add_item("[Placeholder] sword")
-	# Select the entry matching the weapon we loaded at startup
-	if not scanned_w.is_empty():
-		_weapon_dropdown.select(0)
-	else:
-		_weapon_dropdown.select(_weapon_dropdown.item_count - 1)
-	_weapon_dropdown.item_selected.connect(_on_weapon_dropdown_selected)
-	section.add_child(_weapon_dropdown)
-
 	# Draw Anchors toggle
 	_draw_anchors_check = CheckButton.new()
 	_draw_anchors_check.text = "Draw Anchors"
@@ -1132,13 +1101,9 @@ func _build_weapon_subsection() -> void:
 	_body_clip_buttons_container.visible = false
 	section.add_child(_body_clip_buttons_container)
 
-	# Auto-generate toggle
-	_body_clip_auto_check = CheckButton.new()
-	_body_clip_auto_check.text = "Auto from Body"
-	_body_clip_auto_check.add_theme_font_size_override("font_size", FONT_LABEL)
-	_body_clip_auto_check.add_theme_color_override("font_color", C_TEXT_SEC)
-	_body_clip_auto_check.toggled.connect(_on_body_clip_auto_toggled)
-	_body_clip_buttons_container.add_child(_body_clip_auto_check)
+	# Generate mask from body alpha
+	_body_clip_generate_btn = _make_button("Generate from Body", _on_generate_body_clip_from_body)
+	_body_clip_buttons_container.add_child(_body_clip_generate_btn)
 
 	# Paint/Erase toggle row
 	var clip_mode_hbox := HBoxContainer.new()
@@ -1665,6 +1630,9 @@ func _update_preview_frame() -> void:
 	# Update weapon
 	_update_weapon_preview()
 
+	# Update body clip mask tinted overlay (independent of weapon state)
+	_update_body_clip_overlay()
+
 	# Update anchor detection indicator
 	_update_anchor_indicator()
 
@@ -1771,10 +1739,6 @@ func _update_weapon_preview() -> void:
 		return
 
 	var frame := seq.frames[_preview_frame_index]
-	if not frame.weapon_visible:
-		_weapon_sprite.visible = false
-		_weapon_debug = "weapon_visible=false"
-		return
 
 	# Find anchor pixels in the current body frame
 	if not _frame_images.has(_preview_direction):
@@ -1832,14 +1796,7 @@ func _update_weapon_preview() -> void:
 		_weapon_sprite.offset = Vector2.ZERO
 
 	# Apply body clip mask visualization
-	var clip_mask: Image = null
-	if frame.body_clip_auto:
-		# Auto-generate from body frame alpha
-		var body_images: Array = _frame_images.get(_preview_direction, [])
-		if _preview_frame_index >= 0 and _preview_frame_index < body_images.size():
-			clip_mask = CompositionConverter._generate_body_clip_mask(body_images[_preview_frame_index])
-	elif frame.body_clip_mask != null:
-		clip_mask = frame.body_clip_mask
+	var clip_mask: Image = frame.body_clip_mask
 
 	if clip_mask != null:
 		# Clip weapon preview: hide weapon pixels that overlap body clip region
@@ -1873,26 +1830,33 @@ func _update_weapon_preview() -> void:
 						composited.set_pixel(wx, wy, wpx)
 			_weapon_sprite.texture = ImageTexture.create_from_image(composited)
 
-	# Tinted overlay on body sprite to show clip regions when painting is active
-	if _body_clip_paint_enabled and clip_mask != null:
-		var body_images_for_overlay: Array = _frame_images.get(_preview_direction, [])
-		if _preview_frame_index >= 0 and _preview_frame_index < body_images_for_overlay.size():
-			var body_img: Image = body_images_for_overlay[_preview_frame_index].duplicate()
-			for y in range(mini(body_img.get_height(), clip_mask.get_height())):
-				for x in range(mini(body_img.get_width(), clip_mask.get_width())):
-					if clip_mask.get_pixel(x, y).r > 0.5:
-						var px: Color = body_img.get_pixel(x, y)
-						# Tint clipped body pixels red
-						px = px.lerp(Color(1.0, 0.2, 0.2, px.a), 0.4)
-						body_img.set_pixel(x, y, px)
-			_preview_sprite.texture = ImageTexture.create_from_image(body_img)
-
 	# Weapon always in front — no z-ordering toggle
 	_weapon_sprite.z_index = 1
 	_weapon_sprite.modulate = Color(1.0, 1.0, 1.0, 0.9)
 	var angle_deg := rad_to_deg(_weapon_sprite.rotation)
 	_weapon_debug = "OK %.0fdeg pos=%s" % [angle_deg, str(_weapon_sprite.position)]
 
+
+func _update_body_clip_overlay() -> void:
+	if not _body_clip_paint_enabled:
+		return
+	var seq := _active_sequence()
+	if seq == null or _preview_frame_index < 0 or _preview_frame_index >= seq.frames.size():
+		return
+	var clip_mask: Image = seq.frames[_preview_frame_index].body_clip_mask
+	if clip_mask == null:
+		return
+	var body_images: Array = _frame_images.get(_preview_direction, [])
+	if _preview_frame_index >= body_images.size():
+		return
+	var body_img: Image = body_images[_preview_frame_index].duplicate()
+	for y in range(mini(body_img.get_height(), clip_mask.get_height())):
+		for x in range(mini(body_img.get_width(), clip_mask.get_width())):
+			if clip_mask.get_pixel(x, y).r > 0.5:
+				var px: Color = body_img.get_pixel(x, y)
+				px = px.lerp(Color(1.0, 0.2, 0.2, px.a), 0.4)
+				body_img.set_pixel(x, y, px)
+	_preview_sprite.texture = ImageTexture.create_from_image(body_img)
 
 
 func _find_anchors_in_image(img: Image) -> Dictionary:
@@ -2211,16 +2175,6 @@ func _on_timeline_effect_moved(from_index: int, to_index: int) -> void:
 		_update_frame_props_ui()
 
 
-func _on_timeline_weapon_toggled(index: int) -> void:
-	_push_undo()
-	for dir_name in _edit_directions():
-		var seq := _current_composition.get_sequence(dir_name)
-		if seq and index < seq.frames.size():
-			seq.frames[index].weapon_visible = not seq.frames[index].weapon_visible
-	_timeline_panel.queue_redraw()
-	if index == _preview_frame_index:
-		_update_preview_frame()
-
 
 func _on_timeline_echo_toggled(index: int) -> void:
 	_push_undo()
@@ -2294,9 +2248,6 @@ func _update_frame_props_ui() -> void:
 	# Block signals during UI update to avoid feedback loops
 	_duration_spinbox.set_value_no_signal(frame.duration_ms)
 	_fps_label.text = "~ %.1f fps" % (1000.0 / maxf(frame.duration_ms, 1))
-	_weapon_check.set_pressed_no_signal(frame.weapon_visible)
-	if _body_clip_auto_check:
-		_body_clip_auto_check.set_pressed_no_signal(frame.body_clip_auto)
 	_echo_check.set_pressed_no_signal(frame.echo_enabled)
 	_echo_settings_container.visible = frame.echo_enabled
 	_echo_count_spin.set_value_no_signal(frame.echo_count)
@@ -2396,10 +2347,6 @@ func _on_duration_changed(value: float) -> void:
 	_timeline_panel._emit_scroll_changed()
 
 
-func _on_weapon_toggled(pressed: bool) -> void:
-	_apply_to_target_frames(func(frame: CompositionFrame): frame.weapon_visible = pressed)
-	_update_preview_frame()
-	_timeline_panel.queue_redraw()
 
 
 func _on_effect_selected(index: int) -> void:
@@ -2908,9 +2855,21 @@ func _on_body_clip_draw_toggled(enabled: bool) -> void:
 	_update_preview_frame()
 
 
-func _on_body_clip_auto_toggled(pressed: bool) -> void:
-	_apply_to_target_frames(func(frame: CompositionFrame): frame.body_clip_auto = pressed)
+func _on_generate_body_clip_from_body() -> void:
+	var indices := _get_target_frames()
+	if indices.is_empty() or _current_composition == null:
+		return
+	_push_undo()
+	for dir_name in _edit_directions():
+		var seq := _current_composition.get_sequence(dir_name)
+		if seq == null:
+			continue
+		var images: Array = _frame_images.get(dir_name, [])
+		for idx in indices:
+			if idx < seq.frames.size() and idx < images.size():
+				seq.frames[idx].body_clip_mask = CompositionConverter._generate_body_clip_mask(images[idx])
 	_update_preview_frame()
+	_set_status("Body clip mask generated from body alpha for %d frame(s)." % indices.size())
 
 
 func _on_body_clip_brush_size(bsize: int) -> void:
@@ -2929,13 +2888,7 @@ func _update_body_clip_brush_highlight() -> void:
 
 
 func _on_clear_body_clip() -> void:
-	var seq := _active_sequence()
-	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
-		return
-	_push_undo()
-	var frame := seq.frames[_selected_frame]
-	frame.body_clip_mask = null
-	frame.body_clip_auto = false
+	_apply_to_target_frames(func(frame: CompositionFrame): frame.body_clip_mask = null)
 	_update_preview_frame()
 
 
@@ -2944,7 +2897,7 @@ func _on_copy_body_clip_to_next() -> void:
 	if seq == null or _selected_frame < 0 or _selected_frame >= seq.frames.size():
 		return
 	var frame := seq.frames[_selected_frame]
-	if frame.body_clip_mask == null and not frame.body_clip_auto:
+	if frame.body_clip_mask == null:
 		_set_status("No body clip mask on current frame to copy.")
 		return
 	var next_idx := _selected_frame + 1
@@ -2952,9 +2905,7 @@ func _on_copy_body_clip_to_next() -> void:
 		_set_status("No next frame to copy to.")
 		return
 	_push_undo()
-	if frame.body_clip_mask != null:
-		seq.frames[next_idx].body_clip_mask = frame.body_clip_mask.duplicate()
-	seq.frames[next_idx].body_clip_auto = frame.body_clip_auto
+	seq.frames[next_idx].body_clip_mask = frame.body_clip_mask.duplicate()
 	_set_status("Body clip mask copied to frame %d." % next_idx)
 
 
@@ -3553,15 +3504,3 @@ func _update_effect_preview() -> void:
 	_effect_sprite.position = anchor_pos
 
 
-func _on_weapon_dropdown_selected(index: int) -> void:
-	var text := _weapon_dropdown.get_item_text(index)
-	if text.begins_with("[Asset] "):
-		var weapon_id := text.substr(8)
-		var loaded := _load_weapon_from_folder(weapon_id)
-		if not loaded.is_empty():
-			_weapon_set = loaded
-			_update_preview_frame()
-			return
-	# Fallback to placeholder sword
-	_weapon_set = PlaceholderWeaponSprites.create_sword_set()
-	_update_preview_frame()

@@ -44,10 +44,6 @@ extends Resource
 ## FORMAT_R8: 255 = body pixel (clips weapon), 0 = no clip.
 @export var body_clip_mask: Image = null
 
-## When true, auto-generate body_clip_mask from body sprite alpha on export/preview.
-## When false, use hand-painted body_clip_mask (or null = no clipping).
-@export var body_clip_auto: bool = false
-
 ## Per-frame alpha mask for effect transparency painting.
 ## Same dimensions as effect frame (frame_size × frame_size). null = fully opaque.
 ## FORMAT_R8: 255 = opaque, 0 = fully transparent.

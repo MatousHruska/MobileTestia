@@ -250,10 +250,9 @@ func _draw_weapon_track() -> void:
 		var w := _get_frame_width(i)
 		if x + w < LABEL_WIDTH or x > size.x:
 			continue
-		var color := C_WEAPON_ON if sequence.frames[i].weapon_visible else C_WEAPON_OFF
-		draw_rect(Rect2(x, y + 2, w - 1, SUB_TRACK_HEIGHT - 4), color)
+		draw_rect(Rect2(x, y + 2, w - 1, SUB_TRACK_HEIGHT - 4), C_WEAPON_ON)
 		# Show "C" marker on frames that have a body clip mask
-		if sequence.frames[i].body_clip_mask != null and sequence.frames[i].weapon_visible:
+		if sequence.frames[i].body_clip_mask != null:
 			draw_string(_font, Vector2(x + 2, y + SUB_TRACK_HEIGHT - 4), "C",
 				HORIZONTAL_ALIGNMENT_LEFT, -1, 9, C_TEXT)
 
@@ -454,12 +453,9 @@ func _handle_click(pos: Vector2, shift: bool = false) -> void:
 
 
 func _handle_sub_track_click(pos: Vector2) -> void:
-	# Weapon track (index 0) — toggle weapon_visible (routed via signal for All-mode support)
+	# Weapon track (index 0) — always visible, no toggle
 	var weapon_y := _get_track_y(0)
 	if pos.y >= weapon_y and pos.y <= weapon_y + SUB_TRACK_HEIGHT:
-		var idx := _frame_at_x(pos.x, weapon_y, SUB_TRACK_HEIGHT, pos.y)
-		if idx >= 0:
-			weapon_toggled.emit(idx)
 		return
 
 	# Effect track (index 1) — click to toggle, drag to move

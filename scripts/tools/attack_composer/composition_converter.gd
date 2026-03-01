@@ -21,16 +21,10 @@ static func convert(comp: AttackCompositionData, direction: String = "down", fra
 		return data
 	var frames := seq.frames
 
-	# Collect per-frame body clip masks (body occlusion painted/auto-generated in the composer)
+	# Collect per-frame body clip masks (painted or generated in the composer)
 	var body_clip_data: Array = []
 	for i in range(frames.size()):
-		var frame := frames[i]
-		var mask: Image = null
-		if frame.body_clip_auto and i < frame_images.size():
-			# Auto-generate: any body pixel with alpha > 0 becomes a clip pixel
-			mask = _generate_body_clip_mask(frame_images[i])
-		elif frame.body_clip_mask != null:
-			mask = frame.body_clip_mask
+		var mask: Image = frames[i].body_clip_mask
 		if mask != null:
 			body_clip_data.append({
 				"frame_index": i,
