@@ -16,6 +16,9 @@ class_name ZoneBase
 @export_group("Chunk System")
 @export var use_chunk_system: bool = true  ## Enable chunk-based loading for this zone
 
+@export_group("Atmosphere")
+@export var zone_mood: ZoneMood  ## Zone lighting/bloom/particle preset
+
 ## Auto-find references
 @onready var hud: HUD = $HUD
 
@@ -62,6 +65,12 @@ func _ready() -> void:
 			Debug.print_saveload("[SAVELOAD] Zone: ERROR - ChunkManager not found!")
 	else:
 		Debug.print_saveload("[SAVELOAD] Zone: Chunk system disabled for this zone")
+
+	# Apply zone atmosphere
+	if zone_mood:
+		var env_mgr = get_node_or_null("/root/EnvironmentManager")
+		if env_mgr:
+			env_mgr.apply_mood(zone_mood)
 
 	# Position player at spawn point
 	Debug.print_saveload("[SAVELOAD] Zone: Positioning player at spawn...")
@@ -219,5 +228,10 @@ func _exit_tree() -> void:
 			chunk_mgr.cleanup_zone()
 			Debug.print_saveload("[SAVELOAD] Zone exit: ChunkManager state AFTER cleanup: initialized=%s, zone=%s" % [chunk_mgr._initialized, chunk_mgr.current_zone_id])
 			Debug.info("Zone", "ChunkManager cleaned up for zone: %s" % zone_id)
+
+	# Clear zone atmosphere
+	var env_mgr = get_node_or_null("/root/EnvironmentManager")
+	if env_mgr:
+		env_mgr.clear_mood()
 
 	Debug.print_saveload("[SAVELOAD] ====== ZoneBase._exit_tree() END ======")
