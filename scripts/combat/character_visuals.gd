@@ -50,21 +50,46 @@ var _shadow_last_body_anim: StringName = &""  # Tracks body animation for auto-s
 var current_direction: String = "down"
 var is_flipped: bool = false
 
-## Weapon z-order override from composed animations (-1 = behind, 1 = front, 0 = no override)
-var _weapon_z_override: int = 0
-
-## Per-frame alpha masks for weapon transparency (from Attack Composer)
-var _weapon_alpha_masks: Dictionary = {}   # frame_index → Image
-var _weapon_alpha_cache: Dictionary = {}   # frame_index → ImageTexture (pre-composited)
+## Per-frame body clip masks for weapon occlusion (from Attack Composer)
+var _body_clip_masks: Dictionary = {}   # frame_index → Image (body-frame-sized)
+var _body_clip_cache: Dictionary = {}   # frame_index → ImageTexture (pre-composited)
 
 ## Cached weapon anchor positions per (animation, frame_index) pair.
 ## Avoids GPU→CPU readback + full-frame pixel scan every frame.
 ## Cleared when sprite_frames resource changes.
 var _anchor_cache: Dictionary = {}   # "anim:frame" → Dictionary
 
+## Pre-extracted anchor metadata from SpriteFrames resource.
+## Populated from SpriteFrames.get_meta("anchor_data") at initialization.
+## Eliminates GPU→CPU readback entirely for sprites with embedded metadata.
+var _anchor_metadata: Dictionary = {}  # "anim:frame" → { "grip": [x,y], ... }
+
+## Cached effect SpriteFrames shared across all CharacterVisuals instances.
+## Keyed by "effect_id:direction" — avoids GPU readback + blit + alpha loop on repeat spawns.
+static var _effect_sf_cache: Dictionary = {}  # "effect_id:direction" → SpriteFrames
+
+## Composition-level anchor overrides from Attack Composer context_data.
+## Highest priority — survives body sprite regeneration.
+var _composition_anchors: Dictionary = {}  # frame_index → { "grip": [x,y], ... }
+
 #===============================================================================
 # WEAPON ANCHOR
 #===============================================================================
+
+## Load pre-extracted anchor metadata from SpriteFrames resource.
+## Flattens nested { anim: { frame: data } } into flat "anim:frame" → data lookup.
+func _load_anchor_metadata() -> void:
+	_anchor_metadata.clear()
+	if not body_sprite or not body_sprite.sprite_frames:
+		return
+	var raw: Dictionary = body_sprite.sprite_frames.get_meta("anchor_data", {})
+	for anim_name in raw:
+		var frames_dict: Dictionary = raw[anim_name]
+		for frame_str in frames_dict:
+			_anchor_metadata["%s:%s" % [anim_name, frame_str]] = frames_dict[frame_str]
+	if not _anchor_metadata.is_empty():
+		Debug.log("Visuals", "Loaded %d anchor metadata entries from SpriteFrames" % _anchor_metadata.size())
+
 
 ## Weapon anchor pixel color for scanning
 const WEAPON_ANCHOR_COLOR := Color("#FF00AA")
@@ -120,6 +145,8 @@ func initialize(body: AnimatedSprite2D) -> void:
 	set_weapon_visible(false)
 	# Setup shadow after layers are created
 	_setup_shadow()
+	# Load pre-extracted anchor metadata from SpriteFrames (avoids GPU readback)
+	_load_anchor_metadata()
 
 
 #===============================================================================
@@ -347,10 +374,10 @@ func _update_weapon_position(anchors: Dictionary) -> void:
 	# ── Rotation path ──────────────────────────────────────────────────
 	# Use the "right" texture with continuous rotation when:
 	#   (a) a direction pixel exists (explicit angle), OR
-	#   (b) alpha masks are loaded (masks are in "right" texture space,
-	#       so we MUST use the rotation path to composite them correctly)
+	#   (b) body clip masks are loaded (clipping requires the rotation path
+	#       to transform weapon pixels into body-frame coordinates)
 	var _use_rotation_path := not _weapon_texture_set.is_empty() and (
-		direction_pixel != Vector2.INF or not _weapon_alpha_masks.is_empty()
+		direction_pixel != Vector2.INF or not _body_clip_masks.is_empty()
 	)
 
 	if _use_rotation_path:
@@ -373,7 +400,7 @@ func _update_weapon_position(anchors: Dictionary) -> void:
 			desired_angle = atan2(direction_pixel.y - anchor.y, direction_pixel.x - anchor.x)
 			weapon_dir = _weapon_direction_from_angle(anchor, direction_pixel)
 		else:
-			# Synthesize angle from anchor position heuristic (for alpha mask support)
+			# Synthesize angle from anchor position heuristic (for body clip mask support)
 			weapon_dir = _weapon_direction_from_anchor(anchor)
 			match weapon_dir:
 				"down": desired_angle = PI / 2.0
@@ -401,15 +428,12 @@ func _update_weapon_position(anchors: Dictionary) -> void:
 		else:
 			weapon_sprite.offset = Vector2.ZERO
 
-		# Z-index: use composed data override if active, otherwise direction-based
-		if _weapon_z_override != 0:
-			weapon_sprite.z_index = _weapon_z_override
-		else:
-			weapon_sprite.z_index = -1 if weapon_dir == "up" else 1
+		# Weapon always renders in front — body clip mask handles occlusion
+		weapon_sprite.z_index = 1
 
 		weapon_sprite.visible = true
 		weapon_sprite.position = anchor
-		_apply_weapon_alpha_mask()
+		_apply_body_clip_mask()
 		return
 
 	# ── Legacy path (no direction pixel) ───────────────────────────────
@@ -436,11 +460,8 @@ func _update_weapon_position(anchors: Dictionary) -> void:
 		weapon_sprite.visible = false
 		return
 
-	# Adjust z-index: use composed data override if active, otherwise direction-based default
-	if _weapon_z_override != 0:
-		weapon_sprite.z_index = _weapon_z_override
-	else:
-		weapon_sprite.z_index = -1 if weapon_dir == "up" else 1
+	# Weapon always renders in front — body clip mask handles occlusion
+	weapon_sprite.z_index = 1
 
 	weapon_sprite.visible = true
 	weapon_sprite.position = anchor
@@ -516,6 +537,11 @@ func _get_blade_tip_offset(_anchor: Vector2) -> Vector2:
 
 ## Scan the current body sprite frame for grip (magenta) and direction (cyan) anchor pixels.
 ## Returns Dictionary with "grip" and/or "direction" keys (local-space Vector2), or empty dict.
+##
+## Priority chain (highest to lowest):
+##   0. Composition anchors (from context_data — per-composition override)
+##   1. SpriteFrames metadata (pre-extracted at build time — zero GPU readback)
+##   2. Lazy cache / pixel scan (fallback for old sprites without metadata)
 func _find_weapon_anchors() -> Dictionary:
 	if not body_sprite or not body_sprite.sprite_frames:
 		return {}
@@ -526,9 +552,19 @@ func _find_weapon_anchors() -> Dictionary:
 	if not body_sprite.sprite_frames.has_animation(current_anim):
 		return {}
 
-	# Check cache first — avoids GPU→CPU readback + pixel scan every frame.
-	# Cache stores raw (unflipped) pixel coords; flipping is applied after lookup.
 	var cache_key := "%s:%d" % [current_anim, current_frame_idx]
+
+	# Priority 0: Composition-level anchors (survives body sprite regeneration)
+	if not _composition_anchors.is_empty():
+		var comp_entry: Dictionary = _composition_anchors.get(int(current_frame_idx), {})
+		if not comp_entry.is_empty():
+			return _convert_image_space_anchors(comp_entry, current_anim, current_frame_idx)
+
+	# Priority 1: Pre-extracted metadata (no GPU readback needed)
+	if _anchor_metadata.has(cache_key):
+		return _convert_image_space_anchors(_anchor_metadata[cache_key], current_anim, current_frame_idx)
+
+	# Priority 2: Lazy cache from pixel scanning (fallback for old sprites without metadata)
 	var cached: Dictionary = _anchor_cache.get(cache_key, {})
 	if not cached.is_empty() or _anchor_cache.has(cache_key):
 		# Apply flip to cached raw positions
@@ -576,6 +612,33 @@ func _find_weapon_anchors() -> Dictionary:
 		if is_flipped:
 			pos.x = -pos.x
 		result[key] = pos
+	return result
+
+
+## Convert image-space anchor entry { "grip": [x,y], ... } to local-space Vector2 positions.
+## Used by both metadata and composition anchor lookups.
+func _convert_image_space_anchors(entry: Dictionary, anim: StringName, frame_idx: int) -> Dictionary:
+	var half_w := 0.0
+	var half_h := 0.0
+	var tex := body_sprite.sprite_frames.get_frame_texture(anim, frame_idx)
+	if tex:
+		half_w = tex.get_width() / 2.0
+		half_h = tex.get_height() / 2.0
+	var result := {}
+	if entry.has("grip"):
+		var gp: Array = entry["grip"]
+		if gp.size() >= 2:
+			var pos := Vector2(gp[0] - half_w, gp[1] - half_h)
+			if is_flipped:
+				pos.x = -pos.x
+			result["grip"] = pos
+	if entry.has("direction"):
+		var dp: Array = entry["direction"]
+		if dp.size() >= 2:
+			var pos := Vector2(dp[0] - half_w, dp[1] - half_h)
+			if is_flipped:
+				pos.x = -pos.x
+			result["direction"] = pos
 	return result
 
 
@@ -641,70 +704,107 @@ func set_weapon_visible(vis: bool) -> void:
 		weapon_sprite.visible = false
 
 
-## Set weapon z-order from composed animation data
-func _on_weapon_z_changed(in_front: bool) -> void:
-	_weapon_z_override = 1 if in_front else -1
-
-
-## Clear weapon z-order override when sequence finishes
+## Clear body clip state when sequence finishes
 func _on_sequence_finished(_template_id: String) -> void:
-	_weapon_z_override = 0
-	_weapon_alpha_masks.clear()
-	_weapon_alpha_cache.clear()
+	_body_clip_masks.clear()
+	_body_clip_cache.clear()
+	_composition_anchors.clear()
 
 
-## Handle alpha mask data from AbilityVisualPlayer
-func _on_weapon_alpha_masks_changed(masks: Dictionary) -> void:
-	_weapon_alpha_masks = masks
-	_weapon_alpha_cache.clear()
+## Handle composition-level anchor data from AbilityVisualPlayer
+func _on_composition_anchors_changed(anchors: Dictionary) -> void:
+	_composition_anchors = anchors
+
+
+## Handle body clip mask data from AbilityVisualPlayer
+func _on_body_clip_masks_changed(masks: Dictionary) -> void:
+	_body_clip_masks = masks
+	_body_clip_cache.clear()
 	if not masks.is_empty():
-		Debug.log("Visuals", "Received %d weapon alpha masks, keys: %s" % [masks.size(), str(masks.keys())])
+		Debug.log("Visuals", "Received %d body clip masks, keys: %s" % [masks.size(), str(masks.keys())])
 	else:
-		Debug.log("Visuals", "Weapon alpha masks cleared")
+		Debug.log("Visuals", "Body clip masks cleared")
 
 
-## Apply per-frame alpha mask to the weapon texture.
-## Alpha masks are painted in the Attack Composer on the UNROTATED weapon image
-## (same image for all directions). At runtime, direction variants are pixel-rotated
-## ("right" = 90° CCW). We composite on the unrotated "down" texture, then rotate
-## the result to match the "right" variant orientation.
-func _apply_weapon_alpha_mask() -> void:
-	if _weapon_alpha_masks.is_empty() or body_sprite == null or weapon_sprite == null:
+## Apply per-frame body clip mask to the weapon texture.
+## Body clip masks are body-frame-sized binary images (255=clip, 0=pass).
+## For each weapon pixel, we transform it into body-frame coordinates and check
+## if it falls on a clipped region. If so, the weapon pixel is fully hidden.
+func _apply_body_clip_mask() -> void:
+	if _body_clip_masks.is_empty() or body_sprite == null or weapon_sprite == null:
 		return
 	var current_frame: int = body_sprite.frame
-	if not _weapon_alpha_masks.has(current_frame):
+	if not _body_clip_masks.has(current_frame):
 		return
-	if _weapon_alpha_cache.has(current_frame):
-		weapon_sprite.texture = _weapon_alpha_cache[current_frame]
+	if _body_clip_cache.has(current_frame):
+		weapon_sprite.texture = _body_clip_cache[current_frame]
 		return
-	# Use "down" (unrotated) texture — masks are in unrotated coordinate space.
-	# The "down" texture already has the global alpha_mask.png baked in by
-	# WeaponTextureLoader, so we only need to apply the per-frame mask.
-	var base_tex: Texture2D = _weapon_texture_set.get("down")
-	if base_tex == null:
+
+	# Use "right" texture as base (the rotation path always uses "right")
+	var right_tex: Texture2D = _weapon_texture_set.get("right")
+	if right_tex == null:
 		return
-	var base_img: Image = base_tex.get_image()
+	var base_img: Image = right_tex.get_image()
 	if base_img == null:
 		return
-	var mask: Image = _weapon_alpha_masks[current_frame]
+	var mask: Image = _body_clip_masks[current_frame]
 	var composited: Image = base_img.duplicate() as Image
 	if composited == null:
 		return
-	# Ensure image is in a writable uncompressed format
 	if composited.is_compressed():
 		composited.decompress()
-	for y in range(mini(composited.get_height(), mask.get_height())):
-		for x in range(mini(composited.get_width(), mask.get_width())):
-			var alpha_mult := mask.get_pixel(x, y).r
-			if alpha_mult < 0.99:
-				var px: Color = composited.get_pixel(x, y)
-				px.a *= alpha_mult
-				composited.set_pixel(x, y, px)
-	# Rotate to match "right" variant orientation (90° CCW), since the
-	# rotation path always uses the "right" texture + sprite rotation.
-	composited.rotate_90(COUNTERCLOCKWISE)
+
+	# Get body frame size for coordinate transform
+	var body_tex: Texture2D = body_sprite.sprite_frames.get_frame_texture(
+		body_sprite.animation, current_frame)
+	if body_tex == null:
+		return
+	var body_size := body_tex.get_size()
+	var weapon_size := Vector2(composited.get_width(), composited.get_height())
+
+	# Weapon transform parameters (in local-space, centered at body origin)
+	var wp_pos: Vector2 = weapon_sprite.position  # anchor position in local-space
+	var wp_rot: float = weapon_sprite.rotation
+	var wp_ofs: Vector2 = weapon_sprite.offset
+	var wp_flip_h: bool = weapon_sprite.flip_h
+
+	# Transform each weapon pixel to body-frame pixel coords
+	for wy in range(composited.get_height()):
+		for wx in range(composited.get_width()):
+			# Skip fully transparent weapon pixels
+			var wpx: Color = composited.get_pixel(wx, wy)
+			if wpx.a < 0.01:
+				continue
+
+			# Weapon pixel in weapon-local space (centered)
+			var weapon_local := Vector2(wx, wy) - weapon_size / 2.0 + wp_ofs
+			if wp_flip_h:
+				weapon_local.x = -weapon_local.x
+
+			# Apply rotation and position to get body-local coords
+			var body_local: Vector2 = weapon_local.rotated(wp_rot) + wp_pos
+
+			# Convert to body-frame pixel coords (0,0 = top-left)
+			var body_px := Vector2i(
+				int(body_local.x + body_size.x / 2.0),
+				int(body_local.y + body_size.y / 2.0)
+			)
+
+			# Check bounds and mask
+			if body_px.x < 0 or body_px.x >= int(body_size.x):
+				continue
+			if body_px.y < 0 or body_px.y >= int(body_size.y):
+				continue
+			if body_px.x >= mask.get_width() or body_px.y >= mask.get_height():
+				continue
+
+			# If mask says "body here" (clip), hide this weapon pixel
+			if mask.get_pixel(body_px.x, body_px.y).r > 0.5:
+				wpx.a = 0.0
+				composited.set_pixel(wx, wy, wpx)
+
 	var cached_tex := ImageTexture.create_from_image(composited)
-	_weapon_alpha_cache[current_frame] = cached_tex
+	_body_clip_cache[current_frame] = cached_tex
 	weapon_sprite.texture = cached_tex
 
 
@@ -752,12 +852,12 @@ func connect_to_visual_player(visual_player: Node) -> void:
 	visual_player.effect_event.connect(_on_effect_event)
 	if visual_player.has_signal("echo_requested"):
 		visual_player.echo_requested.connect(_on_echo_requested)
-	if visual_player.has_signal("weapon_z_changed"):
-		visual_player.weapon_z_changed.connect(_on_weapon_z_changed)
 	if visual_player.has_signal("sequence_finished"):
 		visual_player.sequence_finished.connect(_on_sequence_finished)
-	if visual_player.has_signal("weapon_alpha_masks_changed"):
-		visual_player.weapon_alpha_masks_changed.connect(_on_weapon_alpha_masks_changed)
+	if visual_player.has_signal("body_clip_masks_changed"):
+		visual_player.body_clip_masks_changed.connect(_on_body_clip_masks_changed)
+	if visual_player.has_signal("composition_anchors_changed"):
+		visual_player.composition_anchors_changed.connect(_on_composition_anchors_changed)
 
 
 func _on_play_body_animation(anim_name: String) -> void:
@@ -850,6 +950,13 @@ func _load_real_effect(effect_id: String, direction: String) -> Node2D:
 	if not meta is Dictionary:
 		return null
 
+	var duration_ms: int = meta.get("duration_ms", 200)
+
+	# Check cache — reuse SpriteFrames from a previous spawn of the same effect
+	var cache_key := "%s:%s" % [effect_id, direction]
+	if _effect_sf_cache.has(cache_key):
+		return _create_effect_node(_effect_sf_cache[cache_key], duration_ms)
+
 	var sheet_path: String = EFFECTS_DIR + "/" + effect_id + "/" + effect_id + "_" + direction + ".png"
 	if not ResourceLoader.exists(sheet_path):
 		return null
@@ -861,7 +968,6 @@ func _load_real_effect(effect_id: String, direction: String) -> Node2D:
 	var sheet_img: Image = sheet_tex.get_image()
 	var frame_count: int = meta.get("frame_count", 1)
 	var frame_size: int = meta.get("frame_size", 32)
-	var duration_ms: int = meta.get("duration_ms", 200)
 	var fps: float = float(frame_count) / maxf(float(duration_ms) / 1000.0, 0.001)
 
 	# Load optional alpha mask
@@ -891,9 +997,17 @@ func _load_real_effect(effect_id: String, direction: String) -> Node2D:
 		var tex := ImageTexture.create_from_image(frame_img)
 		sprite_frames.add_frame("play", tex)
 
-	# Create AnimatedSprite2D that plays once and auto-frees
+	# Cache for future spawns of the same effect
+	_effect_sf_cache[cache_key] = sprite_frames
+
+	return _create_effect_node(sprite_frames, duration_ms)
+
+
+## Create an AnimatedSprite2D node that plays a cached SpriteFrames once and auto-frees.
+## Shared by cached and uncached effect paths.
+func _create_effect_node(sf: SpriteFrames, duration_ms: int) -> Node2D:
 	var sprite := AnimatedSprite2D.new()
-	sprite.sprite_frames = sprite_frames
+	sprite.sprite_frames = sf
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	var duration_sec: float = float(duration_ms) / 1000.0
 	sprite.ready.connect(func() -> void:
