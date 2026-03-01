@@ -5,6 +5,7 @@ class_name EnvironmentManagerClass
 var _canvas_modulate: CanvasModulate
 var _world_env: WorldEnvironment
 var _environment: Environment
+var _particle_manager: ZoneParticleManager
 var current_mood: ZoneMood
 
 
@@ -40,8 +41,15 @@ func apply_mood(mood: ZoneMood) -> void:
 		_environment.glow_hdr_threshold = mood.bloom_threshold
 		_environment.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
 
-	Debug.log("Environment", "Applied mood: ambient=%s, bloom=%s (intensity=%.1f)" % [
-		mood.ambient_color, mood.bloom_enabled, mood.bloom_intensity if mood.bloom_enabled else 0.0
+	# Particles
+	if not mood.particle_type.is_empty():
+		_ensure_particle_manager()
+		_particle_manager.activate(mood.particle_type, mood.particle_tint)
+	elif _particle_manager:
+		_particle_manager.deactivate()
+
+	Debug.log("Environment", "Applied mood: ambient=%s, bloom=%s, particles=%s" % [
+		mood.ambient_color, mood.bloom_enabled, mood.particle_type
 	])
 
 
@@ -50,3 +58,17 @@ func clear_mood() -> void:
 	current_mood = null
 	_canvas_modulate.color = Color.WHITE
 	_environment.glow_enabled = false
+	if _particle_manager:
+		_particle_manager.deactivate()
+
+
+func _ensure_particle_manager() -> void:
+	if _particle_manager and is_instance_valid(_particle_manager):
+		return
+	_particle_manager = ZoneParticleManager.new()
+	_particle_manager.name = "ZoneParticles"
+	add_child(_particle_manager)
+	# Find the game camera
+	var camera := get_viewport().get_camera_2d()
+	if camera:
+		_particle_manager.setup(camera)
