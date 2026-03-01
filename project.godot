@@ -48,6 +48,7 @@ GlobalProgress="*res://autoloads/global_progress_manager.gd"
 SaveManager="*res://autoloads/save_manager.gd"
 CombatText="*res://autoloads/floating_combat_text_manager.gd"
 TalentProcSystem="*res://scripts/combat/talent_proc_system.gd"
+EnvironmentManager="*res://autoloads/environment_manager.gd"
 
 [display]
 
