@@ -321,6 +321,7 @@ func _create_chunk_root() -> void:
 	if not _chunk_root:
 		_chunk_root = Node2D.new()
 		_chunk_root.name = "ChunkRoot"
+		_chunk_root.y_sort_enabled = true
 		chunk_parent.add_child(_chunk_root)
 
 
@@ -999,6 +1000,15 @@ func _spawn_chunk_entities(chunk_id: String, chunk_node: Node2D, chunk_coords: V
 		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
 		if chunk_bounds.has_point(world_pos):
 			var entity := _spawn_light(light_data, chunk_node, chunk_origin, chunk_id)
+			if entity:
+				spawned_entities.append(entity)
+
+	# Spawn decorations
+	for deco_data in _zone_entities.get("decorations", []):
+		var pos: Dictionary = deco_data.get("position", {})
+		var world_pos := Vector2(pos.get("x", 0), pos.get("y", 0))
+		if chunk_bounds.has_point(world_pos):
+			var entity := DecorationSpawner.spawn(deco_data, chunk_node, chunk_origin, chunk_id)
 			if entity:
 				spawned_entities.append(entity)
 
