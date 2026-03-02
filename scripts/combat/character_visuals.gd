@@ -68,6 +68,10 @@ var _anchor_metadata: Dictionary = {}  # "anim:frame" → { "grip": [x,y], ... }
 ## Keyed by "effect_id:direction" — avoids GPU readback + blit + alpha loop on repeat spawns.
 static var _effect_sf_cache: Dictionary = {}  # "effect_id:direction" → SpriteFrames
 
+## Static light cache — all instances share one group query per frame.
+static var _cached_lights: Array = []
+static var _cache_frame: int = -1
+
 ## Composition-level anchor overrides from Attack Composer context_data.
 ## Highest priority — survives body sprite regeneration.
 var _composition_anchors: Dictionary = {}  # frame_index → { "grip": [x,y], ... }
@@ -278,33 +282,41 @@ func _update_shadow_light_response(delta: float) -> void:
 	if not shadow_sprite:
 		return
 
-	# Find nearest PointLight2D in "lights" group
-	var nearest_dist := SHADOW_LIGHT_SEARCH_RADIUS + 1.0
-	var lights := get_tree().get_nodes_in_group("lights")
-	for light_node in lights:
-		if light_node is PointLight2D and light_node.visible:
-			var dist := global_position.distance_to(light_node.global_position)
-			if dist < nearest_dist:
-				nearest_dist = dist
+	# Throttle distance search — stagger across instances so only ~1/6 of
+	# characters recalculate per frame. On skip frames the lerp still runs.
+	var frame := Engine.get_process_frames()
+	if (frame + get_instance_id()) % 6 == 0:
+		# Refresh static light cache once per frame (shared by all instances)
+		if frame != _cache_frame:
+			_cached_lights = get_tree().get_nodes_in_group("lights")
+			_cache_frame = frame
 
-	# Determine target opacity and scale based on distance
-	if nearest_dist > SHADOW_LIGHT_SEARCH_RADIUS:
-		# No light nearby — ambient fallback
-		_shadow_target_opacity = SHADOW_NO_LIGHT_OPACITY
-		_shadow_target_scale = SHADOW_NO_LIGHT_SCALE
-	else:
-		# Interpolate between close and far values
-		var t := clampf((nearest_dist - SHADOW_CLOSE_DISTANCE) / (SHADOW_FAR_DISTANCE - SHADOW_CLOSE_DISTANCE), 0.0, 1.0)
-		_shadow_target_opacity = lerpf(SHADOW_CLOSE_OPACITY, SHADOW_FAR_OPACITY, t)
-		_shadow_target_scale = lerpf(SHADOW_CLOSE_SCALE, SHADOW_FAR_SCALE, t)
+		# Find nearest PointLight2D
+		var nearest_dist := SHADOW_LIGHT_SEARCH_RADIUS + 1.0
+		for light_node in _cached_lights:
+			if light_node is PointLight2D and light_node.visible:
+				var dist := global_position.distance_to(light_node.global_position)
+				if dist < nearest_dist:
+					nearest_dist = dist
 
-	# Smooth lerp toward targets
+		# Determine target opacity and scale based on distance
+		if nearest_dist > SHADOW_LIGHT_SEARCH_RADIUS:
+			_shadow_target_opacity = SHADOW_NO_LIGHT_OPACITY
+			_shadow_target_scale = SHADOW_NO_LIGHT_SCALE
+		else:
+			var t := clampf((nearest_dist - SHADOW_CLOSE_DISTANCE) / (SHADOW_FAR_DISTANCE - SHADOW_CLOSE_DISTANCE), 0.0, 1.0)
+			_shadow_target_opacity = lerpf(SHADOW_CLOSE_OPACITY, SHADOW_FAR_OPACITY, t)
+			_shadow_target_scale = lerpf(SHADOW_CLOSE_SCALE, SHADOW_FAR_SCALE, t)
+
+	_apply_shadow_lerp(delta)
+
+
+func _apply_shadow_lerp(delta: float) -> void:
 	var lerp_speed := SHADOW_TRANSITION_SPEED * delta
 	shadow_sprite.modulate.a = lerpf(shadow_sprite.modulate.a, _shadow_target_opacity, lerp_speed)
 	var current_scale := shadow_sprite.scale.x
 	var new_scale := lerpf(current_scale, _shadow_target_scale, lerp_speed)
 	shadow_sprite.scale = Vector2(new_scale, new_scale)
-
 	shadow_sprite.visible = _shadow_animation_valid
 
 

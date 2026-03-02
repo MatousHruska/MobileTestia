@@ -3502,5 +3502,3 @@ func _update_effect_preview() -> void:
 	# Apply user offset (in pixels, scaled to viewport)
 	anchor_pos += frame.effect_offset * _preview_sprite.scale
 	_effect_sprite.position = anchor_pos
-
-

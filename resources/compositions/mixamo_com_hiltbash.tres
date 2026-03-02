@@ -207,6 +207,202 @@ movement_start_frame = 2
 movement_end_frame = 6
 damage_frame = 17
 
+[sub_resource type="Resource" id="Resource_jmaah"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+effect_offset = Vector2(0, -8)
+
+[sub_resource type="Resource" id="Resource_k43gx"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_tt24q"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_apk4i"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_rs7x8"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_0uldv"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_24lb5"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_ebhrg"]
+script = ExtResource("1_mo7w5")
+duration_ms = 64
+
+[sub_resource type="Resource" id="Resource_arogv"]
+script = ExtResource("1_mo7w5")
+duration_ms = 64
+
+[sub_resource type="Resource" id="Resource_5j1eq"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+
+[sub_resource type="Resource" id="Resource_dyvh5"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+
+[sub_resource type="Resource" id="Resource_difqc"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+
+[sub_resource type="Resource" id="Resource_h2q6w"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+
+[sub_resource type="Resource" id="Resource_idywu"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+
+[sub_resource type="Resource" id="Resource_prr58"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+
+[sub_resource type="Resource" id="Resource_ty6e1"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_8cesm"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_g1h5a"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_7oe15"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_5cks2"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_jam7s"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_x81ho"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_8b1tu"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_pjl4n"]
+script = ExtResource("1_mo7w5")
+duration_ms = 24
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_6d4pc"]
+script = ExtResource("1_mo7w5")
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_3kiaf"]
+script = ExtResource("1_mo7w5")
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_4gf4t"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+effect_id = "s0111"
+effect_anchor = "center"
+effect_offset = Vector2(47, -9)
+effect_rotation_deg = 90.0
+
+[sub_resource type="Resource" id="Resource_80g1r"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_ex1hm"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_6y4tb"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_jf30c"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_dxsyr"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_x5tw6"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_esbdc"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_m3cxj"]
+script = ExtResource("1_mo7w5")
+duration_ms = 32
+
+[sub_resource type="Resource" id="Resource_devia"]
+script = ExtResource("2_fvpml")
+frames = Array[ExtResource("1_mo7w5")]([SubResource("Resource_jmaah"), SubResource("Resource_k43gx"), SubResource("Resource_tt24q"), SubResource("Resource_apk4i"), SubResource("Resource_rs7x8"), SubResource("Resource_0uldv"), SubResource("Resource_24lb5"), SubResource("Resource_ebhrg"), SubResource("Resource_arogv"), SubResource("Resource_5j1eq"), SubResource("Resource_dyvh5"), SubResource("Resource_difqc"), SubResource("Resource_h2q6w"), SubResource("Resource_idywu"), SubResource("Resource_prr58"), SubResource("Resource_ty6e1"), SubResource("Resource_8cesm"), SubResource("Resource_g1h5a"), SubResource("Resource_7oe15"), SubResource("Resource_5cks2"), SubResource("Resource_jam7s"), SubResource("Resource_x81ho"), SubResource("Resource_8b1tu"), SubResource("Resource_pjl4n"), SubResource("Resource_6d4pc"), SubResource("Resource_3kiaf"), SubResource("Resource_4gf4t"), SubResource("Resource_80g1r"), SubResource("Resource_ex1hm"), SubResource("Resource_6y4tb"), SubResource("Resource_jf30c"), SubResource("Resource_dxsyr"), SubResource("Resource_x5tw6"), SubResource("Resource_esbdc"), SubResource("Resource_m3cxj")])
+movement_type = "dash"
+movement_distance = 10.0
+movement_start_frame = 2
+movement_end_frame = 6
+damage_frame = 17
+
 [sub_resource type="Image" id="Image_4kytp"]
 data = {
 "data": PackedByteArray("////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////AP//////////////////////////////////////////////////AAD/////////////////////////////////////////////////AAAA/////////////////////////////////////////////////wAAAAD/AP////////////////////////////////////////////8AAAAAAAAA////////////////////////////////////////////AAAAAAAAAAD//////////////////////////////////////////wAAAAAAAAD//////////////////////////////////////////wAAAAAA//////////////////////////////////////////////8AAAAAAP////////////////////////////////////////////8AAAAAAAD/////////////////////////////////////////////AAAAAAAA/////////////////////////////////////////////wAAAAAAAP////////////////////////////////////////////8AAAAAAAD/////////////////////////////////////////////AAAAAAAA/////////////////////////////////////////////wAAAAAAAP////////////////////////////////////////////8AAAAAAAD/////////////////////////////////////////////AAAAAAAA/////////////////////////////////////////////wAAAAAAAP////////////////////////////////////////////8AAAAAAAD//////////////////////////////////////////////wAAAAAA/////////////////////////////////////////////////wAAAP///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////w=="),
@@ -573,202 +769,6 @@ alpha_mask = SubResource("Image_2dmjp")
 [sub_resource type="Resource" id="Resource_ebqd7"]
 script = ExtResource("2_fvpml")
 frames = Array[ExtResource("1_mo7w5")]([SubResource("Resource_xgmqy"), SubResource("Resource_fh5fi"), SubResource("Resource_yp4ck"), SubResource("Resource_rj5wa"), SubResource("Resource_fb4uv"), SubResource("Resource_6a6og"), SubResource("Resource_0oxrm"), SubResource("Resource_abux7"), SubResource("Resource_87g2v"), SubResource("Resource_eifu2"), SubResource("Resource_kl0gq"), SubResource("Resource_7ckgn"), SubResource("Resource_p6nof"), SubResource("Resource_w5j4v"), SubResource("Resource_ku51j"), SubResource("Resource_6n2eu"), SubResource("Resource_xhrqo"), SubResource("Resource_hksnx"), SubResource("Resource_4pe7k"), SubResource("Resource_s8xqc"), SubResource("Resource_xp02r"), SubResource("Resource_p11dx"), SubResource("Resource_toqp3"), SubResource("Resource_jufcf"), SubResource("Resource_mblc7"), SubResource("Resource_s4txn"), SubResource("Resource_rv057"), SubResource("Resource_xj6sp"), SubResource("Resource_gygqg"), SubResource("Resource_5rm8o"), SubResource("Resource_u7v4e"), SubResource("Resource_hhxni"), SubResource("Resource_4lsc6"), SubResource("Resource_kwvow"), SubResource("Resource_lssfy")])
-movement_type = "dash"
-movement_distance = 10.0
-movement_start_frame = 2
-movement_end_frame = 6
-damage_frame = 17
-
-[sub_resource type="Resource" id="Resource_jmaah"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-effect_offset = Vector2(0, -8)
-
-[sub_resource type="Resource" id="Resource_k43gx"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_tt24q"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_apk4i"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_rs7x8"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_0uldv"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_24lb5"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_ebhrg"]
-script = ExtResource("1_mo7w5")
-duration_ms = 64
-
-[sub_resource type="Resource" id="Resource_arogv"]
-script = ExtResource("1_mo7w5")
-duration_ms = 64
-
-[sub_resource type="Resource" id="Resource_5j1eq"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-
-[sub_resource type="Resource" id="Resource_dyvh5"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-
-[sub_resource type="Resource" id="Resource_difqc"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-
-[sub_resource type="Resource" id="Resource_h2q6w"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-
-[sub_resource type="Resource" id="Resource_idywu"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-
-[sub_resource type="Resource" id="Resource_prr58"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-
-[sub_resource type="Resource" id="Resource_ty6e1"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_8cesm"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_g1h5a"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_7oe15"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_5cks2"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_jam7s"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_x81ho"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_8b1tu"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_pjl4n"]
-script = ExtResource("1_mo7w5")
-duration_ms = 24
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_6d4pc"]
-script = ExtResource("1_mo7w5")
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_3kiaf"]
-script = ExtResource("1_mo7w5")
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_4gf4t"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-effect_id = "s0111"
-effect_anchor = "center"
-effect_offset = Vector2(47, -9)
-effect_rotation_deg = 90.0
-
-[sub_resource type="Resource" id="Resource_80g1r"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_ex1hm"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_6y4tb"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_jf30c"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_dxsyr"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_x5tw6"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_esbdc"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_m3cxj"]
-script = ExtResource("1_mo7w5")
-duration_ms = 32
-
-[sub_resource type="Resource" id="Resource_devia"]
-script = ExtResource("2_fvpml")
-frames = Array[ExtResource("1_mo7w5")]([SubResource("Resource_jmaah"), SubResource("Resource_k43gx"), SubResource("Resource_tt24q"), SubResource("Resource_apk4i"), SubResource("Resource_rs7x8"), SubResource("Resource_0uldv"), SubResource("Resource_24lb5"), SubResource("Resource_ebhrg"), SubResource("Resource_arogv"), SubResource("Resource_5j1eq"), SubResource("Resource_dyvh5"), SubResource("Resource_difqc"), SubResource("Resource_h2q6w"), SubResource("Resource_idywu"), SubResource("Resource_prr58"), SubResource("Resource_ty6e1"), SubResource("Resource_8cesm"), SubResource("Resource_g1h5a"), SubResource("Resource_7oe15"), SubResource("Resource_5cks2"), SubResource("Resource_jam7s"), SubResource("Resource_x81ho"), SubResource("Resource_8b1tu"), SubResource("Resource_pjl4n"), SubResource("Resource_6d4pc"), SubResource("Resource_3kiaf"), SubResource("Resource_4gf4t"), SubResource("Resource_80g1r"), SubResource("Resource_ex1hm"), SubResource("Resource_6y4tb"), SubResource("Resource_jf30c"), SubResource("Resource_dxsyr"), SubResource("Resource_x5tw6"), SubResource("Resource_esbdc"), SubResource("Resource_m3cxj")])
 movement_type = "dash"
 movement_distance = 10.0
 movement_start_frame = 2

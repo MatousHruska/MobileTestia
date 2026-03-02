@@ -10,6 +10,10 @@ class_name WeaponTextureLoader
 
 const WEAPON_SPRITES_BASE := "res://assets/sprites/weapons/"
 
+## Cached weapon texture sets keyed by sprite_id.
+## Avoids GPU readback + image rotation + ImageTexture creation on re-equip.
+static var _texture_set_cache: Dictionary = {}  # sprite_id → Dictionary
+
 
 ## Load a complete weapon texture set for an equipped weapon.
 ## Returns a Dictionary matching CharacterVisuals.set_weapon_texture_set() format:
@@ -17,10 +21,15 @@ const WEAPON_SPRITES_BASE := "res://assets/sprites/weapons/"
 ##     "grip_down": Vector2, "grip_up": Vector2, "grip_right": Vector2 }
 ## Returns empty dictionary if no visuals are available.
 static func load_weapon_textures(sprite_id: String, weapon_category: String) -> Dictionary:
+	# Try cache first — weapon assets don't change at runtime
+	if sprite_id != "" and _texture_set_cache.has(sprite_id):
+		return _texture_set_cache[sprite_id]
+
 	# Try loading from disk if sprite_id is set
 	if sprite_id != "":
 		var from_disk := _load_from_disk(sprite_id)
 		if not from_disk.is_empty():
+			_texture_set_cache[sprite_id] = from_disk
 			return from_disk
 
 	# Fallback to procedural placeholder

@@ -1,0 +1,57 @@
+{
+  "columns": 5,
+  "decorations": [
+    {
+      "decoration_id": "pinetree",
+      "has_normal": true,
+      "has_occluder": true,
+      "has_shadow": true,
+      "source_height": 96,
+      "source_width": 96,
+      "tile_x": 0,
+      "tile_y": 0
+    },
+    {
+      "decoration_id": "pinetree2",
+      "has_normal": true,
+      "has_occluder": true,
+      "has_shadow": true,
+      "source_height": 96,
+      "source_width": 36,
+      "tile_x": 1,
+      "tile_y": 0
+    },
+    {
+      "decoration_id": "blocking",
+      "has_normal": true,
+      "has_occluder": true,
+      "has_shadow": true,
+      "source_height": 96,
+      "source_width": 96,
+      "tile_x": 2,
+      "tile_y": 0
+    },
+    {
+      "decoration_id": "test_pillar",
+      "has_normal": false,
+      "has_occluder": false,
+      "has_shadow": false,
+      "source_height": 32,
+      "source_width": 12,
+      "tile_x": 3,
+      "tile_y": 0
+    },
+    {
+      "decoration_id": "test_rock",
+      "has_normal": false,
+      "has_occluder": false,
+      "has_shadow": false,
+      "source_height": 18,
+      "source_width": 24,
+      "tile_x": 4,
+      "tile_y": 0
+    }
+  ],
+  "rows": 1,
+  "tile_size": 64
+}

@@ -379,14 +379,14 @@ func debug_test_path() -> void:
 #===============================================================================
 
 func _on_chunk_loaded(chunk_id: String) -> void:
-	# Get chunk coordinates from ChunkManager
+	# Get chunk coordinates and tile_data from ChunkManager (avoids double JSON load)
 	if not ChunkManager.loaded_chunks.has(chunk_id):
 		return
 
 	var chunk_data = ChunkManager.loaded_chunks[chunk_id]
 	var chunk_coords: Vector2i = chunk_data.coords
 
-	_nav_grid.load_chunk(chunk_id, chunk_coords)
+	_nav_grid.load_chunk(chunk_id, chunk_coords, chunk_data.tile_data)
 	_pending_rebuild = true
 
 	Debug.log("PathfindingService", "Chunk loaded: %s at %s" % [chunk_id, chunk_coords])

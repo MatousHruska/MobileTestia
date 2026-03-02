@@ -53,6 +53,7 @@ Private Const COL_ZN_IS_PVP_ENABLED As Integer = 9
 Private Const COL_ZN_STATUS_EFFECT_ID As Integer = 10
 Private Const COL_ZN_DISCOVERY_POPUP As Integer = 11
 Private Const COL_ZN_DESCRIPTION As Integer = 12
+Private Const COL_ZN_MOOD_ID As Integer = 13
 
 ' Column indices for GameplaySettings (key-value pairs)
 Private Const COL_GS_KEY As Integer = 1
@@ -520,7 +521,8 @@ Public Sub ExportZones()
         json = json & "      ""is_pvp_enabled"": " & isPvpEnabled & "," & vbCrLf
         json = json & "      ""status_effect_id"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_STATUS_EFFECT_ID))) & """," & vbCrLf
         json = json & "      ""discovery_popup"": " & discoveryPopup & "," & vbCrLf
-        json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_DESCRIPTION))) & """" & vbCrLf
+        json = json & "      ""description"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_ZN_DESCRIPTION))) & """," & vbCrLf
+        json = json & "      ""mood_id"": """ & EscapeJsonString(Trim(GetDefaultString(ws.Cells(i, COL_ZN_MOOD_ID)))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -629,7 +631,7 @@ Public Sub SetupZonesSheet()
     Dim headers As Variant
     headers = Array("id", "name", "zone_type", "min_level", "max_level", _
                     "music_track", "ambient_sound", "is_safe_zone", "is_pvp_enabled", _
-                    "status_effect_id", "discovery_popup", "description")
+                    "status_effect_id", "discovery_popup", "description", "mood_id")
 
     SetupSheetHeaders ws, headers
 
@@ -646,6 +648,7 @@ Public Sub SetupZonesSheet()
     SafeAddComment ws.Cells(1, 10), "Status effect applied while in zone (e.g., status_cold)"
     SafeAddComment ws.Cells(1, 11), "TRUE/FALSE - show discovery popup on first visit"
     SafeAddComment ws.Cells(1, 12), "Flavor text description of the zone"
+    SafeAddComment ws.Cells(1, 13), "FK to ZoneMoods sheet (e.g., mood_outdoor_meadow). Controls ambient color, bloom, particles."
 
     MsgBox "Zones sheet setup complete!" & vbCrLf & vbCrLf & _
            "NOTE: Enemy spawns are now configured in the SpawnPoints sheet.", vbInformation

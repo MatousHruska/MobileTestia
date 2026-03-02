@@ -92,6 +92,9 @@ Public Sub ExportAll()
     ExportChunksData
     ExportTerrainTypesData
 
+    ' Zone Moods (atmosphere presets)
+    ExportZoneMoodsData
+
     On Error GoTo 0
 
     g_SilentMode = False
@@ -148,6 +151,7 @@ Public Sub ValidateAll()
     ValidateCombatText
     ValidateChunks
     ValidateTerrainTypes
+    ValidateZoneMoods
     On Error GoTo 0
 
     g_SilentMode = False
@@ -219,6 +223,7 @@ Public Sub SetupWorkbook()
     currentSheet = "CombatTextCategories": SetupCombatTextCategoriesSheet
     currentSheet = "Chunks": SetupChunksSheet
     currentSheet = "TerrainTypes": SetupTerrainTypesSheet
+    currentSheet = "ZoneMoods": SetupZoneMoodsSheet
 
     g_SilentMode = False
 
@@ -519,7 +524,7 @@ Private Sub SetupZonesSheet()
     Dim headers As Variant
     headers = Array("id", "name", "zone_type", "min_level", "max_level", _
                     "music_track", "ambient_sound", "is_safe_zone", "is_pvp_enabled", _
-                    "status_effect_id", "discovery_popup", "description")
+                    "status_effect_id", "discovery_popup", "description", "mood_id")
     SetHeaders ws, headers
 
     ' Add comments
@@ -529,6 +534,7 @@ Private Sub SetupZonesSheet()
     SafeAddComment ws.Cells(1, 9), "true/false - PvP enabled in this zone"
     SafeAddComment ws.Cells(1, 10), "Status effect applied while in zone (e.g., status_cold)"
     SafeAddComment ws.Cells(1, 11), "true/false - Show discovery popup on first visit"
+    SafeAddComment ws.Cells(1, 13), "FK to ZoneMoods sheet (e.g., mood_outdoor_meadow)"
 End Sub
 
 Private Sub SetupDialoguesSheet()

@@ -12,7 +12,8 @@
       "is_pvp_enabled": false,
       "status_effect_id": "",
       "discovery_popup": false,
-      "description": ""
+      "description": "",
+      "mood_id": ""
     },
     {
       "id": "zone_meadow",
@@ -26,7 +27,8 @@
       "is_pvp_enabled": false,
       "status_effect_id": "",
       "discovery_popup": false,
-      "description": ""
+      "description": "",
+      "mood_id": ""
     },
     {
       "id": "zone_forest",
@@ -40,7 +42,8 @@
       "is_pvp_enabled": false,
       "status_effect_id": "",
       "discovery_popup": true,
-      "description": "A peaceful forest teeming with wildlife"
+      "description": "A peaceful forest teeming with wildlife",
+      "mood_id": ""
     },
     {
       "id": "zone_crypt",
@@ -54,7 +57,8 @@
       "is_pvp_enabled": false,
       "status_effect_id": "",
       "discovery_popup": false,
-      "description": ""
+      "description": "",
+      "mood_id": ""
     },
     {
       "id": "zone_mountain",
@@ -68,7 +72,8 @@
       "is_pvp_enabled": false,
       "status_effect_id": "",
       "discovery_popup": true,
-      "description": "Mountain testing area with wolves, archers, and boss"
+      "description": "Mountain testing area with wolves, archers, and boss",
+      "mood_id": ""
     },
     {
       "id": "zone_test",
@@ -82,7 +87,8 @@
       "is_pvp_enabled": false,
       "status_effect_id": "",
       "discovery_popup": false,
-      "description": "Test zone imported from LDtk"
+      "description": "Test zone imported from LDtk",
+      "mood_id": "mood_outdoor_meadow"
     }
   ]
 }

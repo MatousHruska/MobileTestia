@@ -100,6 +100,7 @@ var _processed_occluder_points: Dictionary = {}  # angle_name -> PackedVector2Ar
 var step_indicator: Control
 var step_containers: Array[Control] = []
 var preview_container: SubViewportContainer
+var _right_preview_rect: TextureRect  # 2D preview in right panel (pixel art, composite, etc.)
 var sub_viewport: SubViewport
 var camera: Camera3D
 var model_slot: Node3D
@@ -134,7 +135,10 @@ var _dither_strength_slider: HSlider
 var _outline_check: CheckButton
 var _denoise_check: CheckButton
 var _denoise_slider: HSlider
-var _pixel_preview_rect: TextureRect
+var _palette_dropdown: OptionButton
+var _palette_swatch_container: HFlowContainer
+var _palette_colors: PackedColorArray = PackedColorArray()
+var _palette_file_dialog: FileDialog = null
 
 # Step 4 refs
 var _2d_normal_container: VBoxContainer
@@ -357,11 +361,22 @@ func _build_ui() -> void:
 	right_panel.add_theme_stylebox_override("panel", right_sb)
 	root_hbox.add_child(right_panel)
 
+	# Wrapper so both the 3D viewport and 2D preview can share the right panel
+	var right_stack := Control.new()
+	right_stack.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	right_panel.add_child(right_stack)
+
 	preview_container = SubViewportContainer.new()
-	preview_container.size_flags_horizontal = SIZE_EXPAND_FILL
-	preview_container.size_flags_vertical = SIZE_EXPAND_FILL
+	preview_container.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	preview_container.stretch = true
-	right_panel.add_child(preview_container)
+	right_stack.add_child(preview_container)
+
+	_right_preview_rect = TextureRect.new()
+	_right_preview_rect.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	_right_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_right_preview_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_right_preview_rect.visible = false
+	right_stack.add_child(_right_preview_rect)
 
 
 func _build_viewport() -> void:
@@ -498,9 +513,13 @@ func _go_to_step(step: int) -> void:
 			_refresh_preview_angle_buttons()
 			_update_composite_preview()
 
-	# Viewport visibility: only show 3D viewport during steps 0-1 in 3D mode
+	# Right panel visibility: 3D viewport for steps 0-1, 2D preview for step 2
+	var show_3d := (_source_mode == "3d" and step <= 1)
+	var show_2d_preview := (step == 2)
 	if preview_container:
-		preview_container.visible = (_source_mode == "3d" and step <= 1)
+		preview_container.visible = show_3d
+	if _right_preview_rect:
+		_right_preview_rect.visible = show_2d_preview
 
 	# Update step indicator
 	if step_indicator:
@@ -816,32 +835,13 @@ func _compute_camera_pan(detect_img: Image, detect_size: int, detect_cam_size: f
 	## Given a detection-pass render (wider view), find the bounding box of opaque
 	## pixels and compute a world-space camera shift to center the model.
 	## Returns Vector3.ZERO if no shift is needed.
-	var w := detect_img.get_width()
-	var h := detect_img.get_height()
-	var min_x := w
-	var min_y := h
-	var max_x := 0
-	var max_y := 0
-
-	for y in range(h):
-		for x in range(w):
-			if detect_img.get_pixel(x, y).a > 0.1:
-				if x < min_x:
-					min_x = x
-				if x > max_x:
-					max_x = x
-				if y < min_y:
-					min_y = y
-				if y > max_y:
-					max_y = y
-
-	# No opaque pixels — no shift needed
-	if max_x < min_x:
+	var used_rect := detect_img.get_used_rect()
+	if used_rect.size == Vector2i.ZERO:
 		return Vector3.ZERO
 
 	# Bounding box center offset from viewport center (in pixels)
-	var center_px_x := (min_x + max_x) / 2.0
-	var center_px_y := (min_y + max_y) / 2.0
+	var center_px_x := used_rect.position.x + used_rect.size.x / 2.0
+	var center_px_y := used_rect.position.y + used_rect.size.y / 2.0
 	var offset_px_x := center_px_x - detect_size / 2.0
 	var offset_px_y := center_px_y - detect_size / 2.0
 
@@ -1123,8 +1123,8 @@ func _build_step3(parent: VBoxContainer) -> void:
 	content.add_child(_make_small_label(
 		"Configure downscaling, palette, outline, and dithering settings."))
 
-	# Output height slider (8-128, default 32, step 1)
-	var height_data := _make_slider_row(8.0, 128.0, 32.0, 1.0)
+	# Output height slider (8-512, default 32, step 1)
+	var height_data := _make_slider_row(8.0, 512.0, 32.0, 1.0)
 	_output_height_slider = height_data[1]
 	content.add_child(_make_field("Output Height (px)", height_data[0]))
 
@@ -1133,7 +1133,26 @@ func _build_step3(parent: VBoxContainer) -> void:
 	_alpha_threshold_slider = alpha_data[1]
 	content.add_child(_make_field("Alpha Threshold", alpha_data[0]))
 
-	# Dithering checkbox
+	# ── Palette ────────────────────────────────────────────────────────
+	# Dropdown: saved palettes from res://assets/palettes/
+	_palette_dropdown = OptionButton.new()
+	_palette_dropdown.add_theme_font_size_override("font_size", FONT_VALUE)
+	_palette_dropdown.item_selected.connect(_on_palette_dropdown_selected)
+	content.add_child(_make_field("Palette", _palette_dropdown))
+	_scan_palettes()
+
+	# Load from file button
+	var load_palette_btn := _make_primary_button("Load Palette PNG...")
+	load_palette_btn.pressed.connect(_on_load_palette_pressed)
+	content.add_child(load_palette_btn)
+
+	# Swatch preview
+	_palette_swatch_container = HFlowContainer.new()
+	_palette_swatch_container.add_theme_constant_override("h_separation", 2)
+	_palette_swatch_container.add_theme_constant_override("v_separation", 2)
+	content.add_child(_palette_swatch_container)
+
+	# ── Dithering ──────────────────────────────────────────────────────
 	_dither_check = CheckButton.new()
 	_dither_check.text = "Ordered Dithering"
 	_style_checkbutton_transparent(_dither_check)
@@ -1162,18 +1181,10 @@ func _build_step3(parent: VBoxContainer) -> void:
 	_denoise_slider = denoise_data[1]
 	content.add_child(_make_field("Min Cluster Size", denoise_data[0]))
 
-	# Update Preview button
+	# Update Preview button — renders into the right panel
 	var preview_btn := _make_primary_button("Update Preview")
 	preview_btn.pressed.connect(_update_pixel_preview)
 	content.add_child(preview_btn)
-
-	# Preview TextureRect
-	_pixel_preview_rect = TextureRect.new()
-	_pixel_preview_rect.custom_minimum_size = Vector2(200, 200)
-	_pixel_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_pixel_preview_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_pixel_preview_rect.size_flags_horizontal = SIZE_EXPAND_FILL
-	content.add_child(_pixel_preview_rect)
 
 
 func _build_step4(parent: VBoxContainer) -> void:
@@ -1375,7 +1386,7 @@ func _build_step6(parent: VBoxContainer) -> void:
 		"Run this after exporting to update the atlas with the new decoration."))
 
 	var atlas_btn := _make_primary_button("Regenerate Atlas")
-	atlas_btn.pressed.connect(_regenerate_atlas)
+	atlas_btn.pressed.connect(func() -> void: _regenerate_atlas())
 	atlas_content.add_child(atlas_btn)
 
 	# ── Export Log ─────────────────────────────────────────────────────
@@ -1465,16 +1476,26 @@ func _start_export() -> void:
 				ResourceSaver.save(occluder, output_dir + "/occluder.tres")
 				_append_log("Saved: %s/occluder.tres (%d vertices)" % [deco_id, points.size()])
 
+	# Collect just-exported images so the atlas can use them from memory
+	# instead of re-reading from disk.
+	var exported_images: Dictionary = {}  # { deco_id: Image }
+	for angle_config in angles:
+		var angle_name: String = angle_config["name"]
+		var suffix: String = angle_config.get("suffix", "")
+		var deco_id := _decoration_id + suffix
+		if _processed_color.has(angle_name):
+			exported_images[deco_id] = _processed_color[angle_name]
+
 	_append_log("")
 	_append_log("[b]Export complete.[/b] Now regenerating atlas...")
-	_regenerate_atlas()
+	_regenerate_atlas(exported_images)
 
 
 func _append_log(text: String) -> void:
 	_export_log.append_text(text + "\n")
 
 
-func _regenerate_atlas() -> void:
+func _regenerate_atlas(cached_images: Dictionary = {}) -> void:
 	var global_decos_dir := ProjectSettings.globalize_path(DECORATIONS_DIR)
 	var dir := DirAccess.open(global_decos_dir)
 	if dir == null:
@@ -1487,9 +1508,14 @@ func _regenerate_atlas() -> void:
 	var folder_name := dir.get_next()
 	while folder_name != "":
 		if dir.current_is_dir() and folder_name != "_atlas" and not folder_name.begins_with("."):
-			var sprite_path := "%s/%s/sprite.png" % [DECORATIONS_DIR, folder_name]
-			var global_sprite := ProjectSettings.globalize_path(sprite_path)
-			var img := Image.load_from_file(global_sprite)
+			# Use in-memory image if available, otherwise load from disk
+			var img: Image = null
+			if cached_images.has(folder_name):
+				img = cached_images[folder_name]
+			else:
+				var global_sprite := ProjectSettings.globalize_path(
+					"%s/%s/sprite.png" % [DECORATIONS_DIR, folder_name])
+				img = Image.load_from_file(global_sprite)
 			if img:
 				deco_entries.append({
 					"decoration_id": folder_name,
@@ -1596,13 +1622,30 @@ func _process_decoration_image(source: Image) -> Image:
 	if _dither_check.button_pressed:
 		PixelArtProcessing.apply_ordered_dithering(result, _dither_strength_slider.value, 1)  # 4x4 Bayer
 		PixelArtProcessing.apply_auto_quantize(result)
+	# Palette mapping (if a palette is loaded)
+	if not _palette_colors.is_empty():
+		PixelArtProcessing.apply_palette_mapping(result, _palette_colors)
 	# Outline (if enabled)
 	if _outline_check.button_pressed:
 		PixelArtProcessing.apply_outline(result, Color.BLACK)
 	# Denoising (if enabled)
 	if _denoise_check.button_pressed:
 		PixelArtProcessing.apply_denoising(result, int(_denoise_slider.value))
+	# Crop transparent border so bottom-center anchoring aligns with the actual sprite
+	result = _crop_transparent_border(result)
 	return result
+
+
+## Crop transparent padding around the sprite to its used rect.
+func _crop_transparent_border(image: Image) -> Image:
+	var used := image.get_used_rect()
+	if used.size == Vector2i.ZERO:
+		return image  # Fully transparent — nothing to crop
+	if used == Rect2i(Vector2i.ZERO, image.get_size()):
+		return image  # Already tight — no crop needed
+	var cropped := Image.create(used.size.x, used.size.y, false, image.get_format())
+	cropped.blit_rect(image, used, Vector2i.ZERO)
+	return cropped
 
 
 ## Update the pixel art preview with the processed source image.
@@ -1618,8 +1661,87 @@ func _update_pixel_preview() -> void:
 		_set_status("No source image to process.")
 		return
 	var processed := _process_decoration_image(source)
-	_pixel_preview_rect.texture = ImageTexture.create_from_image(processed)
+	_right_preview_rect.texture = ImageTexture.create_from_image(processed)
 	_set_status("Preview: %dx%d px" % [processed.get_width(), processed.get_height()])
+
+
+#===============================================================================
+# PALETTE LOADING
+#===============================================================================
+
+const PALETTE_DIR := "res://assets/palettes"
+
+
+func _scan_palettes() -> void:
+	_palette_dropdown.clear()
+	_palette_dropdown.add_item("(none)")
+
+	var global_dir := ProjectSettings.globalize_path(PALETTE_DIR)
+	var dir := DirAccess.open(global_dir)
+	if dir == null:
+		DirAccess.make_dir_recursive_absolute(global_dir)
+		return
+
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if file_name.to_lower().ends_with(".png"):
+			_palette_dropdown.add_item(file_name)
+		file_name = dir.get_next()
+	dir.list_dir_end()
+
+
+func _on_palette_dropdown_selected(index: int) -> void:
+	if index == 0:
+		_palette_colors.clear()
+		_update_palette_swatch()
+		return
+	var palette_name: String = _palette_dropdown.get_item_text(index)
+	var global_path := ProjectSettings.globalize_path("%s/%s" % [PALETTE_DIR, palette_name])
+	_load_palette_from_path(global_path)
+
+
+func _on_load_palette_pressed() -> void:
+	if _palette_file_dialog == null:
+		_palette_file_dialog = FileDialog.new()
+		_palette_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILE
+		_palette_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		_palette_file_dialog.filters = PackedStringArray(["*.png ; PNG Palette"])
+		_palette_file_dialog.file_selected.connect(_on_palette_file_selected)
+		add_child(_palette_file_dialog)
+	_palette_file_dialog.popup_centered(Vector2i(600, 400))
+
+
+func _on_palette_file_selected(path: String) -> void:
+	_load_palette_from_path(path)
+
+
+func _load_palette_from_path(path: String) -> void:
+	var image := Image.new()
+	var err := image.load(path)
+	if err != OK:
+		_set_status("ERROR: Could not load palette from %s" % path)
+		return
+
+	_palette_colors.clear()
+	for y in range(image.get_height()):
+		for x in range(image.get_width()):
+			var color := image.get_pixel(x, y)
+			if color.a > 0.5 and not _palette_colors.has(color):
+				_palette_colors.append(color)
+
+	_set_status("Loaded palette: %d colors" % _palette_colors.size())
+	_update_palette_swatch()
+
+
+func _update_palette_swatch() -> void:
+	for child in _palette_swatch_container.get_children():
+		child.queue_free()
+	for color in _palette_colors:
+		var swatch := ColorRect.new()
+		swatch.custom_minimum_size = Vector2(12, 12)
+		swatch.color = color
+		_palette_swatch_container.add_child(swatch)
 
 
 #===============================================================================
@@ -2084,14 +2206,8 @@ func _update_composite_preview() -> void:
 	# Layer 3: Normal map (replaces sprite pixels where both are opaque)
 	if _show_normal_check.button_pressed and _processed_normal.has(angle_key):
 		var normal_img: Image = _processed_normal[angle_key]
-		for y in range(normal_img.get_height()):
-			for x in range(normal_img.get_width()):
-				var nc := normal_img.get_pixel(x, y)
-				if nc.a > 0.5:
-					var cx := origin_x + x
-					var cy := origin_y + y
-					if cx >= 0 and cx < comp_w and cy >= 0 and cy < comp_h:
-						composite.set_pixel(cx, cy, Color(nc.r, nc.g, nc.b, 1.0))
+		composite.blend_rect(normal_img, Rect2i(Vector2i.ZERO, normal_img.get_size()),
+			Vector2i(origin_x, origin_y))
 
 	# Layer 4: Occluder outline (yellow polygon lines via Bresenham)
 	if _show_occluder_check.button_pressed and _processed_occluder_points.has(angle_key):
@@ -2112,24 +2228,7 @@ func _update_composite_preview() -> void:
 
 ## Alpha-blend a source image onto a destination at the given offset.
 func _alpha_blend_image(dest: Image, src: Image, offset_x: int, offset_y: int) -> void:
-	var dw := dest.get_width()
-	var dh := dest.get_height()
-	for y in range(src.get_height()):
-		for x in range(src.get_width()):
-			var sc := src.get_pixel(x, y)
-			if sc.a < 0.01:
-				continue
-			var dx := offset_x + x
-			var dy := offset_y + y
-			if dx < 0 or dx >= dw or dy < 0 or dy >= dh:
-				continue
-			var dc := dest.get_pixel(dx, dy)
-			# Standard alpha blending: out = src * src.a + dst * (1 - src.a)
-			var out_r := sc.r * sc.a + dc.r * (1.0 - sc.a)
-			var out_g := sc.g * sc.a + dc.g * (1.0 - sc.a)
-			var out_b := sc.b * sc.a + dc.b * (1.0 - sc.a)
-			var out_a := sc.a + dc.a * (1.0 - sc.a)
-			dest.set_pixel(dx, dy, Color(out_r, out_g, out_b, out_a))
+	dest.blend_rect(src, Rect2i(Vector2i.ZERO, src.get_size()), Vector2i(offset_x, offset_y))
 
 
 ## Draw a line on an image using Bresenham's algorithm.

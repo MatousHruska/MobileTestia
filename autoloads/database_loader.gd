@@ -83,18 +83,29 @@ var lore_echoes_list: Array = []
 var trigger_areas_list: Array = []
 var interior_regions_list: Array = []
 
+## Deferred loading state — tier 2 databases load on first chunk load
+var _deferred_loaded: bool = false
+
 ## Signals
 signal databases_loaded
+signal deferred_databases_loaded
 signal database_load_failed(filename: String, error: String)
 
 
 func _ready() -> void:
-	load_all_databases()
+	_load_essential_databases()
 
 
-## Load all database files
+## Load all database files (both tiers). Used for full reload scenarios.
 func load_all_databases() -> void:
-	Debug.info("Database", "Loading databases from %s" % DATABASE_PATH)
+	_load_essential_databases()
+	ensure_deferred_loaded()
+
+
+## Tier 1 — Essential databases needed before the first frame.
+## Items, enemies, combat, talents, config, and map structure.
+func _load_essential_databases() -> void:
+	Debug.info("Database", "Loading essential databases from %s" % DATABASE_PATH)
 
 	var success := true
 
@@ -119,21 +130,49 @@ func load_all_databases() -> void:
 	success = _load_database("talent_trees.json", "talent_trees", talent_trees, talent_trees_list) and success
 	success = _load_database("talents.json", "talents", talents, talents_list) and success
 
-	# Quests
+	# Gameplay (essential config)
+	success = _load_database("consumables.json", "consumables", consumables) and success
+	success = _load_database("status_effects.json", "status_effects", status_effects) and success
+	success = _load_gameplay_settings() and success
+
+	# Map structure (needed for zone/chunk initialization)
+	success = _load_database("zones.json", "zones", zones, zones_list) and success
+	success = _load_database("chunks.json", "chunks", chunks, chunks_list) and success
+	success = _load_database("terrain_types.json", "terrain_types", terrain_types, terrain_types_list) and success
+
+	# Config
+	success = _load_database("stat_descriptions.json", "stat_descriptions", stat_descriptions) and success
+	success = _load_combat_text() and success
+
+	if success:
+		Debug.info("Database", "Essential databases loaded successfully")
+		databases_loaded.emit()
+	else:
+		Debug.warn("Database", "Some essential databases failed to load")
+
+
+## Trigger deferred (tier 2) database loading. Safe to call multiple times.
+## Called automatically on first chunk load so zone entity data is ready.
+func ensure_deferred_loaded() -> void:
+	if _deferred_loaded:
+		return
+	_deferred_loaded = true
+
+	Debug.info("Database", "Loading deferred databases from %s" % DATABASE_PATH)
+
+	var success := true
+
+	# Quests & NPCs
 	success = _load_database("quests.json", "quests", quests, quests_list) and success
 	success = _load_database("quest_objectives.json", "quest_objectives", quest_objectives) and success
-
-	# NPCs & Trading
 	success = _load_database("npcs.json", "npcs", npcs, npcs_list) and success
 	success = _load_database("shop_inventory.json", "shop_inventory", shop_inventory) and success
 	success = _load_database("dialogues.json", "dialogues", dialogues, dialogues_list) and success
 
-	# Gameplay
-	success = _load_database("consumables.json", "consumables", consumables) and success
-	success = _load_database("status_effects.json", "status_effects", status_effects) and success
-	success = _load_gameplay_settings() and success
-	success = _load_database("zones.json", "zones", zones, zones_list) and success
+	# World data
 	success = _load_database("locations.json", "locations", locations, locations_list) and success
+	success = _load_database("spawn_points.json", "spawn_points", spawn_points, spawn_points_list) and success
+	success = _load_database("cutscenes.json", "cutscenes", cutscenes, cutscenes_list) and success
 
 	# Interactables
 	success = _load_database("chests.json", "chests", chests, chests_list) and success
@@ -144,37 +183,17 @@ func load_all_databases() -> void:
 	success = _load_database("signs.json", "signs", signs, signs_list) and success
 	success = _load_database("lore_echoes.json", "lore_echoes", lore_echoes, lore_echoes_list) and success
 	success = _load_database("trigger_areas.json", "trigger_areas", trigger_areas, trigger_areas_list) and success
-
-	# Interior Regions (for roof hiding system)
 	success = _load_database("interior_regions.json", "interior_regions", interior_regions, interior_regions_list) and success
 
-	# Spawn points
-	success = _load_database("spawn_points.json", "spawn_points", spawn_points, spawn_points_list) and success
-
-	# Cutscenes
-	success = _load_database("cutscenes.json", "cutscenes", cutscenes, cutscenes_list) and success
-
-	# Floating Dialogues
+	# UI data
 	success = _load_database("floating_dialogues.json", "floating_dialogues", floating_dialogues, floating_dialogues_list) and success
-
-	# Popup Messages
 	success = _load_database("popup_messages.json", "popup_messages", popup_messages, popup_messages_list) and success
 
-	# Stat Descriptions
-	success = _load_database("stat_descriptions.json", "stat_descriptions", stat_descriptions) and success
-
-	# Combat Text
-	success = _load_combat_text() and success
-
-	# Map System (Chunks & Terrain)
-	success = _load_database("chunks.json", "chunks", chunks, chunks_list) and success
-	success = _load_database("terrain_types.json", "terrain_types", terrain_types, terrain_types_list) and success
-
 	if success:
-		Debug.info("Database", "All databases loaded successfully")
-		databases_loaded.emit()
+		Debug.info("Database", "Deferred databases loaded successfully")
 	else:
-		Debug.warn("Database", "Some databases failed to load")
+		Debug.warn("Database", "Some deferred databases failed to load")
+	deferred_databases_loaded.emit()
 
 
 ## Load a single database file

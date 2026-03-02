@@ -1,15 +1,17 @@
-[gd_scene load_steps=6 format=3 uid="uid://d1kw178kdxchc"]
+[gd_scene load_steps=7 format=3 uid="uid://d1kw178kdxchc"]
 
 [ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="1_player"]
 [ext_resource type="PackedScene" uid="uid://hud001" path="res://scenes/ui/hud/game_hud.tscn" id="2_hud"]
 [ext_resource type="Script" uid="uid://br7g6n3ugvdis" path="res://scripts/camera/game_camera.gd" id="3_camera"]
 [ext_resource type="Script" uid="uid://vik7jjuuh4ix" path="res://scripts/world/zone_base.gd" id="4_zone"]
 [ext_resource type="Script" uid="uid://dc6rssr8gotxo" path="res://scripts/world/spawn_point.gd" id="5_spawn"]
+[ext_resource type="Resource" path="res://resources/zone_moods/deep_cave.tres" id="6_mood"]
 
 [node name="ZoneLDtkTest" type="Node2D"]
 script = ExtResource("4_zone")
 zone_id = "zone_ldtk_test"
 zone_name = "LDtk Test Zone"
+zone_mood = ExtResource("6_mood")
 
 [node name="SpawnPoints" type="Node2D" parent="."]
 

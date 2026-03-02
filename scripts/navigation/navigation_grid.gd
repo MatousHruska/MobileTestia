@@ -13,9 +13,6 @@ const TILE_SIZE: int = 16
 ## Tiles per chunk (matches ChunkManager)
 const CHUNK_TILES: int = 64
 
-## Path to chunk tile data
-const CHUNK_TILES_DIR := "res://maps/chunk_tiles/"
-
 ## Wall margin in tiles - expands blocked regions to prevent corner clipping
 ## Set to 1 to block tiles adjacent to walls (prevents entities from pathing
 ## too close to walls, avoiding corner-stuck issues with collision radius)
@@ -31,24 +28,6 @@ const NAV_FLYING: int = 2    # 0010 - Flying enemies (can cross water/pits)
 const NAV_JUMPING: int = 4   # 0100 - Jumping enemies (can cross pits, not water)
 const NAV_GHOST: int = 8     # 1000 - Ghost enemies (ignore all terrain)
 const NAV_ALL: int = 15      # 1111 - All layers combined
-
-## Terrain to navigation layer mapping
-## Each terrain type has a bitmask of which layers can traverse it
-const TERRAIN_NAV_LAYERS: Dictionary = {
-	"terrain_void": 0,                              # Nothing can traverse
-	"terrain_grass": NAV_ALL,                       # All can traverse
-	"terrain_dirt": NAV_ALL,                        # All can traverse
-	"terrain_stone": NAV_ALL,                       # All can traverse
-	"terrain_water": NAV_FLYING | NAV_GHOST,        # Only flying/ghost
-	"terrain_wall": NAV_GHOST,                      # Only ghost
-	"terrain_sand": NAV_ALL,                        # All can traverse
-	"terrain_snow": NAV_ALL,                        # All can traverse
-	"terrain_pit": NAV_FLYING | NAV_JUMPING | NAV_GHOST,  # Flying, jumping, ghost
-	"terrain_lava": NAV_FLYING | NAV_GHOST,         # Only flying/ghost (dangerous)
-}
-
-## Default layer for unrecognized terrain (treat as blocked for ground)
-const DEFAULT_NAV_LAYER: int = 0
 
 #===============================================================================
 # STATE
@@ -95,13 +74,11 @@ func _init() -> void:
 # CHUNK MANAGEMENT
 #===============================================================================
 
-## Load navigation data for a chunk
-func load_chunk(chunk_id: String, chunk_coords: Vector2i) -> void:
+## Load navigation data for a chunk.
+## tile_data is the parsed chunk tile JSON (passed from ChunkManager to avoid double disk I/O).
+func load_chunk(chunk_id: String, chunk_coords: Vector2i, tile_data: Dictionary) -> void:
 	if _chunk_data.has(chunk_id):
 		return  # Already loaded
-
-	# Load tile data from JSON
-	var tile_data := _load_chunk_tiles(chunk_id)
 
 	# Store nav layer bitmask per tile
 	# Key: Vector2i (world tile coords), Value: int (bitmask of traversable layers)
@@ -121,22 +98,6 @@ func load_chunk(chunk_id: String, chunk_coords: Vector2i) -> void:
 		var local_coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
 		var world_tile := _local_to_world_tile(local_coords, chunk_coords)
 		nav_layers[world_tile] = NAV_GHOST  # Only ghosts traverse walls
-
-	# Process ground layer for terrain types
-	var ground_tiles: Array = tile_data.get("ground", [])
-	for tile in ground_tiles:
-		var terrain_id: String = tile.get("terrain_id", "")
-		if terrain_id.is_empty():
-			continue
-		var local_coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
-		var world_tile := _local_to_world_tile(local_coords, chunk_coords)
-		var layer_mask: int = TERRAIN_NAV_LAYERS.get(terrain_id, DEFAULT_NAV_LAYER)
-		# Only restrict if terrain is more restrictive than collision
-		# (collision may have already set it to NAV_GHOST)
-		if nav_layers.has(world_tile):
-			nav_layers[world_tile] = nav_layers[world_tile] & layer_mask
-		else:
-			nav_layers[world_tile] = layer_mask
 
 	# Store chunk data
 	_chunk_data[chunk_id] = {
@@ -287,30 +248,6 @@ func _local_to_world_tile(local: Vector2i, chunk_coords: Vector2i) -> Vector2i:
 #===============================================================================
 # INTERNAL METHODS
 #===============================================================================
-
-## Load tile data from chunk JSON file
-func _load_chunk_tiles(chunk_id: String) -> Dictionary:
-	var path := CHUNK_TILES_DIR + chunk_id + ".json"
-
-	if not FileAccess.file_exists(path):
-		if debug_enabled:
-			print("[NavigationGrid] No tile data for chunk: %s" % chunk_id)
-		return {}
-
-	var file := FileAccess.open(path, FileAccess.READ)
-	if file == null:
-		return {}
-
-	var json := JSON.new()
-	var error := json.parse(file.get_as_text())
-	file.close()
-
-	if error != OK:
-		if debug_enabled:
-			print("[NavigationGrid] JSON parse error for %s" % chunk_id)
-		return {}
-
-	return json.data
 
 ## Rebuild the A* grid from loaded chunks for the current navigation layer
 func _rebuild_grid() -> void:

@@ -31,28 +31,19 @@ const CHUNK_TILES_DIR := "res://maps/chunk_tiles/"
 const ZONE_ENTITIES_DIR := "res://maps/entities/"
 
 ## Tileset resource for rendering chunks
-const PLACEHOLDER_TILESET_PATH := "res://resources/tilesets/placeholder_tileset.tres"
+const TILESET_PATH := "res://resources/tilesets/terrain2_tileset.tres"
 
-## Terrain ID to tileset tile mapping (atlas coordinates)
-## Matches the order in generate_placeholder_tileset.gd
-const TERRAIN_TO_TILE := {
-	"terrain_void": Vector2i(0, 0),
-	"terrain_grass": Vector2i(1, 0),
-	"terrain_dirt": Vector2i(2, 0),
-	"terrain_stone": Vector2i(3, 0),
-	"terrain_water": Vector2i(4, 0),
-	"terrain_wall": Vector2i(5, 0),
-	"terrain_sand": Vector2i(6, 0),
-	"terrain_snow": Vector2i(7, 0),
-}
+## Atlas columns in terrain2.png (1152px / 16px = 72)
+const TILESET_COLUMNS := 72
 
-## Roof type to tileset tile mapping (row 1 of tileset)
+## Roof type to tileset tile mapping
+## Uses solid-fill tiles from terrain2.png for interior ceiling masking
 const ROOF_TO_TILE := {
-	"roof_none": Vector2i(0, 1),
-	"roof_cave": Vector2i(0, 1),
-	"roof_house": Vector2i(1, 1),
-	"roof_dungeon": Vector2i(2, 1),
-	"roof_ruins": Vector2i(3, 1),
+	"roof_none": Vector2i(0, 0),           # Transparent (no roof)
+	"roof_cave": Vector2i(11, 4),          # Dark gray stone
+	"roof_house": Vector2i(25, 4),         # Brown wood
+	"roof_dungeon": Vector2i(10, 2),       # Darker stone
+	"roof_ruins": Vector2i(13, 2),         # Weathered stone
 }
 
 #===============================================================================
@@ -92,6 +83,7 @@ class ChunkData:
 	var coords: Vector2i = Vector2i.ZERO
 	var state: int = ChunkState.UNLOADED  # Use int for ChunkState enum
 	var node: Node2D = null  # Container for chunk content
+	var tile_data: Dictionary = {}  # Parsed chunk tile JSON (shared with NavigationGrid)
 	var enemy_temp_states: Array = []  # Saved enemy states for reload
 	var load_time: float = 0.0  # When chunk was loaded
 	var database_data: Dictionary = {}  # Data from DatabaseLoader
@@ -416,12 +408,16 @@ func load_chunk(chunk_id: String, coords: Vector2i = Vector2i.ZERO) -> void:
 		var chunk_node := Node2D.new()
 		chunk_node.name = "Chunk_%s" % chunk_id
 		chunk_node.position = chunk_to_world(coords)
+		chunk_node.y_sort_enabled = true  # Propagate children into ChunkRoot's Y-sort
 		_chunk_root.add_child(chunk_node)
 		chunk_data.node = chunk_node
 
+		# Load and store tile data (shared with NavigationGrid to avoid double load)
+		var tile_data := _load_chunk_tiles(chunk_id)
+		chunk_data.tile_data = tile_data
+
 		# Generate TileMap layers from chunk tile data
 		if generate_tilemaps:
-			var tile_data := _load_chunk_tiles(chunk_id)
 			if not tile_data.is_empty():
 				_create_chunk_tilemap(chunk_id, tile_data, chunk_node)
 
@@ -626,14 +622,14 @@ func _get_tileset() -> TileSet:
 	if _tileset != null:
 		return _tileset
 
-	if ResourceLoader.exists(PLACEHOLDER_TILESET_PATH):
-		_tileset = load(PLACEHOLDER_TILESET_PATH) as TileSet
+	if ResourceLoader.exists(TILESET_PATH):
+		_tileset = load(TILESET_PATH) as TileSet
 		if _tileset:
-			Debug.log("ChunkManager", "Loaded tileset: %s" % PLACEHOLDER_TILESET_PATH)
+			Debug.log("ChunkManager", "Loaded tileset: %s" % TILESET_PATH)
 		else:
-			Debug.warn("ChunkManager", "Failed to load tileset: %s" % PLACEHOLDER_TILESET_PATH)
+			Debug.warn("ChunkManager", "Failed to load tileset: %s" % TILESET_PATH)
 	else:
-		Debug.warn("ChunkManager", "Tileset not found: %s (run generate_placeholder_tileset.gd)" % PLACEHOLDER_TILESET_PATH)
+		Debug.warn("ChunkManager", "Tileset not found: %s (run generate_terrain2_tileset.gd)" % TILESET_PATH)
 
 	return _tileset
 
@@ -645,63 +641,45 @@ func _create_chunk_tilemap(chunk_id: String, tile_data: Dictionary, chunk_node: 
 		Debug.warn("ChunkManager", "Cannot create tilemap without tileset")
 		return
 
-	# Create ground layer (z_index -10 so it renders behind player/entities)
-	var ground_tiles: Array = tile_data.get("ground", [])
-	if not ground_tiles.is_empty():
-		var ground_layer := TileMapLayer.new()
-		ground_layer.name = "Ground"
-		ground_layer.tile_set = tileset
-		ground_layer.z_index = -10
-		chunk_node.add_child(ground_layer)
+	# Create visual tiles layer (z_index -10 so it renders behind player/entities)
+	var visual_tiles: Array = tile_data.get("visual_tiles", [])
+	if not visual_tiles.is_empty():
+		var visual_layer := TileMapLayer.new()
+		visual_layer.name = "VisualTiles"
+		visual_layer.tile_set = tileset
+		visual_layer.z_index = -10
+		chunk_node.add_child(visual_layer)
 
-		# Populate ground tiles
-		for tile in ground_tiles:
+		# Populate visual tiles from hand-painted LDtk Tiles layer
+		for tile in visual_tiles:
 			var coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
-			var terrain_id: String = tile.get("terrain_id", "terrain_void")
-			var atlas_coords: Vector2i = TERRAIN_TO_TILE.get(terrain_id, Vector2i(0, 0))
-			ground_layer.set_cell(coords, 0, atlas_coords)
+			var tile_id: int = int(tile.get("tile_id", 0))
+			# Convert tile_id to atlas coords (72 tiles per row in terrain2.png)
+			var atlas_x := tile_id % TILESET_COLUMNS
+			var atlas_y := int(tile_id / TILESET_COLUMNS)
+			var atlas_coords := Vector2i(atlas_x, atlas_y)
+			# TODO: Handle flip_x, flip_y with alternative_tile
+			visual_layer.set_cell(coords, 0, atlas_coords)
 
-		Debug.log("ChunkManager", "Created ground layer with %d tiles for %s" % [ground_tiles.size(), chunk_id])
+		Debug.log("ChunkManager", "Created visual tiles layer with %d tiles for %s" % [visual_tiles.size(), chunk_id])
 
-	# Create collision layer (z_index -9 so walls render behind player but above ground)
+	# Create collision layer (invisible — physics only)
+	# Uses tile (0,0) which has a full-tile collision polygon
 	var collision_tiles: Array = tile_data.get("collision", [])
 	if not collision_tiles.is_empty():
 		var collision_layer := TileMapLayer.new()
 		collision_layer.name = "Collision"
 		collision_layer.tile_set = tileset
 		collision_layer.z_index = -9
+		collision_layer.visible = false
 		collision_layer.collision_enabled = true
 		chunk_node.add_child(collision_layer)
 
-		# Populate collision tiles (using wall tile which has collision shape)
-		var wall_atlas: Vector2i = TERRAIN_TO_TILE.get("terrain_wall", Vector2i(5, 0))
 		for tile in collision_tiles:
 			var coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
-			collision_layer.set_cell(coords, 0, wall_atlas)
+			collision_layer.set_cell(coords, 0, Vector2i(0, 0))
 
 		Debug.log("ChunkManager", "Created collision layer with %d tiles for %s" % [collision_tiles.size(), chunk_id])
-
-	# Create decoration layer (z_index -5 for floor decorations, behind player)
-	var decoration_tiles: Array = tile_data.get("decoration", [])
-	if not decoration_tiles.is_empty():
-		var decoration_layer := TileMapLayer.new()
-		decoration_layer.name = "Decoration"
-		decoration_layer.tile_set = tileset
-		decoration_layer.z_index = -5
-		chunk_node.add_child(decoration_layer)
-
-		# Populate decoration tiles
-		for tile in decoration_tiles:
-			var coords := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
-			var tile_id: int = int(tile.get("tile_id", 0))
-			# Convert tile_id to atlas coords (8 tiles per row)
-			var atlas_x := tile_id % 8
-			var atlas_y := int(tile_id / 8)
-			var atlas_coords := Vector2i(atlas_x, atlas_y)
-			# TODO: Handle flip_x, flip_y with alternative_tile
-			decoration_layer.set_cell(coords, 0, atlas_coords)
-
-		Debug.log("ChunkManager", "Created decoration layer with %d tiles for %s" % [decoration_tiles.size(), chunk_id])
 
 	# Store interior region data for this chunk (used by InteriorManager)
 	var interior_regions: Array = tile_data.get("interior_regions", [])
@@ -1794,6 +1772,8 @@ func _spawn_light(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 		light.shadow_enabled = env_mgr.current_mood.realtime_shadows
 	else:
 		light.shadow_enabled = false
+	light.shadow_filter = PointLight2D.SHADOW_FILTER_PCF5
+	light.shadow_filter_smooth = 1.5
 
 	# Flicker animation based on light type
 	var light_type: String = data.get("light_type", "torch")

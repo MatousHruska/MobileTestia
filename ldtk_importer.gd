@@ -29,27 +29,6 @@ const TILE_SIZE: int = 16
 const CHUNK_TILES: int = 64
 const CHUNK_SIZE_PX: int = TILE_SIZE * CHUNK_TILES  # 1024
 
-#===============================================================================
-# INTGRID TO TERRAIN MAPPING
-#===============================================================================
-
-## Maps LDtk IntGrid values to terrain database IDs
-const INTGRID_TERRAIN_MAP := {
-	0: "terrain_void",
-	1: "terrain_grass",
-	2: "terrain_dirt",
-	3: "terrain_stone",
-	4: "terrain_water",
-	5: "terrain_wall",
-	6: "terrain_sand",
-	7: "terrain_snow",
-	8: "terrain_pit",
-	9: "terrain_lava",
-}
-
-## Terrain types with collision
-const COLLISION_TERRAIN := ["terrain_water", "terrain_wall"]
-
 ## Maps LDtk roof IntGrid values to roof type IDs
 const INTGRID_ROOF_MAP := {
 	0: "roof_none",
@@ -233,9 +212,6 @@ func _process_level(level: Dictionary) -> Dictionary:
 
 func _extract_chunk_metadata(level: Dictionary, bounds: Rect2, zone_id: String, cx: int, cy: int) -> Dictionary:
 	## Extract metadata for a single chunk
-	# Analyze terrain in chunk to determine biome
-	var biome := _analyze_biome(level, bounds)
-
 	# Count spawn points to determine enemy density
 	var density := _analyze_density(level, bounds)
 
@@ -249,57 +225,12 @@ func _extract_chunk_metadata(level: Dictionary, bounds: Rect2, zone_id: String, 
 		"zone_id": zone_id,
 		"grid_x": cx,
 		"grid_y": cy,
-		"biome_type": biome,
+		"biome_type": "grass",
 		"enemy_density": density,
 		"spawn_table_id": "",
 		"ambient_override": "",
 		"lighting_preset": "default"
 	}
-
-
-func _analyze_biome(level: Dictionary, bounds: Rect2) -> String:
-	## Analyze terrain types in chunk to determine dominant biome
-	var terrain_counts := {}
-
-	for layer in level.get("layerInstances", []):
-		if layer.get("__identifier", "").to_lower() != "ground":
-			continue
-		if layer.get("__type", "") != "IntGrid":
-			continue
-
-		var grid_size: int = layer.get("__gridSize", 16)
-		var c_wid: int = layer.get("__cWid", 0)
-		var csv: Array = layer.get("intGridCsv", [])
-
-		for i in range(csv.size()):
-			var value: int = csv[i]
-			if value == 0:
-				continue
-
-			# Calculate pixel position
-			var gx: int = i % c_wid
-			var gy: int = int(i / c_wid)
-			var px: float = gx * grid_size
-			var py: float = gy * grid_size
-
-			# Check if tile is within chunk bounds
-			if bounds.has_point(Vector2(px, py)):
-				var terrain_id: String = INTGRID_TERRAIN_MAP.get(value, "terrain_void")
-				terrain_counts[terrain_id] = terrain_counts.get(terrain_id, 0) + 1
-
-	# Find most common terrain (excluding void)
-	var max_count := 0
-	var dominant_terrain := "grass"  # Default
-
-	for terrain_id in terrain_counts:
-		if terrain_id == "terrain_void":
-			continue
-		if terrain_counts[terrain_id] > max_count:
-			max_count = terrain_counts[terrain_id]
-			# Extract biome name from terrain_id (e.g., "terrain_grass" -> "grass")
-			dominant_terrain = terrain_id.replace("terrain_", "")
-
-	return dominant_terrain
 
 
 func _analyze_density(level: Dictionary, bounds: Rect2) -> String:
@@ -337,9 +268,8 @@ func _analyze_density(level: Dictionary, bounds: Rect2) -> String:
 func _extract_chunk_tiles(level: Dictionary, bounds: Rect2) -> Dictionary:
 	## Extract tile data for a single chunk
 	var result := {
-		"ground": [],           # Array of {x, y, terrain_id}
 		"collision": [],        # Array of {x, y}
-		"decoration": [],       # Array of {x, y, tile_id, tileset_id}
+		"visual_tiles": [],     # Array of {x, y, tile_id, flip_x, flip_y}
 		"interior_regions": [], # Array of {x, y, region_value}
 		"roofs": []             # Array of {x, y, roof_type, region_value}
 	}
@@ -362,54 +292,14 @@ func _extract_chunk_tiles(level: Dictionary, bounds: Rect2) -> Dictionary:
 		var layer_id: String = layer.get("__identifier", "").to_lower()
 
 		match layer_id:
-			"ground":
-				result.ground = _extract_intgrid_tiles(layer, bounds)
 			"collision":
 				result.collision = _extract_collision_tiles(layer, bounds)
-			"decoration":
-				result.decoration = _extract_tile_layer_tiles(layer, bounds)
+			"visual_tiles":
+				result.visual_tiles = _extract_tile_layer_tiles(layer, bounds)
 			"roofs":
 				result.roofs = _extract_roof_tiles(layer, bounds, region_grid)
 
 	return result
-
-
-func _extract_intgrid_tiles(layer: Dictionary, bounds: Rect2) -> Array:
-	## Extract IntGrid tiles within bounds, converting to chunk-local coordinates
-	var tiles: Array = []
-	var grid_size: int = layer.get("__gridSize", 16)
-	var c_wid: int = layer.get("__cWid", 0)
-	var csv: Array = layer.get("intGridCsv", [])
-
-	for i in range(csv.size()):
-		var value: int = csv[i]
-		if value == 0:
-			continue
-
-		# Calculate world pixel position
-		var gx: int = i % c_wid
-		var gy: int = int(i / c_wid)
-		var px: float = gx * grid_size
-		var py: float = gy * grid_size
-
-		# Check if tile is within chunk bounds
-		if not bounds.has_point(Vector2(px, py)):
-			continue
-
-		# Convert to chunk-local tile coordinates
-		var local_x: int = int((px - bounds.position.x) / grid_size)
-		var local_y: int = int((py - bounds.position.y) / grid_size)
-
-		# Map IntGrid value to terrain ID
-		var terrain_id: String = INTGRID_TERRAIN_MAP.get(value, "terrain_void")
-
-		tiles.append({
-			"x": local_x,
-			"y": local_y,
-			"terrain_id": terrain_id
-		})
-
-	return tiles
 
 
 func _extract_collision_tiles(layer: Dictionary, bounds: Rect2) -> Array:
@@ -463,15 +353,15 @@ func _extract_tile_layer_tiles(layer: Dictionary, bounds: Rect2) -> Array:
 		var local_x: int = int((px - bounds.position.x) / grid_size)
 		var local_y: int = int((py - bounds.position.y) / grid_size)
 
-		var src: Array = tile.get("src", [0, 0])
-		var tile_id: int = int(src[0] / grid_size) + int(src[1] / grid_size) * 16  # Assumes 16-wide tileset
+		# Use LDtk's pre-computed linear tile index (avoids hardcoded column count)
+		var tile_id: int = int(tile.get("t", 0))
 
 		tiles.append({
 			"x": local_x,
 			"y": local_y,
 			"tile_id": tile_id,
-			"flip_x": tile.get("f", 0) & 1 == 1,
-			"flip_y": tile.get("f", 0) & 2 == 2
+			"flip_x": int(tile.get("f", 0)) & 1 == 1,
+			"flip_y": int(tile.get("f", 0)) & 2 == 2
 		})
 
 	# Grid tiles (manual placements)
@@ -486,15 +376,14 @@ func _extract_tile_layer_tiles(layer: Dictionary, bounds: Rect2) -> Array:
 		var local_x: int = int((px - bounds.position.x) / grid_size)
 		var local_y: int = int((py - bounds.position.y) / grid_size)
 
-		var src: Array = tile.get("src", [0, 0])
-		var tile_id: int = int(src[0] / grid_size) + int(src[1] / grid_size) * 16
+		var tile_id: int = int(tile.get("t", 0))
 
 		tiles.append({
 			"x": local_x,
 			"y": local_y,
 			"tile_id": tile_id,
-			"flip_x": tile.get("f", 0) & 1 == 1,
-			"flip_y": tile.get("f", 0) & 2 == 2
+			"flip_x": int(tile.get("f", 0)) & 1 == 1,
+			"flip_y": int(tile.get("f", 0)) & 2 == 2
 		})
 
 	return tiles

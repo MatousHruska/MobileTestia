@@ -24,7 +24,16 @@ context_data = {
 "z_index": 2
 }],
 "frame_start_index": 0,
-"frame_timings": [32, 32, 32, 32, 32, 32, 32, 64, 64, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 64, 64, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32]
+"frame_timings": [32, 32, 32, 32, 32, 32, 32, 64, 64, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 64, 64, 32, 32, 32, 32, 32, 32, 32, 32, 32, 32],
+"weapon_anchors": [{
+"direction": [42, 24],
+"frame_index": 0,
+"grip": [44, 49]
+}, {
+"direction": [43, 17],
+"frame_index": 1,
+"grip": [44, 48]
+}]
 }
 
 [sub_resource type="Resource" id="Resource_dh20c"]

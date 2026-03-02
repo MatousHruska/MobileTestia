@@ -24,6 +24,11 @@ class_name ZoneBase
 
 
 func _ready() -> void:
+	# Enable Y-sort so Player and chunk entities (decorations, enemies) share
+	# the same depth-ordering hierarchy.  ChunkRoot and each chunk node also
+	# have y_sort_enabled, so their children propagate up to this level.
+	y_sort_enabled = true
+
 	Debug.print_saveload("[SAVELOAD] ====== ZoneBase._ready() START | Frame: %d ======" % Engine.get_process_frames())
 	Debug.print_saveload("[SAVELOAD] Zone: name=%s, id=%s" % [zone_name, zone_id])
 	Debug.print_saveload("[SAVELOAD] Zone: Game.current_state=%s, Game.player_valid=%s" % [Game.GameState.keys()[Game.current_state] if Game else "null", Game.is_player_valid() if Game else false])

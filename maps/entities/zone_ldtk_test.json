@@ -1,5 +1,18 @@
 {
 	"chests": [],
+	"decorations": [
+		{
+			"decoration_id": "",
+			"flip_x": false,
+			"position": {
+				"x": 488.0,
+				"y": 288.0
+			},
+			"scale": 1.0,
+			"shadow_mode": "baked",
+			"z_mode": "y_sort"
+		}
+	],
 	"doors": [],
 	"levers": [],
 	"lights": [
@@ -7,6 +20,7 @@
 			"color": "#FFAA44",
 			"height": 50.0,
 			"intensity": 1.5,
+			"light_type": "torch",
 			"position": {
 				"x": 506.0,
 				"y": 1654.0
@@ -68,8 +82,8 @@
 		{
 			"id": "default",
 			"position": {
-				"x": 716.0,
-				"y": 1792.0
+				"x": 380.0,
+				"y": 288.0
 			}
 		}
 	],

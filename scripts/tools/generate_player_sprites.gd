@@ -39,6 +39,60 @@ const COL_WEAPON_ANCHOR := Color("#FF00AA") # Magenta — weapon anchor marker
 const COL_CAST_GLOW := Color("#AADDFF")     # Light Blue-White — magic channeling glow
 const COL_THROW_ITEM := Color("#DD8844")    # Orange-Brown — thrown item placeholder
 
+## Direction pixel color for anchor orientation
+const COL_WEAPON_DIRECTION := Color("#00FFFF")
+
+
+## Replace a marker pixel with the average color of its non-transparent 4-connected neighbors.
+static func _neighbor_average(img: Image, x: int, y: int) -> Color:
+	var total_r := 0.0
+	var total_g := 0.0
+	var total_b := 0.0
+	var total_a := 0.0
+	var count := 0
+	for offset in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+		var nx: int = x + offset.x
+		var ny: int = y + offset.y
+		if nx >= 0 and nx < img.get_width() and ny >= 0 and ny < img.get_height():
+			var px := img.get_pixel(nx, ny)
+			if px.a > 0.01:
+				total_r += px.r
+				total_g += px.g
+				total_b += px.b
+				total_a += px.a
+				count += 1
+	if count == 0:
+		return Color(0, 0, 0, 0)
+	return Color(total_r / count, total_g / count, total_b / count, total_a / count)
+
+
+## Scan a horizontal spritesheet for anchor-colored pixels.
+## Returns: { frame_idx_str: { "grip": [x,y], "direction": [x,y] }, ... }
+## Also REPLACES found anchor pixels with neighbor-average color in-place.
+static func _extract_and_strip_anchors(sheet_image: Image, frame_size: int) -> Dictionary:
+	var frame_count := sheet_image.get_width() / frame_size
+	var result := {}
+	for fi in range(frame_count):
+		var x_offset := fi * frame_size
+		var frame_anchors := {}
+		for y in range(sheet_image.get_height()):
+			for x in range(x_offset, x_offset + frame_size):
+				var pixel := sheet_image.get_pixel(x, y)
+				if pixel.is_equal_approx(COL_WEAPON_ANCHOR) and not frame_anchors.has("grip"):
+					frame_anchors["grip"] = [x - x_offset, y]  # frame-local coords
+					sheet_image.set_pixel(x, y, _neighbor_average(sheet_image, x, y))
+				elif pixel.is_equal_approx(COL_WEAPON_DIRECTION) and not frame_anchors.has("direction"):
+					frame_anchors["direction"] = [x - x_offset, y]
+					sheet_image.set_pixel(x, y, _neighbor_average(sheet_image, x, y))
+				if frame_anchors.size() == 2:
+					break
+			if frame_anchors.size() == 2:
+				break
+		if not frame_anchors.is_empty():
+			result[str(fi)] = frame_anchors
+	return result
+
+
 ## Pose types for arm rendering
 enum PoseType {
 	NEUTRAL,
@@ -116,11 +170,20 @@ func _run() -> void:
 	# Ensure output directory exists
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SPRITE_DIR))
 
+	# Collect anchor data across all animations for embedding in SpriteFrames
+	var all_anchor_data: Dictionary = {}
+
 	# Generate each animation spritesheet
 	for anim_name in ANIM_DEFS:
 		var def: Dictionary = ANIM_DEFS[anim_name]
 		var frame_count: int = def["frames"]
 		var image := _generate_spritesheet(anim_name, frame_count)
+
+		# Extract anchors and strip colored pixels before saving
+		var anim_anchors := _extract_and_strip_anchors(image, SPRITE_SIZE)
+		if not anim_anchors.is_empty():
+			all_anchor_data[anim_name] = anim_anchors
+
 		var path := "%s/%s.png" % [SPRITE_DIR, anim_name]
 		var err := image.save_png(ProjectSettings.globalize_path(path))
 		if err != OK:
@@ -128,12 +191,16 @@ func _run() -> void:
 			return
 		print("  Saved: %s (%d frames)" % [path, frame_count])
 
-	# Generate SpriteFrames resource
-	_generate_sprite_frames_resource()
+	# Generate SpriteFrames resource with embedded anchor metadata
+	_generate_sprite_frames_resource(all_anchor_data)
 
+	var anchor_count := 0
+	for anim_name in all_anchor_data:
+		anchor_count += all_anchor_data[anim_name].size()
 	print("=== Generation Complete ===")
 	print("Sprites: %s/" % SPRITE_DIR)
 	print("SpriteFrames: %s" % SPRITEFRAMES_PATH)
+	print("Anchor metadata: %d animations, %d frames" % [all_anchor_data.size(), anchor_count])
 
 
 #===============================================================================
@@ -1311,10 +1378,11 @@ func _draw_ghost(img: Image, direction: String, h_offset: int, v_offset: int) ->
 # SPRITEFRAMES RESOURCE GENERATION
 #===============================================================================
 
-func _generate_sprite_frames_resource() -> void:
+func _generate_sprite_frames_resource(anchor_data: Dictionary = {}) -> void:
 	## Create a SpriteFrames .tres that references the generated PNGs.
 	## Uses load() to create ext_resource references instead of embedding
 	## pixel data — keeps the .tres tiny (~50 KB vs 153 MB).
+	## anchor_data: pre-extracted weapon anchor positions to embed as metadata.
 
 	# Force Godot to detect and import the PNGs we just saved
 	print("  Triggering filesystem scan for PNG import...")
@@ -1351,6 +1419,11 @@ func _generate_sprite_frames_resource() -> void:
 			atlas_tex.atlas = sheet_texture
 			atlas_tex.region = Rect2(i * SPRITE_SIZE, 0, SPRITE_SIZE, SPRITE_SIZE)
 			frames.add_frame(anim_name, atlas_tex)
+
+	# Embed pre-extracted anchor positions as resource metadata
+	if not anchor_data.is_empty():
+		frames.set_meta("anchor_data", anchor_data)
+		print("  Embedded anchor_data metadata (%d animations)" % anchor_data.size())
 
 	# Save the SpriteFrames resource
 	DirAccess.make_dir_recursive_absolute(

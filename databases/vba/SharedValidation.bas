@@ -514,6 +514,7 @@ Private Sub CreateIdNamedRanges()
     CreateNamedRange "LoreEchoes", 1, "ID_LoreEchoes"
     CreateNamedRange "TriggerAreas", 1, "ID_TriggerAreas"
     CreateNamedRange "InteriorRegions", 1, "ID_InteriorRegions"
+    CreateNamedRange "ZoneMoods", 1, "ID_ZoneMoods"
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -622,6 +623,9 @@ Private Sub ApplyForeignKeyValidation()
 
     ' InteriorRegions
     ApplyValidation "InteriorRegions", 2, "ID_Zones"  ' zone_id
+
+    ' Zones - mood_id
+    ApplyValidation "Zones", 13, "ID_ZoneMoods"       ' mood_id
 End Sub
 
 '-------------------------------------------------------------------------------
@@ -757,6 +761,11 @@ Private Sub ApplyEnumValidation()
     ApplyListValidation "TriggerAreas", 3, "cutscene,quest,spawn,dialogue"  ' trigger_type
     ApplyListValidation "TriggerAreas", 5, "TRUE,FALSE"       ' one_shot
     ApplyListValidation "TriggerAreas", 8, "not_started,active,completed"  ' require_quest_state
+
+    ' ZoneMoods
+    ApplyListValidation "ZoneMoods", 4, "TRUE,FALSE"           ' bloom_enabled
+    ApplyListValidation "ZoneMoods", 7, "snow,dust_motes,embers"  ' particle_type
+    ApplyListValidation "ZoneMoods", 9, "TRUE,FALSE"           ' realtime_shadows
 End Sub
 
 '-------------------------------------------------------------------------------

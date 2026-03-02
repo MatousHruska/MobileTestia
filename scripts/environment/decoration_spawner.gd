@@ -33,9 +33,16 @@ static func spawn(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 	var flip_x: bool = data.get("flip_x", false)
 	node.scale = Vector2(-deco_scale if flip_x else deco_scale, deco_scale)
 
-	# Main sprite
+	# Anchor offset: bottom-center so the node position = ground contact point.
+	# All child sprites and occluders use this offset for consistency.
+	var tex_size := Vector2(assets.texture.get_size())
+	var anchor_offset := Vector2(-tex_size.x / 2.0, -tex_size.y)
+
+	# Main sprite — anchored at bottom-center
 	var sprite := Sprite2D.new()
 	sprite.texture = assets.texture
+	sprite.centered = false
+	sprite.offset = anchor_offset
 	if assets.normal_map:
 		var shader_mat := ShaderMaterial.new()
 		shader_mat.shader = _get_normal_shader()
@@ -49,12 +56,19 @@ static func spawn(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 		"realtime":
 			if assets.occluder:
 				var occluder := LightOccluder2D.new()
-				occluder.occluder_polygon = assets.occluder
+				occluder.occluder = assets.occluder
+				# Occluder polygon is in image-space (top-left origin),
+				# offset to match the bottom-center anchored sprite.
+				occluder.position = anchor_offset
 				node.add_child(occluder)
 		"baked":
 			if assets.shadow:
 				var shadow_sprite := Sprite2D.new()
 				shadow_sprite.texture = assets.shadow
+				shadow_sprite.centered = false
+				shadow_sprite.offset = Vector2(
+					-assets.shadow.get_width() / 2.0,
+					-assets.shadow.get_height())
 				shadow_sprite.z_index = -1  # Draw behind the decoration
 				node.add_child(shadow_sprite)
 
