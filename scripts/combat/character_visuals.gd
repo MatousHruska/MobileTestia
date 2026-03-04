@@ -2,14 +2,13 @@ class_name CharacterVisuals
 extends Node2D
 ## CharacterVisuals - Layered sprite stack for character rendering.
 ##
-## Manages visual layers (shadow, weapon, effects, overlay) alongside the existing
+## Manages visual layers (weapon, effects, overlay) alongside the existing
 ## body AnimatedSprite2D. Added as a sibling to the body sprite — does NOT
 ## reparent it. Responds to AbilityVisualPlayer signals for weapon visibility,
 ## body animation, and effect spawning.
 ##
 ## Node tree (created in code):
 ##   CharacterVisuals (Node2D)
-##     +-- ShadowSprite    (AnimatedSprite2D, z=-2)
 ##     +-- WeaponSprite    (Sprite2D, z=1)
 ##     +-- EffectAnchor    (Node2D)
 ##     +-- OverlaySprite   (AnimatedSprite2D, z=2)
@@ -36,12 +35,6 @@ var effect_anchor: Node2D = null
 ## Overlay for flashes/shields
 var overlay_sprite: AnimatedSprite2D = null
 
-## Shadow layer
-var shadow_sprite: AnimatedSprite2D = null
-var _shadow_has_animations: bool = false  # True if SpriteFrames has _shadow anims
-var _shadow_animation_valid: bool = true  # False when no matching shadow anim found
-var _shadow_last_body_anim: StringName = &""  # Tracks body animation for auto-sync
-
 #===============================================================================
 # DIRECTION STATE
 #===============================================================================
@@ -67,10 +60,6 @@ var _anchor_metadata: Dictionary = {}  # "anim:frame" → { "grip": [x,y], ... }
 ## Cached effect SpriteFrames shared across all CharacterVisuals instances.
 ## Keyed by "effect_id:direction" — avoids GPU readback + blit + alpha loop on repeat spawns.
 static var _effect_sf_cache: Dictionary = {}  # "effect_id:direction" → SpriteFrames
-
-## Static light cache — all instances share one group query per frame.
-static var _cached_lights: Array = []
-static var _cache_frame: int = -1
 
 ## Composition-level anchor overrides from Attack Composer context_data.
 ## Highest priority — survives body sprite regeneration.
@@ -102,36 +91,6 @@ const WEAPON_ANCHOR_COLOR := Color("#FF00AA")
 const WEAPON_DIRECTION_COLOR := Color("#00FFFF")
 
 #===============================================================================
-# SHADOW CONSTANTS
-#===============================================================================
-
-## Fallback ellipse shadow dimensions (fraction of frame size)
-const SHADOW_ELLIPSE_WIDTH_RATIO := 0.8
-const SHADOW_ELLIPSE_HEIGHT_RATIO := 0.3
-
-## Shadow Y offset — positions shadow at character's feet
-const SHADOW_Y_OFFSET := 14.0
-
-## Light detection
-const SHADOW_LIGHT_SEARCH_RADIUS := 512.0
-const SHADOW_TRANSITION_SPEED := 3.3
-
-## Shadow appearance ranges (based on light distance)
-const SHADOW_CLOSE_DISTANCE := 64.0
-const SHADOW_FAR_DISTANCE := 512.0
-const SHADOW_CLOSE_OPACITY := 0.1
-const SHADOW_FAR_OPACITY := 0.6
-const SHADOW_NO_LIGHT_OPACITY := 0.5
-const SHADOW_CLOSE_SCALE := 0.7
-const SHADOW_FAR_SCALE := 1.0
-const SHADOW_NO_LIGHT_SCALE := 1.0
-
-## Current shadow targets (for lerping)
-var _shadow_target_opacity := SHADOW_NO_LIGHT_OPACITY
-var _shadow_target_scale := SHADOW_NO_LIGHT_SCALE
-
-
-#===============================================================================
 # INITIALIZATION
 #===============================================================================
 
@@ -141,14 +100,12 @@ var _shadow_target_scale := SHADOW_NO_LIGHT_SCALE
 ## weapon/effect/overlay as children of this node.
 func initialize(body: AnimatedSprite2D) -> void:
 	body_sprite = body
-	_create_shadow_layer()
 	_create_weapon_layer()
 	_create_effect_anchor()
 	_create_overlay_layer()
 	# Ensure weapon starts hidden
 	set_weapon_visible(false)
-	# Setup shadow after layers are created
-	_setup_shadow()
+	# TODO: Shadow system — hook new shadow implementation here
 	# Load pre-extracted anchor metadata from SpriteFrames (avoids GPU readback)
 	_load_anchor_metadata()
 
@@ -179,174 +136,13 @@ func _create_overlay_layer() -> void:
 	add_child(overlay_sprite)
 
 
-func _create_shadow_layer() -> void:
-	shadow_sprite = AnimatedSprite2D.new()
-	shadow_sprite.name = "ShadowSprite"
-	shadow_sprite.z_index = -2
-	shadow_sprite.position.y = SHADOW_Y_OFFSET
-	shadow_sprite.modulate = Color(1, 1, 1, SHADOW_NO_LIGHT_OPACITY)
-	add_child(shadow_sprite)
-	# Move shadow to be the first child (renders behind everything)
-	move_child(shadow_sprite, 0)
-
-
-func _setup_shadow() -> void:
-	if not body_sprite or not body_sprite.sprite_frames:
-		return
-
-	# Check if SpriteFrames has any _shadow animations
-	var anims := body_sprite.sprite_frames.get_animation_names()
-	for anim_name in anims:
-		if anim_name.ends_with("_shadow"):
-			_shadow_has_animations = true
-			break
-
-	if _shadow_has_animations:
-		# Use the same SpriteFrames — shadow plays _shadow variant animations
-		shadow_sprite.sprite_frames = body_sprite.sprite_frames
-	else:
-		# Generate a simple ellipse fallback
-		_generate_ellipse_shadow()
-
-
-func _generate_ellipse_shadow() -> void:
-	## Generate a simple oval shadow texture for characters without shadow animations.
-	if not body_sprite or not body_sprite.sprite_frames:
-		return
-
-	# Get frame size from the first available animation
-	var anims := body_sprite.sprite_frames.get_animation_names()
-	if anims.is_empty():
-		return
-	var first_tex := body_sprite.sprite_frames.get_frame_texture(anims[0], 0)
-	if not first_tex:
-		return
-
-	var frame_w := first_tex.get_width()
-	var frame_h := first_tex.get_height()
-	var shadow_w := int(frame_w * SHADOW_ELLIPSE_WIDTH_RATIO)
-	var shadow_h := int(frame_h * SHADOW_ELLIPSE_HEIGHT_RATIO)
-
-	# Draw ellipse
-	var img := Image.create(shadow_w, shadow_h, false, Image.FORMAT_RGBA8)
-	img.fill(Color.TRANSPARENT)
-	var center := Vector2(shadow_w / 2.0, shadow_h / 2.0)
-	var radius := Vector2(shadow_w / 2.0, shadow_h / 2.0)
-	for y in range(shadow_h):
-		for x in range(shadow_w):
-			var dx := (x - center.x) / radius.x
-			var dy := (y - center.y) / radius.y
-			if dx * dx + dy * dy <= 1.0:
-				img.set_pixel(x, y, Color.BLACK)
-
-	var tex := ImageTexture.create_from_image(img)
-	# Create a single-frame SpriteFrames for the ellipse
-	var frames := SpriteFrames.new()
-	frames.add_animation("ellipse")
-	frames.add_frame("ellipse", tex)
-	frames.set_animation_loop("ellipse", true)
-	shadow_sprite.sprite_frames = frames
-	shadow_sprite.play("ellipse")
-
-
-func _sync_shadow_animation(base_anim_name: String) -> void:
-	if not shadow_sprite or not shadow_sprite.sprite_frames:
-		return
-
-	if not _shadow_has_animations:
-		# Ellipse mode — shadow is always the same, nothing to sync
-		return
-
-	# Resolve the shadow animation name
-	var dir := current_direction
-	if is_flipped:
-		dir = "right"
-
-	# Try: {base}_{dir}_shadow, then idle_{dir}_shadow
-	var candidates: Array[String] = [
-		"%s_%s_shadow" % [base_anim_name, dir],
-		"idle_%s_shadow" % dir,
-	]
-
-	for candidate in candidates:
-		if shadow_sprite.sprite_frames.has_animation(candidate):
-			shadow_sprite.play(candidate)
-			_shadow_animation_valid = true
-			return
-
-	# If no shadow animation at all, mark invalid (light response will hide it)
-	_shadow_animation_valid = false
-
-
-func _update_shadow_light_response(delta: float) -> void:
-	if not shadow_sprite:
-		return
-
-	# Throttle distance search — stagger across instances so only ~1/6 of
-	# characters recalculate per frame. On skip frames the lerp still runs.
-	var frame := Engine.get_process_frames()
-	if (frame + get_instance_id()) % 6 == 0:
-		# Refresh static light cache once per frame (shared by all instances)
-		if frame != _cache_frame:
-			_cached_lights = get_tree().get_nodes_in_group("lights")
-			_cache_frame = frame
-
-		# Find nearest PointLight2D
-		var nearest_dist := SHADOW_LIGHT_SEARCH_RADIUS + 1.0
-		for light_node in _cached_lights:
-			if light_node is PointLight2D and light_node.visible:
-				var dist := global_position.distance_to(light_node.global_position)
-				if dist < nearest_dist:
-					nearest_dist = dist
-
-		# Determine target opacity and scale based on distance
-		if nearest_dist > SHADOW_LIGHT_SEARCH_RADIUS:
-			_shadow_target_opacity = SHADOW_NO_LIGHT_OPACITY
-			_shadow_target_scale = SHADOW_NO_LIGHT_SCALE
-		else:
-			var t := clampf((nearest_dist - SHADOW_CLOSE_DISTANCE) / (SHADOW_FAR_DISTANCE - SHADOW_CLOSE_DISTANCE), 0.0, 1.0)
-			_shadow_target_opacity = lerpf(SHADOW_CLOSE_OPACITY, SHADOW_FAR_OPACITY, t)
-			_shadow_target_scale = lerpf(SHADOW_CLOSE_SCALE, SHADOW_FAR_SCALE, t)
-
-	_apply_shadow_lerp(delta)
-
-
-func _apply_shadow_lerp(delta: float) -> void:
-	var lerp_speed := SHADOW_TRANSITION_SPEED * delta
-	shadow_sprite.modulate.a = lerpf(shadow_sprite.modulate.a, _shadow_target_opacity, lerp_speed)
-	var current_scale := shadow_sprite.scale.x
-	var new_scale := lerpf(current_scale, _shadow_target_scale, lerp_speed)
-	shadow_sprite.scale = Vector2(new_scale, new_scale)
-	shadow_sprite.visible = _shadow_animation_valid
-
-
 #===============================================================================
 # PER-FRAME UPDATE
 #===============================================================================
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if body_sprite == null:
 		return
-
-	# Auto-detect body animation changes and sync shadow
-	if shadow_sprite and _shadow_has_animations:
-		var current_body_anim := body_sprite.animation
-		if current_body_anim != _shadow_last_body_anim:
-			_shadow_last_body_anim = current_body_anim
-			# Strip direction suffix to get base name for shadow lookup
-			var base_name := current_body_anim as String
-			for dir_suffix in ["_down", "_up", "_right"]:
-				if base_name.ends_with(dir_suffix):
-					base_name = base_name.substr(0, base_name.length() - dir_suffix.length())
-					break
-			_sync_shadow_animation(base_name)
-		# Keep shadow frame in sync with body
-		if shadow_sprite.visible:
-			if body_sprite.sprite_frames and shadow_sprite.sprite_frames:
-				shadow_sprite.frame = body_sprite.frame
-	# Flip shadow to match body
-	if shadow_sprite:
-		shadow_sprite.flip_h = is_flipped
 
 	# Find both anchor pixels once per frame
 	var anchors := _find_weapon_anchors()
@@ -358,7 +154,6 @@ func _process(delta: float) -> void:
 		effect_anchor.position = grip + _get_blade_tip_offset(grip)
 
 	_update_weapon_position(anchors)
-	_update_shadow_light_response(delta)
 
 
 func _update_weapon_position(anchors: Dictionary) -> void:
@@ -879,8 +674,6 @@ func _on_play_body_animation(anim_name: String) -> void:
 	var resolved := _resolve_animation_name(anim_name)
 	if body_sprite.sprite_frames.has_animation(resolved):
 		body_sprite.play(resolved)
-		# Sync shadow animation
-		_sync_shadow_animation(anim_name)
 	else:
 		Debug.warn("Visuals", "Animation not found after resolve: %s (from %s)" % [resolved, anim_name])
 
@@ -1104,13 +897,3 @@ func set_direction(direction: String, flipped: bool) -> void:
 	# Weapon texture direction is determined per-frame by
 	# _update_weapon_position() based on the anchor position,
 	# so we don't force-select it here.
-	# Update shadow animation for new direction
-	if shadow_sprite and _shadow_has_animations and body_sprite:
-		var current_body_anim := body_sprite.animation as String
-		# Strip direction suffix to get base name
-		var base_name := current_body_anim
-		for dir_suffix in ["_down", "_up", "_right"]:
-			if base_name.ends_with(dir_suffix):
-				base_name = base_name.substr(0, base_name.length() - dir_suffix.length())
-				break
-		_sync_shadow_animation(base_name)
