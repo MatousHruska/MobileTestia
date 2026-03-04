@@ -1,11 +1,11 @@
 class_name DecorationSpawner
 extends RefCounted
-## Loads and spawns decoration entities with normal maps, occluders, and baked shadows.
+## Loads and spawns decoration entities with normal maps and occluders.
 ## Resources are cached per decoration_id for reuse across instances.
 
 const DECORATIONS_DIR := "res://assets/decorations/"
 
-## Cache: decoration_id -> { texture, normal_map, occluder, shadow }
+## Cache: decoration_id -> { texture, normal_map, occluder }
 static var _cache: Dictionary = {}
 
 
@@ -50,27 +50,16 @@ static func spawn(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 		sprite.material = shader_mat
 	node.add_child(sprite)
 
-	# Shadow handling
-	var shadow_mode: String = data.get("shadow_mode", "baked")
-	match shadow_mode:
-		"realtime":
-			if assets.occluder:
-				var occluder := LightOccluder2D.new()
-				occluder.occluder = assets.occluder
-				# Occluder polygon is in image-space (top-left origin),
-				# offset to match the bottom-center anchored sprite.
-				occluder.position = anchor_offset
-				node.add_child(occluder)
-		"baked":
-			if assets.shadow:
-				var shadow_sprite := Sprite2D.new()
-				shadow_sprite.texture = assets.shadow
-				shadow_sprite.centered = false
-				shadow_sprite.offset = Vector2(
-					-assets.shadow.get_width() / 2.0,
-					-assets.shadow.get_height())
-				shadow_sprite.z_index = -1  # Draw behind the decoration
-				node.add_child(shadow_sprite)
+	# Light occluder (blocks light for 2D lighting)
+	if assets.occluder:
+		var occluder := LightOccluder2D.new()
+		occluder.occluder = assets.occluder
+		# Occluder polygon is in image-space (top-left origin),
+		# offset to match the bottom-center anchored sprite.
+		occluder.position = anchor_offset
+		node.add_child(occluder)
+
+	# TODO: Shadow system — hook new decoration shadow here
 
 	# Z-sorting / depth mode
 	var z_mode: String = data.get("z_mode", "y_sort")
@@ -102,7 +91,6 @@ static func _load_assets(deco_id: String) -> Dictionary:
 		"texture": null,
 		"normal_map": null,
 		"occluder": null,
-		"shadow": null
 	}
 
 	# Sprite (required)
@@ -120,18 +108,12 @@ static func _load_assets(deco_id: String) -> Dictionary:
 	if ResourceLoader.exists(occluder_path):
 		assets.occluder = load(occluder_path)
 
-	# Baked shadow (optional)
-	var shadow_path := base_path + "shadow.png"
-	if ResourceLoader.exists(shadow_path):
-		assets.shadow = load(shadow_path)
-
 	_cache[deco_id] = assets
-	Debug.log("DecorationSpawner", "Loaded assets for '%s': texture=%s, normal=%s, occluder=%s, shadow=%s" % [
+	Debug.log("DecorationSpawner", "Loaded assets for '%s': texture=%s, normal=%s, occluder=%s" % [
 		deco_id,
 		assets.texture != null,
 		assets.normal_map != null,
 		assets.occluder != null,
-		assets.shadow != null
 	])
 	return assets
 

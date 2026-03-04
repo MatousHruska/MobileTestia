@@ -1,8 +1,8 @@
 extends Control
 ## Decoration Pipeline — 6-step wizard for creating pixel art decorations.
 ##
-## Converts 3D models or 2D source images into pixel art sprites with normal maps,
-## baked shadows, and auto-traced occluder polygons. Generates an LDtk tileset atlas.
+## Converts 3D models or 2D source images into pixel art sprites with normal maps
+## and auto-traced occluder polygons. Generates an LDtk tileset atlas.
 
 #===============================================================================
 # CONSTANTS
@@ -20,7 +20,7 @@ const STEP_NAMES := [
 	"Source Selection",
 	"Capture / Import",
 	"Pixel Art Processing",
-	"Normal & Shadow",
+	"Normal & Occluder",
 	"Preview & Adjust",
 	"Export & Atlas",
 ]
@@ -82,7 +82,6 @@ var current_model_instance: Node = null
 # Capture results: angle_name -> Image
 var _captured_color: Dictionary = {}
 var _captured_normal: Dictionary = {}
-var _captured_shadow: Dictionary = {}
 
 # 2D import state
 var _imported_image: Image = null
@@ -90,7 +89,6 @@ var _imported_image: Image = null
 # Processing results: angle_name -> Image
 var _processed_color: Dictionary = {}
 var _processed_normal: Dictionary = {}
-var _processed_shadow: Dictionary = {}
 var _processed_occluder_points: Dictionary = {}  # angle_name -> PackedVector2Array
 
 #===============================================================================
@@ -145,9 +143,6 @@ var _2d_normal_container: VBoxContainer
 var _normal_height_slider: HSlider
 var _normal_invert_check: CheckButton
 var _normal_preview_rect: TextureRect
-var _shadow_offset_slider: HSlider
-var _shadow_opacity_slider: HSlider
-var _shadow_preview_rect: TextureRect
 var _occluder_simplify_slider: HSlider
 var _occluder_info_label: Label
 
@@ -155,7 +150,6 @@ var _occluder_info_label: Label
 var _preview_angle_toggle: HBoxContainer
 var _show_sprite_check: CheckButton
 var _show_normal_check: CheckButton
-var _show_shadow_check: CheckButton
 var _show_occluder_check: CheckButton
 var _composite_preview_rect: TextureRect
 var _dimensions_label: Label
@@ -167,7 +161,6 @@ var _export_log: RichTextLabel
 # Capture materials
 var _normal_capture_shader: Shader
 var _normal_capture_material: ShaderMaterial = null
-var _shadow_capture_material: StandardMaterial3D = null
 var _saved_unlit_materials: Array[Dictionary] = []
 
 #===============================================================================
@@ -182,10 +175,6 @@ func _ready() -> void:
 	if _normal_capture_shader:
 		_normal_capture_material = ShaderMaterial.new()
 		_normal_capture_material.shader = _normal_capture_shader
-	# Create shadow capture material
-	_shadow_capture_material = StandardMaterial3D.new()
-	_shadow_capture_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_shadow_capture_material.albedo_color = Color.BLACK
 	await get_tree().process_frame
 	_scan_models()
 
@@ -506,7 +495,7 @@ func _go_to_step(step: int) -> void:
 				_capture_status_label.text = "Press capture to render from all selected angles."
 		2:  # Entering Pixel Art Processing — refresh preview
 			_update_pixel_preview()
-		3:  # Entering Normal & Shadow — show 2D-only controls if applicable
+		3:  # Entering Normal & Occluder — show 2D-only controls if applicable
 			if _2d_normal_container:
 				_2d_normal_container.visible = (_source_mode == "2d")
 		4:  # Entering Preview — refresh angle buttons and composite
@@ -549,9 +538,9 @@ func _on_next_pressed() -> void:
 				return
 		2:  # Pixel Art Processing — no mandatory validation
 			pass
-		3:  # Normal & Shadow — must have processed outputs
+		3:  # Normal & Occluder — must have processed outputs
 			if _processed_color.is_empty():
-				_set_status("Generate normals/shadows first.")
+				_set_status("Generate normals/occluders first.")
 				return
 		4:  # Preview — no validation
 			pass
@@ -711,7 +700,6 @@ func _start_capture() -> void:
 	# Clear previous captures
 	_captured_color.clear()
 	_captured_normal.clear()
-	_captured_shadow.clear()
 
 	# Disable nav buttons during capture
 	back_button.disabled = true
@@ -738,8 +726,7 @@ func _capture_decoration() -> void:
 	##   3. Compute camera pan to center model
 	##   4. Color pass
 	##   5. Normal map pass
-	##   6. Shadow pass
-	## Results stored in _captured_color / _captured_normal / _captured_shadow.
+	## Results stored in _captured_color / _captured_normal.
 	var angles: Array = ANGLE_CONFIGS[_angle_mode]
 	var output_size := CAPTURE_OUTPUT_SIZE
 	var elevation := _camera_elevation_slider.value if _camera_elevation_slider else 30.0
@@ -799,25 +786,6 @@ func _capture_decoration() -> void:
 
 			_restore_saved_materials()
 
-		# 6. Shadow pass: top-down camera, shadow materials, render, restore
-		if _shadow_capture_material:
-			var shadow_cam := _create_shadow_camera()
-			sub_viewport.add_child(shadow_cam)
-			shadow_cam.current = true
-
-			_save_current_materials(current_model_instance)
-			_apply_shadow_capture_materials(current_model_instance)
-			await RenderingServer.frame_post_draw
-			await RenderingServer.frame_post_draw
-
-			var shadow_img := sub_viewport.get_texture().get_image()
-			shadow_img.convert(Image.FORMAT_RGBA8)
-			_captured_shadow[angle_name] = shadow_img
-
-			_restore_saved_materials()
-			shadow_cam.queue_free()
-			camera.current = true
-
 	# Restore model rotation and camera settings
 	if current_model_instance is Node3D:
 		(current_model_instance as Node3D).rotation_degrees.y = 0.0
@@ -858,17 +826,6 @@ func _compute_camera_pan(detect_img: Image, detect_size: int, detect_cam_size: f
 
 	# Screen-right = camera-right, screen-down = negative camera-up
 	return cam_right * (offset_px_x * world_per_pixel) - cam_up * (offset_px_y * world_per_pixel)
-
-
-func _create_shadow_camera() -> Camera3D:
-	## Create a temporary top-down orthographic camera for shadow capture.
-	var shadow_cam := Camera3D.new()
-	shadow_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
-	shadow_cam.size = camera.size  # Match main camera's view width
-	shadow_cam.far = 100.0
-	shadow_cam.position = camera_target + Vector3(0.0, 10.0, 0.0)  # High above
-	shadow_cam.rotation_degrees = Vector3(-90.0, 0.0, 0.0)  # Look straight down
-	return shadow_cam
 
 
 func _update_capture_preview() -> void:
@@ -972,18 +929,6 @@ func _apply_normal_capture_materials(node: Node) -> void:
 				mesh_instance.set_surface_override_material(surface_idx, _normal_capture_material)
 	for child in node.get_children():
 		_apply_normal_capture_materials(child)
-
-
-func _apply_shadow_capture_materials(node: Node) -> void:
-	## Override all mesh materials with flat black for shadow silhouette capture.
-	if node is MeshInstance3D:
-		var mesh_instance := node as MeshInstance3D
-		var mesh := mesh_instance.mesh
-		if mesh != null:
-			for surface_idx in range(mesh.get_surface_count()):
-				mesh_instance.set_surface_override_material(surface_idx, _shadow_capture_material)
-	for child in node.get_children():
-		_apply_shadow_capture_materials(child)
 
 
 #===============================================================================
@@ -1098,7 +1043,7 @@ func _build_step2(parent: VBoxContainer) -> void:
 	var content: VBoxContainer = sec[1]
 
 	content.add_child(_make_small_label(
-		"Capture color, normal map, and shadow images from the 3D model at each selected viewing angle."))
+		"Capture color and normal map images from the 3D model at each selected viewing angle."))
 
 	var capture_btn := _make_primary_button("Capture All Angles")
 	capture_btn.pressed.connect(_start_capture)
@@ -1227,33 +1172,6 @@ func _build_step4(parent: VBoxContainer) -> void:
 	_normal_preview_rect.size_flags_horizontal = SIZE_EXPAND_FILL
 	normal_content.add_child(_normal_preview_rect)
 
-	# ── Baked Shadow Section ────────────────────────────────────────────
-	var shadow_sec := _make_section("Baked Shadow")
-	parent.add_child(shadow_sec[0])
-	var shadow_content: VBoxContainer = shadow_sec[1]
-
-	shadow_content.add_child(_make_small_label(
-		"Generate a shadow image offset below the sprite. " +
-		"3D sources use the captured shadow pass; 2D generates from alpha silhouette."))
-
-	# Shadow Offset Y slider (-8 to 8, default 2, step 1)
-	var offset_data := _make_slider_row(-8.0, 8.0, 2.0, 1.0)
-	_shadow_offset_slider = offset_data[1]
-	shadow_content.add_child(_make_field("Shadow Offset Y", offset_data[0]))
-
-	# Shadow Opacity slider (0.1-1.0, default 0.5, step 0.05)
-	var opacity_data := _make_slider_row(0.1, 1.0, 0.5, 0.05)
-	_shadow_opacity_slider = opacity_data[1]
-	shadow_content.add_child(_make_field("Shadow Opacity", opacity_data[0]))
-
-	# Shadow preview
-	_shadow_preview_rect = TextureRect.new()
-	_shadow_preview_rect.custom_minimum_size = Vector2(120, 120)
-	_shadow_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_shadow_preview_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_shadow_preview_rect.size_flags_horizontal = SIZE_EXPAND_FILL
-	shadow_content.add_child(_shadow_preview_rect)
-
 	# ── Occluder Polygon Section ────────────────────────────────────────
 	var occluder_sec := _make_section("Occluder Polygon")
 	parent.add_child(occluder_sec[0])
@@ -1279,8 +1197,8 @@ func _build_step4(parent: VBoxContainer) -> void:
 	# ── Generate Button ─────────────────────────────────────────────────
 	parent.add_child(HSeparator.new())
 
-	var gen_btn := _make_primary_button("Generate Normal + Shadow + Occluder")
-	gen_btn.pressed.connect(_generate_normal_shadow_occluder)
+	var gen_btn := _make_primary_button("Generate Normal + Occluder")
+	gen_btn.pressed.connect(_generate_normal_and_occluder)
 	parent.add_child(gen_btn)
 
 
@@ -1335,13 +1253,6 @@ func _build_step5(parent: VBoxContainer) -> void:
 	_show_normal_check.toggled.connect(func(_on: bool) -> void: _update_composite_preview())
 	layer_content.add_child(_show_normal_check)
 
-	_show_shadow_check = CheckButton.new()
-	_show_shadow_check.text = "Shadow"
-	_show_shadow_check.button_pressed = true
-	_style_checkbutton_transparent(_show_shadow_check)
-	_show_shadow_check.toggled.connect(func(_on: bool) -> void: _update_composite_preview())
-	layer_content.add_child(_show_shadow_check)
-
 	_show_occluder_check = CheckButton.new()
 	_show_occluder_check.text = "Occluder Outline"
 	_show_occluder_check.button_pressed = true
@@ -1373,7 +1284,7 @@ func _build_step6(parent: VBoxContainer) -> void:
 	var export_content: VBoxContainer = export_sec[1]
 
 	export_content.add_child(_make_small_label(
-		"Exports processed sprites (color, normal, shadow) and occluder polygons " +
+		"Exports processed sprites (color, normal) and occluder polygons " +
 		"to the decorations asset folder. Each angle variant is saved as a separate " +
 		"sub-folder under assets/decorations/."))
 
@@ -1466,12 +1377,6 @@ func _start_export() -> void:
 			_processed_normal[angle_name].save_png(global_normal)
 			_append_log("Saved: %s/normal.png" % deco_id)
 
-		# Save shadow.png
-		if _processed_shadow.has(angle_name):
-			var global_shadow := ProjectSettings.globalize_path(output_dir + "/shadow.png")
-			_processed_shadow[angle_name].save_png(global_shadow)
-			_append_log("Saved: %s/shadow.png" % deco_id)
-
 		# Save occluder.tres
 		if _processed_occluder_points.has(angle_name):
 			var points: PackedVector2Array = _processed_occluder_points[angle_name]
@@ -1532,7 +1437,6 @@ func _regenerate_atlas(cached_images: Dictionary = {}) -> void:
 					"width": img.get_width(),
 					"height": img.get_height(),
 					"has_normal": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/normal.png" % [DECORATIONS_DIR, folder_name])),
-					"has_shadow": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/shadow.png" % [DECORATIONS_DIR, folder_name])),
 					"has_occluder": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/occluder.tres" % [DECORATIONS_DIR, folder_name])),
 				})
 		folder_name = dir.get_next()
@@ -1588,7 +1492,6 @@ func _regenerate_atlas(cached_images: Dictionary = {}) -> void:
 			"source_width": entry["width"],
 			"source_height": entry["height"],
 			"has_normal": entry["has_normal"],
-			"has_shadow": entry["has_shadow"],
 			"has_occluder": entry["has_occluder"],
 		})
 
@@ -1754,11 +1657,11 @@ func _update_palette_swatch() -> void:
 
 
 #===============================================================================
-# NORMAL MAP, SHADOW & OCCLUDER GENERATION
+# NORMAL MAP & OCCLUDER GENERATION
 #===============================================================================
 
-## Master generation — processes all angles to produce normal maps, shadows, and occluder polygons.
-func _generate_normal_shadow_occluder() -> void:
+## Master generation — processes all angles to produce normal maps and occluder polygons.
+func _generate_normal_and_occluder() -> void:
 	# Determine which angles to process
 	var angles: Array
 	if _source_mode == "3d":
@@ -1770,7 +1673,6 @@ func _generate_normal_shadow_occluder() -> void:
 	# Clear previous results
 	_processed_color.clear()
 	_processed_normal.clear()
-	_processed_shadow.clear()
 	_processed_occluder_points.clear()
 
 	var target_height := int(_output_height_slider.value)
@@ -1818,15 +1720,7 @@ func _generate_normal_shadow_occluder() -> void:
 				_normal_invert_check.button_pressed)
 		_processed_normal[angle_name] = processed_normal
 
-		# 4. Process shadow
-		var processed_shadow: Image
-		if _source_mode == "3d" and _captured_shadow.has(angle_name):
-			processed_shadow = _apply_shadow_styling(_captured_shadow[angle_name], target_height)
-		else:
-			processed_shadow = _generate_shadow_from_alpha(processed_color)
-		_processed_shadow[angle_name] = processed_shadow
-
-		# 5. Trace occluder polygon
+		# 4. Trace occluder polygon
 		var occluder_poly := _trace_occluder_polygon(processed_color, simplification)
 		_processed_occluder_points[angle_name] = occluder_poly
 		total_occluder_verts += occluder_poly.size()
@@ -1835,8 +1729,6 @@ func _generate_normal_shadow_occluder() -> void:
 	var first_angle: String = (angles[0] as Dictionary)["name"]
 	if _processed_normal.has(first_angle):
 		_normal_preview_rect.texture = ImageTexture.create_from_image(_processed_normal[first_angle])
-	if _processed_shadow.has(first_angle):
-		_shadow_preview_rect.texture = ImageTexture.create_from_image(_processed_shadow[first_angle])
 
 	# Update occluder info
 	var angle_count := angles.size()
@@ -1846,7 +1738,7 @@ func _generate_normal_shadow_occluder() -> void:
 		_occluder_info_label.text = "Occluder: %d angles, %d total vertices (avg %.0f/angle)" % [
 			angle_count, total_occluder_verts, float(total_occluder_verts) / float(angle_count)]
 
-	_set_status("Generated normals, shadows, and occluders for %d angle(s)." % angle_count)
+	_set_status("Generated normals and occluders for %d angle(s)." % angle_count)
 
 
 #-------------------------------------------------------------------------------
@@ -1907,70 +1799,6 @@ func _get_luminance(image: Image, x: int, y: int, invert: bool) -> float:
 	if invert:
 		lum = 1.0 - lum
 	return lum
-
-
-#-------------------------------------------------------------------------------
-# Shadow generation
-#-------------------------------------------------------------------------------
-
-## Generate a shadow image from sprite alpha silhouette (for 2D sources).
-## Creates a dark offset copy of the sprite's opaque regions.
-func _generate_shadow_from_alpha(sprite: Image) -> Image:
-	var w := sprite.get_width()
-	var h := sprite.get_height()
-	var offset_y := int(_shadow_offset_slider.value)
-	var opacity := _shadow_opacity_slider.value
-
-	# Create image with extra space for the offset
-	var extra := absi(offset_y)
-	var shadow_h := h + extra
-	var result := Image.create(w, shadow_h, false, Image.FORMAT_RGBA8)
-	result.fill(Color(0, 0, 0, 0))
-
-	# Compute y-shift: positive offset pushes shadow downward
-	var y_shift := extra if offset_y >= 0 else 0
-
-	for y in range(h):
-		for x in range(w):
-			if sprite.get_pixel(x, y).a >= 0.5:
-				var dest_y := y + y_shift
-				if dest_y >= 0 and dest_y < shadow_h:
-					result.set_pixel(x, dest_y, Color(0.0, 0.0, 0.0, opacity))
-
-	return result
-
-
-## Style a 3D-captured shadow image: downscale, offset, and apply opacity.
-func _apply_shadow_styling(shadow_source: Image, target_height: int) -> Image:
-	var offset_y := int(_shadow_offset_slider.value)
-	var opacity := _shadow_opacity_slider.value
-
-	# Downscale the captured shadow to match target pixel art size
-	var source := shadow_source.duplicate() as Image
-	var scale_factor := float(target_height) / float(source.get_height())
-	var target_width := int(float(source.get_width()) * scale_factor)
-	source.resize(target_width, target_height, Image.INTERPOLATE_NEAREST)
-
-	var w := source.get_width()
-	var h := source.get_height()
-	var extra := absi(offset_y)
-	var shadow_h := h + extra
-	var result := Image.create(w, shadow_h, false, Image.FORMAT_RGBA8)
-	result.fill(Color(0, 0, 0, 0))
-
-	var y_shift := extra if offset_y >= 0 else 0
-
-	for y in range(h):
-		for x in range(w):
-			var color := source.get_pixel(x, y)
-			if color.a >= 0.5:
-				var dest_y := y + y_shift
-				if dest_y >= 0 and dest_y < shadow_h:
-					# Use the darkness from the captured shadow, apply opacity
-					var darkness := 1.0 - color.r  # shadow pass is dark = shadow
-					result.set_pixel(x, dest_y, Color(0.0, 0.0, 0.0, darkness * opacity))
-
-	return result
 
 
 #-------------------------------------------------------------------------------
@@ -2182,17 +2010,9 @@ func _update_composite_preview() -> void:
 	var sprite_w := color_img.get_width()
 	var sprite_h := color_img.get_height()
 
-	# Determine shadow bounds to size the composite
-	var shadow_img: Image = null
-	if _processed_shadow.has(angle_key):
-		shadow_img = _processed_shadow[angle_key]
-
-	# Composite size: slightly larger than sprite to show shadow offset
-	var shadow_offset_y := 0
-	if shadow_img:
-		shadow_offset_y = int(_shadow_offset_slider.value) if _shadow_offset_slider else 2
+	# Composite size: slightly larger than sprite for padding
 	var comp_w := sprite_w + 4  # 2px padding each side
-	var comp_h := sprite_h + absi(shadow_offset_y) + 4  # padding + shadow room
+	var comp_h := sprite_h + 4  # 2px padding top and bottom
 	var composite := Image.create(comp_w, comp_h, false, Image.FORMAT_RGBA8)
 
 	# Fill with dark background
@@ -2200,25 +2020,19 @@ func _update_composite_preview() -> void:
 
 	# Origin offset: center the sprite horizontally, add top padding
 	var origin_x := 2
-	var origin_y := 2 + (absi(shadow_offset_y) if shadow_offset_y < 0 else 0)
+	var origin_y := 2
 
-	# Layer 1: Shadow (offset is already baked into the shadow image pixels)
-	if _show_shadow_check.button_pressed and shadow_img:
-		var sx := origin_x
-		var sy := origin_y - (absi(shadow_offset_y) if shadow_offset_y < 0 else 0)
-		_alpha_blend_image(composite, shadow_img, sx, sy)
-
-	# Layer 2: Sprite (color)
+	# Layer 1: Sprite (color)
 	if _show_sprite_check.button_pressed:
 		_alpha_blend_image(composite, color_img, origin_x, origin_y)
 
-	# Layer 3: Normal map (replaces sprite pixels where both are opaque)
+	# Layer 2: Normal map (replaces sprite pixels where both are opaque)
 	if _show_normal_check.button_pressed and _processed_normal.has(angle_key):
 		var normal_img: Image = _processed_normal[angle_key]
 		composite.blend_rect(normal_img, Rect2i(Vector2i.ZERO, normal_img.get_size()),
 			Vector2i(origin_x, origin_y))
 
-	# Layer 4: Occluder outline (yellow polygon lines via Bresenham)
+	# Layer 3: Occluder outline (yellow polygon lines via Bresenham)
 	if _show_occluder_check.button_pressed and _processed_occluder_points.has(angle_key):
 		var occluder_pts: PackedVector2Array = _processed_occluder_points[angle_key]
 		if occluder_pts.size() >= 2:
