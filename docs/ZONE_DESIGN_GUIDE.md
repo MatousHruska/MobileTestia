@@ -449,13 +449,13 @@ Boss Area
 
 ### Lighting Guidelines
 
-| Time/Mood | Lighting | Shadows |
-|-----------|----------|---------|
-| Day/Safe | Bright, warm | Soft |
-| Dusk/Tension | Orange, dim | Long |
-| Night/Danger | Blue, dark | Sharp |
-| Underground | Point lights only | Deep |
-| Magical | Colored, glowing | Unusual |
+| Time/Mood | Lighting |
+|-----------|----------|
+| Day/Safe | Bright, warm |
+| Dusk/Tension | Orange, dim |
+| Night/Danger | Blue, dark |
+| Underground | Point lights only |
+| Magical | Colored, glowing |
 
 ### Environmental Storytelling
 
