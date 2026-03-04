@@ -9,7 +9,6 @@
 				"y": 352.0
 			},
 			"scale": 2.0,
-			"shadow_mode": "baked",
 			"z_mode": "y_sort"
 		},
 		{
@@ -20,7 +19,6 @@
 				"y": 432.0
 			},
 			"scale": 2.0,
-			"shadow_mode": "baked",
 			"z_mode": "y_sort"
 		},
 		{
@@ -31,7 +29,6 @@
 				"y": 432.0
 			},
 			"scale": 2.0,
-			"shadow_mode": "baked",
 			"z_mode": "y_sort"
 		},
 		{
@@ -42,7 +39,6 @@
 				"y": 480.0
 			},
 			"scale": 2.0,
-			"shadow_mode": "baked",
 			"z_mode": "y_sort"
 		},
 		{
@@ -53,7 +49,6 @@
 				"y": 256.0
 			},
 			"scale": 2.0,
-			"shadow_mode": "baked",
 			"z_mode": "y_sort"
 		},
 		{
@@ -64,7 +59,6 @@
 				"y": 384.0
 			},
 			"scale": 2.0,
-			"shadow_mode": "baked",
 			"z_mode": "y_sort"
 		}
 	],

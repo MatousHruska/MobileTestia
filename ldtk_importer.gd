@@ -670,8 +670,7 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 						"decoration_id": deco_id_val if deco_id_val != null else "",
 						"scale": float(fields.get("scale", 1.0)),
 						"flip_x": fields.get("flip_x", false),
-						"z_mode": fields.get("z_mode", "y_sort"),
-						"shadow_mode": fields.get("shadow_mode", "baked")
+						"z_mode": fields.get("z_mode", "y_sort")
 					})
 
 	return result
@@ -888,8 +887,7 @@ func _export_entities_summary(entities: Dictionary) -> void:
 			"decoration_id": deco.get("decoration_id", ""),
 			"scale": deco.get("scale", 1.0),
 			"flip_x": deco.get("flip_x", false),
-			"z_mode": deco.get("z_mode", "y_sort"),
-			"shadow_mode": deco.get("shadow_mode", "baked")
+			"z_mode": deco.get("z_mode", "y_sort")
 		})
 
 	# Export each zone's entities to a separate JSON file
