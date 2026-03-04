@@ -10,4 +10,3 @@ bloom_intensity = 1.2
 bloom_threshold = 0.5
 particle_type = "embers"
 particle_tint = Color(1, 0.4, 0.1, 1)
-realtime_shadows = true

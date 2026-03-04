@@ -10,4 +10,3 @@ bloom_intensity = 1.0
 bloom_threshold = 0.6
 particle_type = "dust_motes"
 particle_tint = Color(1, 0.9, 0.7, 1)
-realtime_shadows = true

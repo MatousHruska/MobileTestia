@@ -1766,14 +1766,7 @@ func _spawn_light(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 	var radius: float = float(data.get("radius", 128))
 	light.texture_scale = radius / (texture.width * 0.5)
 
-	# Shadow — enabled based on zone mood setting
-	var env_mgr = get_node_or_null("/root/EnvironmentManager")
-	if env_mgr and env_mgr.current_mood:
-		light.shadow_enabled = env_mgr.current_mood.realtime_shadows
-	else:
-		light.shadow_enabled = false
-	light.shadow_filter = PointLight2D.SHADOW_FILTER_PCF5
-	light.shadow_filter_smooth = 1.5
+	# TODO: Shadow system — hook new light shadow config here
 
 	# Flicker animation based on light type
 	var light_type: String = data.get("light_type", "torch")

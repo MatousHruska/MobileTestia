@@ -10,4 +10,3 @@ bloom_intensity = 0.5
 bloom_threshold = 0.8
 particle_type = "snow"
 particle_tint = Color(1, 1, 1, 1)
-realtime_shadows = false
