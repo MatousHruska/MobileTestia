@@ -1,0 +1,53 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" uid="uid://bvrdktn8lehws" path="res://assets/decorations/pinetree2/sprite.png" id="1_tree"]
+[ext_resource type="Script" path="res://scripts/environment/silhouette_shadow.gd" id="2_script"]
+
+[node name="ShadowTest" type="Node2D"]
+
+[node name="Background" type="ColorRect" parent="."]
+offset_right = 800.0
+offset_bottom = 600.0
+color = Color(0.35, 0.55, 0.2, 1.0)
+
+[node name="Tree1" type="Sprite2D" parent="."]
+position = Vector2(300, 400)
+texture = ExtResource("1_tree")
+
+[node name="Shadow" type="Sprite2D" parent="Tree1"]
+script = ExtResource("2_script")
+shadow_length = 1.0
+shadow_skew = 0.5
+shadow_opacity = 0.3
+
+[node name="Tree2" type="Sprite2D" parent="."]
+position = Vector2(500, 320)
+texture = ExtResource("1_tree")
+
+[node name="Shadow" type="Sprite2D" parent="Tree2"]
+script = ExtResource("2_script")
+shadow_length = 1.0
+shadow_skew = 0.5
+shadow_opacity = 0.3
+
+[node name="Tree3" type="Sprite2D" parent="."]
+position = Vector2(180, 280)
+scale = Vector2(1.5, 1.5)
+texture = ExtResource("1_tree")
+
+[node name="Shadow" type="Sprite2D" parent="Tree3"]
+script = ExtResource("2_script")
+shadow_length = 1.0
+shadow_skew = 0.5
+shadow_opacity = 0.3
+
+[node name="Tree4" type="Sprite2D" parent="."]
+position = Vector2(600, 450)
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("1_tree")
+
+[node name="Shadow" type="Sprite2D" parent="Tree4"]
+script = ExtResource("2_script")
+shadow_length = 1.2
+shadow_skew = 0.5
+shadow_opacity = 0.25
