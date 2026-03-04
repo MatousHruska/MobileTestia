@@ -2,7 +2,7 @@ Attribute VB_Name = "ZoneMoodDatabase"
 '===============================================================================
 ' ZoneMoodDatabase Module
 ' Handles validation and export for ZoneMoods (atmosphere presets for zones)
-' Each mood defines ambient color, bloom, particles, and shadow settings.
+' Each mood defines ambient color, bloom, and particle settings.
 ' Zones reference moods via mood_id foreign key.
 '===============================================================================
 Option Explicit
@@ -19,7 +19,6 @@ Private Const COL_ZM_BLOOM_INTENSITY As Integer = 5
 Private Const COL_ZM_BLOOM_THRESHOLD As Integer = 6
 Private Const COL_ZM_PARTICLE_TYPE As Integer = 7
 Private Const COL_ZM_PARTICLE_TINT As Integer = 8
-Private Const COL_ZM_REALTIME_SHADOWS As Integer = 9
 
 ' Valid dropdown values
 Private validParticleTypes() As String
@@ -170,14 +169,6 @@ Public Sub ExportZoneMoodsData()
             bloomEnabled = "false"
         End If
 
-        Dim realtimeShadows As String
-        realtimeShadows = LCase(Trim(ws.Cells(i, COL_ZM_REALTIME_SHADOWS).Value))
-        If realtimeShadows = "true" Or realtimeShadows = "1" Or realtimeShadows = "yes" Then
-            realtimeShadows = "true"
-        Else
-            realtimeShadows = "false"
-        End If
-
         json = json & "    {" & vbCrLf
         json = json & "      ""id"": """ & EscapeJsonString(id) & """," & vbCrLf
         json = json & "      ""name"": """ & EscapeJsonString(Trim(GetDefaultString(ws.Cells(i, COL_ZM_NAME)))) & """," & vbCrLf
@@ -186,8 +177,7 @@ Public Sub ExportZoneMoodsData()
         json = json & "      ""bloom_intensity"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_ZM_BLOOM_INTENSITY), 0.8)) & "," & vbCrLf
         json = json & "      ""bloom_threshold"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_ZM_BLOOM_THRESHOLD), 0.7)) & "," & vbCrLf
         json = json & "      ""particle_type"": """ & EscapeJsonString(Trim(LCase(GetDefaultString(ws.Cells(i, COL_ZM_PARTICLE_TYPE))))) & """," & vbCrLf
-        json = json & "      ""particle_tint"": """ & EscapeJsonString(Trim(GetDefaultString(ws.Cells(i, COL_ZM_PARTICLE_TINT), "#FFFFFF"))) & """," & vbCrLf
-        json = json & "      ""realtime_shadows"": " & realtimeShadows & vbCrLf
+        json = json & "      ""particle_tint"": """ & EscapeJsonString(Trim(GetDefaultString(ws.Cells(i, COL_ZM_PARTICLE_TINT), "#FFFFFF"))) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -213,7 +203,7 @@ Public Sub SetupZoneMoodsSheet()
 
     Dim headers As Variant
     headers = Array("id", "name", "ambient_color", "bloom_enabled", "bloom_intensity", _
-                    "bloom_threshold", "particle_type", "particle_tint", "realtime_shadows")
+                    "bloom_threshold", "particle_type", "particle_tint")
 
     SetupSheetHeaders ws, headers
 
@@ -226,7 +216,6 @@ Public Sub SetupZoneMoodsSheet()
     SafeAddComment ws.Cells(1, 6), "Bloom brightness threshold 0.0-1.0 (0.9=only very bright areas glow)"
     SafeAddComment ws.Cells(1, 7), "Particle effect: snow, dust_motes, embers (or leave empty for none)"
     SafeAddComment ws.Cells(1, 8), "Particle color tint as hex #RRGGBB (e.g., #FFE6B3 warm dust)"
-    SafeAddComment ws.Cells(1, 9), "TRUE/FALSE - enable realtime shadow casting from lights"
 
     MsgBox "ZoneMoods sheet setup complete!", vbInformation
 End Sub

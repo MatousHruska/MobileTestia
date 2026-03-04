@@ -765,7 +765,6 @@ Private Sub ApplyEnumValidation()
     ' ZoneMoods
     ApplyListValidation "ZoneMoods", 4, "TRUE,FALSE"           ' bloom_enabled
     ApplyListValidation "ZoneMoods", 7, "snow,dust_motes,embers"  ' particle_type
-    ApplyListValidation "ZoneMoods", 9, "TRUE,FALSE"           ' realtime_shadows
 End Sub
 
 '-------------------------------------------------------------------------------
