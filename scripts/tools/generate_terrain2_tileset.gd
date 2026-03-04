@@ -1,58 +1,80 @@
 @tool
 extends EditorScript
-## Terrain2 Tileset Generator - Creates a TileSet resource for terrain2.png
+## Tileset Generator - Creates TileSet resources from tileset images
 ## Run from Editor: Script > Run
 ##
-## terrain2.png is a 1152x448 pixel tileset (72 columns x 28 rows at 16px)
-## This script registers all 2016 tiles as atlas entries.
+## Generates TileSet .tres files for ALL configured tilesets.
+## Each entry auto-computes atlas dimensions from the image.
 ## Collision is NOT per-tile — it comes from the IntGrid collision layer.
 
 #===============================================================================
 # CONFIGURATION
 #===============================================================================
 
-## Path to the terrain2 tileset image (already exists in project)
-const TILESET_IMAGE_PATH := "res://maps/tilesets/terrain2.png"
-
-## Output path for the TileSet resource
-const TILESET_RESOURCE_PATH := "res://resources/tilesets/terrain2_tileset.tres"
-
-## Tile size in pixels
+## Tile size in pixels (all tilesets use 16px grid)
 const TILE_SIZE := 16
 
-## Atlas dimensions (terrain2.png is 1152x448)
-const ATLAS_COLUMNS := 72
-const ATLAS_ROWS := 28
+## Tileset registry: each entry generates one TileSet .tres
+## Columns/rows are computed from image dimensions automatically
+const TILESETS := [
+	{
+		"image": "res://maps/tilesets/highlands.png",
+		"output": "res://resources/tilesets/highlands_tileset.tres",
+		"name": "Highlands",
+	},
+	{
+		"image": "res://maps/tilesets/highlands_props.png",
+		"output": "res://resources/tilesets/highlands_props_tileset.tres",
+		"name": "Highlands Props",
+	},
+	{
+		"image": "res://maps/tilesets/terrain2.png",
+		"output": "res://resources/tilesets/terrain2_tileset.tres",
+		"name": "Terrain2",
+	},
+]
 
 #===============================================================================
 # MAIN ENTRY POINT
 #===============================================================================
 
 func _run() -> void:
-	print("=== Terrain2 Tileset Generator ===")
+	print("=== Tileset Generator ===")
 
-	# Verify the source image exists
-	if not ResourceLoader.exists(TILESET_IMAGE_PATH):
-		push_error("Tileset image not found: %s" % TILESET_IMAGE_PATH)
-		return
+	var success_count := 0
+	for entry in TILESETS:
+		var image_path: String = entry["image"]
+		var output_path: String = entry["output"]
+		var ts_name: String = entry["name"]
 
-	# Create and save the TileSet resource
-	if not _create_tileset_resource():
-		push_error("Failed to create tileset resource")
-		return
+		if not ResourceLoader.exists(image_path):
+			print("Skipping %s — image not found: %s" % [ts_name, image_path])
+			continue
 
-	print("=== Generation Complete ===")
-	print("TileSet: %s" % TILESET_RESOURCE_PATH)
-	print("Atlas: %dx%d tiles (%d total)" % [ATLAS_COLUMNS, ATLAS_ROWS, ATLAS_COLUMNS * ATLAS_ROWS])
+		var texture: Texture2D = load(image_path) as Texture2D
+		if texture == null:
+			push_error("Failed to load texture: %s" % image_path)
+			continue
+
+		var cols := texture.get_width() / TILE_SIZE
+		var rows := texture.get_height() / TILE_SIZE
+		print("\n--- %s ---" % ts_name)
+		print("Image: %s (%dx%d px)" % [image_path, texture.get_width(), texture.get_height()])
+		print("Atlas: %dx%d tiles (%d total)" % [cols, rows, cols * rows])
+
+		if _create_tileset_resource(texture, output_path, cols, rows):
+			success_count += 1
+		else:
+			push_error("Failed to create tileset: %s" % ts_name)
+
+	print("\n=== Generation Complete (%d/%d tilesets) ===" % [success_count, TILESETS.size()])
 
 
 #===============================================================================
 # TILESET RESOURCE CREATION
 #===============================================================================
 
-func _create_tileset_resource() -> bool:
-	print("Creating TileSet resource...")
-
+func _create_tileset_resource(texture: Texture2D, output_path: String, cols: int, rows: int) -> bool:
 	var tileset := TileSet.new()
 	tileset.tile_size = Vector2i(TILE_SIZE, TILE_SIZE)
 
@@ -63,14 +85,6 @@ func _create_tileset_resource() -> bool:
 	tileset.set_physics_layer_collision_layer(0, 1)
 	tileset.set_physics_layer_collision_mask(0, 0)
 
-	# Load the texture
-	var texture: Texture2D = load(TILESET_IMAGE_PATH) as Texture2D
-	if texture == null:
-		push_error("Failed to load tileset texture: %s" % TILESET_IMAGE_PATH)
-		return false
-
-	print("Loaded texture: %dx%d px" % [texture.get_width(), texture.get_height()])
-
 	# Create atlas source
 	var source := TileSetAtlasSource.new()
 	source.texture = texture
@@ -78,10 +92,9 @@ func _create_tileset_resource() -> bool:
 
 	# Register all tiles in the atlas grid
 	var tile_count := 0
-	for row in range(ATLAS_ROWS):
-		for col in range(ATLAS_COLUMNS):
-			var atlas_coords := Vector2i(col, row)
-			source.create_tile(atlas_coords)
+	for row in range(rows):
+		for col in range(cols):
+			source.create_tile(Vector2i(col, row))
 			tile_count += 1
 
 	print("Registered %d tiles in atlas" % tile_count)
@@ -98,17 +111,16 @@ func _create_tileset_resource() -> bool:
 	collision_tile.set_collision_polygon_points(0, 0, PackedVector2Array([
 		Vector2(0, 0), Vector2(16, 0), Vector2(16, 16), Vector2(0, 16)
 	]))
-	print("Added collision polygon to tile (0,0)")
 
 	# Ensure output directory exists
-	var dir_path := TILESET_RESOURCE_PATH.get_base_dir()
+	var dir_path := output_path.get_base_dir()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir_path))
 
 	# Save the tileset resource
-	var error := ResourceSaver.save(tileset, TILESET_RESOURCE_PATH)
+	var error := ResourceSaver.save(tileset, output_path)
 	if error != OK:
-		push_error("Failed to save TileSet: %s (error %d)" % [TILESET_RESOURCE_PATH, error])
+		push_error("Failed to save TileSet: %s (error %d)" % [output_path, error])
 		return false
 
-	print("Saved TileSet resource: %s" % TILESET_RESOURCE_PATH)
+	print("Saved: %s" % output_path)
 	return true

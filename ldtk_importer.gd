@@ -661,11 +661,13 @@ func _extract_entities(level: Dictionary, zone_id: String) -> Dictionary:
 
 				# Decorations
 				"decoration":
+					# Field is "decorationid" (enum-linked, no underscore) in LDtk
+					var deco_id_val = fields.get("decorationid", fields.get("decoration_id", ""))
 					result.decorations.append({
 						"zone_id": zone_id,
 						"position_x": position.x,
 						"position_y": position.y,
-						"decoration_id": fields.get("decoration_id", ""),
+						"decoration_id": deco_id_val if deco_id_val != null else "",
 						"scale": float(fields.get("scale", 1.0)),
 						"flip_x": fields.get("flip_x", false),
 						"z_mode": fields.get("z_mode", "y_sort"),

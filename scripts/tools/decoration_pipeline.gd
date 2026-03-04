@@ -1003,7 +1003,12 @@ func _build_step1(parent: VBoxContainer) -> void:
 	deco_id_input.placeholder_text = "e.g. barrel, torch_wall, crate_large"
 	deco_id_input.size_flags_horizontal = SIZE_EXPAND_FILL
 	deco_id_input.text_changed.connect(func(text: String) -> void:
-		_decoration_id = text.strip_edges()
+		# Enforce lowercase — LDtk identifierStyle:"Lowercase" requires it
+		_decoration_id = text.strip_edges().to_lower()
+		if deco_id_input.text != _decoration_id:
+			var caret := deco_id_input.caret_column
+			deco_id_input.text = _decoration_id
+			deco_id_input.caret_column = caret
 	)
 	parent.add_child(_make_field("Decoration ID", deco_id_input))
 
@@ -1489,6 +1494,10 @@ func _start_export() -> void:
 	_append_log("")
 	_append_log("[b]Export complete.[/b] Now regenerating atlas...")
 	_regenerate_atlas(exported_images)
+
+	# Reminder: LDtk enum must be updated manually
+	_append_log("")
+	_append_log("[color=yellow][b]Remember:[/b] Add new decoration IDs to the 'decorationid' enum in LDtk (Project Settings > Enums) and link each value to its atlas tile.[/color]")
 
 
 func _append_log(text: String) -> void:

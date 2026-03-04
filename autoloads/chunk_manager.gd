@@ -31,19 +31,19 @@ const CHUNK_TILES_DIR := "res://maps/chunk_tiles/"
 const ZONE_ENTITIES_DIR := "res://maps/entities/"
 
 ## Tileset resource for rendering chunks
-const TILESET_PATH := "res://resources/tilesets/terrain2_tileset.tres"
+const TILESET_PATH := "res://resources/tilesets/highlands_tileset.tres"
 
-## Atlas columns in terrain2.png (1152px / 16px = 72)
-const TILESET_COLUMNS := 72
+## Atlas columns in highlands.png (1824px / 16px = 114)
+const TILESET_COLUMNS := 114
 
 ## Roof type to tileset tile mapping
-## Uses solid-fill tiles from terrain2.png for interior ceiling masking
+## Uses solid-fill tiles from highlands.png for interior ceiling masking
 const ROOF_TO_TILE := {
 	"roof_none": Vector2i(0, 0),           # Transparent (no roof)
-	"roof_cave": Vector2i(11, 4),          # Dark gray stone
-	"roof_house": Vector2i(25, 4),         # Brown wood
-	"roof_dungeon": Vector2i(10, 2),       # Darker stone
-	"roof_ruins": Vector2i(13, 2),         # Weathered stone
+	"roof_cave": Vector2i(5, 5),           # Dark gray stone
+	"roof_house": Vector2i(15, 10),        # Brown wood
+	"roof_dungeon": Vector2i(20, 10),      # Darker stone
+	"roof_ruins": Vector2i(90, 10),        # Weathered stone
 }
 
 #===============================================================================
@@ -629,7 +629,7 @@ func _get_tileset() -> TileSet:
 		else:
 			Debug.warn("ChunkManager", "Failed to load tileset: %s" % TILESET_PATH)
 	else:
-		Debug.warn("ChunkManager", "Tileset not found: %s (run generate_terrain2_tileset.gd)" % TILESET_PATH)
+		Debug.warn("ChunkManager", "Tileset not found: %s (run generate_terrain2_tileset.gd from Editor > Script > Run)" % TILESET_PATH)
 
 	return _tileset
 

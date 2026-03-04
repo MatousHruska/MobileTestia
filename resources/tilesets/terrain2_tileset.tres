@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://bk0raf26jbfn5" path="res://maps/tilesets/terrain2.png" id="1_m1kdv"]
 
-[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_m1kdv"]
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_xq5ve"]
 texture = ExtResource("1_m1kdv")
 0:0/0 = 0
 0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(0, 0, 16, 0, 16, 16, 0, 16)
@@ -2025,4 +2025,4 @@ texture = ExtResource("1_m1kdv")
 [resource]
 physics_layer_0/collision_layer = 1
 physics_layer_0/collision_mask = 0
-sources/0 = SubResource("TileSetAtlasSource_m1kdv")
+sources/0 = SubResource("TileSetAtlasSource_xq5ve")
