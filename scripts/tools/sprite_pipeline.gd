@@ -100,7 +100,6 @@ var camera_target: Vector3 = Vector3.ZERO
 ## Step 2 state
 var _captured_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
 var _captured_normal_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
-var _captured_shadow_sheets: Dictionary = {}  # { "down": Image, "up": Image, "right": Image }
 var _capture_scope := "all"  # "all", "down", "up", "right"
 var _capture_btn: Button = null
 
@@ -162,7 +161,6 @@ var _current_preset: Dictionary = {}
 ## Normal map capture shader — loaded once at startup
 var _normal_capture_shader: Shader = null
 var _normal_capture_material: ShaderMaterial = null
-var _shadow_capture_material: StandardMaterial3D = null
 
 #===============================================================================
 # NODE REFERENCES
@@ -243,10 +241,6 @@ func _ready() -> void:
 	if _normal_capture_shader:
 		_normal_capture_material = ShaderMaterial.new()
 		_normal_capture_material.shader = _normal_capture_shader
-	# Create shadow capture material — flat black, unshaded
-	_shadow_capture_material = StandardMaterial3D.new()
-	_shadow_capture_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_shadow_capture_material.albedo_color = Color.BLACK
 	await get_tree().process_frame
 	_scan_models()
 
@@ -593,7 +587,6 @@ func _build_step2(parent: VBoxContainer) -> void:
 	var mode_group := _make_toggle_group([
 		{"label": "Color", "key": "color"},
 		{"label": "Normal", "key": "normal"},
-		{"label": "Shadow", "key": "shadow"},
 	], func(key: String) -> void:
 		_capture_preview_mode = key
 		_update_capture_preview()
@@ -880,7 +873,7 @@ func _build_step_frame_editor(parent: VBoxContainer) -> void:
 	var nudge_sec := _make_section("Nudge Frame")
 	parent.add_child(nudge_sec[0])
 	var nudge_content: VBoxContainer = nudge_sec[1]
-	nudge_content.add_child(_make_small_label("Shift this frame's content by 1 capture pixel. Affects color, normal & shadow."))
+	nudge_content.add_child(_make_small_label("Shift this frame's content by 1 capture pixel. Affects color & normal."))
 
 	# Arrow grid: 3x3 with arrows at cross positions
 	var nudge_grid := GridContainer.new()
@@ -1067,7 +1060,7 @@ func _nudge_current_frame(dx: int, dy: int) -> void:
 	var last_frame := (_frame_editor_frame_count - 1) if nudge_all else _frame_editor_frame
 
 	var apply_all := _frame_editor_all_directions_toggle and _frame_editor_all_directions_toggle.button_pressed
-	var sheet_dicts := [_captured_sheets, _captured_normal_sheets, _captured_shadow_sheets]
+	var sheet_dicts := [_captured_sheets, _captured_normal_sheets]
 	for sheet_dict in sheet_dicts:
 		var dirs_to_edit: Array = sheet_dict.keys() if apply_all else [_frame_editor_direction]
 		for dir_name in dirs_to_edit:
@@ -1101,7 +1094,7 @@ func _delete_current_frame() -> void:
 	# The capture sheets store raw 512px-per-frame horizontal strips.
 	# Frame width = sheet_width / frame_count (using current frame_count).
 	var apply_all := _frame_editor_all_directions_toggle and _frame_editor_all_directions_toggle.button_pressed
-	var sheet_dicts := [_captured_sheets, _captured_normal_sheets, _captured_shadow_sheets]
+	var sheet_dicts := [_captured_sheets, _captured_normal_sheets]
 	for sheet_dict in sheet_dicts:
 		var dirs_to_edit: Array = sheet_dict.keys() if apply_all else [_frame_editor_direction]
 		for dir_name in dirs_to_edit:
@@ -1794,7 +1787,6 @@ func _on_load_spritesheet() -> void:
 	_load_spritesheet_status.text = ""
 	_captured_sheets.clear()
 	_captured_normal_sheets.clear()
-	_captured_shadow_sheets.clear()
 
 	if anim_dropdown.selected < 0:
 		_load_spritesheet_status.text = "No animation selected"
@@ -1807,7 +1799,6 @@ func _on_load_spritesheet() -> void:
 
 	var color_count := 0
 	var normal_count := 0
-	var shadow_count := 0
 	var detected_frame_size := 0
 
 	for dir_info in DIRECTIONS:
@@ -1828,13 +1819,6 @@ func _on_load_spritesheet() -> void:
 		if normal_img:
 			_captured_normal_sheets[dir_name] = normal_img
 			normal_count += 1
-		# Shadow map
-		var shadow_path := "%s/%s_%s_shadow.png" % [base_dir, safe_anim_name, dir_name]
-		var global_shadow := ProjectSettings.globalize_path(shadow_path)
-		var shadow_img := Image.load_from_file(global_shadow)
-		if shadow_img:
-			_captured_shadow_sheets[dir_name] = shadow_img
-			shadow_count += 1
 
 	if color_count == 0:
 		_load_spritesheet_status.text = "No exported sheets found for %s/%s" % [model_name, safe_anim_name]
@@ -1846,8 +1830,8 @@ func _on_load_spritesheet() -> void:
 		_export_frame_size = detected_frame_size
 
 	_loaded_from_spritesheet = true
-	_load_spritesheet_status.text = "Loaded %d color + %d normal + %d shadow sheets (%dpx frames)" % [
-		color_count, normal_count, shadow_count, detected_frame_size]
+	_load_spritesheet_status.text = "Loaded %d color + %d normal sheets (%dpx frames)" % [
+		color_count, normal_count, detected_frame_size]
 
 	# Jump directly to Frame Editor (step 3)
 	_go_to_step(3)
@@ -1926,17 +1910,6 @@ func _apply_normal_capture_materials(node: Node) -> void:
 	for child in node.get_children():
 		_apply_normal_capture_materials(child)
 
-func _apply_shadow_capture_materials(node: Node) -> void:
-	## Override all mesh materials with flat black for shadow silhouette capture.
-	if node is MeshInstance3D:
-		var mesh_instance := node as MeshInstance3D
-		var mesh := mesh_instance.mesh
-		if mesh != null:
-			for surface_idx in range(mesh.get_surface_count()):
-				mesh_instance.set_surface_override_material(surface_idx, _shadow_capture_material)
-	for child in node.get_children():
-		_apply_shadow_capture_materials(child)
-
 
 #===============================================================================
 # CAMERA
@@ -1949,16 +1922,6 @@ func _position_camera(elevation_deg: float) -> void:
 	var offset_z := cos(elevation_rad) * distance
 	camera.position = camera_target + Vector3(0.0, offset_y, offset_z)
 	camera.look_at(camera_target, Vector3.UP)
-
-
-func _create_shadow_camera() -> Camera3D:
-	## Create a temporary top-down orthographic camera for shadow capture.
-	var shadow_cam := Camera3D.new()
-	shadow_cam.projection = Camera3D.PROJECTION_ORTHOGONAL
-	shadow_cam.size = camera.size  # Match main camera's view width
-	shadow_cam.position = camera_target + Vector3(0.0, 10.0, 0.0)  # High above
-	shadow_cam.rotation_degrees = Vector3(-90.0, 0.0, 0.0)  # Look straight down
-	return shadow_cam
 
 
 func _on_elevation_changed(value: float) -> void:
@@ -2112,11 +2075,9 @@ func _start_capture() -> void:
 	if _capture_scope == "all":
 		_captured_sheets.clear()
 		_captured_normal_sheets.clear()
-		_captured_shadow_sheets.clear()
 	else:
 		_captured_sheets.erase(_capture_scope)
 		_captured_normal_sheets.erase(_capture_scope)
-		_captured_shadow_sheets.erase(_capture_scope)
 	next_button.disabled = true
 	back_button.disabled = true
 	await _capture_animation()
@@ -2167,9 +2128,6 @@ func _capture_animation() -> void:
 
 		var normal_sheet := Image.create(sheet_width, output_size, false, Image.FORMAT_RGBA8)
 		normal_sheet.fill(Color(0.5, 0.5, 1.0, 0.0))  # Neutral normal, transparent
-
-		var shadow_sheet := Image.create(sheet_width, output_size, false, Image.FORMAT_RGBA8)
-		shadow_sheet.fill(Color.TRANSPARENT)
 
 		for frame_idx in range(frame_count):
 			var seek_time: float
@@ -2228,33 +2186,10 @@ func _capture_animation() -> void:
 				# Restore original unlit materials for next color pass
 				_restore_saved_materials()
 
-			# --- Shadow capture pass: top-down silhouette ---
-			if _shadow_capture_material:
-				# Swap main camera for top-down shadow camera
-				var shadow_cam := _create_shadow_camera()
-				sub_viewport.add_child(shadow_cam)
-				shadow_cam.current = true
-
-				_save_current_materials(current_model_instance)
-				_apply_shadow_capture_materials(current_model_instance)
-				# Re-seek animation
-				current_anim_player.play(anim_name)
-				current_anim_player.seek(seek_time, true)
-				await RenderingServer.frame_post_draw
-				await RenderingServer.frame_post_draw
-
-				var shadow_frame := sub_viewport.get_texture().get_image()
-				shadow_frame.convert(Image.FORMAT_RGBA8)
-				shadow_sheet.blit_rect(shadow_frame, Rect2i(0, 0, output_size, output_size), Vector2i(frame_idx * output_size, 0))
-
-				_restore_saved_materials()
-				# Restore main camera
-				shadow_cam.queue_free()
-				camera.current = true
+			# TODO: Shadow pipeline — hook new shadow capture here
 
 		_captured_sheets[dir_name] = sheet
 		_captured_normal_sheets[dir_name] = normal_sheet
-		_captured_shadow_sheets[dir_name] = shadow_sheet
 
 	_update_capture_preview()
 
@@ -2274,11 +2209,6 @@ func _capture_animation() -> void:
 		var file_path := "%s/%s_%s_normal.png" % [output_dir, safe_anim_name, dir_name]
 		var global_path := ProjectSettings.globalize_path(file_path)
 		_captured_normal_sheets[dir_name].save_png(global_path)
-
-	for dir_name in _captured_shadow_sheets:
-		var file_path := "%s/%s_%s_shadow.png" % [output_dir, safe_anim_name, dir_name]
-		var global_path := ProjectSettings.globalize_path(file_path)
-		_captured_shadow_sheets[dir_name].save_png(global_path)
 
 	# Restore camera and viewport
 	if current_model_instance is Node3D:
@@ -2351,8 +2281,6 @@ func _update_capture_preview() -> void:
 			sheets = _captured_sheets
 		"normal":
 			sheets = _captured_normal_sheets
-		"shadow":
-			sheets = _captured_shadow_sheets
 		_:
 			sheets = _captured_sheets
 	var rects := [capture_down_rect, capture_up_rect, capture_right_rect]
@@ -2637,34 +2565,10 @@ func _start_export() -> void:
 		_append_log("Saved normal: %s" % output_path)
 		normal_count += 1
 
-	# Export shadow maps
-	var shadow_count := 0
-	for dir_name in _captured_shadow_sheets:
-		_set_status("Processing shadow %s..." % dir_name)
-		# Shadow processing: just downscale + alpha threshold (no dithering/palette/outline)
-		var shadow_source: Image = _captured_shadow_sheets[dir_name]
-		var result: Image
-		if _loaded_from_spritesheet:
-			result = shadow_source
-		else:
-			result = shadow_source.duplicate() as Image
-			var target_height := int(output_height_spin.value)
-			var scale_factor := float(target_height) / float(result.get_height())
-			var target_width := int(float(result.get_width()) * scale_factor)
-			result.resize(target_width, target_height, Image.INTERPOLATE_NEAREST)
-			PixelArtProcessing.apply_alpha_threshold(result, int(alpha_threshold_slider.value))
+	# TODO: Shadow pipeline — hook new shadow export here
 
-		var output_path := "%s/%s_%s_shadow.png" % [output_dir, safe_anim_name, dir_name]
-		var global_path := ProjectSettings.globalize_path(output_path)
-		var err := result.save_png(global_path)
-		if err != OK:
-			_append_log("ERROR: Failed to save shadow %s" % output_path)
-			continue
-		_append_log("Saved shadow: %s" % output_path)
-		shadow_count += 1
-
-	_append_log("\nExported %d color + %d normal + %d shadow files to %s/" % [count, normal_count, shadow_count, output_dir])
-	_set_status("Export complete! %d files saved." % (count + normal_count + shadow_count))
+	_append_log("\nExported %d color + %d normal files to %s/" % [count, normal_count, output_dir])
+	_set_status("Export complete! %d files saved." % (count + normal_count))
 	_exported_folder = model_name
 	back_button.disabled = false
 	next_button.visible = true
@@ -2680,7 +2584,6 @@ func _on_run_again_pressed() -> void:
 	_loaded_from_spritesheet = false
 	_captured_sheets.clear()
 	_captured_normal_sheets.clear()
-	_captured_shadow_sheets.clear()
 	_go_to_step(0)
 
 
@@ -2688,7 +2591,6 @@ func _on_done_pressed() -> void:
 	_loaded_from_spritesheet = false
 	_captured_sheets.clear()
 	_captured_normal_sheets.clear()
-	_captured_shadow_sheets.clear()
 	_palette_colors.clear()
 	_clear_model()
 	_go_to_step(0)
@@ -2775,7 +2677,7 @@ func _try_add_export_folder(folder_name: String) -> void:
 	sub_dir.list_dir_begin()
 	var file_name := sub_dir.get_next()
 	while file_name != "":
-		if file_name.ends_with(".png") and not file_name.ends_with(".png.import") and not file_name.ends_with("_normal.png") and not file_name.ends_with("_shadow.png"):
+		if file_name.ends_with(".png") and not file_name.ends_with(".png.import") and not file_name.ends_with("_normal.png"):
 			for dir_info in DIRECTIONS:
 				var dir_name: String = dir_info["name"]
 				if file_name.ends_with("_%s.png" % dir_name):
@@ -2895,14 +2797,6 @@ func _apply_to_spriteframes() -> void:
 			if FileAccess.file_exists(normal_abs_path):
 				normal_image = Image.load_from_file(normal_abs_path)
 
-			# Check for corresponding shadow map
-			var shadow_filename := sheet_filename.get_basename() + "_shadow.png"
-			var shadow_path := "%s/%s/%s" % [OUTPUT_BASE, folder, shadow_filename]
-			var shadow_abs_path := ProjectSettings.globalize_path(shadow_path)
-			var shadow_image: Image = null
-			if FileAccess.file_exists(shadow_abs_path):
-				shadow_image = Image.load_from_file(shadow_abs_path)
-
 			# Use load() for external PNG references — stores a path (~50 bytes) instead
 			# of embedding raw pixel data as PackedByteArray (~5 MB per sheet).
 			# Critical for mobile: keeps .tres tiny and lets textures go through
@@ -2935,28 +2829,6 @@ func _apply_to_spriteframes() -> void:
 				frames.add_frame(anim_name, atlas_tex)
 
 			total_anims += 1
-
-			# Create shadow animation if shadow map exists
-			if shadow_image:
-				var shadow_anim_name: String = anim_name + "_shadow"
-				if frames.has_animation(shadow_anim_name):
-					frames.remove_animation(shadow_anim_name)
-				frames.add_animation(shadow_anim_name)
-				frames.set_animation_speed(shadow_anim_name, fps)
-				frames.set_animation_loop(shadow_anim_name, loop)
-
-				var shadow_texture: Texture2D = load(shadow_path)
-				if shadow_texture == null:
-					_append_apply_log("  ERROR: Shadow map not yet imported: %s" % shadow_path)
-					continue
-				for i in range(frame_count):
-					var atlas_tex := AtlasTexture.new()
-					atlas_tex.atlas = shadow_texture
-					atlas_tex.region = Rect2(i * _export_frame_size, 0, _export_frame_size, _export_frame_size)
-					frames.add_frame(shadow_anim_name, atlas_tex)
-
-				_append_apply_log("    + shadow: %s (%s)" % [shadow_filename, shadow_anim_name])
-				total_anims += 1
 
 	# Saving phase
 	_apply_progress_bar.value = 1.0
