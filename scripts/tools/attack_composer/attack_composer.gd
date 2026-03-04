@@ -1506,7 +1506,7 @@ func _on_anim_selected(index: int) -> void:
 	dir.list_dir_begin()
 	var file_name := dir.get_next()
 	while file_name != "":
-		if not dir.current_is_dir() and file_name.ends_with(".png") and not file_name.ends_with("_normal.png") and not file_name.ends_with("_shadow.png"):
+		if not dir.current_is_dir() and file_name.ends_with(".png") and not file_name.ends_with("_normal.png"):
 			# Strip .png and try to extract model prefix
 			var base := file_name.get_basename()
 			for direction in DIRECTIONS:
