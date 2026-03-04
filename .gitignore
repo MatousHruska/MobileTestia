@@ -85,3 +85,7 @@ databases/*.xlsx
 
 # Debug screenshots and test images
 debug/
+
+# Reference assets (moved outside project to source_assets/)
+tests/2Deffects/
+tests/Epic RPG World*/
