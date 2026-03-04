@@ -19,7 +19,9 @@ func _ready() -> void:
 	_shadow_material.shader = shader
 	_shadow_material.set_shader_parameter("shadow_color", Color(0.0, 0.0, 0.0, shadow_opacity))
 	material = _shadow_material
-	z_index = -1
+	# Draw behind parent sprite but stay in parent's z-layer
+	# (z_index = -1 would put us behind the background too)
+	show_behind_parent = true
 
 	# Copy texture from parent Sprite2D if we don't have one set
 	if texture == null and get_parent() is Sprite2D:
