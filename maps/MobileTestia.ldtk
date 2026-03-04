@@ -1780,46 +1780,6 @@
 					"tilesetUid": null
 				},
 				{
-					"identifier": "shadow_mode",
-					"doc": "Shadow: baked, realtime, none",
-					"__type": "String",
-					"uid": 166,
-					"type": "F_String",
-					"isArray": false,
-					"canBeNull": false,
-					"arrayMinLength": null,
-					"arrayMaxLength": null,
-					"editorDisplayMode": "ValueOnly",
-					"editorDisplayScale": 1,
-					"editorDisplayPos": "Above",
-					"editorLinkStyle": "StraightArrow",
-					"editorDisplayColor": null,
-					"editorAlwaysShow": false,
-					"editorShowInWorld": false,
-					"editorCutLongValues": true,
-					"editorTextSuffix": null,
-					"editorTextPrefix": null,
-					"useForSmartColor": false,
-					"exportToToc": false,
-					"searchable": false,
-					"min": null,
-					"max": null,
-					"regex": null,
-					"acceptFileTypes": null,
-					"defaultOverride": {
-						"id": "V_String",
-						"params": ["baked"]
-					},
-					"textLanguageMode": null,
-					"symmetricalRef": false,
-					"autoChainRef": true,
-					"allowOutOfLevelRef": true,
-					"allowedRefs": "OnlySame",
-					"allowedRefsEntityUid": null,
-					"allowedRefTags": [],
-					"tilesetUid": null
-				},
-				{
 					"identifier": "decorationid",
 					"doc": null,
 					"__type": "LocalEnum.decorationid",
@@ -2330,7 +2290,6 @@
 								{ "__identifier": "scale", "__type": "Float", "__value": 2, "__tile": null, "defUid": 163, "realEditorValues": [{ "id": "V_Float", "params": [2] }] },
 								{ "__identifier": "flip_x", "__type": "Bool", "__value": false, "__tile": null, "defUid": 164, "realEditorValues": [] },
 								{ "__identifier": "z_mode", "__type": "String", "__value": "y_sort", "__tile": null, "defUid": 165, "realEditorValues": [] },
-								{ "__identifier": "shadow_mode", "__type": "String", "__value": "baked", "__tile": null, "defUid": 166, "realEditorValues": [] },
 								{ "__identifier": "decorationid", "__type": "LocalEnum.decorationid", "__value": "pinetree2", "__tile": null, "defUid": 169, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["pinetree2"]
@@ -2355,7 +2314,6 @@
 								{ "__identifier": "scale", "__type": "Float", "__value": 2, "__tile": null, "defUid": 163, "realEditorValues": [{ "id": "V_Float", "params": [2] }] },
 								{ "__identifier": "flip_x", "__type": "Bool", "__value": false, "__tile": null, "defUid": 164, "realEditorValues": [] },
 								{ "__identifier": "z_mode", "__type": "String", "__value": "y_sort", "__tile": null, "defUid": 165, "realEditorValues": [] },
-								{ "__identifier": "shadow_mode", "__type": "String", "__value": "baked", "__tile": null, "defUid": 166, "realEditorValues": [] },
 								{ "__identifier": "decorationid", "__type": "LocalEnum.decorationid", "__value": "pinetree2", "__tile": null, "defUid": 169, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["pinetree2"]
@@ -2380,7 +2338,6 @@
 								{ "__identifier": "scale", "__type": "Float", "__value": 2, "__tile": null, "defUid": 163, "realEditorValues": [{ "id": "V_Float", "params": [2] }] },
 								{ "__identifier": "flip_x", "__type": "Bool", "__value": false, "__tile": null, "defUid": 164, "realEditorValues": [] },
 								{ "__identifier": "z_mode", "__type": "String", "__value": "y_sort", "__tile": null, "defUid": 165, "realEditorValues": [] },
-								{ "__identifier": "shadow_mode", "__type": "String", "__value": "baked", "__tile": null, "defUid": 166, "realEditorValues": [] },
 								{ "__identifier": "decorationid", "__type": "LocalEnum.decorationid", "__value": "pinetree2", "__tile": null, "defUid": 169, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["pinetree2"]
@@ -2405,7 +2362,6 @@
 								{ "__identifier": "scale", "__type": "Float", "__value": 2, "__tile": null, "defUid": 163, "realEditorValues": [{ "id": "V_Float", "params": [2] }] },
 								{ "__identifier": "flip_x", "__type": "Bool", "__value": false, "__tile": null, "defUid": 164, "realEditorValues": [] },
 								{ "__identifier": "z_mode", "__type": "String", "__value": "y_sort", "__tile": null, "defUid": 165, "realEditorValues": [] },
-								{ "__identifier": "shadow_mode", "__type": "String", "__value": "baked", "__tile": null, "defUid": 166, "realEditorValues": [] },
 								{ "__identifier": "decorationid", "__type": "LocalEnum.decorationid", "__value": "pinetree2", "__tile": null, "defUid": 169, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["pinetree2"]
@@ -2430,7 +2386,6 @@
 								{ "__identifier": "scale", "__type": "Float", "__value": 2, "__tile": null, "defUid": 163, "realEditorValues": [{ "id": "V_Float", "params": [2] }] },
 								{ "__identifier": "flip_x", "__type": "Bool", "__value": false, "__tile": null, "defUid": 164, "realEditorValues": [] },
 								{ "__identifier": "z_mode", "__type": "String", "__value": "y_sort", "__tile": null, "defUid": 165, "realEditorValues": [] },
-								{ "__identifier": "shadow_mode", "__type": "String", "__value": "baked", "__tile": null, "defUid": 166, "realEditorValues": [] },
 								{ "__identifier": "decorationid", "__type": "LocalEnum.decorationid", "__value": "pinetree2", "__tile": null, "defUid": 169, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["pinetree2"]
@@ -2455,7 +2410,6 @@
 								{ "__identifier": "scale", "__type": "Float", "__value": 2, "__tile": null, "defUid": 163, "realEditorValues": [{ "id": "V_Float", "params": [2] }] },
 								{ "__identifier": "flip_x", "__type": "Bool", "__value": false, "__tile": null, "defUid": 164, "realEditorValues": [] },
 								{ "__identifier": "z_mode", "__type": "String", "__value": "y_sort", "__tile": null, "defUid": 165, "realEditorValues": [] },
-								{ "__identifier": "shadow_mode", "__type": "String", "__value": "baked", "__tile": null, "defUid": 166, "realEditorValues": [] },
 								{ "__identifier": "decorationid", "__type": "LocalEnum.decorationid", "__value": "pinetree2", "__tile": null, "defUid": 169, "realEditorValues": [{
 									"id": "V_String",
 									"params": ["pinetree2"]
