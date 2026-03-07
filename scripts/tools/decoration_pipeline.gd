@@ -1955,6 +1955,19 @@ func _append_log(text: String) -> void:
 	_export_log.append_text(text + "\n")
 
 
+func _read_shadow_flag(deco_id: String, key: String) -> bool:
+	var path := ProjectSettings.globalize_path("%s/%s/shadow.json" % [DECORATIONS_DIR, deco_id])
+	if not FileAccess.file_exists(path):
+		return false
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		return false
+	var json := JSON.new()
+	if json.parse(file.get_as_text()) != OK:
+		return false
+	return json.data.get(key, false)
+
+
 func _regenerate_atlas(cached_images: Dictionary = {}) -> void:
 	var global_decos_dir := ProjectSettings.globalize_path(DECORATIONS_DIR)
 	var dir := DirAccess.open(global_decos_dir)
@@ -1986,6 +1999,7 @@ func _regenerate_atlas(cached_images: Dictionary = {}) -> void:
 					"has_occluder": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/occluder.tres" % [DECORATIONS_DIR, folder_name])),
 					"has_shadow": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/shadow.json" % [DECORATIONS_DIR, folder_name])),
 					"has_shadow_mask": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/shadow_mask.png" % [DECORATIONS_DIR, folder_name])),
+					"has_hide_behind": _read_shadow_flag(folder_name, "hide_behind"),
 				})
 		folder_name = dir.get_next()
 	dir.list_dir_end()
@@ -2043,6 +2057,7 @@ func _regenerate_atlas(cached_images: Dictionary = {}) -> void:
 			"has_occluder": entry["has_occluder"],
 			"has_shadow": entry["has_shadow"],
 			"has_shadow_mask": entry.get("has_shadow_mask", false),
+			"has_hide_behind": entry.get("has_hide_behind", false),
 		})
 
 	# Save atlas
