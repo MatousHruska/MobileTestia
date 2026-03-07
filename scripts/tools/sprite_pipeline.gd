@@ -1652,12 +1652,19 @@ func _build_step_shadow(parent: VBoxContainer) -> void:
 	mask_content.add_child(clear_btn)
 
 
-func _on_shadow_alpha_paint_toggled(_on: bool) -> void:
-	pass  # Task 4
+func _on_shadow_alpha_paint_toggled(on: bool) -> void:
+	if on and _shadow_alpha_mask == null:
+		var frame_size := int(output_height_spin.value)
+		_shadow_alpha_mask = Image.create(frame_size, frame_size, false, Image.FORMAT_R8)
+		_shadow_alpha_mask.fill(Color(1, 1, 1))
+	if _shadow_alpha_overlay:
+		_shadow_alpha_overlay.queue_redraw()
 
 
 func _on_shadow_clear_mask() -> void:
-	pass  # Task 4
+	if _shadow_alpha_mask != null:
+		_shadow_alpha_mask.fill(Color(1, 1, 1))
+		_update_shadow_preview()
 
 
 func _setup_shadow_preview() -> void:
@@ -1783,12 +1790,99 @@ func _update_shadow_preview_frame() -> void:
 		_shadow_frame_label.text = "Frame %d / %d" % [_shadow_preview_frame + 1, _shadow_preview_frame_count]
 
 
-func _on_shadow_viewport_input(_event: InputEvent) -> void:
-	pass  # Task 4
+func _on_shadow_viewport_input(event: InputEvent) -> void:
+	if not _shadow_alpha_paint_toggle_btn or not _shadow_alpha_paint_toggle_btn.button_pressed:
+		return
+	if _shadow_alpha_mask == null:
+		return
+
+	var mouse_pos: Vector2
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index != MOUSE_BUTTON_LEFT or not mb.pressed:
+			return
+		mouse_pos = mb.position
+	elif event is InputEventMouseMotion:
+		if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			return
+		mouse_pos = (event as InputEventMouseMotion).position
+	else:
+		return
+
+	if not _shadow_preview_sprite:
+		return
+
+	var container_size := _shadow_preview_container.size
+	var vp_size := Vector2(_shadow_preview_viewport.size)
+	var vp_mouse := mouse_pos * (vp_size / container_size)
+
+	var sprite_pos := _shadow_preview_sprite.position
+	var sprite_scale := _shadow_preview_sprite.scale
+	var frame_size := int(output_height_spin.value)
+	var tex_size := Vector2(frame_size, frame_size)
+	var tex_origin := sprite_pos - (tex_size * sprite_scale * 0.5)
+	var local_pos := (vp_mouse - tex_origin) / sprite_scale
+
+	# Get current frame image for alpha check
+	var current_tex := _shadow_preview_sprite.sprite_frames.get_frame_texture("preview", _shadow_preview_frame)
+	var current_img := SilhouetteShadow._get_unwrapped_image(current_tex)
+	if current_img == null:
+		return
+
+	var half_brush := _shadow_alpha_brush_size / 2
+	var painted := false
+	for by in range(-half_brush, half_brush + 1):
+		for bx in range(-half_brush, half_brush + 1):
+			var px := int(local_pos.x) + bx
+			var py := int(local_pos.y) + by
+			if px < 0 or px >= frame_size or py < 0 or py >= frame_size:
+				continue
+			if current_img.get_pixel(px, py).a < 0.01:
+				continue
+			_shadow_alpha_mask.set_pixel(px, py, Color(_shadow_alpha_paint_value / 255.0, 0, 0))
+			painted = true
+
+	if painted:
+		_update_shadow_preview()
 
 
 func _draw_shadow_alpha_overlay() -> void:
-	pass  # Task 4
+	if not _shadow_alpha_paint_toggle_btn or not _shadow_alpha_paint_toggle_btn.button_pressed:
+		return
+	if _shadow_alpha_mask == null or not _shadow_preview_sprite:
+		return
+
+	var frame_size := int(output_height_spin.value)
+	var container_size := _shadow_preview_container.size
+	var vp_size := Vector2(_shadow_preview_viewport.size)
+	var sprite_pos := _shadow_preview_sprite.position
+	var sprite_scale := _shadow_preview_sprite.scale
+	var tex_size := Vector2(frame_size, frame_size)
+	var tex_origin := sprite_pos - (tex_size * sprite_scale * 0.5)
+	var vp_to_container := container_size / vp_size
+	var pixel_w := sprite_scale.x * vp_to_container.x
+	var pixel_h := sprite_scale.y * vp_to_container.y
+
+	# Get current frame for alpha check
+	var current_tex := _shadow_preview_sprite.sprite_frames.get_frame_texture("preview", _shadow_preview_frame)
+	var current_img := SilhouetteShadow._get_unwrapped_image(current_tex)
+	if current_img == null:
+		return
+
+	var img_w := _shadow_alpha_mask.get_width()
+	var img_h := _shadow_alpha_mask.get_height()
+
+	for y in range(img_h):
+		for x in range(img_w):
+			if current_img.get_pixel(x, y).a < 0.01:
+				continue
+			var mask_val: float = _shadow_alpha_mask.get_pixel(x, y).r
+			if mask_val > 0.99:
+				continue
+			var screen_x := (tex_origin.x + x * sprite_scale.x) * vp_to_container.x
+			var screen_y := (tex_origin.y + y * sprite_scale.y) * vp_to_container.y
+			var rect := Rect2(screen_x, screen_y, pixel_w, pixel_h)
+			_shadow_alpha_overlay.draw_rect(rect, Color(1.0, 0.2, 0.2, (1.0 - mask_val) * 0.6))
 
 
 #===============================================================================
