@@ -110,6 +110,7 @@ func _sync_animated_frame() -> void:
 		var frame_tex := sf.get_frame_texture(anim, frame_idx)
 		if frame_tex != texture:
 			texture = frame_tex
+			_update_frame_uv_rect(frame_tex)
 			# Compute foot position once from the first frame we see
 			if _foot_y < 0.0:
 				_foot_y = _detect_foot_y(frame_tex)
@@ -146,6 +147,27 @@ static func _get_unwrapped_image(tex: Texture2D) -> Image:
 			return _get_unwrapped_image(canvas_tex.diffuse_texture)
 		return null
 	return tex.get_image()
+
+
+func _update_frame_uv_rect(tex: Texture2D) -> void:
+	## Tell the shader where this frame sits in the atlas so the mask samples correctly.
+	if not _shadow_material:
+		return
+	if tex is AtlasTexture:
+		var atlas_tex := tex as AtlasTexture
+		var atlas := atlas_tex.atlas
+		# Unwrap CanvasTexture to get actual atlas dimensions
+		var atlas_w := float(atlas.get_width())
+		var atlas_h := float(atlas.get_height())
+		if atlas is CanvasTexture and atlas.diffuse_texture:
+			atlas_w = float(atlas.diffuse_texture.get_width())
+			atlas_h = float(atlas.diffuse_texture.get_height())
+		var r := atlas_tex.region
+		_shadow_material.set_shader_parameter("frame_uv_rect", Vector4(
+			r.position.x / atlas_w, r.position.y / atlas_h,
+			r.size.x / atlas_w, r.size.y / atlas_h))
+	else:
+		_shadow_material.set_shader_parameter("frame_uv_rect", Vector4(0.0, 0.0, 1.0, 1.0))
 
 
 func _update_shadow_transform() -> void:
