@@ -108,7 +108,7 @@ func initialize(body: AnimatedSprite2D) -> void:
 	# Shadow — silhouette projected from body sprite, angle/opacity from ZoneMood
 	var shadow := SilhouetteShadow.new()
 	shadow.name = "Shadow"
-	shadow.shadow_overlap = 0.0
+	shadow.shadow_overlap = 0.15
 	body_sprite.add_child(shadow)
 	# Load pre-extracted anchor metadata from SpriteFrames (avoids GPU readback)
 	_load_anchor_metadata()
