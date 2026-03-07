@@ -507,6 +507,14 @@ func _build_ui() -> void:
 	_light_preview_container.visible = false
 	right_vbox.add_child(_light_preview_container)
 
+	# Shadow preview viewport (Step 5), initially hidden
+	_shadow_preview_container = SubViewportContainer.new()
+	_shadow_preview_container.size_flags_horizontal = SIZE_EXPAND_FILL
+	_shadow_preview_container.size_flags_vertical = SIZE_EXPAND_FILL
+	_shadow_preview_container.stretch = true
+	_shadow_preview_container.visible = false
+	right_vbox.add_child(_shadow_preview_container)
+
 
 #===============================================================================
 # STEP 1 — MODEL & ANIMATION
@@ -1653,15 +1661,134 @@ func _on_shadow_clear_mask() -> void:
 
 
 func _setup_shadow_preview() -> void:
-	pass  # Task 3
+	# Clean up previous viewport contents
+	if _shadow_preview_viewport:
+		_shadow_preview_viewport.queue_free()
+		_shadow_preview_viewport = null
+		_shadow_preview_sprite = null
+		_shadow_preview_shadow = null
+
+	# Clean up previous overlay
+	if _shadow_alpha_overlay and is_instance_valid(_shadow_alpha_overlay):
+		_shadow_alpha_overlay.queue_free()
+		_shadow_alpha_overlay = null
+
+	_shadow_preview_viewport = SubViewport.new()
+	_shadow_preview_viewport.size = Vector2i(512, 512)
+	_shadow_preview_viewport.transparent_bg = false
+	_shadow_preview_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_shadow_preview_container.add_child(_shadow_preview_viewport)
+
+	# Green background for contrast
+	var bg := ColorRect.new()
+	bg.color = Color(0.35, 0.55, 0.3, 1.0)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_shadow_preview_viewport.add_child(bg)
+
+	# Build AnimatedSprite2D with captured frames for current direction
+	var dir_name: String = _shadow_preview_direction
+	if not _captured_sheets.has(dir_name):
+		return
+
+	var sheet_image: Image
+	if _loaded_from_spritesheet:
+		sheet_image = _captured_sheets[dir_name]
+	else:
+		sheet_image = _process_image(_captured_sheets[dir_name])
+
+	var frame_size := int(output_height_spin.value)
+	var frame_count := sheet_image.get_width() / frame_size
+	if frame_count <= 0:
+		return
+
+	_shadow_preview_frame_count = frame_count
+	_shadow_preview_frame = clampi(_shadow_preview_frame, 0, frame_count - 1)
+
+	# Create SpriteFrames with individual frame textures
+	var sf := SpriteFrames.new()
+	sf.add_animation("preview")
+	sf.set_animation_speed("preview", 15)
+	sf.set_animation_loop("preview", true)
+
+	var sheet_tex := ImageTexture.create_from_image(sheet_image)
+	for i in range(frame_count):
+		var atlas := AtlasTexture.new()
+		atlas.atlas = sheet_tex
+		atlas.region = Rect2(i * frame_size, 0, frame_size, frame_size)
+		sf.add_frame("preview", atlas)
+
+	_shadow_preview_sprite = AnimatedSprite2D.new()
+	_shadow_preview_sprite.sprite_frames = sf
+	_shadow_preview_sprite.animation = "preview"
+	_shadow_preview_sprite.centered = true
+
+	# Scale and position to fit viewport
+	var vp_size := Vector2(_shadow_preview_viewport.size)
+	var target_size := vp_size.y * 0.4
+	var sprite_scale := target_size / float(frame_size)
+	_shadow_preview_sprite.scale = Vector2(sprite_scale, sprite_scale)
+	_shadow_preview_sprite.position = Vector2(vp_size.x * 0.5, vp_size.y * 0.7)
+	_shadow_preview_viewport.add_child(_shadow_preview_sprite)
+
+	# Add SilhouetteShadow child
+	_shadow_preview_shadow = SilhouetteShadow.new()
+	_shadow_preview_shadow.name = "PreviewShadow"
+	_shadow_preview_sprite.add_child(_shadow_preview_shadow)
+
+	# Alpha mask overlay for painting feedback
+	_shadow_alpha_overlay = Control.new()
+	_shadow_alpha_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_shadow_alpha_overlay.mouse_filter = Control.MOUSE_FILTER_PASS
+	_shadow_alpha_overlay.draw.connect(_draw_shadow_alpha_overlay)
+	_shadow_preview_container.add_child(_shadow_alpha_overlay)
+
+	# Wire up input for mask painting — disconnect first to prevent stacking
+	if _shadow_preview_container.gui_input.is_connected(_on_shadow_viewport_input):
+		_shadow_preview_container.gui_input.disconnect(_on_shadow_viewport_input)
+	_shadow_preview_container.gui_input.connect(_on_shadow_viewport_input)
+
+	_update_shadow_preview()
+	_update_shadow_preview_frame()
 
 
 func _update_shadow_preview() -> void:
-	pass  # Task 3
+	if not _shadow_preview_shadow or not is_instance_valid(_shadow_preview_shadow):
+		return
+	_shadow_preview_shadow.apply_params({
+		"overlap": _shadow_overlap_slider.value,
+		"length": _shadow_length_slider.value,
+		"offset_x": _shadow_offset_x_slider.value,
+		"offset_y": _shadow_offset_y_slider.value,
+		"angle": _shadow_angle_slider.value,
+		"opacity": _shadow_opacity_slider.value,
+	})
+	# Apply alpha mask
+	if _shadow_alpha_mask != null:
+		if _shadow_mask_tex == null:
+			_shadow_mask_tex = ImageTexture.create_from_image(_shadow_alpha_mask)
+		else:
+			_shadow_mask_tex.update(_shadow_alpha_mask)
+		_shadow_preview_shadow.set_shadow_mask(_shadow_mask_tex)
+	else:
+		_shadow_preview_shadow.set_shadow_mask(null)
+	# Redraw overlay
+	if _shadow_alpha_overlay:
+		_shadow_alpha_overlay.queue_redraw()
 
 
 func _update_shadow_preview_frame() -> void:
-	pass  # Task 3
+	if _shadow_preview_sprite and _shadow_preview_sprite.sprite_frames:
+		_shadow_preview_sprite.frame = _shadow_preview_frame
+	if _shadow_frame_label:
+		_shadow_frame_label.text = "Frame %d / %d" % [_shadow_preview_frame + 1, _shadow_preview_frame_count]
+
+
+func _on_shadow_viewport_input(_event: InputEvent) -> void:
+	pass  # Task 4
+
+
+func _draw_shadow_alpha_overlay() -> void:
+	pass  # Task 4
 
 
 #===============================================================================
