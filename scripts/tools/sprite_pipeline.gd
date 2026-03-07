@@ -2,7 +2,7 @@ extends Control
 ## Sprite Pipeline Wizard
 ##
 ## Unified tool that chains 3D sprite capture and pixel art conversion
-## into a single 7-step wizard flow with saveable presets.
+## into a single 8-step wizard flow with saveable presets.
 ##
 ## Steps:
 ##   1. Model & Animation — select model, pick animation, configure camera
@@ -10,8 +10,9 @@ extends Control
 ##   3. Pixel Art Settings — configure processing, preview result
 ##   4. Frame Editor — preview processed animation, delete unwanted frames
 ##   5. Light Preview — interactive light/normal map preview
-##   6. Export — process all directions, save final pixel art
-##   7. Apply to SpriteFrames — load exported sheets into player_sprites.tres
+##   6. Shadow — configure shadow parameters and alpha mask
+##   7. Export — process all directions, save final pixel art
+##   8. Apply to SpriteFrames — load exported sheets into player_sprites.tres
 ##
 ## Run: scenes/tools/sprite_pipeline.tscn (F6)
 
@@ -85,7 +86,7 @@ const FONT_VALUE := 12
 # WIZARD STATE
 #===============================================================================
 
-var _current_step := 0  # 0-6
+var _current_step := 0  # 0-7
 var _step_containers: Array[VBoxContainer] = []  # one per step
 
 ## Step 1 state
@@ -146,10 +147,39 @@ var _light_ambient_slider: HSlider = null
 var _light_frame_label: Label = null
 var _light_texture_cache: ImageTexture = null  # Cached soft circular light texture
 
-## Step 5 state — actual frame size from export (used by Steps 5/6)
+## Step 5 (Shadow) state
+var _shadow_preview_viewport: SubViewport = null
+var _shadow_preview_container: SubViewportContainer = null
+var _shadow_preview_sprite: AnimatedSprite2D = null
+var _shadow_preview_shadow: SilhouetteShadow = null
+var _shadow_preview_playing := false
+var _shadow_preview_timer := 0.0
+var _shadow_preview_frame := 0
+var _shadow_preview_frame_count := 0
+var _shadow_preview_direction := "down"
+
+# Shadow parameter sliders
+var _shadow_overlap_slider: HSlider = null
+var _shadow_length_slider: HSlider = null
+var _shadow_offset_x_slider: HSlider = null
+var _shadow_offset_y_slider: HSlider = null
+var _shadow_angle_slider: HSlider = null
+var _shadow_opacity_slider: HSlider = null
+var _shadow_frame_label: Label = null
+
+# Shadow alpha mask painting
+var _shadow_alpha_mask: Image = null
+var _shadow_mask_tex: ImageTexture = null
+var _shadow_alpha_overlay: Control = null
+var _shadow_alpha_paint_toggle_btn: CheckButton = null
+var _shadow_alpha_paint_value: int = 0
+var _shadow_alpha_brush_size: int = 3
+var _shadow_alpha_buttons: Array[Button] = []
+
+## Step 6 state — actual frame size from export (used by Steps 6/7)
 var _export_frame_size := FRAME_SIZE
 
-## Step 6 (Apply) state
+## Step 7 (Apply) state
 var _apply_groups: Array = []  # Dynamically scanned from OUTPUT_BASE folders
 var _exported_folder: String = ""  # Folder name from the most recent export
 var _apply_scope := "all"  # "all", "down", "up", "right"
@@ -212,12 +242,12 @@ var denoising_min_cluster_spin: SpinBox
 var pixel_preview_rect: TextureRect
 var show_original_toggle: CheckButton
 
-# Step 5 (Export) nodes
+# Step 6 (Export) nodes
 var export_log_label: Label
 var _load_spritesheet_btn: Button = null
 var _load_spritesheet_status: Label = null
 
-# Step 6 (Apply) nodes
+# Step 7 (Apply) nodes
 var apply_log_label: Label
 var apply_button: Button
 var apply_summary_container: VBoxContainer
@@ -260,6 +290,13 @@ func _process(delta: float) -> void:
 			_light_preview_timer -= 1.0 / fps
 			_light_preview_frame = (_light_preview_frame + 1) % _light_preview_frame_count
 			_update_light_preview_frame()
+	if _shadow_preview_playing and _current_step == 5:
+		_shadow_preview_timer += delta
+		var fps := 15.0
+		if _shadow_preview_timer >= 1.0 / fps:
+			_shadow_preview_timer -= 1.0 / fps
+			_shadow_preview_frame = (_shadow_preview_frame + 1) % _shadow_preview_frame_count
+			_update_shadow_preview_frame()
 
 
 func _build_ui() -> void:
@@ -348,8 +385,8 @@ func _build_ui() -> void:
 	steps_vbox.add_theme_constant_override("separation", 8)
 	content_margin.add_child(steps_vbox)
 
-	# Build 7 step containers
-	for i in range(7):
+	# Build 8 step containers
+	for i in range(8):
 		var step_cont := VBoxContainer.new()
 		step_cont.add_theme_constant_override("separation", 10)
 		step_cont.visible = (i == 0)
@@ -362,8 +399,9 @@ func _build_ui() -> void:
 	_build_step3(_step_containers[2])
 	_build_step_frame_editor(_step_containers[3])
 	_build_step_light_preview(_step_containers[4])
-	_build_step_export(_step_containers[5])
-	_build_step_apply(_step_containers[6])
+	_build_step_shadow(_step_containers[5])
+	_build_step_export(_step_containers[6])
+	_build_step_apply(_step_containers[7])
 
 	# ── Bottom bar (fixed, not scrolled) ───────────────────
 	var bottom_sep := HSeparator.new()
@@ -1397,7 +1435,27 @@ func _apply_light_preset(preset: Dictionary) -> void:
 
 
 #===============================================================================
-# STEP 5 — EXPORT
+# STEP 5 — SHADOW (index 5)
+#===============================================================================
+
+func _build_step_shadow(_parent: VBoxContainer) -> void:
+	pass  # Task 2
+
+
+func _setup_shadow_preview() -> void:
+	pass  # Task 3
+
+
+func _update_shadow_preview() -> void:
+	pass  # Task 3
+
+
+func _update_shadow_preview_frame() -> void:
+	pass  # Task 3
+
+
+#===============================================================================
+# STEP 6 — EXPORT (index 6)
 #===============================================================================
 
 func _build_step_export(parent: VBoxContainer) -> void:
@@ -1424,7 +1482,7 @@ func _build_step_export(parent: VBoxContainer) -> void:
 
 
 #===============================================================================
-# STEP 6 — APPLY TO SPRITEFRAMES (index 6)
+# STEP 7 — APPLY TO SPRITEFRAMES (index 7)
 #===============================================================================
 
 func _build_step_apply(parent: VBoxContainer) -> void:
@@ -1519,10 +1577,10 @@ func _go_to_step(step: int) -> void:
 		_step_containers[i].visible = (i == step)
 	# Update navigation buttons
 	back_button.visible = step > 0
-	next_button.visible = (step < 6)
-	next_button.text = "Export  \u25b6" if step == 5 else "Next  \u25b6"
+	next_button.visible = (step < 7)
+	next_button.text = "Export  \u25b6" if step == 6 else "Next  \u25b6"
 	# Style Next button for Export step
-	if step == 5:
+	if step == 6:
 		# Export step — style Next/Export button as warning
 		var warning_sb := StyleBoxFlat.new()
 		warning_sb.bg_color = C_WARNING
@@ -1548,8 +1606,8 @@ func _go_to_step(step: int) -> void:
 		next_button.add_theme_stylebox_override("hover", accent_hover)
 	# Update step indicator
 	var step_names := ["Model & Animation", "Capture Preview", "Pixel Art Settings",
-		"Frame Editor", "Light Preview", "Export", "Apply to SpriteFrames"]
-	step_indicator_label.text = "Step %d of 7: %s" % [step + 1, step_names[step]]
+		"Frame Editor", "Light Preview", "Shadow", "Export", "Apply to SpriteFrames"]
+	step_indicator_label.text = "Step %d of 8: %s" % [step + 1, step_names[step]]
 	if step_indicator:
 		step_indicator.set_step(step)
 	# Update preview visibility
@@ -1562,6 +1620,8 @@ func _go_to_step(step: int) -> void:
 		_frame_editor_frame_label.visible = (step == 3)
 	if _light_preview_container:
 		_light_preview_container.visible = (step == 4)
+	if _shadow_preview_container:
+		_shadow_preview_container.visible = (step == 5)
 	# Stop frame editor playback when leaving step 3
 	if step != 3:
 		_frame_editor_playing = false
@@ -1582,13 +1642,15 @@ func _go_to_step(step: int) -> void:
 		4:
 			_setup_light_preview()
 		5:
-			_start_export()
+			_setup_shadow_preview()
 		6:
+			_start_export()
+		7:
 			_scan_export_folders()
 
 
 func _on_next_pressed() -> void:
-	if _current_step < 6:
+	if _current_step < 7:
 		_go_to_step(_current_step + 1)
 
 
@@ -2509,7 +2571,7 @@ func _on_generate_palette_pressed() -> void:
 
 
 #===============================================================================
-# EXPORT (Step 5)
+# EXPORT (Step 6)
 #===============================================================================
 
 func _start_export() -> void:
@@ -2596,7 +2658,7 @@ func _on_done_pressed() -> void:
 
 
 #===============================================================================
-# APPLY TO SPRITEFRAMES (Step 6)
+# APPLY TO SPRITEFRAMES (Step 7)
 #===============================================================================
 
 func _scan_export_folders() -> void:
