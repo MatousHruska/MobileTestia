@@ -84,13 +84,18 @@ static func spawn(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 		area.position = anchor_offset
 		node.add_child(area)
 
+		var hide_tween: Tween = null
 		area.body_entered.connect(func(_body: Node2D) -> void:
-			var tw := sprite.create_tween()
-			tw.tween_property(sprite, "self_modulate:a", HIDE_BEHIND_OPACITY, HIDE_BEHIND_FADE_DURATION)
+			if hide_tween and hide_tween.is_valid():
+				hide_tween.kill()
+			hide_tween = sprite.create_tween()
+			hide_tween.tween_property(sprite, "self_modulate:a", HIDE_BEHIND_OPACITY, HIDE_BEHIND_FADE_DURATION)
 		)
 		area.body_exited.connect(func(_body: Node2D) -> void:
-			var tw := sprite.create_tween()
-			tw.tween_property(sprite, "self_modulate:a", 1.0, HIDE_BEHIND_FADE_DURATION)
+			if hide_tween and hide_tween.is_valid():
+				hide_tween.kill()
+			hide_tween = sprite.create_tween()
+			hide_tween.tween_property(sprite, "self_modulate:a", 1.0, HIDE_BEHIND_FADE_DURATION)
 		)
 
 	# Z-sorting / depth mode
