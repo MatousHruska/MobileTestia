@@ -105,11 +105,23 @@ func initialize(body: AnimatedSprite2D) -> void:
 	_create_overlay_layer()
 	# Ensure weapon starts hidden
 	set_weapon_visible(false)
-	# Shadow — silhouette projected from body sprite, angle/opacity from ZoneMood
+	# Shadow — silhouette projected from body sprite
 	var shadow := SilhouetteShadow.new()
 	shadow.name = "Shadow"
-	shadow.shadow_overlap = 0.15
+	# Read per-character shadow params from SpriteFrames metadata (set by sprite pipeline)
+	var shadow_params: Dictionary = body_sprite.sprite_frames.get_meta("shadow_params", {})
+	if shadow_params.is_empty():
+		shadow.shadow_overlap = 0.15  # Default for sprites without metadata
+	else:
+		shadow.apply_params(shadow_params)
 	body_sprite.add_child(shadow)
+	# Apply shadow mask if stored
+	var mask_bytes: PackedByteArray = body_sprite.sprite_frames.get_meta("shadow_mask", PackedByteArray())
+	if not mask_bytes.is_empty():
+		var mask_img := Image.new()
+		mask_img.load_png_from_buffer(mask_bytes)
+		var mask_tex := ImageTexture.create_from_image(mask_img)
+		shadow.set_shadow_mask(mask_tex)
 	# Load pre-extracted anchor metadata from SpriteFrames (avoids GPU readback)
 	_load_anchor_metadata()
 
