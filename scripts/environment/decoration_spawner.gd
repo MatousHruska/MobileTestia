@@ -4,6 +4,8 @@ extends RefCounted
 ## Resources are cached per decoration_id for reuse across instances.
 
 const DECORATIONS_DIR := "res://assets/decorations/"
+const HIDE_BEHIND_OPACITY := 0.3
+const HIDE_BEHIND_FADE_DURATION := 0.2
 
 ## Cache: decoration_id -> { texture, normal_map, occluder }
 static var _cache: Dictionary = {}
@@ -59,7 +61,37 @@ static func spawn(data: Dictionary, parent: Node2D, chunk_origin: Vector2, chunk
 		occluder.position = anchor_offset
 		node.add_child(occluder)
 
-	# TODO: Shadow system — hook new decoration shadow here
+	# Shadow (per-decoration params from shadow.json, global angle/opacity from ZoneMood)
+	if assets.shadow_params != null:
+		var shadow := SilhouetteShadow.new()
+		shadow.name = "Shadow"
+		sprite.add_child(shadow)  # Child of Sprite2D — reads parent texture in _ready()
+		shadow.apply_params(assets.shadow_params)
+		if assets.shadow_mask:
+			shadow.set_shadow_mask(assets.shadow_mask)
+
+	# Hide-behind: fade decoration when player walks behind it
+	var hide_behind: bool = assets.shadow_params.get("hide_behind", false) if assets.shadow_params else false
+	if hide_behind and assets.occluder:
+		var area := Area2D.new()
+		area.name = "HideBehindArea"
+		area.collision_layer = 0
+		area.collision_mask = 2  # Detect player body (layer 2)
+		var col_poly := CollisionPolygon2D.new()
+		col_poly.polygon = assets.occluder.polygon
+		area.add_child(col_poly)
+		# Occluder polygon is in image-space; offset to match bottom-center anchor
+		area.position = anchor_offset
+		node.add_child(area)
+
+		area.body_entered.connect(func(_body: Node2D) -> void:
+			var tw := sprite.create_tween()
+			tw.tween_property(sprite, "self_modulate:a", HIDE_BEHIND_OPACITY, HIDE_BEHIND_FADE_DURATION)
+		)
+		area.body_exited.connect(func(_body: Node2D) -> void:
+			var tw := sprite.create_tween()
+			tw.tween_property(sprite, "self_modulate:a", 1.0, HIDE_BEHIND_FADE_DURATION)
+		)
 
 	# Z-sorting / depth mode
 	var z_mode: String = data.get("z_mode", "y_sort")
@@ -91,6 +123,8 @@ static func _load_assets(deco_id: String) -> Dictionary:
 		"texture": null,
 		"normal_map": null,
 		"occluder": null,
+		"shadow_params": null,
+		"shadow_mask": null,
 	}
 
 	# Sprite (required)
@@ -108,12 +142,30 @@ static func _load_assets(deco_id: String) -> Dictionary:
 	if ResourceLoader.exists(occluder_path):
 		assets.occluder = load(occluder_path)
 
+	# Shadow params (optional JSON)
+	var shadow_path := base_path + "shadow.json"
+	if FileAccess.file_exists(shadow_path):
+		var file := FileAccess.open(shadow_path, FileAccess.READ)
+		if file:
+			var json := JSON.new()
+			if json.parse(file.get_as_text()) == OK:
+				assets.shadow_params = json.data
+
+	# Shadow alpha mask (optional grayscale PNG)
+	var mask_path := base_path + "shadow_mask.png"
+	if ResourceLoader.exists(mask_path):
+		var mask_tex := load(mask_path) as Texture2D
+		if mask_tex:
+			assets.shadow_mask = mask_tex
+
 	_cache[deco_id] = assets
-	Debug.log("DecorationSpawner", "Loaded assets for '%s': texture=%s, normal=%s, occluder=%s" % [
+	Debug.log("DecorationSpawner", "Loaded assets for '%s': texture=%s, normal=%s, occluder=%s, shadow=%s, mask=%s" % [
 		deco_id,
 		assets.texture != null,
 		assets.normal_map != null,
 		assets.occluder != null,
+		assets.shadow_params != null,
+		assets.shadow_mask != null,
 	])
 	return assets
 
