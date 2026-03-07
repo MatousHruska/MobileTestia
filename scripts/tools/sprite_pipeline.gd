@@ -1438,8 +1438,218 @@ func _apply_light_preset(preset: Dictionary) -> void:
 # STEP 5 — SHADOW (index 5)
 #===============================================================================
 
-func _build_step_shadow(_parent: VBoxContainer) -> void:
-	pass  # Task 2
+func _build_step_shadow(parent: VBoxContainer) -> void:
+	# --- Section 1: Shadow Parameters ---
+	var sec := _make_section("Shadow Parameters")
+	parent.add_child(sec[0])
+	var content: VBoxContainer = sec[1]
+
+	content.add_child(_make_small_label(
+		"Configure shadow shape per-character. These values are saved with the SpriteFrames."
+	))
+
+	# Overlap slider
+	var overlap_data := _make_slider_row(0.0, 0.5, 0.15, 0.01)
+	_shadow_overlap_slider = overlap_data[1]
+	_shadow_overlap_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+	content.add_child(_make_field("Overlap", overlap_data[0]))
+
+	# Length slider
+	var length_data := _make_slider_row(0.1, 3.0, 1.0, 0.05)
+	_shadow_length_slider = length_data[1]
+	_shadow_length_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+	content.add_child(_make_field("Length", length_data[0]))
+
+	# Offset X slider
+	var offset_x_data := _make_slider_row(-50.0, 50.0, 0.0, 1.0)
+	_shadow_offset_x_slider = offset_x_data[1]
+	_shadow_offset_x_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+	content.add_child(_make_field("Offset X", offset_x_data[0]))
+
+	# Offset Y slider
+	var offset_y_data := _make_slider_row(-50.0, 50.0, 0.0, 1.0)
+	_shadow_offset_y_slider = offset_y_data[1]
+	_shadow_offset_y_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+	content.add_child(_make_field("Offset Y", offset_y_data[0]))
+
+	# --- Section 2: Preview Controls (not exported) — collapsible ---
+	var preview_col := _make_collapsible("Preview Controls (not exported)", true)
+	parent.add_child(preview_col[0])
+	var preview_content: VBoxContainer = preview_col[1]
+
+	preview_content.add_child(_make_small_label(
+		"These control the preview only. At runtime, angle and opacity come from ZoneMood."
+	))
+
+	# Angle slider
+	var angle_data := _make_slider_row(-3.14, 3.14, 0.5, 0.05)
+	_shadow_angle_slider = angle_data[1]
+	_shadow_angle_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+	preview_content.add_child(_make_field("Angle", angle_data[0]))
+
+	# Opacity slider
+	var opacity_data := _make_slider_row(0.0, 1.0, 0.3, 0.05)
+	_shadow_opacity_slider = opacity_data[1]
+	_shadow_opacity_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+	preview_content.add_child(_make_field("Opacity", opacity_data[0]))
+
+	# --- Section 3: Animation Preview ---
+	var anim_sec := _make_section("Animation Preview")
+	parent.add_child(anim_sec[0])
+	var anim_content: VBoxContainer = anim_sec[1]
+
+	# Direction toggle group
+	var dir_group := _make_toggle_group([
+		{"label": "Down", "key": "down"},
+		{"label": "Up", "key": "up"},
+		{"label": "Right", "key": "right"},
+	], func(key: String) -> void:
+		_shadow_preview_direction = key
+		_setup_shadow_preview()
+	)
+	anim_content.add_child(_make_field("Direction", dir_group))
+
+	# Frame navigation
+	var frame_hbox := HBoxContainer.new()
+	frame_hbox.add_theme_constant_override("separation", 4)
+	anim_content.add_child(frame_hbox)
+	var prev_btn := Button.new()
+	prev_btn.text = "\u25c0"
+	prev_btn.custom_minimum_size.x = 32
+	prev_btn.pressed.connect(func() -> void:
+		_shadow_preview_frame = max(0, _shadow_preview_frame - 1)
+		_update_shadow_preview_frame()
+	)
+	frame_hbox.add_child(prev_btn)
+	_shadow_frame_label = Label.new()
+	_shadow_frame_label.text = "Frame 1 / 1"
+	_shadow_frame_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_shadow_frame_label.size_flags_horizontal = SIZE_EXPAND_FILL
+	frame_hbox.add_child(_shadow_frame_label)
+	var next_btn := Button.new()
+	next_btn.text = "\u25b6"
+	next_btn.custom_minimum_size.x = 32
+	next_btn.pressed.connect(func() -> void:
+		_shadow_preview_frame = min(_shadow_preview_frame_count - 1, _shadow_preview_frame + 1)
+		_update_shadow_preview_frame()
+	)
+	frame_hbox.add_child(next_btn)
+	var play_btn := Button.new()
+	play_btn.text = "Play"
+	play_btn.pressed.connect(func() -> void:
+		_shadow_preview_playing = not _shadow_preview_playing
+		play_btn.text = "Stop" if _shadow_preview_playing else "Play"
+	)
+	frame_hbox.add_child(play_btn)
+
+	# --- Section 4: Alpha Mask Painting — collapsible ---
+	var mask_col := _make_collapsible("Alpha Mask Painting", false)
+	parent.add_child(mask_col[0])
+	var mask_content: VBoxContainer = mask_col[1]
+
+	mask_content.add_child(_make_small_label(
+		"Paint transparency on the shadow. Single mask applied to all frames. L-click to paint."
+	))
+
+	# Alpha Level buttons
+	mask_content.add_child(_make_label("Alpha Level"))
+	var alpha_hbox := HBoxContainer.new()
+	alpha_hbox.add_theme_constant_override("separation", 4)
+	mask_content.add_child(alpha_hbox)
+	_shadow_alpha_buttons = []
+	var alpha_levels: Array = [[0, "0%"], [64, "25%"], [128, "50%"], [191, "75%"], [255, "100%"]]
+	for i in range(alpha_levels.size()):
+		var value: int = alpha_levels[i][0]
+		var label_text: String = alpha_levels[i][1]
+		var btn := Button.new()
+		btn.text = label_text
+		btn.toggle_mode = true
+		btn.button_pressed = (i == 0)
+		btn.custom_minimum_size.x = 44
+		btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		# Style: normal bg uses C_ACCENT with alpha proportional to value (min 0.15)
+		var normal_sb := StyleBoxFlat.new()
+		normal_sb.bg_color = Color(C_ACCENT.r, C_ACCENT.g, C_ACCENT.b, maxf(value / 255.0, 0.15))
+		normal_sb.set_corner_radius_all(4)
+		normal_sb.set_content_margin_all(4)
+		btn.add_theme_stylebox_override("normal", normal_sb)
+		# Style: pressed uses solid C_ACCENT
+		var pressed_sb := StyleBoxFlat.new()
+		pressed_sb.bg_color = C_ACCENT
+		pressed_sb.set_corner_radius_all(4)
+		pressed_sb.set_content_margin_all(4)
+		btn.add_theme_stylebox_override("pressed", pressed_sb)
+		# Style: hover slightly brighter
+		var hover_sb := StyleBoxFlat.new()
+		hover_sb.bg_color = Color(C_ACCENT.r, C_ACCENT.g, C_ACCENT.b, minf(maxf(value / 255.0, 0.15) + 0.15, 1.0))
+		hover_sb.set_corner_radius_all(4)
+		hover_sb.set_content_margin_all(4)
+		btn.add_theme_stylebox_override("hover", hover_sb)
+		btn.pressed.connect(func(v: int, b: Button) -> void:
+			_shadow_alpha_paint_value = v
+			for other in _shadow_alpha_buttons:
+				if other != b:
+					other.button_pressed = false
+		.bind(value, btn))
+		alpha_hbox.add_child(btn)
+		_shadow_alpha_buttons.append(btn)
+
+	# Brush Size buttons
+	mask_content.add_child(_make_label("Brush Size"))
+	var brush_hbox := HBoxContainer.new()
+	brush_hbox.add_theme_constant_override("separation", 4)
+	mask_content.add_child(brush_hbox)
+	var brush_sizes: Array = [[1, "1px"], [3, "3px"], [5, "5px"]]
+	var brush_buttons: Array[Button] = []
+	for i in range(brush_sizes.size()):
+		var bsize: int = brush_sizes[i][0]
+		var label_text: String = brush_sizes[i][1]
+		var btn := Button.new()
+		btn.text = label_text
+		btn.toggle_mode = true
+		btn.button_pressed = (bsize == 3)
+		btn.custom_minimum_size.x = 44
+		btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		# Style: normal C_SURFACE
+		var normal_sb := StyleBoxFlat.new()
+		normal_sb.bg_color = C_SURFACE
+		normal_sb.set_corner_radius_all(4)
+		normal_sb.set_content_margin_all(4)
+		btn.add_theme_stylebox_override("normal", normal_sb)
+		# Style: pressed C_ACCENT
+		var pressed_sb := StyleBoxFlat.new()
+		pressed_sb.bg_color = C_ACCENT
+		pressed_sb.set_corner_radius_all(4)
+		pressed_sb.set_content_margin_all(4)
+		btn.add_theme_stylebox_override("pressed", pressed_sb)
+		btn.pressed.connect(func(bs: int, b: Button) -> void:
+			_shadow_alpha_brush_size = bs
+			for other in brush_buttons:
+				if other != b:
+					other.button_pressed = false
+		.bind(bsize, btn))
+		brush_hbox.add_child(btn)
+		brush_buttons.append(btn)
+
+	# Enable Alpha Painting toggle
+	_shadow_alpha_paint_toggle_btn = CheckButton.new()
+	_shadow_alpha_paint_toggle_btn.text = "Enable Alpha Painting"
+	_style_checkbutton_transparent(_shadow_alpha_paint_toggle_btn)
+	_shadow_alpha_paint_toggle_btn.toggled.connect(_on_shadow_alpha_paint_toggled)
+	mask_content.add_child(_shadow_alpha_paint_toggle_btn)
+
+	# Clear Mask button
+	var clear_btn := _make_subtle_button("Clear Mask")
+	clear_btn.pressed.connect(_on_shadow_clear_mask)
+	mask_content.add_child(clear_btn)
+
+
+func _on_shadow_alpha_paint_toggled(_on: bool) -> void:
+	pass  # Task 4
+
+
+func _on_shadow_clear_mask() -> void:
+	pass  # Task 4
 
 
 func _setup_shadow_preview() -> void:
