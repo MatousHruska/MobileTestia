@@ -1678,6 +1678,31 @@ func _has_shadow_mask_painted() -> bool:
 
 
 func _setup_shadow_preview() -> void:
+	# Load existing shadow metadata from SpriteFrames (re-edit support)
+	var existing_frames := ResourceLoader.load(SPRITEFRAMES_PATH, "", ResourceLoader.CACHE_MODE_IGNORE) as SpriteFrames
+	if existing_frames:
+		var params: Dictionary = existing_frames.get_meta("shadow_params", {})
+		if not params.is_empty():
+			if _shadow_overlap_slider and params.has("overlap"):
+				_shadow_overlap_slider.value = params["overlap"]
+			if _shadow_length_slider and params.has("length"):
+				_shadow_length_slider.value = params["length"]
+			if _shadow_offset_x_slider and params.has("offset_x"):
+				_shadow_offset_x_slider.value = params["offset_x"]
+			if _shadow_offset_y_slider and params.has("offset_y"):
+				_shadow_offset_y_slider.value = params["offset_y"]
+
+		# Load existing mask
+		if _shadow_alpha_mask == null:
+			var mask_bytes: PackedByteArray = existing_frames.get_meta("shadow_mask", PackedByteArray())
+			if not mask_bytes.is_empty():
+				var mask_img := Image.new()
+				mask_img.load_png_from_buffer(mask_bytes)
+				if mask_img.get_format() != Image.FORMAT_R8:
+					mask_img.convert(Image.FORMAT_R8)
+				_shadow_alpha_mask = mask_img
+				_shadow_mask_tex = null  # Force re-create on next preview update
+
 	# Clean up previous viewport contents
 	if _shadow_preview_viewport:
 		_shadow_preview_viewport.queue_free()
