@@ -22,6 +22,9 @@ var _pending_mask: Texture2D  ## Mask set before _ready() — applied once mater
 var _animated_parent: AnimatedSprite2D  ## Non-null when parent is AnimatedSprite2D
 var _foot_y := -1.0  ## Bottommost opaque row in texture (image-space), -1 = not computed
 var _current_dir := ""  ## Tracked direction for per-direction param/mask switching
+var _original_parent: Node2D  ## Parent sprite we were attached to before reparenting
+var _in_shadow_group := false  ## True when reparented into the shared CanvasGroup
+var _local_offset := Vector2.ZERO  ## Shadow offset from parent origin (computed by transform)
 
 func _ready() -> void:
 	add_to_group("shadows")
@@ -29,19 +32,21 @@ func _ready() -> void:
 	var shader := load("res://shaders/silhouette_shadow.gdshader") as Shader
 	_shadow_material = ShaderMaterial.new()
 	_shadow_material.shader = shader
-	_shadow_material.set_shader_parameter("shadow_color", Color(0.0, 0.0, 0.0, shadow_opacity))
+	# Full alpha — CanvasGroup self_modulate controls final opacity
+	_shadow_material.set_shader_parameter("shadow_color", Color(0.0, 0.0, 0.0, 1.0))
 	material = _shadow_material
 	show_behind_parent = true
 
 	# Copy texture from parent sprite if we don't have one set
+	_original_parent = get_parent() as Node2D
 	if texture == null:
-		if get_parent() is AnimatedSprite2D:
-			_animated_parent = get_parent() as AnimatedSprite2D
+		if _original_parent is AnimatedSprite2D:
+			_animated_parent = _original_parent as AnimatedSprite2D
 			centered = _animated_parent.centered
 			_parent_offset = _animated_parent.offset
 			_sync_animated_frame()
-		elif get_parent() is Sprite2D:
-			var parent_sprite := get_parent() as Sprite2D
+		elif _original_parent is Sprite2D:
+			var parent_sprite := _original_parent as Sprite2D
 			texture = parent_sprite.texture
 			centered = parent_sprite.centered
 			_parent_offset = parent_sprite.offset
@@ -50,8 +55,6 @@ func _ready() -> void:
 	var env_mgr := get_node_or_null("/root/EnvironmentManager")
 	if env_mgr and env_mgr.current_mood:
 		shadow_angle = env_mgr.current_mood.shadow_angle
-		shadow_opacity = env_mgr.current_mood.shadow_opacity
-		_shadow_material.set_shader_parameter("shadow_color", Color(0.0, 0.0, 0.0, shadow_opacity))
 
 	# Apply mask that was set before _ready() (material didn't exist yet)
 	if _pending_mask:
@@ -60,6 +63,26 @@ func _ready() -> void:
 
 	_update_shadow_transform()
 
+	# Reparent into the shared CanvasGroup (deferred to avoid tree modification during _ready)
+	_try_reparent_to_shadow_group.call_deferred()
+
+
+func _try_reparent_to_shadow_group() -> void:
+	## Move this shadow into the shared CanvasGroup so overlapping shadows merge.
+	var env_mgr := get_node_or_null("/root/EnvironmentManager")
+	if not env_mgr:
+		return  # Running standalone (e.g., pipeline preview) — stay as child
+	var group: CanvasGroup = env_mgr.get_shadow_group()
+	if not group or not group.is_inside_tree():
+		return
+	# Remember our global position before reparenting
+	var gpos := global_position
+	get_parent().remove_child(self)
+	group.add_child(self)
+	global_position = gpos
+	show_behind_parent = false  # No longer relevant — we're in the CanvasGroup
+	_in_shadow_group = true
+
 
 ## Call this to apply parameter changes at runtime.
 func apply_params(params: Dictionary) -> void:
@@ -67,10 +90,12 @@ func apply_params(params: Dictionary) -> void:
 	if params.has("angle"): shadow_angle = params["angle"]
 	if params.has("offset_x"): shadow_offset_x = params["offset_x"]
 	if params.has("offset_y"): shadow_offset_y = params["offset_y"]
-	if params.has("opacity"): shadow_opacity = params["opacity"]
 	if params.has("overlap"): shadow_overlap = params["overlap"]
-	if _shadow_material:
-		_shadow_material.set_shader_parameter("shadow_color", Color(0.0, 0.0, 0.0, shadow_opacity))
+	if params.has("opacity"):
+		shadow_opacity = params["opacity"]
+		# Only set per-shadow opacity when NOT in the shared group (e.g., pipeline preview)
+		if not _in_shadow_group and _shadow_material:
+			_shadow_material.set_shader_parameter("shadow_color", Color(0.0, 0.0, 0.0, shadow_opacity))
 	_update_shadow_transform()
 
 
@@ -84,7 +109,16 @@ func set_shadow_mask(mask_texture: Texture2D) -> void:
 
 
 func _process(_delta: float) -> void:
-	if _animated_parent:
+	# Track original parent's position when reparented into shadow group
+	if _in_shadow_group:
+		if _original_parent and is_instance_valid(_original_parent):
+			global_position = _original_parent.global_position + _local_offset
+		else:
+			# Original parent was freed — clean up
+			queue_free()
+			return
+
+	if _animated_parent and is_instance_valid(_animated_parent):
 		_sync_animated_frame()
 		# Sync flip_h every frame — flip can change without texture change
 		var flip_x := -1.0 if _animated_parent.flip_h else 1.0
@@ -100,7 +134,7 @@ func _sync_animated_frame() -> void:
 	var frame_idx := _animated_parent.frame
 	var sf := _animated_parent.sprite_frames
 
-	# Detect direction change from animation name suffix (e.g., "idle_down" → "down")
+	# Detect direction change from animation name suffix (e.g., "idle_down" -> "down")
 	var dir := _extract_direction(anim)
 	if dir != _current_dir and not dir.is_empty():
 		_current_dir = dir
@@ -119,7 +153,7 @@ func _sync_animated_frame() -> void:
 
 func _detect_foot_y(tex: Texture2D) -> float:
 	## Find the bottommost opaque row by scanning the texture's alpha.
-	## Unwraps AtlasTexture → CanvasTexture → diffuse chain.
+	## Unwraps AtlasTexture -> CanvasTexture -> diffuse chain.
 	var img := _get_unwrapped_image(tex)
 	if img == null:
 		return float(tex.get_height())  # Fallback: assume feet at bottom
@@ -186,12 +220,17 @@ func _update_shadow_transform() -> void:
 	var overlap := tex_height * shadow_overlap
 	if centered:
 		offset = Vector2(0.0, tex_height / 2.0 - foot_y)
-		position = Vector2(shadow_offset_x, foot_y - tex_height / 2.0 - overlap + shadow_offset_y)
+		_local_offset = Vector2(shadow_offset_x, foot_y - tex_height / 2.0 - overlap + shadow_offset_y)
 	else:
 		# When parent has a custom offset (e.g. bottom-center anchoring), the shadow
 		# must position relative to the texture's visual base, not the node origin.
 		offset = Vector2(_parent_offset.x, -foot_y)
-		position = Vector2(shadow_offset_x, _parent_offset.y + foot_y - overlap + shadow_offset_y)
+		_local_offset = Vector2(shadow_offset_x, _parent_offset.y + foot_y - overlap + shadow_offset_y)
+
+	# When in shadow group, position is set in _process from parent's global_position.
+	# When still a child of parent sprite, set position directly.
+	if not _in_shadow_group:
+		position = _local_offset
 
 	# Flip vertically and stretch by shadow_length.
 	# Mirror horizontally when parent AnimatedSprite2D uses flip_h (left-facing).
@@ -203,7 +242,7 @@ func _update_shadow_transform() -> void:
 
 
 func _extract_direction(anim: StringName) -> String:
-	## Parse direction suffix from animation name (e.g., "idle_down" → "down").
+	## Parse direction suffix from animation name (e.g., "idle_down" -> "down").
 	## Returns "" if no recognized direction suffix found.
 	var anim_str := String(anim)
 	for dir in ["down", "up", "right", "left"]:

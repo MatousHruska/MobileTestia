@@ -10,6 +10,7 @@ var _canvas_modulate: CanvasModulate
 var _world_env: WorldEnvironment
 var _environment: Environment
 var _particle_manager: ZoneParticleManager
+var _shadow_group: CanvasGroup  ## Shared CanvasGroup for anti-stacking shadows
 var current_mood: ZoneMood
 
 ## Pending mood to apply once nodes are ready (if apply_mood called before viewport)
@@ -29,6 +30,10 @@ func _ready() -> void:
 	_world_env.name = "ZoneBloom"
 	_world_env.environment = _environment
 
+	_shadow_group = CanvasGroup.new()
+	_shadow_group.name = "ShadowGroup"
+	_shadow_group.self_modulate = Color(1, 1, 1, 0.0)  # Invisible until mood sets opacity
+
 	# Wait for the game viewport to be registered, then attach nodes there
 	var dual_viewport = get_node_or_null("/root/DualViewport")
 	if dual_viewport:
@@ -40,6 +45,7 @@ func _ready() -> void:
 		# Fallback: attach to self (e.g., running a tool scene directly via F6)
 		add_child(_canvas_modulate)
 		add_child(_world_env)
+		add_child(_shadow_group)
 
 
 func _on_game_viewport_ready() -> void:
@@ -49,14 +55,16 @@ func _on_game_viewport_ready() -> void:
 
 
 func _attach_to_viewport(viewport: SubViewport) -> void:
-	## Reparent CanvasModulate and WorldEnvironment into the game viewport.
-	if _canvas_modulate.get_parent():
-		_canvas_modulate.get_parent().remove_child(_canvas_modulate)
-	if _world_env.get_parent():
-		_world_env.get_parent().remove_child(_world_env)
+	## Reparent CanvasModulate, WorldEnvironment, and ShadowGroup into the game viewport.
+	for node in [_canvas_modulate, _world_env, _shadow_group]:
+		if node.get_parent():
+			node.get_parent().remove_child(node)
 
 	viewport.add_child(_canvas_modulate)
 	viewport.add_child(_world_env)
+	# ShadowGroup must be a sibling of world_root (not inside it) to avoid
+	# y_sort + shader interaction that breaks CanvasGroup merging.
+	viewport.add_child(_shadow_group)
 	Debug.log("Environment", "Attached to game viewport: %s" % viewport.name)
 
 	# Apply any mood that was requested before the viewport was ready
@@ -92,8 +100,11 @@ func apply_mood(mood: ZoneMood) -> void:
 	elif _particle_manager:
 		_particle_manager.deactivate()
 
-	Debug.log("Environment", "Applied mood: ambient=%s, bloom=%s, particles=%s" % [
-		mood.ambient_color, mood.bloom_enabled, mood.particle_type
+	# Shadows
+	_apply_shadow_params(mood.shadow_angle, mood.shadow_opacity)
+
+	Debug.log("Environment", "Applied mood: ambient=%s, bloom=%s, particles=%s, shadow_angle=%s" % [
+		mood.ambient_color, mood.bloom_enabled, mood.particle_type, mood.shadow_angle
 	])
 
 
@@ -106,6 +117,20 @@ func clear_mood() -> void:
 	_environment.glow_enabled = false
 	if _particle_manager:
 		_particle_manager.deactivate()
+	_apply_shadow_params(0.0, 0.0)
+
+
+func _apply_shadow_params(angle: float, opacity: float) -> void:
+	## Update shadow group opacity and per-shadow angle.
+	_shadow_group.self_modulate = Color(1, 1, 1, opacity)
+	for shadow in get_tree().get_nodes_in_group("shadows"):
+		if shadow is SilhouetteShadow:
+			shadow.apply_params({"angle": angle})
+
+
+func get_shadow_group() -> CanvasGroup:
+	## Returns the shared CanvasGroup that shadows should reparent into.
+	return _shadow_group
 
 
 func _ensure_particle_manager() -> void:
