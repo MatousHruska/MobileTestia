@@ -1667,6 +1667,16 @@ func _on_shadow_clear_mask() -> void:
 		_update_shadow_preview()
 
 
+func _has_shadow_mask_painted() -> bool:
+	if _shadow_alpha_mask == null:
+		return false
+	for y in range(_shadow_alpha_mask.get_height()):
+		for x in range(_shadow_alpha_mask.get_width()):
+			if _shadow_alpha_mask.get_pixel(x, y).r < 0.99:
+				return true
+	return false
+
+
 func _setup_shadow_preview() -> void:
 	# Clean up previous viewport contents
 	if _shadow_preview_viewport:
@@ -3320,6 +3330,25 @@ func _apply_to_spriteframes() -> void:
 				frames.add_frame(anim_name, atlas_tex)
 
 			total_anims += 1
+
+	# Store shadow params as metadata
+	var shadow_params := {
+		"overlap": _shadow_overlap_slider.value if _shadow_overlap_slider else 0.15,
+		"length": _shadow_length_slider.value if _shadow_length_slider else 1.0,
+		"offset_x": _shadow_offset_x_slider.value if _shadow_offset_x_slider else 0.0,
+		"offset_y": _shadow_offset_y_slider.value if _shadow_offset_y_slider else 0.0,
+	}
+	frames.set_meta("shadow_params", shadow_params)
+	_append_apply_log("--- Shadow params saved: %s ---" % str(shadow_params))
+
+	# Store shadow mask as PNG bytes (if painted)
+	if _shadow_alpha_mask != null and _has_shadow_mask_painted():
+		var mask_bytes := _shadow_alpha_mask.save_png_to_buffer()
+		frames.set_meta("shadow_mask", mask_bytes)
+		_append_apply_log("  Shadow mask saved (%d bytes)" % mask_bytes.size())
+	elif frames.has_meta("shadow_mask"):
+		frames.remove_meta("shadow_mask")
+		_append_apply_log("  Shadow mask cleared")
 
 	# Saving phase
 	_apply_progress_bar.value = 1.0
