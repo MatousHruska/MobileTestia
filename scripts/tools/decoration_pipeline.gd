@@ -1901,6 +1901,7 @@ func _start_export() -> void:
 				"offset_x": _shadow_offset_x_slider.value,
 				"offset_y": _shadow_offset_y_slider.value,
 				"overlap": _shadow_overlap_slider.value,
+				"hide_behind": _hide_behind_check.button_pressed if _hide_behind_check else false,
 			}
 			var shadow_json := JSON.stringify(shadow_params, "  ")
 			var shadow_path := ProjectSettings.globalize_path(output_dir + "/shadow.json")
@@ -1918,6 +1919,18 @@ func _start_export() -> void:
 					_append_log("Saved: %s/shadow_mask.png" % deco_id)
 				else:
 					_append_log("[color=red]ERROR: Failed to save shadow_mask.png (err %d)[/color]" % mask_err)
+
+		# Save hide_behind flag even without shadow enabled
+		if not (_shadow_enabled_check and _shadow_enabled_check.button_pressed):
+			if _hide_behind_check and _hide_behind_check.button_pressed:
+				var hide_params := {"hide_behind": true}
+				var hide_json := JSON.stringify(hide_params, "  ")
+				var hide_path := ProjectSettings.globalize_path(output_dir + "/shadow.json")
+				var hide_file := FileAccess.open(hide_path, FileAccess.WRITE)
+				if hide_file:
+					hide_file.store_string(hide_json)
+					hide_file.close()
+					_append_log("Saved: %s/shadow.json (hide_behind only)" % deco_id)
 
 	# Collect just-exported images so the atlas can use them from memory
 	# instead of re-reading from disk.
