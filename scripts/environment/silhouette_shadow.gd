@@ -20,6 +20,7 @@ var _shadow_material: ShaderMaterial
 var _parent_offset := Vector2.ZERO  ## Parent sprite's offset (for bottom-center anchoring)
 var _pending_mask: Texture2D  ## Mask set before _ready() — applied once material exists
 var _animated_parent: AnimatedSprite2D  ## Non-null when parent is AnimatedSprite2D
+var _foot_y := -1.0  ## Bottommost opaque row in texture (image-space), -1 = not computed
 
 func _ready() -> void:
 	add_to_group("shadows")
@@ -97,7 +98,42 @@ func _sync_animated_frame() -> void:
 		var frame_tex := sf.get_frame_texture(anim, frame_idx)
 		if frame_tex != texture:
 			texture = frame_tex
+			# Compute foot position once from the first frame we see
+			if _foot_y < 0.0:
+				_foot_y = _detect_foot_y(frame_tex)
 			_update_shadow_transform()
+
+
+func _detect_foot_y(tex: Texture2D) -> float:
+	## Find the bottommost opaque row by scanning the texture's alpha.
+	## Unwraps AtlasTexture → CanvasTexture → diffuse chain.
+	var img := _get_unwrapped_image(tex)
+	if img == null:
+		return float(tex.get_height())  # Fallback: assume feet at bottom
+
+	# Scan bottom-up for the first row with any opaque pixel
+	for y in range(img.get_height() - 1, -1, -1):
+		for x in range(img.get_width()):
+			if img.get_pixel(x, y).a > 0.1:
+				return float(y + 1)
+	return float(tex.get_height())
+
+
+static func _get_unwrapped_image(tex: Texture2D) -> Image:
+	## Unwrap texture chain (AtlasTexture / CanvasTexture) to get pixel data.
+	if tex is AtlasTexture:
+		var atlas_tex := tex as AtlasTexture
+		var atlas_img := _get_unwrapped_image(atlas_tex.atlas)
+		if atlas_img:
+			var r := atlas_tex.region
+			return atlas_img.get_region(Rect2i(int(r.position.x), int(r.position.y), int(r.size.x), int(r.size.y)))
+		return null
+	if tex is CanvasTexture:
+		var canvas_tex := tex as CanvasTexture
+		if canvas_tex.diffuse_texture:
+			return _get_unwrapped_image(canvas_tex.diffuse_texture)
+		return null
+	return tex.get_image()
 
 
 func _update_shadow_transform() -> void:
@@ -106,18 +142,22 @@ func _update_shadow_transform() -> void:
 
 	var tex_height := float(texture.get_height())
 
-	# Move the sprite pivot to the trunk base (bottom of texture) using offset.
-	# Shift upward into the tree by shadow_overlap fraction so the shadow starts
-	# under the trunk. show_behind_parent hides this overlap.
+	# foot_y: where the feet actually are in image-space.
+	# For static sprites (decorations), feet are at the bottom of the texture.
+	# For animated sprites, detected from alpha scan to handle padding.
+	var foot_y := _foot_y if _foot_y > 0.0 else tex_height
+
+	# Move the sprite pivot to the foot position using offset.
+	# Shift upward by shadow_overlap fraction so the shadow starts under the body.
 	var overlap := tex_height * shadow_overlap
 	if centered:
-		offset = Vector2(0.0, -tex_height / 2.0)
-		position = Vector2(shadow_offset_x, tex_height / 2.0 - overlap + shadow_offset_y)
+		offset = Vector2(0.0, tex_height / 2.0 - foot_y)
+		position = Vector2(shadow_offset_x, foot_y - tex_height / 2.0 - overlap + shadow_offset_y)
 	else:
 		# When parent has a custom offset (e.g. bottom-center anchoring), the shadow
 		# must position relative to the texture's visual base, not the node origin.
-		offset = Vector2(_parent_offset.x, -tex_height)
-		position = Vector2(shadow_offset_x, _parent_offset.y + tex_height - overlap + shadow_offset_y)
+		offset = Vector2(_parent_offset.x, -foot_y)
+		position = Vector2(shadow_offset_x, _parent_offset.y + foot_y - overlap + shadow_offset_y)
 
 	# Flip vertically and stretch by shadow_length
 	scale = Vector2(1.0, -shadow_length)
