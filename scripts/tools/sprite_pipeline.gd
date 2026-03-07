@@ -1593,12 +1593,14 @@ func _build_step_shadow(parent: VBoxContainer) -> void:
 		hover_sb.set_corner_radius_all(4)
 		hover_sb.set_content_margin_all(4)
 		btn.add_theme_stylebox_override("hover", hover_sb)
-		btn.pressed.connect(func(v: int, b: Button) -> void:
-			_shadow_alpha_paint_value = v
+		var captured_value := value
+		var captured_btn := btn
+		btn.pressed.connect(func() -> void:
+			_shadow_alpha_paint_value = captured_value
 			for other in _shadow_alpha_buttons:
-				if other != b:
+				if other != captured_btn:
 					other.button_pressed = false
-		.bind(value, btn))
+		)
 		alpha_hbox.add_child(btn)
 		_shadow_alpha_buttons.append(btn)
 
@@ -1630,12 +1632,14 @@ func _build_step_shadow(parent: VBoxContainer) -> void:
 		pressed_sb.set_corner_radius_all(4)
 		pressed_sb.set_content_margin_all(4)
 		btn.add_theme_stylebox_override("pressed", pressed_sb)
-		btn.pressed.connect(func(bs: int, b: Button) -> void:
-			_shadow_alpha_brush_size = bs
+		var captured_bsize := bsize
+		var captured_btn := btn
+		btn.pressed.connect(func() -> void:
+			_shadow_alpha_brush_size = captured_bsize
 			for other in brush_buttons:
-				if other != b:
+				if other != captured_btn:
 					other.button_pressed = false
-		.bind(bsize, btn))
+		)
 		brush_hbox.add_child(btn)
 		brush_buttons.append(btn)
 
