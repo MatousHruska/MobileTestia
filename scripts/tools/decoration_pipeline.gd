@@ -1,5 +1,5 @@
 extends Control
-## Decoration Pipeline — 6-step wizard for creating pixel art decorations.
+## Decoration Pipeline — 7-step wizard for creating pixel art decorations.
 ##
 ## Converts 3D models or 2D source images into pixel art sprites with normal maps
 ## and auto-traced occluder polygons. Generates an LDtk tileset atlas.
@@ -21,6 +21,7 @@ const STEP_NAMES := [
 	"Capture / Import",
 	"Pixel Art Processing",
 	"Normal & Occluder",
+	"Shadow",
 	"Preview & Adjust",
 	"Export & Atlas",
 ]
@@ -99,6 +100,7 @@ var step_indicator: Control
 var step_containers: Array[Control] = []
 var preview_container: SubViewportContainer
 var _right_preview_rect: TextureRect  # 2D preview in right panel (pixel art, composite, etc.)
+var _right_stack: Control  # Container in right panel for stacking preview layers
 var sub_viewport: SubViewport
 var camera: Camera3D
 var model_slot: Node3D
@@ -146,7 +148,34 @@ var _normal_preview_rect: TextureRect
 var _occluder_simplify_slider: HSlider
 var _occluder_info_label: Label
 
-# Step 5 refs
+# Step 5 refs (Shadow)
+var _shadow_enabled_check: CheckButton
+var _shadow_length_slider: HSlider
+var _shadow_offset_x_slider: HSlider
+var _shadow_offset_y_slider: HSlider
+var _shadow_overlap_slider: HSlider
+var _shadow_sun_sweep_slider: HSlider
+var _shadow_preview_opacity_slider: HSlider
+var _shadow_controls_container: VBoxContainer
+var _shadow_preview_container: SubViewportContainer  # In right panel
+var _shadow_preview_sprite: Sprite2D
+var _shadow_preview_shadow: SilhouetteShadow
+var _shadow_preview_viewport: SubViewport
+
+# Shadow alpha mask state
+var _shadow_alpha_mask: Image = null
+var _shadow_alpha_paint_value: int = 0  # Default to erasing (0 = fully transparent)
+var _shadow_alpha_buttons: Array[Button] = []
+var _shadow_alpha_brush_size: int = 3
+var _shadow_alpha_paint_toggle_btn: CheckButton = null
+var _shadow_alpha_overlay: Control = null  # Overlay drawn on shadow preview
+var _shadow_preview_tex: ImageTexture = null  # Cached sprite texture for preview
+var _shadow_mask_tex: ImageTexture = null  # Cached mask texture for preview
+
+# Hide-behind-character state
+var _hide_behind_check: CheckButton = null
+
+# Step 6 refs (Preview & Adjust)
 var _preview_angle_toggle: HBoxContainer
 var _show_sprite_check: CheckButton
 var _show_normal_check: CheckButton
@@ -155,7 +184,7 @@ var _composite_preview_rect: TextureRect
 var _dimensions_label: Label
 var _current_preview_angle := "front"
 
-# Step 6 refs
+# Step 7 refs (Export & Atlas)
 var _export_log: RichTextLabel
 
 # Capture materials
@@ -281,21 +310,13 @@ func _build_ui() -> void:
 	steps_vbox.add_theme_constant_override("separation", 8)
 	content_margin.add_child(steps_vbox)
 
-	# Build 6 step containers
+	# Build 7 step containers
 	for i in range(STEP_NAMES.size()):
 		var step_cont := VBoxContainer.new()
 		step_cont.add_theme_constant_override("separation", 10)
 		step_cont.visible = (i == 0)
 		steps_vbox.add_child(step_cont)
 		step_containers.append(step_cont)
-
-	# Build each step's contents (placeholders for now)
-	_build_step1(step_containers[0])
-	_build_step2(step_containers[1])
-	_build_step3(step_containers[2])
-	_build_step4(step_containers[3])
-	_build_step5(step_containers[4])
-	_build_step6(step_containers[5])
 
 	# -- Bottom bar (fixed, not scrolled) --
 	var bottom_sep := HSeparator.new()
@@ -351,21 +372,30 @@ func _build_ui() -> void:
 	root_hbox.add_child(right_panel)
 
 	# Wrapper so both the 3D viewport and 2D preview can share the right panel
-	var right_stack := Control.new()
-	right_stack.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	right_panel.add_child(right_stack)
+	_right_stack = Control.new()
+	_right_stack.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	right_panel.add_child(_right_stack)
 
 	preview_container = SubViewportContainer.new()
 	preview_container.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	preview_container.stretch = true
-	right_stack.add_child(preview_container)
+	_right_stack.add_child(preview_container)
 
 	_right_preview_rect = TextureRect.new()
 	_right_preview_rect.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	_right_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_right_preview_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	_right_preview_rect.visible = false
-	right_stack.add_child(_right_preview_rect)
+	_right_stack.add_child(_right_preview_rect)
+
+	# Build each step's contents (after right panel so step5 can add shadow preview there)
+	_build_step1(step_containers[0])
+	_build_step2(step_containers[1])
+	_build_step3(step_containers[2])
+	_build_step4(step_containers[3])
+	_build_step5(step_containers[4])
+	_build_step6(step_containers[5])
+	_build_step7(step_containers[6])
 
 
 func _build_viewport() -> void:
@@ -498,17 +528,22 @@ func _go_to_step(step: int) -> void:
 		3:  # Entering Normal & Occluder — show 2D-only controls if applicable
 			if _2d_normal_container:
 				_2d_normal_container.visible = (_source_mode == "2d")
-		4:  # Entering Preview — refresh angle buttons and composite
+		4:  # Entering Shadow — refresh shadow preview
+			_update_shadow_preview()
+		5:  # Entering Preview — refresh angle buttons and composite
 			_refresh_preview_angle_buttons()
 			_update_composite_preview()
 
-	# Right panel visibility: 3D viewport for steps 0-1, 2D preview for step 2
+	# Right panel visibility: 3D viewport for steps 0-1, 2D preview for step 2, shadow for step 4
 	var show_3d := (_source_mode == "3d" and step <= 1)
 	var show_2d_preview := (step == 2)
+	var show_shadow_preview := (step == 4)
 	if preview_container:
 		preview_container.visible = show_3d
 	if _right_preview_rect:
 		_right_preview_rect.visible = show_2d_preview
+	if _shadow_preview_container:
+		_shadow_preview_container.visible = show_shadow_preview
 
 	# Update step indicator
 	if step_indicator:
@@ -542,9 +577,11 @@ func _on_next_pressed() -> void:
 			if _processed_color.is_empty():
 				_set_status("Generate normals/occluders first.")
 				return
-		4:  # Preview — no validation
+		4:  # Shadow — no validation needed
 			pass
-		5:  # Export — trigger export and return
+		5:  # Preview — no validation
+			pass
+		6:  # Export — trigger export and return
 			_start_export()
 			return
 	_go_to_step(_current_step + 1)
@@ -614,6 +651,11 @@ func _on_model_selected(index: int) -> void:
 	if deco_id_input and deco_id_input.text.is_empty():
 		deco_id_input.text = suggested_id
 		_decoration_id = suggested_id
+		_shadow_alpha_mask = null
+		if _hide_behind_check:
+			_hide_behind_check.button_pressed = false
+		_shadow_preview_tex = null
+		_shadow_mask_tex = null
 
 
 func _clear_model() -> void:
@@ -651,6 +693,11 @@ func _on_2d_file_selected(path: String) -> void:
 	if deco_id_input and deco_id_input.text.is_empty():
 		deco_id_input.text = suggested_id
 		_decoration_id = suggested_id
+		_shadow_alpha_mask = null
+		if _hide_behind_check:
+			_hide_behind_check.button_pressed = false
+		_shadow_preview_tex = null
+		_shadow_mask_tex = null
 
 	_set_status("Imported 2D image: %s" % path.get_file())
 
@@ -950,6 +997,11 @@ func _build_step1(parent: VBoxContainer) -> void:
 	deco_id_input.text_changed.connect(func(text: String) -> void:
 		# Enforce lowercase — LDtk identifierStyle:"Lowercase" requires it
 		_decoration_id = text.strip_edges().to_lower()
+		_shadow_alpha_mask = null
+		if _hide_behind_check:
+			_hide_behind_check.button_pressed = false
+		_shadow_preview_tex = null
+		_shadow_mask_tex = null  # Reset mask for new decoration
 		if deco_id_input.text != _decoration_id:
 			var caret := deco_id_input.caret_column
 			deco_id_input.text = _decoration_id
@@ -1203,6 +1255,230 @@ func _build_step4(parent: VBoxContainer) -> void:
 
 
 func _build_step5(parent: VBoxContainer) -> void:
+	# ── Shadow Configuration ──────────────────────────────────────────
+	var shadow_sec := _make_section("Shadow Configuration")
+	parent.add_child(shadow_sec[0])
+	var shadow_content: VBoxContainer = shadow_sec[1]
+
+	_shadow_enabled_check = CheckButton.new()
+	_shadow_enabled_check.text = "Enable Shadow"
+	_shadow_enabled_check.button_pressed = false
+	_style_checkbutton_transparent(_shadow_enabled_check)
+	_shadow_enabled_check.toggled.connect(func(on: bool) -> void:
+		_shadow_controls_container.visible = on
+		_update_shadow_preview()
+	)
+	shadow_content.add_child(_shadow_enabled_check)
+
+	# Controls container (hidden until shadow is enabled)
+	_shadow_controls_container = VBoxContainer.new()
+	_shadow_controls_container.add_theme_constant_override("separation", 6)
+	_shadow_controls_container.visible = false
+	shadow_content.add_child(_shadow_controls_container)
+
+	# Per-decoration sliders
+	_shadow_controls_container.add_child(_make_label("Shadow Length"))
+	var length_row := _make_slider_row(0.1, 3.0, 1.0, 0.05)
+	_shadow_controls_container.add_child(length_row[0])
+	_shadow_length_slider = length_row[1]
+	_shadow_length_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+
+	_shadow_controls_container.add_child(_make_label("Offset X"))
+	var offset_x_row := _make_slider_row(-100.0, 100.0, 0.0, 1.0)
+	_shadow_controls_container.add_child(offset_x_row[0])
+	_shadow_offset_x_slider = offset_x_row[1]
+	_shadow_offset_x_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+
+	_shadow_controls_container.add_child(_make_label("Offset Y"))
+	var offset_y_row := _make_slider_row(-100.0, 100.0, 0.0, 1.0)
+	_shadow_controls_container.add_child(offset_y_row[0])
+	_shadow_offset_y_slider = offset_y_row[1]
+	_shadow_offset_y_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+
+	_shadow_controls_container.add_child(_make_label("Overlap"))
+	var overlap_row := _make_slider_row(0.0, 0.5, 0.25, 0.01)
+	_shadow_controls_container.add_child(overlap_row[0])
+	_shadow_overlap_slider = overlap_row[1]
+	_shadow_overlap_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+
+	# Preview-only controls (not exported)
+	_shadow_controls_container.add_child(HSeparator.new())
+	_shadow_controls_container.add_child(_make_small_label(
+		"Angle and opacity come from ZoneMood at runtime — these are for preview only."))
+
+	_shadow_controls_container.add_child(_make_label("Sun Sweep (preview)"))
+	var sweep_row := _make_slider_row(0.0, 1.0, 0.5, 0.01)
+	_shadow_controls_container.add_child(sweep_row[0])
+	_shadow_sun_sweep_slider = sweep_row[1]
+	_shadow_sun_sweep_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+
+	_shadow_controls_container.add_child(_make_label("Opacity (preview)"))
+	var opacity_row := _make_slider_row(0.0, 1.0, 0.3, 0.01)
+	_shadow_controls_container.add_child(opacity_row[0])
+	_shadow_preview_opacity_slider = opacity_row[1]
+	_shadow_preview_opacity_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+
+	# ── Shadow Alpha Mask ─────────────────────────────────────────────
+	var alpha_col := _make_collapsible("Shadow Alpha Mask", false)
+	_shadow_controls_container.add_child(alpha_col[0])
+	var alpha_content: VBoxContainer = alpha_col[1]
+
+	alpha_content.add_child(_make_small_label(
+		"Paint transparency on the shadow to hide unwanted parts (roots, base artifacts). L-click to paint."))
+
+	# Alpha level buttons
+	alpha_content.add_child(_make_label("Alpha Level"))
+	var alpha_row := HBoxContainer.new()
+	alpha_row.add_theme_constant_override("separation", 4)
+	alpha_content.add_child(alpha_row)
+
+	_shadow_alpha_buttons.clear()
+	var alpha_levels: Array[Array] = [
+		[0, "0%"], [64, "25%"], [128, "50%"], [191, "75%"], [255, "100%"],
+	]
+	for entry in alpha_levels:
+		var value: int = entry[0]
+		var label_text: String = entry[1]
+		var btn := Button.new()
+		btn.text = label_text
+		btn.toggle_mode = true
+		btn.button_pressed = (value == 0)  # Default: 0% (erase mode)
+		btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		var btn_sb := StyleBoxFlat.new()
+		btn_sb.bg_color = Color(C_ACCENT.r, C_ACCENT.g, C_ACCENT.b, maxf(value / 255.0, 0.15))
+		btn_sb.set_corner_radius_all(4)
+		btn_sb.set_content_margin_all(6)
+		btn.add_theme_stylebox_override("normal", btn_sb)
+		var active_sb := StyleBoxFlat.new()
+		active_sb.bg_color = C_ACCENT
+		active_sb.set_corner_radius_all(4)
+		active_sb.set_content_margin_all(6)
+		btn.add_theme_stylebox_override("pressed", active_sb)
+		var btn_hover_sb := StyleBoxFlat.new()
+		btn_hover_sb.bg_color = Color(C_ACCENT_HOVER.r, C_ACCENT_HOVER.g, C_ACCENT_HOVER.b, clampf(value / 255.0 + 0.15, 0.0, 1.0))
+		btn_hover_sb.set_corner_radius_all(4)
+		btn_hover_sb.set_content_margin_all(6)
+		btn.add_theme_stylebox_override("hover", btn_hover_sb)
+		btn.add_theme_font_size_override("font_size", FONT_HINT)
+		alpha_row.add_child(btn)
+		_shadow_alpha_buttons.append(btn)
+
+	# Connect alpha level buttons with mutual exclusion
+	for i in range(_shadow_alpha_buttons.size()):
+		var value: int = alpha_levels[i][0]
+		var idx := i
+		_shadow_alpha_buttons[i].pressed.connect(func() -> void:
+			_shadow_alpha_paint_value = value
+			for j in range(_shadow_alpha_buttons.size()):
+				_shadow_alpha_buttons[j].button_pressed = (j == idx)
+		)
+
+	# Brush size buttons
+	alpha_content.add_child(_make_label("Brush Size"))
+	var brush_row := HBoxContainer.new()
+	brush_row.add_theme_constant_override("separation", 4)
+	alpha_content.add_child(brush_row)
+
+	var brush_sizes: Array[Array] = [[1, "1px"], [3, "3px"], [5, "5px"]]
+	for entry in brush_sizes:
+		var bsize: int = entry[0]
+		var label_text: String = entry[1]
+		var btn := Button.new()
+		btn.text = label_text
+		btn.size_flags_horizontal = SIZE_EXPAND_FILL
+		btn.toggle_mode = true
+		btn.button_pressed = (bsize == 3)  # Default 3px
+		var btn_sb := StyleBoxFlat.new()
+		btn_sb.bg_color = C_SURFACE
+		btn_sb.set_corner_radius_all(4)
+		btn_sb.set_content_margin_all(6)
+		btn.add_theme_stylebox_override("normal", btn_sb)
+		var active_sb := StyleBoxFlat.new()
+		active_sb.bg_color = C_ACCENT
+		active_sb.set_corner_radius_all(4)
+		active_sb.set_content_margin_all(6)
+		btn.add_theme_stylebox_override("pressed", active_sb)
+		btn.add_theme_font_size_override("font_size", FONT_HINT)
+		brush_row.add_child(btn)
+
+	# Connect brush buttons after all are created
+	var brush_btns: Array[Button] = []
+	for child in brush_row.get_children():
+		if child is Button:
+			brush_btns.append(child as Button)
+	for i in range(brush_btns.size()):
+		var bsize: int = brush_sizes[i][0]
+		var idx := i
+		brush_btns[i].pressed.connect(func() -> void:
+			_shadow_alpha_brush_size = bsize
+			for j in range(brush_btns.size()):
+				brush_btns[j].button_pressed = (j == idx)
+		)
+
+	# Toggle and clear
+	_shadow_alpha_paint_toggle_btn = CheckButton.new()
+	_shadow_alpha_paint_toggle_btn.text = "Enable Alpha Painting"
+	_style_checkbutton_transparent(_shadow_alpha_paint_toggle_btn)
+	_shadow_alpha_paint_toggle_btn.toggled.connect(_on_shadow_alpha_paint_toggled)
+	alpha_content.add_child(_shadow_alpha_paint_toggle_btn)
+
+	var clear_alpha_btn := _make_subtle_button("Clear Mask")
+	clear_alpha_btn.pressed.connect(_on_clear_shadow_alpha_mask)
+	alpha_content.add_child(clear_alpha_btn)
+
+	# ── Shadow Preview (in right panel) ───────────────────────────────
+	# SubViewport in the right panel so the SilhouetteShadow shader renders live
+	var viewport_container := SubViewportContainer.new()
+	viewport_container.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	viewport_container.stretch = true
+	viewport_container.visible = false
+	_right_stack.add_child(viewport_container)
+	_shadow_preview_container = viewport_container
+
+	_shadow_preview_viewport = SubViewport.new()
+	_shadow_preview_viewport.size = Vector2i(512, 512)
+	_shadow_preview_viewport.transparent_bg = false
+	_shadow_preview_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	viewport_container.add_child(_shadow_preview_viewport)
+
+	# Green background for contrast
+	var bg := ColorRect.new()
+	bg.color = Color(0.35, 0.55, 0.3, 1.0)
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_shadow_preview_viewport.add_child(bg)
+
+	# The sprite and shadow will be added dynamically in _update_shadow_preview()
+	_shadow_preview_sprite = Sprite2D.new()
+	_shadow_preview_sprite.centered = true
+	_shadow_preview_sprite.position = Vector2(256, 420)  # Bottom-center of viewport
+	_shadow_preview_viewport.add_child(_shadow_preview_sprite)
+
+	# Alpha mask overlay — drawn on top of the viewport container for visual feedback
+	_shadow_alpha_overlay = Control.new()
+	_shadow_alpha_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_shadow_alpha_overlay.mouse_filter = Control.MOUSE_FILTER_PASS
+	_shadow_alpha_overlay.draw.connect(_draw_shadow_alpha_overlay)
+	viewport_container.add_child(_shadow_alpha_overlay)
+
+	# Input handling on the viewport container
+	viewport_container.gui_input.connect(_on_shadow_viewport_input)
+
+	# ── Hide Behind Character ────────────────────────────────────────
+	var hide_sec := _make_section("Hide Behind Character")
+	parent.add_child(hide_sec[0])
+	var hide_content: VBoxContainer = hide_sec[1]
+
+	hide_content.add_child(_make_small_label(
+		"When enabled, the decoration fades when the player walks behind it. Requires an occluder polygon (Step 4)."))
+
+	_hide_behind_check = CheckButton.new()
+	_hide_behind_check.text = "Hide in front of character"
+	_hide_behind_check.button_pressed = false
+	_style_checkbutton_transparent(_hide_behind_check)
+	hide_content.add_child(_hide_behind_check)
+
+
+func _build_step6(parent: VBoxContainer) -> void:
 	# ── Composite Preview Section ──────────────────────────────────────
 	var preview_sec := _make_section("Composite Preview")
 	parent.add_child(preview_sec[0])
@@ -1277,7 +1553,7 @@ func _build_step5(parent: VBoxContainer) -> void:
 	preview_content.add_child(_dimensions_label)
 
 
-func _build_step6(parent: VBoxContainer) -> void:
+func _build_step7(parent: VBoxContainer) -> void:
 	# ── Export Section ─────────────────────────────────────────────────
 	var export_sec := _make_section("Export Decoration")
 	parent.add_child(export_sec[0])
@@ -1339,6 +1615,238 @@ func _build_step6(parent: VBoxContainer) -> void:
 
 
 #===============================================================================
+# SHADOW PREVIEW
+#===============================================================================
+
+func _update_shadow_preview() -> void:
+	if not _shadow_preview_sprite or not _shadow_enabled_check:
+		return
+
+	var preview_image := _get_shadow_preview_image()
+
+	if preview_image == null:
+		return
+
+	# Try loading existing mask from disk on first preview (re-edit support)
+	if _shadow_alpha_mask == null and not _decoration_id.is_empty():
+		var mask_global := ProjectSettings.globalize_path(
+			DECORATIONS_DIR + "/" + _decoration_id + "/shadow_mask.png")
+		if FileAccess.file_exists(mask_global):
+			var loaded_mask := Image.load_from_file(mask_global)
+			if loaded_mask and loaded_mask.get_width() == preview_image.get_width() \
+					and loaded_mask.get_height() == preview_image.get_height():
+				if loaded_mask.get_format() != Image.FORMAT_R8:
+					loaded_mask.convert(Image.FORMAT_R8)
+				_shadow_alpha_mask = loaded_mask
+
+	# Update the sprite texture (cache to avoid re-upload on paint strokes)
+	if _shadow_preview_tex == null:
+		_shadow_preview_tex = ImageTexture.create_from_image(preview_image)
+	else:
+		_shadow_preview_tex.update(preview_image)
+	_shadow_preview_sprite.texture = _shadow_preview_tex
+
+	# Scale sprite to fit the viewport nicely (leave room for shadow)
+	var vp_size := Vector2(_shadow_preview_viewport.size)
+	var max_dim := maxf(preview_image.get_width(), preview_image.get_height())
+	var target_size := vp_size.y * 0.4  # Use ~40% of viewport height for sprite
+	var sprite_scale := target_size / max_dim if max_dim > 0 else 1.0
+	_shadow_preview_sprite.scale = Vector2(sprite_scale, sprite_scale)
+
+	# Position at bottom-center, accounting for scale
+	var scaled_height := preview_image.get_height() * sprite_scale
+	_shadow_preview_sprite.position = Vector2(vp_size.x * 0.5, vp_size.y * 0.8 - scaled_height * 0.5)
+
+	if not _shadow_enabled_check.button_pressed:
+		# Hide shadow if disabled
+		if _shadow_preview_shadow and is_instance_valid(_shadow_preview_shadow):
+			_shadow_preview_shadow.visible = false
+		return
+
+	# Create shadow node once, reuse on subsequent calls
+	if _shadow_preview_shadow == null or not is_instance_valid(_shadow_preview_shadow):
+		_shadow_preview_shadow = SilhouetteShadow.new()
+		_shadow_preview_shadow.name = "PreviewShadow"
+		_shadow_preview_sprite.add_child(_shadow_preview_shadow)
+	_shadow_preview_shadow.visible = true
+
+	# Apply per-decoration params from sliders
+	var sun_t := _shadow_sun_sweep_slider.value
+	var preview_angle := lerpf(PI * 0.75, PI * 0.25, sun_t)
+	_shadow_preview_shadow.apply_params({
+		"length": _shadow_length_slider.value,
+		"offset_x": _shadow_offset_x_slider.value,
+		"offset_y": _shadow_offset_y_slider.value,
+		"overlap": _shadow_overlap_slider.value,
+		"angle": preview_angle,
+		"opacity": _shadow_preview_opacity_slider.value,
+	})
+
+	# Apply alpha mask to shadow preview (cache texture, update in-place)
+	if _shadow_alpha_mask != null:
+		if _shadow_mask_tex == null:
+			_shadow_mask_tex = ImageTexture.create_from_image(_shadow_alpha_mask)
+		else:
+			_shadow_mask_tex.update(_shadow_alpha_mask)
+		_shadow_preview_shadow.set_shadow_mask(_shadow_mask_tex)
+	else:
+		_shadow_preview_shadow.set_shadow_mask(null)
+
+	# Redraw overlay
+	if _shadow_alpha_overlay:
+		_shadow_alpha_overlay.queue_redraw()
+
+
+#===============================================================================
+# SHADOW ALPHA MASK PAINTING
+#===============================================================================
+
+func _on_shadow_alpha_paint_toggled(on: bool) -> void:
+	if on and _shadow_alpha_mask == null:
+		# Create mask matching the processed image size
+		var preview_image := _get_shadow_preview_image()
+		if preview_image:
+			_shadow_alpha_mask = Image.create(
+				preview_image.get_width(), preview_image.get_height(),
+				false, Image.FORMAT_R8)
+			_shadow_alpha_mask.fill(Color(1, 1, 1))  # 255 = opaque
+	if _shadow_alpha_overlay:
+		_shadow_alpha_overlay.queue_redraw()
+
+
+func _on_clear_shadow_alpha_mask() -> void:
+	if _shadow_alpha_mask != null:
+		_shadow_alpha_mask.fill(Color(1, 1, 1))
+		_update_shadow_preview()
+
+
+func _get_shadow_preview_image() -> Image:
+	## Returns the first available processed image (used for mask dimensions + pixel checks).
+	for angle_name in ["front", "back", "left", "right"]:
+		if _processed_color.has(angle_name):
+			return _processed_color[angle_name]
+	if _imported_image != null:
+		return _imported_image
+	return null
+
+
+func _has_shadow_alpha_painted() -> bool:
+	## Returns true if the mask has any non-opaque pixels.
+	if _shadow_alpha_mask == null:
+		return false
+	for y in range(_shadow_alpha_mask.get_height()):
+		for x in range(_shadow_alpha_mask.get_width()):
+			if _shadow_alpha_mask.get_pixel(x, y).r < 0.99:
+				return true
+	return false
+
+
+func _on_shadow_viewport_input(event: InputEvent) -> void:
+	if not _shadow_alpha_paint_toggle_btn.button_pressed or _shadow_alpha_mask == null:
+		return
+
+	var mouse_pos: Vector2
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index != MOUSE_BUTTON_LEFT or not mb.pressed:
+			return
+		mouse_pos = mb.position
+	elif event is InputEventMouseMotion:
+		if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			return
+		mouse_pos = (event as InputEventMouseMotion).position
+	else:
+		return
+
+	# Convert viewport mouse position to texture pixel coordinates
+	var preview_image := _get_shadow_preview_image()
+	if preview_image == null or not _shadow_preview_sprite:
+		return
+
+	# The viewport container is stretched to fill its parent, so we need to map
+	# mouse position through the viewport size to sprite texture coordinates.
+	var container_size := _shadow_preview_container.size
+	var vp_size := Vector2(_shadow_preview_viewport.size)
+	# Scale from container space to viewport space
+	var vp_mouse := mouse_pos * (vp_size / container_size)
+
+	# Convert from viewport space to sprite-local pixel coordinates
+	var sprite_pos := _shadow_preview_sprite.position
+	var sprite_scale := _shadow_preview_sprite.scale
+	var tex_size := Vector2(preview_image.get_size())
+	# Centered sprite: texture center is at sprite_pos
+	var tex_origin := sprite_pos - (tex_size * sprite_scale * 0.5)
+	var local_pos := (vp_mouse - tex_origin) / sprite_scale
+
+	var half_brush := _shadow_alpha_brush_size / 2
+	var painted := false
+	for by in range(-half_brush, half_brush + 1):
+		for bx in range(-half_brush, half_brush + 1):
+			var px := int(local_pos.x) + bx
+			var py := int(local_pos.y) + by
+			if px < 0 or px >= preview_image.get_width() or py < 0 or py >= preview_image.get_height():
+				continue
+			# Only paint on non-transparent sprite pixels
+			if preview_image.get_pixel(px, py).a < 0.01:
+				continue
+			_shadow_alpha_mask.set_pixel(px, py, Color(_shadow_alpha_paint_value / 255.0, 0, 0))
+			painted = true
+
+	if painted:
+		_update_shadow_preview()
+
+
+func _draw_shadow_alpha_overlay() -> void:
+	## Draw red overlay + checkerboard on painted mask pixels.
+	if not _shadow_alpha_paint_toggle_btn.button_pressed or _shadow_alpha_mask == null:
+		return
+
+	var preview_image := _get_shadow_preview_image()
+	if preview_image == null or not _shadow_preview_sprite:
+		return
+
+	var container_size := _shadow_preview_container.size
+	var vp_size := Vector2(_shadow_preview_viewport.size)
+	var sprite_pos := _shadow_preview_sprite.position
+	var sprite_scale := _shadow_preview_sprite.scale
+	var tex_size := Vector2(preview_image.get_size())
+	var tex_origin := sprite_pos - (tex_size * sprite_scale * 0.5)
+
+	# Scale from viewport space to container space
+	var vp_to_container := container_size / vp_size
+	var pixel_w := sprite_scale.x * vp_to_container.x
+	var pixel_h := sprite_scale.y * vp_to_container.y
+
+	var img_w := _shadow_alpha_mask.get_width()
+	var img_h := _shadow_alpha_mask.get_height()
+
+	for y in range(img_h):
+		for x in range(img_w):
+			var sprite_pixel := preview_image.get_pixel(x, y)
+			if sprite_pixel.a < 0.01:
+				continue
+			var mask_val: float = _shadow_alpha_mask.get_pixel(x, y).r
+			if mask_val > 0.99:
+				continue  # Fully opaque, no overlay
+			# Screen position of this pixel
+			var screen_x := (tex_origin.x + x * sprite_scale.x) * vp_to_container.x
+			var screen_y := (tex_origin.y + y * sprite_scale.y) * vp_to_container.y
+			var rect := Rect2(screen_x, screen_y, pixel_w, pixel_h)
+			# Red overlay proportional to transparency
+			_shadow_alpha_overlay.draw_rect(rect, Color(1.0, 0.2, 0.2, (1.0 - mask_val) * 0.6))
+			# Checkerboard for strongly transparent pixels
+			if mask_val < 0.5:
+				var half_w := pixel_w * 0.5
+				var half_h := pixel_h * 0.5
+				_shadow_alpha_overlay.draw_rect(
+					Rect2(screen_x, screen_y, half_w, half_h),
+					Color(0, 0, 0, 0.3))
+				_shadow_alpha_overlay.draw_rect(
+					Rect2(screen_x + half_w, screen_y + half_h, half_w, half_h),
+					Color(0, 0, 0, 0.3))
+
+
+#===============================================================================
 # EXPORT & ATLAS GENERATION
 #===============================================================================
 
@@ -1385,6 +1893,31 @@ func _start_export() -> void:
 				occluder.polygon = points
 				ResourceSaver.save(occluder, output_dir + "/occluder.tres")
 				_append_log("Saved: %s/occluder.tres (%d vertices)" % [deco_id, points.size()])
+
+		# Save shadow.json (per-decoration params only, no angle/opacity)
+		if _shadow_enabled_check and _shadow_enabled_check.button_pressed:
+			var shadow_params := {
+				"length": _shadow_length_slider.value,
+				"offset_x": _shadow_offset_x_slider.value,
+				"offset_y": _shadow_offset_y_slider.value,
+				"overlap": _shadow_overlap_slider.value,
+			}
+			var shadow_json := JSON.stringify(shadow_params, "  ")
+			var shadow_path := ProjectSettings.globalize_path(output_dir + "/shadow.json")
+			var shadow_file := FileAccess.open(shadow_path, FileAccess.WRITE)
+			if shadow_file:
+				shadow_file.store_string(shadow_json)
+				shadow_file.close()
+				_append_log("Saved: %s/shadow.json" % deco_id)
+
+			# Save shadow_mask.png if painted
+			if _has_shadow_alpha_painted():
+				var mask_path := ProjectSettings.globalize_path(output_dir + "/shadow_mask.png")
+				var mask_err := _shadow_alpha_mask.save_png(mask_path)
+				if mask_err == OK:
+					_append_log("Saved: %s/shadow_mask.png" % deco_id)
+				else:
+					_append_log("[color=red]ERROR: Failed to save shadow_mask.png (err %d)[/color]" % mask_err)
 
 	# Collect just-exported images so the atlas can use them from memory
 	# instead of re-reading from disk.
@@ -1438,6 +1971,8 @@ func _regenerate_atlas(cached_images: Dictionary = {}) -> void:
 					"height": img.get_height(),
 					"has_normal": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/normal.png" % [DECORATIONS_DIR, folder_name])),
 					"has_occluder": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/occluder.tres" % [DECORATIONS_DIR, folder_name])),
+					"has_shadow": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/shadow.json" % [DECORATIONS_DIR, folder_name])),
+					"has_shadow_mask": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/shadow_mask.png" % [DECORATIONS_DIR, folder_name])),
 				})
 		folder_name = dir.get_next()
 	dir.list_dir_end()
@@ -1493,6 +2028,8 @@ func _regenerate_atlas(cached_images: Dictionary = {}) -> void:
 			"source_height": entry["height"],
 			"has_normal": entry["has_normal"],
 			"has_occluder": entry["has_occluder"],
+			"has_shadow": entry["has_shadow"],
+			"has_shadow_mask": entry.get("has_shadow_mask", false),
 		})
 
 	# Save atlas
@@ -1914,10 +2451,10 @@ func _point_line_distance(point: Vector2, line_start: Vector2, line_end: Vector2
 
 
 #===============================================================================
-# STEP 5 — COMPOSITE PREVIEW LOGIC
+# STEP 6 — COMPOSITE PREVIEW LOGIC
 #===============================================================================
 
-## Called when the user taps an angle button in step 5.
+## Called when the user taps an angle button in step 6.
 func _on_preview_angle_changed(angle_key: String) -> void:
 	_current_preview_angle = angle_key
 	_update_composite_preview()
