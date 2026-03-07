@@ -21,6 +21,7 @@ var _parent_offset := Vector2.ZERO  ## Parent sprite's offset (for bottom-center
 var _pending_mask: Texture2D  ## Mask set before _ready() — applied once material exists
 var _animated_parent: AnimatedSprite2D  ## Non-null when parent is AnimatedSprite2D
 var _foot_y := -1.0  ## Bottommost opaque row in texture (image-space), -1 = not computed
+var _current_dir := ""  ## Tracked direction for per-direction param/mask switching
 
 func _ready() -> void:
 	add_to_group("shadows")
@@ -98,6 +99,13 @@ func _sync_animated_frame() -> void:
 	var anim := _animated_parent.animation
 	var frame_idx := _animated_parent.frame
 	var sf := _animated_parent.sprite_frames
+
+	# Detect direction change from animation name suffix (e.g., "idle_down" → "down")
+	var dir := _extract_direction(anim)
+	if dir != _current_dir and not dir.is_empty():
+		_current_dir = dir
+		_apply_per_direction(dir)
+
 	if sf.has_animation(anim) and frame_idx < sf.get_frame_count(anim):
 		var frame_tex := sf.get_frame_texture(anim, frame_idx)
 		if frame_tex != texture:
@@ -170,3 +178,28 @@ func _update_shadow_transform() -> void:
 
 	# Rotation pivots around the trunk base (set by offset above)
 	rotation = shadow_angle
+
+
+func _extract_direction(anim: StringName) -> String:
+	## Parse direction suffix from animation name (e.g., "idle_down" → "down").
+	## Returns "" if no recognized direction suffix found.
+	var anim_str := String(anim)
+	for dir in ["down", "up", "right", "left"]:
+		if anim_str.ends_with("_" + dir):
+			# Left reuses right params (flip_h handles mirroring)
+			return "right" if dir == "left" else dir
+	return ""
+
+
+func _apply_per_direction(dir: String) -> void:
+	## Apply per-direction shadow params and mask from metadata set by CharacterVisuals.
+	var params_per_dir: Dictionary = get_meta("shadow_params_per_dir", {})
+	if params_per_dir.has(dir):
+		apply_params(params_per_dir[dir])
+
+	var masks_per_dir: Dictionary = get_meta("shadow_masks_per_dir", {})
+	if masks_per_dir.has(dir):
+		set_shadow_mask(masks_per_dir[dir])
+	elif _shadow_material:
+		# Clear mask if this direction has none
+		_shadow_material.set_shader_parameter("shadow_mask", null)

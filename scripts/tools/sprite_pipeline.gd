@@ -167,7 +167,11 @@ var _shadow_angle_slider: HSlider = null
 var _shadow_opacity_slider: HSlider = null
 var _shadow_frame_label: Label = null
 
-# Shadow alpha mask painting
+# Per-direction shadow params and masks
+var _shadow_params_per_dir: Dictionary = {}  # { "down": { "overlap": ..., ... }, ... }
+var _shadow_masks_per_dir: Dictionary = {}   # { "down": Image?, "up": Image?, "right": Image? }
+
+# Shadow alpha mask painting (current direction)
 var _shadow_alpha_mask: Image = null
 var _shadow_mask_tex: ImageTexture = null
 var _shadow_alpha_overlay: Control = null
@@ -1512,7 +1516,9 @@ func _build_step_shadow(parent: VBoxContainer) -> void:
 		{"label": "Up", "key": "up"},
 		{"label": "Right", "key": "right"},
 	], func(key: String) -> void:
+		_save_shadow_direction_state()
 		_shadow_preview_direction = key
+		_load_shadow_direction_state()
 		_setup_shadow_preview()
 	)
 	anim_content.add_child(_make_field("Direction", dir_group))
@@ -1671,41 +1677,92 @@ func _on_shadow_clear_mask() -> void:
 		_update_shadow_preview()
 
 
+func _save_shadow_direction_state() -> void:
+	## Save current slider values and mask to per-direction storage.
+	var dir := _shadow_preview_direction
+	_shadow_params_per_dir[dir] = {
+		"overlap": _shadow_overlap_slider.value if _shadow_overlap_slider else 0.15,
+		"length": _shadow_length_slider.value if _shadow_length_slider else 1.0,
+		"offset_x": _shadow_offset_x_slider.value if _shadow_offset_x_slider else 0.0,
+		"offset_y": _shadow_offset_y_slider.value if _shadow_offset_y_slider else 0.0,
+	}
+	if _shadow_alpha_mask != null:
+		_shadow_masks_per_dir[dir] = _shadow_alpha_mask.duplicate()
+	elif _shadow_masks_per_dir.has(dir):
+		_shadow_masks_per_dir.erase(dir)
+
+
+func _load_shadow_direction_state() -> void:
+	## Restore slider values and mask from per-direction storage.
+	var dir := _shadow_preview_direction
+	var params: Dictionary = _shadow_params_per_dir.get(dir, {})
+	if _shadow_overlap_slider:
+		_shadow_overlap_slider.value = params.get("overlap", 0.15)
+	if _shadow_length_slider:
+		_shadow_length_slider.value = params.get("length", 1.0)
+	if _shadow_offset_x_slider:
+		_shadow_offset_x_slider.value = params.get("offset_x", 0.0)
+	if _shadow_offset_y_slider:
+		_shadow_offset_y_slider.value = params.get("offset_y", 0.0)
+	# Restore mask
+	if _shadow_masks_per_dir.has(dir):
+		_shadow_alpha_mask = (_shadow_masks_per_dir[dir] as Image).duplicate()
+	else:
+		_shadow_alpha_mask = null
+	_shadow_mask_tex = null  # Force re-create
+
+
 func _has_shadow_mask_painted() -> bool:
-	if _shadow_alpha_mask == null:
+	return _has_mask_painted(_shadow_alpha_mask)
+
+
+static func _has_mask_painted(mask: Image) -> bool:
+	if mask == null:
 		return false
-	for y in range(_shadow_alpha_mask.get_height()):
-		for x in range(_shadow_alpha_mask.get_width()):
-			if _shadow_alpha_mask.get_pixel(x, y).r < 0.99:
+	for y in range(mask.get_height()):
+		for x in range(mask.get_width()):
+			if mask.get_pixel(x, y).r < 0.99:
 				return true
 	return false
 
 
 func _setup_shadow_preview() -> void:
 	# Load existing shadow metadata from SpriteFrames (re-edit support)
-	var existing_frames := ResourceLoader.load(SPRITEFRAMES_PATH, "", ResourceLoader.CACHE_MODE_IGNORE) as SpriteFrames
-	if existing_frames:
-		var params: Dictionary = existing_frames.get_meta("shadow_params", {})
-		if not params.is_empty():
-			if _shadow_overlap_slider and params.has("overlap"):
-				_shadow_overlap_slider.value = params["overlap"]
-			if _shadow_length_slider and params.has("length"):
-				_shadow_length_slider.value = params["length"]
-			if _shadow_offset_x_slider and params.has("offset_x"):
-				_shadow_offset_x_slider.value = params["offset_x"]
-			if _shadow_offset_y_slider and params.has("offset_y"):
-				_shadow_offset_y_slider.value = params["offset_y"]
+	if _shadow_params_per_dir.is_empty():
+		var existing_frames := ResourceLoader.load(SPRITEFRAMES_PATH, "", ResourceLoader.CACHE_MODE_IGNORE) as SpriteFrames
+		if existing_frames:
+			var raw_params: Dictionary = existing_frames.get_meta("shadow_params", {})
+			# Detect per-direction format (has "down"/"up"/"right" keys) vs old flat format
+			if raw_params.has("down") or raw_params.has("up") or raw_params.has("right"):
+				_shadow_params_per_dir = raw_params.duplicate(true)
+			elif not raw_params.is_empty():
+				# Old flat format — apply to all directions
+				for dir_key in ["down", "up", "right"]:
+					_shadow_params_per_dir[dir_key] = raw_params.duplicate()
 
-		# Load existing mask
-		if _shadow_alpha_mask == null:
-			var mask_bytes: PackedByteArray = existing_frames.get_meta("shadow_mask", PackedByteArray())
-			if not mask_bytes.is_empty():
-				var mask_img := Image.new()
-				mask_img.load_png_from_buffer(mask_bytes)
-				if mask_img.get_format() != Image.FORMAT_R8:
-					mask_img.convert(Image.FORMAT_R8)
-				_shadow_alpha_mask = mask_img
-				_shadow_mask_tex = null  # Force re-create on next preview update
+			# Load per-direction masks
+			for dir_key in ["down", "up", "right"]:
+				var meta_key := "shadow_mask_%s" % dir_key
+				var mask_bytes: PackedByteArray = existing_frames.get_meta(meta_key, PackedByteArray())
+				if not mask_bytes.is_empty():
+					var mask_img := Image.new()
+					mask_img.load_png_from_buffer(mask_bytes)
+					if mask_img.get_format() != Image.FORMAT_R8:
+						mask_img.convert(Image.FORMAT_R8)
+					_shadow_masks_per_dir[dir_key] = mask_img
+			# Backward compat: old single mask → apply to all directions
+			if _shadow_masks_per_dir.is_empty():
+				var old_mask_bytes: PackedByteArray = existing_frames.get_meta("shadow_mask", PackedByteArray())
+				if not old_mask_bytes.is_empty():
+					var mask_img := Image.new()
+					mask_img.load_png_from_buffer(old_mask_bytes)
+					if mask_img.get_format() != Image.FORMAT_R8:
+						mask_img.convert(Image.FORMAT_R8)
+					for dir_key in ["down", "up", "right"]:
+						_shadow_masks_per_dir[dir_key] = mask_img.duplicate()
+
+		# Apply current direction's state to sliders/mask
+		_load_shadow_direction_state()
 
 	# Clean up previous viewport contents
 	if _shadow_preview_viewport:
@@ -1862,12 +1919,6 @@ func _on_shadow_viewport_input(event: InputEvent) -> void:
 	var tex_origin := sprite_pos - (tex_size * sprite_scale * 0.5)
 	var local_pos := (vp_mouse - tex_origin) / sprite_scale
 
-	# Get current frame image for alpha check
-	var current_tex := _shadow_preview_sprite.sprite_frames.get_frame_texture("preview", _shadow_preview_frame)
-	var current_img := SilhouetteShadow._get_unwrapped_image(current_tex)
-	if current_img == null:
-		return
-
 	var half_brush := _shadow_alpha_brush_size / 2
 	var painted := false
 	for by in range(-half_brush, half_brush + 1):
@@ -1875,8 +1926,6 @@ func _on_shadow_viewport_input(event: InputEvent) -> void:
 			var px := int(local_pos.x) + bx
 			var py := int(local_pos.y) + by
 			if px < 0 or px >= frame_size or py < 0 or py >= frame_size:
-				continue
-			if current_img.get_pixel(px, py).a < 0.01:
 				continue
 			_shadow_alpha_mask.set_pixel(px, py, Color(_shadow_alpha_paint_value / 255.0, 0, 0))
 			painted = true
@@ -1902,19 +1951,11 @@ func _draw_shadow_alpha_overlay() -> void:
 	var pixel_w := sprite_scale.x * vp_to_container.x
 	var pixel_h := sprite_scale.y * vp_to_container.y
 
-	# Get current frame for alpha check
-	var current_tex := _shadow_preview_sprite.sprite_frames.get_frame_texture("preview", _shadow_preview_frame)
-	var current_img := SilhouetteShadow._get_unwrapped_image(current_tex)
-	if current_img == null:
-		return
-
 	var img_w := _shadow_alpha_mask.get_width()
 	var img_h := _shadow_alpha_mask.get_height()
 
 	for y in range(img_h):
 		for x in range(img_w):
-			if current_img.get_pixel(x, y).a < 0.01:
-				continue
 			var mask_val: float = _shadow_alpha_mask.get_pixel(x, y).r
 			if mask_val > 0.99:
 				continue
@@ -3360,24 +3401,36 @@ func _apply_to_spriteframes() -> void:
 
 			total_anims += 1
 
-	# Store shadow params as metadata
-	var shadow_params := {
-		"overlap": _shadow_overlap_slider.value if _shadow_overlap_slider else 0.15,
-		"length": _shadow_length_slider.value if _shadow_length_slider else 1.0,
-		"offset_x": _shadow_offset_x_slider.value if _shadow_offset_x_slider else 0.0,
-		"offset_y": _shadow_offset_y_slider.value if _shadow_offset_y_slider else 0.0,
-	}
-	frames.set_meta("shadow_params", shadow_params)
-	_append_apply_log("--- Shadow params saved: %s ---" % str(shadow_params))
+	# Save current direction state before exporting
+	_save_shadow_direction_state()
 
-	# Store shadow mask as PNG bytes (if painted)
-	if _shadow_alpha_mask != null and _has_shadow_mask_painted():
-		var mask_bytes := _shadow_alpha_mask.save_png_to_buffer()
-		frames.set_meta("shadow_mask", mask_bytes)
-		_append_apply_log("  Shadow mask saved (%d bytes)" % mask_bytes.size())
-	elif frames.has_meta("shadow_mask"):
+	# Store per-direction shadow params as metadata
+	var all_shadow_params := {}
+	for dir_key in ["down", "up", "right"]:
+		all_shadow_params[dir_key] = _shadow_params_per_dir.get(dir_key, {
+			"overlap": 0.15, "length": 1.0, "offset_x": 0.0, "offset_y": 0.0,
+		})
+	frames.set_meta("shadow_params", all_shadow_params)
+	_append_apply_log("--- Shadow params saved (per-direction) ---")
+	for dir_key in all_shadow_params:
+		_append_apply_log("  %s: %s" % [dir_key, str(all_shadow_params[dir_key])])
+
+	# Store per-direction shadow masks as PNG bytes
+	var any_mask_saved := false
+	for dir_key in ["down", "up", "right"]:
+		var meta_key := "shadow_mask_%s" % dir_key
+		var mask_img: Image = _shadow_masks_per_dir.get(dir_key, null) as Image
+		if mask_img != null and _has_mask_painted(mask_img):
+			frames.set_meta(meta_key, mask_img.save_png_to_buffer())
+			_append_apply_log("  Shadow mask %s saved" % dir_key)
+			any_mask_saved = true
+		elif frames.has_meta(meta_key):
+			frames.remove_meta(meta_key)
+	# Clean up old single-mask key if present
+	if frames.has_meta("shadow_mask"):
 		frames.remove_meta("shadow_mask")
-		_append_apply_log("  Shadow mask cleared")
+	if not any_mask_saved:
+		_append_apply_log("  No shadow masks painted")
 
 	# Saving phase
 	_apply_progress_bar.value = 1.0

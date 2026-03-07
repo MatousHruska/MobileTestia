@@ -108,20 +108,40 @@ func initialize(body: AnimatedSprite2D) -> void:
 	# Shadow — silhouette projected from body sprite
 	var shadow := SilhouetteShadow.new()
 	shadow.name = "Shadow"
-	# Read per-character shadow params from SpriteFrames metadata (set by sprite pipeline)
+	# Read per-direction shadow params from SpriteFrames metadata (set by sprite pipeline)
 	var shadow_params: Dictionary = body_sprite.sprite_frames.get_meta("shadow_params", {})
 	if shadow_params.is_empty():
 		shadow.shadow_overlap = 0.15  # Default for sprites without metadata
+	elif shadow_params.has("down"):
+		# Per-direction format — start with "down", runtime updates on direction change
+		shadow.apply_params(shadow_params["down"])
+		shadow.set_meta("shadow_params_per_dir", shadow_params)
 	else:
+		# Old flat format
 		shadow.apply_params(shadow_params)
 	body_sprite.add_child(shadow)
-	# Apply shadow mask if stored
-	var mask_bytes: PackedByteArray = body_sprite.sprite_frames.get_meta("shadow_mask", PackedByteArray())
-	if not mask_bytes.is_empty():
-		var mask_img := Image.new()
-		mask_img.load_png_from_buffer(mask_bytes)
-		var mask_tex := ImageTexture.create_from_image(mask_img)
-		shadow.set_shadow_mask(mask_tex)
+	# Load per-direction shadow masks
+	var has_per_dir_masks := false
+	var masks_per_dir := {}
+	for dir_key in ["down", "up", "right"]:
+		var meta_key := "shadow_mask_%s" % dir_key
+		var mbytes: PackedByteArray = body_sprite.sprite_frames.get_meta(meta_key, PackedByteArray())
+		if not mbytes.is_empty():
+			var mimg := Image.new()
+			mimg.load_png_from_buffer(mbytes)
+			masks_per_dir[dir_key] = ImageTexture.create_from_image(mimg)
+			has_per_dir_masks = true
+	if has_per_dir_masks:
+		shadow.set_meta("shadow_masks_per_dir", masks_per_dir)
+		if masks_per_dir.has("down"):
+			shadow.set_shadow_mask(masks_per_dir["down"])
+	else:
+		# Backward compat: old single mask
+		var mask_bytes: PackedByteArray = body_sprite.sprite_frames.get_meta("shadow_mask", PackedByteArray())
+		if not mask_bytes.is_empty():
+			var mask_img := Image.new()
+			mask_img.load_png_from_buffer(mask_bytes)
+			shadow.set_shadow_mask(ImageTexture.create_from_image(mask_img))
 	# Load pre-extracted anchor metadata from SpriteFrames (avoids GPU readback)
 	_load_anchor_metadata()
 
