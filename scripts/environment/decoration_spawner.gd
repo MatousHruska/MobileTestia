@@ -187,7 +187,7 @@ shader_type canvas_item;
 uniform sampler2D normal_texture : hint_normal;
 
 void fragment() {
-	COLOR = texture(TEXTURE, UV);
+	COLOR = texture(TEXTURE, UV) * COLOR;
 	NORMAL_MAP = texture(normal_texture, UV).rgb;
 }
 """
