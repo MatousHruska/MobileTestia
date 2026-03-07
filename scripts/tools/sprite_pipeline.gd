@@ -2565,8 +2565,6 @@ func _start_export() -> void:
 		_append_log("Saved normal: %s" % output_path)
 		normal_count += 1
 
-	# TODO: Shadow pipeline — hook new shadow export here
-
 	_append_log("\nExported %d color + %d normal files to %s/" % [count, normal_count, output_dir])
 	_set_status("Export complete! %d files saved." % (count + normal_count))
 	_exported_folder = model_name

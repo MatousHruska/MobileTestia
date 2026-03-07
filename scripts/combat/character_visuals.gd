@@ -105,7 +105,11 @@ func initialize(body: AnimatedSprite2D) -> void:
 	_create_overlay_layer()
 	# Ensure weapon starts hidden
 	set_weapon_visible(false)
-	# TODO: Shadow system — hook new shadow implementation here
+	# Shadow — silhouette projected from body sprite, angle/opacity from ZoneMood
+	var shadow := SilhouetteShadow.new()
+	shadow.name = "Shadow"
+	shadow.shadow_overlap = 0.0
+	body_sprite.add_child(shadow)
 	# Load pre-extracted anchor metadata from SpriteFrames (avoids GPU readback)
 	_load_anchor_metadata()
 
