@@ -85,6 +85,10 @@ func set_shadow_mask(mask_texture: Texture2D) -> void:
 func _process(_delta: float) -> void:
 	if _animated_parent:
 		_sync_animated_frame()
+		# Sync flip_h every frame — flip can change without texture change
+		var flip_x := -1.0 if _animated_parent.flip_h else 1.0
+		if scale.x != flip_x:
+			scale.x = flip_x
 
 
 func _sync_animated_frame() -> void:
@@ -159,8 +163,10 @@ func _update_shadow_transform() -> void:
 		offset = Vector2(_parent_offset.x, -foot_y)
 		position = Vector2(shadow_offset_x, _parent_offset.y + foot_y - overlap + shadow_offset_y)
 
-	# Flip vertically and stretch by shadow_length
-	scale = Vector2(1.0, -shadow_length)
+	# Flip vertically and stretch by shadow_length.
+	# Mirror horizontally when parent AnimatedSprite2D uses flip_h (left-facing).
+	var flip_x := -1.0 if (_animated_parent and _animated_parent.flip_h) else 1.0
+	scale = Vector2(flip_x, -shadow_length)
 
 	# Rotation pivots around the trunk base (set by offset above)
 	rotation = shadow_angle
