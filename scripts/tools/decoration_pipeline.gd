@@ -1916,6 +1916,7 @@ func _start_export() -> void:
 				"offset_y": _shadow_offset_y_slider.value,
 				"overlap": _shadow_overlap_slider.value,
 				"hide_behind": _hide_behind_check.button_pressed if _hide_behind_check else false,
+				"wind_sway": _wind_sway_check.button_pressed if _wind_sway_check else false,
 			}
 			var shadow_json := JSON.stringify(shadow_params, "  ")
 			var shadow_path := ProjectSettings.globalize_path(output_dir + "/shadow.json")
@@ -2014,6 +2015,7 @@ func _regenerate_atlas(cached_images: Dictionary = {}) -> void:
 					"has_shadow": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/shadow.json" % [DECORATIONS_DIR, folder_name])),
 					"has_shadow_mask": FileAccess.file_exists(ProjectSettings.globalize_path("%s/%s/shadow_mask.png" % [DECORATIONS_DIR, folder_name])),
 					"has_hide_behind": _read_shadow_flag(folder_name, "hide_behind"),
+					"has_wind_sway": _read_shadow_flag(folder_name, "wind_sway"),
 				})
 		folder_name = dir.get_next()
 	dir.list_dir_end()
@@ -2072,6 +2074,7 @@ func _regenerate_atlas(cached_images: Dictionary = {}) -> void:
 			"has_shadow": entry["has_shadow"],
 			"has_shadow_mask": entry.get("has_shadow_mask", false),
 			"has_hide_behind": entry.get("has_hide_behind", false),
+			"has_wind_sway": entry.get("has_wind_sway", false),
 		})
 
 	# Save atlas
