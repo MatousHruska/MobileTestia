@@ -1,6 +1,33 @@
 {
-  "columns": 0,
-  "decorations": [],
-  "rows": 0,
+  "columns": 2,
+  "decorations": [
+    {
+      "decoration_id": "meshy_ai_pinetreesnow1_0307181350_texture",
+      "has_hide_behind": false,
+      "has_normal": true,
+      "has_occluder": true,
+      "has_shadow": true,
+      "has_shadow_mask": true,
+      "has_wind_sway": false,
+      "source_height": 122,
+      "source_width": 48,
+      "tile_x": 0,
+      "tile_y": 0
+    },
+    {
+      "decoration_id": "pinetreesnow1",
+      "has_hide_behind": true,
+      "has_normal": true,
+      "has_occluder": true,
+      "has_shadow": true,
+      "has_shadow_mask": true,
+      "has_wind_sway": true,
+      "source_height": 99,
+      "source_width": 38,
+      "tile_x": 1,
+      "tile_y": 0
+    }
+  ],
+  "rows": 1,
   "tile_size": 64
 }
