@@ -5,7 +5,7 @@
 [ext_resource type="SpriteFrames" path="res://resources/player_sprites.tres" id="3_sprites"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_collision"]
-size = Vector2(20, 30)
+size = Vector2(16, 10)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hitbox"]
 size = Vector2(20, 30)
@@ -16,17 +16,16 @@ collision_mask = 1
 script = ExtResource("1_player")
 
 [node name="Sprite" type="AnimatedSprite2D" parent="."]
+position = Vector2(0, -20)
 sprite_frames = ExtResource("3_sprites")
 script = ExtResource("2_animator")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(0, 8)
 shape = SubResource("RectangleShape2D_collision")
 
 [node name="HitboxPivot" type="Node2D" parent="."]
 
 [node name="AttackHitbox" type="Area2D" parent="HitboxPivot"]
-position = Vector2(0, 20)
 collision_layer = 4
 collision_mask = 8
 monitoring = false

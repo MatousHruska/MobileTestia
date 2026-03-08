@@ -81,6 +81,8 @@ func _setup_sprite() -> void:
 	# Always create a new AnimatedSprite2D
 	sprite = AnimatedSprite2D.new()
 	sprite.name = "Sprite2D"
+	# Offset sprite upward so the node origin sits at the feet for correct y-sorting
+	sprite.position.y = -20
 	add_child(sprite)
 
 	if sprite_frames:
@@ -103,6 +105,8 @@ func _setup_character_visuals() -> void:
 	character_visuals = cv_script.new()
 	character_visuals.name = "CharacterVisuals"
 	add_child(character_visuals)
+	# Match sprite offset so weapon/effect layers align with the body
+	character_visuals.position = sprite.position
 	character_visuals.initialize(sprite)
 
 

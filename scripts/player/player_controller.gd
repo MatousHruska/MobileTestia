@@ -177,6 +177,8 @@ func _setup_character_visuals() -> void:
 	character_visuals.name = "CharacterVisuals"
 	add_child(character_visuals)
 	if animator:
+		# Match sprite offset so weapon/effect layers align with the body
+		character_visuals.position = animator.position
 		character_visuals.initialize(animator)  # PlayerAnimator IS the AnimatedSprite2D
 
 	# Load weapon visual for currently equipped weapon

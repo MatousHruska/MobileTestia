@@ -14,3 +14,7 @@ extends Resource
 @export_group("Particles")
 @export var particle_type: String = ""  ## "snow", "dust_motes", "embers", or "" for none
 @export var particle_tint: Color = Color.WHITE
+
+@export_group("Shadows")
+@export var shadow_angle: float = 0.5  ## Sun direction in radians
+@export var shadow_opacity: float = 0.3  ## 0.0 = invisible, 1.0 = solid black
