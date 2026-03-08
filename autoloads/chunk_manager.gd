@@ -142,6 +142,9 @@ var _patrol_waypoints: Dictionary = {}
 ## Interior region data per chunk: { chunk_id: Array of {x, y, region_value} }
 var _interior_region_data: Dictionary = {}
 
+## Terrain type data per chunk: { chunk_id: Dictionary { Vector2i(x,y): String (terrain_id) } }
+var _terrain_data: Dictionary = {}
+
 ## Roof TileMapLayers per chunk per region: { chunk_id: { region_value: TileMapLayer } }
 var _roof_layers: Dictionary = {}
 
@@ -269,6 +272,7 @@ func cleanup_zone() -> void:
 	_chunk_entities.clear()
 	_zone_entities.clear()
 	_player_spawns.clear()
+	_terrain_data.clear()
 	player_chunk = Vector2i.ZERO
 
 	print("[SAVELOAD] CM cleanup: AFTER: initialized=%s, zone=%s" % [_initialized, current_zone_id])
@@ -500,6 +504,25 @@ func get_current_interior_region() -> int:
 	return _current_interior_region
 
 
+## Get the terrain type ID at a world position.
+## Returns terrain_id string (e.g., "terrain_snow") or "" if no terrain data.
+func get_terrain_at(world_pos: Vector2) -> String:
+	var chunk_coords := world_to_chunk(world_pos)
+	var zone_name := current_zone_id
+	if zone_name.begins_with("zone_"):
+		zone_name = zone_name.substr(5)
+	var chunk_id := "chunk_%s_%d_%d" % [zone_name, chunk_coords.x, chunk_coords.y]
+
+	if not _terrain_data.has(chunk_id):
+		return ""
+
+	var chunk_origin := chunk_to_world(chunk_coords)
+	var local_pos := world_pos - chunk_origin
+	var tile_key := Vector2i(int(local_pos.x / TILE_SIZE), int(local_pos.y / TILE_SIZE))
+
+	return _terrain_data[chunk_id].get(tile_key, "")
+
+
 ## Set roof visibility for a specific region across all loaded chunks
 ## alpha: 0.0 = fully hidden, 1.0 = fully visible
 func set_roof_alpha_for_region(region_value: int, alpha: float) -> void:
@@ -686,6 +709,16 @@ func _create_chunk_tilemap(chunk_id: String, tile_data: Dictionary, chunk_node: 
 	if not interior_regions.is_empty():
 		_interior_region_data[chunk_id] = interior_regions
 		Debug.log("ChunkManager", "Stored %d interior region tiles for %s" % [interior_regions.size(), chunk_id])
+
+	# Store ground/terrain data for this chunk (used by FootprintManager etc.)
+	var ground_tiles: Array = tile_data.get("ground", [])
+	if not ground_tiles.is_empty():
+		var terrain_lookup := {}
+		for tile in ground_tiles:
+			var key := Vector2i(int(tile.get("x", 0)), int(tile.get("y", 0)))
+			terrain_lookup[key] = tile.get("terrain_id", "")
+		_terrain_data[chunk_id] = terrain_lookup
+		Debug.log("ChunkManager", "Stored %d terrain tiles for %s" % [ground_tiles.size(), chunk_id])
 
 	# Create roof layers (z_index +10 so roofs render above player/entities)
 	# Group roof tiles by region_value for independent visibility control
@@ -1855,6 +1888,7 @@ func _cleanup_chunk_entities(chunk_id: String) -> void:
 	# Clean up interior region and roof layer tracking
 	_interior_region_data.erase(chunk_id)
 	_roof_layers.erase(chunk_id)
+	_terrain_data.erase(chunk_id)
 
 	Debug.log("ChunkManager", "Cleaned up entities for chunk: %s" % chunk_id)
 
