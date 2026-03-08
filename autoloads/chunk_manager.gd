@@ -275,6 +275,10 @@ func cleanup_zone() -> void:
 	_terrain_data.clear()
 	player_chunk = Vector2i.ZERO
 
+	var fp_mgr := get_node_or_null("/root/FootprintManager")
+	if fp_mgr:
+		fp_mgr.clear_footprints()
+
 	print("[SAVELOAD] CM cleanup: AFTER: initialized=%s, zone=%s" % [_initialized, current_zone_id])
 	Debug.info("ChunkManager", "Zone cleanup complete")
 	zone_cleanup.emit()
