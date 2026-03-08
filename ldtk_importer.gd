@@ -271,7 +271,8 @@ func _extract_chunk_tiles(level: Dictionary, bounds: Rect2) -> Dictionary:
 		"collision": [],        # Array of {x, y}
 		"visual_tiles": [],     # Array of {x, y, tile_id, flip_x, flip_y}
 		"interior_regions": [], # Array of {x, y, region_value}
-		"roofs": []             # Array of {x, y, roof_type, region_value}
+		"roofs": [],            # Array of {x, y, roof_type, region_value}
+		"ground": []            # Array of {x, y, terrain_id}
 	}
 
 	# First pass: extract interior regions to build region lookup
@@ -298,6 +299,8 @@ func _extract_chunk_tiles(level: Dictionary, bounds: Rect2) -> Dictionary:
 				result.visual_tiles = _extract_tile_layer_tiles(layer, bounds)
 			"roofs":
 				result.roofs = _extract_roof_tiles(layer, bounds, region_grid)
+			"ground":
+				result.ground = _extract_ground_tiles(layer, bounds)
 
 	return result
 
@@ -331,6 +334,50 @@ func _extract_collision_tiles(layer: Dictionary, bounds: Rect2) -> Array:
 		tiles.append({
 			"x": local_x,
 			"y": local_y
+		})
+
+	return tiles
+
+
+func _extract_ground_tiles(layer: Dictionary, bounds: Rect2) -> Array:
+	## Extract ground/terrain type tiles within bounds.
+	## IntGrid values map to terrain IDs from terrain_types.json.
+	var tiles: Array = []
+	var grid_size: int = layer.get("__gridSize", 16)
+	var c_wid: int = layer.get("__cWid", 0)
+	var csv: Array = layer.get("intGridCsv", [])
+
+	var value_to_terrain := {
+		1: "terrain_grass",
+		2: "terrain_dirt",
+		3: "terrain_stone",
+		4: "terrain_water",
+		5: "terrain_wall",
+		6: "terrain_sand",
+		7: "terrain_snow",
+		8: "terrain_void",
+	}
+
+	for i in range(csv.size()):
+		var value: int = csv[i]
+		if value == 0 or not value_to_terrain.has(value):
+			continue
+
+		var gx: int = i % c_wid
+		var gy: int = int(i / c_wid)
+		var px: float = gx * grid_size
+		var py: float = gy * grid_size
+
+		if not bounds.has_point(Vector2(px, py)):
+			continue
+
+		var local_x: int = int((px - bounds.position.x) / grid_size)
+		var local_y: int = int((py - bounds.position.y) / grid_size)
+
+		tiles.append({
+			"x": local_x,
+			"y": local_y,
+			"terrain_id": value_to_terrain[value]
 		})
 
 	return tiles
