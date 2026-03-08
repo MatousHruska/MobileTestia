@@ -522,7 +522,7 @@ func get_terrain_at(world_pos: Vector2) -> String:
 
 	var chunk_origin := chunk_to_world(chunk_coords)
 	var local_pos := world_pos - chunk_origin
-	var tile_key := Vector2i(int(local_pos.x / TILE_SIZE), int(local_pos.y / TILE_SIZE))
+	var tile_key := Vector2i(floori(local_pos.x / TILE_SIZE), floori(local_pos.y / TILE_SIZE))
 
 	return _terrain_data[chunk_id].get(tile_key, "")
 

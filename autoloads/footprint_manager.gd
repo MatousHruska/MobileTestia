@@ -150,8 +150,10 @@ func _spawn_decal(pos: Vector2, direction: Vector2, tint: Color) -> void:
 	var tween := decal.create_tween()
 	tween.tween_property(decal, "modulate:a", 0.0, FADE_DURATION)
 	tween.tween_callback(func() -> void:
-		_footprint_count -= 1
-		decal.queue_free()
+		if _footprint_count > 0:
+			_footprint_count -= 1
+		if is_instance_valid(decal):
+			decal.queue_free()
 	)
 
 
