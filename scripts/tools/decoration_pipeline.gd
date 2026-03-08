@@ -8,7 +8,7 @@ extends Control
 # CONSTANTS
 #===============================================================================
 
-const IMPORT_DIR := "res://assets/3d_imports"
+const IMPORT_DIR := "res://assets/3d_imports/Decorations"
 const DECORATIONS_DIR := "res://assets/decorations"
 const ATLAS_DIR := "res://assets/decorations/_atlas"
 const TOOLS_MENU_PATH := "res://scenes/tools/tools_menu.tscn"
@@ -174,6 +174,7 @@ var _shadow_mask_tex: ImageTexture = null  # Cached mask texture for preview
 
 # Hide-behind-character state
 var _hide_behind_check: CheckButton = null
+var _wind_sway_check: CheckButton = null
 
 # Step 6 refs (Preview & Adjust)
 var _preview_angle_toggle: HBoxContainer
@@ -654,6 +655,8 @@ func _on_model_selected(index: int) -> void:
 		_shadow_alpha_mask = null
 		if _hide_behind_check:
 			_hide_behind_check.button_pressed = false
+		if _wind_sway_check:
+			_wind_sway_check.button_pressed = false
 		_shadow_preview_tex = null
 		_shadow_mask_tex = null
 
@@ -696,6 +699,8 @@ func _on_2d_file_selected(path: String) -> void:
 		_shadow_alpha_mask = null
 		if _hide_behind_check:
 			_hide_behind_check.button_pressed = false
+		if _wind_sway_check:
+			_wind_sway_check.button_pressed = false
 		_shadow_preview_tex = null
 		_shadow_mask_tex = null
 
@@ -1000,6 +1005,8 @@ func _build_step1(parent: VBoxContainer) -> void:
 		_shadow_alpha_mask = null
 		if _hide_behind_check:
 			_hide_behind_check.button_pressed = false
+		if _wind_sway_check:
+			_wind_sway_check.button_pressed = false
 		_shadow_preview_tex = null
 		_shadow_mask_tex = null  # Reset mask for new decoration
 		if deco_id_input.text != _decoration_id:
@@ -1300,6 +1307,13 @@ func _build_step5(parent: VBoxContainer) -> void:
 	_shadow_controls_container.add_child(overlap_row[0])
 	_shadow_overlap_slider = overlap_row[1]
 	_shadow_overlap_slider.value_changed.connect(func(_v: float) -> void: _update_shadow_preview())
+
+	_wind_sway_check = CheckButton.new()
+	_wind_sway_check.text = "Wind Sway"
+	_wind_sway_check.tooltip_text = "Subtle horizontal oscillation simulating wind"
+	_wind_sway_check.button_pressed = false
+	_style_checkbutton_transparent(_wind_sway_check)
+	_shadow_controls_container.add_child(_wind_sway_check)
 
 	# Preview-only controls (not exported)
 	_shadow_controls_container.add_child(HSeparator.new())
