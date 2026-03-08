@@ -25,6 +25,9 @@ var _current_dir := ""  ## Tracked direction for per-direction param/mask switch
 var _original_parent: Node2D  ## Parent sprite we were attached to before reparenting
 var _in_shadow_group := false  ## True when reparented into the shared CanvasGroup
 var _local_offset := Vector2.ZERO  ## Shadow offset from parent origin (computed by transform)
+var _inherited_scale := Vector2.ONE  ## Scale inherited from parent hierarchy (captured before reparenting)
+var _wind_sway_enabled := false  ## Whether this shadow oscillates horizontally
+var _wind_sway_phase := 0.0  ## Random phase offset (radians) for desynchronized sway
 
 func _ready() -> void:
 	add_to_group("shadows")
@@ -75,6 +78,10 @@ func _try_reparent_to_shadow_group() -> void:
 	var group: CanvasGroup = env_mgr.get_shadow_group()
 	if not group or not group.is_inside_tree():
 		return
+	# Capture the scale inherited from parent hierarchy before reparenting.
+	# global_scale includes our own scale, so divide it out to get parent contribution.
+	var own_scale := scale
+	_inherited_scale = global_scale / own_scale
 	# Remember our global position before reparenting
 	var gpos := global_position
 	get_parent().remove_child(self)
@@ -82,6 +89,8 @@ func _try_reparent_to_shadow_group() -> void:
 	global_position = gpos
 	show_behind_parent = false  # No longer relevant — we're in the CanvasGroup
 	_in_shadow_group = true
+	# Re-apply transform with inherited scale factored in
+	_update_shadow_transform()
 
 
 ## Call this to apply parameter changes at runtime.
@@ -96,6 +105,10 @@ func apply_params(params: Dictionary) -> void:
 		# Only set per-shadow opacity when NOT in the shared group (e.g., pipeline preview)
 		if not _in_shadow_group and _shadow_material:
 			_shadow_material.set_shader_parameter("shadow_color", Color(0.0, 0.0, 0.0, shadow_opacity))
+	if params.has("wind_sway"):
+		_wind_sway_enabled = params["wind_sway"]
+		if _wind_sway_enabled and _wind_sway_phase == 0.0:
+			_wind_sway_phase = randf() * TAU
 	_update_shadow_transform()
 
 
@@ -112,7 +125,7 @@ func _process(_delta: float) -> void:
 	# Track original parent's position when reparented into shadow group
 	if _in_shadow_group:
 		if _original_parent and is_instance_valid(_original_parent):
-			global_position = _original_parent.global_position + _local_offset
+			global_position = _original_parent.global_position + _local_offset * _inherited_scale
 		else:
 			# Original parent was freed — clean up
 			queue_free()
@@ -124,6 +137,11 @@ func _process(_delta: float) -> void:
 		var flip_x := -1.0 if _animated_parent.flip_h else 1.0
 		if scale.x != flip_x:
 			scale.x = flip_x
+
+	# Wind sway — subtle horizontal oscillation for decoration shadows
+	if _wind_sway_enabled:
+		var sway_offset := sin(Time.get_ticks_msec() * 0.001 * 0.8 + _wind_sway_phase) * 1.5
+		global_position.x += sway_offset
 
 
 func _sync_animated_frame() -> void:
@@ -234,8 +252,9 @@ func _update_shadow_transform() -> void:
 
 	# Flip vertically and stretch by shadow_length.
 	# Mirror horizontally when parent AnimatedSprite2D uses flip_h (left-facing).
+	# Apply inherited scale from parent hierarchy (captured before CanvasGroup reparenting).
 	var flip_x := -1.0 if (_animated_parent and _animated_parent.flip_h) else 1.0
-	scale = Vector2(flip_x, -shadow_length)
+	scale = Vector2(flip_x * _inherited_scale.x, -shadow_length * _inherited_scale.y)
 
 	# Rotation pivots around the trunk base (set by offset above)
 	rotation = shadow_angle
