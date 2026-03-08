@@ -16,6 +16,8 @@ Private Const COL_TT_HAS_COLLISION As Integer = 4
 Private Const COL_TT_MOVEMENT_COST As Integer = 5
 Private Const COL_TT_FOOTSTEP_SOUND As Integer = 6
 Private Const COL_TT_CAN_SPAWN_ON As Integer = 7
+Private Const COL_TT_HAS_FOOTPRINTS As Integer = 8
+Private Const COL_TT_FOOTPRINT_TINT As Integer = 9
 
 '===============================================================================
 ' TERRAIN TYPES
@@ -102,6 +104,28 @@ Public Sub ValidateTerrainTypes()
             End If
         End If
 
+        ' Validate has_footprints is valid boolean
+        Dim hasFootprints As String
+        hasFootprints = LCase(Trim(ws.Cells(i, COL_TT_HAS_FOOTPRINTS).Value))
+        If Len(hasFootprints) > 0 Then
+            If hasFootprints <> "true" And hasFootprints <> "false" And _
+               hasFootprints <> "1" And hasFootprints <> "0" And _
+               hasFootprints <> "yes" And hasFootprints <> "no" Then
+                LogValidationError errors, errorCount, i, "Has Footprints", _
+                    "Must be TRUE or FALSE"
+            End If
+        End If
+
+        ' Validate footprint_tint is hex format
+        Dim footprintTint As String
+        footprintTint = Trim(ws.Cells(i, COL_TT_FOOTPRINT_TINT).Value)
+        If Len(footprintTint) > 0 Then
+            If Left(footprintTint, 1) <> "#" Or Len(footprintTint) <> 7 Then
+                LogValidationError errors, errorCount, i, "Footprint Tint", _
+                    "Color must be hex format: #RRGGBB (e.g., #FFFFFF)"
+            End If
+        End If
+
 NextTerrainType:
     Next i
 
@@ -158,6 +182,15 @@ Public Sub ExportTerrainTypesData()
             canSpawnOn = "false"
         End If
 
+        ' Handle boolean has_footprints field
+        Dim hasFootprints2 As String
+        hasFootprints2 = LCase(Trim(ws.Cells(i, COL_TT_HAS_FOOTPRINTS).Value))
+        If hasFootprints2 = "true" Or hasFootprints2 = "1" Or hasFootprints2 = "yes" Then
+            hasFootprints2 = "true"
+        Else
+            hasFootprints2 = "false"
+        End If
+
         json = json & "    {" & vbCrLf
         json = json & "      ""id"": """ & EscapeJsonString(id) & """," & vbCrLf
         json = json & "      ""name"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TT_NAME))) & """," & vbCrLf
@@ -165,7 +198,9 @@ Public Sub ExportTerrainTypesData()
         json = json & "      ""has_collision"": " & hasCollision & "," & vbCrLf
         json = json & "      ""movement_cost"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_TT_MOVEMENT_COST), 1)) & "," & vbCrLf
         json = json & "      ""footstep_sound"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TT_FOOTSTEP_SOUND))) & """," & vbCrLf
-        json = json & "      ""can_spawn_on"": " & canSpawnOn & "" & vbCrLf
+        json = json & "      ""can_spawn_on"": " & canSpawnOn & "," & vbCrLf
+        json = json & "      ""has_footprints"": " & hasFootprints2 & "," & vbCrLf
+        json = json & "      ""footprint_tint"": """ & EscapeJsonString(GetDefaultString(ws.Cells(i, COL_TT_FOOTPRINT_TINT), "#FFFFFF")) & """" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -191,7 +226,8 @@ Public Sub SetupTerrainTypesSheet()
 
     Dim headers As Variant
     headers = Array("id", "name", "placeholder_color", "has_collision", _
-                    "movement_cost", "footstep_sound", "can_spawn_on")
+                    "movement_cost", "footstep_sound", "can_spawn_on", _
+                    "has_footprints", "footprint_tint")
 
     SetupSheetHeaders ws, headers
 
@@ -203,4 +239,6 @@ Public Sub SetupTerrainTypesSheet()
     SafeAddComment ws.Cells(1, 5), "Movement speed multiplier (1.0 = normal, 2.0 = half speed, 0.0 = impassable)"
     SafeAddComment ws.Cells(1, 6), "Sound effect ID for footsteps (e.g., sfx_step_grass)"
     SafeAddComment ws.Cells(1, 7), "TRUE/FALSE - Can enemies spawn on this terrain?"
+    SafeAddComment ws.Cells(1, 8), "TRUE/FALSE - Does this terrain leave footprint marks?"
+    SafeAddComment ws.Cells(1, 9), "Hex color for footprint tint (#RRGGBB, e.g., #FFFFFF for snow)"
 End Sub
