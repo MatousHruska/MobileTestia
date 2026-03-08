@@ -3,6 +3,9 @@
 class_name SilhouetteShadow
 extends Sprite2D
 
+const WIND_SWAY_SPEED := 0.8  ## Oscillation speed in radians/sec (~8s full cycle)
+const WIND_SWAY_AMPLITUDE := 1.5  ## Max horizontal displacement in pixels
+
 ## How far the shadow stretches (1.0 = same height as sprite).
 @export_range(0.1, 3.0) var shadow_length := 1.0
 ## Rotation angle in radians — rotates the shadow around the trunk base.
@@ -140,7 +143,7 @@ func _process(_delta: float) -> void:
 
 	# Wind sway — subtle horizontal oscillation for decoration shadows
 	if _wind_sway_enabled:
-		var sway_offset := sin(Time.get_ticks_msec() * 0.001 * 0.8 + _wind_sway_phase) * 1.5
+		var sway_offset := sin(Time.get_ticks_msec() * 0.001 * WIND_SWAY_SPEED + _wind_sway_phase) * WIND_SWAY_AMPLITUDE
 		global_position.x += sway_offset
 
 
