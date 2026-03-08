@@ -7,7 +7,9 @@
       "has_collision": false,
       "movement_cost": 1,
       "footstep_sound": "sfx_step_grass",
-      "can_spawn_on": true
+      "can_spawn_on": true,
+      "has_footprints": false,
+      "footprint_tint": "#FFFFFF"
     },
     {
       "id": "terrain_dirt",
@@ -16,7 +18,9 @@
       "has_collision": false,
       "movement_cost": 1,
       "footstep_sound": "sfx_step_dirt",
-      "can_spawn_on": true
+      "can_spawn_on": true,
+      "has_footprints": true,
+      "footprint_tint": "#6b5344"
     },
     {
       "id": "terrain_stone",
@@ -25,7 +29,9 @@
       "has_collision": false,
       "movement_cost": 1,
       "footstep_sound": "sfx_step_stone",
-      "can_spawn_on": true
+      "can_spawn_on": true,
+      "has_footprints": false,
+      "footprint_tint": "#FFFFFF"
     },
     {
       "id": "terrain_water",
@@ -34,7 +40,9 @@
       "has_collision": true,
       "movement_cost": 0,
       "footstep_sound": "sfx_step_water",
-      "can_spawn_on": false
+      "can_spawn_on": false,
+      "has_footprints": false,
+      "footprint_tint": "#FFFFFF"
     },
     {
       "id": "terrain_wall",
@@ -43,7 +51,9 @@
       "has_collision": true,
       "movement_cost": 0,
       "footstep_sound": "",
-      "can_spawn_on": false
+      "can_spawn_on": false,
+      "has_footprints": false,
+      "footprint_tint": "#FFFFFF"
     },
     {
       "id": "terrain_sand",
@@ -52,7 +62,9 @@
       "has_collision": false,
       "movement_cost": 1,
       "footstep_sound": "sfx_step_sand",
-      "can_spawn_on": true
+      "can_spawn_on": true,
+      "has_footprints": true,
+      "footprint_tint": "#c4a35a"
     },
     {
       "id": "terrain_snow",
@@ -61,7 +73,9 @@
       "has_collision": false,
       "movement_cost": 1,
       "footstep_sound": "sfx_step_snow",
-      "can_spawn_on": true
+      "can_spawn_on": true,
+      "has_footprints": true,
+      "footprint_tint": "#72798c"
     },
     {
       "id": "terrain_void",
@@ -70,7 +84,9 @@
       "has_collision": true,
       "movement_cost": 0,
       "footstep_sound": "",
-      "can_spawn_on": false
+      "can_spawn_on": false,
+      "has_footprints": false,
+      "footprint_tint": "#FFFFFF"
     }
   ]
 }

@@ -1,5 +1,6 @@
 {
 	"collision": [],
+	"ground": [],
 	"interior_regions": [
 		{
 			"region_value": 1,

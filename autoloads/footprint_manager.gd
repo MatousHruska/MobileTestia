@@ -105,7 +105,7 @@ func _try_spawn_footprint(pos: Vector2, direction: Vector2) -> void:
 			return
 
 	# Parse tint color from terrain data
-	var tint_hex: String = terrain_data.get("footprint_tint", "#FFFFFF")
+	var tint_hex: String = terrain_data.get("footprint_tint", "#FFFFFF").strip_edges()
 	var tint := Color.from_string(tint_hex, Color.WHITE)
 	tint.a = 0.6  # Start semi-transparent
 
@@ -127,7 +127,7 @@ func _spawn_decal(pos: Vector2, direction: Vector2, tint: Color) -> void:
 	var decal := Sprite2D.new()
 	decal.texture = _footprint_texture
 	decal.modulate = tint
-	decal.z_index = -1  # Below characters
+	decal.z_index = 1  # Above visual tiles, below roofs (z=10)
 
 	# Position with left/right foot offset
 	_right_foot = not _right_foot
@@ -164,7 +164,7 @@ func _spawn_step_puff(pos: Vector2, tint: Color) -> void:
 	particles.lifetime = PUFF_LIFETIME
 	particles.one_shot = true
 	particles.explosiveness = 1.0
-	particles.z_index = -1
+	particles.z_index = 1  # Match footprint decal layer
 
 	var mat := ParticleProcessMaterial.new()
 	mat.direction = Vector3(0, -1, 0)  # Upward drift
@@ -196,10 +196,20 @@ func _remove_oldest_footprint() -> void:
 
 
 func _find_world_root() -> Node2D:
-	# DualViewport autoload has get_world_root() method
+	# Footprints must be parented inside the zone node (not world_root)
+	# so their z_index is compared relative to ChunkRoot/TileMapLayers.
+	# If parented to world_root, footprints at z=-1 render behind the
+	# entire zone node at z=0 (which contains all visual tiles).
 	var dvp := get_node_or_null("/root/DualViewport")
 	if dvp and dvp.has_method("get_world_root"):
-		return dvp.get_world_root()
+		var world_root = dvp.get_world_root()
+		if world_root:
+			# Find the zone node inside world_root (same logic as ChunkManager)
+			for child in world_root.get_children():
+				if child is ZoneBase:
+					return child as Node2D
+			# Fallback to world_root if no zone found
+			return world_root
 	# Fallback: look for world_root in scene tree
 	var nodes := get_tree().get_nodes_in_group("world_root")
 	if not nodes.is_empty():
