@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Texture2D" uid="uid://bvrdktn8lehws" path="res://assets/decorations/pinetree2/sprite.png" id="1_tree"]
 [ext_resource type="Script" path="res://scripts/environment/silhouette_shadow.gd" id="2_script"]
+[ext_resource type="Script" path="res://scripts/test/shadow_test_controls.gd" id="3_controls"]
 
 [node name="ShadowTest" type="Node2D"]
 
@@ -17,7 +18,6 @@ texture = ExtResource("1_tree")
 [node name="Shadow" type="Sprite2D" parent="Tree1"]
 script = ExtResource("2_script")
 shadow_length = 1.0
-shadow_skew = 0.5
 shadow_opacity = 0.3
 
 [node name="Tree2" type="Sprite2D" parent="."]
@@ -27,7 +27,6 @@ texture = ExtResource("1_tree")
 [node name="Shadow" type="Sprite2D" parent="Tree2"]
 script = ExtResource("2_script")
 shadow_length = 1.0
-shadow_skew = 0.5
 shadow_opacity = 0.3
 
 [node name="Tree3" type="Sprite2D" parent="."]
@@ -38,7 +37,6 @@ texture = ExtResource("1_tree")
 [node name="Shadow" type="Sprite2D" parent="Tree3"]
 script = ExtResource("2_script")
 shadow_length = 1.0
-shadow_skew = 0.5
 shadow_opacity = 0.3
 
 [node name="Tree4" type="Sprite2D" parent="."]
@@ -49,5 +47,11 @@ texture = ExtResource("1_tree")
 [node name="Shadow" type="Sprite2D" parent="Tree4"]
 script = ExtResource("2_script")
 shadow_length = 1.2
-shadow_skew = 0.5
 shadow_opacity = 0.25
+
+[node name="Controls" type="Control" parent="."]
+layout_mode = 0
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 1
+script = ExtResource("3_controls")

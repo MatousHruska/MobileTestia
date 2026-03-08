@@ -19,6 +19,8 @@ Private Const COL_ZM_BLOOM_INTENSITY As Integer = 5
 Private Const COL_ZM_BLOOM_THRESHOLD As Integer = 6
 Private Const COL_ZM_PARTICLE_TYPE As Integer = 7
 Private Const COL_ZM_PARTICLE_TINT As Integer = 8
+Private Const COL_ZM_SHADOW_ANGLE As Integer = 9
+Private Const COL_ZM_SHADOW_OPACITY As Integer = 10
 
 ' Valid dropdown values
 Private validParticleTypes() As String
@@ -120,6 +122,22 @@ Public Sub ValidateZoneMoods()
             End If
         End If
 
+        ' Validate shadow_angle range (-3.14 to 3.14)
+        Dim shadowAngle As Double
+        shadowAngle = GetDefaultNumeric(ws.Cells(i, COL_ZM_SHADOW_ANGLE), 0.5)
+        If shadowAngle < -3.14 Or shadowAngle > 3.14 Then
+            LogValidationError errors, errorCount, i, "Shadow Angle", _
+                "Must be between -3.14 and 3.14 (radians)"
+        End If
+
+        ' Validate shadow_opacity range (0.0 to 1.0)
+        Dim shadowOpacity As Double
+        shadowOpacity = GetDefaultNumeric(ws.Cells(i, COL_ZM_SHADOW_OPACITY), 0.3)
+        If shadowOpacity < 0 Or shadowOpacity > 1 Then
+            LogValidationError errors, errorCount, i, "Shadow Opacity", _
+                "Must be between 0.0 and 1.0"
+        End If
+
 NextMood:
     Next i
 
@@ -177,7 +195,9 @@ Public Sub ExportZoneMoodsData()
         json = json & "      ""bloom_intensity"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_ZM_BLOOM_INTENSITY), 0.8)) & "," & vbCrLf
         json = json & "      ""bloom_threshold"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_ZM_BLOOM_THRESHOLD), 0.7)) & "," & vbCrLf
         json = json & "      ""particle_type"": """ & EscapeJsonString(Trim(LCase(GetDefaultString(ws.Cells(i, COL_ZM_PARTICLE_TYPE))))) & """," & vbCrLf
-        json = json & "      ""particle_tint"": """ & EscapeJsonString(Trim(GetDefaultString(ws.Cells(i, COL_ZM_PARTICLE_TINT), "#FFFFFF"))) & """" & vbCrLf
+        json = json & "      ""particle_tint"": """ & EscapeJsonString(Trim(GetDefaultString(ws.Cells(i, COL_ZM_PARTICLE_TINT), "#FFFFFF"))) & """," & vbCrLf
+        json = json & "      ""shadow_angle"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_ZM_SHADOW_ANGLE), 0.5)) & "," & vbCrLf
+        json = json & "      ""shadow_opacity"": " & FormatJsonNumber(GetDefaultNumeric(ws.Cells(i, COL_ZM_SHADOW_OPACITY), 0.3)) & "" & vbCrLf
         json = json & "    }"
 
         itemCount = itemCount + 1
@@ -203,7 +223,8 @@ Public Sub SetupZoneMoodsSheet()
 
     Dim headers As Variant
     headers = Array("id", "name", "ambient_color", "bloom_enabled", "bloom_intensity", _
-                    "bloom_threshold", "particle_type", "particle_tint")
+                    "bloom_threshold", "particle_type", "particle_tint", _
+                    "shadow_angle", "shadow_opacity")
 
     SetupSheetHeaders ws, headers
 
@@ -216,6 +237,8 @@ Public Sub SetupZoneMoodsSheet()
     SafeAddComment ws.Cells(1, 6), "Bloom brightness threshold 0.0-1.0 (0.9=only very bright areas glow)"
     SafeAddComment ws.Cells(1, 7), "Particle effect: snow, dust_motes, embers (or leave empty for none)"
     SafeAddComment ws.Cells(1, 8), "Particle color tint as hex #RRGGBB (e.g., #FFE6B3 warm dust)"
+    SafeAddComment ws.Cells(1, 9), "Shadow sun angle in radians -3.14 to 3.14 (0.5=default right-ish, default 0.5)"
+    SafeAddComment ws.Cells(1, 10), "Shadow opacity 0.0-1.0 (0=invisible, 0.3=subtle, 1.0=solid black, default 0.3)"
 
     MsgBox "ZoneMoods sheet setup complete!", vbInformation
 End Sub

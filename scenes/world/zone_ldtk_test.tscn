@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://br7g6n3ugvdis" path="res://scripts/camera/game_camera.gd" id="3_camera"]
 [ext_resource type="Script" uid="uid://vik7jjuuh4ix" path="res://scripts/world/zone_base.gd" id="4_zone"]
 [ext_resource type="Script" uid="uid://dc6rssr8gotxo" path="res://scripts/world/spawn_point.gd" id="5_spawn"]
-[ext_resource type="Resource" path="res://resources/zone_moods/deep_cave.tres" id="6_mood"]
+[ext_resource type="Resource" path="res://resources/zone_moods/snowy_mountain.tres" id="6_mood"]
 
 [node name="ZoneLDtkTest" type="Node2D"]
 script = ExtResource("4_zone")
